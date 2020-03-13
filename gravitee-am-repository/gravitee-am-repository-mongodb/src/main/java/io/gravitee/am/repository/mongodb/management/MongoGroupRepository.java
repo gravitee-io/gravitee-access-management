@@ -63,8 +63,13 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
+    public Single<List<Group>> findAll(ReferenceType referenceType, String referenceId) {
+        return Observable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert).collect(ArrayList::new, List::add);
+    }
+
+    @Override
     public Single<List<Group>> findByDomain(String domain) {
-        return Observable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain)))).map(this::convert).collect(ArrayList::new, List::add);
+        return findAll(DOMAIN, domain);
     }
 
     @Override
@@ -83,7 +88,6 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     public Single<List<Group>> findByIdIn(List<String> ids) {
         return Observable.fromPublisher(groupsCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(ArrayList::new, List::add);
     }
-
 
     @Override
     public Maybe<Group> findByName(ReferenceType referenceType, String referenceId, String groupName) {

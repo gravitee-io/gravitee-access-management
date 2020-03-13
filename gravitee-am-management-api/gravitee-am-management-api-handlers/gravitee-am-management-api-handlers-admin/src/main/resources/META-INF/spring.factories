@@ -1,2 +1,0 @@
-io.gravitee.am.management.core.context.ContextFactory=\
-  io.gravitee.am.management.handlers.admin.context.AdminContextFactory

@@ -16,13 +16,14 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.common.event.Action;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -117,7 +118,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         return extensionGrantRepository.create(extensionGrant)
                                 .flatMap(extensionGrant1 -> {
                                     // create event for sync process
-                                    Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant1.getId(), extensionGrant1.getDomain(), Action.CREATE));
+                                    Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant1.getId(), ReferenceType.DOMAIN, extensionGrant1.getDomain(), Action.CREATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(extensionGrant1));
                                 });
 
@@ -146,11 +147,11 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         .defaultIfEmpty(Optional.empty())
                         .toSingle()
                         .flatMap(existingTokenGranter -> {
-                           if (existingTokenGranter.isPresent() && !existingTokenGranter.get().getId().equals(id)) {
-                               throw new ExtensionGrantAlreadyExistsException("Extension grant with the same name already exists");
-                           }
-                           return Single.just(tokenGranter);
-                       }))
+                            if (existingTokenGranter.isPresent() && !existingTokenGranter.get().getId().equals(id)) {
+                                throw new ExtensionGrantAlreadyExistsException("Extension grant with the same name already exists");
+                            }
+                            return Single.just(tokenGranter);
+                        }))
                 .flatMap(oldExtensionGrant -> {
                     ExtensionGrant extensionGrantToUpdate = new ExtensionGrant(oldExtensionGrant);
                     extensionGrantToUpdate.setName(updateExtensionGrant.getName());
@@ -164,7 +165,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                     return extensionGrantRepository.update(extensionGrantToUpdate)
                             .flatMap(extensionGrant -> {
                                 // create event for sync process
-                                Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant.getId(), extensionGrant.getDomain(), Action.UPDATE));
+                                Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant.getId(), ReferenceType.DOMAIN, extensionGrant.getDomain(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(extensionGrant));
                             })
                             .doOnSuccess(extensionGrant -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_UPDATED).oldValue(oldExtensionGrant).extensionGrant(extensionGrant)))
@@ -210,7 +211,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         }))
                 .flatMapCompletable(extensionGrant -> {
                     // create event for sync process
-                    Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrantId, domain, Action.DELETE));
+                    Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrantId, ReferenceType.DOMAIN, domain, Action.DELETE));
                     return extensionGrantRepository.delete(extensionGrantId)
                             .andThen(eventService.create(event))
                             .toCompletable()

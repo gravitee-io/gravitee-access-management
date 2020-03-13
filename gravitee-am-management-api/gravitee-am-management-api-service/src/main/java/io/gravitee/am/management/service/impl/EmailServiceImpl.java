@@ -72,6 +72,11 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private AuditService auditService;
 
+    public EmailServiceImpl(){
+        super();
+    }
+
+
     @Override
     public void send(Email email, User user) {
         if (enabled) {

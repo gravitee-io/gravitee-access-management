@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c55b4035-63d4-4790-9ee3-ba5306246751",
+		"_postman_id": "128296a1-fb5a-42ea-8f5f-3f128a5f0f6c",
 		"name": "Gravitee.io - AM - API Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -57,12 +57,12 @@
 							]
 						},
 						"url": {
-							"raw": "{{management_url}}/admin/token",
+							"raw": "{{management_url}}/auth/token",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
-								"admin",
+								"auth",
 								"token"
 							]
 						}
@@ -104,14 +104,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{management_url}}/management/domains/admin",
+							"raw": "{{management_url}}/management/platform/settings",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
 								"management",
-								"domains",
-								"admin"
+								"platform",
+								"settings"
 							]
 						}
 					},
@@ -161,14 +161,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{management_url}}/management/domains/admin/identities",
+							"raw": "{{management_url}}/management/platform/identities",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
 								"management",
-								"domains",
-								"admin",
+								"platform",
 								"identities"
 							]
 						}
@@ -202,14 +201,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{management_url}}/management/domains/admin",
+							"raw": "{{management_url}}/management/platform/settings",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
 								"management",
-								"domains",
-								"admin"
+								"platform",
+								"settings"
 							]
 						}
 					},
@@ -260,12 +259,12 @@
 							]
 						},
 						"url": {
-							"raw": "{{management_url}}/admin/token",
+							"raw": "{{management_url}}/auth/token",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
-								"admin",
+								"auth",
 								"token"
 							]
 						}
@@ -299,14 +298,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{management_url}}/management/domains/admin",
+							"raw": "{{management_url}}/management/platform/settings",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
 								"management",
-								"domains",
-								"admin"
+								"platform",
+								"settings"
 							]
 						}
 					},
@@ -338,14 +337,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{management_url}}/management/domains/admin/identities/{{newIdp}}",
+							"raw": "{{management_url}}/management/platform/identities/{{newIdp}}",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
 								"management",
-								"domains",
-								"admin",
+								"platform",
 								"identities",
 								"{{newIdp}}"
 							]

@@ -102,7 +102,7 @@ public class GroupServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(groupRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singletonList(new Group())));
+        when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.singletonList(new Group())));
         TestObserver<List<Group>> testObserver = groupService.findByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
@@ -113,7 +113,7 @@ public class GroupServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(groupRepository.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         groupService.findByDomain(DOMAIN).subscribe(testObserver);

@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.FactorRepository;
@@ -126,7 +127,7 @@ public class FactorServiceImpl implements FactorService {
                 })
                 .flatMap(factor1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.FACTOR, new Payload(factor1.getId(), factor1.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.FACTOR, new Payload(factor1.getId(), ReferenceType.DOMAIN, factor1.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(factor1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -156,7 +157,7 @@ public class FactorServiceImpl implements FactorService {
                     return factorRepository.update(factorToUpdate)
                             .flatMap(factor1 -> {
                                 // create event for sync process
-                                Event event = new Event(Type.FACTOR, new Payload(factor1.getId(), factor1.getDomain(), Action.UPDATE));
+                                Event event = new Event(Type.FACTOR, new Payload(factor1.getId(), ReferenceType.DOMAIN, factor1.getDomain(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(factor1));
                             })
                             .doOnSuccess(factor1 -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_UPDATED).oldValue(oldFactor).factor(factor1)))
@@ -187,7 +188,7 @@ public class FactorServiceImpl implements FactorService {
                         }))
                 .flatMapCompletable(factor -> {
                     // create event for sync process
-                    Event event = new Event(Type.FACTOR, new Payload(factorId, domain, Action.DELETE));
+                    Event event = new Event(Type.FACTOR, new Payload(factorId, ReferenceType.DOMAIN, domain, Action.DELETE));
                     return factorRepository.delete(factorId)
                             .andThen(eventService.create(event))
                             .toCompletable()

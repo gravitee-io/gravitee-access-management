@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Policy;
 import io.gravitee.am.common.event.Action;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.common.event.Type;
@@ -113,7 +114,7 @@ public class PolicyServiceImpl implements PolicyService {
         return policyRepository.create(policy)
                 .flatMap(policy1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.POLICY, new Payload(policy1.getId(), policy1.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.POLICY, new Payload(policy1.getId(), ReferenceType.DOMAIN, policy1.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(policy1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -141,7 +142,7 @@ public class PolicyServiceImpl implements PolicyService {
                     return policyRepository.update(policyToUpdate)
                             .flatMap(policy1 -> {
                                 // create event for sync process
-                                Event event = new Event(Type.POLICY, new Payload(policy1.getId(), policy1.getDomain(), Action.UPDATE));
+                                Event event = new Event(Type.POLICY, new Payload(policy1.getId(), ReferenceType.DOMAIN, policy1.getDomain(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(policy1));
                             })
                             .doOnSuccess(policy1 -> auditService.report(AuditBuilder.builder(PolicyAuditBuilder.class).principal(principal).type(EventType.POLICY_UPDATED).oldValue(oldPolicy).policy(policy1)))
@@ -166,7 +167,7 @@ public class PolicyServiceImpl implements PolicyService {
                 .toList()
                 .flatMap(policies1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.POLICY, new Payload(null, domain, Action.BULK_UPDATE));
+                    Event event = new Event(Type.POLICY, new Payload(null, ReferenceType.DOMAIN, domain, Action.BULK_UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(policies1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -185,7 +186,7 @@ public class PolicyServiceImpl implements PolicyService {
                 .switchIfEmpty(Maybe.error(new PolicyNotFoundException(id)))
                 .flatMapCompletable(policy -> {
                     // create event for sync process
-                    Event event = new Event(Type.POLICY, new Payload(id, policy.getDomain(), Action.DELETE));
+                    Event event = new Event(Type.POLICY, new Payload(id, ReferenceType.DOMAIN, policy.getDomain(), Action.DELETE));
                     return policyRepository.delete(id)
                             .andThen(eventService.create(event))
                             .toCompletable()

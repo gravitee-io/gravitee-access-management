@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.DomainBasedTemplateResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.common.event.Event;
@@ -88,7 +89,7 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
 
     @Override
     public void onEvent(Event<FormEvent, Payload> event) {
-        if (domain.getId().equals(event.content().getDomain())) {
+        if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:

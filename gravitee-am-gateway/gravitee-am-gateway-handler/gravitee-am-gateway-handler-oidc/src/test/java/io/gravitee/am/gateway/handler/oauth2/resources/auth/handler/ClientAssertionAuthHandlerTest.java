@@ -48,14 +48,14 @@ public class ClientAssertionAuthHandlerTest extends GraviteeAuthHandlerTestBase 
             rc.response().end();
         };
 
-        router.route("/token/*")
+        router.route("/token")
                 .handler(ClientAssertionAuthHandler.create(new DummyClientAssertionAuthProvider()).getDelegate())
                 .handler(handler);
     }
 
     @Test
     public void unauthorized_noCredentials() throws Exception {
-        testRequest(HttpMethod.POST, "/token/", 401, "Unauthorized");
+        testRequest(HttpMethod.POST, "/token", 401, "Unauthorized");
     }
 
     @Test

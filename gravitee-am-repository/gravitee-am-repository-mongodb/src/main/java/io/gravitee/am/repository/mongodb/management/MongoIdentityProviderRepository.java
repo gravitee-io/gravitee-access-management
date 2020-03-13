@@ -43,7 +43,6 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoIdentityProviderRepository extends AbstractManagementMongoRepository implements IdentityProviderRepository {
 
     private static final String FIELD_ID = "_id";
-    //private static final String FIELD_DOMAIN = "domain";
     private MongoCollection<IdentityProviderMongo> identitiesCollection;
 
     @PostConstruct

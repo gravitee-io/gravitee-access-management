@@ -21,13 +21,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.common.event.Action;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.management.api.CertificateRepository;
@@ -200,7 +201,7 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMap(certificate -> certificateRepository.create(certificate))
                 // create event for sync process
                 .flatMap(certificate -> {
-                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), certificate.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(certificate));
                 })
                 .doOnError(ex -> {
@@ -305,7 +306,7 @@ public class CertificateServiceImpl implements CertificateService {
                             .flatMap(certificate -> certificateRepository.update(certificate))
                             // create event for sync process
                             .flatMap(certificate1 -> {
-                                Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), certificate1.getDomain(), Action.UPDATE));
+                                Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), ReferenceType.DOMAIN, certificate1.getDomain(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(certificate1));
                             })
                             .onErrorResumeNext(ex -> {
@@ -326,7 +327,7 @@ public class CertificateServiceImpl implements CertificateService {
                 // create event for sync process
                 .flatMap(certificate1 -> {
                     // Reload domain to take care about certificate update
-                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), certificate1.getDomain(), Action.UPDATE));
+                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), ReferenceType.DOMAIN, certificate1.getDomain(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(certificate1));
                 })
                 .doOnError(ex -> {
@@ -350,7 +351,7 @@ public class CertificateServiceImpl implements CertificateService {
                 )
                 .flatMapCompletable(certificate -> {
                     // create event for sync process
-                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), certificate.getDomain(), Action.DELETE));
+                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.DELETE));
                     return certificateRepository.delete(certificateId)
                             .andThen(eventService.create(event))
                             .toCompletable()

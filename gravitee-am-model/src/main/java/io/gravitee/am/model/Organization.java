@@ -35,7 +35,7 @@ public class Organization implements Resource{
 
     private List<String> domainRestrictions;
 
-    private Set<String> identities;
+    private List<String> identities;
 
     private Date createdAt;
     
@@ -105,11 +105,11 @@ public class Organization implements Resource{
         this.updatedAt = updatedAt;
     }
 
-    public Set<String> getIdentities() {
+    public List<String> getIdentities() {
         return identities;
     }
 
-    public void setIdentities(Set<String> identities) {
+    public void setIdentities(List<String> identities) {
         this.identities = identities;
     }
 }

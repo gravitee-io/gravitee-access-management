@@ -21,10 +21,10 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Form;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -82,14 +82,19 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public Single<List<Form>> findByDomain(String domain) {
-        LOGGER.debug("Find form by domain {}", domain);
-        return formRepository.findByDomain(domain)
+    public Single<List<Form>> findAll(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("Find form by {} {}", referenceType, referenceId);
+        return formRepository.findAll(referenceType, referenceId)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a form using its domain {}", domain, ex);
+                    LOGGER.error("An error occurs while trying to find a form using its {} {}", referenceType, referenceId, ex);
                     return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a form using its domain %s", domain), ex));
+                            String.format("An error occurs while trying to find a form using its %s %s", referenceType, referenceId), ex));
                 });
+    }
+
+    @Override
+    public Single<List<Form>> findByDomain(String domain) {
+        return findAll(ReferenceType.DOMAIN, domain);
     }
 
     @Override
@@ -192,7 +197,7 @@ public class FormServiceImpl implements FormService {
                     return formRepository.update(formToUpdate)
                             .flatMap(page -> {
                                 // create event for sync process
-                                Event event = new Event(Type.FORM, new Payload(page.getId(), referenceType == ReferenceType.DOMAIN ? page.getReferenceId() : null, Action.UPDATE));
+                                Event event = new Event(Type.FORM, new Payload(page.getId(), page.getReferenceType(), page.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(page));
                             })
                             .doOnSuccess(form -> auditService.report(AuditBuilder.builder(FormTemplateAuditBuilder.class).principal(principal).type(EventType.FORM_TEMPLATE_UPDATED).oldValue(oldForm).form(form)))
@@ -241,7 +246,7 @@ public class FormServiceImpl implements FormService {
                 })
                 .flatMap(page -> {
                     // create event for sync process
-                    Event event = new Event(Type.FORM, new Payload(page.getId(), referenceType == ReferenceType.DOMAIN ? page.getReferenceId() : null, Action.CREATE));
+                    Event event = new Event(Type.FORM, new Payload(page.getId(), page.getReferenceType(), page.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(page));
                 })
                 .onErrorResumeNext(ex -> {
@@ -263,7 +268,7 @@ public class FormServiceImpl implements FormService {
                 .switchIfEmpty(Maybe.error(new FormNotFoundException(formId)))
                 .flatMapCompletable(page -> {
                     // create event for sync process
-                    Event event = new Event(Type.FORM, new Payload(page.getId(), referenceType == ReferenceType.DOMAIN ? page.getReferenceId() : null, Action.DELETE));
+                    Event event = new Event(Type.FORM, new Payload(page.getId(), page.getReferenceType(), page.getReferenceId(), Action.DELETE));
 
                     return formRepository.delete(formId)
                             .andThen(eventService.create(event)).toCompletable()

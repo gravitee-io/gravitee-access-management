@@ -148,7 +148,7 @@ public class MembershipServiceImpl implements MembershipService {
                                 return membershipRepository.create(newMembership)
                                         // create event for sync process
                                         .flatMap(membership1 -> {
-                                            Event event = new Event(Type.MEMBERSHIP, new Payload(membership1.getId(), membership1.getDomain(), Action.CREATE));
+                                            Event event = new Event(Type.MEMBERSHIP, new Payload(membership1.getId(), membership1.getReferenceType(), membership1.getReferenceId(), Action.CREATE));
                                             return eventService.create(event).flatMap(__ -> Single.just(membership1));
                                         })
                                         .onErrorResumeNext(ex -> {
@@ -169,7 +169,7 @@ public class MembershipServiceImpl implements MembershipService {
                                 return membershipRepository.update(updateMembership)
                                         // create event for sync process
                                         .flatMap(membership1 -> {
-                                            Event event = new Event(Type.MEMBERSHIP, new Payload(membership1.getId(), membership1.getDomain(), Action.UPDATE));
+                                            Event event = new Event(Type.MEMBERSHIP, new Payload(membership1.getId(), membership1.getReferenceType(), membership1.getReferenceId(), Action.UPDATE));
                                             return eventService.create(event).flatMap(__ -> Single.just(membership1));
                                         })
                                         .onErrorResumeNext(ex -> {
@@ -212,7 +212,7 @@ public class MembershipServiceImpl implements MembershipService {
         return membershipRepository.findById(membershipId)
                 .switchIfEmpty(Maybe.error(new MembershipNotFoundException(membershipId)))
                 .flatMapCompletable(membership -> membershipRepository.delete(membershipId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.MEMBERSHIP, new Payload(membership.getId(), membership.getDomain(), Action.DELETE)))))
+                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.MEMBERSHIP, new Payload(membership.getId(), membership.getReferenceType(), membership.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_DELETED).membership(membership)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_DELETED).throwable(throwable)))
                 )

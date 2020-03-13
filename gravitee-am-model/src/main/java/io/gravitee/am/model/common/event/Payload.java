@@ -16,6 +16,7 @@
 package io.gravitee.am.model.common.event;
 
 import io.gravitee.am.common.event.Action;
+import io.gravitee.am.model.ReferenceType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,12 +28,16 @@ import java.util.Map;
 public class Payload extends HashMap<String, Object> {
 
     private static final String ID = "id";
-    private static final String DOMAIN = "domain";
+    private static final String REFERENCE_TYPE = "referenceType";
+    private static final String REFERENCE_ID = "referenceId";
     private static final String ACTION = "action";
 
-    public Payload(String id, String domain, Action action) {
+    public Payload(String id, ReferenceType referenceType, String referenceId, Action action) {
         put(ID, id);
-        put(DOMAIN, domain);
+        if(referenceType != null) {
+            put(REFERENCE_TYPE, referenceType.name());
+        }
+        put(REFERENCE_ID, referenceId);
         put(ACTION, action);
     }
 
@@ -44,8 +49,17 @@ public class Payload extends HashMap<String, Object> {
         return (String) get(ID);
     }
 
-    public String getDomain() {
-        return (String) get(DOMAIN);
+    public ReferenceType getReferenceType() {
+        String rawReferenceType = (String) get(REFERENCE_TYPE);
+        if (rawReferenceType == null) {
+            return null;
+        } else {
+            return ReferenceType.valueOf(rawReferenceType);
+        }
+    }
+
+    public String getReferenceId() {
+        return (String) get(REFERENCE_ID);
     }
 
     public Action getAction() {

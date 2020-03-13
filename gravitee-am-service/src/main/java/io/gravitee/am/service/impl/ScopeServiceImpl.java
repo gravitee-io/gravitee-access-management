@@ -16,13 +16,14 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
-import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
@@ -92,7 +93,7 @@ public class ScopeServiceImpl implements ScopeService {
     public Single<Scope> create(String domain, NewScope newScope, User principal) {
         LOGGER.debug("Create a new scope {} for domain {}", newScope, domain);
         // replace all whitespace by an underscore (whitespace is a reserved keyword to separate tokens)
-        String scopeKey = newScope.getKey().replaceAll("\\s+","_");
+        String scopeKey = newScope.getKey().replaceAll("\\s+", "_");
         return scopeRepository.findByDomainAndKey(domain, scopeKey)
                 .isEmpty()
                 .flatMap(empty -> {
@@ -114,7 +115,7 @@ public class ScopeServiceImpl implements ScopeService {
                 })
                 .flatMap(scope -> {
                     // create event for sync process
-                    Event event = new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(scope));
                 })
                 .onErrorResumeNext(ex -> {
@@ -155,7 +156,7 @@ public class ScopeServiceImpl implements ScopeService {
                 })
                 .flatMap(scope -> {
                     // create event for sync process
-                    Event event = new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.CREATE));
+                    Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(scope));
                 })
                 .onErrorResumeNext(ex -> {
@@ -195,7 +196,7 @@ public class ScopeServiceImpl implements ScopeService {
                     scopeToUpdate.setName(updateScope.getName());
                     scopeToUpdate.setDescription(updateScope.getDescription());
                     scopeToUpdate.setExpiresIn(updateScope.getExpiresIn());
-                    if(!oldScope.isSystem() && updateScope.getDiscovery()!=null) {
+                    if (!oldScope.isSystem() && updateScope.getDiscovery() != null) {
                         scopeToUpdate.setDiscovery(updateScope.isDiscovery());
                     }
 
@@ -216,7 +217,7 @@ public class ScopeServiceImpl implements ScopeService {
         return scopeRepository.update(toUpdate)
                 .flatMap(scope1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.SCOPE, new Payload(scope1.getId(), scope1.getDomain(), Action.UPDATE));
+                    Event event = new Event(Type.SCOPE, new Payload(scope1.getId(), ReferenceType.DOMAIN, scope1.getDomain(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(scope1));
                 })
                 .doOnSuccess(scope1 -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).oldValue(oldValue).scope(scope1)))
@@ -240,7 +241,7 @@ public class ScopeServiceImpl implements ScopeService {
                 })
                 .flatMap(scope -> {
                     // create event for sync process
-                    Event event = new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.UPDATE));
+                    Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(scope));
                 })
                 .onErrorResumeNext(ex -> {
@@ -308,7 +309,7 @@ public class ScopeServiceImpl implements ScopeService {
                                 // 5_ create event for sync process
                                 .andThen(
                                         Completable.fromSingle(
-                                                eventService.create(new Event(Type.SCOPE, new Payload(scope.getId(), scope.getDomain(), Action.DELETE))))
+                                                eventService.create(new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.DELETE))))
                                 )
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).scope(scope)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).throwable(throwable)))
@@ -352,20 +353,20 @@ public class ScopeServiceImpl implements ScopeService {
      */
     @Override
     public Single<Boolean> validateScope(String domain, List<String> scopes) {
-        if(scopes==null || scopes.isEmpty()) {
+        if (scopes == null || scopes.isEmpty()) {
             return Single.just(true);//nothing to do...
         }
 
         return findByDomain(domain)
                 .map(domainSet -> domainSet.stream().map(scope -> scope.getKey()).collect(Collectors.toSet()))
-                .flatMap(domainScopes -> this.validateScope(domainScopes,scopes));
+                .flatMap(domainScopes -> this.validateScope(domainScopes, scopes));
     }
 
     private Single<Boolean> validateScope(Set<String> domainScopes, List<String> scopes) {
 
-        for(String scope:scopes) {
-            if(!domainScopes.contains(scope)) {
-                return Single.error(new InvalidClientMetadataException("scope "+scope+" is not valid."));
+        for (String scope : scopes) {
+            if (!domainScopes.contains(scope)) {
+                return Single.error(new InvalidClientMetadataException("scope " + scope + " is not valid."));
             }
         }
 

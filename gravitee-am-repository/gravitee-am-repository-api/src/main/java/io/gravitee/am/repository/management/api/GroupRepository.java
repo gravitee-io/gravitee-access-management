@@ -32,6 +32,8 @@ public interface GroupRepository extends CrudRepository<Group, String> {
 
     Single<List<Group>> findByMember(String memberId);
 
+    Single<List<Group>> findAll(ReferenceType referenceType, String referenceId);
+
     Single<List<Group>> findByDomain(String domain);
 
     Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size);

@@ -193,7 +193,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                 .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
                 .flatMapCompletable(email -> {
                     // create event for sync process
-                    Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType() == ReferenceType.DOMAIN ? email.getReferenceId() : null, Action.DELETE));
+                    Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.DELETE));
                     return emailRepository.delete(emailId)
                             .andThen(eventService.create(event))
                             .toCompletable()
@@ -236,7 +236,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                 })
                 .flatMap(email -> {
                     // create event for sync process
-                    Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType() == ReferenceType.DOMAIN ? email.getReferenceId() : null, Action.CREATE));
+                    Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(email));
                 })
                 .onErrorResumeNext(ex -> {
@@ -267,7 +267,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     return emailRepository.update(emailToUpdate)
                             .flatMap(email -> {
                                 // create event for sync process
-                                Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType() == ReferenceType.DOMAIN ? email.getReferenceId() : null, Action.UPDATE));
+                                Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(email));
                             })
                             .doOnSuccess(email -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).oldValue(oldEmail).email(email)))

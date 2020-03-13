@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -54,8 +55,8 @@ public class EventManagerImpl implements EventManager {
         String domain = null;
         if (event.content() != null) {
             Object content = event.content();
-            if (content instanceof Payload) {
-                domain = ((Payload)content).getDomain();
+            if (content instanceof Payload && ((Payload)content).getReferenceType() == ReferenceType.DOMAIN) {
+                domain = ((Payload)content).getReferenceId();
             } else if (content instanceof Domain) {
                 domain = ((Domain)content).getId();
             } else if (content instanceof AuthenticationDetails && ((AuthenticationDetails)content).getDomain() != null) {

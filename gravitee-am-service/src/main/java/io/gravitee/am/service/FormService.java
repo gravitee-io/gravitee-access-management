@@ -35,6 +35,8 @@ public interface FormService {
 
     Maybe<Form> findById(String id);
 
+    Single<List<Form>> findAll(ReferenceType referenceType, String referenceId);
+
     Single<List<Form>> findByDomain(String domain);
 
     Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client);

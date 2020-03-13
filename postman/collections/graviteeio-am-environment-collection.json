@@ -57,12 +57,12 @@
 							]
 						},
 						"url": {
-							"raw": "{{management_url}}/admin/token",
+							"raw": "{{management_url}}/auth/token",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
-								"admin",
+								"auth",
 								"token"
 							]
 						}
@@ -159,7 +159,7 @@
 							"    ",
 							"    var jsonData = pm.response.json();",
 							"    pm.expect(jsonData.http_status).to.equal(400);",
-							"    pm.expect(jsonData.message).to.equal(\"[name: may not be null]\");",
+							"    pm.expect(jsonData.message).to.equal(\"[name: must not be null]\");",
 							"});",
 							""
 						],

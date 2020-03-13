@@ -160,7 +160,7 @@ public class RoleServiceImpl implements RoleService {
                 })
                 // create event for sync process
                 .flatMap(role -> {
-                    Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType() == ReferenceType.DOMAIN ? role.getReferenceId() : null, Action.CREATE));
+                    Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(role));
                 })
                 .onErrorResumeNext(ex -> {
@@ -204,7 +204,7 @@ public class RoleServiceImpl implements RoleService {
                                 return roleRepository.update(roleToUpdate)
                                         // create event for sync process
                                         .flatMap(role -> {
-                                            Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType() == ReferenceType.DOMAIN ? role.getReferenceId() : null, Action.UPDATE));
+                                            Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.UPDATE));
                                             return eventService.create(event).flatMap(__ -> Single.just(role));
                                         })
                                         .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).oldValue(oldRole).role(role)))
@@ -239,7 +239,7 @@ public class RoleServiceImpl implements RoleService {
                     return role;
                 })
                 .flatMapCompletable(role -> roleRepository.delete(roleId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType() == ReferenceType.DOMAIN ? role.getReferenceId() : null, Action.DELETE)))))
+                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).role(role)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).throwable(throwable)))
                 )
@@ -259,7 +259,7 @@ public class RoleServiceImpl implements RoleService {
         Role role = initSystemRole(systemRole.name(), roleScope.getId(), permissions);
         return roleRepository.create(role)
                 .flatMap(role1 -> {
-                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType() == ReferenceType.DOMAIN ? role1.getReferenceId() : null, Action.CREATE));
+                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType(), role1.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(role1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -297,7 +297,7 @@ public class RoleServiceImpl implements RoleService {
                         role.setUpdatedAt(role.getCreatedAt());
                         return roleRepository.create(role)
                                 .flatMap(role1 -> {
-                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType() == ReferenceType.DOMAIN ? role1.getReferenceId() : null, Action.CREATE));
+                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType(), role1.getReferenceId(), Action.CREATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
                                 })
                                 .onErrorResumeNext(ex -> {
@@ -324,7 +324,7 @@ public class RoleServiceImpl implements RoleService {
                         role.setUpdatedAt(new Date());
                         return roleRepository.update(role)
                                 .flatMap(role1 -> {
-                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType() == ReferenceType.DOMAIN ? role1.getReferenceId() : null, Action.UPDATE));
+                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType(), role1.getReferenceId(), Action.UPDATE));
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
                                 })
                                 .onErrorResumeNext(ex -> {

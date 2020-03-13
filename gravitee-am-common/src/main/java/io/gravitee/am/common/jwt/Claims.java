@@ -69,6 +69,11 @@ public interface Claims {
     String domain = "domain";
 
     /**
+     * The "org" (organization) claim identifies the organization that the JWT is intended for.
+     */
+    String organization = "org";
+
+    /**
      * The claims parameter used to request that specific Claims be returned
      */
     String claims = "claims_request_parameter";
