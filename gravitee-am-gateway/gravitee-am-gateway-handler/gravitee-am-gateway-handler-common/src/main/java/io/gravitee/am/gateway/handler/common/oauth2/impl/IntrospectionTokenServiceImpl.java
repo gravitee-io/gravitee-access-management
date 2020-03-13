@@ -15,15 +15,17 @@
  */
 package io.gravitee.am.gateway.handler.common.oauth2.impl;
 
-import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
@@ -35,6 +37,7 @@ import java.util.Date;
  */
 public class IntrospectionTokenServiceImpl implements IntrospectionTokenService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(IntrospectionTokenServiceImpl.class);
     private static final long OFFLINE_VERIFICATION_TIMER_SECONDS = 10;
 
     @Autowired
@@ -61,17 +64,25 @@ public class IntrospectionTokenServiceImpl implements IntrospectionTokenService 
 
                     // check if token is not revoked
                     return accessTokenRepository.findByToken(jwt.getJti())
-                            .switchIfEmpty(Single.error(new InvalidTokenException("The token is invalid")))
+                            .switchIfEmpty(Single.error(new InvalidTokenException("The token is invalid", "Token with JTI [" + jwt.getJti() + "] not found in the database", jwt)))
                             .map(accessToken -> {
                                 if (accessToken.getExpireAt().before(new Date())) {
-                                    throw new InvalidTokenException("The token expired");
+                                    throw new InvalidTokenException("The token expired", "Token with JTI [" + jwt.getJti() + "] is expired", jwt);
                                 }
                                 return jwt;
                             });
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof JWTException) {
+                        LOGGER.debug("An error occurs while decoding JWT access token : {}", token, ex);
                         return Single.error(new InvalidTokenException(ex.getMessage(), ex));
+                    }
+                    if (ex instanceof InvalidTokenException) {
+                        InvalidTokenException invalidTokenException = (InvalidTokenException) ex;
+                        String details = invalidTokenException.getDetails();
+                        JWT jwt = invalidTokenException.getJwt();
+                        LOGGER.debug("An error occurs while checking JWT access token validity: {}\n\t - details: {}\n\t - decoded jwt: {}",
+                                token, details != null ? details : "none", jwt != null ? jwt.toString() : "{}", invalidTokenException);
                     }
                     return Single.error(ex);
                 });
