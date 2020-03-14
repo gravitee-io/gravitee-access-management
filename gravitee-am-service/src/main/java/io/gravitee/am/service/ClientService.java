@@ -37,7 +37,11 @@ public interface ClientService {
 
     Single<Page<Client>> findAll(int page, int size);
 
+    Single<Page<Client>> searchAll(String query, int page, int size);
+
     Single<Set<Client>> search(String domain, String query);
+
+    Single<Page<Client>> search(String domain, String query, int page, int size);
 
     Single<Set<Client>> findByDomain(String domain);
 

@@ -59,6 +59,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     private static final String FIELD_ID = "_id";
     private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_CLIENT_ID = "clientId";
+    private static final String FIELD_CLIENT_NAME = "clientName";
     private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_OAUTH2_IDENTITIES = "oauth2Identities";
     private static final String FIELD_CERTIFICATE = "certificate";
@@ -70,6 +71,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientsCollection = mongoOperations.getCollection("clients", ClientMongo.class);
         super.createIndex(clientsCollection, new Document(FIELD_DOMAIN, 1));
         super.createIndex(clientsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1));
+        super.createIndex(clientsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_NAME, 1));
         super.createIndex(clientsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1));
         super.createIndex(clientsCollection, new Document(FIELD_IDENTITIES, 1));
         super.createIndex(clientsCollection, new Document(FIELD_CERTIFICATE, 1));
@@ -83,26 +85,22 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Single<Set<Client>> search(String domain, String query) {
-        // currently search on client_id field
-        Bson searchQuery = new BasicDBObject(FIELD_CLIENT_ID, query);
-        // if query contains wildcard, use the regex query
-        if (query.contains("*")) {
-            String compactQuery = query.replaceAll("\\*+", ".*");
-            String regex = "^" + compactQuery;
-            searchQuery = new BasicDBObject(FIELD_CLIENT_ID, Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
-        }
-
-        Bson mongoQuery = and(
-                eq(FIELD_DOMAIN, domain),
-                searchQuery);
-
+        Bson mongoQuery = searchQuery(domain, query);
         return Observable.fromPublisher(clientsCollection.find(mongoQuery)).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Single<Page<Client>> search(String domain, String query, int page, int size) {
+        Bson mongoQuery = searchQuery(domain, query);
+        Single<Long> countOperation = Observable.fromPublisher(clientsCollection.countDocuments(mongoQuery)).first(0l);
+        Single<Set<Client>> clientsOperation = Observable.fromPublisher(clientsCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        return Single.zip(countOperation, clientsOperation, (count, clients) -> new Page<>(clients, page, count));
     }
 
     @Override
     public Single<Page<Client>> findByDomain(String domain, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(clientsCollection.count(eq(FIELD_DOMAIN, domain))).first(0l);
-        Single<Set<Client>> clientsOperation = Observable.fromPublisher(clientsCollection.find(eq(FIELD_DOMAIN, domain)).skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        Single<Set<Client>> clientsOperation = Observable.fromPublisher(clientsCollection.find(eq(FIELD_DOMAIN, domain)).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, clientsOperation, (count, clients) -> new Page<>(clients, page, count));
     }
 
@@ -134,8 +132,13 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Page<Client>> findAll(int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(clientsCollection.count()).first(0l);
-        Single<Set<Client>> clientsOperation = Observable.fromPublisher(clientsCollection.find().skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        Single<Set<Client>> clientsOperation = Observable.fromPublisher(clientsCollection.find().skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, clientsOperation, (count, clients) -> new Page<>(clients, page, count));
+    }
+
+    @Override
+    public Single<Page<Client>> searchAll(String query, int page, int size) {
+        return search(null, query, page, size);
     }
 
     @Override
@@ -169,6 +172,27 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Long> count() {
         return Observable.fromPublisher(clientsCollection.count()).first(0l);
+    }
+
+    private Bson searchQuery(String domain, String query) {
+        // currently search on client_id or client_name field
+        Bson searchQuery = or(new BasicDBObject(FIELD_CLIENT_ID, query), new BasicDBObject(FIELD_CLIENT_NAME, query));
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            searchQuery = or(new BasicDBObject(FIELD_CLIENT_ID, Pattern.compile(regex, Pattern.CASE_INSENSITIVE)),
+                    new BasicDBObject(FIELD_CLIENT_NAME, Pattern.compile(regex, Pattern.CASE_INSENSITIVE)));
+        }
+        Bson mongoQuery;
+        if (domain == null ) {
+            mongoQuery = searchQuery;
+        } else {
+            mongoQuery = and(
+                    eq(FIELD_DOMAIN, domain),
+                    searchQuery);
+        }
+        return mongoQuery;
     }
 
     private Client convert(ClientMongo clientMongo) {

@@ -28,7 +28,7 @@ export class WidgetClientsComponent implements OnInit {
   constructor(private dashboardService: DashboardService) { }
 
   ngOnInit() {
-    this.dashboardService.findClients(this.domainId).subscribe(data => this.clients = data);
+    this.dashboardService.findClients(this.domainId).subscribe(response => this.clients = response.data);
   }
 
 }

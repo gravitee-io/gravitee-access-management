@@ -24,12 +24,16 @@ export class ClientService {
 
   constructor(private http: HttpClient) { }
 
-  findByDomain(domainId): Observable<any> {
-    return this.http.get<any>(this.clientsURL + domainId + "/clients");
+  findByDomain(domainId, page?, size?): Observable<any> {
+    return this.http.get<any>(this.clientsURL + domainId + '/clients'
+      + ((page !== undefined) ? '?page=' + page : '')
+      + ((size !== undefined) ? '&size=' + size : ''));
   }
 
-  search(domainId, searchTerm): Observable<any> {
-    return this.http.get<any>(this.clientsURL + domainId + "/clients?q=" + searchTerm);
+  search(domainId, searchTerm, page?, size?): Observable<any> {
+    return this.http.get<any>(this.clientsURL + domainId + '/clients?q=' + searchTerm
+      + ((page !== undefined) ? '&page=' + page : '')
+      + ((size !== undefined) ? '&size=' + size : ''));
   }
 
   get(domainId, id): Observable<any> {

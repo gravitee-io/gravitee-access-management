@@ -43,6 +43,11 @@ public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> imple
     }
 
     @Override
+    public Single<Page<Client>> search(String domain, String query, int page, int size) {
+        return target.search(domain, query, page, size);
+    }
+
+    @Override
     public Single<Page<Client>> findByDomain(String domain, int page, int size) {
         return target.findByDomain(domain, page, size);
     }
@@ -75,6 +80,11 @@ public class ClientRepositoryProxy extends AbstractProxy<ClientRepository> imple
     @Override
     public Single<Page<Client>> findAll(int page, int size) {
         return target.findAll(page, size);
+    }
+
+    @Override
+    public Single<Page<Client>> searchAll(String query, int page, int size) {
+        return target.searchAll(query, page, size);
     }
 
     @Override

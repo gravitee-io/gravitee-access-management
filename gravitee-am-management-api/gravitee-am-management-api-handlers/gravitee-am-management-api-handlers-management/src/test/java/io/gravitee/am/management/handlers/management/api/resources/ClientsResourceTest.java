@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.common.http.HttpStatusCode;
@@ -60,10 +61,10 @@ public class ClientsResourceTest extends JerseySpringTest {
         mockClient2.setClientId("client-2-name");
         mockClient2.setDomain(domainId);
 
-        final Set<Client> clients = new HashSet<>(Arrays.asList(mockClient, mockClient2));
+        final Page<Client> clients = new Page(new HashSet<>(Arrays.asList(mockClient, mockClient2)), 0 , 2);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(clients)).when(clientService).findByDomain(domainId);
+        doReturn(Single.just(clients)).when(clientService).findByDomain(domainId, 0, Integer.MAX_VALUE);
 
         final Response response = target("domains").path(domainId).path("clients").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -75,7 +76,7 @@ public class ClientsResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetClients_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(clientService).findByDomain(domainId);
+        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(clientService).findByDomain(domainId, 0, Integer.MAX_VALUE);
 
         final Response response = target("domains").path(domainId).path("clients").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

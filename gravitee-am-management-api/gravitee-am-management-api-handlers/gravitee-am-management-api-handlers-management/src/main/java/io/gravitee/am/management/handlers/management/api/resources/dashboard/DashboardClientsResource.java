@@ -38,10 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -73,6 +70,7 @@ public class DashboardClientsResource extends AbstractResource {
     public void listClients(@QueryParam("page") @DefaultValue("0") int page,
                             @QueryParam("size") @DefaultValue("10") int size,
                             @QueryParam("domainId") String domainId,
+                            @QueryParam("q") String query,
                             @Suspended final AsyncResponse response) {
         int selectedSize = Math.min(size, MAX_CLIENTS_FOR_DASHBOARD);
         Single<AbstractMap.SimpleEntry<Page<Client>, Map<String, Domain>>> singleDashboardClients;
@@ -83,11 +81,23 @@ public class DashboardClientsResource extends AbstractResource {
                     .flatMapSingle(domain -> {
                         Map<String, Domain> domains = new HashMap<>();
                         domains.put(domainId, domain);
-                        return clientService.findByDomain(domainId, page, selectedSize)
+                        Single<Page<Client>> findClients;
+                        if (query != null) {
+                            findClients = clientService.search(domainId, query, page, size);
+                        } else {
+                            findClients = clientService.findByDomain(domainId, page, selectedSize);
+                        }
+                        return findClients
                                 .map(pagedClients -> new AbstractMap.SimpleEntry<>(pagedClients, domains));
                     });
         } else {
-            singleDashboardClients = clientService.findAll(page, selectedSize)
+            Single<Page<Client>> findClients;
+            if (query != null) {
+                findClients = clientService.searchAll(query, page, size);
+            } else {
+                findClients = clientService.findAll(page, selectedSize);
+            }
+            singleDashboardClients = findClients
                    .flatMap(pagedClients -> {
                        Set<String> domainIds = pagedClients.getData().stream().map(c -> c.getDomain()).collect(Collectors.toSet());
                        return domainService.findByIdIn(domainIds)
@@ -97,11 +107,15 @@ public class DashboardClientsResource extends AbstractResource {
         }
 
         singleDashboardClients
-                .map(entry -> entry.getKey().getData()
-                        .stream()
-                        .map(clientEnhancer.enhanceClient(entry.getValue()))
-                        .sorted((c1, c2) -> c2.getUpdatedAt().compareTo(c1.getUpdatedAt()))
-                        .collect(Collectors.toList()))
+                .map(entry -> {
+                    Page<Client> pagedClients = entry.getKey();
+                    List<ClientListItem> sortedClients = pagedClients.getData()
+                            .stream()
+                            .map(clientEnhancer.enhanceClient(entry.getValue()))
+                            .sorted((c1, c2) -> c2.getUpdatedAt().compareTo(c1.getUpdatedAt()))
+                            .collect(Collectors.toList());
+                    return new Page(sortedClients, pagedClients.getCurrentPage(), pagedClients.getTotalCount());
+                })
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error)
