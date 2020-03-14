@@ -143,6 +143,17 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    public Single<Page<Client>> search(String domain, String query, int page, int size) {
+        LOGGER.debug("Search clients for domain {} and with query {}", domain, query);
+        return clientRepository.search(domain, query, page, size)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find clients for domain {} and query {}", domain, query, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find clients for domain %s and query %s", domain, query), ex));
+                });
+    }
+
+    @Override
     public Single<Page<Client>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("Find clients by domain", domain);
         return clientRepository.findByDomain(domain, page, size)
@@ -200,6 +211,17 @@ public class ClientServiceImpl implements ClientService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find clients", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find clients", ex));
+                });
+    }
+
+    @Override
+    public Single<Page<Client>> searchAll(String query, int page, int size) {
+        LOGGER.debug("Search clients with query {}");
+        return clientRepository.searchAll(query, page, size)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search clients with query {}", query, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to search clients with query %s", query), ex));
                 });
     }
 

@@ -24,8 +24,19 @@ export class DashboardService {
 
   constructor(private http: HttpClient) { }
 
-  findClients(domainId: any): Observable<any> {
-    return this.http.get<any>(this.dashboardURL + "clients" + ((domainId) ? "?domainId="+domainId : ""));
+  findClients(domainId: any, page?, size?): Observable<any> {
+    const params = {};
+    params['domainId'] = domainId;
+    params['page'] = page;
+    params['size'] = size;
+    const queryParams = Object.keys(params).filter(key => params[key] != null && params[key] !== undefined).map(key => key + '=' + params[key]).join('&');
+    return this.http.get<any>(this.dashboardURL + 'clients?' + queryParams);
+  }
+
+  searchClients(query, page?, size?) {
+    return this.http.get<any>(this.dashboardURL + 'clients?q=' + query
+      + ((page !== undefined) ? '&page=' + page : '')
+      + ((size !== undefined) ? '&size=' + size : ''));
   }
 
   findTopClients(domainId: any): Observable<any> {

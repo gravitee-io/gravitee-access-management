@@ -17,8 +17,24 @@
 -->
 <div class="domain-clients-container">
   <h1 *ngIf="!isEmpty">Clients</h1>
+  <div *ngIf="!isEmpty" class="clients-search">
+    <mat-form-field>
+      <mat-icon matPrefix="">search</mat-icon>
+      <input type="text" matInput placeholder="Search" (input)="onSearch($event)">
+    </mat-form-field>
+  </div>
   <div class="domain-clients-content" *ngIf="!isEmpty">
-    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]='clients'>
+    <ngx-datatable class="material"
+                   [columnMode]="'flex'"
+                   [headerHeight]="40"
+                   [footerHeight]="40"
+                   [rowHeight]="50"
+                   [rows]='clients'
+                   [externalPaging]="true"
+                   [count]="page.totalElements"
+                   [offset]="page.pageNumber"
+                   [limit]="page.size"
+                   (page)='setPage($event)'>
       <ngx-datatable-column name="Client Name" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <a [routerLink]="['/domains', row.domainId, 'clients', row.id]">{{row.clientName}}</a>

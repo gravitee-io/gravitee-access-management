@@ -21,6 +21,8 @@ import { DashboardService } from "../services/dashboard.service";
 
 @Injectable()
 export class ClientsResolver implements Resolve<any> {
+  private default_page = 0;
+  private default_size = 10;
 
   constructor(private clientService: ClientService, private dashboardService: DashboardService) { }
 
@@ -33,9 +35,9 @@ export class ClientsResolver implements Resolve<any> {
     }
 
     if (domainId) {
-      return this.clientService.findByDomain(domainId);
+      return this.clientService.findByDomain(domainId, this.default_page, this.default_size);
     } else {
-      return this.dashboardService.findClients(null);
+      return this.dashboardService.findClients(null, this.default_page, this.default_size);
     }
   }
 

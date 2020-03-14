@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { DialogService } from "../services/dialog.service";
-import { SnackbarService } from "../services/snackbar.service";
-import { ActivatedRoute } from "@angular/router";
-import { ClientService } from "../services/client.service";
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from "@angular/router";
+import {DialogService} from "../services/dialog.service";
+import {SnackbarService} from "../services/snackbar.service";
+import {ClientService} from "../services/client.service";
+import {DashboardService} from "../services/dashboard.service";
 
 @Component({
   selector: 'app-clients',
@@ -25,25 +26,61 @@ import { ClientService } from "../services/client.service";
   styleUrls: ['./clients.component.scss']
 })
 export class ClientsComponent implements OnInit {
-  private clients: any[];
+  private searchValue: string;
   domainId: string;
   domain: any = {};
   newClientRouterLink: any[] = ['/dashboard', 'clients', 'new'];
+  page: any = {};
+  pagedClients: any;
+  clients: any[];
 
   constructor(private dialogService: DialogService,
-              private snackbarService: SnackbarService, private clientService: ClientService,
+              private snackbarService: SnackbarService,
+              private clientService: ClientService,
+              private dashboardService: DashboardService,
               private route: ActivatedRoute) {
+    this.page.pageNumber = 0;
+    this.page.size = 10;
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    this.clients = this.route.snapshot.data['clients'];
+    this.pagedClients = this.route.snapshot.data['clients'];
+    this.clients = this.pagedClients.data;
+    this.page.totalElements = this.pagedClients.totalCount;
     if (this.domain) {
       this.newClientRouterLink = ['/domains', this.domain.id, 'clients', 'new'];
     }
   }
 
+  onSearch(event) {
+    this.searchValue = event.target.value;
+    this.loadClients();
+  }
+
+  setPage(pageInfo) {
+    this.page.pageNumber = pageInfo.offset;
+    this.loadClients();
+  }
+
+  loadClients() {
+    let findClients;
+    if (this.domain) {
+      findClients = (this.searchValue) ?
+        this.clientService.search(this.domain.id, this.searchValue + '*', this.page.pageNumber, this.page.size) :
+        this.clientService.findByDomain(this.domain.id, this.page.pageNumber, this.page.size);
+    } else {
+      findClients = (this.searchValue) ?
+        this.dashboardService.searchClients(this.searchValue + '*', this.page.pageNumber, this.page.size) :
+        this.dashboardService.findClients(null, this.page.pageNumber, this.page.size);
+    }
+    findClients.subscribe(pagedUsers => {
+      this.page.totalElements = pagedUsers.totalCount;
+      this.clients = pagedUsers.data;
+    });
+  }
+
   get isEmpty() {
-    return !this.clients || this.clients.length === 0;
+    return !this.clients || this.clients.length === 0 && !this.searchValue;
   }
 }

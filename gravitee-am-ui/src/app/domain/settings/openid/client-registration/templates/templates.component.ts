@@ -57,7 +57,8 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
     this.templateIsEnabled = this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled;
     this.initEmptyStateMessage();
 
-    const datasource = _.map(this.route.snapshot.data['clients'],  client => <Client>{
+    const pagedClients = this.route.snapshot.data['clients'];
+    const datasource = _.map(pagedClients.data,  client => <Client>{
       id: client.id, clientId: client.clientId, name: client.clientName, template: client.template
     });
     this.clients = new MatTableDataSource(datasource);
