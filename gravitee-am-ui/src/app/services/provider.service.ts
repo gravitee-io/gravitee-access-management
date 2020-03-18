@@ -21,7 +21,7 @@ import { PlatformService } from "./platform.service";
 
 @Injectable()
 export class ProviderService {
-  private providersURL = AppConfig.settings.baseURL + '/domains/';
+  private providersURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
               private platformService: PlatformService) { }

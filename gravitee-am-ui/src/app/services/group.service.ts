@@ -21,7 +21,7 @@ import {PlatformService} from "./platform.service";
 
 @Injectable()
 export class GroupService {
-  private groupsURL = AppConfig.settings.baseURL + '/domains/';
+  private groupsURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
               private platformService: PlatformService) { }

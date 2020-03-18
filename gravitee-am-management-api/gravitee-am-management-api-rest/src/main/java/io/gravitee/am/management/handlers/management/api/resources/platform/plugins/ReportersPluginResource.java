@@ -1,4 +1,4 @@
-/**
+package io.gravitee.am.management.handlers.management.api.resources.platform.plugins; /**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.service.model.plugin.ReporterPlugin;
@@ -61,6 +60,7 @@ public class ReportersPluginResource {
 
     @Path("{reporter}")
     public ReporterPluginResource getReporterResource() {
+
         return resourceContext.getResource(ReporterPluginResource.class);
     }
 }

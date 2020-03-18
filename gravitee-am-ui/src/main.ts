@@ -49,5 +49,9 @@ forkJoin(constants, build)
     Object.keys(response[0]).forEach((key) => config[key] = response[0][key]);
     Object.keys(response[1]).forEach((key) => config[key] = response[1][key]);
     AppConfig.settings = config;
+
+    AppConfig.settings.organizationBaseURL = AppConfig.settings.baseURL + '/organizations/' + AppConfig.settings.defaultOrganizationId
+    AppConfig.settings.domainBaseURL = AppConfig.settings.organizationBaseURL + '/environments/' + AppConfig.settings.defaultEnvironmentId + '/domains/'
+
     platformBrowserDynamic().bootstrapModule(AppModule);
   });

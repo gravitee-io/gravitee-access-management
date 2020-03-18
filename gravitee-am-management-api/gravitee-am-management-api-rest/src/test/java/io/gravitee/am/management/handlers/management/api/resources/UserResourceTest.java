@@ -79,7 +79,7 @@ public class UserResourceTest extends JerseySpringTest {
         final String domainId = "domain-id";
         doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(domainService).findById(domainId);
 
-        final Response response = target("domains/" + domainId).request().get();
+        final Response response = target("domains").path(domainId).request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 

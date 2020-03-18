@@ -40,7 +40,7 @@ public class TagAuditBuilder extends ManagementAuditBuilder<TagAuditBuilder> {
 
         referenceId(tag.getOrganizationId());
 
-        setTarget(tag.getId(), EntityType.TAG, null, tag.getName(), null);
+        setTarget(tag.getId(), EntityType.TAG, null, tag.getName(), ReferenceType.ORGANIZATION, tag.getOrganizationId());
         return this;
     }
 }

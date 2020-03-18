@@ -20,7 +20,7 @@ import { Observable } from "rxjs";
 
 @Injectable()
 export class ScopeService {
-  private scopes = AppConfig.settings.baseURL + '/domains/';
+  private scopes = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient) { }
 

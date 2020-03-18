@@ -178,7 +178,7 @@ public class UserServiceTest {
         when(newUser.getUsername()).thenReturn("username");
         when(newUser.getSource()).thenReturn("source");
         when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
-        when(userRepository.findByDomainAndUsernameAndSource(DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = userService.create(DOMAIN, newUser).test();
@@ -196,7 +196,7 @@ public class UserServiceTest {
         NewUser newUser = Mockito.mock(NewUser.class);
         when(newUser.getUsername()).thenReturn("username");
         when(newUser.getSource()).thenReturn("source");
-        when(userRepository.findByDomainAndUsernameAndSource(DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
         when(userRepository.create(any(User.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
@@ -211,7 +211,7 @@ public class UserServiceTest {
         NewUser newUser = Mockito.mock(NewUser.class);
         when(newUser.getUsername()).thenReturn("username");
         when(newUser.getSource()).thenReturn("source");
-        when(userRepository.findByDomainAndUsernameAndSource(DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.just(new User()));
+        when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.just(new User()));
 
         TestObserver testObserver = new TestObserver();
         userService.create(DOMAIN, newUser).subscribe(testObserver);

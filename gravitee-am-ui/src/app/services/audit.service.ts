@@ -21,7 +21,7 @@ import * as moment from 'moment';
 
 @Injectable()
 export class AuditService {
-  private auditsURL = AppConfig.settings.baseURL + '/domains/';
+  private auditsURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
               private platformService: PlatformService) { }

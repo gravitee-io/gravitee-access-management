@@ -24,6 +24,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
@@ -68,6 +69,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
     private static final String FIELD_ID = "_id";
+    private static final String FIELD_REFERENCE_TYPE = "referenceType";
+    private static final String FIELD_REFERENCE_ID = "referenceId";
     private static final String FIELD_TIMESTAMP = "timestamp";
     private static final String FIELD_TYPE = "type";
     private static final String FIELD_STATUS = "outcome.status";
@@ -87,9 +90,9 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private Disposable disposable;
 
     @Override
-    public Single<Page<Audit>> search(AuditReportableCriteria criteria, int page, int size) {
+    public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
         // build query
-        Bson query = query(criteria);
+        Bson query = query(referenceType, referenceId, criteria);
 
         // run search query
         Single<Long> countOperation = Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l);
@@ -98,9 +101,9 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     }
 
     @Override
-    public Single<Map<Object, Object>> aggregate(AuditReportableCriteria criteria, Type analyticsType) {
+    public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, Type analyticsType) {
         // build query
-        Bson query = query(criteria);
+        Bson query = query(referenceType, referenceId, criteria);
         switch (analyticsType) {
             case DATE_HISTO:
                 return executeHistogram(criteria, query);
@@ -114,8 +117,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     }
 
     @Override
-    public Maybe<Audit> findById(String id) {
-        return Observable.fromPublisher(reportableCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+    public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
+        return Observable.fromPublisher(reportableCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -123,6 +126,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         bulkProcessor
                 .onNext((Audit) reportable);
     }
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -149,12 +153,12 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
             }
 
             // we wait until the bulk processor has stopped
-            while(bulkProcessor.hasSubscribers()) {
+            while (bulkProcessor.hasSubscribers()) {
                 logger.debug("The bulk processor is processing data, wait.");
             }
 
             mongoClient.close();
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             logger.error("Failed to close mongoDB client", ex);
         }
     }
@@ -206,13 +210,13 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
                         Aggregates.match(query),
                         Aggregates.group(new BasicDBObject("_id", "$" + criteria.field()), Accumulators.sum("count", 1)),
                         Aggregates.limit(criteria.size() != null ? criteria.size() : 50))
-                ))
+        ))
                 .toList()
                 .map(docs -> docs.stream().collect(Collectors.toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
     }
 
     private Single<Map<Object, Object>> executeCount(Bson query) {
-        return Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l).map(data ->  Collections.singletonMap("data", data));
+        return Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l).map(data -> Collections.singletonMap("data", data));
     }
 
     private Flowable bulk(List<Audit> audits) {
@@ -223,8 +227,10 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         return Flowable.fromPublisher(reportableCollection.bulkWrite(this.convert(audits)));
     }
 
-    private Bson query(AuditReportableCriteria criteria) {
+    private Bson query(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria) {
         List<Bson> filters = new ArrayList<>();
+
+        filters.add(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)));
 
         // event types
         if (criteria.types() != null && !criteria.types().isEmpty()) {
@@ -279,7 +285,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
             actorMongo.setAlternativeId(actor.getAlternativeId());
             actorMongo.setType(actor.getType());
             actorMongo.setDisplayName(actor.getDisplayName());
-            actorMongo.setDomain(actor.getDomain());
+            actorMongo.setReferenceType(actor.getReferenceType() != null ? actor.getReferenceType().name() : null);
+            actorMongo.setReferenceId(actor.getReferenceId());
             auditMongo.setActor(actorMongo);
         }
 
@@ -303,7 +310,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
             targetMongo.setType(target.getType());
             targetMongo.setAlternativeId(target.getAlternativeId());
             targetMongo.setDisplayName(target.getDisplayName());
-            targetMongo.setDomain(target.getDomain());
+            targetMongo.setReferenceType(target.getReferenceType() != null ? target.getReferenceType().name() : null);
+            targetMongo.setReferenceId(target.getReferenceId());
             auditMongo.setTarget(targetMongo);
         }
 
@@ -335,7 +343,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
             actor.setAlternativeId(actorMongo.getAlternativeId());
             actor.setType(actorMongo.getType());
             actor.setDisplayName(actorMongo.getDisplayName());
-            actor.setDomain(actorMongo.getDomain());
+            actor.setReferenceType(actorMongo.getReferenceType() != null ? ReferenceType.valueOf(actorMongo.getReferenceType()) : null);
+            actor.setReferenceId(actorMongo.getReferenceId());
             audit.setActor(actor);
         }
 
@@ -359,7 +368,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
             target.setType(targetMongo.getType());
             target.setAlternativeId(targetMongo.getAlternativeId());
             target.setDisplayName(targetMongo.getDisplayName());
-            target.setDomain(targetMongo.getDomain());
+            target.setReferenceType(targetMongo.getReferenceType() != null ? ReferenceType.valueOf(targetMongo.getReferenceType()) : null);
+            target.setReferenceId(targetMongo.getReferenceId());
             audit.setTarget(target);
         }
 
@@ -382,7 +392,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
 
         Map<Long, Long> intervals = new HashMap<>();
         intervals.put(startDate.toEpochMilli(), 0l);
-        while(startDate.isBefore(endDate)) {
+        while (startDate.isBefore(endDate)) {
             startDate = startDate.plus(criteria.interval(), ChronoUnit.MILLIS);
             intervals.put(startDate.toEpochMilli(), 0l);
         }

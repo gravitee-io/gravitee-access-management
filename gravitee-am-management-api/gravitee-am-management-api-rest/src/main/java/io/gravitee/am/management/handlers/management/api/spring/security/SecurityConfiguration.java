@@ -90,10 +90,10 @@ public class SecurityConfiguration {
         protected void configure(HttpSecurity http) throws Exception {
 
             http.requestMatchers()
-                .antMatchers("/auth/authorize", "/auth/login", "/auth/login/callback", "/auth/logout")
+                .antMatchers("/auth/authorize", "/auth/login", "/auth/login/callback", "/auth/logout", "/auth/assets/**")
                 .and()
             .authorizeRequests()
-                .antMatchers("/auth/login").permitAll()
+                .antMatchers("/auth/login", "/auth/assets/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
             .formLogin()
@@ -150,8 +150,9 @@ public class SecurityConfiguration {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
 
-            http
-                .antMatcher("/management/**")
+            http.requestMatchers()
+                    .antMatchers("/organizations/**", "/user", "/platform/**")
+                    .and()
                 .sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -172,7 +173,7 @@ public class SecurityConfiguration {
 
         @Override
         public void configure(WebSecurity web) {
-            web.ignoring().antMatchers("/management/swagger.json");
+            web.ignoring().antMatchers("/swagger.json");
         }
     }
 
@@ -232,7 +233,7 @@ public class SecurityConfiguration {
 
     @Bean
     public Filter jwtAuthenticationFilter() {
-        return new JWTAuthenticationFilter(new AntPathRequestMatcher("/management/**"));
+        return new JWTAuthenticationFilter(new AntPathRequestMatcher("/**"));
     }
 
     @Bean

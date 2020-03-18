@@ -20,7 +20,7 @@ import { Observable } from "rxjs";
 
 @Injectable()
 export class CertificateService {
-  private certificatesURL = AppConfig.settings.baseURL + '/domains/';
+  private certificatesURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient) { }
 

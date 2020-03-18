@@ -133,7 +133,8 @@
       <ngx-datatable-column name="Actor" [flexGrow]="2">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span *ngIf="isUnknownActor(row)">{{row.actor?.alternativeId}}</span>
-          <a *ngIf="!isUnknownActor(row)" [routerLink]="getActorUrl(row)">{{row.actor?.displayName}} | <small>{{row.actor?.alternativeId}}</small></a>
+          <a *ngIf="!isUnknownActor(row) && hasActorUrl(row)" [routerLink]="getActorUrl(row)">{{row.actor?.displayName}} | <small>{{row.actor?.alternativeId}}</small></a>
+          <span *ngIf="!isUnknownActor(row) && !hasActorUrl(row)">{{row.actor?.displayName}} | <small>{{row.actor?.alternativeId}}</small></span>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Target" [flexGrow]="2">

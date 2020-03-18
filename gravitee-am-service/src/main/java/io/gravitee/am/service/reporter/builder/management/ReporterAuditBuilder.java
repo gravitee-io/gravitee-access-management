@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 
 /**
@@ -34,7 +35,7 @@ public class ReporterAuditBuilder extends ManagementAuditBuilder<ReporterAuditBu
             setNewValue(reporter);
         }
         domain(reporter.getDomain());
-        setTarget(reporter.getId(), EntityType.REPORTER, null, reporter.getName(), reporter.getDomain());
+        setTarget(reporter.getId(), EntityType.REPORTER, null, reporter.getName(), ReferenceType.DOMAIN, reporter.getDomain());
         return this;
     }
 }

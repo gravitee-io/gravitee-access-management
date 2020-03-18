@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.Set;
@@ -26,6 +27,8 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface TagRepository extends CrudRepository<Tag, String> {
+
+    Maybe<Tag> findById(String id, String organizationId);
 
     Single<Set<Tag>> findAll(String organizationId);
 }

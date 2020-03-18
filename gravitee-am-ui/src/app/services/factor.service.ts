@@ -20,7 +20,7 @@ import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class FactorService {
-  private factorsURL = AppConfig.settings.baseURL + '/domains/';
+  private factorsURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient) { }
 

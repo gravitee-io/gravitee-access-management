@@ -38,7 +38,7 @@ public class OrganizationAuditBuilder extends ManagementAuditBuilder<Organizatio
         referenceType(ReferenceType.ORGANIZATION);
         referenceId(organization.getId());
 
-        setTarget(organization.getId(), EntityType.ORGANIZATION, null, organization.getName(), null);
+        setTarget(organization.getId(), EntityType.ORGANIZATION, null, organization.getName(), ReferenceType.ORGANIZATION, organization.getId());
         return this;
     }
 }

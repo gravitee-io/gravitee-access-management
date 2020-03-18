@@ -60,7 +60,9 @@ public class TagsResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(tags)).when(tagService).findAll(anyString());
 
-        final Response response = target("platform").path("tags").request().get();
+        final Response response = target("organizations")
+                .path("DEFAULT")
+                .path("tags").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final List<Tag> responseEntity = readEntity(response, List.class);
@@ -71,7 +73,9 @@ public class TagsResourceTest extends JerseySpringTest {
     public void shouldGetTags_technicalManagementException() {
         doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(tagService).findAll(anyString());
 
-        final Response response = target("platform").path("tags").request().get();
+        final Response response = target("organizations")
+                .path("DEFAULT")
+                .path("tags").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
@@ -86,7 +90,8 @@ public class TagsResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(tag)).when(tagService).create(any(), anyString(), any());
 
-        final Response response = target("platform")
+        final Response response = target("organizations")
+                .path("DEFAULT")
                 .path("tags")
                 .request().post(Entity.json(newTag));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.reporter.api.audit.model;
 
+import io.gravitee.am.model.ReferenceType;
+
 import java.util.Map;
 
 /**
@@ -46,9 +48,14 @@ public class AuditEntity {
     private String displayName;
 
     /**
-     * Security domain of the entity
+     * The reference type of the entity (ex : DOMAIN, ORGANIZATION).
      */
-    private String domain;
+    private ReferenceType referenceType;
+
+    /**
+     * The reference id of the entity (ex : domain identifier, organization identifier).
+     */
+    private String referenceId;
 
     private Map<String, Object> attributes;
 
@@ -84,12 +91,20 @@ public class AuditEntity {
         this.displayName = displayName;
     }
 
-    public String getDomain() {
-        return domain;
+    public ReferenceType getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public Map<String, Object> getAttributes() {

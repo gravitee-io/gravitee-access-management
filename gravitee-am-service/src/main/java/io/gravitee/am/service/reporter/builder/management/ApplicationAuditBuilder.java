@@ -18,6 +18,7 @@ package io.gravitee.am.service.reporter.builder.management;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.ReferenceType;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,7 +35,7 @@ public class ApplicationAuditBuilder extends ManagementAuditBuilder<ApplicationA
             setNewValue(application);
         }
         domain(application.getDomain());
-        setTarget(application.getId(), EntityType.APPLICATION, null, application.getName(), application.getDomain());
+        setTarget(application.getId(), EntityType.APPLICATION, null, application.getName(), ReferenceType.DOMAIN, application.getDomain());
         return this;
     }
 }

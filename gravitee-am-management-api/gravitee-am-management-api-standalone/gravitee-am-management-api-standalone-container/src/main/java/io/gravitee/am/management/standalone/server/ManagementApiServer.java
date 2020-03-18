@@ -40,7 +40,7 @@ import java.util.EnumSet;
  */
 public class ManagementApiServer extends JettyHttpServer {
 
-    @Value("${http.api.entrypoint:/}")
+    @Value("${http.api.entrypoint:/management}")
     private String entrypoint;
 
     @Autowired
@@ -53,7 +53,7 @@ public class ManagementApiServer extends JettyHttpServer {
     public void attachHandlers() {
 
         // Create the servlet context
-        final ServletContextHandler context = new ServletContextHandler(this.server, this.entrypoint, ServletContextHandler.SESSIONS);
+        final ServletContextHandler context = new ServletContextHandler(this.server, entrypoint, ServletContextHandler.SESSIONS);
 
         // REST configuration
         final ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
@@ -69,7 +69,7 @@ public class ManagementApiServer extends JettyHttpServer {
         webApplicationContext.register(ManagementConfiguration.class);
 
         context.addEventListener(new ContextLoaderListener(webApplicationContext));
-        context.addServlet(servletHolder, "/management/*");
+        context.addServlet(servletHolder, "/*");
         context.addServlet(new ServletHolder(new DispatcherServlet(webApplicationContext)), "/auth/*");
 
         // Spring Security filter

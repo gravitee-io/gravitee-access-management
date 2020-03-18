@@ -17,11 +17,8 @@ package io.gravitee.am.management.handlers.management.api;
 
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.handlers.management.api.provider.*;
-import io.gravitee.am.management.handlers.management.api.resources.CurrentUserResource;
-import io.gravitee.am.management.handlers.management.api.resources.DomainsResource;
-import io.gravitee.am.management.handlers.management.api.resources.EnvironmentsResource;
-import io.gravitee.am.management.handlers.management.api.resources.OrganizationsResource;
-import io.gravitee.am.management.handlers.management.api.resources.dashboard.DashboardResource;
+import io.gravitee.am.management.handlers.management.api.resources.organizations.OrganizationsResource;
+import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains.CurrentUserResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.PlatformResource;
 import io.gravitee.common.util.Version;
 import io.swagger.jaxrs.config.BeanConfig;
@@ -46,11 +43,7 @@ public class ManagementApplication extends ResourceConfig {
         beanConfig.setScan(true);
 
         register(OrganizationsResource.class);
-        register(EnvironmentsResource.class);
-
-        register(DomainsResource.class);
         register(PlatformResource.class);
-        register(DashboardResource.class);
         register(CurrentUserResource.class);
 
         register(ObjectMapperResolver.class);

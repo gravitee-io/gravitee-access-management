@@ -19,6 +19,24 @@
 				"type": "text/plain"
 			},
 			"enabled": true
+		},
+		{
+			"key": "defaultOrganizationId",
+			"value": "DEFAULT",
+			"description": {
+				"content": "",
+				"type": "text/plain"
+			},
+			"enabled": true
+		},
+		{
+			"key": "defaultEnvironmentId",
+			"value": "DEFAULT",
+			"description": {
+				"content": "",
+				"type": "text/plain"
+			},
+			"enabled": true
 		}
 	],
 	"_postman_variable_scope": "environment",

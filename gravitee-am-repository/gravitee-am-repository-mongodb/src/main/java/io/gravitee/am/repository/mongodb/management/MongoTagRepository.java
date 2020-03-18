@@ -30,6 +30,7 @@ import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 /**
@@ -40,11 +41,18 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoTagRepository extends AbstractManagementMongoRepository implements TagRepository {
 
     private static final String FIELD_ID = "_id";
+    private static final String FIELD_ORGANIZATION_ID = "organizationId";
     private MongoCollection<TagMongo> tagsCollection;
 
     @PostConstruct
     public void init() {
         tagsCollection = mongoOperations.getCollection("tags", TagMongo.class);
+    }
+
+
+    @Override
+    public Maybe<Tag> findById(String id, String organizationId) {
+        return Observable.fromPublisher(tagsCollection.find(and(eq(FIELD_ORGANIZATION_ID, organizationId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
     }
 
     @Override

@@ -19,6 +19,8 @@ import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 
 /**
@@ -36,12 +38,12 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
     public ManagementAuditBuilder() {
         super();
         client(ADMIN_CLIENT);
-        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, SYSTEM);
+        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
     }
 
     public T principal(User principal) {
         if (principal != null) {
-            setActor(principal.getId(), EntityType.USER, principal.getUsername(), getDisplayName(principal), getDomain(principal));
+            setActor(principal.getId(), EntityType.USER, principal.getUsername(), getDisplayName(principal), getReferenceType(principal), getReferenceId(principal));
             if (principal.getAdditionalInformation() != null) {
                 if (principal.getAdditionalInformation().containsKey(Claims.ip_address)) {
                     ipAddress((String) principal.getAdditionalInformation().get(Claims.ip_address));
@@ -58,16 +60,44 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
         final String displayName =
                 // display name
                 user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
-                                        (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
-                                        // default to username
-                                        user.getUsername();
+                        (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
+                        // default to username
+                        user.getUsername();
 
         return displayName;
     }
 
-    private String getDomain(User user) {
-        return
-                user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(Claims.domain) ?
-                        (String) user.getAdditionalInformation().get(Claims.domain) : null;
+
+    private ReferenceType getReferenceType(User user) {
+        if (user.getAdditionalInformation() == null) {
+            return null;
+        }
+
+        if (user.getAdditionalInformation().containsKey(Claims.domain)) {
+            return ReferenceType.DOMAIN;
+        }
+
+        if (user.getAdditionalInformation().containsKey(Claims.organization)) {
+            return ReferenceType.ORGANIZATION;
+        }
+
+        return null;
+    }
+
+    private String getReferenceId(User user) {
+
+        if (user.getAdditionalInformation() == null) {
+            return null;
+        }
+
+        if (user.getAdditionalInformation().containsKey(Claims.domain)) {
+            return (String) user.getAdditionalInformation().get(Claims.domain);
+        }
+
+        if (user.getAdditionalInformation().containsKey(Claims.organization)) {
+            return (String) user.getAdditionalInformation().get(Claims.organization);
+        }
+
+        return null;
     }
 }

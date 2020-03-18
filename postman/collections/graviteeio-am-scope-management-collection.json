@@ -1,1220 +1,1301 @@
 {
-	"info": {
-		"_postman_id": "a7d027e7-140b-4ffc-8401-339d4a4091e2",
-		"name": "Gravitee.io - AM - Scope Management",
-		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Prepare",
-			"item": [
-				{
-					"name": "Generate admin token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "571e9b59-b9e7-452c-9469-9786ded290a6",
-								"exec": [
-									"",
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"var token = JSON.parse(responseBody);",
-									"pm.environment.set('token', token.access_token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
-							}
-						],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "grant_type",
-									"value": "password",
-									"type": "text"
-								},
-								{
-									"key": "username",
-									"value": "admin",
-									"type": "text"
-								},
-								{
-									"key": "password",
-									"value": "adminadmin",
-									"type": "text"
-								}
-							]
-						},
-						"url": {
-							"raw": "{{management_url}}/auth/token",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"auth",
-								"token"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create scope domain",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
-								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"var jsonData = pm.response.json();",
-									"pm.environment.set('domain', jsonData.id);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"name\": \"scope\", \n\t\"description\": \"test scope management\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Start domain",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"// wait for sync process",
-									"setTimeout(function(){}, 10000);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"enabled\": true\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}"
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"protocolProfileBehavior": {}
-		},
-		{
-			"name": "Invalid Case",
-			"item": [
-				{
-					"name": "Create - Missing property",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 400\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.message).to.eql('[description: must not be null]');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"key\": \"admin\",\n  \"name\": \"admin\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create already existing scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 400\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.message).to.contains('A scope [email] already exists for domain');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"key\": \"email\",\n  \"name\": \"should not be created\",\n  \"description\": \"should not be created\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update non existing scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 404\", function () {",
-									"    pm.response.to.have.status(404);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"    pm.expect(body.message).to.contains('can not be found');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"shouldNotBeUpdated\",\n  \"description\": \"shouldNotBeUpdated\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/nonExistingScope",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"nonExistingScope"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update - Missing name property",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 400\", function () {",
-									"    pm.response.to.have.status(400);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"    pm.expect(body.message).to.eql('[name: must not be null]');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"discovery\": true,\n  \"description\": \"wallet information updated\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/nonExistingScope",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"nonExistingScope"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete non existing scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 404\", function () {",
-									"    pm.response.to.have.status(404);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"    pm.expect(body.message).to.contains('can not be found');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"shouldNotBeUpdated\",\n  \"description\": \"shouldNotBeUpdated\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/nonExistingScope",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"nonExistingScope"
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"protocolProfileBehavior": {}
-		},
-		{
-			"name": "Nominal Case",
-			"item": [
-				{
-					"name": "Get scopes",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body[0].key).to.eql('address');",
-									"    pm.expect(body[0].system).to.eql(true);",
-									"    ",
-									"    pm.environment.set('addressScopeId', body[0].id);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.key).to.eql('admin');",
-									"    pm.expect(body.discovery).to.eql(false);",
-									"    ",
-									"    pm.environment.set('adminScopeId', body.id);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"key\": \"admin\",\n  \"name\": \"admin\",\n  \"description\": \"admin non public scope\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.discovery).to.eql(false);",
-									"    pm.expect(body.name).to.eql('admin');",
-									"    pm.expect(body.description).to.eql('admin non public scope');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/{{adminScopeId}}",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"{{adminScopeId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Patch scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.discovery).to.eql(true);",
-									"    pm.expect(body.name).to.eql('admin name patched');",
-									"    pm.expect(body.description).to.eql('admin information patched');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"discovery\": true,\n  \"name\": \"admin name patched\",\n  \"description\": \"admin information patched\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/{{adminScopeId}}",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"{{adminScopeId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.discovery).to.eql(true);//should not be overrided when missing in the body",
-									"    pm.expect(body.name).to.eql('admin name updated');",
-									"    pm.expect(body.description).to.eql('admin information updated');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"admin name updated\",\n  \"description\": \"admin information updated\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/{{adminScopeId}}",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"{{adminScopeId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 204\", function () {",
-									"    pm.response.to.have.status(204);",
-									"});",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"discovery\": true,\n  \"description\": \"wallet information updated\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/{{adminScopeId}}",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"{{adminScopeId}}"
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"protocolProfileBehavior": {}
-		},
-		{
-			"name": "System scope",
-			"item": [
-				{
-					"name": "System scope discovery",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.discovery).to.eql(true);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"discovery\": false,\n  \"description\": \"Discovery should stay to true\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/{{addressScopeId}}",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"{{addressScopeId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "System scope discovery",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.discovery).to.eql(true);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"discovery\": false,\n  \"name\": \"Address\",\n  \"description\": \"Discovery should stay to true\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/{{addressScopeId}}",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"{{addressScopeId}}"
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"protocolProfileBehavior": {}
-		},
-		{
-			"name": "Scope Discovery",
-			"item": [
-				{
-					"name": "Create admin scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.key).to.eql('admin');",
-									"    pm.expect(body.discovery).to.eql(false);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"key\": \"admin\",\n  \"name\": \"admin\",\n  \"description\": \"admin non public scope\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create body scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.key).to.eql('body');",
-									"    pm.expect(body.discovery).to.eql(true);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"key\": \"body\",\n  \"name\": \"body\",\n  \"description\": \"body information\",\n  \"discovery\": true\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create wallet scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.key).to.eql('wallet');",
-									"    pm.expect(body.discovery).to.eql(false);",
-									"    ",
-									"    pm.environment.set('walletScopeId', body.id);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"key\": \"wallet\",\n  \"name\": \"wallet\",\n  \"description\": \"wallet information\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Patch wallet scope",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check scope properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"",
-									"    pm.expect(body.discovery).to.eql(true);",
-									"    pm.expect(body.name).to.eql('wallet');",
-									"    pm.expect(body.description).to.eql('wallet information updated');",
-									"});",
-									"",
-									"// wait for sync process",
-									"setTimeout(function(){}, 6000);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"discovery\": true,\n  \"description\": \"wallet information updated\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}/scopes/{{walletScopeId}}",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}",
-								"scopes",
-								"{{walletScopeId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "well-known/openid-configuration",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check scope discovery properties\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"    pm.expect(body.scopes_supported).to.eql([ 'address','body','email','groups','offline_access','openid','phone','profile','roles','wallet']);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
-							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domain}}",
-								"oidc",
-								".well-known",
-								"openid-configuration"
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"protocolProfileBehavior": {}
-		},
-		{
-			"name": "Delete domain",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
-						"exec": [
-							"pm.test(\"Status code is 204\", function () {",
-							"    pm.response.to.have.status(204);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Authorization",
-						"value": "Bearer {{token}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "{{management_url}}/management/domains/{{domain}}",
-					"host": [
-						"{{management_url}}"
-					],
-					"path": [
-						"management",
-						"domains",
-						"{{domain}}"
-					]
-				}
-			},
-			"response": []
-		}
-	],
-	"protocolProfileBehavior": {}
+  "info": {
+    "_postman_id": "a7d027e7-140b-4ffc-8401-339d4a4091e2",
+    "name": "Gravitee.io - AM - Scope Management",
+    "description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Prepare",
+      "item": [
+        {
+          "name": "Generate admin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "571e9b59-b9e7-452c-9469-9786ded290a6",
+                "exec": [
+                  "",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var token = JSON.parse(responseBody);",
+                  "pm.environment.set('token', token.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "adminadmin",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{management_url}}/management/auth/token",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "auth",
+                "token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create scope domain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('domain', jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"name\": \"scope\", \n\t\"description\": \"test scope management\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start domain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// wait for sync process",
+                  "setTimeout(function(){}, 10000);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "protocolProfileBehavior": {}
+    },
+    {
+      "name": "Invalid Case",
+      "item": [
+        {
+          "name": "Create - Missing property",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.message).to.eql('[description: must not be null]');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"admin\",\n  \"name\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create already existing scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.message).to.contains('A scope [email] already exists for domain');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"email\",\n  \"name\": \"should not be created\",\n  \"description\": \"should not be created\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update non existing scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "    pm.expect(body.message).to.contains('can not be found');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"shouldNotBeUpdated\",\n  \"description\": \"shouldNotBeUpdated\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/nonExistingScope",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "nonExistingScope"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update - Missing name property",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "    pm.expect(body.message).to.eql('[name: must not be null]');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discovery\": true,\n  \"description\": \"wallet information updated\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/nonExistingScope",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "nonExistingScope"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete non existing scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "    pm.expect(body.message).to.contains('can not be found');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"shouldNotBeUpdated\",\n  \"description\": \"shouldNotBeUpdated\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/nonExistingScope",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "nonExistingScope"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "protocolProfileBehavior": {}
+    },
+    {
+      "name": "Nominal Case",
+      "item": [
+        {
+          "name": "Get scopes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body[0].key).to.eql('address');",
+                  "    pm.expect(body[0].system).to.eql(true);",
+                  "    ",
+                  "    pm.environment.set('addressScopeId', body[0].id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.key).to.eql('admin');",
+                  "    pm.expect(body.discovery).to.eql(false);",
+                  "    ",
+                  "    pm.environment.set('adminScopeId', body.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"admin\",\n  \"name\": \"admin\",\n  \"description\": \"admin non public scope\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.discovery).to.eql(false);",
+                  "    pm.expect(body.name).to.eql('admin');",
+                  "    pm.expect(body.description).to.eql('admin non public scope');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/{{adminScopeId}}",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "{{adminScopeId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patch scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.discovery).to.eql(true);",
+                  "    pm.expect(body.name).to.eql('admin name patched');",
+                  "    pm.expect(body.description).to.eql('admin information patched');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discovery\": true,\n  \"name\": \"admin name patched\",\n  \"description\": \"admin information patched\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/{{adminScopeId}}",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "{{adminScopeId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.discovery).to.eql(true);//should not be overrided when missing in the body",
+                  "    pm.expect(body.name).to.eql('admin name updated');",
+                  "    pm.expect(body.description).to.eql('admin information updated');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"admin name updated\",\n  \"description\": \"admin information updated\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/{{adminScopeId}}",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "{{adminScopeId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discovery\": true,\n  \"description\": \"wallet information updated\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/{{adminScopeId}}",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "{{adminScopeId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "protocolProfileBehavior": {}
+    },
+    {
+      "name": "System scope",
+      "item": [
+        {
+          "name": "System scope discovery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.discovery).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discovery\": false,\n  \"description\": \"Discovery should stay to true\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/{{addressScopeId}}",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "{{addressScopeId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "System scope discovery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.discovery).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discovery\": false,\n  \"name\": \"Address\",\n  \"description\": \"Discovery should stay to true\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/{{addressScopeId}}",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "{{addressScopeId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "protocolProfileBehavior": {}
+    },
+    {
+      "name": "Scope Discovery",
+      "item": [
+        {
+          "name": "Create admin scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.key).to.eql('admin');",
+                  "    pm.expect(body.discovery).to.eql(false);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"admin\",\n  \"name\": \"admin\",\n  \"description\": \"admin non public scope\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create body scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.key).to.eql('body');",
+                  "    pm.expect(body.discovery).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"body\",\n  \"name\": \"body\",\n  \"description\": \"body information\",\n  \"discovery\": true\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create wallet scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.key).to.eql('wallet');",
+                  "    pm.expect(body.discovery).to.eql(false);",
+                  "    ",
+                  "    pm.environment.set('walletScopeId', body.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"wallet\",\n  \"name\": \"wallet\",\n  \"description\": \"wallet information\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patch wallet scope",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a9d1a08f-42e1-48a8-a551-aeda99bc04e1",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "",
+                  "    pm.expect(body.discovery).to.eql(true);",
+                  "    pm.expect(body.name).to.eql('wallet');",
+                  "    pm.expect(body.description).to.eql('wallet information updated');",
+                  "});",
+                  "",
+                  "// wait for sync process",
+                  "setTimeout(function(){}, 6000);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discovery\": true,\n  \"description\": \"wallet information updated\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/scopes/{{walletScopeId}}",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}",
+                "scopes",
+                "{{walletScopeId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "well-known/openid-configuration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check scope discovery properties\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "    pm.expect(body.scopes_supported).to.eql([ 'address','body','email','groups','offline_access','openid','phone','profile','roles','wallet']);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "{{domain}}",
+                "oidc",
+                ".well-known",
+                "openid-configuration"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "protocolProfileBehavior": {}
+    },
+    {
+      "name": "Delete domain",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+          "host": [
+            "{{management_url}}"
+          ],
+          "path": [
+            "management",
+            "organizations",
+            "{{defaultOrganizationId}}",
+            "environments",
+            "{{defaultEnvironmentId}}",
+            "domains",
+            "{{domain}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "protocolProfileBehavior": {}
 }

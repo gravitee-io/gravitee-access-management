@@ -22,7 +22,7 @@ import {AuthService} from "./auth.service";
 
 @Injectable()
 export class DomainService {
-  private domainsURL: string = AppConfig.settings.baseURL + '/domains/';
+  private domainsURL: string = AppConfig.settings.domainBaseURL;
   private domainUpdatedSource = new Subject<any>();
   domainUpdated$ = this.domainUpdatedSource.asObservable();
 

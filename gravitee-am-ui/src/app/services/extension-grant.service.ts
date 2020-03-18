@@ -20,7 +20,7 @@ import { Observable } from "rxjs";
 
 @Injectable()
 export class ExtensionGrantService {
-  private extensionGrantsUrl = AppConfig.settings.baseURL + '/domains/';
+  private extensionGrantsUrl = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient) { }
 

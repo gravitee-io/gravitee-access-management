@@ -51,7 +51,7 @@
             </div>
             <div class="role-information" fxLayout="column">
               <div fxLayout="row">
-                <a [routerLink]="[row.id]">{{row.name}}</a>
+                <a [routerLink]="[row.id]" [queryParams]="{system:row.system}">{{row.name}}</a>
                 <mat-chip-list *ngIf="row.system"><mat-chip>system</mat-chip></mat-chip-list>
               </div>
               <small>{{row.description}}</small>

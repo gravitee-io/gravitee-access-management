@@ -20,7 +20,7 @@ import { Observable } from "rxjs";
 
 @Injectable()
 export class EmailService {
-  private emailsUrl = AppConfig.settings.baseURL + '/domains/';
+  private emailsUrl = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient) { }
 

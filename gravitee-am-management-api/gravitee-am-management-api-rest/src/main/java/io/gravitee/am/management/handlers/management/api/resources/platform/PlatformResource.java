@@ -15,16 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform;
 
-import io.gravitee.am.management.handlers.management.api.resources.platform.audits.AuditsResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.forms.FormsResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.groups.GroupsResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.idps.IdentityProvidersResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.PluginsResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.roles.RolesResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.search.SearchResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.settings.SettingsResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.tags.TagsResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.users.UsersResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.roles.SystemRoleResource;
 import io.swagger.annotations.Api;
 
 import javax.ws.rs.Path;
@@ -48,48 +40,8 @@ public class PlatformResource {
         return resourceContext.getResource(PluginsResource.class);
     }
 
-    @Path("audits")
-    public AuditsResource getAuditsResource() {
-        return resourceContext.getResource(AuditsResource.class);
-    }
-
-    @Path("tags")
-    public TagsResource getTagsResource() {
-        return resourceContext.getResource(TagsResource.class);
-    }
-
     @Path("roles")
-    public RolesResource getRolesResource() {
-        return resourceContext.getResource(RolesResource.class);
-    }
-
-    @Path("groups")
-    public GroupsResource getGroupsResource() {
-        return resourceContext.getResource(GroupsResource.class);
-    }
-
-    @Path("identities")
-    public IdentityProvidersResource getIdentityProvidersResource() {
-        return resourceContext.getResource(IdentityProvidersResource.class);
-    }
-
-    @Path("users")
-    public UsersResource getUsersResource() {
-        return resourceContext.getResource(UsersResource.class);
-    }
-
-    @Path("settings")
-    public SettingsResource getSettingsResource() {
-        return resourceContext.getResource(SettingsResource.class);
-    }
-
-    @Path("forms")
-    public FormsResource getFormsResource() {
-        return resourceContext.getResource(FormsResource.class);
-    }
-
-    @Path("search")
-    public SearchResource getSearchResource() {
-        return resourceContext.getResource(SearchResource.class);
+    public SystemRoleResource getSystemRoleResource() {
+        return resourceContext.getResource(SystemRoleResource.class);
     }
 }
