@@ -52,7 +52,7 @@ echo "========================================================================="
 echo ""
 
 rem Execute the JVM in the foreground
-%JAVA% %JAVA_OPTS% -cp %GRAVITEE_BOOT_CLASSPATH% -Dgravitee.home=%GRAVITEE_HOME% io.gravitee.am.management.standalone.boostrap.Bootstrap "%*"
+%JAVA% %JAVA_OPTS% -cp %GRAVITEE_BOOT_CLASSPATH% -Dgravitee.home=%GRAVITEE_HOME% io.gravitee.am.management.standalone.bootstrap.Bootstrap "%*"
 
 set GRAVITEE_STATUS=%?
 goto endbatch
@@ -63,8 +63,8 @@ echo.
 echo **************************************************
 echo *
 echo * WARNING ...
-echo * JAVA_HOME must be set before starting Gravitee 
-echo * Please check Java documentation to do it 
+echo * JAVA_HOME must be set before starting Gravitee
+echo * Please check Java documentation to do it
 echo *
 echo **************************************************
 GOTO endbatch
