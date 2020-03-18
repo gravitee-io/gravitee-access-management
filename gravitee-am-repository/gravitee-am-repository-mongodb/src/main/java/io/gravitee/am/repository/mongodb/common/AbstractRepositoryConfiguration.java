@@ -25,9 +25,5 @@ import org.springframework.core.env.Environment;
 public abstract class AbstractRepositoryConfiguration {
 
     @Autowired
-    private Environment environment;
-
-    protected String getDatabaseName() {
-        return environment.getProperty("oauth2.mongodb.dbname", "gravitee-am");
-    }
+    protected Environment environment;
 }
