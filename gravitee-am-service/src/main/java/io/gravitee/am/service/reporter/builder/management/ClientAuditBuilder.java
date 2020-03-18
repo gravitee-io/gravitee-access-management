@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 
 /**
@@ -34,7 +35,7 @@ public class ClientAuditBuilder extends ManagementAuditBuilder<ClientAuditBuilde
             setNewValue(client);
         }
         domain(client.getDomain());
-        setTarget(client.getId(), EntityType.CLIENT, client.getClientId(), client.getClientName(), client.getDomain());
+        setTarget(client.getId(), EntityType.CLIENT, client.getClientId(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
         return this;
     }
 }

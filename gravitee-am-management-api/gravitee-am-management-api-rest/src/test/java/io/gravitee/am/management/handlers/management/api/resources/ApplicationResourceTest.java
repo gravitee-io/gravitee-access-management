@@ -93,16 +93,16 @@ public class ApplicationResourceTest extends JerseySpringTest {
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
 
-        final String clientId = "client-id";
+        final String applicationId = "application-id";
         final Application mockClient = new Application();
-        mockClient.setId(clientId);
+        mockClient.setId(applicationId);
         mockClient.setName("client-name");
         mockClient.setDomain("wrong-domain");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockClient)).when(applicationService).findById(clientId);
+        doReturn(Maybe.just(mockClient)).when(applicationService).findById(applicationId);
 
-        final Response response = target("domains").path(domainId).path("applications").path(clientId).request().get();
+        final Response response = target("domains").path(domainId).path("applications").path(applicationId).request().get();
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 

@@ -16,6 +16,7 @@
 package io.gravitee.am.service.reporter.vertx;
 
 import io.gravitee.am.common.analytics.Type;
+import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.Reportable;
@@ -52,7 +53,7 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     }
 
     public EventBusReporterWrapper(Vertx vertx, Reporter reporter) {
-        this(vertx, null, null, reporter);
+        this(vertx, ReferenceType.PLATFORM, Platform.DEFAULT, reporter);
     }
 
     private EventBusReporterWrapper(Vertx vertx, ReferenceType referenceType, String referenceId, Reporter reporter) {
@@ -66,29 +67,34 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     public void handle(Message<Reportable> reportableMsg) {
         Reportable reportable = reportableMsg.body();
 
-        if (reportable.getReferenceType() == ReferenceType.DOMAIN) {
-            if (referenceType == ReferenceType.DOMAIN
-                    && referenceId.equals(reportable.getReferenceId()) && reporter.canHandle(reportable)) {
-                reporter.report(reportable);
-            }
-        } else if (referenceType == null) {
+        if (canHandle(reportable)) {
             reporter.report(reportable);
         }
     }
 
-    @Override
-    public Single<Page> search(ReportableCriteria criteria, int page, int size) {
-        return reporter.search(criteria, page, size);
+    private boolean canHandle(Reportable reportable) {
+
+        if (reportable.getReferenceType() == ReferenceType.DOMAIN) {
+            return referenceType == ReferenceType.DOMAIN
+                    && referenceId.equals(reportable.getReferenceId()) && reporter.canHandle(reportable);
+        }
+
+        return referenceType == ReferenceType.PLATFORM;
     }
 
     @Override
-    public Single<Map<Object, Object>> aggregate(ReportableCriteria criteria, Type analyticsType) {
-        return reporter.aggregate(criteria, analyticsType);
+    public Single<Page> search(ReferenceType referenceType, String referenceId, ReportableCriteria criteria, int page, int size) {
+        return reporter.search(referenceType, referenceId, criteria, page, size);
     }
 
     @Override
-    public Maybe findById(String id) {
-        return reporter.findById(id);
+    public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId, ReportableCriteria criteria, Type analyticsType) {
+        return reporter.aggregate(referenceType, referenceId, criteria, analyticsType);
+    }
+
+    @Override
+    public Maybe findById(ReferenceType referenceType, String referenceId, String id) {
+        return reporter.findById(referenceType, referenceId, id);
     }
 
     @Override

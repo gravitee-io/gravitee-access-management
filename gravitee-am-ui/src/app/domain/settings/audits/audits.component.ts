@@ -129,50 +129,57 @@ export class AuditsComponent implements OnInit {
     return row.outcome.status === 'FAILURE' && row.type === 'USER_LOGIN';
   }
 
+  hasActorUrl(row) {
+    return this.getActorUrl(row).length > 0;
+  }
+
   getActorUrl(row) {
     let routerLink = [];
 
-    if (AppConfig.settings.authentication.domainId === row.actor.domain || AppConfig.settings.authentication.domainId === row.accessPoint.id) {
+    if ('organization' === row.actor.referenceType) {
       routerLink.push('/settings');
       routerLink.push('management');
-    } else {
+    } else if ('domain' === row.actor.referenceType) {
       routerLink.push('/domains');
-      routerLink.push(row.actor.domain ? row.actor.domain : row.domain);
+      routerLink.push(row.actor.referenceId ? row.actor.referenceId : row.referenceId);
       routerLink.push('settings');
     }
 
-    routerLink.push('users');
-    routerLink.push(row.actor.id);
+    if(routerLink.length > 0) {
+      routerLink.push('users');
+      routerLink.push(row.actor.id);
+    }
 
     return routerLink;
   }
 
   getTargetUrl(row) {
     let routerLink = [];
-    if (AppConfig.settings.authentication.domainId === row.target.domain) {
+    if ('organization' === row.target.referenceType) {
       routerLink.push('/settings');
       routerLink.push('management');
     } else {
       routerLink.push('/domains');
-      routerLink.push(row.target.domain);
+      routerLink.push(row.target.referenceId);
       if (row.target.type !== 'CLIENT' && row.target.type !== 'APPLICATION') {
         routerLink.push('settings');
       }
-    }
-    if (row.target.type !== 'DOMAIN') {
-      if (row.target.type !== 'IDENTITY_PROVIDER') {
-        if (row.target.type === 'CLIENT') {
-          routerLink.push('applications');
+
+      if (row.target.type !== 'DOMAIN') {
+        if (row.target.type !== 'IDENTITY_PROVIDER') {
+          if (row.target.type === 'CLIENT') {
+            routerLink.push('applications');
+          } else {
+            routerLink.push(row.target.type.toLowerCase() + 's');
+          }
         } else {
-          routerLink.push(row.target.type.toLowerCase() + 's');
+          routerLink.push('providers');
         }
-      } else {
-        routerLink.push('providers');
-      }
-      if (row.target.type === 'FORM' || row.target.type === 'EMAIL') {
-        routerLink.push(row.target.type.toLowerCase());
-      } else {
-        routerLink.push(row.target.id);
+        if (row.target.type === 'FORM' || row.target.type === 'EMAIL') {
+          routerLink.push(row.target.type.toLowerCase());
+        } else {
+          routerLink.push(row.target.id);
+        }
       }
     }
     return routerLink;

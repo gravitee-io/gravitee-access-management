@@ -31,13 +31,13 @@ import java.util.Set;
  */
 public interface TagService {
 
-    Maybe<Tag> findById(String id);
+    Maybe<Tag> findById(String id, String organizationId);
 
     Single<Set<Tag>> findAll(String organizationId);
 
     Single<Tag> create(NewTag tag, String organizationId, User principal);
 
-    Single<Tag> update(String tagId, UpdateTag tag, User principal);
+    Single<Tag> update(String tagId, String organizationId, UpdateTag tag, User principal);
 
-    Completable delete(String tagId, User principal);
+    Completable delete(String tagId, String organizationId, User principal);
 }

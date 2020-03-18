@@ -60,6 +60,6 @@ public class DefaultEnvironmentUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return HIGHEST_PRECEDENCE;
+        return 2;
     }
 }

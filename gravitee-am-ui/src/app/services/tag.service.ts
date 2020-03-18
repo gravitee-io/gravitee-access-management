@@ -20,7 +20,7 @@ import {Observable} from "rxjs";
 
 @Injectable()
 export class TagService {
-  private tagsURL = AppConfig.settings.baseURL + '/platform/tags/';
+  private tagsURL = AppConfig.settings.organizationBaseURL + '/tags/';
 
   constructor(private http: HttpClient) { }
 

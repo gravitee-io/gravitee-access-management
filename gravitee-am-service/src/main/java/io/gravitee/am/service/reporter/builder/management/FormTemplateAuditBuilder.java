@@ -38,8 +38,7 @@ public class FormTemplateAuditBuilder extends ManagementAuditBuilder<FormTemplat
         referenceType(form.getReferenceType());
         referenceId(form.getReferenceId());
 
-        setTarget(form.getId(), EntityType.FORM, null, form.getTemplate(),
-                form.getReferenceType() == ReferenceType.DOMAIN ? form.getReferenceId() : null);
+        setTarget(form.getId(), EntityType.FORM, null, form.getTemplate(), form.getReferenceType(), form.getReferenceId());
         return this;
     }
 }

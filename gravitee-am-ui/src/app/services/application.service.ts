@@ -22,7 +22,7 @@ import {map} from "rxjs/operators";
 
 @Injectable()
 export class ApplicationService {
-  private appsURL = AppConfig.settings.baseURL + '/domains/';
+  private appsURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient, private authService: AuthService) { }
 

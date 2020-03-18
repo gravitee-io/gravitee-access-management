@@ -38,7 +38,7 @@ public class EmailTemplateAuditBuilder extends ManagementAuditBuilder<EmailTempl
         referenceType(email.getReferenceType());
         referenceId(email.getReferenceId());
 
-        setTarget(email.getId(), EntityType.EMAIL, null, email.getTemplate(), email.getReferenceType() == ReferenceType.DOMAIN ? email.getReferenceId() : null);
+        setTarget(email.getId(), EntityType.EMAIL, null, email.getTemplate(), email.getReferenceType(), email.getReferenceId());
         return this;
     }
 }

@@ -29,7 +29,8 @@ public class AuditEntityMongo {
     private String alternativeId;
     private String type;
     private String displayName;
-    private String domain;
+    private String referenceType;
+    private String referenceId;
     private Document attributes;
 
     public String getId() {
@@ -64,12 +65,20 @@ public class AuditEntityMongo {
         this.displayName = displayName;
     }
 
-    public String getDomain() {
-        return domain;
+    public String getReferenceType() {
+        return referenceType;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setReferenceType(String referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public Document getAttributes() {

@@ -20,7 +20,7 @@ import { Observable } from "rxjs";
 
 @Injectable()
 export class RoleService {
-  private rolesURL = AppConfig.settings.baseURL + '/domains/';
+  private rolesURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient) { }
 

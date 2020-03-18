@@ -15,7 +15,7 @@
  */
 import {Component, ViewChild} from '@angular/core';
 import {MatStepper} from '@angular/material';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {CertificateService} from '../../../../services/certificate.service';
 import {SnackbarService} from '../../../../services/snackbar.service';
 
@@ -32,7 +32,12 @@ export class CertificateCreationComponent {
 
   constructor(private certificateService: CertificateService,
               private snackbarService: SnackbarService,
-              private router: Router) { }
+              private router: Router,
+              private route: ActivatedRoute) { }
+
+  ngOnInit() {
+    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+  }
 
   create() {
     this.certificate.configuration = JSON.stringify(this.certificate.configuration);

@@ -28,6 +28,9 @@ export class RoleResolver implements Resolve<any> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     const roleId = route.paramMap.get('roleId');
     if (state.url.startsWith('/settings')) {
+      if(route.queryParams['system'] === "true"){
+        return this.platformService.systemRole(roleId);
+      }
       return this.platformService.role(roleId);
     }
 

@@ -41,15 +41,10 @@ public class SyncManager {
     private final Logger logger = LoggerFactory.getLogger(SyncManager.class);
 
     @Autowired
-    private OrganizationService organizationService;
-
-    @Autowired
     private EventService eventService;
 
     @Autowired
     private EventManager eventManager;
-
-    private Organization deployedDefaultOrganization;
 
     private long lastRefreshAt = System.currentTimeMillis();
 
@@ -59,36 +54,13 @@ public class SyncManager {
         logger.debug("Refreshing sync state...");
 
         try {
-            if (deployedDefaultOrganization == null) {
-                logger.debug("Initial synchronization");
-                deployOrganizations();
-            }
-
             processEvents();
         } catch (Exception ex) {
             logger.error("An error occurs while synchronizing organizations", ex);
         }
     }
 
-    private void deployOrganizations() {
-        // For now only default organization is used.
-        try {
-            deployedDefaultOrganization = organizationService.findById(Organization.DEFAULT).blockingGet();
-            if (deployedDefaultOrganization != null) {
-                eventManager.publishEvent(DomainEvent.DEPLOY, deployedDefaultOrganization);
-            }
-        } catch (OrganizationNotFoundException onfe) {
-            // There is no DEFAULT organization yet. Just wait the next try.
-        }
-    }
-
-
     private void processEvents() {
-
-        if (deployedDefaultOrganization == null) {
-            // Default organization not yet deployed, skip processing events for now.
-            return;
-        }
 
         long nextLastRefreshAt = System.currentTimeMillis();
 

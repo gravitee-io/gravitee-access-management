@@ -1,2668 +1,2693 @@
 {
-	"info": {
-		"_postman_id": "081ae40f-b857-49d3-95e0-27266818b744",
-		"name": "Gravitee.io - AM - SCIM",
-		"description": "Test System for Cross-domain Identity Management\nSCIM 2.0 is released as RFC7642, RFC7643 and RFC7644",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Prepare",
-			"item": [
-				{
-					"name": "Generate admin token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "571e9b59-b9e7-452c-9469-9786ded290a6",
-								"exec": [
-									"",
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"var token = JSON.parse(responseBody);",
-									"pm.environment.set('token', token.access_token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
-							}
-						],
-						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "grant_type",
-									"value": "password",
-									"type": "text"
-								},
-								{
-									"key": "username",
-									"value": "admin",
-									"type": "text"
-								},
-								{
-									"key": "password",
-									"value": "adminadmin",
-									"type": "text"
-								}
-							]
-						},
-						"url": {
-							"raw": "{{management_url}}/auth/token",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"auth",
-								"token"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create scim domain",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
-								"exec": [
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"var jsonData = pm.response.json();",
-									"pm.environment.set('domain', jsonData.id);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"name\": \"scim-domain\", \n\t\"description\": \"test System for Cross-domain Identity Management specifications\"\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Start domain",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
-								"exec": [
-									"// wait for sync process",
-									"setTimeout(function(){}, 10000);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"enabled\": true\n}"
-						},
-						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}",
-							"host": [
-								"{{management_url}}"
-							],
-							"path": [
-								"management",
-								"domains",
-								"{{domain}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "well-known/openid-configuration",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Check discovery endpoints\", function () {",
-									"    pm.response.to.be.header('Content-Type', 'application/json');",
-									"    var body = pm.response.json();",
-									"    ",
-									"    pm.expect(body).to.have.property(\"token_endpoint\");",
-									"    pm.environment.set('tokenEndpoint', body.token_endpoint);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
-							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domain}}",
-								"oidc",
-								".well-known",
-								"openid-configuration"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "SCIM",
-			"item": [
-				{
-					"name": "Case - non SCIM domain",
-					"item": [
-						{
-							"name": "Fetch Service Provider Configuration",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 404\", function () {",
-											"    pm.response.to.have.status(404);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/ServiceProviderConfig",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"ServiceProviderConfig"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Fetch Users endpoint",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 404\", function () {",
-											"    pm.response.to.have.status(404);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Users"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Fetch Groups endpoint",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 404\", function () {",
-											"    pm.response.to.have.status(404);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Groups"
-									]
-								}
-							},
-							"response": []
-						}
-					],
-					"_postman_isSubFolder": true
-				},
-				{
-					"name": "Configure domain",
-					"item": [
-						{
-							"name": "Configure SCIM",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "286df3a2-0e06-4b00-9614-3b0fd9ceecb9",
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"SCIM enabled for domain\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.scim.enabled).to.eql(true);",
-											"});",
-											"",
-											"// wait for sync process",
-											"setTimeout(function(){}, 10000);"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "PATCH",
-								"header": [
-									{
-										"key": "Authorization",
-										"type": "text",
-										"value": "Bearer {{token}}"
-									},
-									{
-										"key": "Content-Type",
-										"name": "Content-Type",
-										"type": "text",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"scim\": {\n    \"enabled\": true\n  }\n}"
-								},
-								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}",
-									"host": [
-										"{{management_url}}"
-									],
-									"path": [
-										"management",
-										"domains",
-										"{{domain}}"
-									]
-								}
-							},
-							"response": []
-						}
-					],
-					"_postman_isSubFolder": true
-				},
-				{
-					"name": "Service Provider Configuration",
-					"item": [
-						{
-							"name": "Fetch Service Provider Configuration",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Check SCIM configuration\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig']);",
-											"    pm.expect(jsonData.patch.supported).to.eql(false);",
-											"    pm.expect(jsonData.bulk.supported).to.eql(false);",
-											"    pm.expect(jsonData.filter.supported).to.eql(false);",
-											"    pm.expect(jsonData.changePassword.supported).to.eql(false);",
-											"    pm.expect(jsonData.sort.supported).to.eql(false);",
-											"    pm.expect(jsonData.etag.supported).to.eql(false);",
-											"    pm.expect(jsonData.authenticationSchemes[0].type).to.eql('oauthbearertoken');",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/ServiceProviderConfig",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"ServiceProviderConfig"
-									]
-								}
-							},
-							"response": []
-						}
-					],
-					"_postman_isSubFolder": true
-				},
-				{
-					"name": "Case - invalid token",
-					"item": [
-						{
-							"name": "Fetch Users endpoint - no token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Users"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Fetch Users endpoint - invalid token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer wrong-token",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Users"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Create Users endpoint - no token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Users"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Create Users endpoint - invalid token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer wrong-token",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Users"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Replace Users endpoint - no token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "PUT",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Users",
-										"test-id"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Replace Users endpoint - invalid token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "PUT",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer wrong-token",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Users",
-										"test-id"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delete Users endpoint - no token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "DELETE",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Users",
-										"test-id"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delete Users endpoint - invalid token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer wrong-token",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Users",
-										"test-id"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Fetch Groups endpoint - no token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Groups"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Fetch Groups endpoint - invalid token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer wrong-token",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Groups"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Replace Groups endpoint - no token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "PUT",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Groups",
-										"test-id"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Replace Groups endpoint - invalid token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "PUT",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer wrong-token",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Groups",
-										"test-id"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Create Groups endpoint - no token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Groups"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Create Groups endpoint - invalid token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer wrong-token",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Groups"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delete Groups endpoint - no token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "DELETE",
-								"header": [],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Groups",
-										"test-id"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delete Groups endpoint - invalid token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"SCIM is secured with a bearer token\", function () {",
-											"    var jsonData = pm.response.json();",
-											"    pm.expect(jsonData.status).to.eql(\"401\");",
-											"    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
-											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer wrong-token",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": ""
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"scim",
-										"Groups",
-										"test-id"
-									]
-								}
-							},
-							"response": []
-						}
-					],
-					"_postman_isSubFolder": true
-				},
-				{
-					"name": "Configure client",
-					"item": [
-						{
-							"name": "Create SCIM client",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
-										"exec": [
-											"pm.test(\"Status code is 201\", function () {",
-											"    pm.response.to.have.status(201);",
-											"});",
-											"",
-											"var body = JSON.parse(responseBody);",
-											"pm.environment.set('clientSCIM', body.id);"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"clientId\": \"client-scim\",\n  \"clientSecret\": \"client-scim-secret\"\n}"
-								},
-								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}/clients",
-									"host": [
-										"{{management_url}}"
-									],
-									"path": [
-										"management",
-										"domains",
-										"{{domain}}",
-										"clients"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Configure SCIM client",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"// wait for sync process",
-											"setTimeout(function(){}, 6000);"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "PATCH",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{token}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"authorizedGrantTypes\": [\"client_credentials\"],\n  \"scopes\" : [\"scim\"]\n}"
-								},
-								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{clientSCIM}}",
-									"host": [
-										"{{management_url}}"
-									],
-									"path": [
-										"management",
-										"domains",
-										"{{domain}}",
-										"clients",
-										"{{clientSCIM}}"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Generate token",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Has an access_token\", function () {",
-											"    var body = pm.response.json();",
-											"    pm.expect(body).to.have.property('access_token');",
-											"    ",
-											"    pm.environment.set('access_token', body.access_token);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "904f0113-b2b9-4645-9511-48bb10791506",
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Basic Y2xpZW50LXNjaW06Y2xpZW50LXNjaW0tc2VjcmV0"
-									}
-								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "grant_type",
-											"value": "client_credentials",
-											"type": "text"
-										}
-									]
-								},
-								"url": {
-									"raw": "{{tokenEndpoint}}",
-									"host": [
-										"{{tokenEndpoint}}"
-									]
-								}
-							},
-							"response": []
-						}
-					],
-					"_postman_isSubFolder": true
-				},
-				{
-					"name": "Users",
-					"item": [
-						{
-							"name": "Create",
-							"item": [
-								{
-									"name": "Invalid request - malformed json",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"",
-													"pm.test(\"SCIM create user malformed json\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"400\");",
-													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
-													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{access_token}}",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Invalid request - userName required",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"",
-													"pm.test(\"SCIM create userName field required\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"400\");",
-													"    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
-													"    pm.expect(jsonData.detail).to.eql(\"Field [userName] is required\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"value": "application/json",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Create user",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
-												"exec": [
-													"pm.test(\"Status code is 201\", function () {",
-													"    pm.response.to.have.status(201);",
-													"});",
-													"",
-													"pm.test(\"SCIM create user\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData).to.have.property('id');",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
-													"    pm.environment.set('userSCIM', jsonData.id);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{access_token}}",
-												"type": "text"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"value": "application/json",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"externalId\": \"701984\",\n  \"userName\": \"bjensen@example.com\",\n  \"name\": {\n    \"formatted\": \"Ms. Barbara J Jensen, III\",\n    \"familyName\": \"Jensen\",\n    \"givenName\": \"Barbara\",\n    \"middleName\": \"Jane\",\n    \"honorificPrefix\": \"Ms.\",\n    \"honorificSuffix\": \"III\"\n  },\n  \"displayName\": \"Babs Jensen\",\n  \"nickName\": \"Babs\",\n  \"profileUrl\": \"https://login.example.com/bjensen\",\n  \"emails\": [\n    {\n      \"value\": \"bjensen@example.com\",\n      \"type\": \"work\",\n      \"primary\": true\n    },\n    {\n      \"value\": \"babs@jensen.org\",\n      \"type\": \"home\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"type\": \"work\",\n      \"streetAddress\": \"100 Universal City Plaza\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"100 Universal City Plaza\\nHollywood, CA 91608 USA\",\n      \"primary\": true\n    },\n    {\n      \"type\": \"home\",\n      \"streetAddress\": \"456 Hollywood Blvd\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"456 Hollywood Blvd\\nHollywood, CA 91608 USA\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"555-555-5555\",\n      \"type\": \"work\"\n    },\n    {\n      \"value\": \"555-555-4444\",\n      \"type\": \"mobile\"\n    }\n  ],\n  \"ims\": [\n    {\n      \"value\": \"someaimhandle\",\n      \"type\": \"aim\"\n    }\n  ],\n  \"photos\": [\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/F\",\n      \"type\": \"photo\"\n    },\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/T\",\n      \"type\": \"thumbnail\"\n    }\n  ],\n  \"userType\": \"Employee\",\n  \"title\": \"Tour Guide\",\n  \"preferredLanguage\": \"en-US\",\n  \"locale\": \"en-US\",\n  \"timezone\": \"America/Los_Angeles\",\n  \"active\":true,\n  \"x509Certificates\": [\n    {\n      \"value\":\n       \"MIIDQzCCAqygAwIBAgICEAAwDQ....1UEBhMCVVMx\"\n    }\n  ]\n}"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Invalid request - userName already exists",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"",
-													"pm.test(\"SCIM create user uniqueness\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"400\");",
-													"    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
-													"    pm.expect(jsonData.detail).to.eql(\"User with username [bjensen@example.com] already exists\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"type": "text",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen@example.com\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users"
-											]
-										}
-									},
-									"response": []
-								}
-							],
-							"_postman_isSubFolder": true
-						},
-						{
-							"name": "Update",
-							"item": [
-								{
-									"name": "Invalid request - user not found",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 404\", function () {",
-													"    pm.response.to.have.status(404);",
-													"});",
-													"",
-													"pm.test(\"SCIM update user unknown user\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"404\");",
-													"    pm.expect(jsonData.detail).to.eql(\"User [wrong-id] can not be found.\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"value": "application/json",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/wrong-id",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users",
-												"wrong-id"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Invalid request - malformed json",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"",
-													"pm.test(\"SCIM update user malformed json\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"400\");",
-													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
-													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{access_token}}",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users",
-												"{{userSCIM}}"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Update user",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"",
-													"pm.test(\"SCIM update user\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData).to.have.property('id');",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
-													"    pm.expect(jsonData.name.familyName).to.eql('Jensen2');",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"type": "text",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen2\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users",
-												"{{userSCIM}}"
-											]
-										}
-									},
-									"response": []
-								}
-							],
-							"_postman_isSubFolder": true
-						},
-						{
-							"name": "List",
-							"item": [
-								{
-									"name": "List users",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"",
-													"// 2 users (one from SCIM and an other from inline idp)",
-													"pm.test(\"SCIM list users\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
-													"    pm.expect(jsonData.totalResults).to.eql(1);",
-													"    pm.expect(jsonData.startIndex).to.eql(1);",
-													"    pm.expect(jsonData.itemsPerPage).to.eql(1);",
-													"    pm.expect(jsonData.Resources.length).to.eql(1);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{access_token}}",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users"
-											]
-										}
-									},
-									"response": []
-								}
-							],
-							"_postman_isSubFolder": true
-						},
-						{
-							"name": "Delete",
-							"item": [
-								{
-									"name": "Invalid request - user not found",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 404\", function () {",
-													"    pm.response.to.have.status(404);",
-													"});",
-													"",
-													"pm.test(\"SCIM delete user unknown user\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"404\");",
-													"    pm.expect(jsonData.detail).to.eql(\"User [wrong-id] can not be found.\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "DELETE",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/wrong-id",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users",
-												"wrong-id"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Delete user",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 204\", function () {",
-													"    pm.response.to.have.status(204);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "DELETE",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users",
-												"{{userSCIM}}"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "List users",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"",
-													"pm.test(\"SCIM list users after delete\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
-													"    pm.expect(jsonData.totalResults).to.eql(0);",
-													"    pm.expect(jsonData.startIndex).to.eql(1);",
-													"    pm.expect(jsonData.itemsPerPage).to.eql(0);",
-													"    pm.expect(jsonData.Resources.length).to.eql(0);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Users"
-											]
-										}
-									},
-									"response": []
-								}
-							],
-							"_postman_isSubFolder": true
-						}
-					],
-					"_postman_isSubFolder": true
-				},
-				{
-					"name": "Groups",
-					"item": [
-						{
-							"name": "Create",
-							"item": [
-								{
-									"name": "Invalid request - malformed json",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"",
-													"pm.test(\"SCIM create group malformed json\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"400\");",
-													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
-													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{access_token}}",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Invalid request - displayName required",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"",
-													"pm.test(\"SCIM group displayName field required\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"400\");",
-													"    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
-													"    pm.expect(jsonData.detail).to.eql(\"Field [displayName] is required\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"type": "text",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"]\n}"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Create group",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
-												"exec": [
-													"pm.test(\"Status code is 201\", function () {",
-													"    pm.response.to.have.status(201);",
-													"});",
-													"",
-													"pm.test(\"SCIM create user\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData).to.have.property('id');",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
-													"    pm.environment.set('groupSCIM', jsonData.id);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"type": "text",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides\"\n}"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Invalid request - displayName already exists",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"",
-													"pm.test(\"SCIM create group uniqueness\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"400\");",
-													"    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
-													"    pm.expect(jsonData.detail).to.eql(\"Group with display name [Tour Guides] already exists\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"type": "text",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides\"\n}"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups"
-											]
-										}
-									},
-									"response": []
-								}
-							],
-							"_postman_isSubFolder": true
-						},
-						{
-							"name": "Update",
-							"item": [
-								{
-									"name": "Invalid request - group not found",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 404\", function () {",
-													"    pm.response.to.have.status(404);",
-													"});",
-													"",
-													"pm.test(\"SCIM update user unknown user\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"404\");",
-													"    pm.expect(jsonData.detail).to.eql(\"Group [wrong-id] can not be found.\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"type": "text",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides 2\"\n}"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/wrong-id",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups",
-												"wrong-id"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Invalid request - malformed json",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"",
-													"pm.test(\"SCIM update user malformed json\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"400\");",
-													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
-													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{access_token}}",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups",
-												"{{groupSCIM}}"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Update group",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"",
-													"pm.test(\"SCIM update user\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData).to.have.property('id');",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
-													"    pm.expect(jsonData.displayName).to.eql('Tour Guides 2');",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"type": "text",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides 2\"\n}"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups",
-												"{{groupSCIM}}"
-											]
-										}
-									},
-									"response": []
-								}
-							],
-							"_postman_isSubFolder": true
-						},
-						{
-							"name": "List",
-							"item": [
-								{
-									"name": "List groups",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"",
-													"pm.test(\"SCIM list groups\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
-													"    pm.expect(jsonData.totalResults).to.eql(1);",
-													"    pm.expect(jsonData.startIndex).to.eql(1);",
-													"    pm.expect(jsonData.itemsPerPage).to.eql(1);",
-													"    pm.expect(jsonData.Resources.length).to.eql(1);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups"
-											]
-										}
-									},
-									"response": []
-								}
-							],
-							"_postman_isSubFolder": true
-						},
-						{
-							"name": "Delete",
-							"item": [
-								{
-									"name": "Invalid request - group not found",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 404\", function () {",
-													"    pm.response.to.have.status(404);",
-													"});",
-													"",
-													"pm.test(\"SCIM delete group unknown group\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.status).to.eql(\"404\");",
-													"    pm.expect(jsonData.detail).to.eql(\"Group [wrong-id] can not be found.\");",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "DELETE",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/wrong-id",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups",
-												"wrong-id"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Delete group",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 204\", function () {",
-													"    pm.response.to.have.status(204);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "DELETE",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups",
-												"{{groupSCIM}}"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "List groups",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "ace28d5f-a975-4430-ba47-29184cf01460",
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"",
-													"pm.test(\"SCIM list groups after delete\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
-													"    pm.expect(jsonData.totalResults).to.eql(0);",
-													"    pm.expect(jsonData.startIndex).to.eql(1);",
-													"    pm.expect(jsonData.itemsPerPage).to.eql(0);",
-													"    pm.expect(jsonData.Resources.length).to.eql(0);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": ""
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"scim",
-												"Groups"
-											]
-										}
-									},
-									"response": []
-								}
-							],
-							"_postman_isSubFolder": true
-						}
-					],
-					"_postman_isSubFolder": true
-				}
-			]
-		},
-		{
-			"name": "Delete domain",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
-						"exec": [
-							"pm.test(\"Status code is 204\", function () {",
-							"    pm.response.to.have.status(204);",
-							"});"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Authorization",
-						"value": "Bearer {{token}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "{{management_url}}/management/domains/{{domain}}",
-					"host": [
-						"{{management_url}}"
-					],
-					"path": [
-						"management",
-						"domains",
-						"{{domain}}"
-					]
-				}
-			},
-			"response": []
-		}
-	]
+  "info": {
+    "_postman_id": "081ae40f-b857-49d3-95e0-27266818b744",
+    "name": "Gravitee.io - AM - SCIM",
+    "description": "Test System for Cross-domain Identity Management\nSCIM 2.0 is released as RFC7642, RFC7643 and RFC7644",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Prepare",
+      "item": [
+        {
+          "name": "Generate admin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "571e9b59-b9e7-452c-9469-9786ded290a6",
+                "exec": [
+                  "",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var token = JSON.parse(responseBody);",
+                  "pm.environment.set('token', token.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "adminadmin",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{management_url}}/management/auth/token",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "auth",
+                "token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create scim domain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('domain', jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"name\": \"scim-domain\", \n\t\"description\": \"test System for Cross-domain Identity Management specifications\"\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start domain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
+                "exec": [
+                  "// wait for sync process",
+                  "setTimeout(function(){}, 10000);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+              "host": [
+                "{{management_url}}"
+              ],
+              "path": [
+                "management",
+                "organizations",
+                "{{defaultOrganizationId}}",
+                "environments",
+                "{{defaultEnvironmentId}}",
+                "domains",
+                "{{domain}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "well-known/openid-configuration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Check discovery endpoints\", function () {",
+                  "    pm.response.to.be.header('Content-Type', 'application/json');",
+                  "    var body = pm.response.json();",
+                  "    ",
+                  "    pm.expect(body).to.have.property(\"token_endpoint\");",
+                  "    pm.environment.set('tokenEndpoint', body.token_endpoint);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "{{domain}}",
+                "oidc",
+                ".well-known",
+                "openid-configuration"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SCIM",
+      "item": [
+        {
+          "name": "Case - non SCIM domain",
+          "item": [
+            {
+              "name": "Fetch Service Provider Configuration",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 404\", function () {",
+                      "    pm.response.to.have.status(404);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/ServiceProviderConfig",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "ServiceProviderConfig"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Fetch Users endpoint",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 404\", function () {",
+                      "    pm.response.to.have.status(404);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Users"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Fetch Groups endpoint",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 404\", function () {",
+                      "    pm.response.to.have.status(404);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Groups"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "_postman_isSubFolder": true
+        },
+        {
+          "name": "Configure domain",
+          "item": [
+            {
+              "name": "Configure SCIM",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "286df3a2-0e06-4b00-9614-3b0fd9ceecb9",
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM enabled for domain\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.scim.enabled).to.eql(true);",
+                      "});",
+                      "",
+                      "// wait for sync process",
+                      "setTimeout(function(){}, 10000);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "type": "text",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"scim\": {\n    \"enabled\": true\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+                  "host": [
+                    "{{management_url}}"
+                  ],
+                  "path": [
+                    "management",
+                    "organizations",
+                    "{{defaultOrganizationId}}",
+                    "environments",
+                    "{{defaultEnvironmentId}}",
+                    "domains",
+                    "{{domain}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "_postman_isSubFolder": true
+        },
+        {
+          "name": "Service Provider Configuration",
+          "item": [
+            {
+              "name": "Fetch Service Provider Configuration",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"Check SCIM configuration\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig']);",
+                      "    pm.expect(jsonData.patch.supported).to.eql(false);",
+                      "    pm.expect(jsonData.bulk.supported).to.eql(false);",
+                      "    pm.expect(jsonData.filter.supported).to.eql(false);",
+                      "    pm.expect(jsonData.changePassword.supported).to.eql(false);",
+                      "    pm.expect(jsonData.sort.supported).to.eql(false);",
+                      "    pm.expect(jsonData.etag.supported).to.eql(false);",
+                      "    pm.expect(jsonData.authenticationSchemes[0].type).to.eql('oauthbearertoken');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/ServiceProviderConfig",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "ServiceProviderConfig"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "_postman_isSubFolder": true
+        },
+        {
+          "name": "Case - invalid token",
+          "item": [
+            {
+              "name": "Fetch Users endpoint - no token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Users"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Fetch Users endpoint - invalid token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer wrong-token",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Users"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Users endpoint - no token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Users"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Users endpoint - invalid token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer wrong-token",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Users"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Replace Users endpoint - no token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Users",
+                    "test-id"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Replace Users endpoint - invalid token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer wrong-token",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Users",
+                    "test-id"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Users endpoint - no token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Users",
+                    "test-id"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Users endpoint - invalid token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer wrong-token",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Users",
+                    "test-id"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Fetch Groups endpoint - no token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Groups"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Fetch Groups endpoint - invalid token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer wrong-token",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Groups"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Replace Groups endpoint - no token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Groups",
+                    "test-id"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Replace Groups endpoint - invalid token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer wrong-token",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Groups",
+                    "test-id"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Groups endpoint - no token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Groups"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Groups endpoint - invalid token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer wrong-token",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Groups"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Groups endpoint - no token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"Authorization failure. The authorization header is invalid or missing.\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Groups",
+                    "test-id"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Groups endpoint - invalid token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "824e7241-8698-4f0e-a856-ce3dcc28a98f",
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"SCIM is secured with a bearer token\", function () {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.status).to.eql(\"401\");",
+                      "    pm.expect(jsonData.detail).to.eql(\"The access token is invalid\");",
+                      "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer wrong-token",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "{{domain}}",
+                    "scim",
+                    "Groups",
+                    "test-id"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "_postman_isSubFolder": true
+        },
+        {
+          "name": "Configure client",
+          "item": [
+            {
+              "name": "Create SCIM client",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
+                    "exec": [
+                      "pm.test(\"Status code is 201\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "",
+                      "var body = JSON.parse(responseBody);",
+                      "pm.environment.set('clientSCIM', body.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clientId\": \"client-scim\",\n  \"clientSecret\": \"client-scim-secret\"\n}"
+                },
+                "url": {
+                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients",
+                  "host": [
+                    "{{management_url}}"
+                  ],
+                  "path": [
+                    "management",
+                    "organizations",
+                    "{{defaultOrganizationId}}",
+                    "environments",
+                    "{{defaultEnvironmentId}}",
+                    "domains",
+                    "{{domain}}",
+                    "clients"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Configure SCIM client",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "// wait for sync process",
+                      "setTimeout(function(){}, 6000);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"authorizedGrantTypes\": [\"client_credentials\"],\n  \"scopes\" : [\"scim\"]\n}"
+                },
+                "url": {
+                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{clientSCIM}}",
+                  "host": [
+                    "{{management_url}}"
+                  ],
+                  "path": [
+                    "management",
+                    "organizations",
+                    "{{defaultOrganizationId}}",
+                    "environments",
+                    "{{defaultEnvironmentId}}",
+                    "domains",
+                    "{{domain}}",
+                    "clients",
+                    "{{clientSCIM}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Generate token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"Has an access_token\", function () {",
+                      "    var body = pm.response.json();",
+                      "    pm.expect(body).to.have.property('access_token');",
+                      "    ",
+                      "    pm.environment.set('access_token', body.access_token);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "id": "904f0113-b2b9-4645-9511-48bb10791506",
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Basic Y2xpZW50LXNjaW06Y2xpZW50LXNjaW0tc2VjcmV0"
+                  }
+                ],
+                "body": {
+                  "mode": "urlencoded",
+                  "urlencoded": [
+                    {
+                      "key": "grant_type",
+                      "value": "client_credentials",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{tokenEndpoint}}",
+                  "host": [
+                    "{{tokenEndpoint}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "_postman_isSubFolder": true
+        },
+        {
+          "name": "Users",
+          "item": [
+            {
+              "name": "Create",
+              "item": [
+                {
+                  "name": "Invalid request - malformed json",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create user malformed json\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Invalid request - userName required",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create userName field required\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Field [userName] is required\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Create user",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+                        "exec": [
+                          "pm.test(\"Status code is 201\", function () {",
+                          "    pm.response.to.have.status(201);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create user\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData).to.have.property('id');",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+                          "    pm.environment.set('userSCIM', jsonData.id);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"externalId\": \"701984\",\n  \"userName\": \"bjensen@example.com\",\n  \"name\": {\n    \"formatted\": \"Ms. Barbara J Jensen, III\",\n    \"familyName\": \"Jensen\",\n    \"givenName\": \"Barbara\",\n    \"middleName\": \"Jane\",\n    \"honorificPrefix\": \"Ms.\",\n    \"honorificSuffix\": \"III\"\n  },\n  \"displayName\": \"Babs Jensen\",\n  \"nickName\": \"Babs\",\n  \"profileUrl\": \"https://login.example.com/bjensen\",\n  \"emails\": [\n    {\n      \"value\": \"bjensen@example.com\",\n      \"type\": \"work\",\n      \"primary\": true\n    },\n    {\n      \"value\": \"babs@jensen.org\",\n      \"type\": \"home\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"type\": \"work\",\n      \"streetAddress\": \"100 Universal City Plaza\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"100 Universal City Plaza\\nHollywood, CA 91608 USA\",\n      \"primary\": true\n    },\n    {\n      \"type\": \"home\",\n      \"streetAddress\": \"456 Hollywood Blvd\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"456 Hollywood Blvd\\nHollywood, CA 91608 USA\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"555-555-5555\",\n      \"type\": \"work\"\n    },\n    {\n      \"value\": \"555-555-4444\",\n      \"type\": \"mobile\"\n    }\n  ],\n  \"ims\": [\n    {\n      \"value\": \"someaimhandle\",\n      \"type\": \"aim\"\n    }\n  ],\n  \"photos\": [\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/F\",\n      \"type\": \"photo\"\n    },\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/T\",\n      \"type\": \"thumbnail\"\n    }\n  ],\n  \"userType\": \"Employee\",\n  \"title\": \"Tour Guide\",\n  \"preferredLanguage\": \"en-US\",\n  \"locale\": \"en-US\",\n  \"timezone\": \"America/Los_Angeles\",\n  \"active\":true,\n  \"x509Certificates\": [\n    {\n      \"value\":\n       \"MIIDQzCCAqygAwIBAgICEAAwDQ....1UEBhMCVVMx\"\n    }\n  ]\n}"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Invalid request - userName already exists",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create user uniqueness\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"User with username [bjensen@example.com] already exists\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen@example.com\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ],
+              "_postman_isSubFolder": true
+            },
+            {
+              "name": "Update",
+              "item": [
+                {
+                  "name": "Invalid request - user not found",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 404\", function () {",
+                          "    pm.response.to.have.status(404);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM update user unknown user\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"404\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"User [wrong-id] can not be found.\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users/wrong-id",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users",
+                        "wrong-id"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Invalid request - malformed json",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM update user malformed json\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users",
+                        "{{userSCIM}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update user",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM update user\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData).to.have.property('id');",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+                          "    pm.expect(jsonData.name.familyName).to.eql('Jensen2');",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen2\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users",
+                        "{{userSCIM}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ],
+              "_postman_isSubFolder": true
+            },
+            {
+              "name": "List",
+              "item": [
+                {
+                  "name": "List users",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "ace28d5f-a975-4430-ba47-29184cf01460",
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "",
+                          "// 2 users (one from SCIM and an other from inline idp)",
+                          "pm.test(\"SCIM list users\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+                          "    pm.expect(jsonData.totalResults).to.eql(1);",
+                          "    pm.expect(jsonData.startIndex).to.eql(1);",
+                          "    pm.expect(jsonData.itemsPerPage).to.eql(1);",
+                          "    pm.expect(jsonData.Resources.length).to.eql(1);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ],
+              "_postman_isSubFolder": true
+            },
+            {
+              "name": "Delete",
+              "item": [
+                {
+                  "name": "Invalid request - user not found",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 404\", function () {",
+                          "    pm.response.to.have.status(404);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM delete user unknown user\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"404\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"User [wrong-id] can not be found.\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users/wrong-id",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users",
+                        "wrong-id"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete user",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 204\", function () {",
+                          "    pm.response.to.have.status(204);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users",
+                        "{{userSCIM}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "List users",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "ace28d5f-a975-4430-ba47-29184cf01460",
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM list users after delete\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+                          "    pm.expect(jsonData.totalResults).to.eql(0);",
+                          "    pm.expect(jsonData.startIndex).to.eql(1);",
+                          "    pm.expect(jsonData.itemsPerPage).to.eql(0);",
+                          "    pm.expect(jsonData.Resources.length).to.eql(0);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ],
+              "_postman_isSubFolder": true
+            }
+          ],
+          "_postman_isSubFolder": true
+        },
+        {
+          "name": "Groups",
+          "item": [
+            {
+              "name": "Create",
+              "item": [
+                {
+                  "name": "Invalid request - malformed json",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create group malformed json\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Invalid request - displayName required",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM group displayName field required\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Field [displayName] is required\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"]\n}"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Create group",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+                        "exec": [
+                          "pm.test(\"Status code is 201\", function () {",
+                          "    pm.response.to.have.status(201);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create user\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData).to.have.property('id');",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+                          "    pm.environment.set('groupSCIM', jsonData.id);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Invalid request - displayName already exists",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create group uniqueness\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Group with display name [Tour Guides] already exists\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ],
+              "_postman_isSubFolder": true
+            },
+            {
+              "name": "Update",
+              "item": [
+                {
+                  "name": "Invalid request - group not found",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 404\", function () {",
+                          "    pm.response.to.have.status(404);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM update user unknown user\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"404\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Group [wrong-id] can not be found.\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides 2\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups/wrong-id",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups",
+                        "wrong-id"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Invalid request - malformed json",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM update user malformed json\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{access_token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups",
+                        "{{groupSCIM}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update group",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM update user\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData).to.have.property('id');",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+                          "    pm.expect(jsonData.displayName).to.eql('Tour Guides 2');",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides 2\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups",
+                        "{{groupSCIM}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ],
+              "_postman_isSubFolder": true
+            },
+            {
+              "name": "List",
+              "item": [
+                {
+                  "name": "List groups",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "ace28d5f-a975-4430-ba47-29184cf01460",
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM list groups\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+                          "    pm.expect(jsonData.totalResults).to.eql(1);",
+                          "    pm.expect(jsonData.startIndex).to.eql(1);",
+                          "    pm.expect(jsonData.itemsPerPage).to.eql(1);",
+                          "    pm.expect(jsonData.Resources.length).to.eql(1);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ],
+              "_postman_isSubFolder": true
+            },
+            {
+              "name": "Delete",
+              "item": [
+                {
+                  "name": "Invalid request - group not found",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 404\", function () {",
+                          "    pm.response.to.have.status(404);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM delete group unknown group\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"404\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Group [wrong-id] can not be found.\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups/wrong-id",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups",
+                        "wrong-id"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete group",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 204\", function () {",
+                          "    pm.response.to.have.status(204);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups",
+                        "{{groupSCIM}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "List groups",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "ace28d5f-a975-4430-ba47-29184cf01460",
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM list groups after delete\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+                          "    pm.expect(jsonData.totalResults).to.eql(0);",
+                          "    pm.expect(jsonData.startIndex).to.eql(1);",
+                          "    pm.expect(jsonData.itemsPerPage).to.eql(0);",
+                          "    pm.expect(jsonData.Resources.length).to.eql(0);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": ""
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Groups"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ],
+              "_postman_isSubFolder": true
+            }
+          ],
+          "_postman_isSubFolder": true
+        }
+      ]
+    },
+    {
+      "name": "Delete domain",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+          "host": [
+            "{{management_url}}"
+          ],
+          "path": [
+            "management",
+            "organizations",
+            "{{defaultOrganizationId}}",
+            "environments",
+            "{{defaultEnvironmentId}}",
+            "domains",
+            "{{domain}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
 }

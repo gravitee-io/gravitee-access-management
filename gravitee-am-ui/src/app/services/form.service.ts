@@ -21,7 +21,7 @@ import {PlatformService} from "./platform.service";
 
 @Injectable()
 export class FormService {
-  private formsUrl = AppConfig.settings.baseURL + '/domains/';
+  private formsUrl = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
               private platformService: PlatformService) {

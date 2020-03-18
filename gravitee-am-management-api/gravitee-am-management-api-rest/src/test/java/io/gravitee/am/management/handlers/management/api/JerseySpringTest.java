@@ -24,6 +24,7 @@ import io.gravitee.am.management.handlers.management.api.manager.membership.Memb
 import io.gravitee.am.management.handlers.management.api.manager.role.RoleManager;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.service.*;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.*;
@@ -164,6 +165,17 @@ public abstract class JerseySpringTest {
     @Configuration
     @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
     static class ContextConfiguration {
+
+        @Bean
+        public OrganizationService organizationService() {
+            return mock(OrganizationService.class);
+        }
+
+        @Bean
+        public EnvironmentService environmentService() {
+            return mock(EnvironmentService.class);
+        }
+
         @Bean
         public DomainService domainService() {
             return mock(DomainService.class);
@@ -318,6 +330,11 @@ public abstract class JerseySpringTest {
     private JerseyTest _jerseyTest;
 
     public final WebTarget target(final String path) {
+
+        if("domains".equals(path)) {
+            return _jerseyTest.target("organizations").path("DEFAULT").path("environments").path("DEFAULT").path(path);
+        }
+
         return _jerseyTest.target(path);
     }
 

@@ -37,6 +37,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.text.Normalizer;
@@ -53,6 +54,7 @@ public class TagServiceImpl implements TagService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(TagServiceImpl.class);
 
+    @Lazy
     @Autowired
     private TagRepository tagRepository;
 
@@ -63,9 +65,9 @@ public class TagServiceImpl implements TagService {
     private DomainService domainService;
 
     @Override
-    public Maybe<Tag> findById(String id) {
+    public Maybe<Tag> findById(String id, String organizationId) {
         LOGGER.debug("Find tag by ID: {}", id);
-        return tagRepository.findById(id)
+        return tagRepository.findById(id, organizationId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a tag using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -88,7 +90,7 @@ public class TagServiceImpl implements TagService {
         LOGGER.debug("Create a new tag: {}", newTag);
         String id = humanReadableId(newTag.getName());
 
-        return tagRepository.findById(id)
+        return tagRepository.findById(id, organizationId)
                 .isEmpty()
                 .flatMap(empty -> {
                     if (!empty) {
@@ -117,9 +119,9 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public Single<Tag> update(String tagId, UpdateTag updateTag, User principal) {
+    public Single<Tag> update(String tagId, String organizationId, UpdateTag updateTag, User principal) {
         LOGGER.debug("Update an existing tag: {}", updateTag);
-        return tagRepository.findById(tagId)
+        return tagRepository.findById(tagId, organizationId)
                 .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
                 .flatMapSingle(oldTag -> {
                     Tag tag = new Tag();
@@ -144,9 +146,9 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public Completable delete(String tagId, User principal) {
+    public Completable delete(String tagId, String orgaizationId, User principal) {
         LOGGER.debug("Delete tag {}", tagId);
-        return tagRepository.findById(tagId)
+        return tagRepository.findById(tagId, orgaizationId)
                 .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
                 .flatMapCompletable(tag -> tagRepository.delete(tagId)
                         .andThen(domainService.findAll()

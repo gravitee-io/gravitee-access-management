@@ -48,7 +48,7 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
         try {
-            return getReporter(referenceType, referenceId).search(criteria, page, size);
+            return getReporter(referenceType, referenceId).search(referenceType, referenceId, criteria, page, size);
         } catch (Exception ex) {
             logger.error("An error occurs during audits search for {}}: {}", referenceType, referenceId, ex);
             return Single.error(ex);
@@ -64,7 +64,7 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public Single<Map<Object, Object>> aggregate(String domain, AuditReportableCriteria criteria, Type analyticsType) {
         try {
-            return getReporter(domain).aggregate(criteria, analyticsType);
+            return getReporter(domain).aggregate(ReferenceType.DOMAIN, domain, criteria, analyticsType);
         } catch (Exception ex) {
             logger.error("An error occurs during audits aggregation for domain: {}", domain, ex);
             return Single.error(ex);
@@ -74,7 +74,7 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public Single<Audit> findById(ReferenceType referenceType, String referenceId, String auditId) {
         try {
-            return getReporter(referenceType, referenceId).findById(auditId)
+            return getReporter(referenceType, referenceId).findById(referenceType, referenceId, auditId)
                     .switchIfEmpty(Single.error(new AuditNotFoundException(auditId)));
         } catch (Exception ex) {
             logger.error("An error occurs while trying to find audit by id: {} and for the {}}: {}", auditId, referenceType, referenceId, ex);

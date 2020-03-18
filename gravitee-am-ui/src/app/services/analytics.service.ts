@@ -19,7 +19,7 @@ import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class AnalyticsService {
-  private analyticsURL = AppConfig.settings.baseURL + '/domains/';
+  private analyticsURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient) { }
 

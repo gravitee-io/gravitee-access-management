@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.email.Email;
+import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
 
@@ -33,7 +34,7 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
     public EmailAuditBuilder() {
         super();
         // emails are sent by system actor
-        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, SYSTEM);
+        setActor(SYSTEM, SYSTEM, SYSTEM, SYSTEM, ReferenceType.PLATFORM, Platform.DEFAULT);
     }
 
     public EmailAuditBuilder email(Email email) {
@@ -42,7 +43,7 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
     }
 
     public EmailAuditBuilder user(User user) {
-        setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType() == ReferenceType.DOMAIN ? user.getReferenceId() : null);
+        setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
         return this;
     }
 }

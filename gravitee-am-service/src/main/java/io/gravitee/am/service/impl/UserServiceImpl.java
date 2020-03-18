@@ -205,7 +205,7 @@ public class UserServiceImpl implements UserService {
     public Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser) {
         LOGGER.debug("Create a new user {} for {} {}", newUser, referenceType, referenceId);
 
-        return userRepository.findByDomainAndUsernameAndSource(referenceId, newUser.getUsername(), newUser.getSource())
+        return userRepository.findByUsernameAndSource(referenceType, referenceId, newUser.getUsername(), newUser.getSource())
                 .isEmpty()
                 .flatMap(isEmpty -> {
                     if (!isEmpty) {

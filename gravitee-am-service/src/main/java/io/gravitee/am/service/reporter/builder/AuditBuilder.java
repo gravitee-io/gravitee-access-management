@@ -50,18 +50,20 @@ public abstract class AuditBuilder<T> {
     private String accessPointId;
     private String accessPointAlternativeId;
     private String accessPointName;
-    private String actorDomain;
     private String type;
     private Throwable throwable;
     private String actorId;
     private String actorType;
     private String actorAlternativeId;
     private String actorDisplayName;
+    private ReferenceType actorReferenceType;
+    private String actorReferenceId;
     private String targetId;
     private String targetType;
     private String targetAlternativeId;
     private String targetDisplayName;
-    private String targetDomain;
+    private ReferenceType targetReferenceType;
+    private String targetReferenceId;
     private String ipAddress;
     private String userAgent;
     private Object oldValue;
@@ -144,20 +146,22 @@ public abstract class AuditBuilder<T> {
         return type;
     }
 
-    protected void setActor(String actorId, String actorType, String actorAlternativeId, String actorDisplayName, String actorDomain) {
+    protected void setActor(String actorId, String actorType, String actorAlternativeId, String actorDisplayName, ReferenceType actorReferenceType, String actorReferenceId) {
         this.actorId = actorId;
         this.actorType = actorType;
         this.actorAlternativeId = actorAlternativeId;
         this.actorDisplayName = actorDisplayName;
-        this.actorDomain = actorDomain;
+        this.actorReferenceType = actorReferenceType;
+        this.actorReferenceId = actorReferenceId;
     }
 
-    protected void setTarget(String targetId, String targetType, String targetAlternativeId, String targetDisplayName, String targetDomain) {
+    protected void setTarget(String targetId, String targetType, String targetAlternativeId, String targetDisplayName, ReferenceType targetReferenceType, String targetReferenceId) {
         this.targetId = targetId;
         this.targetType = targetType;
         this.targetAlternativeId = targetAlternativeId;
         this.targetDisplayName = targetDisplayName;
-        this.targetDomain = targetDomain;
+        this.targetReferenceType = targetReferenceType;
+        this.targetReferenceId = targetReferenceId;
     }
 
     protected void setNewValue(Object newValue) {
@@ -180,7 +184,8 @@ public abstract class AuditBuilder<T> {
         actor.setType(actorType);
         actor.setAlternativeId(actorAlternativeId);
         actor.setDisplayName(actorDisplayName);
-        actor.setDomain(actorDomain);
+        actor.setReferenceType(actorReferenceType);
+        actor.setReferenceId(actorReferenceId);
         audit.setActor(actor);
 
         // Network access point
@@ -199,7 +204,8 @@ public abstract class AuditBuilder<T> {
             target.setType(targetType);
             target.setAlternativeId(targetAlternativeId);
             target.setDisplayName(targetDisplayName);
-            target.setDomain(targetDomain);
+            target.setReferenceType(targetReferenceType);
+            target.setReferenceId(targetReferenceId);
             audit.setTarget(target);
         }
 

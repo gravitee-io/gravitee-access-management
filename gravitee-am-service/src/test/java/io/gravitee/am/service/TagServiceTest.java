@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.TagRepository;
@@ -54,8 +55,8 @@ public class TagServiceTest {
 
     @Test
     public void shouldFindById() {
-        when(tagRepository.findById("my-tag")).thenReturn(Maybe.just(new Tag()));
-        TestObserver testObserver = tagService.findById("my-tag").test();
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.just(new Tag()));
+        TestObserver testObserver = tagService.findById("my-tag", Organization.DEFAULT).test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
@@ -65,8 +66,8 @@ public class TagServiceTest {
 
     @Test
     public void shouldFindById_notExistingScope() {
-        when(tagRepository.findById("my-tag")).thenReturn(Maybe.empty());
-        TestObserver testObserver = tagService.findById("my-tag").test();
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.empty());
+        TestObserver testObserver = tagService.findById("my-tag", Organization.DEFAULT).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNoValues();
@@ -74,9 +75,9 @@ public class TagServiceTest {
 
     @Test
     public void shouldFindById_technicalException() {
-        when(tagRepository.findById("my-tag")).thenReturn(Maybe.error(TechnicalException::new));
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.error(TechnicalException::new));
         TestObserver testObserver = new TestObserver();
-        tagService.findById("my-tag").subscribe(testObserver);
+        tagService.findById("my-tag", Organization.DEFAULT).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -86,16 +87,16 @@ public class TagServiceTest {
     public void shouldCreate() {
         NewTag newTag = Mockito.mock(NewTag.class);
         when(newTag.getName()).thenReturn("my-tag");
-        when(tagRepository.findById("my-tag")).thenReturn(Maybe.empty());
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.empty());
         when(tagRepository.create(any(Tag.class))).thenReturn(Single.just(new Tag()));
 
-        TestObserver testObserver = tagService.create(newTag, "DEFAULT", null).test();
+        TestObserver testObserver = tagService.create(newTag, Organization.DEFAULT, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(tagRepository, times(1)).findById(eq("my-tag"));
+        verify(tagRepository, times(1)).findById(eq("my-tag"), eq(Organization.DEFAULT));
         verify(tagRepository, times(1)).create(any(Tag.class));
     }
 
@@ -103,15 +104,15 @@ public class TagServiceTest {
     public void shouldCreate_tagAlreadyExists() {
         NewTag newTag = Mockito.mock(NewTag.class);
         when(newTag.getName()).thenReturn("my-tag");
-        when(tagRepository.findById("my-tag")).thenReturn(Maybe.just(new Tag()));
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.just(new Tag()));
 
         TestObserver<Tag> testObserver = new TestObserver<>();
-        tagService.create(newTag, "DEFAULT", null).subscribe(testObserver);
+        tagService.create(newTag, Organization.DEFAULT, null).subscribe(testObserver);
 
         testObserver.assertError(TagAlreadyExistsException.class);
         testObserver.assertNotComplete();
 
-        verify(tagRepository, times(1)).findById(eq("my-tag"));
+        verify(tagRepository, times(1)).findById(eq("my-tag"), eq(Organization.DEFAULT));
         verify(tagRepository, never()).create(any(Tag.class));
     }
 
@@ -119,10 +120,10 @@ public class TagServiceTest {
     public void shouldNotCreate_technicalException() {
         NewTag newTag = Mockito.mock(NewTag.class);
         when(newTag.getName()).thenReturn("my-tag");
-        when(tagRepository.findById("my-tag")).thenReturn(Maybe.error(TechnicalException::new));
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        tagService.create(newTag, "DEFAULT", null).subscribe(testObserver);
+        tagService.create(newTag, Organization.DEFAULT, null).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -132,10 +133,10 @@ public class TagServiceTest {
 
     @Test
     public void shouldDelete_notExistingTag() {
-        when(tagRepository.findById("my-tag")).thenReturn(Maybe.empty());
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
-        tagService.delete("my-tag", null).subscribe(testObserver);
+        tagService.delete("my-tag", Organization.DEFAULT, null).subscribe(testObserver);
 
         testObserver.assertError(TagNotFoundException.class);
         testObserver.assertNotComplete();
@@ -143,10 +144,10 @@ public class TagServiceTest {
 
     @Test
     public void shouldDelete_technicalException() {
-        when(tagRepository.findById("my-tag")).thenReturn(Maybe.error(TechnicalException::new));
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        tagService.delete("my-tag", null).subscribe(testObserver);
+        tagService.delete("my-tag", Organization.DEFAULT, null).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oauth2.Scope;
 
 /**
@@ -34,7 +35,7 @@ public class ScopeAuditBuilder extends ManagementAuditBuilder<ScopeAuditBuilder>
             setNewValue(scope);
         }
         domain(scope.getDomain());
-        setTarget(scope.getId(), EntityType.SCOPE, scope.getKey(), scope.getName(), scope.getDomain());
+        setTarget(scope.getId(), EntityType.SCOPE, scope.getKey(), scope.getName(), ReferenceType.DOMAIN, scope.getDomain());
         return this;
     }
 }
