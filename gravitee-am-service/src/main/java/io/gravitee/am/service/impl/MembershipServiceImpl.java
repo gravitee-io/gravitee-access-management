@@ -28,8 +28,8 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.Member;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.repository.management.api.MembershipRepository;
+import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -42,6 +42,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -57,6 +58,7 @@ public class MembershipServiceImpl implements MembershipService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MembershipServiceImpl.class);
 
+    @Lazy
     @Autowired
     private MembershipRepository membershipRepository;
 
@@ -92,13 +94,11 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public Flowable<Membership> findAll() {
-        LOGGER.debug("Find memberships");
-        return membershipRepository.findAll()
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find memberships", ex);
-                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find memberships", ex));
-                });
+    public Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria) {
+
+        LOGGER.debug("Find memberships by reference type {} and reference id {} and criteria {}", referenceType, referenceId, criteria);
+
+        return membershipRepository.findByCriteria(referenceType, referenceId, criteria);
     }
 
     @Override
@@ -113,23 +113,12 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public Maybe<Membership> findByReferenceAndMember(String referenceId, String memberId) {
-        LOGGER.debug("Find memberships by reference id {} and member id {}", referenceId, memberId);
-        return membershipRepository.findByReferenceAndMember(referenceId, memberId)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find memberships by reference id {} and member id {}", referenceId, memberId, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find memberships by reference id %s and member id %s", referenceId, memberId), ex));
-                });
-    }
-
-    @Override
     public Single<Membership> addOrUpdate(String organizationId, Membership membership, User principal) {
         LOGGER.debug("Add or update membership {}", membership);
 
         return checkMember(organizationId, membership)
-                .andThen(checkRole(organizationId, membership.getRole(), membership.getReferenceType(), membership.getReferenceId()))
-                .andThen(membershipRepository.findByReferenceAndMember(membership.getReferenceId(), membership.getMemberId())
+                .andThen(checkRole(organizationId, membership.getRoleId(), membership.getReferenceType(), membership.getReferenceId()))
+                .andThen(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
                         .flatMapSingle(optMembership -> {
@@ -142,7 +131,7 @@ public class MembershipServiceImpl implements MembershipService {
                                 newMembership.setMemberType(membership.getMemberType());
                                 newMembership.setReferenceId(membership.getReferenceId());
                                 newMembership.setReferenceType(membership.getReferenceType());
-                                newMembership.setRole(membership.getRole());
+                                newMembership.setRoleId(membership.getRoleId());
                                 newMembership.setCreatedAt(new Date());
                                 newMembership.setUpdatedAt(newMembership.getCreatedAt());
                                 return membershipRepository.create(newMembership)
@@ -164,7 +153,7 @@ public class MembershipServiceImpl implements MembershipService {
                                 // update membership
                                 Membership oldMembership = optMembership.get();
                                 Membership updateMembership = new Membership(oldMembership);
-                                updateMembership.setRole(membership.getRole());
+                                updateMembership.setRoleId(membership.getRoleId());
                                 updateMembership.setUpdatedAt(new Date());
                                 return membershipRepository.update(updateMembership)
                                         // create event for sync process
@@ -194,7 +183,7 @@ public class MembershipServiceImpl implements MembershipService {
 
         List<String> userIds = memberships.stream().filter(membership -> MemberType.USER.equals(membership.getMemberType())).map(Membership::getMemberId).distinct().collect(Collectors.toList());
         List<String> groupIds = memberships.stream().filter(membership -> MemberType.GROUP.equals(membership.getMemberType())).map(Membership::getMemberId).distinct().collect(Collectors.toList());
-        List<String> roleIds = memberships.stream().map(Membership::getRole).distinct().collect(Collectors.toList());
+        List<String> roleIds = memberships.stream().map(Membership::getRoleId).distinct().collect(Collectors.toList());
 
         return Single.zip(userService.findByIdIn(userIds), groupService.findByIdIn(groupIds), roleService.findByIdIn(roleIds), (users, groups, roles) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
@@ -264,8 +253,8 @@ public class MembershipServiceImpl implements MembershipService {
     private Completable checkRole(String organizationId, String role, ReferenceType referenceType, String referenceId) {
         return roleService.findById(role)
                 .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
-                // Role must be on the right scope.
-                .filter(role1 -> RoleScope.valueOf(role1.getScope()).name().equals(referenceType.name()) &&
+                // Role must be set on the right entity type.
+                .filter(role1 -> role1.getAssignableType().equals(referenceType) &&
                         // Role can be either a system role, either an organization role, either a domain role.
                         (role1.isSystem()
                                 || (role1.getReferenceType() == ReferenceType.ORGANIZATION && organizationId.equals(role1.getReferenceId()))

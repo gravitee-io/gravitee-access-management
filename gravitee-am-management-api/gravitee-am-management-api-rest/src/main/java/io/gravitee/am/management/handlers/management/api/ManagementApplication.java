@@ -58,7 +58,6 @@ public class ManagementApplication extends ResourceConfig {
         register(WebApplicationExceptionMapper.class);
 
         register(UriBuilderRequestFilter.class);
-        register(PermissionsFilter.class);
         register(ByteArrayOutputStreamWriter.class);
 
         register(ApiListingResource.class);

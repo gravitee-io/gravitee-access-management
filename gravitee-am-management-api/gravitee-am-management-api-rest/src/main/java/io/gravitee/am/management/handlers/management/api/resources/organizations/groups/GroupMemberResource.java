@@ -16,12 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.groups;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.exception.MemberAlreadyExistsException;
 import io.gravitee.am.service.exception.MemberNotFoundException;
@@ -56,14 +54,12 @@ public class GroupMemberResource extends AbstractResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Add a group member")
+    @ApiOperation(value = "Add a group member",
+            notes = "User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Member has been added successfully"),
             @ApiResponse(code = 400, message = "User does not exist"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_GROUP, acls = RolePermissionAction.UPDATE)
-    })
     public void addMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("group") String group,
@@ -71,36 +67,35 @@ public class GroupMemberResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
-                .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
-                        .flatMap(user -> {
-                            if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
-                                return Single.error(new MemberAlreadyExistsException(userId));
-                            }
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
+                .andThen(groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                        .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
+                                .flatMap(user -> {
+                                    if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
+                                        return Single.error(new MemberAlreadyExistsException(userId));
+                                    }
 
-                            List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
-                            groupMembers.add(userId);
+                                    List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
+                                    groupMembers.add(userId);
 
-                            UpdateGroup updateGroup = new UpdateGroup();
-                            updateGroup.setName(group1.getName());
-                            updateGroup.setDescription(group1.getDescription());
-                            updateGroup.setRoles(group1.getRoles());
-                            updateGroup.setMembers(groupMembers);
-                            return groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
-                        }))
+                                    UpdateGroup updateGroup = new UpdateGroup();
+                                    updateGroup.setName(group1.getName());
+                                    updateGroup.setDescription(group1.getDescription());
+                                    updateGroup.setRoles(group1.getRoles());
+                                    updateGroup.setMembers(groupMembers);
+                                    return groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
+                                })))
                 .subscribe(response::resume, response::resume);
     }
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Remove a group member")
+    @ApiOperation(value = "Remove a group member",
+            notes = "User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Member has been removed successfully"),
             @ApiResponse(code = 400, message = "User does not exist"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_GROUP, acls = RolePermissionAction.DELETE)
-    })
     public void removeMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("group") String group,
@@ -108,23 +103,24 @@ public class GroupMemberResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
-                .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
-                        .flatMap(user -> {
-                            if (group1.getMembers() == null || !group1.getMembers().contains(userId)) {
-                                return Single.error(new MemberNotFoundException(userId));
-                            }
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
+                .andThen(groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                        .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
+                                .flatMap(user -> {
+                                    if (group1.getMembers() == null || !group1.getMembers().contains(userId)) {
+                                        return Single.error(new MemberNotFoundException(userId));
+                                    }
 
-                            List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
-                            groupMembers.remove(userId);
+                                    List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
+                                    groupMembers.remove(userId);
 
-                            UpdateGroup updateGroup = new UpdateGroup();
-                            updateGroup.setName(group1.getName());
-                            updateGroup.setDescription(group1.getDescription());
-                            updateGroup.setRoles(group1.getRoles());
-                            updateGroup.setMembers(groupMembers);
-                            return groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
-                        }))
+                                    UpdateGroup updateGroup = new UpdateGroup();
+                                    updateGroup.setName(group1.getName());
+                                    updateGroup.setDescription(group1.getDescription());
+                                    updateGroup.setRoles(group1.getRoles());
+                                    updateGroup.setMembers(groupMembers);
+                                    return groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
+                                })))
                 .subscribe(response::resume, response::resume);
     }
 }

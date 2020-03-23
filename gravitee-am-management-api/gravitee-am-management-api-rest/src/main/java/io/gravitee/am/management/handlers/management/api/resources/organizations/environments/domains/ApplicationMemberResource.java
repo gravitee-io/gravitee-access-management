@@ -16,10 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.MembershipService;
@@ -37,6 +36,9 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -53,26 +55,32 @@ public class ApplicationMemberResource extends AbstractResource {
     private ApplicationService applicationService;
 
     @DELETE
-    @ApiOperation(value = "Remove a membership")
+    @ApiOperation(value = "Remove a membership",
+            notes = "User must have APPLICATION_MEMBER[DELETE] permission on the specified application " +
+                    "or APPLICATION_MEMBER[DELETE] permission on the specified domain " +
+                    "or APPLICATION_MEMBER[DELETE] permission on the specified environment " +
+                    "or APPLICATION_MEMBER[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Membership successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = RolePermissionAction.DELETE)
-    })
-    public void removeMember(@PathParam("domain") String domain,
-                             @PathParam("application") String application,
-                             @PathParam("member") String membershipId,
-                             @Suspended final AsyncResponse response) {
+    public void removeMember(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @PathParam("member") String membershipId,
+            @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMap(__ -> applicationService.findById(application))
-                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                .flatMapCompletable(__ -> membershipService.delete(membershipId, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_MEMBER, Acl.DELETE),
+                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_MEMBER, Acl.DELETE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_MEMBER, Acl.DELETE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_MEMBER, Acl.DELETE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(__ -> applicationService.findById(application))
+                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
+                        .flatMapCompletable(__ -> membershipService.delete(membershipId, authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

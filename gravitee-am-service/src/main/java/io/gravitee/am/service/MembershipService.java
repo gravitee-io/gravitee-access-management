@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -34,11 +35,9 @@ public interface MembershipService {
 
     Maybe<Membership> findById(String id);
 
-    Flowable<Membership> findAll();
+    Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria);
 
     Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType);
-
-    Maybe<Membership> findByReferenceAndMember(String referenceId, String memberId);
 
     Single<Membership> addOrUpdate(String organizationId, Membership membership, User principal);
 

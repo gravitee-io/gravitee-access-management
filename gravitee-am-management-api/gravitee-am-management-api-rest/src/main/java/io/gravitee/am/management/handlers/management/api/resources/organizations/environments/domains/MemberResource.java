@@ -16,10 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -35,6 +34,9 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -48,24 +50,27 @@ public class MemberResource extends AbstractResource {
     private MembershipService membershipService;
 
     @DELETE
-    @ApiOperation(value = "Remove a membership")
+    @ApiOperation(value = "Remove a membership",
+            notes = "User must have the DOMAIN_MEMBER[DELETE] permission on the specified domain " +
+                    "or DOMAIN_MEMBER[DELETE] permission on the specified environment " +
+                    "or DOMAIN_MEMBER[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Membership successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_MEMBER, acls = RolePermissionAction.DELETE)
-    })
     public void removeMember(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("member") String membershipId,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> membershipService.delete(membershipId, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_MEMBER, Acl.DELETE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_MEMBER, Acl.DELETE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_MEMBER, Acl.DELETE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapCompletable(irrelevant -> membershipService.delete(membershipId, authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

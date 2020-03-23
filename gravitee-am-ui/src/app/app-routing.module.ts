@@ -173,7 +173,7 @@ const routes: Routes = [
         canActivate: [AuthGuard],
         data: {
           perms: {
-            only: ['management_domain_create']
+            only: ['domain_create']
           }
         }
       },
@@ -186,7 +186,7 @@ const routes: Routes = [
             icon: 'settings'
           },
           perms: {
-            only: ['management_settings_read']
+            only: ['organization_settings_read']
           }
         },
         children: [
@@ -203,7 +203,7 @@ const routes: Routes = [
                 section: 'Settings'
               },
               perms: {
-                only: ['management_settings_read']
+                only: ['organization_settings_read']
               }
             }
           },
@@ -220,7 +220,7 @@ const routes: Routes = [
                 section: 'Settings'
               },
               perms: {
-                only: ['management_form_read']
+                only: ['organization_form_read']
               }
             }
           },
@@ -236,7 +236,7 @@ const routes: Routes = [
                 section: 'Identities'
               },
               perms: {
-                only: ['management_identity_provider_read']
+                only: ['organization_identity_provider_read']
               }
             }
           },
@@ -245,7 +245,7 @@ const routes: Routes = [
             canActivate: [AuthGuard],
             data: {
               perms: {
-                only: ['management_identity_provider_create']
+                only: ['organization_identity_provider_create']
               }
             }
           },
@@ -257,7 +257,7 @@ const routes: Routes = [
             },
             data: {
               perms: {
-                only: ['management_identity_provider_read']
+                only: ['organization_identity_provider_read']
               }
             },
             children: [
@@ -276,7 +276,7 @@ const routes: Routes = [
                 section: 'Security'
               },
               perms: {
-                only: ['management_audit_read']
+                only: ['organization_audit_read']
               }
             }
           },
@@ -288,7 +288,7 @@ const routes: Routes = [
             },
             data: {
               perms: {
-                only: ['management_audit_read']
+                only: ['organization_audit_read']
               }
             }
           },
@@ -300,7 +300,7 @@ const routes: Routes = [
             },
             data: {
               perms: {
-                only: ['management_audit_read']
+                only: ['organization_audit_read']
               }
             }
           },
@@ -312,7 +312,7 @@ const routes: Routes = [
             },
             data: {
               perms: {
-                only: ['management_audit_read']
+                only: ['organization_audit_read']
               }
             }
           },
@@ -328,7 +328,7 @@ const routes: Routes = [
                 section: 'User Management'
               },
               perms: {
-                only: ['management_user_read']
+                only: ['organization_user_read']
               }
             }
           },
@@ -341,7 +341,7 @@ const routes: Routes = [
             },
             data: {
               perms: {
-                only: ['management_user_read']
+                only: ['organization_user_read']
               }
             },
             children: [
@@ -364,7 +364,7 @@ const routes: Routes = [
                 section: 'User Management'
               },
               perms: {
-                only: ['management_group_read']
+                only: ['organization_group_read']
               }
             }
           },
@@ -373,7 +373,7 @@ const routes: Routes = [
             canActivate: [AuthGuard],
             data: {
               perms: {
-                only: ['management_group_create']
+                only: ['organization_group_create']
               }
             }
           },
@@ -386,7 +386,7 @@ const routes: Routes = [
             },
             data: {
               perms: {
-                only: ['management_group_read']
+                only: ['organization_group_read']
               }
             },
             children: [
@@ -408,7 +408,7 @@ const routes: Routes = [
                 section: 'User Management',
               },
               perms: {
-                only: ['management_role_read']
+                only: ['organization_role_read']
               }
             }
           },
@@ -417,7 +417,7 @@ const routes: Routes = [
             canActivate: [AuthGuard],
             data: {
               perms: {
-                only: ['management_role_create']
+                only: ['organization_role_create']
               }
             }
           },
@@ -430,7 +430,7 @@ const routes: Routes = [
             },
             data: {
               perms: {
-                only: ['management_role_read']
+                only: ['organization_role_read']
               }
             }
           },
@@ -446,7 +446,7 @@ const routes: Routes = [
                 section: 'Deployment'
               },
               perms: {
-                only: ['management_shard_read']
+                only: ['organization_tag_read']
               }
             }
           },
@@ -455,7 +455,7 @@ const routes: Routes = [
             canActivate: [AuthGuard],
             data: {
               perms: {
-                only: ['management_shard_create']
+                only: ['organization_tag_create']
               }
             }
           },
@@ -468,7 +468,7 @@ const routes: Routes = [
             },
             data: {
               perms: {
-                only: ['management_shard_read']
+                only: ['organization_tag_read']
               }
             }
           }
@@ -522,7 +522,7 @@ const routes: Routes = [
         },
         data: {
           perms: {
-            only: ['domain_application_create']
+            only: ['application_create']
           }
         }
       },
@@ -1249,7 +1249,7 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: {
       perms: {
-        only: ['management_domain_create']
+        only: ['domain_create']
       }
     },
   },

@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.platform.roles;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
@@ -50,7 +51,7 @@ public class SystemRoleResourceTest extends JerseySpringTest {
         final Response response = target("platform").path("roles").path(roleId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Role role = readEntity(response, Role.class);
+        final RoleEntity role = readEntity(response, RoleEntity.class);
         assertEquals(roleId, role.getId());
     }
 

@@ -16,13 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.groups;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.common.http.MediaType;
@@ -59,38 +57,35 @@ public class GroupRolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a group roles")
+    @ApiOperation(value = "Get a group roles",
+            notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Group roles successfully fetched", response = Role.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_GROUP, acls = RolePermissionAction.READ)
-    })
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("group") String group,
             @Suspended final AsyncResponse response) {
 
-        groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
-                .flatMap(group1 -> {
-                    if (group1.getRoles() == null || group1.getRoles().isEmpty()) {
-                        return Single.just(Collections.emptyList());
-                    }
-                    return roleService.findByIdIn(group1.getRoles());
-                })
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.READ)
+                .andThen(groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                        .flatMap(group1 -> {
+                            if (group1.getRoles() == null || group1.getRoles().isEmpty()) {
+                                return Single.just(Collections.emptyList());
+                            }
+                            return roleService.findByIdIn(group1.getRoles());
+                        }))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Assign roles to a group")
+    @ApiOperation(value = "Assign roles to a group",
+            notes = "User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Roles successfully assigned", response = Group.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_GROUP, acls = RolePermissionAction.UPDATE)
-    })
     public void assign(
             @PathParam("organizationId") String organizationId,
             @PathParam("group") String group,
@@ -98,7 +93,8 @@ public class GroupRolesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        groupService.assignRoles(ReferenceType.ORGANIZATION, organizationId, group, roles, authenticatedUser)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
+                .andThen(groupService.assignRoles(ReferenceType.ORGANIZATION, organizationId, group, roles, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 

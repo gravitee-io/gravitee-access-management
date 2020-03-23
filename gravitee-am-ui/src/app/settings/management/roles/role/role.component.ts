@@ -50,8 +50,8 @@ export class ManagementRoleComponent implements OnInit {
   ngOnInit() {
     this.role = this.route.snapshot.data['role'];
     this.role.permissions = this.role.permissions || [];
-    this.readonly = this.role.system || (!this.authService.isAdmin() && !this.authService.hasPermissions(['management_role_update']));
-    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_role_delete']);
+    this.readonly = this.role.system || (!this.authService.hasPermissions(['organization_role_update']));
+    this.deleteMode = this.authService.hasPermissions(['organization_role_delete']);
     this.initPermissions();
   }
 

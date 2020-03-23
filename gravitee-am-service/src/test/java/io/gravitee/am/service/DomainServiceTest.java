@@ -257,7 +257,7 @@ public class DomainServiceTest {
         when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
-        when(roleService.findSystemRole(SystemRole.PRIMARY_OWNER, RoleScope.DOMAIN)).thenReturn(Maybe.just(new Role()));
+        when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, ReferenceType.DOMAIN)).thenReturn(Maybe.just(new Role()));
 
         TestObserver testObserver = domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain, new DefaultUser("username")).test();
         testObserver.awaitTerminalEvent();

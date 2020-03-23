@@ -55,9 +55,9 @@ export class GroupMembersComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
-      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_update']);
+      this.editMode = this.authService.hasPermissions(['organization_group_update']);
     } else {
-      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_update']);
+      this.editMode = this.authService.hasPermissions(['domain_group_update']);
     }
     this.group = this.route.snapshot.parent.data['group'];
     const pagedMembers = this.route.snapshot.data['members'];

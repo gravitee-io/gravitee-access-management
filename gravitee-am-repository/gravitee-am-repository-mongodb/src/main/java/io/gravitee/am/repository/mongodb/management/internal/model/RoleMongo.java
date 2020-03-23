@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.codecs.pojo.annotations.BsonId;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,11 +39,13 @@ public class RoleMongo extends Auditable {
 
     private String referenceId;
 
-    private Integer scope;
+    private String assignableType;
 
     private boolean system;
 
-    private List<String> permissions;
+    private Map<String, Set<Acl>> permissions;
+
+    private List<String> oauthScopes;
 
     public String getId() {
         return id;
@@ -83,28 +87,12 @@ public class RoleMongo extends Auditable {
         this.referenceId = referenceId;
     }
 
-    public Integer getScope() {
-        return scope;
-    }
-
-    public void setScope(Integer scope) {
-        this.scope = scope;
-    }
-
     public boolean isSystem() {
         return system;
     }
 
     public void setSystem(boolean system) {
         this.system = system;
-    }
-
-    public List<String> getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(List<String> permissions) {
-        this.permissions = permissions;
     }
 
     @Override
@@ -120,5 +108,29 @@ public class RoleMongo extends Auditable {
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
+    }
+
+    public String getAssignableType() {
+        return assignableType;
+    }
+
+    public void setAssignableType(String assignableType) {
+        this.assignableType = assignableType;
+    }
+
+    public Map<String, Set<Acl>> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(Map<String, Set<Acl>> permissions) {
+        this.permissions = permissions;
+    }
+
+    public List<String> getOauthScopes() {
+        return oauthScopes;
+    }
+
+    public void setOauthScopes(List<String> oauthScopes) {
+        this.oauthScopes = oauthScopes;
     }
 }

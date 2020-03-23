@@ -39,7 +39,7 @@ export class ManagementGeneralComponent implements OnInit {
 
   ngOnInit() {
     this.settings = this.route.snapshot.data['settings'];
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['management_settings_update']);
+    this.readonly = !this.authService.hasPermissions(['organization_settings_update']);
     this.organizationService.identityProviders().subscribe(data => {
 
       // Separate all idps and all social idps.

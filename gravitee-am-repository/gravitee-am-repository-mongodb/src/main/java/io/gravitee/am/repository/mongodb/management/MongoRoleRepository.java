@@ -17,18 +17,20 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
 import io.reactivex.*;
+import io.reactivex.Observable;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.*;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
@@ -43,6 +45,7 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     private static final String FIELD_ID = "_id";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_SCOPE = "scope";
+    private static final String FIELD_ASSIGNABLE_TYPE = "assignableType";
     public static final String FIELD_SYSTEM = "system";
     private MongoCollection<RoleMongo> rolesCollection;
 
@@ -54,13 +57,13 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<Set<Role>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType == null ? null : referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<Role> findAll(ReferenceType referenceType, String referenceId) {
+        return Flowable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType == null ? null : referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
     }
 
     @Override
     public Single<Set<Role>> findByDomain(String domain) {
-        return findAll(DOMAIN, domain);
+        return findAll(DOMAIN, domain).collect(HashSet::new, Set::add);
     }
 
     @Override
@@ -97,8 +100,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Maybe<Role> findByNameAndScope(ReferenceType referenceType, String referenceId, String name, int scope) {
-        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType == null ? null : referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, name), eq(FIELD_SCOPE, scope))).first()).firstElement().map(this::convert);
+    public Maybe<Role> findByNameAndAssignableType(ReferenceType referenceType, String referenceId, String name, ReferenceType assignableType) {
+        return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, name), eq(FIELD_ASSIGNABLE_TYPE, assignableType.name()))).first()).firstElement().map(this::convert);
     }
 
     private Role convert(RoleMongo roleMongo) {
@@ -112,9 +115,17 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         role.setDescription(roleMongo.getDescription());
         role.setReferenceType(roleMongo.getReferenceType() == null ? null : ReferenceType.valueOf(roleMongo.getReferenceType()));
         role.setReferenceId(roleMongo.getReferenceId());
-        role.setScope(roleMongo.getScope());
+        role.setAssignableType(roleMongo.getAssignableType() == null ? null : ReferenceType.valueOf(roleMongo.getAssignableType()));
         role.setSystem(roleMongo.isSystem());
-        role.setPermissions(roleMongo.getPermissions());
+
+        if (roleMongo.getPermissions() != null) {
+            Map<Permission, Set<Acl>> permissions = new HashMap<>();
+            roleMongo.getPermissions().forEach((key, value) -> permissions.put(Permission.valueOf(key), new HashSet<>(value)));
+
+            role.setPermissions(permissions);
+        }
+
+        role.setOauthScopes(roleMongo.getOauthScopes());
         role.setCreatedAt(roleMongo.getCreatedAt());
         role.setUpdatedAt(roleMongo.getUpdatedAt());
         return role;
@@ -131,9 +142,10 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         roleMongo.setDescription(role.getDescription());
         roleMongo.setReferenceType(role.getReferenceType() == null ? null : role.getReferenceType().name());
         roleMongo.setReferenceId(role.getReferenceId());
-        roleMongo.setScope(role.getScope());
+        roleMongo.setAssignableType(role.getAssignableType() == null ? null : role.getAssignableType().name());
         roleMongo.setSystem(role.isSystem());
-        roleMongo.setPermissions(role.getPermissions());
+        roleMongo.setPermissions(role.getPermissions() == null ? null : role.getPermissions().entrySet().stream().collect(Collectors.toMap(o -> o.getKey().name(), Map.Entry::getValue)));
+        roleMongo.setOauthScopes(role.getOauthScopes());
         roleMongo.setCreatedAt(role.getCreatedAt());
         roleMongo.setUpdatedAt(role.getUpdatedAt());
         return roleMongo;

@@ -16,12 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.authentication.service;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.service.impl.AuthenticationServiceImpl;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Organization;
-import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.*;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.model.NewUser;
 import io.reactivex.Maybe;
@@ -61,6 +61,11 @@ public class AuthenticationServiceTest {
     @Mock
     private UserService userServiceMock;
 
+    @Mock
+    private RoleService roleServiceMock;
+
+    @Mock
+    private MembershipService membershipServiceMock;
 
     @Mock
     private io.gravitee.am.model.User repositoryUserMock;
@@ -70,12 +75,17 @@ public class AuthenticationServiceTest {
 
     @Test
     public void shouldCreateUser() {
+        User user = new User();
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        user.setReferenceId(ORGANIZATION_ID);
+
         when(authenticationMock.getPrincipal()).thenReturn(userDetailsMock);
         when(userServiceMock.findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null)).thenReturn(Maybe.empty());
         when(userServiceMock.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null)).thenReturn(Maybe.empty());
-        when(userServiceMock.create(any(io.gravitee.am.model.User.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
-        when(userServiceMock.enhance(any())).thenReturn(Single.just(new io.gravitee.am.model.User()));
-
+        when(userServiceMock.create(any(io.gravitee.am.model.User.class))).thenReturn(Single.just(user));
+        when(userServiceMock.enhance(any())).thenReturn(Single.just(user));
+        when(roleServiceMock.findSystemRole(SystemRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(new Role()));
+        when(membershipServiceMock.addOrUpdate(eq(ORGANIZATION_ID), any(Membership.class))).thenReturn(Single.just(new Membership()));
         authenticationService.onAuthenticationSuccess(authenticationMock);
 
         verify(userServiceMock, times(1)).findByExternalIdAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null);

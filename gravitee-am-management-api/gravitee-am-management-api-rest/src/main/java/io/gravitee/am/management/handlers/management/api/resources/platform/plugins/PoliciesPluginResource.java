@@ -47,16 +47,15 @@ public class PoliciesPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List policy plugins")
+    @ApiOperation(value = "List policy plugins",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
+
         policyPluginService.findAll()
                 .map(policyPlugins -> policyPlugins.stream()
                         .sorted(Comparator.comparing(PolicyPlugin::getName))
                         .collect(Collectors.toList()))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{policy}")

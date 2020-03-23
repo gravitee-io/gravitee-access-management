@@ -48,7 +48,7 @@
             </mat-form-field>
           </div>
         </div>
-        <div *hasPermission="['management_settings_update']">
+        <div *hasPermission="['organization_settings_update']">
           <button mat-raised-button [disabled]="(!managementForm.valid || managementForm.pristine)" type="submit">SAVE</button>
         </div>
       </form>

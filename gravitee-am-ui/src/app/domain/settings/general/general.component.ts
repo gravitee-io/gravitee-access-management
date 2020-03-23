@@ -55,7 +55,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
   ngOnInit() {
     this.domain = this.route.snapshot.parent.data['domain'];
     this.tags = this.route.snapshot.data['tags'];
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_settings_update']);
+    this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
     this.initTags();
   }
 

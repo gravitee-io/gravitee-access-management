@@ -47,16 +47,14 @@ public class ExtensionGrantsPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List extension grant plugins")
+    @ApiOperation(value = "List extension grant plugins",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
         extensionGrantPluginService.findAll()
                 .map(extensionGrantPlugins -> extensionGrantPlugins.stream()
                         .sorted(Comparator.comparing(ExtensionGrantPlugin::getName))
                         .collect(Collectors.toList()))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{extensionGrant}")

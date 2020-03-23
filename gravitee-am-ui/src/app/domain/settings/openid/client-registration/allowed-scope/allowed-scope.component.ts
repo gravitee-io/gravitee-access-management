@@ -47,7 +47,7 @@ export class ClientRegistrationAllowedScopeComponent implements OnInit {
     this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
     this.isAllowedScopesEnabled = this.domain.oidc.clientRegistrationSettings.isAllowedScopesEnabled;
     this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.allowedScopes;
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_dcr_create', 'domain_dcr_update']);
+    this.readonly = !this.authService.hasPermissions(['domain_dcr_create', 'domain_dcr_update']);
   }
 
   enableAllowedScopesFilter(event) {

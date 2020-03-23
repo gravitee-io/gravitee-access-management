@@ -31,6 +31,8 @@ public class UpdateRole {
 
     private List<String> permissions;
 
+    private List<String> oauthScopes;
+
     public String getName() {
         return name;
     }
@@ -62,5 +64,13 @@ public class UpdateRole {
                 ", description='" + description + '\'' +
                 ", permissions=" + permissions +
                 '}';
+    }
+
+    public List<String> getOauthScopes() {
+        return oauthScopes;
+    }
+
+    public void setOauthScopes(List<String> oauthScopes) {
+        this.oauthScopes = oauthScopes;
     }
 }

@@ -48,7 +48,7 @@ export class UserApplicationsComponent implements OnInit {
     this.consents = _.sortBy(this.route.snapshot.data['consents'], 'updatedAt').reverse();
     this.appConsentsGrouped  = _.groupBy(this.consents, 'clientId');
     this.appConsents = _.sortedUniqBy(this.consents, 'clientId');
-    this.canRevoke = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
+    this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
   }
 
   get isEmpty() {

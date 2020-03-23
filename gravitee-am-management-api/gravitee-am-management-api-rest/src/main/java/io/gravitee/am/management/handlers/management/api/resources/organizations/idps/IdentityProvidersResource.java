@@ -17,13 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
@@ -61,58 +59,57 @@ public class IdentityProvidersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered identity providers of the organization")
+    @ApiOperation(value = "List registered identity providers of the organization",
+            notes = "User must have the ORGANIZATION_IDENTITY_PROVIDER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered identity providers of the organization", response = IdentityProvider.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_IDENTITY_PROVIDER, acls = RolePermissionAction.READ)
-    })
     public void list(
             @PathParam("organizationId") String organizationId,
             @QueryParam("userProvider") boolean userProvider,
             @Suspended final AsyncResponse response) {
 
-        identityProviderService.findAll(ReferenceType.ORGANIZATION, organizationId)
-                .flatMapObservable(Observable::fromIterable)
-                .filter(identityProvider -> {
-                    if (userProvider) {
-                        return identityProviderManager.userProviderExists(identityProvider.getId());
-                    }
-                    return true;
-                })
-                .toList()
-                .map(identities -> {
-                    List<IdentityProvider> sortedIdentityProviders = identities.stream()
-                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                            .collect(Collectors.toList());
-                    return Response.ok(sortedIdentityProviders).build();
-                })
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.READ)
+                .andThen(identityProviderService.findAll(ReferenceType.ORGANIZATION, organizationId)
+                        .flatMapObservable(Observable::fromIterable)
+                        .filter(identityProvider -> {
+                            if (userProvider) {
+                                return identityProviderManager.userProviderExists(identityProvider.getId());
+                            }
+                            return true;
+                        })
+                        .toList()
+                        .map(identities -> {
+                            List<IdentityProvider> sortedIdentityProviders = identities.stream()
+                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                                    .collect(Collectors.toList());
+                            return Response.ok(sortedIdentityProviders).build();
+                        }))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create an identity provider for the organization")
+    @ApiOperation(value = "Create an identity provider for the organization",
+            notes = "User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Identity provider successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_IDENTITY_PROVIDER, acls = RolePermissionAction.CREATE)
-    })
     public void create(
             @PathParam("organizationId") String organizationId,
             @ApiParam(name = "identity", required = true) @Valid @NotNull final NewIdentityProvider newIdentityProvider,
             @Suspended final AsyncResponse response) {
+
         final User authenticatedUser = getAuthenticatedUser();
 
-        identityProviderService.create(ReferenceType.ORGANIZATION, organizationId, newIdentityProvider, authenticatedUser)
-                .flatMap(identityProviderManager::reloadUserProvider)
-                .map(identityProvider -> Response
-                        .created(URI.create("/organizations/" + organizationId + "/identities/" + identityProvider.getId()))
-                        .entity(identityProvider)
-                        .build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.CREATE)
+                .andThen(identityProviderService.create(ReferenceType.ORGANIZATION, organizationId, newIdentityProvider, authenticatedUser)
+                        .flatMap(identityProviderManager::reloadUserProvider)
+                        .map(identityProvider -> Response
+                                .created(URI.create("/organizations/" + organizationId + "/identities/" + identityProvider.getId()))
+                                .entity(identityProvider)
+                                .build()))
                 .subscribe(response::resume, response::resume);
     }
 

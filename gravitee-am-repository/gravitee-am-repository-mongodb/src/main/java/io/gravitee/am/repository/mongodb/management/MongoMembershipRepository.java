@@ -21,17 +21,18 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.MembershipRepository;
+import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.MembershipMongo;
 import io.reactivex.*;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -44,6 +45,7 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     private static final String FIELD_REFERENCE_ID = "referenceId";
     private static final String FIELD_REFERENCE_TYPE = "referenceType";
     private static final String FIELD_MEMBER_ID = "memberId";
+    public static final String FIELD_MEMBER_TYPE = "memberType";
     private MongoCollection<MembershipMongo> membershipsCollection;
 
     @PostConstruct
@@ -54,19 +56,38 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     }
 
     @Override
-    public Flowable<Membership> findAll() {
-        return Flowable.fromPublisher(membershipsCollection.find()).map(this::convert);
-    }
-
-    @Override
     public Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType) {
         return Observable.fromPublisher(membershipsCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))
                 .map(this::convert).collect(ArrayList::new, List::add);
     }
 
     @Override
-    public Maybe<Membership> findByReferenceAndMember(String referenceId, String memberId) {
-        return Observable.fromPublisher(membershipsCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_MEMBER_ID, memberId))).first()).firstElement().map(this::convert);
+    public Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria) {
+
+        Bson eqReference = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
+        Bson eqGroupId = null;
+        Bson eqUserId = null;
+
+        if (criteria.getGroupIds().isPresent()) {
+            eqGroupId = and(eq(FIELD_MEMBER_TYPE, MemberType.GROUP.name()), in(FIELD_MEMBER_ID, criteria.getGroupIds().get()));
+        }
+
+        if (criteria.getUserId().isPresent()) {
+            eqUserId = and(eq(FIELD_MEMBER_TYPE, MemberType.USER.name()), eq(FIELD_MEMBER_ID, criteria.getUserId().get()));
+        }
+
+        return toBsonFilter(criteria.isLogicalOR(), eqGroupId, eqUserId)
+                .map(filter -> and(eqReference, filter))
+                .switchIfEmpty(Single.just(eqReference))
+                .flatMapPublisher(filter -> Flowable.fromPublisher(membershipsCollection.find(filter))).map(this::convert);
+    }
+
+    @Override
+    public Maybe<Membership> findByReferenceAndMember(ReferenceType referenceType, String referenceId, MemberType memberType, String memberId) {
+        return Observable.fromPublisher(membershipsCollection.find(
+                and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
+                        eq(FIELD_MEMBER_TYPE, memberType.name()), eq(FIELD_MEMBER_ID, memberId))).first())
+                .firstElement().map(this::convert);
     }
 
     @Override
@@ -100,7 +121,7 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         membership.setMemberType(MemberType.valueOf(membershipMongo.getMemberType()));
         membership.setReferenceId(membershipMongo.getReferenceId());
         membership.setReferenceType(ReferenceType.valueOf(membershipMongo.getReferenceType()));
-        membership.setRole(membershipMongo.getRole());
+        membership.setRoleId(membershipMongo.getRole());
         membership.setCreatedAt(membershipMongo.getCreatedAt());
         membership.setUpdatedAt(membershipMongo.getUpdatedAt());
         return membership;
@@ -114,7 +135,7 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         membershipMongo.setMemberType(membership.getMemberType().name());
         membershipMongo.setReferenceId(membership.getReferenceId());
         membershipMongo.setReferenceType(membership.getReferenceType().name());
-        membershipMongo.setRole(membership.getRole());
+        membershipMongo.setRole(membership.getRoleId());
         membershipMongo.setCreatedAt(membership.getCreatedAt());
         membershipMongo.setUpdatedAt(membership.getUpdatedAt());
         return membershipMongo;

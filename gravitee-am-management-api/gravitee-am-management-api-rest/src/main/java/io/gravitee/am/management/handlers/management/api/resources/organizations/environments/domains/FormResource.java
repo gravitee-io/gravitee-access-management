@@ -17,11 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Form;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -43,6 +42,9 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -61,45 +63,52 @@ public class FormResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a form")
+    @ApiOperation(value = "Update a form",
+            notes = "User must have the DOMAIN_FORM[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_FORM[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_FORM[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Form successfully updated", response = Form.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_FORM, acls = RolePermissionAction.UPDATE)
-    })
     public void update(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("form") String form,
             @ApiParam(name = "form", required = true) @Valid @NotNull UpdateForm updateForm,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> formService.update(domain, form, updateForm, authenticatedUser))
-                .map(form1 -> Response.ok(form1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FORM, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FORM, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FORM, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> formService.update(domain, form, updateForm, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a form")
+    @ApiOperation(value = "Delete a form",
+            notes = "User must have the DOMAIN_FORM[DELETE] permission on the specified domain " +
+                    "or DOMAIN_FORM[DELETE] permission on the specified environment " +
+                    "or DOMAIN_FORM[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Form successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_FORM, acls = RolePermissionAction.DELETE)
-    })
-    public void delete(@PathParam("domain") String domain,
-                           @PathParam("form") String form,
-                           @Suspended final AsyncResponse response) {
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("form") String form,
+            @Suspended final AsyncResponse response) {
+
         final User authenticatedUser = getAuthenticatedUser();
 
-        formService.delete(domain, form, authenticatedUser)
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FORM, Acl.DELETE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FORM, Acl.DELETE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FORM, Acl.DELETE)))
+                .andThen(formService.delete(domain, form, authenticatedUser))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

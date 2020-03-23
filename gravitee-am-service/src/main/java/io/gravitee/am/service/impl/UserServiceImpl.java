@@ -132,7 +132,6 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-
     @Override
     public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
 
@@ -356,19 +355,9 @@ public class UserServiceImpl implements UserService {
                         return roleService.findByIdIn(new ArrayList<>(roles))
                                 // update role permission for role with scope
                                 .map(roles1 -> {
-                                    return roles1.stream()
-                                            .map(role -> {
-                                                if (role.getScope() != null) {
-                                                    role.getPermissions().forEach(p -> p = RoleScope.valueOf(role.getScope()).name() + "_" + p);
-                                                }
-                                                return role;
-                                            }).collect(Collectors.toSet());
-                                })
-                                .map(roles1 -> {
                                     user.setRolesPermissions(roles1);
                                     return user;
                                 });
-
                     }
                     return Single.just(user);
                 })

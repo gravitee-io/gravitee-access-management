@@ -376,7 +376,7 @@ public class ApplicationServiceTest {
             return mock;
         }).when(applicationTemplateManager).apply(any());
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
-        when(roleService.findSystemRole(SystemRole.PRIMARY_OWNER, RoleScope.APPLICATION)).thenReturn(Maybe.just(new Role()));
+        when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
 
         TestObserver testObserver = applicationService.create(DOMAIN, newClient, new DefaultUser("username")).test();
         testObserver.awaitTerminalEvent();

@@ -28,7 +28,7 @@ import {AuthService} from "../../../../../services/auth.service";
 export class ApplicationMembershipsComponent implements OnInit {
   private domainId: string;
   private application: any;
-  applicationRoleScope = 'APPLICATION';
+  applicationRoleType = 'APPLICATION';
   members: any;
   createMode = false;
   editMode = false;
@@ -45,9 +45,9 @@ export class ApplicationMembershipsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.application = this.route.snapshot.parent.parent.data['application'];
     this.members = this.route.snapshot.data['members'];
-    this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_member_create']);
-    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_member_update']);
-    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_member_delete']);
+    this.createMode = this.authService.hasPermissions(['application_member_create']);
+    this.editMode = this.authService.hasPermissions(['application_member_update']);
+    this.deleteMode = this.authService.hasPermissions(['application_member_delete']);
   }
 
 

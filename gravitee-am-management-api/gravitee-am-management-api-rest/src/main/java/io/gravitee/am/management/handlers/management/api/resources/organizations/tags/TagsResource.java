@@ -17,11 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.TagService;
 import io.gravitee.am.service.model.NewTag;
 import io.gravitee.common.http.MediaType;
@@ -37,7 +36,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -56,7 +54,7 @@ public class TagsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "List sharding tags",
-            notes = "List all the sharding tags.")
+            notes = "User must have the ORGANIZATION_TAG[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List all the sharding tags", response = Domain.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -64,26 +62,21 @@ public class TagsResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
 
-        tagService.findAll(organizationId)
-                .map(domains ->
-                        domains.stream()
-                                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                .collect(Collectors.toList()))
-                .subscribe(
-                        result -> response.resume(Response.ok(result).build()),
-                        response::resume);
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_TAG, Acl.READ)
+                .andThen(tagService.findAll(organizationId))
+                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                .toList()
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a sharding tags")
+    @ApiOperation(value = "Create a sharding tags",
+            notes = "User must have the ORGANIZATION_TAG[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Sharding tag successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_TAG, acls = RolePermissionAction.CREATE)
-    })
     public void create(
             @PathParam("organizationId") String organizationId,
             @ApiParam(name = "tag", required = true)
@@ -91,7 +84,8 @@ public class TagsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        tagService.create(newTag, organizationId, authenticatedUser)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_TAG, Acl.CREATE)
+                .andThen(tagService.create(newTag, organizationId, authenticatedUser))
                 .subscribe(
                         tag -> response.resume(Response
                                 .created(URI.create("/organizations/" + organizationId + "/tags/" + tag.getId()))

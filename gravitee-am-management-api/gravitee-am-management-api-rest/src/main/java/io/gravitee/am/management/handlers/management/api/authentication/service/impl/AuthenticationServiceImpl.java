@@ -23,9 +23,15 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
+import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
@@ -50,6 +56,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private MembershipService membershipService;
 
     @Autowired
     private AuditService auditService;
@@ -99,7 +111,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         newUser.setLoginsCount(1l);
                         newUser.setRoles(principal.getRoles());
                         newUser.setAdditionalInformation(principal.getAdditionalInformation());
-                        return userService.create(newUser);
+                        return userService.create(newUser)
+                                .flatMap(user -> setOrganizationUserRole(user.getId(), user.getReferenceId())
+                                        .map(membership -> user));
                     }
                     return Single.error(ex);
                 })
@@ -109,10 +123,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         principal.setId(endUser.getId());
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
-
-        if(endUser.getReferenceType() == ReferenceType.ORGANIZATION) {
-            principal.getAdditionalInformation().put(Claims.organization, endUser.getReferenceId());
-        }
+        principal.getAdditionalInformation().put(Claims.organization, endUser.getReferenceId());
 
         // set roles
         Set<String> roles = endUser.getRoles() != null ? new HashSet<>(endUser.getRoles()) : new HashSet<>();
@@ -123,5 +134,27 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         principal.getAdditionalInformation().put(CustomClaims.ROLES, roles);
 
         return principal;
+    }
+
+    /**
+     * Set the ORGANIZATION_USER role to a newly create user.
+     * Note: this business code should not be here and will be moved to a dedicated UserService when the following issue
+     * will be handled https://github.com/gravitee-io/issues/issues/3323
+     */
+    private Single<Membership> setOrganizationUserRole(String userId, String organizationId) {
+
+        // To access AM portal, a user must, at least have the ORGANIZATION[READ] permission (granted by the ORGANIZATION_USER role).
+        return roleService.findSystemRole(SystemRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)
+                .switchIfEmpty(Maybe.error(new TechnicalManagementException(String.format("Cannot add user membership to organization %s. Unable to find ORGANIZATION_USER role", organizationId))))
+                .flatMapSingle(role -> {
+                    Membership membership = new Membership();
+                    membership.setRoleId(role.getId());
+                    membership.setMemberType(MemberType.USER);
+                    membership.setMemberId(userId);
+                    membership.setReferenceType(ReferenceType.ORGANIZATION);
+                    membership.setReferenceId(organizationId);
+
+                    return membershipService.addOrUpdate(organizationId, membership);
+                });
     }
 }

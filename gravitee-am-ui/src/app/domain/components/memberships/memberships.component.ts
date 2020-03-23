@@ -25,7 +25,7 @@ import * as _ from 'lodash';
   styleUrls: ['./memberships.component.scss']
 })
 export class MembershipsComponent implements OnInit, OnChanges {
-  @Input('roleScope') roleScope: any;
+  @Input('roleType') roleType: any;
   @Input('members') members: any;
   @Input('createMode') createMode: boolean;
   @Input('editMode') editMode: boolean;
@@ -133,7 +133,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
   }
 
   isPrimaryOwner(membership) {
-    return membership.roleName && 'PRIMARY_OWNER' === membership.roleName;
+    return membership.roleName && membership.roleName.endsWith('_PRIMARY_OWNER');
   }
 
   private initMembers() {
@@ -141,12 +141,12 @@ export class MembershipsComponent implements OnInit, OnChanges {
     const metadata = this.members.metadata;
     this.userMembers = _.map(_.filter(memberships, {memberType: 'user'}), m => {
       m.name = (metadata['users'][m.memberId]) ? metadata['users'][m.memberId].displayName : 'Unknown user';
-      m.roleName = (metadata['roles'][m.role]) ? metadata['roles'][m.role].name : 'Unknown role';
+      m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
       return m;
     });
     this.groupMembers = _.map(_.filter(memberships, {memberType: 'group'}), m => {
       m.name = (metadata['groups'][m.memberId]) ? metadata['groups'][m.memberId].displayName : 'Unknown group';
-      m.roleName = (metadata['roles'][m.role]) ? metadata['roles'][m.role].name : 'Unknown role';
+      m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
       return m;
     });
     if (this.groups) {
@@ -155,7 +155,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
   }
 
   private loadRoles() {
-    this.organizationService.roles(this.roleScope).subscribe(response => {
+    this.organizationService.roles(this.roleType).subscribe(response => {
       this.roles = response;
     });
   }

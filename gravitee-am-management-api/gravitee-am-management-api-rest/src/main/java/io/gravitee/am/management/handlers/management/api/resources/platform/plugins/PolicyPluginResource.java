@@ -49,16 +49,16 @@ public class PolicyPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a policy plugin")
+    @ApiOperation(value = "Get a policy plugin",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("policy") String policyId,
             @Suspended final AsyncResponse response) {
+
         policyPluginService.findById(policyId)
                 .switchIfEmpty(Maybe.error(new PolicyPluginNotFoundException(policyId)))
                 .map(policyPlugin -> Response.ok(policyPlugin).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @GET
@@ -68,15 +68,13 @@ public class PolicyPluginResource {
     public void getSchema(
             @PathParam("policy") String policyId,
             @Suspended final AsyncResponse response) {
+
         // Check that the policy exists
         policyPluginService.findById(policyId)
                 .switchIfEmpty(Maybe.error(new PolicyPluginNotFoundException(policyId)))
                 .flatMap(irrelevant -> policyPluginService.getSchema(policyId))
                 .switchIfEmpty(Maybe.error(new PolicyPluginSchemaNotFoundException(policyId)))
                 .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+                .subscribe(response::resume, response::resume);
     }
 }

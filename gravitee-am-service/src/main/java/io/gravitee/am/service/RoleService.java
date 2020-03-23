@@ -18,11 +18,11 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -35,9 +35,7 @@ import java.util.Set;
  */
 public interface RoleService {
 
-    Single<Set<Role>> findAll(ReferenceType referenceType, String referenceId);
-
-    Single<Set<Role>> findAllSystem();
+    Flowable<Role> findAllAssignable(ReferenceType referenceType, String referenceId, ReferenceType assignableType);
 
     Single<Set<Role>> findByDomain(String domain);
 
@@ -45,11 +43,9 @@ public interface RoleService {
 
     Maybe<Role> findById(String id);
 
-    Maybe<Role> findSystemRole(SystemRole systemRole, RoleScope roleScope);
+    Maybe<Role> findSystemRole(SystemRole systemRole, ReferenceType assignableType);
 
     Single<Set<Role>> findByIdIn(List<String> ids);
-
-    Single<Role> createSystemRole(SystemRole systemRole, RoleScope roleScope, List<String> permissions, User principal);
 
     Single<Role> create(ReferenceType referenceType, String referenceId, NewRole newRole, User principal);
 
@@ -62,10 +58,6 @@ public interface RoleService {
     Completable delete(ReferenceType referenceType, String referenceId, String roleId, User principal);
 
     Completable createOrUpdateSystemRoles();
-
-    default Single<Role> createSystemRole(SystemRole systemRole, RoleScope roleScope, List<String> permissions) {
-        return createSystemRole(systemRole, roleScope, permissions, null);
-    }
 
     default Single<Role> create(String domain, NewRole role) {
         return create(domain, role, null);

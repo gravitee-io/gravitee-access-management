@@ -15,20 +15,20 @@
  */
 package io.gravitee.am.management.handlers.management.api.spring.security;
 
-import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationFailureHandler;
-import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationSuccessHandler;
-import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
-import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetailsSource;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.CheckAuthenticationCookieFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.JWTAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.SocialAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CookieClearingLogoutHandler;
+import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationFailureHandler;
+import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationSuccessHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomLogoutSuccessHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationProvider;
-import io.gravitee.am.management.handlers.management.api.authentication.web.XForwardedAwareRedirectStrategy;
-import io.gravitee.am.management.handlers.management.api.authentication.filter.JWTAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.web.RestAuthenticationEntryPoint;
+import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
+import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetailsSource;
+import io.gravitee.am.management.handlers.management.api.authentication.web.XForwardedAwareRedirectStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;

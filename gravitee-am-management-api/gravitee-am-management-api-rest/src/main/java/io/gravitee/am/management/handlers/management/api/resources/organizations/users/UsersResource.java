@@ -16,14 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.exception.UserInvalidException;
@@ -69,13 +67,11 @@ public class UsersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List users of the platform")
+    @ApiOperation(value = "List users of the organization",
+            notes = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List users of the platform", response = User.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List users of the organization", response = User.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_USER, acls = RolePermissionAction.READ)
-    })
     public void list(
             @PathParam("organizationId") String organizationId,
             @QueryParam("q") String query,
@@ -91,37 +87,34 @@ public class UsersResource extends AbstractResource {
             usersPageObs = userService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
         }
 
-        usersPageObs.flatMap(pagedUsers ->
-                Observable.fromIterable(pagedUsers.getData())
-                        .flatMapSingle(user -> {
-                            if (user.getSource() != null) {
-                                return identityProviderService.findById(user.getSource())
-                                        .map(idP -> {
-                                            user.setSource(idP.getName());
-                                            return user;
-                                        })
-                                        .defaultIfEmpty(user)
-                                        .toSingle();
-                            }
-                            return Single.just(user);
-                        })
-                        .toSortedList(Comparator.comparing(User::getUsername))
-                        .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
-        )
-                .map(users -> Response.ok(users).build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.READ)
+                .andThen(usersPageObs.flatMap(pagedUsers ->
+                        Observable.fromIterable(pagedUsers.getData())
+                                .flatMapSingle(user -> {
+                                    if (user.getSource() != null) {
+                                        return identityProviderService.findById(user.getSource())
+                                                .map(idP -> {
+                                                    user.setSource(idP.getName());
+                                                    return user;
+                                                })
+                                                .defaultIfEmpty(user)
+                                                .toSingle();
+                                    }
+                                    return Single.just(user);
+                                })
+                                .toSortedList(Comparator.comparing(User::getUsername))
+                                .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a platform user")
+    @ApiOperation(value = "Create a platform user",
+            notes = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "User successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_USER, acls = RolePermissionAction.CREATE)
-    })
     public void create(
             @PathParam("organizationId") String organizationId,
             @ApiParam(name = "user", required = true) @Valid @NotNull final NewUser newUser,
@@ -142,11 +135,12 @@ public class UsersResource extends AbstractResource {
             }
         }
 
-        userService.create(ReferenceType.ORGANIZATION, organizationId, newUser, authenticatedUser)
-                .map(user -> Response
-                        .created(URI.create("/organizations/" + organizationId + "/users/" + user.getId()))
-                        .entity(user)
-                        .build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.CREATE)
+                .andThen(userService.create(ReferenceType.ORGANIZATION, organizationId, newUser, authenticatedUser)
+                        .map(user -> Response
+                                .created(URI.create("/organizations/" + organizationId + "/users/" + user.getId()))
+                                .entity(user)
+                                .build()))
                 .subscribe(response::resume, response::resume);
     }
 

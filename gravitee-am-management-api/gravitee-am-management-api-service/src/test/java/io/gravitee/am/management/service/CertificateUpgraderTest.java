@@ -15,9 +15,7 @@
  */
 package io.gravitee.am.management.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.management.service.impl.upgrades.CertificateUpgrader;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.service.CertificateService;

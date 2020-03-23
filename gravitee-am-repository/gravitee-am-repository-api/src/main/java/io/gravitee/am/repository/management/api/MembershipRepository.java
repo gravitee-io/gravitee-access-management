@@ -17,7 +17,9 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -30,9 +32,9 @@ import java.util.List;
  */
 public interface MembershipRepository extends CrudRepository<Membership, String> {
 
-    Flowable<Membership> findAll();
-
     Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType);
 
-    Maybe<Membership> findByReferenceAndMember(String referenceId, String memberId);
+    Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria);
+
+    Maybe<Membership> findByReferenceAndMember(ReferenceType referenceType, String referenceId, MemberType memberType, String memberId);
 }

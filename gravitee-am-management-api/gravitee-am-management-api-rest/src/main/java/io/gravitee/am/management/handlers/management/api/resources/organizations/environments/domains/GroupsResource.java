@@ -17,11 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -40,6 +39,9 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -62,37 +64,40 @@ public class GroupsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List groups for a security domain")
+    @ApiOperation(value = "List groups for a security domain",
+            notes = "User must have the DOMAIN_GROUP[READ] permission on the specified domain " +
+                    "or DOMAIN_GROUP[READ] permission on the specified environment " +
+                    "or DOMAIN_GROUP[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List groups for a security domain", response = Group.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.READ)
-    })
-    public void list(@PathParam("domain") String domain,
-                     @QueryParam("page") @DefaultValue("0") int page,
-                     @QueryParam("size") @DefaultValue(MAX_GROUPS_SIZE_PER_PAGE_STRING) int size,
-                     @Suspended final AsyncResponse response) {
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> groupService.findByDomain(domain, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
-                        .map(groups -> Response.ok(groups).build())
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+    public void list(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue(MAX_GROUPS_SIZE_PER_PAGE_STRING) int size,
+            @Suspended final AsyncResponse response) {
+
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_GROUP, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_GROUP, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_GROUP, Acl.READ)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> groupService.findByDomain(domain, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))))
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a group")
+    @ApiOperation(value = "Create a group",
+            notes = "User must have the DOMAIN_GROUP[CREATE] permission on the specified domain " +
+                    "or DOMAIN_GROUP[CREATE] permission on the specified environment " +
+                    "or DOMAIN_GROUP[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Group successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.CREATE)
-    })
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -102,16 +107,17 @@ public class GroupsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> groupService.create(domain, newGroup, authenticatedUser))
-                .map(group -> Response
-                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/groups/" + group.getId()))
-                        .entity(group)
-                        .build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_GROUP, Acl.CREATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_GROUP, Acl.CREATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_GROUP, Acl.CREATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> groupService.create(domain, newGroup, authenticatedUser))
+                        .map(group -> Response
+                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/groups/" + group.getId()))
+                                .entity(group)
+                                .build()))
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{group}")

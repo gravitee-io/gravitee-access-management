@@ -41,12 +41,12 @@
           </mat-form-field>
         </div>
 
-        <div fxLayout="row" *hasPermission="['management_tag_update']">
+        <div fxLayout="row" *hasPermission="['organization_tag_update']">
           <button mat-raised-button [disabled]="(!tagForm.valid || tagForm.pristine)" type="submit">SAVE</button>
         </div>
       </form>
 
-      <div class="gv-page-delete-zone" fxLayout="column" *hasPermission="['management_tag_delete']">
+      <div class="gv-page-delete-zone" fxLayout="column" *hasPermission="['organization_tag_delete']">
         <p>This operation cannot be undone.</p>
         Sharding tag will be deleted and will not be used for gateway deployment.
         <div class="gv-page-delete-button" fxLayout="row">

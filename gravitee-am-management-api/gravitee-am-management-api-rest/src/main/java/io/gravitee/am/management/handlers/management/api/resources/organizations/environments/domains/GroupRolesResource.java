@@ -16,13 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
@@ -46,6 +44,9 @@ import javax.ws.rs.core.Context;
 import java.util.Collections;
 import java.util.List;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -66,50 +67,61 @@ public class GroupRolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a group roles")
+    @ApiOperation(value = "Get a group roles",
+            notes = "User must have the DOMAIN_GROUP[READ] permission on the specified domain " +
+                    "or DOMAIN_GROUP[READ] permission on the specified environment " +
+                    "or DOMAIN_GROUP[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Group roles successfully fetched", response = Role.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.READ)
-    })
-    public void list(@PathParam("domain") String domain,
-                     @PathParam("group") String group,
-                     @Suspended final AsyncResponse response) {
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMap(__ -> groupService.findById(group))
-                .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
-                .flatMapSingle(group1 -> {
-                    if (group1.getRoles() == null || group1.getRoles().isEmpty()) {
-                        return Single.just(Collections.emptyList());
-                    }
-                    return roleService.findByIdIn(group1.getRoles());
-                })
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+    public void list(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("group") String group,
+            @Suspended final AsyncResponse response) {
+
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_GROUP, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_GROUP, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_GROUP, Acl.READ)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(__ -> groupService.findById(group))
+                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
+                        .flatMapSingle(group1 -> {
+                            if (group1.getRoles() == null || group1.getRoles().isEmpty()) {
+                                return Single.just(Collections.emptyList());
+                            }
+                            return roleService.findByIdIn(group1.getRoles());
+                        }))
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Assign roles to a group")
+    @ApiOperation(value = "Assign roles to a group",
+            notes = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_GROUP[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Roles successfully assigned", response = Group.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.UPDATE)
-    })
-    public void assign(@PathParam("domain") String domain,
-                       @PathParam("group") String group,
-                       @Valid @NotNull final List<String> roles,
-                       @Suspended final AsyncResponse response) {
+    public void assign(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("group") String group,
+            @Valid @NotNull final List<String> roles,
+            @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(domain1 -> groupService.assignRoles(ReferenceType.DOMAIN, domain, group, roles, authenticatedUser))
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_GROUP, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_GROUP, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_GROUP, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(domain1 -> groupService.assignRoles(ReferenceType.DOMAIN, domain, group, roles, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

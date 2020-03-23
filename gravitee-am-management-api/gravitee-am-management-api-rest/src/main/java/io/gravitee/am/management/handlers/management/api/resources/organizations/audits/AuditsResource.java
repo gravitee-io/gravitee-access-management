@@ -17,12 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.management.handlers.management.api.model.AuditParam;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.AuditService;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.DomainService;
@@ -47,7 +46,7 @@ import java.util.Collections;
  * @author GraviteeSource Team
  */
 @Api(tags = {"audit"})
-public class AuditsResource {
+public class AuditsResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -60,13 +59,11 @@ public class AuditsResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List audit logs for the platform")
+    @ApiOperation(value = "List audit logs for the organization",
+            notes = "User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List audit logs for the platform", response = Audit.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_AUDIT, acls = RolePermissionAction.READ)
-    })
     public void list(
             @PathParam("organizationId") String organizationId,
             @BeanParam AuditParam param,
@@ -82,17 +79,8 @@ public class AuditsResource {
             queryBuilder.types(Collections.singletonList(param.getType()));
         }
 
-        auditService.search(ReferenceType.ORGANIZATION, organizationId, queryBuilder.build(), param.getPage(), param.getSize())
-                .map(pagedAudits -> Response.ok(pagedAudits).build())
-                .subscribe(response::resume, response::resume);
-    }
-
-    @GET
-    @Path("events")
-    @Produces(javax.ws.rs.core.MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List platform audit event types")
-    public void list(@Suspended final AsyncResponse response) {
-        Single.just(EventType.types())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_AUDIT, Acl.READ)
+                .andThen(auditService.search(ReferenceType.ORGANIZATION, organizationId, queryBuilder.build(), param.getPage(), param.getSize()))
                 .subscribe(response::resume, response::resume);
     }
 

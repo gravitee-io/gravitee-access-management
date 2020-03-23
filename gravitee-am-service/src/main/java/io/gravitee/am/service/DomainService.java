@@ -21,6 +21,7 @@ import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -35,6 +36,8 @@ import java.util.Set;
 public interface DomainService {
 
     Maybe<Domain> findById(String id);
+
+    Flowable<Domain> findAllByEnvironment(String organizationId, String environment);
 
     Single<Set<Domain>> findAll();
 

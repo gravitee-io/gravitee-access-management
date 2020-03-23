@@ -62,18 +62,20 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         MongoClientSettings.Builder builder = MongoClientSettings.builder();
         builder.writeConcern(WriteConcern.ACKNOWLEDGED);
 
-        // codec configuration for pojo mapping
-        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClients.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-        builder.codecRegistry(pojoCodecRegistry);
+        CodecRegistry defaultCodecRegistry = MongoClients.getDefaultCodecRegistry();
+        CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder()
+                .register("io.gravitee.am.repository.mongodb.model", "io.gravitee.am.model")
+                .automatic(true)
+                .build());
+
+        builder.codecRegistry(fromRegistries(defaultCodecRegistry, pojoCodecRegistry));
 
         // Trying to get the MongoClientURI if uri property is defined
         String uri = readPropertyValue(propertyPrefix + "uri");
-        if (uri != null && ! uri.isEmpty()) {
+        if (uri != null && !uri.isEmpty()) {
             // The builder can be configured with default options, which may be overridden by options specified in
             // the URI string.
             MongoClientSettings settings = builder
-                    .codecRegistry(pojoCodecRegistry)
                     .applyConnectionString(new ConnectionString(uri))
                     .build();
 

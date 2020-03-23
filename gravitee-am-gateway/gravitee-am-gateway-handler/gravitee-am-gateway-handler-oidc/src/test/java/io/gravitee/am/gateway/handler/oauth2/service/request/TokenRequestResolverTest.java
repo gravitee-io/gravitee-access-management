@@ -65,7 +65,7 @@ public class TokenRequestResolverTest {
 
         User user = new User();
         Role role = new Role();
-        role.setPermissions(userScopes);
+        role.setOauthScopes(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
@@ -95,7 +95,7 @@ public class TokenRequestResolverTest {
 
         User user = new User();
         Role role = new Role();
-        role.setPermissions(userScopes);
+        role.setOauthScopes(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
@@ -126,7 +126,7 @@ public class TokenRequestResolverTest {
 
         User user = new User();
         Role role = new Role();
-        role.setPermissions(userScopes);
+        role.setOauthScopes(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
@@ -173,7 +173,7 @@ public class TokenRequestResolverTest {
 
         User user = new User();
         Role role = new Role();
-        role.setPermissions(Collections.singletonList("user"));
+        role.setOauthScopes(Collections.singletonList("user"));
         user.setRolesPermissions(Collections.singleton(role));
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
@@ -205,7 +205,7 @@ public class TokenRequestResolverTest {
 
         User user = new User();
         Role role = new Role();
-        role.setPermissions(Collections.singletonList(scope));
+        role.setOauthScopes(Collections.singletonList(scope));
         user.setRolesPermissions(Collections.singleton(role));
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(authorizationRequest, client, user).test();

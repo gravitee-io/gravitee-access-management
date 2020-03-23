@@ -20,13 +20,11 @@ import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -51,6 +49,9 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -78,121 +79,137 @@ public class UserResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a user")
+    @ApiOperation(value = "Get a user",
+            notes = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
+                    "or DOMAIN_USER[READ] permission on the specified environment " +
+                    "or DOMAIN_USER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "User successfully fetched", response = UserEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.READ)
-    })
     public void get(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("user") String user,
             @Suspended final AsyncResponse response) {
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMap(irrelevant -> userService.findById(user))
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
-                .flatMap(user1 -> {
-                    if (user1.getReferenceType() == ReferenceType.DOMAIN
-                            && !user1.getReferenceId().equalsIgnoreCase(domain)) {
-                        throw new BadRequestException("User does not belong to domain");
-                    }
-                    return Maybe.just(new UserEntity(user1));
-                })
-                .flatMap(this::enhanceIdentityProvider)
-                .flatMap(this::enhanceClient)
-                .map(user1 -> Response.ok(user1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.READ)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(irrelevant -> userService.findById(user))
+                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
+                        .flatMap(user1 -> {
+                            if (user1.getReferenceType() == ReferenceType.DOMAIN
+                                    && !user1.getReferenceId().equalsIgnoreCase(domain)) {
+                                throw new BadRequestException("User does not belong to domain");
+                            }
+                            return Maybe.just(new UserEntity(user1));
+                        })
+                        .flatMap(this::enhanceIdentityProvider)
+                        .flatMap(this::enhanceClient))
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a user")
+    @ApiOperation(value = "Update a user",
+            notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "User successfully updated", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
-    })
     public void updateUser(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("user") String user,
             @ApiParam(name = "user", required = true) @Valid @NotNull UpdateUser updateUser,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> userService.update(ReferenceType.DOMAIN, domain, user, updateUser, authenticatedUser))
-                .map(user1 -> Response.ok(user1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> userService.update(ReferenceType.DOMAIN, domain, user, updateUser, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Path("/status")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a user status")
+    @ApiOperation(value = "Update a user status",
+            notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "User status successfully updated", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
-    })
     public void updateUserStatus(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("user") String user,
             @ApiParam(name = "status", required = true) @Valid @NotNull StatusEntity status,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> userService.updateStatus(ReferenceType.DOMAIN, domain, user, status.isEnabled(), authenticatedUser))
-                .map(user1 -> Response.ok(user1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> userService.updateStatus(ReferenceType.DOMAIN, domain, user, status.isEnabled(), authenticatedUser)))
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a user")
+    @ApiOperation(value = "Delete a user",
+            notes = "User must have the DOMAIN_USER[DELETE] permission on the specified domain " +
+                    "or DOMAIN_USER[DELETE] permission on the specified environment " +
+                    "or DOMAIN_USER[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "User successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.DELETE)
-    })
-    public void delete(@PathParam("domain") String domain,
-                       @PathParam("user") String user,
-                       @Suspended final AsyncResponse response) {
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("user") String user,
+            @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> userService.delete(ReferenceType.DOMAIN, domain, user, authenticatedUser))
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.DELETE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.DELETE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.DELETE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapCompletable(irrelevant -> userService.delete(ReferenceType.DOMAIN, domain, user, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @POST
     @Path("resetPassword")
-    @ApiOperation(value = "Reset password")
+    @ApiOperation(value = "Reset password",
+            notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Password reset"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
-    })
-    public void resetPassword(@PathParam("domain") String domain,
-                              @PathParam("user") String user,
-                              @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
-                              @Suspended final AsyncResponse response) {
+    public void resetPassword(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("user") String user,
+            @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
+            @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         // check password policy
@@ -201,59 +218,67 @@ public class UserResource extends AbstractResource {
             return;
         }
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(user1 -> userService.resetPassword(ReferenceType.DOMAIN, domain, user, password.getPassword(), authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapCompletable(user1 -> userService.resetPassword(ReferenceType.DOMAIN, domain, user, password.getPassword(), authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
 
     }
 
     @POST
     @Path("sendRegistrationConfirmation")
-    @ApiOperation(value = "Send registration confirmation email")
+    @ApiOperation(value = "Send registration confirmation email",
+            notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Email sent"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
-    })
-    public void sendRegistrationConfirmation(@PathParam("domain") String domain,
-                                             @PathParam("user") String user,
-                                             @Suspended final AsyncResponse response) {
+    public void sendRegistrationConfirmation(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("user") String user,
+            @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> userService.sendRegistrationConfirmation(ReferenceType.DOMAIN, domain, user, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapCompletable(irrelevant -> userService.sendRegistrationConfirmation(ReferenceType.DOMAIN, domain, user, authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
 
     }
 
-
     @POST
     @Path("unlock")
-    @ApiOperation(value = "Unlock a user")
+    @ApiOperation(value = "Unlock a user",
+            notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "User unlocked"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.UPDATE)
-    })
-    public void unlockUser(@PathParam("domain") String domain,
-                           @PathParam("user") String user,
-                           @Suspended final AsyncResponse response) {
+    public void unlockUser(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("user") String user,
+            @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(irrelevant -> userService.unlock(ReferenceType.DOMAIN, domain, user, authenticatedUser))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapCompletable(irrelevant -> userService.unlock(ReferenceType.DOMAIN, domain, user, authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
 
     }
 

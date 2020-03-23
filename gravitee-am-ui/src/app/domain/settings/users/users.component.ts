@@ -52,7 +52,7 @@ export class UsersComponent implements OnInit {
       this.organizationContext = true;
       this.createMode = false;
     } else {
-      this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_create']);
+      this.createMode = this.authService.hasPermissions(['domain_user_create']);
     }
     this.pagedUsers = this.route.snapshot.data['users'];
     this.users = this.pagedUsers.data;

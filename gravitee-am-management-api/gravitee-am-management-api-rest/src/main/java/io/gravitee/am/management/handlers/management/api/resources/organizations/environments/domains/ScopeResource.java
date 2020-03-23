@@ -17,11 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -45,6 +44,9 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -64,100 +66,113 @@ public class ScopeResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a scope")
+    @ApiOperation(value = "Get a scope",
+            notes = "User must have the DOMAIN_SCOPE[READ] permission on the specified domain " +
+                    "or DOMAIN_SCOPE[READ] permission on the specified environment " +
+                    "or DOMAIN_SCOPE[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Client", response = Scope.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.READ)
-    })
     public void get(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("scope") String scopeId,
             @Suspended final AsyncResponse response) {
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMap(irrelevant -> scopeService.findById(scopeId))
-                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
-                .map(scope -> {
-                    if (!scope.getDomain().equalsIgnoreCase(domain)) {
-                        throw new BadRequestException("Scope does not belong to domain");
-                    }
-                    return Response.ok(scope).build();
-                })
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_SCOPE, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SCOPE, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SCOPE, Acl.READ)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(irrelevant -> scopeService.findById(scopeId))
+                        .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
+                        .map(scope -> {
+                            if (!scope.getDomain().equalsIgnoreCase(domain)) {
+                                throw new BadRequestException("Scope does not belong to domain");
+                            }
+                            return Response.ok(scope).build();
+                        }))
+                .subscribe(response::resume, response::resume);
     }
 
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Patch a scope")
+    @ApiOperation(value = "Patch a scope",
+            notes = "User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_SCOPE[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_SCOPE[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Scope successfully patched", response = Scope.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.UPDATE)
-    })
     public void patch(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("scope") String scope,
             @ApiParam(name = "scope", required = true) @Valid @NotNull PatchScope patchScope,
             @Suspended final AsyncResponse response) {
+
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> scopeService.patch(domain, scope, patchScope, authenticatedUser))
-                .map(scope1 -> Response.ok(scope1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_SCOPE, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SCOPE, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SCOPE, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> scopeService.patch(domain, scope, patchScope, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a scope")
+    @ApiOperation(value = "Update a scope",
+            notes = "User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_SCOPE[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_SCOPE[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Scope successfully updated", response = Scope.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.UPDATE)
-    })
     public void update(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("scope") String scope,
             @ApiParam(name = "scope", required = true) @Valid @NotNull UpdateScope updateScope,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> scopeService.update(domain, scope, updateScope, authenticatedUser))
-                .map(scope1 -> Response.ok(scope1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_SCOPE, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SCOPE, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SCOPE, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> scopeService.update(domain, scope, updateScope, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a scope")
+    @ApiOperation(value = "Delete a scope",
+            notes = "User must have the DOMAIN_SCOPE[DELETE] permission on the specified domain " +
+                    "or DOMAIN_SCOPE[DELETE] permission on the specified environment " +
+                    "or DOMAIN_SCOPE[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Scope successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.DELETE)
-    })
-    public void delete(@PathParam("domain") String domain,
-                       @PathParam("scope") String scope,
-                       @Suspended final AsyncResponse response) {
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("scope") String scope,
+            @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        scopeService.delete(scope, false, authenticatedUser)
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_SCOPE, Acl.DELETE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SCOPE, Acl.DELETE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SCOPE, Acl.DELETE)))
+                .andThen(scopeService.delete(scope, false, authenticatedUser))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

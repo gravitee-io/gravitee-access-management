@@ -39,6 +39,6 @@ export class ApplicationDesignComponent implements OnInit {
   }
 
   private canNavigate(permissions): boolean {
-    return this.authService.isAdmin() || this.authService.hasPermissions(permissions);
+    return this.authService.hasPermissions(permissions);
   }
 }

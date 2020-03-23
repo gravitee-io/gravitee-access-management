@@ -65,7 +65,7 @@
                   [subMessage]="'No data to display'"
                   [icon]="'devices'"></app-emptystate>
 
-  <div *hasPermission="['domain_application_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *hasPermission="['application_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
     <a mat-fab color="accent" [routerLink]="this.newApplicationRouterLink">
       <mat-icon>add</mat-icon>
     </a>

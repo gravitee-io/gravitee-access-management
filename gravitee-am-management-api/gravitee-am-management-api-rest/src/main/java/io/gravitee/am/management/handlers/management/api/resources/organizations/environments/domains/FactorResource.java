@@ -17,11 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Factor;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -44,6 +43,9 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -61,72 +63,85 @@ public class FactorResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a policy")
+    @ApiOperation(value = "Get a factor",
+            notes = "User must have the DOMAIN_FACTOR[READ] permission on the specified domain " +
+                    "or DOMAIN_FACTOR[READ] permission on the specified environment " +
+                    "or DOMAIN_FACTOR[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Factor successfully fetched", response = Factor.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_FACTOR, acls = RolePermissionAction.READ)
-    })
-    public void get(@PathParam("domain") String domain,
-                    @PathParam("factor") String factor,
-                    @Suspended final AsyncResponse response) {
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMap(__ -> factorService.findById(factor))
-                .switchIfEmpty(Maybe.error(new FactorNotFoundException(factor)))
-                .map(factor1 -> {
-                    if (!factor1.getDomain().equalsIgnoreCase(domain)) {
-                        throw new BadRequestException("Factor does not belong to domain");
-                    }
-                    return Response.ok(factor1).build();
-                })
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+    public void get(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("factor") String factor,
+            @Suspended final AsyncResponse response) {
+
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FACTOR, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FACTOR, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FACTOR, Acl.READ)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(__ -> factorService.findById(factor))
+                        .switchIfEmpty(Maybe.error(new FactorNotFoundException(factor)))
+                        .map(factor1 -> {
+                            if (!factor1.getDomain().equalsIgnoreCase(domain)) {
+                                throw new BadRequestException("Factor does not belong to domain");
+                            }
+                            return Response.ok(factor1).build();
+                        }))
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a factor")
+    @ApiOperation(value = "Update a factor",
+            notes = "User must have the DOMAIN_FACTOR[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_FACTOR[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_FACTOR[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Factor successfully updated", response = Factor.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_FACTOR, acls = RolePermissionAction.UPDATE)
-    })
-    public void update(@PathParam("domain") String domain,
-                       @PathParam("policy") String policy,
-                       @ApiParam(name = "identity", required = true) @Valid @NotNull UpdateFactor updateFactor,
-                       @Suspended final AsyncResponse response) {
+    public void update(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("policy") String policy,
+            @ApiParam(name = "identity", required = true) @Valid @NotNull UpdateFactor updateFactor,
+            @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(__ -> factorService.update(domain, policy, updateFactor, authenticatedUser))
-                .map(factor1 -> Response.ok(factor1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FACTOR, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FACTOR, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FACTOR, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(__ -> factorService.update(domain, policy, updateFactor, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a factor")
+    @ApiOperation(value = "Delete a factor",
+            notes = "User must have the DOMAIN_FACTOR[DELETE] permission on the specified domain " +
+                    "or DOMAIN_FACTOR[DELETE] permission on the specified environment " +
+                    "or DOMAIN_FACTOR[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Factor successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_EXTENSION_POINT, acls = RolePermissionAction.DELETE)
-    })
-    public void delete(@PathParam("domain") String domain,
-                       @PathParam("factor") String factor,
-                       @Suspended final AsyncResponse response) {
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("factor") String factor,
+            @Suspended final AsyncResponse response) {
+
         final User authenticatedUser = getAuthenticatedUser();
 
-        factorService.delete(domain, factor, authenticatedUser)
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FACTOR, Acl.DELETE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FACTOR, Acl.DELETE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FACTOR, Acl.DELETE)))
+                .andThen(factorService.delete(domain, factor, authenticatedUser))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

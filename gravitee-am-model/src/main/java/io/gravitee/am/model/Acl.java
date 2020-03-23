@@ -13,21 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.security;
+package io.gravitee.am.model;
 
-import javax.ws.rs.NameBinding;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@NameBinding
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Permissions {
-    Permission[] value();
+public enum Acl {
+    CREATE,
+    READ,
+    UPDATE,
+    DELETE;
+
+    private static final Set<Acl> ALL = Arrays.stream(values()).collect(Collectors.toSet());
+
+    public static Set<Acl> all() {
+        return ALL;
+    }
+
+    public static Set<Acl> of(Acl... acls) {
+
+        return Arrays.stream(acls).collect(Collectors.toSet());
+    }
 }

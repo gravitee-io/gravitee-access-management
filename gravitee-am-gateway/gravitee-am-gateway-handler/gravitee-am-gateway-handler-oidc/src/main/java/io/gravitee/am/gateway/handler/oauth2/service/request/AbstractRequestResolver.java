@@ -73,7 +73,7 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             Set<Role> roles = endUser.getRolesPermissions();
             if (roles != null && !roles.isEmpty()) {
                 Set<String> permissions = roles.stream()
-                        .map(role -> role.getPermissions() != null ? role.getPermissions() : Collections.<String>emptyList())
+                        .map(role -> role.getOauthScopes() != null ? role.getOauthScopes() : Collections.<String>emptyList())
                         .flatMap(List::stream)
                         .collect(Collectors.toSet());
                 

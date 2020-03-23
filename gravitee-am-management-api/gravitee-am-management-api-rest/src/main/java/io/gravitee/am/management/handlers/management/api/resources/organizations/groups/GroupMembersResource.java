@@ -15,13 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.groups;
 
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.common.http.MediaType;
@@ -37,14 +36,13 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
 import java.util.Comparator;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GroupMembersResource {
+public class GroupMembersResource extends AbstractResource {
 
     private static final int MAX_MEMBERS_SIZE_PER_PAGE = 30;
     private static final String MAX_MEMBERS_SIZE_PER_PAGE_STRING = "30";
@@ -60,13 +58,11 @@ public class GroupMembersResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List group members")
+    @ApiOperation(value = "List group members",
+            notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Group members successfully fetched", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_GROUP, acls = RolePermissionAction.READ)
-    })
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("group") String group,
@@ -74,28 +70,28 @@ public class GroupMembersResource {
             @QueryParam("size") @DefaultValue(MAX_MEMBERS_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
-        groupService.findMembers(ReferenceType.ORGANIZATION, organizationId, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE))
-                .flatMap(pagedMembers -> {
-                    if (pagedMembers.getData() == null) {
-                        return Single.just(pagedMembers);
-                    }
-                    return Observable.fromIterable(pagedMembers.getData())
-                            .flatMapSingle(member -> {
-                                if (member.getSource() != null) {
-                                    return identityProviderService.findById(member.getSource())
-                                            .map(idP -> {
-                                                member.setSource(idP.getName());
-                                                return member;
-                                            })
-                                            .defaultIfEmpty(member)
-                                            .toSingle();
-                                }
-                                return Single.just(member);
-                            })
-                            .toSortedList(Comparator.comparing(User::getUsername))
-                            .map(members -> new Page<>(members, pagedMembers.getCurrentPage(), pagedMembers.getTotalCount()));
-                })
-                .map(members -> Response.ok(members).build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.READ)
+                .andThen(groupService.findMembers(ReferenceType.ORGANIZATION, organizationId, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE))
+                        .flatMap(pagedMembers -> {
+                            if (pagedMembers.getData() == null) {
+                                return Single.just(pagedMembers);
+                            }
+                            return Observable.fromIterable(pagedMembers.getData())
+                                    .flatMapSingle(member -> {
+                                        if (member.getSource() != null) {
+                                            return identityProviderService.findById(member.getSource())
+                                                    .map(idP -> {
+                                                        member.setSource(idP.getName());
+                                                        return member;
+                                                    })
+                                                    .defaultIfEmpty(member)
+                                                    .toSingle();
+                                        }
+                                        return Single.just(member);
+                                    })
+                                    .toSortedList(Comparator.comparing(User::getUsername))
+                                    .map(members -> new Page<>(members, pagedMembers.getCurrentPage(), pagedMembers.getTotalCount()));
+                        }))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -15,20 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments;
 
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains.DomainsResource;
-import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.model.NewEnvironment;
-import io.gravitee.common.http.MediaType;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
-import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 
 /**

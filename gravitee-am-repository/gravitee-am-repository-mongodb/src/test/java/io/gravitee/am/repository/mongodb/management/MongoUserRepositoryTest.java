@@ -65,6 +65,8 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
     public void testFindById() throws TechnicalException {
         // create user
         User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("domainId");
         user.setUsername("testsUsername");
         User userCreated = userRepository.create(user).blockingGet();
 
@@ -103,6 +105,8 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
     @Test
     public void testCreate() throws TechnicalException {
         User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("domainId");
         user.setUsername("testsUsername");
         user.setAdditionalInformation(Collections.singletonMap("email", "johndoe@test.com"));
         TestObserver<User> testObserver = userRepository.create(user).test();
@@ -117,11 +121,15 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
     public void testUpdate() throws TechnicalException {
         // create user
         User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("domainId");
         user.setUsername("testsUsername");
         User userCreated = userRepository.create(user).blockingGet();
 
         // update user
         User updatedUser = new User();
+        updatedUser.setReferenceType(ReferenceType.DOMAIN);
+        updatedUser.setReferenceId("domainId");
         updatedUser.setId(userCreated.getId());
         updatedUser.setUsername("testUpdatedUsername");
 
@@ -137,6 +145,8 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
     public void testDelete() throws TechnicalException {
         // create user
         User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("domainId");
         user.setUsername("testsUsername");
         User userCreated = userRepository.create(user).blockingGet();
 
@@ -166,7 +176,7 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         userRepository.create(user).blockingGet();
 
         User user2 = new User();
-        user.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceType(ReferenceType.DOMAIN);
         user2.setReferenceId(domain);
         user2.setUsername("testUsername2");
         userRepository.create(user2).blockingGet();

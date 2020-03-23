@@ -16,14 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.common.http.MediaType;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,13 +45,12 @@ public class UserRoleResource extends AbstractResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Revoke user role",
+            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Roles successfully revoked", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_USER, acls = RolePermissionAction.DELETE)
-    })
-    public void list(
+    public void revokeRoles(
             @PathParam("organizationId") String organizationId,
             @PathParam("user") String user,
             @PathParam("role") String role,
@@ -60,7 +58,8 @@ public class UserRoleResource extends AbstractResource {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        userService.revokeRoles(ReferenceType.ORGANIZATION, organizationId, user, Collections.singletonList(role), authenticatedUser)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(userService.revokeRoles(ReferenceType.ORGANIZATION, organizationId, user, Collections.singletonList(role), authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 }

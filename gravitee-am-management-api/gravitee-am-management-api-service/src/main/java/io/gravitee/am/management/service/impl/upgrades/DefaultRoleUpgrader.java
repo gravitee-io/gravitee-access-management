@@ -15,24 +15,12 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Organization;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
-import io.gravitee.am.model.permissions.ManagementPermission;
-import io.gravitee.am.model.permissions.RoleScope;
-import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.model.NewIdentityProvider;
-import io.gravitee.am.service.model.PatchOrganization;
-import io.gravitee.am.service.model.UpdateIdentityProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
-
-import java.util.Collections;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -49,8 +49,8 @@ export class ScopeComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.scope = this.route.snapshot.data['scope'];
-    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_scope_update']);
-    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_scope_delete']);
+    this.editMode = this.authService.hasPermissions(['domain_scope_update']);
+    this.deleteMode = this.authService.hasPermissions(['domain_scope_delete']);
     this.initBreadcrumb();
   }
 

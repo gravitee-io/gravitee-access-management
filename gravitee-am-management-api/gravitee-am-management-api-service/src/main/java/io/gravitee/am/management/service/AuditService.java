@@ -16,8 +16,8 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.common.analytics.Type;
-import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.reactivex.Maybe;

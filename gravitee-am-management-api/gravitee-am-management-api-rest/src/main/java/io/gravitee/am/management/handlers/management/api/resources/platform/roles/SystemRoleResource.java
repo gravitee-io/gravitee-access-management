@@ -15,40 +15,27 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.roles;
 
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.model.permissions.RoleScope;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
-import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -66,32 +53,28 @@ public class SystemRoleResource extends AbstractResource {
     @GET
     @Path("{role}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a system role")
+    @ApiOperation(value = "Get a system role",
+            notes = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "System role successfully fetched", response = Role.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @io.gravitee.am.management.handlers.management.api.security.Permission(value = RolePermission.MANAGEMENT_ROLE, acls = RolePermissionAction.READ)
-    })
     public void get(
             @PathParam("role") String role,
             @Suspended final AsyncResponse response) {
 
+        // No permission needed to read system role.
         roleService.findById(ReferenceType.PLATFORM, Platform.DEFAULT, role)
                 .map(this::convert)
                 .subscribe(response::resume, response::resume);
     }
 
     private RoleEntity convert(Role role) {
+
         RoleEntity roleEntity = new RoleEntity(role);
-        if (role.getScope() != null) {
-            try {
-                Permission[] permissions = Permission.findByScope(RoleScope.valueOf(role.getScope()));
-                List<String> availablePermissions = Arrays.asList(permissions).stream().map(Permission::getMask).sorted().collect(Collectors.toList());
-                roleEntity.setAvailablePermissions(availablePermissions);
-            } catch (Exception ex) {
-            }
-        }
+
+        roleEntity.setAvailablePermissions(Permission.allPermissions(role.getAssignableType()).stream().map(permission -> permission.name().toLowerCase()).collect(Collectors.toList()));
+        roleEntity.setPermissions(Permission.flatten(role.getPermissions()));
+
         return roleEntity;
     }
 }

@@ -29,7 +29,7 @@ export class RoleCreationComponent implements OnInit {
   private domainId: string;
   organizationContext: boolean;
   role: any = {};
-  roleScopes: any[] = ['MANAGEMENT', 'DOMAIN', 'APPLICATION'];
+  roleTypes: any[] = ['ORGANIZATION', 'DOMAIN', 'APPLICATION'];
 
   constructor(private roleService: RoleService,
               private organizationService: OrganizationService,

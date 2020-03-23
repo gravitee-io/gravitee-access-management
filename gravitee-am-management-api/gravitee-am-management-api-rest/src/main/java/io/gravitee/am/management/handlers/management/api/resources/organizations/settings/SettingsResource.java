@@ -17,11 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.model.PatchOrganization;
 import io.gravitee.common.http.MediaType;
@@ -49,39 +48,36 @@ public class SettingsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get platform main settings")
+    @ApiOperation(value = "Get organization main settings",
+            notes = "User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Platform settings successfully fetched", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_SETTINGS, acls = RolePermissionAction.READ)
-    })
     public void get(
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
 
-        organizationService.findById(organizationId)
-                .subscribe(domain -> response.resume(Response.ok(domain).build()), response::resume);
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_SETTINGS, Acl.READ)
+                .andThen(organizationService.findById(organizationId))
+                .subscribe(response::resume, response::resume);
     }
-
 
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update platform main settings")
+    @ApiOperation(value = "Update platform main settings",
+            notes = "User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Platform settings successfully patched", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_SETTINGS, acls = RolePermissionAction.UPDATE)
-    })
     public void patch(
             @PathParam("organizationId") String organizationId,
             @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchOrganization patchOrganization,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        organizationService.update(organizationId, patchOrganization, authenticatedUser)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_SETTINGS, Acl.UPDATE)
+                .andThen(organizationService.update(organizationId, patchOrganization, authenticatedUser))
                 .subscribe(organization -> response.resume(Response.ok(organization).build()), response::resume);
     }
 }

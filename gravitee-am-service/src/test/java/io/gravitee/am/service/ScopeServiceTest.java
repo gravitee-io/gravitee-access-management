@@ -17,10 +17,12 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
@@ -528,7 +530,7 @@ public class ScopeServiceTest {
 
         Role role = mock(Role.class);
         when(role.getId()).thenReturn("role-1");
-        when(role.getPermissions()).thenReturn(new LinkedList<>(Arrays.asList("my-scope")));
+        when(role.getOauthScopes()).thenReturn(new LinkedList<>(Arrays.asList("my-scope")));
 
         Application application = mock(Application.class);
 

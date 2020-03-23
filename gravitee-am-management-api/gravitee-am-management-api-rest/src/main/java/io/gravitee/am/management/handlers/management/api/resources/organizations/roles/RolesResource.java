@@ -18,12 +18,9 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
-import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.common.http.MediaType;
@@ -39,8 +36,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -57,61 +52,43 @@ public class RolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered roles of the platform")
+    @ApiOperation(value = "List registered roles of the organization",
+            notes = "User must have the ORGANIZATION_ROLE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered roles of the platform", response = RoleEntity.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered roles of the organization", response = RoleEntity.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
-            @QueryParam("scope") RoleScope scope,
+            @QueryParam("type") ReferenceType type,
             @Suspended final AsyncResponse response) {
 
-        roleService.findAll(ReferenceType.ORGANIZATION, organizationId)
-                .map(roles -> {
-                    List<RoleEntity> sortedRoles = roles.stream()
-                            // filter by scope
-                            .filter(role -> {
-                                if (scope == null) {
-                                    return true;
-                                }
-                                return role.getScope() != null && scope.getId() == role.getScope();
-                            })
-                            // if scope is not management return only non system role
-                            .filter(role -> {
-                                if (scope == null || RoleScope.MANAGEMENT.getId() == role.getScope()) {
-                                    return true;
-                                }
-                                return !role.isSystem();
-                            })
-                            .map(RoleEntity::new)
-                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                            .collect(Collectors.toList());
-                    return Response.ok(sortedRoles).build();
-                })
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ROLE, Acl.READ)
+                .andThen(roleService.findAllAssignable(ReferenceType.ORGANIZATION, organizationId, type)
+                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                        .toList())
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a platform role")
+    @ApiOperation(value = "Create a role for the organization",
+            notes = "User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Role successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_ROLE, acls = RolePermissionAction.CREATE)
-    })
     public void create(
             @PathParam("organizationId") String organizationId,
             @ApiParam(name = "role", required = true) @Valid @NotNull final NewRole newRole,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        roleService.create(ReferenceType.ORGANIZATION, organizationId, newRole, authenticatedUser)
-                .map(role -> Response
-                        .created(URI.create("/organizations/" + organizationId + "/roles/" + role.getId()))
-                        .entity(role)
-                        .build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ROLE, Acl.CREATE)
+                .andThen(roleService.create(ReferenceType.ORGANIZATION, organizationId, newRole, authenticatedUser)
+                        .map(role -> Response
+                                .created(URI.create("/organizations/" + organizationId + "/roles/" + role.getId()))
+                                .entity(role)
+                                .build()))
                 .subscribe(response::resume, response::resume);
     }
 

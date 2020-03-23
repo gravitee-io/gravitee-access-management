@@ -17,12 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.model.EnrolledFactorEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -47,6 +46,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -67,42 +69,45 @@ public class UserFactorsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a user enrolled factors")
+    @ApiOperation(value = "Get a user enrolled factors",
+            notes = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
+                    "or DOMAIN_USER[READ] permission on the specified environment " +
+                    "or DOMAIN_USER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "User enrolled factors successfully fetched", response = EnrolledFactor.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.READ)
-    })
-    public void list(@PathParam("domain") String domain,
-                     @PathParam("user") String user,
-                     @Suspended final AsyncResponse response) {
+    public void list(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("user") String user,
+            @Suspended final AsyncResponse response) {
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMap(__ -> userService.findById(user))
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
-                .flatMapSingle(user1 -> {
-                    if (user1.getFactors() == null) {
-                        return Single.just(Collections.emptyList());
-                    }
-                    return Observable.fromIterable(user1.getFactors())
-                            .flatMapMaybe(enrolledFactor ->
-                                    factorService.findById(enrolledFactor.getFactorId())
-                                            .map(factor -> {
-                                                EnrolledFactorEntity enrolledFactorEntity = new EnrolledFactorEntity(enrolledFactor);
-                                                enrolledFactorEntity.setType(factor.getType());
-                                                enrolledFactorEntity.setName(factor.getName());
-                                                return enrolledFactorEntity;
-                                            })
-                                            .defaultIfEmpty(unknown(enrolledFactor))
-                            )
-                            .toList();
-                })
-                .map(factors ->  Response.ok(factors).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.READ)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(__ -> userService.findById(user))
+                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
+                        .flatMapSingle(user1 -> {
+                            if (user1.getFactors() == null) {
+                                return Single.just(Collections.emptyList());
+                            }
+                            return Observable.fromIterable(user1.getFactors())
+                                    .flatMapMaybe(enrolledFactor ->
+                                            factorService.findById(enrolledFactor.getFactorId())
+                                                    .map(factor -> {
+                                                        EnrolledFactorEntity enrolledFactorEntity = new EnrolledFactorEntity(enrolledFactor);
+                                                        enrolledFactorEntity.setType(factor.getType());
+                                                        enrolledFactorEntity.setName(factor.getName());
+                                                        return enrolledFactorEntity;
+                                                    })
+                                                    .defaultIfEmpty(unknown(enrolledFactor))
+                                    )
+                                    .toList();
+                        }))
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{factor}")

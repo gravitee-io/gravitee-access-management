@@ -67,10 +67,6 @@ export class AuthService {
     return this.user() !== undefined;
   }
 
-  isAdmin(): boolean {
-    return this.isAuthenticated() && this.user().is_admin;
-  }
-
   hasPermissions(permissions): boolean {
     return this.isAuthenticated() &&
       permissions.every(v => this.user().permissions.indexOf(v) >= 0 ||

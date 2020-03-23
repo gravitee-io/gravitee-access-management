@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RoleScope;
+import io.gravitee.am.model.Role;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -33,12 +33,16 @@ public class RoleEntity {
     private String description;
     private ReferenceType referenceType;
     private String referenceId;
-    private String scope;
+    private String assignableType;
     private List<String> permissions;
     private List<String> availablePermissions;
     private boolean system;
     private Date createdAt;
     private Date updatedAt;
+
+    public RoleEntity() {
+        super();
+    }
 
     public RoleEntity(Role other) {
         this.id = other.getId();
@@ -46,8 +50,7 @@ public class RoleEntity {
         this.description = other.getDescription();
         this.referenceType = other.getReferenceType();
         this.referenceId = other.getReferenceId();
-        this.scope = convert(other.getScope());
-        this.permissions = other.getPermissions();
+        this.assignableType = other.getAssignableType() == null ? null : other.getAssignableType().name();
         this.system = other.isSystem();
         this.createdAt = other.getCreatedAt();
         this.updatedAt = other.getUpdatedAt();
@@ -93,14 +96,6 @@ public class RoleEntity {
         this.referenceId = referenceId;
     }
 
-    public String getScope() {
-        return scope;
-    }
-
-    public void setScope(String scope) {
-        this.scope = scope;
-    }
-
     public List<String> getPermissions() {
         return permissions;
     }
@@ -141,11 +136,11 @@ public class RoleEntity {
         this.updatedAt = updatedAt;
     }
 
-    private static String convert(Integer scope) {
-        try {
-            return scope != null ? RoleScope.valueOf(scope).name() : null;
-        } catch (Exception ex) {
-            return null;
-        }
+    public String getAssignableType() {
+        return assignableType;
+    }
+
+    public void setAssignableType(String assignableType) {
+        this.assignableType = assignableType;
     }
 }

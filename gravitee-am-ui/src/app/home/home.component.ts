@@ -40,7 +40,7 @@ export class HomeComponent implements OnInit {
         this.router.navigate(['/domains', response[0].id]);
       } else {
         this.isLoading = false;
-        this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['management_domain_create']);
+        this.readonly = !this.authService.hasPermissions(['domain_create']);
         this.navbarService.notify({});
       }
     });

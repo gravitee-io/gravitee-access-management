@@ -17,12 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.common.http.MediaType;
@@ -56,13 +54,11 @@ public class FormResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a form")
+    @ApiOperation(value = "Update a form",
+            notes = "User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Form successfully updated", response = Form.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_FORM, acls = RolePermissionAction.UPDATE)
-    })
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("form") String form,
@@ -70,26 +66,25 @@ public class FormResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        formService.update(ReferenceType.ORGANIZATION, organizationId, form, updateForm, authenticatedUser)
-                .map(form1 -> Response.ok(form1).build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_FORM, Acl.UPDATE)
+                .andThen(formService.update(ReferenceType.ORGANIZATION, organizationId, form, updateForm, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a form")
+    @ApiOperation(value = "Delete a form",
+            notes = "User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Form successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_FORM, acls = RolePermissionAction.DELETE)
-    })
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("form") String form,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        formService.delete(ReferenceType.ORGANIZATION, organizationId, form, authenticatedUser)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_FORM, Acl.DELETE)
+                .andThen(formService.delete(ReferenceType.ORGANIZATION, organizationId, form, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

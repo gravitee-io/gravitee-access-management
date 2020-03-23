@@ -61,7 +61,7 @@ export class ApplicationOAuth2Component implements OnInit {
     this.application = this.route.snapshot.parent.parent.data['application'];
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'];
     this.scopes = this.route.snapshot.data['scopes'];
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['application_oauth2_update']);
+    this.readonly = !this.authService.hasPermissions(['application_oauth2_update']);
     this.initSettings();
   }
 
