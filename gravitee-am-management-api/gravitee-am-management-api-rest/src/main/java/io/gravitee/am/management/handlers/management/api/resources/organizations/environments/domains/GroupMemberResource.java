@@ -16,11 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.exception.*;
@@ -43,6 +42,9 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -60,93 +62,96 @@ public class GroupMemberResource extends AbstractResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Add a group member")
+    @ApiOperation(value = "Add a group member",
+            notes = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_GROUP[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Member has been added successfully"),
             @ApiResponse(code = 400, message = "User does not exist"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.UPDATE)
-    })
     public void addMember(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("group") String group,
             @PathParam("member") String userId,
             @Suspended final AsyncResponse response) {
+
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMap(__ -> groupService.findById(group))
-                .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
-                .flatMapSingle(group1 -> userService.findById(userId)
-                        .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                        .flatMapSingle(user -> {
-                            if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
-                                return Single.error(new MemberAlreadyExistsException(userId));
-                            }
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_GROUP, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_GROUP, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_GROUP, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(__ -> groupService.findById(group))
+                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
+                        .flatMapSingle(group1 -> userService.findById(userId)
+                                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                                .flatMapSingle(user -> {
+                                    if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
+                                        return Single.error(new MemberAlreadyExistsException(userId));
+                                    }
 
-                            List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
-                            groupMembers.add(userId);
+                                    List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
+                                    groupMembers.add(userId);
 
-                            UpdateGroup updateGroup = new UpdateGroup();
-                            updateGroup.setName(group1.getName());
-                            updateGroup.setDescription(group1.getDescription());
-                            updateGroup.setRoles(group1.getRoles());
-                            updateGroup.setMembers(groupMembers);
-                            return groupService.update(domain, group, updateGroup, authenticatedUser);
-                        })
-                )
-                .map(group1 -> Response.ok(group1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
-
+                                    UpdateGroup updateGroup = new UpdateGroup();
+                                    updateGroup.setName(group1.getName());
+                                    updateGroup.setDescription(group1.getDescription());
+                                    updateGroup.setRoles(group1.getRoles());
+                                    updateGroup.setMembers(groupMembers);
+                                    return groupService.update(domain, group, updateGroup, authenticatedUser);
+                                })
+                        ))
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Remove a group member")
+    @ApiOperation(value = "Remove a group member",
+            notes = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_GROUP[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Member has been removed successfully"),
             @ApiResponse(code = 400, message = "User does not exist"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_GROUP, acls = RolePermissionAction.DELETE)
-    })
     public void removeMember(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("group") String group,
             @PathParam("member") String userId,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMap(__ -> groupService.findById(group))
-                .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
-                .flatMapSingle(group1 -> userService.findById(userId)
-                        .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                        .flatMapSingle(user -> {
-                            if (group1.getMembers() == null || !group1.getMembers().contains(userId)){
-                                return Single.error(new MemberNotFoundException(userId));
-                            }
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_GROUP, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_GROUP, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_GROUP, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(__ -> groupService.findById(group))
+                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
+                        .flatMapSingle(group1 -> userService.findById(userId)
+                                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                                .flatMapSingle(user -> {
+                                    if (group1.getMembers() == null || !group1.getMembers().contains(userId)) {
+                                        return Single.error(new MemberNotFoundException(userId));
+                                    }
 
-                            List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
-                            groupMembers.remove(userId);
+                                    List<String> groupMembers = group1.getMembers() != null ? new ArrayList(group1.getMembers()) : new ArrayList();
+                                    groupMembers.remove(userId);
 
-                            UpdateGroup updateGroup = new UpdateGroup();
-                            updateGroup.setName(group1.getName());
-                            updateGroup.setDescription(group1.getDescription());
-                            updateGroup.setRoles(group1.getRoles());
-                            updateGroup.setMembers(groupMembers);
-                            return groupService.update(domain, group, updateGroup, authenticatedUser);
-                        })
-                )
-                .map(group1 -> Response.ok(group1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
-
+                                    UpdateGroup updateGroup = new UpdateGroup();
+                                    updateGroup.setName(group1.getName());
+                                    updateGroup.setDescription(group1.getDescription());
+                                    updateGroup.setRoles(group1.getRoles());
+                                    updateGroup.setMembers(groupMembers);
+                                    return groupService.update(domain, group, updateGroup, authenticatedUser);
+                                })
+                        ))
+                .subscribe(response::resume, response::resume);
     }
 }

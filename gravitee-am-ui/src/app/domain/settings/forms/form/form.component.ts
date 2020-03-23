@@ -40,9 +40,9 @@ export class DomainSettingsFormComponent implements OnInit {
     } else {
       this.rawTemplate = this.route.snapshot.queryParams['template'];
     }
-    this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_form_create']);
-    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_form_update']);
-    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_form_delete']);
+    this.createMode = this.authService.hasPermissions(['domain_form_create']);
+    this.editMode = this.authService.hasPermissions(['domain_form_update']);
+    this.deleteMode = this.authService.hasPermissions(['domain_form_delete']);
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
   }
 }

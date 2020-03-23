@@ -16,9 +16,11 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -53,6 +55,32 @@ public class MongoDomainRepositoryTest extends AbstractManagementRepositoryTest 
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertValue(domains -> domains.size() == 1);
+    }
+
+
+    @Test
+    public void testFindAllByEnvironment() throws TechnicalException {
+        // create domain
+        Domain domain = new Domain();
+        domain.setName("testName");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId("environment#1");
+        domainRepository.create(domain).blockingGet();
+
+        // create domain on different environment.
+        Domain otherDomain = new Domain();
+        otherDomain.setName("testName");
+        otherDomain.setReferenceType(ReferenceType.ENVIRONMENT);
+        otherDomain.setReferenceId("environment#2");
+        domainRepository.create(otherDomain).blockingGet();
+
+        // fetch domains
+        TestSubscriber<Domain> testObserver1 = domainRepository.findAllByEnvironment("environment#1").test();
+        testObserver1.awaitTerminalEvent();
+
+        testObserver1.assertComplete();
+        testObserver1.assertNoErrors();
+        testObserver1.assertValueCount(1);
     }
 
     @Test

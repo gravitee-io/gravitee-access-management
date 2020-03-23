@@ -78,9 +78,9 @@ export class ApplicationGeneralComponent implements OnInit {
     this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) {
       return {value: item};
     });
-    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_settings_update']);
-    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_settings_delete']);
-    this.renewSecretMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_oauth2_update']);
+    this.editMode = this.authService.hasPermissions(['application_settings_update']);
+    this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
+    this.renewSecretMode = this.authService.hasPermissions(['application_oauth2_update']);
   }
 
 

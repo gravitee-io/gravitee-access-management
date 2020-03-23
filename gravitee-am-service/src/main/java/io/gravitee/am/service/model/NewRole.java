@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
 
 import javax.validation.constraints.NotNull;
@@ -28,7 +29,7 @@ public class NewRole {
     @NotNull
     private String name;
 
-    private RoleScope scope;
+    private ReferenceType assignableType;
 
     private String description;
 
@@ -40,12 +41,12 @@ public class NewRole {
         this.name = name;
     }
 
-    public RoleScope getScope() {
-        return scope;
+    public ReferenceType getAssignableType() {
+        return assignableType;
     }
 
-    public void setScope(RoleScope scope) {
-        this.scope = scope;
+    public void setAssignableType(ReferenceType assignableType) {
+        this.assignableType = assignableType;
     }
 
     public String getDescription() {
@@ -60,6 +61,7 @@ public class NewRole {
     public String toString() {
         return "NewRole{" +
                 "name='" + name + '\'' +
+                ", assignableType=" + assignableType +
                 ", description='" + description + '\'' +
                 '}';
     }

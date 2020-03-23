@@ -17,12 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
-import io.gravitee.am.model.Template;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.common.http.HttpStatusCode;
@@ -55,45 +53,43 @@ public class FormsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Find a platform form template")
+    @ApiOperation(value = "Find an organization form template",
+            notes = "User must have the ORGANIZATION_FORM[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Form successfully fetched"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_FORM, acls = RolePermissionAction.READ)
-    })
     public void get(
             @PathParam("organizationId") String organizationId,
             @NotNull @QueryParam("template") Template formTemplate,
             @Suspended final AsyncResponse response) {
 
-        formService.findByTemplate(ReferenceType.ORGANIZATION, organizationId, formTemplate.template())
-                .map(page -> Response.ok(page).build())
-                .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_FORM, Acl.READ)
+                .andThen(formService.findByTemplate(ReferenceType.ORGANIZATION, organizationId, formTemplate.template())
+                        .map(page -> Response.ok(page).build())
+                        .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build()))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a form")
+    @ApiOperation(value = "Create a form",
+            notes = "User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Form successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_FORM, acls = RolePermissionAction.CREATE)
-    })
     public void create(
             @PathParam("organizationId") String organizationId,
             @ApiParam(name = "form", required = true) @Valid @NotNull final NewForm newForm,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        formService.create(ReferenceType.ORGANIZATION, organizationId, newForm, authenticatedUser)
-                .map(form -> Response
-                        .created(URI.create("/organizations/" + organizationId + "/forms/" + form.getId()))
-                        .entity(form)
-                        .build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_FORM, Acl.CREATE)
+                .andThen(formService.create(ReferenceType.ORGANIZATION, organizationId, newForm, authenticatedUser)
+                        .map(form -> Response
+                                .created(URI.create("/organizations/" + organizationId + "/forms/" + form.getId()))
+                                .entity(form)
+                                .build()))
                 .subscribe(response::resume, response::resume);
     }
 

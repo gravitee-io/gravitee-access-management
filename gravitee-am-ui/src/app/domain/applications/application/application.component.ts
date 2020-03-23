@@ -74,6 +74,6 @@ export class ApplicationComponent implements OnInit {
   }
 
   private canDisplay(permissions): boolean {
-    return this.authService.isAdmin() || this.authService.hasPermissions(permissions);
+    return this.authService.hasPermissions(permissions);
   }
 }

@@ -49,22 +49,20 @@ public class IdentityProvidersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List identity provider plugins")
+    @ApiOperation(value = "List identity provider plugins",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@QueryParam("external") Boolean external,
-                                      @Suspended final AsyncResponse response) {
+                     @Suspended final AsyncResponse response) {
+
         identityProviderPluginService.findAll(external)
                 .map(identityProviderPlugins -> identityProviderPlugins.stream()
                         .sorted(Comparator.comparing(IdentityProviderPlugin::getName))
                         .collect(Collectors.toList()))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{identity}")
     public IdentityProviderPluginResource getIdentityProviderResource() {
         return resourceContext.getResource(IdentityProviderPluginResource.class);
     }
-
 }

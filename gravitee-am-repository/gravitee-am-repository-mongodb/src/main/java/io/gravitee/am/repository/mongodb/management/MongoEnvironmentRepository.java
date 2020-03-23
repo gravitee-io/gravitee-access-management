@@ -20,10 +20,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.EnvironmentMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 

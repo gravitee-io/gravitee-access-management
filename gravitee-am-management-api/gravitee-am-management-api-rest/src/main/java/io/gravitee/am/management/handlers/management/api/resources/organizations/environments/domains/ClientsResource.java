@@ -19,13 +19,11 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ClientListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.enhancer.ClientEnhancer;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -48,6 +46,9 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -72,54 +73,68 @@ public class ClientsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered clients for a security domain")
+    @ApiOperation(value = "List registered clients for a security domain",
+            notes = "User must have DOMAIN[READ] permission on the specified domain, environment or organization " +
+                    "AND either APPLICATION[READ] permission on each domain's client " +
+                    "or APPLICATION[READ] permission on the specified domain " +
+                    "or APPLICATION[READ] permission on the specified environment " +
+                    "or APPLICATION[READ] permission on the specified organization)")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered clients for a security domain",
                     response = ClientListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void list(@PathParam("domain") String _domain,
-                     @QueryParam("q") String query,
-                     @QueryParam("page") Integer page,
-                     @QueryParam("size") Integer size,
-                     @Suspended final AsyncResponse response) {
+    public void list(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @QueryParam("q") String query,
+            @QueryParam("page") Integer page,
+            @QueryParam("size") Integer size,
+            @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
         int requestedPage = page == null ? 0 : page;
         int requestedSize = size == null ? 100 : Math.min(100, size);
 
-        domainService.findById(_domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(_domain)))
-                .flatMapSingle(domain -> getClients(_domain, query, requestedPage, requestedSize)
-                        .map(pagedClients -> {
-                            filterResources(pagedClients.getData(), ReferenceType.APPLICATION, authenticatedUser);
-                            return pagedClients;
-                        })
-                        .map(pagedClients -> {
-                            List<ClientListItem> sortedClients = pagedClients.getData().stream()
-                                    .map(clientEnhancer.enhanceClient(Collections.singletonMap(_domain, domain)))
-                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getClientId(), o2.getClientId()))
-                                    .collect(Collectors.toList());
-                            if (page == null || size == null) {
-                                return sortedClients;
-                            }
-                            return new Page(sortedClients, pagedClients.getCurrentPage(), pagedClients.getTotalCount());
-                        })
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domainId, Permission.DOMAIN, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> getClients(domainId, query, requestedPage, requestedSize)
+                                .flatMap(pagedClients ->
+                                        Maybe.concat(pagedClients.getData().stream()
+                                                .map(client -> hasPermission(authenticatedUser,
+                                                        or(of(ReferenceType.APPLICATION, client.getId(), Permission.APPLICATION, Acl.READ),
+                                                                of(ReferenceType.DOMAIN, domainId, Permission.APPLICATION, Acl.READ),
+                                                                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.READ),
+                                                                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.READ)))
+                                                        .filter(Boolean::booleanValue)
+                                                        .map(permit -> client)).collect(Collectors.toList()))
+                                                .toList()
+                                                .map(clients -> {
+                                                    List<ClientListItem> sortedClients = clients.stream().map(clientEnhancer.enhanceClient(Collections.singletonMap(domainId, domain)))
+                                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getClientId(), o2.getClientId()))
+                                                            .collect(Collectors.toList());
+
+                                                    if (page == null || size == null) {
+                                                        return sortedClients;
+                                                    }
+                                                    return new Page<>(sortedClients, pagedClients.getCurrentPage(), pagedClients.getTotalCount());
+                                                }))))
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a client")
+    @ApiOperation(value = "Create a client",
+            notes = "User must have APPLICATION[CREATE] permission on the specified domain " +
+                    "or APPLICATION[CREATE] permission on the specified environment " +
+                    "or APPLICATION[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Client successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_APPLICATION, acls = RolePermissionAction.CREATE)
-    })
     public void createClient(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -130,17 +145,18 @@ public class ClientsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> clientService.create(domain, newClient, authenticatedUser)
-                        .map(client -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/clients/" + client.getId()))
-                                .entity(client)
-                                .build())
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.CREATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.CREATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.CREATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> clientService.create(domain, newClient, authenticatedUser)
+                                .map(client -> Response
+                                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/clients/" + client.getId()))
+                                        .entity(client)
+                                        .build())
+                        ))
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{client}")

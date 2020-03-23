@@ -17,8 +17,8 @@ package io.gravitee.am.management.service.spring;
 
 import freemarker.cache.*;
 import freemarker.core.HTMLOutputFormat;
-import freemarker.core.TemplateConfiguration;
 import freemarker.core.TemplateClassResolver;
+import freemarker.core.TemplateConfiguration;
 import io.gravitee.common.util.EnvironmentUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

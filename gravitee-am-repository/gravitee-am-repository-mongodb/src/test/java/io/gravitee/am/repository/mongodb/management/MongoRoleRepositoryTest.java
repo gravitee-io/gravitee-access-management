@@ -20,9 +20,11 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -118,17 +120,15 @@ public class MongoRoleRepositoryTest extends AbstractManagementRepositoryTest {
         roleRepository.create(role3).blockingGet();
 
         // fetch role
-        TestObserver<Set<Role>> testObserver = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        TestSubscriber<Role> testObserver = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(roles -> {
-            assertEquals(2, roles.size());
-            assertTrue(roles.stream().anyMatch(role -> role.getId().equals(roleCreated1.getId())));
-            assertTrue(roles.stream().anyMatch(role -> role.getId().equals(roleCreated2.getId())));
-            return true;
-        });
+        testObserver.assertValueCount(2);
+        List<Role> roles = testObserver.values();
+        assertTrue(roles.stream().anyMatch(role -> role.getId().equals(roleCreated1.getId())));
+        assertTrue(roles.stream().anyMatch(role -> role.getId().equals(roleCreated2.getId())));
     }
 
     @Test

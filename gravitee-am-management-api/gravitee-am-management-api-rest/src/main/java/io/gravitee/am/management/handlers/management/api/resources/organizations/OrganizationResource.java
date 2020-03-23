@@ -22,12 +22,16 @@ import io.gravitee.am.management.handlers.management.api.resources.organizations
 import io.gravitee.am.management.handlers.management.api.resources.organizations.forms.FormsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.groups.GroupsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.idps.IdentityProvidersResource;
-import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.PluginsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.roles.RolesResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.search.SearchResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.settings.SettingsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.tags.TagsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.users.UsersResource;
+import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.PluginsResource;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.model.NewOrganization;
 import io.gravitee.common.http.MediaType;
@@ -60,11 +64,11 @@ public class OrganizationResource extends AbstractResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create or update an organization")
+    @ApiOperation(value = "Create or update an organization",
+            notes = "User must have the ORGANIZATION[CREATE] permission on the platform")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Organization successfully created or updated"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    // FIXME: for now there is no permission. This will be implemented in another dedicated feature.
     public void create(
             @PathParam("organizationId") String organizationId,
             @ApiParam(name = "organization", required = true)
@@ -72,7 +76,8 @@ public class OrganizationResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        organizationService.createOrUpdate(organizationId, newOrganization, authenticatedUser)
+        checkPermission(ReferenceType.PLATFORM, Platform.DEFAULT, Permission.ORGANIZATION, Acl.CREATE)
+                .andThen(organizationService.createOrUpdate(organizationId, newOrganization, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 

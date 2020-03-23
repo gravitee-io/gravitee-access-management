@@ -20,10 +20,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.management.api.TagRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.TagMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -61,8 +58,8 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
     }
 
     @Override
-    public Single<Set<Tag>> findAll(String organizationId) {
-        return Observable.fromPublisher(tagsCollection.find(eq("organizationId", organizationId))).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<Tag> findAll(String organizationId) {
+        return Flowable.fromPublisher(tagsCollection.find(eq("organizationId", organizationId))).map(this::convert);
     }
 
     @Override

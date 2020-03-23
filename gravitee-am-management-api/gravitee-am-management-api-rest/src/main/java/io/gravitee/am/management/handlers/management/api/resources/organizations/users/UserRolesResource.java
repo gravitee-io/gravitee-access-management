@@ -16,14 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Single;
@@ -59,38 +57,35 @@ public class UserRolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a user roles")
+    @ApiOperation(value = "Get a user roles",
+            notes = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "User roles successfully fetched", response = Role.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_USER, acls = RolePermissionAction.READ)
-    })
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("user") String user,
             @Suspended final AsyncResponse response) {
 
-        userService.findById(ReferenceType.ORGANIZATION, organizationId, user)
-                .flatMap(endUser -> {
-                    if (endUser.getRoles() == null || endUser.getRoles().isEmpty()) {
-                        return Single.just(Collections.emptyList());
-                    }
-                    return roleService.findByIdIn(endUser.getRoles());
-                })
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.READ)
+                .andThen(userService.findById(ReferenceType.ORGANIZATION, organizationId, user)
+                        .flatMap(endUser -> {
+                            if (endUser.getRoles() == null || endUser.getRoles().isEmpty()) {
+                                return Single.just(Collections.emptyList());
+                            }
+                            return roleService.findByIdIn(endUser.getRoles());
+                        }))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Assign roles to a user")
+    @ApiOperation(value = "Assign roles to a user",
+            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Roles successfully assigned", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_USER, acls = RolePermissionAction.UPDATE)
-    })
     public void assign(
             @PathParam("organizationId") String organizationId,
             @PathParam("user") String user,
@@ -98,7 +93,8 @@ public class UserRolesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        userService.assignRoles(ReferenceType.ORGANIZATION, organizationId, user, roles, authenticatedUser)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(userService.assignRoles(ReferenceType.ORGANIZATION, organizationId, user, roles, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 

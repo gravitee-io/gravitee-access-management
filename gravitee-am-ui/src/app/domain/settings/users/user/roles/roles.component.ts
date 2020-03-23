@@ -49,9 +49,9 @@ export class UserRolesComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
-      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_update']);
+      this.editMode = this.authService.hasPermissions(['organization_user_update']);
     } else {
-      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
+      this.editMode = this.authService.hasPermissions(['domain_user_update']);
     }
     this.user = this.route.snapshot.parent.data['user'];
     this.userRoles = this.route.snapshot.data['roles'];

@@ -15,13 +15,14 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.*;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.junit.Test;
 
@@ -34,6 +35,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -54,9 +56,7 @@ public class DomainsResourceTest extends JerseySpringTest {
         mockDomain2.setId("domain-id-2");
         mockDomain2.setName("domain-name-2");
 
-        final Set<Domain> domains = new HashSet<>(Arrays.asList(mockDomain, mockDomain2));
-
-        doReturn(Single.just(domains)).when(domainService).findAll();
+        doReturn(Flowable.just(mockDomain, mockDomain2)).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
 
         final Response response = target("domains").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());

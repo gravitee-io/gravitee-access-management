@@ -51,9 +51,9 @@ export class GroupRolesComponent implements OnInit {
     this.groupRoles = this.route.snapshot.data['roles'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
-      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_update']);
+      this.editMode = this.authService.hasPermissions(['organization_group_update']);
     } else {
-      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_update']);
+      this.editMode = this.authService.hasPermissions(['domain_group_update']);
     }
   }
 

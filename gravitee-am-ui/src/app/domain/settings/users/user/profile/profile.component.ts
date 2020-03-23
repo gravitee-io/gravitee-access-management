@@ -53,11 +53,11 @@ export class UserProfileComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
-      this.canEdit = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_update']);
-      this.canDelete = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_delete']);
+      this.canEdit = this.authService.hasPermissions(['organization_user_update']);
+      this.canDelete = this.authService.hasPermissions(['organization_user_delete']);
     } else {
-      this.canEdit = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
-      this.canDelete = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_delete']);
+      this.canEdit = this.authService.hasPermissions(['domain_user_update']);
+      this.canDelete = this.authService.hasPermissions(['domain_user_delete']);
     }
     this.user = this.route.snapshot.parent.data['user'];
     this.userAdditionalInformation = Object.assign({}, this.user.additionalInformation);

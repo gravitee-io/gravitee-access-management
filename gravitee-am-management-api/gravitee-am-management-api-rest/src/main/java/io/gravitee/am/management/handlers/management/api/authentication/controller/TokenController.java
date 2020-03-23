@@ -16,14 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.authentication.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.common.oidc.CustomClaims;
-import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.common.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -34,9 +29,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

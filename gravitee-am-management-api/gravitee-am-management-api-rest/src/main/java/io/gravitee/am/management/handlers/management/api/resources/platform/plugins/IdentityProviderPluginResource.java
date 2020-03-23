@@ -50,34 +50,34 @@ public class IdentityProviderPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an identity provider")
+    @ApiOperation(value = "Get an identity provider",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("identity") String identityProviderId,
             @Suspended final AsyncResponse response) {
+
         identityProviderPluginService.findById(identityProviderId)
                 .switchIfEmpty(Maybe.error(new IdentityProviderPluginNotFoundException(identityProviderId)))
                 .map(identityProviderPlugin -> Response.ok(identityProviderPlugin).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an identity provider plugin's schema")
+    @ApiOperation(value = "Get an identity provider plugin's schema",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(
             @PathParam("identity") String identityProviderId,
             @Suspended final AsyncResponse response) {
+
         // Check that the identity provider exists
         identityProviderPluginService.findById(identityProviderId)
                 .switchIfEmpty(Maybe.error(new IdentityProviderPluginNotFoundException(identityProviderId)))
                 .flatMap(irrelevant -> identityProviderPluginService.getSchema(identityProviderId))
                 .switchIfEmpty(Maybe.error(new IdentityProviderPluginSchemaNotFoundException(identityProviderId)))
                 .map(identityProviderPluginSchema -> Response.ok(identityProviderPluginSchema).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
+                .subscribe(response::resume, response::resume
                 );
     }
 }

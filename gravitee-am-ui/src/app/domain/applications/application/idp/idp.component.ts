@@ -58,7 +58,7 @@ export class ApplicationIdPComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.application = this.route.snapshot.parent.data['application'];
     this.application.identities = this.application.identities || [];
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['application_identity_provider_update']);
+    this.readonly = !this.authService.hasPermissions(['application_identity_provider_update']);
     this.providerService.findByDomain(this.domainId).subscribe(data => {
       this.identityProviders = data.filter(idp => !idp.external);
       this.socialIdentityProviders = data.filter(idp => idp.external);

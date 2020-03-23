@@ -82,15 +82,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   private initNavLinks() {
-    if (!this.canDisplay(['management_domain_create'])) {
+    if (!this.canDisplay(['domain_create'])) {
       _.remove(this.navLinks, { href: '/h/domains/new' });
     }
-    if (!this.canDisplay(['management_settings_read'])) {
+    if (!this.canDisplay(['organization_settings_read'])) {
       _.remove(this.navLinks, { href: '/settings' });
     }
   }
 
   private canDisplay(permissions): boolean {
-    return this.authService.isAdmin() || this.authService.hasPermissions(permissions);
+    return this.authService.hasPermissions(permissions);
   }
 }

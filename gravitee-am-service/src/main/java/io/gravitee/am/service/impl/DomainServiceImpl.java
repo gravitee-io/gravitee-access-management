@@ -20,13 +20,13 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.oidc.OIDCSettings;
-import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.*;
@@ -37,13 +37,11 @@ import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.text.Normalizer;
@@ -64,6 +62,7 @@ public class DomainServiceImpl implements DomainService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
 
+    @Lazy
     @Autowired
     private DomainRepository domainRepository;
 
@@ -115,6 +114,9 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private FactorService factorService;
 
+    @Autowired
+    private EnvironmentService environmentService;
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -124,6 +126,16 @@ public class DomainServiceImpl implements DomainService {
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a domain using its ID: %s", id), ex));
                 });
+    }
+
+    @Override
+    public Flowable<Domain> findAllByEnvironment(String organizationId, String environmentId) {
+
+        LOGGER.debug("Find all domains of environment {} (organization {})", environmentId, organizationId);
+
+        return environmentService.findById(environmentId, organizationId)
+                .map(Environment::getId)
+                .flatMapPublisher(environmentsId -> domainRepository.findAllByEnvironment(environmentId));
     }
 
     @Override
@@ -180,7 +192,7 @@ public class DomainServiceImpl implements DomainService {
                     if (principal == null) {
                         return Single.just(domain);
                     }
-                    return roleService.findSystemRole(SystemRole.PRIMARY_OWNER, RoleScope.DOMAIN)
+                    return roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, ReferenceType.DOMAIN)
                             .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the domain, owner role does not exist")))
                             .flatMap(role -> {
                                 Membership membership = new Membership();
@@ -189,7 +201,7 @@ public class DomainServiceImpl implements DomainService {
                                 membership.setMemberType(MemberType.USER);
                                 membership.setReferenceId(domain.getId());
                                 membership.setReferenceType(ReferenceType.DOMAIN);
-                                membership.setRole(role.getId());
+                                membership.setRoleId(role.getId());
                                 return membershipService.addOrUpdate(organizationId, membership)
                                         .map(__ -> domain);
                             });

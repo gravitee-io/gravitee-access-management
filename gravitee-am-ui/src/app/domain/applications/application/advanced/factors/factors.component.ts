@@ -47,7 +47,7 @@ export class ApplicationFactorsComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.application = this.route.snapshot.parent.parent.data['application'];
-    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_settings_update']);
+    this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);
   }
 

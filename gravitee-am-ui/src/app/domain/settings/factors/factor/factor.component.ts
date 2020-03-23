@@ -52,7 +52,7 @@ export class FactorComponent implements OnInit {
     this.factor = this.route.snapshot.data['factor'];
     this.factorConfiguration = JSON.parse(this.factor.configuration);
     this.updateFactorConfiguration = this.factorConfiguration;
-    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_factor_edit']);
+    this.editMode = this.authService.hasPermissions(['domain_factor_edit']);
     this.organizationService.factorSchema(this.factor.type).subscribe(data => {
       this.factorSchema = data;
       // set the grant_type value

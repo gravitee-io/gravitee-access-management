@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.authentication.handler
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationContext;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;

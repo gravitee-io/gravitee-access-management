@@ -46,11 +46,11 @@ export class GroupSettingsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
-      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_update']);
-      this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_delete']);
+      this.editMode = this.authService.hasPermissions(['organization_group_update']);
+      this.deleteMode = this.authService.hasPermissions(['organization_group_delete']);
     } else {
-      this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_update']);
-      this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_delete']);
+      this.editMode = this.authService.hasPermissions(['domain_group_update']);
+      this.deleteMode = this.authService.hasPermissions(['domain_group_delete']);
     }
     this.group = this.route.snapshot.parent.data['group'];
     this.initBreadcrumb();

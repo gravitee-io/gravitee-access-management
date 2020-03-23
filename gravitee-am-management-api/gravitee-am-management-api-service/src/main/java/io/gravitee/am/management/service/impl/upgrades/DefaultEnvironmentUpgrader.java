@@ -16,9 +16,7 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.OrganizationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;

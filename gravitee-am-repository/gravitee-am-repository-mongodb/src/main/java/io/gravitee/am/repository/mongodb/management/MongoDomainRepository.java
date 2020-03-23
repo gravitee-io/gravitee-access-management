@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.model.login.LoginSettings;
@@ -28,19 +29,16 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -72,6 +70,12 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
         return Observable.fromPublisher(domainsCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Flowable<Domain> findAllByEnvironment(String environmentId) {
+
+        return Flowable.fromPublisher(domainsCollection.find(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()), eq(FIELD_REFERENCE_ID, environmentId)))).map(this::convert);
     }
 
     @Override

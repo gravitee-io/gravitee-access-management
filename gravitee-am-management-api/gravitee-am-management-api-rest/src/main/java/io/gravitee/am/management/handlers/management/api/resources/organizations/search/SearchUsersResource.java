@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.search;
 
+import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Observable;
@@ -39,7 +42,7 @@ import java.util.Comparator;
  *
  * TODO : user identity providers lookup method instead
  */
-public class SearchUsersResource {
+public class SearchUsersResource extends AbstractResource {
 
     private static final int MAX_USERS_SIZE_PER_PAGE = 30;
     private static final String MAX_USERS_SIZE_PER_PAGE_STRING = "30";
@@ -49,7 +52,8 @@ public class SearchUsersResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Search users of the platform")
+    @ApiOperation(value = "Search users of the organization",
+            notes = "User must have the ORGANIZATION[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Users search result", response = User.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -68,9 +72,11 @@ public class SearchUsersResource {
             usersPageObs = userService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
         }
 
-        usersPageObs.flatMap(pagedUsers -> Observable.fromIterable(pagedUsers.getData()).toSortedList(Comparator.comparing(User::getUsername))
-                .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount())))
-                .map(users -> Response.ok(users).build())
+        // We only need to make sure current user can access the organization.
+        // We don't want to use ORGANIZATION_USER[READ] permission which give ability to view all information about all organization users.
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION, Acl.READ)
+                .andThen(usersPageObs.flatMap(pagedUsers -> Observable.fromIterable(pagedUsers.getData()).toSortedList(Comparator.comparing(User::getUsername))
+                        .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))))
                 .subscribe(response::resume, response::resume);
     }
 }

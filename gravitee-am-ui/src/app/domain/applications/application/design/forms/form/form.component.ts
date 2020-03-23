@@ -41,9 +41,9 @@ export class ApplicationFormComponent implements OnInit {
     this.appId = this.route.snapshot.parent.parent.params['appId'];
     this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
-    this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_form_create']);
-    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_form_update']);
-    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_form_delete']);
+    this.createMode = this.authService.hasPermissions(['application_form_create']);
+    this.editMode = this.authService.hasPermissions(['application_form_update']);
+    this.deleteMode = this.authService.hasPermissions(['application_form_delete']);
     this.initBreadcrumb();
   }
 

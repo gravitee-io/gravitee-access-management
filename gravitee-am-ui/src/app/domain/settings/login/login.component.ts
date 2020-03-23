@@ -39,7 +39,7 @@ export class DomainSettingsLoginComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.domain = this.route.snapshot.data['domain'];
     this.domain.loginSettings = this.domain.loginSettings || {};
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_login_settings_update']);
+    this.readonly = !this.authService.hasPermissions(['domain_login_settings_update']);
   }
 
   save() {

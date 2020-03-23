@@ -41,9 +41,9 @@ export class ApplicationEmailComponent implements OnInit {
     this.appId = this.route.snapshot.parent.parent.params['appId'];
     this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
-    this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_email_template_create']);
-    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_email_template_update']);
-    this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['application_email_template_delete']);
+    this.createMode = this.authService.hasPermissions(['application_email_template_create']);
+    this.editMode = this.authService.hasPermissions(['application_email_template_update']);
+    this.deleteMode = this.authService.hasPermissions(['application_email_template_delete']);
     this.initBreadcrumb();
   }
 

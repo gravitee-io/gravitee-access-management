@@ -96,8 +96,8 @@ public class ScopeUpgrader implements Upgrader, Ordered {
         return roleService.findByDomain(domain.getId())
                 .filter(roles -> roles != null)
                 .flatMapObservable(roles -> Observable.fromIterable(roles))
-                .filter(role -> role.getPermissions() != null)
-                .flatMap(role -> Observable.fromIterable(role.getPermissions()))
+                .filter(role -> role.getOauthScopes() != null)
+                .flatMap(role -> Observable.fromIterable(role.getOauthScopes()))
                 .flatMapSingle(scope -> createScope(domain.getId(), scope))
                 .toList();
     }

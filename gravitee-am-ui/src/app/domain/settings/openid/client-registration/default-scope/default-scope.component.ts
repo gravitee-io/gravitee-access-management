@@ -45,7 +45,7 @@ export class ClientRegistrationDefaultScopeComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
     this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.defaultScopes;
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_dcr_create', 'domain_dcr_update']);
+    this.readonly = !this.authService.hasPermissions(['domain_dcr_create', 'domain_dcr_update']);
   }
 
   onChange(currentSelectedScopes) {

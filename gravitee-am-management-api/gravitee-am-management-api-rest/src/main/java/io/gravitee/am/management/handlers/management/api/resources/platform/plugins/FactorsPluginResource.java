@@ -47,16 +47,15 @@ public class FactorsPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List factor plugins")
+    @ApiOperation(value = "List factor plugins",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
+
         authenticatorPluginService.findAll()
                 .map(authenticatorPlugins -> authenticatorPlugins.stream()
                         .sorted(Comparator.comparing(FactorPlugin::getName))
                         .collect(Collectors.toList()))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{factor}")

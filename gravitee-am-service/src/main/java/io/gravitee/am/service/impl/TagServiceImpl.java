@@ -30,10 +30,7 @@ import io.gravitee.am.service.model.NewTag;
 import io.gravitee.am.service.model.UpdateTag;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.TagAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,12 +73,12 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public Single<Set<Tag>> findAll(String organizationId) {
+    public Flowable<Tag> findAll(String organizationId) {
         LOGGER.debug("Find all tags");
         return tagRepository.findAll(organizationId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find all tags", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all tags", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all tags", ex));
                 });
     }
 

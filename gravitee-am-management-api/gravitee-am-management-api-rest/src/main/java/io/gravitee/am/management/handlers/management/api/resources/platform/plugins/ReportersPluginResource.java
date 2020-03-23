@@ -46,21 +46,19 @@ public class ReportersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List reporter plugins")
+    @ApiOperation(value = "List reporter plugins",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
+
         reporterPluginService.findAll()
                 .map(reporterPlugins -> reporterPlugins.stream()
                         .sorted(Comparator.comparing(ReporterPlugin::getName))
                         .collect(Collectors.toList()))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{reporter}")
     public ReporterPluginResource getReporterResource() {
-
         return resourceContext.getResource(ReporterPluginResource.class);
     }
 }

@@ -35,7 +35,7 @@ export class HasPermissionDirective {
   }
 
   private updateView() {
-    if (this.authService.isAdmin() || this.authService.hasPermissions(this.permissions)) {
+    if (this.authService.hasPermissions(this.permissions)) {
       this.viewContainer.createEmbeddedView(this.templateRef);
     } else {
       this.viewContainer.clear();

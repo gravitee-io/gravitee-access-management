@@ -17,12 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
@@ -44,7 +42,10 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.util.List;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+import static java.util.Collections.emptySet;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,148 +64,162 @@ public class ApplicationResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an application")
+    @ApiOperation(value = "Get an application",
+            notes = "User must have the APPLICATION[READ] permission on the specified application " +
+                    "or APPLICATION[READ] permission on the specified domain " +
+                    "or APPLICATION[READ] permission on the specified environment " +
+                    "or APPLICATION[READ] permission on the specified organization. " +
+                    "Application will be filtered according to permissions (READ on APPLICATION_IDENTITY_PROVIDER, " +
+                    "APPLICATION_CERTIFICATE, APPLICATION_METADATA, APPLICATION_USER_ACCOUNT, APPLICATION_SETTINGS)")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void get(@PathParam("domain") String domain,
-                    @PathParam("application") String application,
-                    @Suspended final AsyncResponse response) {
+    public void get(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @Suspended final AsyncResponse response) {
+
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMap(irrelevant -> applicationService.findById(application))
-                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                .map(application1 -> {
-                    if (isAdmin(authenticatedUser)) {
-                        return application1;
-                    }
-                    List<String> resourcePermissions = resourcePermissions(application1, ReferenceType.APPLICATION, authenticatedUser);
-                    if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_IDENTITY_PROVIDER, RolePermissionAction.READ)) {
-                        application1.setIdentities(null);
-                    }
-                    if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_CERTIFICATE, RolePermissionAction.READ)) {
-                        application1.setCertificate(null);
-                    }
-                    if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_METADATA, RolePermissionAction.READ)) {
-                        application1.setMetadata(null);
-                    }
-                    if (application1.getSettings() != null) {
-                        if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_USER_ACCOUNT, RolePermissionAction.READ)) {
-                            application1.getSettings().setAccount(null);
-                        }
-                        if (!hasPermission(resourcePermissions, RolePermission.APPLICATION_SETTINGS, RolePermissionAction.READ)) {
-                            application1.getSettings().setAdvanced(null);
-                        }
-                    }
-                    return application1;
-                })
+        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.READ),
+                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.READ)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(irrelevant -> applicationService.findById(application))
+                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
+                        .flatMapSingle(app ->
+                                permissionService.findAllPermissions(authenticatedUser, ReferenceType.APPLICATION, application)
+                                        .map(applicationPermissions -> {
+
+                                            if (!applicationPermissions.getOrDefault(Permission.APPLICATION_IDENTITY_PROVIDER, emptySet()).contains(Acl.READ)) {
+                                                app.setIdentities(null);
+                                            }
+                                            if (!applicationPermissions.getOrDefault(Permission.APPLICATION_CERTIFICATE, emptySet()).contains(Acl.READ)) {
+                                                app.setCertificate(null);
+                                            }
+                                            if (!applicationPermissions.getOrDefault(Permission.APPLICATION_METADATA, emptySet()).contains(Acl.READ)) {
+                                                app.setMetadata(null);
+                                            }
+                                            if (app.getSettings() != null) {
+                                                if (!applicationPermissions.getOrDefault(Permission.APPLICATION_USER_ACCOUNT, emptySet()).contains(Acl.READ)) {
+                                                    app.getSettings().setAccount(null);
+                                                }
+                                                if (!applicationPermissions.getOrDefault(Permission.APPLICATION_SETTINGS, emptySet()).contains(Acl.READ)) {
+                                                    app.getSettings().setAdvanced(null);
+                                                }
+                                            }
+
+                                            return app;
+                                        })))
                 .map(application1 -> {
                     if (!application1.getDomain().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("Application does not belong to domain");
                     }
                     return Response.ok(application1).build();
                 })
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Patch an application")
+    @ApiOperation(value = "Patch an application",
+            notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
+                    "or APPLICATION[UPDATE] permission on the specified domain " +
+                    "or APPLICATION[UPDATE] permission on the specified environment " +
+                    "or APPLICATION[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application successfully patched", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.APPLICATION_SETTINGS, acls = RolePermissionAction.UPDATE)
-    })
     public void patch(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
             @ApiParam(name = "application", required = true) @Valid @NotNull PatchApplication patchApplication,
             @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(__ -> applicationService.patch(domain, application, patchApplication, authenticatedUser))
-                .map(application1 -> Response.ok(application1).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        updateInternal(organizationId, environmentId, domain, application, patchApplication, response);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update an application")
+    @ApiOperation(value = "Update an application",
+            notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
+                    "or APPLICATION[UPDATE] permission on the specified domain " +
+                    "or APPLICATION[UPDATE] permission on the specified environment " +
+                    "or APPLICATION[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application successfully updated", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.APPLICATION_SETTINGS, acls = RolePermissionAction.UPDATE)
-    })
     public void update(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
             @ApiParam(name = "client", required = true) @Valid @NotNull PatchApplication patchApplication,
             @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                //.flatMapSingle(__ -> this.applyDefaultResponseType(patchClient))
-                .flatMapSingle(patch -> applicationService.patch(domain, application, patchApplication, authenticatedUser))
-                .map(updatedApplication -> Response.ok(updatedApplication).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        updateInternal(organizationId, environmentId, domain, application, patchApplication, response);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete an application")
+    @ApiOperation(value = "Delete an application",
+            notes = "User must have APPLICATION[DELETE] permission on the specified application " +
+                    "or APPLICATION[DELETE] permission on the specified domain " +
+                    "or APPLICATION[DELETE] permission on the specified environment " +
+                    "or APPLICATION[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Application successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.APPLICATION_SETTINGS, acls = RolePermissionAction.DELETE)
-    })
-    public void delete(@PathParam("domain") String domain,
-                       @PathParam("application") String application,
-                       @Suspended final AsyncResponse response) {
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        applicationService.delete(application, authenticatedUser)
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.DELETE),
+                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.DELETE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.DELETE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.DELETE)))
+                .andThen(applicationService.delete(application, authenticatedUser))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @POST
     @Path("secret/_renew")
-    @ApiOperation(value = "Renew application secret")
+    @ApiOperation(value = "Renew application secret",
+            notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
+                    "or APPLICATION_OAUTH2[UPDATE] permission on the specified domain " +
+                    "or APPLICATION_OAUTH2[UPDATE] permission on the specified environment " +
+                    "or APPLICATION_OAUTH2[UPDATE] permission on the specified organization")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application secret successfully updated", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.APPLICATION_OAUTH2, acls = RolePermissionAction.UPDATE)
-    })
-    public void renewClientSecret(@PathParam("domain") String domain,
-                                  @PathParam("application") String application,
-                                  @Suspended final AsyncResponse response) {
+    public void renewClientSecret(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(__ -> applicationService.renewClientSecret(domain, application, authenticatedUser))
-                .map(updatedApp -> Response.ok(updatedApp).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_OAUTH2, Acl.READ),
+                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_OAUTH2, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_OAUTH2, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_OAUTH2, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(__ -> applicationService.renewClientSecret(domain, application, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("emails")
@@ -220,5 +235,19 @@ public class ApplicationResource extends AbstractResource {
     @Path("members")
     public ApplicationMembersResource getMembersResource() {
         return resourceContext.getResource(ApplicationMembersResource.class);
+    }
+
+    public void updateInternal(String organizationId, String environmentId, String domain, String application, PatchApplication patchApplication, final AsyncResponse response) {
+
+        final User authenticatedUser = getAuthenticatedUser();
+
+        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.UPDATE),
+                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.UPDATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(patch -> applicationService.patch(domain, application, patchApplication, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
     }
 }

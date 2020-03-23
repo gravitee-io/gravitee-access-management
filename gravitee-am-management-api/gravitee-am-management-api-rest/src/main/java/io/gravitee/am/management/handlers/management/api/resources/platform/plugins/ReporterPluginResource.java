@@ -49,16 +49,16 @@ public class ReporterPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a reporter plugin")
+    @ApiOperation(value = "Get a reporter plugin",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("reporter") String reporterId,
             @Suspended final AsyncResponse response) {
+
         reporterPluginService.findById(reporterId)
                 .switchIfEmpty(Maybe.error(new ReporterPluginNotFoundException(reporterId)))
                 .map(reporterPlugin -> Response.ok(reporterPlugin).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @GET
@@ -68,15 +68,13 @@ public class ReporterPluginResource {
     public void getSchema(
             @PathParam("reporter") String reporterId,
             @Suspended final AsyncResponse response) {
+
         // Check that the identity provider exists
         reporterPluginService.findById(reporterId)
                 .switchIfEmpty(Maybe.error(new ReporterPluginNotFoundException(reporterId)))
                 .flatMap(irrelevant -> reporterPluginService.getSchema(reporterId))
                 .switchIfEmpty(Maybe.error(new ReporterPluginSchemaNotFoundException(reporterId)))
                 .map(reporterPluginSchema -> Response.ok(reporterPluginSchema).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+                .subscribe(response::resume, response::resume);
     }
 }

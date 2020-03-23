@@ -19,6 +19,7 @@ import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.TagRepository;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -50,12 +51,12 @@ public class MongoTagRepositoryTest extends AbstractManagementRepositoryTest {
         tagRepository.create(tag).blockingGet();
 
         // fetch domains
-        TestObserver<Set<Tag>> testObserver1 = tagRepository.findAll(ORGANIZATION_ID).test();
+        TestSubscriber<Tag> testObserver1 = tagRepository.findAll(ORGANIZATION_ID).test();
         testObserver1.awaitTerminalEvent();
 
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
-        testObserver1.assertValue(tags -> tags.size() == 1);
+        testObserver1.assertValueCount(1);
     }
 
     @Test

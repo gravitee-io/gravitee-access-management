@@ -49,34 +49,33 @@ public class CertificatePluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an certificate plugin")
+    @ApiOperation(value = "Get an certificate plugin",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("certificate") String certificateId,
             @Suspended final AsyncResponse response) {
+
         certificatePluginService.findById(certificateId)
                 .map(extensionGrantPlugin -> Response.ok(certificateId).build())
                 .switchIfEmpty(Maybe.error(new CertificatePluginNotFoundException(certificateId)))
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+                .subscribe(response::resume, response::resume);
     }
 
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an certificate's schema")
+    @ApiOperation(value = "Get an certificate's schema",
+            notes = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(
             @PathParam("certificate") String certificateId,
             @Suspended final AsyncResponse response) {
+
         // Check that the certificate exists
         certificatePluginService.findById(certificateId)
                 .switchIfEmpty(Maybe.error(new CertificatePluginNotFoundException(certificateId)))
                 .flatMap(irrelevant -> certificatePluginService.getSchema(certificateId))
                 .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(certificateId)))
                 .map(certificatePluginSchema -> Response.ok(certificatePluginSchema).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+                .subscribe(response::resume, response::resume);
     }
 }

@@ -29,6 +29,8 @@ export class AuthGuard implements CanActivate {
               private applicationService: ApplicationService) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
+
+
     // if no permission required, continue
     if (!route.data || !route.data.perms || !route.data.perms.only) {
       return true;
@@ -37,7 +39,7 @@ export class AuthGuard implements CanActivate {
     const requiredPerms = route.data.perms.only;
     const userResult: Observable<any> = !this.authService.user() ? this.authService.userInfo() : of(this.authService.user());
     let resourceResult: Observable<any> = of([]);
-    if (!requiredPerms[0].startsWith('management')) {
+    if (!requiredPerms[0].startsWith('organization') && requiredPerms[0] !== 'domain_create') {
       // check if the authenticated user can navigate to the next route (domain settings or application settings)
       const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
       const appId = route.parent.paramMap.get('appId') ? route.parent.paramMap.get('appId') : route.parent.parent.paramMap.get('appId');
@@ -78,6 +80,6 @@ export class AuthGuard implements CanActivate {
   }
 
   private isAuthorized(requiredPerms): boolean {
-    return this.authService.isAdmin() || this.authService.hasPermissions(requiredPerms);
+    return this.authService.hasPermissions(requiredPerms);
   }
 }

@@ -20,5 +20,19 @@ package io.gravitee.am.model.permissions;
  * @author GraviteeSource Team
  */
 public enum SystemRole {
-    ADMIN, PRIMARY_OWNER
+    PLATFORM_ADMIN(true),
+    ORGANIZATION_ADMIN(false), ORGANIZATION_PRIMARY_OWNER(true), ORGANIZATION_USER(false),
+    DOMAIN_ADMIN(false), DOMAIN_PRIMARY_OWNER(true), DOMAIN_USER(false),
+    ENVIRONMENT_ADMIN(false), ENVIRONMENT_PRIMARY_OWNER(true),
+    APPLICATION_ADMIN(false), APPLICATION_PRIMARY_OWNER(true), APPLICATION_USER(false);
+
+    private boolean internalOnly;
+
+    SystemRole(boolean internalOnly) {
+        this.internalOnly = internalOnly;
+    }
+
+    public boolean isInternalOnly() {
+        return internalOnly;
+    }
 }

@@ -22,11 +22,11 @@
     <form (ngSubmit)="create()" #roleForm="ngForm" fxLayout="column" fxFlex="70">
       <div class="gv-form-section">
         <mat-form-field *ngIf="organizationContext" appearance="outline" floatLabel="always">
-          <mat-label>Scope</mat-label>
-          <mat-select placeholder="Scope" [(ngModel)]="role.scope" name="scope" required>
-            <mat-option *ngFor="let roleScope of roleScopes" [value]="roleScope">{{ roleScope }}</mat-option>
+          <mat-label>Assignable Type</mat-label>
+          <mat-select placeholder="Type" [(ngModel)]="role.assignableType" name="type" required>
+            <mat-option *ngFor="let roleType of roleTypes" [value]="roleType">{{ roleType }}</mat-option>
           </mat-select>
-          <mat-hint>A scope for your role.</mat-hint>
+          <mat-hint>A type the role can be assign to.</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline" floatLabel="always">

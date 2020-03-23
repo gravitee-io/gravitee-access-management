@@ -96,7 +96,8 @@ export class OrganizationService {
   }
 
   auditEventTypes(): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/audits/events');
+    // Audit event type list is retrieved on platform level.
+    return this.http.get<any>(this.platformURL + '/audits/events');
   }
 
   policies(): Observable<any> {
@@ -111,8 +112,8 @@ export class OrganizationService {
     return this.http.get<any>(this.organizationURL + '/search/users?q=' + searchTerm + '&page=' + page + '&size=' + size);
   }
 
-  roles(scope?): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/roles' + (scope ? '?scope=' + scope : ''));
+  roles(type?): Observable<any> {
+    return this.http.get<any>(this.organizationURL + '/roles' + (type ? '?type=' + type : ''));
   }
 
   role(roleId): Observable<any> {

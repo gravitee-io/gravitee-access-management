@@ -16,13 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
@@ -46,6 +46,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Comparator;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -74,60 +77,64 @@ public class UsersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List users for a security domain")
+    @ApiOperation(value = "List users for a security domain",
+            notes = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
+                    "or DOMAIN_USER[READ] permission on the specified environment " +
+                    "or DOMAIN_USER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List users for a security domain", response = User.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.READ)
-    })
-    public void list(@PathParam("domain") String domain,
-                     @QueryParam("q") String query,
-                     @QueryParam("page") @DefaultValue("0") int page,
-                     @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
-                     @Suspended final AsyncResponse response) {
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> {
-                    if (query != null) {
-                        return userService.search(domain, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
-                    } else {
-                        return userService.findByDomain(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
-                    }
-                })
-                .flatMap(pagedUsers ->
-                        Observable.fromIterable(pagedUsers.getData())
-                                .flatMapSingle(user -> {
-                                    if (user.getSource() != null) {
-                                        return identityProviderService.findById(user.getSource())
-                                                .map(idP -> {
-                                                    user.setSource(idP.getName());
-                                                    return user;
-                                                })
-                                                .defaultIfEmpty(user)
-                                                .toSingle();
-                                    }
-                                    return Single.just(user);
-                                })
-                                .toSortedList(Comparator.comparing(User::getUsername))
-                                .map(users -> new Page(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
-                )
-                .map(users -> Response.ok(users).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+    public void list(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @QueryParam("q") String query,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
+            @Suspended final AsyncResponse response) {
+
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.READ)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> {
+                            if (query != null) {
+                                return userService.search(domain, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                            } else {
+                                return userService.findByDomain(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                            }
+                        })
+                        .flatMap(pagedUsers ->
+                                Observable.fromIterable(pagedUsers.getData())
+                                        .flatMapSingle(user -> {
+                                            if (user.getSource() != null) {
+                                                return identityProviderService.findById(user.getSource())
+                                                        .map(idP -> {
+                                                            user.setSource(idP.getName());
+                                                            return user;
+                                                        })
+                                                        .defaultIfEmpty(user)
+                                                        .toSingle();
+                                            }
+                                            return Single.just(user);
+                                        })
+                                        .toSortedList(Comparator.comparing(User::getUsername))
+                                        .map(users -> new Page(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
+                        ))
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a user")
+    @ApiOperation(value = "Create a user on the specified security domain",
+            notes = "User must have the DOMAIN_USER[CREATE] permission on the specified domain " +
+                    "or DOMAIN_USER[CREATE] permission on the specified environment " +
+                    "or DOMAIN_USER[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "User successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_USER, acls = RolePermissionAction.CREATE)
-    })
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -135,6 +142,7 @@ public class UsersResource extends AbstractResource {
             @ApiParam(name = "user", required = true)
             @Valid @NotNull final NewUser newUser,
             @Suspended final AsyncResponse response) {
+
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         // user must have a password in no pre registration mode
@@ -151,16 +159,17 @@ public class UsersResource extends AbstractResource {
             }
         }
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(userProvider -> userService.create(domain, newUser, authenticatedUser))
-                .map(user -> Response
-                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/users/" + user.getId()))
-                        .entity(user)
-                        .build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.CREATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.CREATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.CREATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(userProvider -> userService.create(domain, newUser, authenticatedUser))
+                        .map(user -> Response
+                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/users/" + user.getId()))
+                                .entity(user)
+                                .build()))
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{user}")

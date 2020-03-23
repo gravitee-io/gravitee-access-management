@@ -33,7 +33,6 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.service.*;
@@ -453,7 +452,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (principal == null) {
                         return Single.just(application1);
                     }
-                    return roleService.findSystemRole(SystemRole.PRIMARY_OWNER, RoleScope.APPLICATION)
+                    return roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)
                             .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the application, owner role does not exist")))
                             .flatMap(role -> {
                                 Membership membership = new Membership();
@@ -462,7 +461,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 membership.setMemberType(MemberType.USER);
                                 membership.setReferenceId(application1.getId());
                                 membership.setReferenceType(ReferenceType.APPLICATION);
-                                membership.setRole(role.getId());
+                                membership.setRoleId(role.getId());
                                 // FIXME: propagate organizationId.
                                 return membershipService.addOrUpdate("DEFAULT", membership)
                                         .map(__ -> domain);

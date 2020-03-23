@@ -18,11 +18,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ClientListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -44,6 +43,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,39 +65,43 @@ public class ScopesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List scopes for a security domain")
+    @ApiOperation(value = "List scopes for a security domain",
+            notes = "User must have the DOMAIN_SCOPE[READ] permission on the specified domain " +
+                    "or DOMAIN_SCOPE[READ] permission on the specified environment " +
+                    "or DOMAIN_SCOPE[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List scopes for a security domain",
                     response = ClientListItem.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.READ)
-    })
-    public void list(@PathParam("domain") String _domain,
-                     @Suspended final AsyncResponse response) {
-        scopeService.findByDomain(_domain)
-                .map(scopes -> {
-                    List<Scope> sortedScopes = scopes.stream()
-                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getKey(), o2.getKey()))
-                            .collect(Collectors.toList());
-                    return Response.ok(sortedScopes).build();
-                })
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error)
-                );
+    public void list(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @Suspended final AsyncResponse response) {
+
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_SCOPE, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SCOPE, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SCOPE, Acl.READ)))
+                .andThen(scopeService.findByDomain(domain)
+                        .map(scopes -> {
+                            List<Scope> sortedScopes = scopes.stream()
+                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getKey(), o2.getKey()))
+                                    .collect(Collectors.toList());
+                            return Response.ok(sortedScopes).build();
+                        }))
+                .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a scope")
+    @ApiOperation(value = "Create a scope",
+            notes = "User must have the DOMAIN_SCOPE[CREATE] permission on the specified domain " +
+                    "or DOMAIN_SCOPE[CREATE] permission on the specified environment " +
+                    "or DOMAIN_SCOPE[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Scope successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_SCOPE, acls = RolePermissionAction.CREATE)
-    })
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -103,19 +109,21 @@ public class ScopesResource extends AbstractResource {
             @ApiParam(name = "scope", required = true)
             @Valid @NotNull final NewScope newScope,
             @Suspended final AsyncResponse response) {
+
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> scopeService.create(domain, newScope, authenticatedUser)
-                        .map(scope -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/scopes/" + scope.getId()))
-                                .entity(scope)
-                                .build())
-                )
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_SCOPE, Acl.CREATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SCOPE, Acl.CREATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SCOPE, Acl.CREATE)))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> scopeService.create(domain, newScope, authenticatedUser)
+                                .map(scope -> Response
+                                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/scopes/" + scope.getId()))
+                                        .entity(scope)
+                                        .build())
+                        ))
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{scope}")

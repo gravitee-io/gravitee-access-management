@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public interface RoleRepository extends CrudRepository<Role, String> {
 
-    Single<Set<Role>> findAll(ReferenceType referenceType, String referenceId);
+    Flowable<Role> findAll(ReferenceType referenceType, String referenceId);
 
     Single<Set<Role>> findByDomain(String domain);
 
@@ -39,5 +39,5 @@ public interface RoleRepository extends CrudRepository<Role, String> {
 
     Maybe<Role> findById(ReferenceType referenceType, String referenceId, String role);
 
-    Maybe<Role> findByNameAndScope(ReferenceType referenceType, String referenceId, String name, int scope);
+    Maybe<Role> findByNameAndAssignableType(ReferenceType referenceType, String referenceId, String name, ReferenceType assignableType);
 }

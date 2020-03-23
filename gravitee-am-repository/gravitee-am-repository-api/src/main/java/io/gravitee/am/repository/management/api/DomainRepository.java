@@ -18,8 +18,10 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.reactivex.SingleSource;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,4 +38,6 @@ public interface DomainRepository extends CrudRepository<Domain, String> {
     Single<Set<Domain>> findAll();
 
     Single<Set<Domain>> findByIdIn(Collection<String> ids);
+
+    Flowable<Domain> findAllByEnvironment(String environmentId);
 }

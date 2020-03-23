@@ -15,8 +15,13 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.model.permissions.SystemRole;
+
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -29,9 +34,10 @@ public class Role {
     private String description;
     private ReferenceType referenceType;
     private String referenceId;
-    private Integer scope;
+    private ReferenceType assignableType;
     private boolean system;
-    private List<String> permissions;
+    private Map<Permission, Set<Acl>> permissions;
+    private List<String> oauthScopes;
     private Date createdAt;
     private Date updatedAt;
 
@@ -44,8 +50,9 @@ public class Role {
         this.description = other.description;
         this.referenceType = other.referenceType;
         this.referenceId = other.referenceId;
-        this.scope = other.scope;
+        this.assignableType = other.assignableType;
         this.permissions = other.permissions;
+        this.oauthScopes = other.oauthScopes;
         this.system = other.system;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
@@ -91,27 +98,24 @@ public class Role {
         this.referenceId = referenceId;
     }
 
-    public Integer getScope() {
-        return scope;
-    }
-
-    public void setScope(Integer scope) {
-        this.scope = scope;
-    }
-
     public boolean isSystem() {
         return system;
+    }
+
+    public boolean isInternalOnly() {
+
+        return isSystem() && SystemRole.valueOf(name).isInternalOnly();
     }
 
     public void setSystem(boolean system) {
         this.system = system;
     }
 
-    public List<String> getPermissions() {
+    public Map<Permission, Set<Acl>> getPermissions() {
         return permissions;
     }
 
-    public void setPermissions(List<String> permissions) {
+    public void setPermissions(Map<Permission, Set<Acl>> permissions) {
         this.permissions = permissions;
     }
 
@@ -129,5 +133,21 @@ public class Role {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<String> getOauthScopes() {
+        return oauthScopes;
+    }
+
+    public void setOauthScopes(List<String> oauthScopes) {
+        this.oauthScopes = oauthScopes;
+    }
+
+    public ReferenceType getAssignableType() {
+        return assignableType;
+    }
+
+    public void setAssignableType(ReferenceType assignableType) {
+        this.assignableType = assignableType;
     }
 }

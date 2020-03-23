@@ -270,14 +270,14 @@ public class ScopeServiceImpl implements ScopeService {
                                 // 1_ Remove permissions from role
                                 roleService.findByDomain(scope.getDomain())
                                         .flatMapObservable(roles -> Observable.fromIterable(roles.stream()
-                                                .filter(role -> role.getPermissions() != null && role.getPermissions().contains(scope.getKey()))
+                                                .filter(role -> role.getOauthScopes() != null && role.getOauthScopes().contains(scope.getKey()))
                                                 .collect(Collectors.toList())))
                                         .flatMapSingle(role -> {
-                                            role.getPermissions().remove(scope.getKey());
+                                            role.getOauthScopes().remove(scope.getKey());
                                             UpdateRole updatedRole = new UpdateRole();
                                             updatedRole.setName(role.getName());
                                             updatedRole.setDescription(role.getDescription());
-                                            updatedRole.setPermissions(role.getPermissions());
+                                            updatedRole.setPermissions(role.getOauthScopes());
                                             // Save role
                                             return roleService.update(scope.getDomain(), role.getId(), updatedRole);
                                         }).toList())

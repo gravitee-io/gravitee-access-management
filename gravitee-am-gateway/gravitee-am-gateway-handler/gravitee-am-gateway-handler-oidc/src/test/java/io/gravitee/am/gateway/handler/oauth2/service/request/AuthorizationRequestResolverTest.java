@@ -104,7 +104,7 @@ public class AuthorizationRequestResolverTest {
 
         User user = new User();
         Role role = new Role();
-        role.setPermissions(Collections.singletonList("user"));
+        role.setOauthScopes(Collections.singletonList("user"));
         user.setRolesPermissions(Collections.singleton(role));
 
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
@@ -131,7 +131,7 @@ public class AuthorizationRequestResolverTest {
 
         User user = new User();
         Role role = new Role();
-        role.setPermissions(userScopes);
+        role.setOauthScopes(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
         
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
@@ -164,7 +164,7 @@ public class AuthorizationRequestResolverTest {
 
         User user = new User();
         Role role = new Role();
-        role.setPermissions(userScopes);
+        role.setOauthScopes(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
         
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
@@ -195,7 +195,7 @@ public class AuthorizationRequestResolverTest {
         
         User user = new User();
         Role role = new Role();
-        role.setPermissions(userScopes);
+        role.setOauthScopes(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
         
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();

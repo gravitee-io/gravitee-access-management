@@ -20,15 +20,14 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
 import io.gravitee.am.management.handlers.management.api.manager.group.GroupManager;
-import io.gravitee.am.management.handlers.management.api.manager.membership.MembershipManager;
-import io.gravitee.am.management.handlers.management.api.manager.role.RoleManager;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.service.*;
-import io.gravitee.am.model.Organization;
+import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.reactivex.Single;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -149,17 +148,14 @@ public abstract class JerseySpringTest {
     protected GroupManager groupManager;
 
     @Autowired
-    protected RoleManager roleManager;
-
-    @Autowired
-    protected MembershipManager membershipManager;
-
-    @Autowired
     protected FactorService factorService;
+
+    @Autowired
+    protected PermissionService permissionService;
 
     @Before
     public void init() {
-        when(roleManager.isAdminRoleGranted(any())).thenReturn(true);
+       when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
     }
 
     @Configuration
@@ -312,18 +308,13 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public RoleManager roleManager() {
-            return mock(RoleManager.class);
-        }
-
-        @Bean
-        public MembershipManager membershipManager() {
-            return mock(MembershipManager.class);
-        }
-
-        @Bean
         public FactorService factorService() {
             return mock(FactorService.class);
+        }
+
+        @Bean
+        public PermissionService permissionService(){
+            return mock(PermissionService.class);
         }
     }
 

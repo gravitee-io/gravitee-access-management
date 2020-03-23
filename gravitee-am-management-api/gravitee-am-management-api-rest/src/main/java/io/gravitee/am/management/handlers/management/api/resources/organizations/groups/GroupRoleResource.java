@@ -16,12 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.groups;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.ApiOperation;
@@ -46,14 +44,12 @@ public class GroupRoleResource extends AbstractResource {
     private GroupService groupService;
 
     @DELETE
-    @ApiOperation(value = "Revoke role to a group")
+    @ApiOperation(value = "Revoke role to a group",
+            notes = "User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses({
             @ApiResponse(code = 200, message = "Roles successfully revoked", response = Group.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_GROUP, acls = RolePermissionAction.UPDATE)
-    })
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("group") String group,
@@ -62,7 +58,8 @@ public class GroupRoleResource extends AbstractResource {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        groupService.revokeRoles(ReferenceType.ORGANIZATION, organizationId, group, Collections.singletonList(role), authenticatedUser)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
+                .andThen(groupService.revokeRoles(ReferenceType.ORGANIZATION, organizationId, group, Collections.singletonList(role), authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 }

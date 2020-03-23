@@ -17,13 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
 import io.gravitee.am.management.service.AuditReporterManager;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchDomain;
@@ -43,7 +41,12 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.util.List;
+
+import java.util.Collections;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+import static java.util.Collections.emptySet;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -63,111 +66,121 @@ public class DomainResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a security domain")
+    @ApiOperation(value = "Get a security domain",
+            notes = "User must have the DOMAIN[READ] permission on the specified domain " +
+                    "or DOMAIN[READ] permission on the specified environment " +
+                    "or DOMAIN[READ] permission on the specified organization. " +
+                    "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
+                    "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Domain", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void get(@PathParam("domain") String domainId, @Suspended final AsyncResponse response) {
+    public void get(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @Suspended final AsyncResponse response) {
+
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .map(domain -> {
-                    if (isAdmin(authenticatedUser)) {
-                        return domain;
-                    }
-                    List<String> resourcePermissions = resourcePermissions(domain, ReferenceType.DOMAIN, authenticatedUser);
-                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_USER_ACCOUNT, RolePermissionAction.READ)) {
-                        domain.setAccountSettings(null);
-                    }
-                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_IDENTITY_PROVIDER, RolePermissionAction.READ)) {
-                        domain.setIdentities(null);
-                    }
-                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_FORM, RolePermissionAction.READ)) {
-                        domain.setLoginForm(null);
-                    }
-                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_LOGIN_SETTINGS, RolePermissionAction.READ)) {
-                        domain.setLoginSettings(null);
-                    }
-                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_DCR, RolePermissionAction.READ)) {
-                        domain.setOidc(null);
-                    }
-                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_SCIM, RolePermissionAction.READ)) {
-                        domain.setScim(null);
-                    }
-                    if (!hasPermission(resourcePermissions, RolePermission.DOMAIN_SETTINGS, RolePermissionAction.READ)) {
-                        domain.setTags(null);
-                    }
-                    return domain;
-                })
-                .map(domain -> Response.ok(domain).build())
-                .subscribe(
-                        result -> response.resume(result),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domainId, Permission.DOMAIN, Acl.READ),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain ->
+                                permissionService.findAllPermissions(authenticatedUser, ReferenceType.DOMAIN, domainId)
+                                        .map(domainPermissions -> {
+
+                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_USER_ACCOUNT, emptySet()).contains(Acl.READ)) {
+                                                domain.setAccountSettings(null);
+                                            }
+                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_IDENTITY_PROVIDER, emptySet()).contains(Acl.READ)) {
+                                                domain.setIdentities(null);
+                                            }
+                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_FORM, emptySet()).contains(Acl.READ)) {
+                                                domain.setLoginForm(null);
+                                            }
+                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_LOGIN_SETTINGS, emptySet()).contains(Acl.READ)) {
+                                                domain.setLoginSettings(null);
+                                            }
+                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_DCR, emptySet()).contains(Acl.READ)) {
+                                                domain.setOidc(null);
+                                            }
+                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_SCIM, emptySet()).contains(Acl.READ)) {
+                                                domain.setScim(null);
+                                            }
+                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_SETTINGS, emptySet()).contains(Acl.READ)) {
+                                                domain.setTags(null);
+                                            }
+
+                                            return domain;
+                                        })))
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update the security domain")
+    @ApiOperation(value = "Update the security domain",
+            notes = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Domain successfully updated", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_SETTINGS, acls = RolePermissionAction.UPDATE)
-    })
     public void update(
-            @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
+            @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
             @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
 
-         domainService.patch(domainId, domainToPatch, authenticatedUser)
-                .subscribe(
-                        domain -> response.resume(Response.ok(domain).build()),
-                        error -> response.resume(error));
+        updateInternal(organizationId, environmentId, domainId, domainToPatch, response);
     }
 
 
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Patch the security domain")
+    @ApiOperation(value = "Patch the security domain",
+            notes = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Domain successfully patched", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_SETTINGS, acls = RolePermissionAction.UPDATE)
-    })
     public void patch(
-            @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
+            @ApiParam(name = "domain", required = true) @Valid @NotNull final PatchDomain domainToPatch,
             @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.patch(domainId, domainToPatch, authenticatedUser)
-                .subscribe(
-                        domain -> response.resume(Response.ok(domain).build()),
-                        error -> response.resume(error));
+        updateInternal(organizationId, environmentId, domainId, domainToPatch, response);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete the security domain")
+    @ApiOperation(value = "Delete the security domain",
+            notes = "User must have the DOMAIN[DELETE] permission on the specified domain " +
+                    "or DOMAIN[DELETE] permission on the specified environment " +
+                    "or DOMAIN[DELETE] permission on the specified organization.")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Domain successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.DOMAIN_SETTINGS, acls = RolePermissionAction.DELETE)
-    })
-    public void delete(@PathParam("domain") String domain,
-                       @Suspended final AsyncResponse response) {
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        domainService.delete(domain, authenticatedUser)
-                .doOnComplete(() -> auditReporterManager.removeReporter(domain))
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(error));
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN, Acl.DELETE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.DELETE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.DELETE)))
+                .andThen(domainService.delete(domain, authenticatedUser)
+                        .doOnComplete(() -> auditReporterManager.removeReporter(domain)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @Path("clients")
@@ -255,5 +268,15 @@ public class DomainResource extends AbstractResource {
         return resourceContext.getResource(FactorsResource.class);
     }
 
+    private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain domainToPatch, final AsyncResponse response) {
+
+        final User authenticatedUser = getAuthenticatedUser();
+
+        checkPermissions(or(of(ReferenceType.DOMAIN, domainId, Permission.DOMAIN_SETTINGS, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SETTINGS, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SETTINGS, Acl.UPDATE)))
+                .andThen(domainService.patch(domainId, domainToPatch, authenticatedUser))
+                .subscribe(domain -> response.resume(Response.ok(domain).build()), response::resume);
+    }
 
 }

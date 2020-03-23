@@ -68,8 +68,11 @@ db.getCollection("forms").updateMany({}, { "$rename": { "domain": "referenceId" 
 db.getCollection("identities").updateMany({ "referenceType": { "$exists": false }}, { "$set": { "referenceType" : "DOMAIN" }});
 db.getCollection("users").updateMany({ "referenceType": { "$exists": false }}, { "$set": { "referenceType" : "DOMAIN" }});
 db.getCollection("groups").updateMany({ "referenceType": { "$exists": false }}, { "$set": { "referenceType" : "DOMAIN" }});
-db.getCollection("roles").updateMany({ "referenceType": { "$exists": false }, "system": false}, { "$set": { "referenceType" : "DOMAIN" }});
 db.getCollection("forms").updateMany({ "referenceType": { "$exists": false }}, { "$set": { "referenceType" : "DOMAIN" }});
+
+// Migrate domain role permissions to oauthScopes.
+db.getCollection("roles").updateMany({ "referenceType": { "$exists": false }, "system": false}, { "$rename": { "permissions": "oauthScopes" }, "$set": { "referenceType" : "DOMAIN", "permissions_tmp": {} }});
+db.getCollection("roles").updateMany({ }, { "$rename": { "permissions_tmp": "permissions" }});
 
 // Migrate admin audits to internal audits collection.
 db.getCollection("reporter_audits_admin").renameCollection("reporter_audits");

@@ -16,10 +16,10 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.management.service.impl.upgrades.ScopeUpgrader;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
@@ -85,10 +85,11 @@ public class ScopeUpgraderTest {
 
         final Role role = new Role();
         role.setId("role-id");
-        role.setPermissions(Collections.singletonList(roleScope.getKey()));
+        role.setOauthScopes(Collections.singletonList(roleScope.getKey()));
 
         when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
-        when(scopeService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet())).thenReturn(Single.just(Collections.singleton(domainScope)));
+        when(scopeService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet()))
+                .thenReturn(Single.just(Collections.singleton(domainScope)));
         when(clientService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(client)));
         when(roleService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(role)));
         when(scopeService.create(any(String.class), any(NewScope.class))).thenReturn(Single.just(new Scope()));

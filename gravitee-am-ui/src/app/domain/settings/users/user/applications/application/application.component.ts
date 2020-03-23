@@ -46,7 +46,7 @@ export class UserApplicationComponent implements OnInit {
     this.userId = this.route.snapshot.parent.params['userId'];
     this.consents = this.route.snapshot.data['consents'];
     this.clientId = this.consents[0] ? this.consents[0].clientEntity.name : this.route.snapshot.params['clientId'];
-    this.canRevoke = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
+    this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
   }
 
   revokeApplication(event) {

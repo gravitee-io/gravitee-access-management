@@ -42,8 +42,8 @@ export class DomainSettingsScopesComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.scopes = this.route.snapshot.data['scopes'];
-    this.canDelete = this.authService.isAdmin() || this.authService.hasPermissions(['domain_scope_delete']);
-    this.canEdit = this.authService.isAdmin() || this.authService.hasPermissions(['domain_scope_update']);
+    this.canDelete = this.authService.hasPermissions(['domain_scope_delete']);
+    this.canEdit = this.authService.hasPermissions(['domain_scope_update']);
   }
 
   loadScopes() {

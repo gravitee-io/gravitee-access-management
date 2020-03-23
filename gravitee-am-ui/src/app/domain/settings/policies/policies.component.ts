@@ -73,7 +73,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.policies = this.route.snapshot.data['policies'] || {};
     this.organizationService.policies().subscribe(data => this.policyPlugins = data);
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_extension_point_update']);
+    this.readonly = !this.authService.hasPermissions(['domain_extension_point_update']);
   }
 
   addPolicy(extensionPoint, policyId) {

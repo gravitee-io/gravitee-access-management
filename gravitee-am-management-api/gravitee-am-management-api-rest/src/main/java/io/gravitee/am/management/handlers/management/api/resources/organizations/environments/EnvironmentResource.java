@@ -18,6 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains.DomainsResource;
+import io.gravitee.am.management.service.permissions.Permissions;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.model.NewEnvironment;
 import io.gravitee.common.http.MediaType;
@@ -34,6 +39,9 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -49,11 +57,12 @@ public class EnvironmentResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create or update an environment")
+    @ApiOperation(value = "Create or update an environment",
+            notes = "User must have the ORGANIZATION_ENVIRONMENT[CREATE] permission on the specified organization " +
+                    "or ORGANIZATION_ENVIRONMENT[CREATE] permission on the platform")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Environment successfully created or updated"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    // FIXME: for now there is no permission. This will be implemented in another dedicated feature.
     public void newEnvironment(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -62,7 +71,9 @@ public class EnvironmentResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        environmentService.createOrUpdate(organizationId, environmentId, newEnvironment, authenticatedUser)
+        checkPermissions(or(of(ReferenceType.ORGANIZATION, organizationId, Permission.ENVIRONMENT, Acl.CREATE),
+                of(ReferenceType.PLATFORM, Platform.DEFAULT, Permission.ENVIRONMENT, Acl.CREATE)))
+                .andThen(environmentService.createOrUpdate(organizationId, environmentId, newEnvironment, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 

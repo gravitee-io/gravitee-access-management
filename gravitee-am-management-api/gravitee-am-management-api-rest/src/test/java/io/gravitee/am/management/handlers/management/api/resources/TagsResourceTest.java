@@ -20,6 +20,7 @@ import io.gravitee.am.model.Tag;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewTag;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.junit.Test;
 
@@ -56,9 +57,7 @@ public class TagsResourceTest extends JerseySpringTest {
         mockRole2.setName("role-2-name");
         mockRole2.setOrganizationId(ORGANIZATION_ID);
 
-        final Set<Tag> tags = new HashSet<>(Arrays.asList(mockRole, mockRole2));
-
-        doReturn(Single.just(tags)).when(tagService).findAll(anyString());
+        doReturn(Flowable.just(mockRole, mockRole2)).when(tagService).findAll(anyString());
 
         final Response response = target("organizations")
                 .path("DEFAULT")
@@ -71,7 +70,7 @@ public class TagsResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldGetTags_technicalManagementException() {
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(tagService).findAll(anyString());
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(tagService).findAll(anyString());
 
         final Response response = target("organizations")
                 .path("DEFAULT")

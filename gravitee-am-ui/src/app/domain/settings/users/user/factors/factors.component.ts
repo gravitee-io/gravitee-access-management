@@ -43,7 +43,7 @@ export class UserFactorsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.user = this.route.snapshot.parent.data['user'];
     this.factors = this.route.snapshot.data['factors'];
-    this.canRevoke = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_update']);
+    this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
   }
 
   get isEmpty() {

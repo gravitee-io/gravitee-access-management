@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;

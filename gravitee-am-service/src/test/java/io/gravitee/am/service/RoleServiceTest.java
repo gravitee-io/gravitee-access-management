@@ -26,9 +26,11 @@ import io.gravitee.am.service.impl.RoleServiceImpl;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -97,7 +99,7 @@ public class RoleServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.singleton(new Role())));
+        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Role()));
         TestObserver<Set<Role>> testObserver = roleService.findByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
@@ -108,7 +110,7 @@ public class RoleServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.error(TechnicalManagementException::new));
+        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.error(TechnicalManagementException::new));
 
         TestObserver testObserver = roleService.findByDomain(DOMAIN).test();
 
@@ -141,7 +143,7 @@ public class RoleServiceTest {
     @Test
     public void shouldCreate() {
         NewRole newRole = Mockito.mock(NewRole.class);
-        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
+        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.empty());
         Role role = new Role();
         role.setReferenceType(ReferenceType.DOMAIN);
         role.setReferenceId("domain#1");
@@ -161,7 +163,7 @@ public class RoleServiceTest {
     @Test
     public void shouldCreate_technicalException() {
         NewRole newRole = Mockito.mock(NewRole.class);
-        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
         roleService.create(DOMAIN, newRole).subscribe(testObserver);
@@ -183,7 +185,7 @@ public class RoleServiceTest {
         role.setReferenceType(ReferenceType.DOMAIN);
         role.setReferenceId("domain#1");
 
-        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.singleton(role)));
+        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(role));
 
         TestObserver testObserver = new TestObserver();
         roleService.create(DOMAIN, newRole).subscribe(testObserver);
@@ -201,7 +203,7 @@ public class RoleServiceTest {
         role.setReferenceType(ReferenceType.DOMAIN);
         role.setReferenceId("domain#1");
         when(roleRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-role")).thenReturn(Maybe.just(role));
-        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.emptySet()));
+        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.empty());
         when(roleRepository.update(any(Role.class))).thenReturn(Single.just(role));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -243,7 +245,7 @@ public class RoleServiceTest {
         role.setReferenceId("domain#1");
 
         when(roleRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-role")).thenReturn(Maybe.just(new Role()));
-        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.singleton(role)));
+        when(roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(role));
 
         TestObserver testObserver = new TestObserver();
         roleService.update(DOMAIN, "my-role", updateRole).subscribe(testObserver);
@@ -341,24 +343,5 @@ public class RoleServiceTest {
         testObserver.assertNoErrors();
 
         verify(roleRepository, times(1)).delete("my-role");
-    }
-
-    @Test
-    public void shouldFindAllSystem() {
-
-        Role role = new Role();
-        role.setId("existing-role-id");
-        role.setName("existing-role-name");
-        role.setReferenceType(ReferenceType.PLATFORM);
-        role.setReferenceId(Platform.DEFAULT);
-        role.setSystem(true);
-
-        when(roleRepository.findAll(ReferenceType.PLATFORM, Platform.DEFAULT)).thenReturn(Single.just(Collections.singleton(role)));
-
-        TestObserver<Set<Role>> obs = roleService.findAllSystem().test();
-
-        obs.awaitTerminalEvent();
-        obs.assertComplete();
-        obs.assertValue(roles -> roles.contains(role));
     }
 }

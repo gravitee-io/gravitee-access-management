@@ -39,7 +39,7 @@ export class DomainSettingsAccountComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.domain = this.route.snapshot.data['domain'];
     this.accountSettings = Object.assign({}, this.domain.accountSettings);
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_user_account_create']) && !this.authService.hasPermissions(['domain_user_account_update'])
+    this.readonly = !this.authService.hasPermissions(['domain_user_account_create']) && !this.authService.hasPermissions(['domain_user_account_update'])
   }
   updateAccountSettings(accountSettings) {
     // force inherit false

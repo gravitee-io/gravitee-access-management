@@ -15,16 +15,21 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -40,6 +45,7 @@ public class DomainResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
         mockDomain.setName("domain-name");
 
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), eq(ReferenceType.DOMAIN), eq(domainId));
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
 
         final Response response = target("domains").path(domainId).request().get();

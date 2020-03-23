@@ -17,11 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Tag;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.TagService;
 import io.gravitee.am.service.exception.TagNotFoundException;
 import io.gravitee.am.service.model.UpdateTag;
@@ -56,33 +55,29 @@ public class TagResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a sharding tag")
+    @ApiOperation(value = "Get a sharding tag",
+            notes = "User must have the ORGANIZATION_TAG[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Sharding tag", response = Tag.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_TAG, acls = RolePermissionAction.READ)
-    })
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("tag") String tagId, @Suspended final AsyncResponse response) {
-        tagService.findById(tagId, organizationId)
-                .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
-                .map(tag -> Response.ok(tag).build())
+
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_TAG, Acl.READ)
+                .andThen(tagService.findById(tagId, organizationId)
+                        .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId))))
                 .subscribe(response::resume, response::resume);
     }
-
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update the sharding tag")
+    @ApiOperation(value = "Update the sharding tag",
+            notes = "User must have the ORGANIZATION_TAG[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Sharding tag successfully updated", response = Tag.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_TAG, acls = RolePermissionAction.UPDATE)
-    })
     public void update(
             @PathParam("organizationId") String organizationId,
             @ApiParam(name = "tag", required = true) @Valid @NotNull final UpdateTag tagToUpdate,
@@ -90,29 +85,25 @@ public class TagResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        tagService.update(tagId, organizationId, tagToUpdate, authenticatedUser)
-                .subscribe(
-                        tag -> response.resume(Response.ok(tag).build()),
-                        response::resume);
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_TAG, Acl.UPDATE)
+                .andThen(tagService.update(tagId, organizationId, tagToUpdate, authenticatedUser))
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete the sharding tag")
+    @ApiOperation(value = "Delete the sharding tag",
+            notes = "User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 204, message = "Sharding tag successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_TAG, acls = RolePermissionAction.DELETE)
-    })
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("tag") String tag,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        tagService.delete(tag, organizationId, authenticatedUser)
-                .subscribe(
-                        () -> response.resume(Response.noContent().build()),
-                        response::resume);
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_TAG, Acl.DELETE)
+                .andThen(tagService.delete(tag, organizationId, authenticatedUser))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

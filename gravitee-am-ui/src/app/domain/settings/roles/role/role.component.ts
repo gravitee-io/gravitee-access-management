@@ -55,7 +55,7 @@ export class RoleComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.role = this.route.snapshot.data['role'];
     this.scopes = this.route.snapshot.data['scopes'];
-    this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_role_update']);
+    this.editMode = this.authService.hasPermissions(['domain_role_update']);
 
     if (!this.role.permissions) {
       this.role.permissions = [];

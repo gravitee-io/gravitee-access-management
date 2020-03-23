@@ -27,6 +27,7 @@ import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.model.NewEnvironment;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.EnvironmentAuditBuilder;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;

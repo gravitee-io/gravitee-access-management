@@ -31,7 +31,7 @@ public class Membership {
     private MemberType memberType;
     private String referenceId;
     private ReferenceType referenceType;
-    private String role;
+    private String roleId;
     private Date createdAt;
     private Date updatedAt;
 
@@ -44,9 +44,19 @@ public class Membership {
         this.memberType = other.memberType;
         this.referenceId = other.referenceId;
         this.referenceType = other.referenceType;
-        this.role = other.role;
+        this.roleId = other.roleId;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+    }
+
+    public boolean isUserMember(String userId) {
+
+        return memberType == MemberType.USER && memberId.equals(userId);
+    }
+
+    public boolean isGroupMember(String groupId) {
+
+        return memberType == MemberType.GROUP && memberId.equals(groupId);
     }
 
     public String getId() {
@@ -97,12 +107,12 @@ public class Membership {
         this.referenceType = referenceType;
     }
 
-    public String getRole() {
-        return role;
+    public String getRoleId() {
+        return roleId;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setRoleId(String roleId) {
+        this.roleId = roleId;
     }
 
     public Date getCreatedAt() {
@@ -130,7 +140,7 @@ public class Membership {
                 "\"memberType\":" + (memberType == null ? "null" : memberType) + ", " +
                 "\"referenceId\":" + (referenceId == null ? "null" : "\"" + referenceId + "\"") + ", " +
                 "\"referenceType\":" + (referenceType == null ? "null" : referenceType) + ", " +
-                "\"role\":" + (role == null ? "null" : "\"" + role + "\"") + ", " +
+                "\"role\":" + (roleId == null ? "null" : "\"" + roleId + "\"") + ", " +
                 "\"createdAt\":" + (createdAt == null ? "null" : createdAt) + ", " +
                 "\"updatedAt\":" + (updatedAt == null ? "null" : updatedAt) +
                 "}";

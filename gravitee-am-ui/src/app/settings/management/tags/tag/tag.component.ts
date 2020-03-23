@@ -42,7 +42,7 @@ export class TagComponent implements OnInit {
 
   ngOnInit() {
     this.tag = this.route.snapshot.data['tag'];
-    this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['management_tag_update']);
+    this.readonly = !this.authService.hasPermissions(['organization_tag_update']);
     this.initBreadcrumb();
   }
 

@@ -113,6 +113,8 @@ public class Domain implements Resource {
         this.scim = other.scim;
         this.accountSettings = other.accountSettings;
         this.tags = other.tags;
+        this.referenceType = other.referenceType;
+        this.referenceId = other.referenceId;
     }
 
     public String getId() {

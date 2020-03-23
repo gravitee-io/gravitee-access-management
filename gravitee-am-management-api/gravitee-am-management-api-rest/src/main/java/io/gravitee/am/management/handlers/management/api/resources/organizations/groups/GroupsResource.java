@@ -17,12 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.handlers.management.api.security.Permission;
-import io.gravitee.am.management.handlers.management.api.security.Permissions;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.RolePermission;
-import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.common.http.MediaType;
@@ -57,9 +55,10 @@ public class GroupsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List groups of the platform")
+    @ApiOperation(value = "List groups of the organization",
+            notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List groups of the platform", response = Group.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "List groups of the organization", response = Group.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -67,31 +66,29 @@ public class GroupsResource extends AbstractResource {
             @QueryParam("size") @DefaultValue(MAX_GROUPS_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
-        groupService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
-                .map(groups -> Response.ok(groups).build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.READ)
+                .andThen(groupService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE)))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a platform group")
+    @ApiOperation(value = "Create a platform group",
+            notes = "User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 201, message = "Group successfully created"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_GROUP, acls = RolePermissionAction.CREATE)
-    })
     public void create(
             @PathParam("organizationId") String organizationId,
             @ApiParam(name = "group", required = true) @Valid @NotNull final NewGroup newGroup,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        groupService.create(ReferenceType.ORGANIZATION, organizationId, newGroup, authenticatedUser)
-                .map(group -> Response.created(URI.create("/organizations/" + organizationId + "/groups/" + group.getId()))
-                        .entity(group)
-                        .build())
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.CREATE)
+                .andThen(groupService.create(ReferenceType.ORGANIZATION, organizationId, newGroup, authenticatedUser)
+                        .map(group -> Response.created(URI.create("/organizations/" + organizationId + "/groups/" + group.getId()))
+                                .entity(group).build()))
                 .subscribe(response::resume, response::resume);
     }
 
