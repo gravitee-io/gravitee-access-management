@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { DialogService } from "../../../../../services/dialog.service";
-import { UserService } from "../../../../../services/user.service";
-import { AppConfig } from "../../../../../../config/app.config";
-import { UserClaimComponent } from "../../creation/user-claim.component";
+import {Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {SnackbarService} from '../../../../../services/snackbar.service';
+import {DialogService} from '../../../../../services/dialog.service';
+import {UserService} from '../../../../../services/user.service';
+import {UserClaimComponent} from '../../creation/user-claim.component';
+import {AuthService} from '../../../../../services/auth.service';
 import * as _ from 'lodash';
-import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
   selector: 'app-user-profile',
@@ -31,7 +29,7 @@ import {AuthService} from "../../../../../services/auth.service";
 })
 export class UserProfileComponent implements OnInit {
   private domainId: string;
-  private adminContext: boolean;
+  adminContext: boolean;
   @ViewChild('userForm') form: any;
   @ViewChild('passwordForm') passwordForm: any;
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
@@ -45,7 +43,6 @@ export class UserProfileComponent implements OnInit {
 
   constructor(private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService,
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
               private userService: UserService,
@@ -55,7 +52,6 @@ export class UserProfileComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
       this.adminContext = true;
       this.canEdit = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_update']);
       this.canDelete = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_delete']);
@@ -67,11 +63,8 @@ export class UserProfileComponent implements OnInit {
     this.userAdditionalInformation = Object.assign({}, this.user.additionalInformation);
   }
 
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '$', this.user.username);
-  }
-
   update() {
+    // TODO we should be able to update platform users
     // set additional information
     if (this.userClaims && Object.keys(this.userClaims).length > 0) {
       let additionalInformation = this.userAdditionalInformation;
@@ -86,7 +79,6 @@ export class UserProfileComponent implements OnInit {
       this.userAdditionalInformation = Object.assign({}, this.user.additionalInformation);
       this.userClaims = {};
       this.viewContainerRef.clear();
-      this.initBreadcrumb();
       this.form.reset(this.user);
       this.formChanged = false;
       this.snackbarService.open('User updated');
@@ -94,6 +86,7 @@ export class UserProfileComponent implements OnInit {
   }
 
   delete(event) {
+    // TODO we should be able to delete platform users
     event.preventDefault();
     this.dialogService
       .confirm('Delete User', 'Are you sure you want to delete this user ?')
@@ -163,6 +156,7 @@ export class UserProfileComponent implements OnInit {
   }
 
   enableUser(event) {
+    // TODO we should be able to update platform users
     this.dialogService
       .confirm( (event.checked ? 'Enable' : 'Disable') + ' User', 'Are you sure you want to ' + (event.checked ? 'enable' : 'disable') + ' the user ?')
       .subscribe(res => {

@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { CertificateService } from "../services/certificate.service";
-import { AppConfig } from "../../config/app.config";
+import {Injectable} from '@angular/core';
+import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
+import {Observable} from 'rxjs';
+import {CertificateService} from '../services/certificate.service';
 
 @Injectable()
 export class CertificatesResolver implements Resolve<any> {
@@ -25,16 +24,9 @@ export class CertificatesResolver implements Resolve<any> {
   constructor(private certificateService: CertificateService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = AppConfig.settings.authentication.domainId;
-    if (!state.url.startsWith('/settings')) {
-      domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
-
-      // try access domainId from higher levels
-      if (!domainId && route.parent.parent.parent) {
-        domainId = route.parent.parent.parent.paramMap.get('domainId');
-      }
-    }
+    const domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') :
+      route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') :
+        route.parent.parent.parent.paramMap.get('domainId');
     return this.certificateService.findByDomain(domainId);
   }
-
 }

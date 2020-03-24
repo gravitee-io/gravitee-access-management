@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable , of} from "rxjs";
-import { AppConfig } from "../../config/app.config";
-import { FormService } from "../services/form.service";
-import {catchError} from "rxjs/operators";
-import {PlatformService} from "../services/platform.service";
+import {Injectable} from '@angular/core';
+import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
+import {Observable, of} from 'rxjs';
+import {catchError} from 'rxjs/operators';
+import {FormService} from '../services/form.service';
+import {PlatformService} from '../services/platform.service';
 
 @Injectable()
 export class FormResolver implements Resolve<any> {
