@@ -17,7 +17,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ProviderService } from "../../../../../services/provider.service";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ActivatedRoute, Router } from "@angular/router";
-import { PlatformService } from "../../../../../services/platform.service";
+import { OrganizationService } from "../../../../../services/organization.service";
 import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { DomainService } from "../../../../../services/domain.service";
 import { AppConfig } from "../../../../../../config/app.config";
@@ -34,7 +34,7 @@ export class ProviderSettingsComponent implements OnInit {
   @ViewChild('providerForm') public form: NgForm;
   private domainId: string;
   private certificates: any[];
-  adminContext = false;
+  organizationContext = false;
   domain: any = {};
   configurationIsValid: boolean = true;
   configurationPristine: boolean = true;
@@ -44,7 +44,7 @@ export class ProviderSettingsComponent implements OnInit {
   updateProviderConfiguration: any;
 
   constructor(private providerService: ProviderService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
@@ -56,17 +56,17 @@ export class ProviderSettingsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.certificates = this.route.snapshot.data['certificates'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
-    if (this.adminContext) {
-      this.platformService.settings().subscribe(data => this.domain = data);
+    if (this.organizationContext) {
+      this.organizationService.settings().subscribe(data => this.domain = data);
     } else {
       this.domainService.get(this.domainId).subscribe(data => this.domain = data);
     }
     this.provider = this.route.snapshot.parent.data['provider'];
     this.providerConfiguration = JSON.parse(this.provider.configuration);
     this.updateProviderConfiguration = this.providerConfiguration;
-    this.platformService.identitySchema(this.provider.type).subscribe(data => {
+    this.organizationService.identitySchema(this.provider.type).subscribe(data => {
       this.providerSchema = data;
       // handle default null values
       let self = this;
@@ -87,8 +87,8 @@ export class ProviderSettingsComponent implements OnInit {
 
   update() {
     this.provider.configuration = JSON.stringify(this.updateProviderConfiguration);
-    this.providerService.update(this.domainId, this.provider.id, this.provider, this.adminContext).subscribe(data => {
-      if (this.adminContext) {
+    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
+      if (this.organizationContext) {
         this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '$', this.provider.name);
       } else {
         this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/providers/' + this.provider.id + '$', this.provider.name);
@@ -105,9 +105,9 @@ export class ProviderSettingsComponent implements OnInit {
       .confirm('Delete Provider', 'Are you sure you want to delete this provider ?')
       .subscribe(res => {
         if (res) {
-          this.providerService.delete(this.domainId, this.provider.id, this.adminContext).subscribe(() => {
+          this.providerService.delete(this.domainId, this.provider.id, this.organizationContext).subscribe(() => {
             this.snackbarService.open('Identity provider deleted');
-            if (this.adminContext) {
+            if (this.organizationContext) {
               this.router.navigate(['/settings', 'management', 'providers']);
             } else {
               this.router.navigate(['/domains', this.domainId, 'settings', 'providers']);

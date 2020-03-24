@@ -18,7 +18,7 @@ import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { GroupService } from "../../../services/group.service";
-import { PlatformService } from "../../../services/platform.service";
+import { OrganizationService } from "../../../services/organization.service";
 import {AuthService} from "../../../services/auth.service";
 
 @Component({
@@ -27,7 +27,7 @@ import {AuthService} from "../../../services/auth.service";
   styleUrls: ['./groups.component.scss']
 })
 export class GroupsComponent implements OnInit {
-  private adminContext = false;
+  private organizationContext = false;
   pagedGroups: any;
   groups: any[];
   domainId: string;
@@ -36,7 +36,7 @@ export class GroupsComponent implements OnInit {
   deleteMode: boolean;
 
   constructor(private groupService: GroupService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
               private authService: AuthService,
@@ -49,7 +49,7 @@ export class GroupsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
       this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_create']);
       this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_delete']);
     } else {
@@ -66,7 +66,7 @@ export class GroupsComponent implements OnInit {
   }
 
   loadGroups() {
-    const groupsCall = this.adminContext ? this.platformService.groups(this.page.pageNumber, this.page.size)
+    const groupsCall = this.organizationContext ? this.organizationService.groups(this.page.pageNumber, this.page.size)
       : this.groupService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
     groupsCall.subscribe(pagedGroups => {
       this.page.totalElements = pagedGroups.totalCount;
@@ -80,7 +80,7 @@ export class GroupsComponent implements OnInit {
       .confirm('Delete Group', 'Are you sure you want to delete this group ?')
       .subscribe(res => {
         if (res) {
-          this.groupService.delete(this.domainId, id, this.adminContext).subscribe(response => {
+          this.groupService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
             this.snackbarService.open('Group deleted');
             this.page.pageNumber = 0;
             this.loadGroups();

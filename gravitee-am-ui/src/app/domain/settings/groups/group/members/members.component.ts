@@ -23,7 +23,7 @@ import { FormControl } from "@angular/forms";
 import { UserService } from "../../../../../services/user.service";
 import { COMMA, ENTER } from "@angular/cdk/keycodes";
 import * as _ from 'lodash';
-import { PlatformService } from "../../../../../services/platform.service";
+import { OrganizationService } from "../../../../../services/organization.service";
 import {AuthService} from "../../../../../services/auth.service";
 
 @Component({
@@ -33,7 +33,7 @@ import {AuthService} from "../../../../../services/auth.service";
 })
 export class GroupMembersComponent implements OnInit {
   private domainId: string;
-  private adminContext = false;
+  private organizationContext = false;
   group: any;
   members: any[];
   page: any = {};
@@ -44,7 +44,7 @@ export class GroupMembersComponent implements OnInit {
               private groupService: GroupService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private authService: AuthService,
               private dialog: MatDialog) {
     this.page.pageNumber = 0;
@@ -54,7 +54,7 @@ export class GroupMembersComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
       this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_update']);
     } else {
       this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_group_update']);
@@ -70,7 +70,7 @@ export class GroupMembersComponent implements OnInit {
   }
 
   loadMembers() {
-    const findMembers = this.adminContext ? this.platformService.groupMembers(this.group.id) :
+    const findMembers = this.organizationContext ? this.organizationService.groupMembers(this.group.id) :
       this.groupService.findMembers(this.domainId, this.group.id,  this.page.pageNumber,  this.page.size);
 
     findMembers.subscribe(pagedMembers => {
@@ -100,7 +100,7 @@ export class GroupMembersComponent implements OnInit {
   }
 
   add() {
-    let dialogRef = this.dialog.open(AddMemberComponent, { width : '700px', data: { domain: this.domainId, adminContext: this.adminContext, groupMembers: this.group.members }});
+    let dialogRef = this.dialog.open(AddMemberComponent, { width : '700px', data: { domain: this.domainId, organizationContext: this.organizationContext, groupMembers: this.group.members }});
     dialogRef.afterClosed().subscribe(members => {
       if (members) {
         let memberIds = _.map(members, 'id');
@@ -122,7 +122,7 @@ export class GroupMembersComponent implements OnInit {
   }
 
   userLink(user) {
-    if (this.adminContext) {
+    if (this.organizationContext) {
       return '/settings/management/users/' + user.id;
     } else {
       return '/domains/' + this.domainId + '/settings/users/' + user.id;
@@ -130,7 +130,7 @@ export class GroupMembersComponent implements OnInit {
   }
 
   private update(message) {
-    this.groupService.update(this.domainId, this.group.id, this.group, this.adminContext).subscribe(data => {
+    this.groupService.update(this.domainId, this.group.id, this.group, this.organizationContext).subscribe(data => {
       this.group = data;
       this.loadMembers();
       this.snackbarService.open(message);
@@ -160,7 +160,7 @@ export class AddMemberComponent {
     this.memberCtrl.valueChanges
       .subscribe(searchTerm => {
         if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
-          this.userService.search(data.domain, searchTerm + '*', 0, 30, data.adminContext).subscribe(response => {
+          this.userService.search(data.domain, searchTerm + '*', 0, 30, data.organizationContext).subscribe(response => {
             this.filteredUsers = response.data.filter(domainUser => _.map(this.selectedMembers, 'id').indexOf(domainUser.id) === -1 && this.groupMembers.indexOf(domainUser.id) === -1);
           });
         }

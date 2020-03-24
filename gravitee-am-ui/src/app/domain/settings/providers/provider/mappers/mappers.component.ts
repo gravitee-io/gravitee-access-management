@@ -27,7 +27,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 })
 export class ProviderMappersComponent implements OnInit {
   private domainId: string;
-  private adminContext = false;
+  private organizationContext = false;
   private defaultMappers: any = {
     'sub' : 'uid',
     'email' : 'mail',
@@ -50,7 +50,7 @@ export class ProviderMappersComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.provider = this.route.snapshot.parent.data['provider'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
     if (!this.provider.mappers) {
       this.setMappers(this.defaultMappers);
@@ -88,7 +88,7 @@ export class ProviderMappersComponent implements OnInit {
 
   update(message) {
     this.provider.mappers = this.mappers.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
-    this.providerService.update(this.domainId, this.provider.id, this.provider, this.adminContext).subscribe(data => {
+    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
       this.snackbarService.open(message);
     })
   }

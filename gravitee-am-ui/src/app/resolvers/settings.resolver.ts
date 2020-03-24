@@ -16,15 +16,15 @@
 import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
-import { PlatformService } from "../services/platform.service";
+import { OrganizationService } from "../services/organization.service";
 
 @Injectable()
 export class SettingsResolver implements Resolve<any> {
 
-  constructor(private platformService: PlatformService) { }
+  constructor(private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    return this.platformService.settings();
+    return this.organizationService.settings();
   }
 
 }

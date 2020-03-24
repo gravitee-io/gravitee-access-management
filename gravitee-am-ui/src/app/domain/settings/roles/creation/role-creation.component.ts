@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { RoleService } from "../../../../services/role.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../../services/snackbar.service";
-import { PlatformService } from "../../../../services/platform.service";
+import { OrganizationService } from "../../../../services/organization.service";
 
 @Component({
   selector: 'app-creation',
@@ -27,12 +27,12 @@ import { PlatformService } from "../../../../services/platform.service";
 export class RoleCreationComponent implements OnInit {
   private scopes: any[];
   private domainId: string;
-  adminContext: boolean;
+  organizationContext: boolean;
   role: any = {};
   roleScopes: any[] = ['MANAGEMENT', 'DOMAIN', 'APPLICATION'];
 
   constructor(private roleService: RoleService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private router: Router,
               private route: ActivatedRoute,
               private snackbarService: SnackbarService) { }
@@ -40,14 +40,14 @@ export class RoleCreationComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
     this.scopes = this.route.snapshot.data['scopes'];
   }
 
   create() {
-    if (this.adminContext) {
-      this.platformService.createRole(this.role).subscribe(data => {
+    if (this.organizationContext) {
+      this.organizationService.createRole(this.role).subscribe(data => {
         this.snackbarService.open('Role ' + data.name + ' created');
         this.router.navigate(['/settings', 'management', 'roles', data.id]);
       });

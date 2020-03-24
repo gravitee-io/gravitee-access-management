@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { ProviderService } from "../../../services/provider.service";
 import { SnackbarService } from "../../../services/snackbar.service";
-import { PlatformService } from "../../../services/platform.service";
+import { OrganizationService } from "../../../services/organization.service";
 import { AuthService } from "../../../services/auth.service";
 
 @Component({
@@ -32,7 +32,7 @@ export class ManagementGeneralComponent implements OnInit {
   readonly: boolean;
 
   constructor(private providerService: ProviderService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private snackbarService: SnackbarService,
               private authService: AuthService,
               private route: ActivatedRoute) { }
@@ -40,7 +40,7 @@ export class ManagementGeneralComponent implements OnInit {
   ngOnInit() {
     this.settings = this.route.snapshot.data['settings'];
     this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['management_settings_update']);
-    this.platformService.identityProviders().subscribe(data => {
+    this.organizationService.identityProviders().subscribe(data => {
 
       // Separate all idps and all social idps.
       this.identityProviders = data.filter(idp => !idp.external);
@@ -56,7 +56,7 @@ export class ManagementGeneralComponent implements OnInit {
     const settings = {};
     settings['identities'] = this.settings.identityProviders.concat(this.settings.socialIdentities);
 
-    this.platformService.patchSettings(settings).subscribe(response => {
+    this.organizationService.patchSettings(settings).subscribe(response => {
       this.snackbarService.open('Settings updated');
     });
   }

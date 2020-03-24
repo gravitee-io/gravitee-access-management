@@ -17,14 +17,14 @@ import {Injectable} from '@angular/core';
 import {AppConfig} from "../../config/app.config";
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
-import {PlatformService} from "./platform.service";
+import {OrganizationService} from "./organization.service";
 
 @Injectable()
 export class GroupService {
   private groupsURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
-              private platformService: PlatformService) { }
+              private organizationService: OrganizationService) { }
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.groupsURL + domainId + "/groups?page=" + page + "&size=" + size);
@@ -38,9 +38,9 @@ export class GroupService {
     return this.http.post<any>(this.groupsURL + domainId + "/groups", user);
   }
 
-  update(domainId, id, group, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.updateGroup(id, group);
+  update(domainId, id, group, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.updateGroup(id, group);
     }
     return this.http.put<any>(this.groupsURL + domainId + "/groups/" + id, {
       'name' : group.name,
@@ -49,9 +49,9 @@ export class GroupService {
     });
   }
 
-  delete(domainId, id, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.deleteGroup(id);
+  delete(domainId, id, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.deleteGroup(id);
     }
     return this.http.delete<any>(this.groupsURL + domainId + "/groups/" + id);
   }
@@ -64,16 +64,16 @@ export class GroupService {
     return this.http.get<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles");
   }
 
-  revokeRole(domainId, groupId, roleId, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.revokeGroupRole(groupId, roleId);
+  revokeRole(domainId, groupId, roleId, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.revokeGroupRole(groupId, roleId);
     }
     return this.http.delete<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles/" + roleId);
   }
 
-  assignRoles(domainId, groupId, roles, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.assignGroupRoles(groupId, roles);
+  assignRoles(domainId, groupId, roles, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.assignGroupRoles(groupId, roles);
     }
     return this.http.post<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles", roles);
   }

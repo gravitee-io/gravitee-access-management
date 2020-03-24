@@ -20,7 +20,7 @@ import {SnackbarService} from "../../../../services/snackbar.service";
 import {ActivatedRoute, Router} from "@angular/router";
 import {BreadcrumbService} from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import {DialogService} from "../../../../services/dialog.service";
-import {PlatformService} from "../../../../services/platform.service";
+import {OrganizationService} from "../../../../services/organization.service";
 import {AuthService} from "../../../../services/auth.service";
 
 @Component({
@@ -39,7 +39,7 @@ export class ManagementRoleComponent implements OnInit {
   permissions: any[];
   readonly: boolean;
 
-  constructor(private platformService: PlatformService,
+  constructor(private organizationService: OrganizationService,
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
@@ -56,7 +56,7 @@ export class ManagementRoleComponent implements OnInit {
   }
 
   update() {
-    this.platformService.updateRole(this.role.id, this.role).subscribe(data => {
+    this.organizationService.updateRole(this.role.id, this.role).subscribe(data => {
       this.role = data;
       this.formChanged = false;
       this.snackbarService.open('Role updated');
@@ -73,7 +73,7 @@ export class ManagementRoleComponent implements OnInit {
       .confirm('Delete Role', 'Are you sure you want to delete this role ?')
       .subscribe(res => {
         if (res) {
-          this.platformService.deleteRole(this.role.id).subscribe(() => {
+          this.organizationService.deleteRole(this.role.id).subscribe(() => {
             this.snackbarService.open('Role ' + this.role.name + ' deleted');
             this.router.navigate(['/settings', 'management', 'roles']);
           });

@@ -16,7 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { PlatformService } from "../../../../services/platform.service";
+import { OrganizationService } from "../../../../services/organization.service";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { ExtensionGrantService } from "../../../../services/extension-grant.service";
 import {DialogService} from "../../../../services/dialog.service";
@@ -43,7 +43,7 @@ export class ExtensionGrantComponent implements OnInit {
   constructor(private route: ActivatedRoute,
               private router: Router,
               private breadcrumbService: BreadcrumbService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private extensionGrantService: ExtensionGrantService,
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
@@ -56,7 +56,7 @@ export class ExtensionGrantComponent implements OnInit {
     this.extensionGrantConfiguration = JSON.parse(this.extensionGrant.configuration);
     this.updateTokenGranterConfiguration = this.extensionGrantConfiguration;
     this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_extension_grant_edit']);
-    this.platformService.extensionGrantSchema(this.extensionGrant.type).subscribe(data => {
+    this.organizationService.extensionGrantSchema(this.extensionGrant.type).subscribe(data => {
       this.extensionGrantSchema = data;
       // set the grant_type value
       if (!this.extensionGrant.grantType && this.extensionGrantSchema.properties.grantType) {

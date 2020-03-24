@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { PlatformService } from "../../../../../../services/platform.service";
+import { OrganizationService } from "../../../../../../services/organization.service";
 
 @Component({
   selector: 'certificate-creation-step1',
@@ -30,11 +30,11 @@ export class CertificateCreationStep1Component implements OnInit {
   certificates: any[];
   selectedCertificateTypeId: string;
 
-  constructor(private platformService: PlatformService) {
+  constructor(private organizationService: OrganizationService) {
   }
 
   ngOnInit() {
-    this.platformService.certificates().subscribe(data => this.certificates = data);
+    this.organizationService.certificates().subscribe(data => this.certificates = data);
   }
 
   selectCertificateType() {

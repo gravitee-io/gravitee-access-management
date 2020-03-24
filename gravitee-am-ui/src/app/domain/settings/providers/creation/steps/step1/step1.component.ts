@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { PlatformService } from "../../../../../../services/platform.service";
+import { OrganizationService } from "../../../../../../services/organization.service";
 
 @Component({
   selector: 'provider-creation-step1',
@@ -34,12 +34,12 @@ export class ProviderCreationStep1Component implements OnInit {
   socialProviders: any[];
   selectedProviderTypeId: string;
 
-  constructor(private platformService: PlatformService) {
+  constructor(private organizationService: OrganizationService) {
   }
 
   ngOnInit() {
-    this.platformService.identities().subscribe(data => this.providers = data);
-    this.platformService.socialIdentities().subscribe(data => this.socialProviders = data);
+    this.organizationService.identities().subscribe(data => this.providers = data);
+    this.organizationService.socialIdentities().subscribe(data => this.socialProviders = data);
   }
 
   selectProviderType(isExternal: boolean) {

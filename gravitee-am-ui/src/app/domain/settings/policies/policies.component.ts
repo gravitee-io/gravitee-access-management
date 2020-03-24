@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {PlatformService} from "../../../services/platform.service";
+import {OrganizationService} from "../../../services/organization.service";
 import {DialogService} from "../../../services/dialog.service";
 import {SnackbarService} from "../../../services/snackbar.service";
 import {ActivatedRoute} from "@angular/router";
@@ -61,7 +61,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
     }
   ];
 
-  constructor(private platformService: PlatformService,
+  constructor(private organizationService: OrganizationService,
               private policyService: PolicyService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
@@ -72,7 +72,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.policies = this.route.snapshot.data['policies'] || {};
-    this.platformService.policies().subscribe(data => this.policyPlugins = data);
+    this.organizationService.policies().subscribe(data => this.policyPlugins = data);
     this.readonly = !this.authService.isAdmin() && !this.authService.hasPermissions(['domain_extension_point_update']);
   }
 
@@ -195,7 +195,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
   private loadPolicySchema(policy, delay) {
     let self = this;
     setTimeout(function() {
-      self.platformService.policySchema(policy.type).subscribe(data => {
+      self.organizationService.policySchema(policy.type).subscribe(data => {
         self.policySchema = data;
         if (policy.id) {
           self.selectedPolicyId = policy.id;

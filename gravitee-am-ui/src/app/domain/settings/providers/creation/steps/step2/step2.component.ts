@@ -15,7 +15,7 @@
  */
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {PlatformService} from '../../../../../../services/platform.service';
+import {OrganizationService} from '../../../../../../services/organization.service';
 import * as _ from 'lodash';
 
 @Component({
@@ -31,7 +31,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
   providerSchema: any = {};
   private certificates: any[];
 
-  constructor(private platformService: PlatformService,
+  constructor(private organizationService: OrganizationService,
               private route: ActivatedRoute) { }
 
   ngOnInit() {
@@ -40,7 +40,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.provider) {
-      this.platformService.identitySchema(changes.provider.currentValue.type).subscribe(data => {
+      this.organizationService.identitySchema(changes.provider.currentValue.type).subscribe(data => {
         this.providerSchema = data;
         // enhance schema information
         if (this.providerSchema.properties.graviteeCertificate && this.certificates && this.certificates.length > 0) {

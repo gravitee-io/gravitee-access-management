@@ -16,7 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
 import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { PlatformService } from "../../../../services/platform.service";
+import { OrganizationService } from "../../../../services/organization.service";
 import { CertificateService}  from "../../../../services/certificate.service";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { DialogService } from "../../../../services/dialog.service";
@@ -37,7 +37,7 @@ export class CertificateComponent implements OnInit {
 
   constructor(private route: ActivatedRoute,
               private breadcrumbService: BreadcrumbService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private certificateService: CertificateService,
               private snackbarService: SnackbarService,
               private router: Router,
@@ -48,7 +48,7 @@ export class CertificateComponent implements OnInit {
     this.certificate = this.route.snapshot.data['certificate'];
     this.certificateConfiguration = JSON.parse(this.certificate.configuration);
     this.updateCertificateConfiguration = this.certificateConfiguration;
-    this.platformService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
+    this.organizationService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
     this.initBreadcrumb();
   }
 

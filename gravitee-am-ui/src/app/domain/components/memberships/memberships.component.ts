@@ -15,7 +15,7 @@
  */
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges} from '@angular/core';
 import {FormControl} from "@angular/forms";
-import {PlatformService} from "../../../services/platform.service";
+import {OrganizationService} from "../../../services/organization.service";
 import {DialogService} from "../../../services/dialog.service";
 import * as _ from 'lodash';
 
@@ -47,12 +47,12 @@ export class MembershipsComponent implements OnInit, OnChanges {
   selectedGroupRole: any;
   displayReset = false;
 
-  constructor(private platformService: PlatformService,
+  constructor(private organizationService: OrganizationService,
               private dialogService: DialogService) {
     this.userCtrl.valueChanges
       .subscribe(searchTerm => {
         if (searchTerm && typeof searchTerm === 'string') {
-          this.platformService.searchUsers(searchTerm + '*', 0, 30).subscribe(response => {
+          this.organizationService.searchUsers(searchTerm + '*', 0, 30).subscribe(response => {
             this.filteredUsers = response.data.filter(user => _.map(this.userMembers, 'memberId').indexOf(user.id) === -1);
           });
         }
@@ -155,13 +155,13 @@ export class MembershipsComponent implements OnInit, OnChanges {
   }
 
   private loadRoles() {
-    this.platformService.roles(this.roleScope).subscribe(response => {
+    this.organizationService.roles(this.roleScope).subscribe(response => {
       this.roles = response;
     });
   }
 
   private loadGroups() {
-    this.platformService.groups().subscribe(response => {
+    this.organizationService.groups().subscribe(response => {
       this.groups = response.data;
       this.filterGroups();
     });

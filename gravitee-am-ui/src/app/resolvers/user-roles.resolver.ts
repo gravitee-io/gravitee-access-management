@@ -17,18 +17,18 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { UserService } from "../services/user.service";
-import { PlatformService } from "../services/platform.service";
+import { OrganizationService } from "../services/organization.service";
 
 @Injectable()
 export class UserRolesResolver implements Resolve<any> {
 
   constructor(private userService: UserService,
-              private platformService: PlatformService) { }
+              private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     const userId = route.parent.paramMap.get('userId');
     if (state.url.startsWith('/settings')) {
-      return this.platformService.userRoles(userId);
+      return this.organizationService.userRoles(userId);
     }
     const domainId = route.parent.parent.parent.paramMap.get('domainId');
     return this.userService.roles(domainId, userId);

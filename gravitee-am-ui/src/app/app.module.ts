@@ -68,7 +68,7 @@ import { ProviderComponent } from './domain/settings/providers/provider/provider
 import { ProviderFormComponent } from './domain/settings/providers/provider/form/form.component';
 import { CreateRoleMapperComponent, ProviderRolesComponent } from "app/domain/settings/providers/provider/roles/roles.component";
 import { ProviderService } from "./services/provider.service";
-import { PlatformService } from "./services/platform.service";
+import { OrganizationService } from "./services/organization.service";
 import { AuthService } from "./services/auth.service";
 import { AppConfig } from "../config/app.config";
 import { LogoutComponent } from './logout/logout.component';
@@ -430,7 +430,7 @@ import {IdenticonHashDirective} from "./directives/identicon-hash.directive";
     NavbarService,
     DialogService,
     SnackbarService,
-    PlatformService,
+    OrganizationService,
     AuthService,
     CertificateService,
     RoleService,

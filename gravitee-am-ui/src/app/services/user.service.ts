@@ -17,14 +17,14 @@ import {Injectable} from '@angular/core';
 import {AppConfig} from "../../config/app.config";
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
-import {PlatformService} from "./platform.service";
+import {OrganizationService} from "./organization.service";
 
 @Injectable()
 export class UserService {
   private usersURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
-              private platformService: PlatformService) { }
+              private organizationService: OrganizationService) { }
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + "/users?page=" + page + "&size=" + size);
@@ -73,9 +73,9 @@ export class UserService {
     return this.http.post<any>(this.usersURL + domainId + "/users/" + id + "/unlock", {});
   }
 
-  search(domainId, searchTerm, page, size, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.searchUsers(searchTerm, page, size);
+  search(domainId, searchTerm, page, size, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.searchUsers(searchTerm, page, size);
     }
     return this.http.get<any>(this.usersURL + domainId + "/users?q=" + searchTerm + "&page=" + page + "&size=" + size);
   }
@@ -96,16 +96,16 @@ export class UserService {
     return this.http.get<any>(this.usersURL + domainId + "/users/" + userId + "/roles");
   }
 
-  revokeRole(domainId, userId, roleId, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.revokeUserRole(userId, roleId);
+  revokeRole(domainId, userId, roleId, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.revokeUserRole(userId, roleId);
     }
     return this.http.delete<any>(this.usersURL + domainId + "/users/" + userId + "/roles/" + roleId);
   }
 
-  assignRoles(domainId, userId, roles, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.assignUserRoles(userId, roles);
+  assignRoles(domainId, userId, roles, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.assignUserRoles(userId, roles);
     }
     return this.http.post<any>(this.usersURL + domainId + "/users/" + userId + "/roles", roles);
   }

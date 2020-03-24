@@ -29,7 +29,7 @@ import {AuthService} from "../../../../../services/auth.service";
 export class GroupSettingsComponent implements OnInit {
   @ViewChild('groupForm') form: any;
   private domainId: string;
-  private adminContext = false;
+  private organizationContext = false;
   group: any;
   editMode: boolean;
   deleteMode: boolean;
@@ -45,7 +45,7 @@ export class GroupSettingsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
       this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_update']);
       this.deleteMode = this.authService.isAdmin() || this.authService.hasPermissions(['management_group_delete']);
     } else {
@@ -61,7 +61,7 @@ export class GroupSettingsComponent implements OnInit {
   }
 
   update() {
-    this.groupService.update(this.domainId, this.group.id, this.group, this.adminContext).subscribe(data => {
+    this.groupService.update(this.domainId, this.group.id, this.group, this.organizationContext).subscribe(data => {
       this.group = data;
       this.form.reset(this.group);
       this.initBreadcrumb();
@@ -75,9 +75,9 @@ export class GroupSettingsComponent implements OnInit {
       .confirm('Delete Group', 'Are you sure you want to delete this group ?')
       .subscribe(res => {
         if (res) {
-          this.groupService.delete(this.domainId, this.group.id, this.adminContext).subscribe(response => {
+          this.groupService.delete(this.domainId, this.group.id, this.organizationContext).subscribe(response => {
             this.snackbarService.open('Group ' + this.group.name + ' deleted');
-            if (this.adminContext) {
+            if (this.organizationContext) {
               this.router.navigate(['/settings', 'management', 'groups']);
             } else {
               this.router.navigate(['/domains', this.domainId, 'settings', 'groups']);

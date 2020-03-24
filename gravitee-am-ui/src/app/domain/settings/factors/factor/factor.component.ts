@@ -16,7 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router} from '@angular/router';
 import { BreadcrumbService } from '../../../../../libraries/ng2-breadcrumb/components/breadcrumbService';
-import { PlatformService } from '../../../../services/platform.service';
+import { OrganizationService } from '../../../../services/organization.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../../services/auth.service';
@@ -41,7 +41,7 @@ export class FactorComponent implements OnInit {
   constructor(private route: ActivatedRoute,
               private router: Router,
               private breadcrumbService: BreadcrumbService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private factorService: FactorService,
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
@@ -53,7 +53,7 @@ export class FactorComponent implements OnInit {
     this.factorConfiguration = JSON.parse(this.factor.configuration);
     this.updateFactorConfiguration = this.factorConfiguration;
     this.editMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_factor_edit']);
-    this.platformService.factorSchema(this.factor.type).subscribe(data => {
+    this.organizationService.factorSchema(this.factor.type).subscribe(data => {
       this.factorSchema = data;
       // set the grant_type value
       if (this.factorSchema.properties.factorType) {

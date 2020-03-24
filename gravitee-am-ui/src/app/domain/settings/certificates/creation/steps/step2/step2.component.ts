@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {PlatformService} from '../../../../../../services/platform.service';
+import {OrganizationService} from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'certificate-creation-step2',
@@ -28,10 +28,10 @@ export class CertificateCreationStep2Component implements OnInit {
   configuration: any;
   certificateSchema: any = {};
 
-  constructor(private platformService: PlatformService) { }
+  constructor(private organizationService: OrganizationService) { }
 
   ngOnInit() {
-    this.platformService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
+    this.organizationService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
   }
 
   enableCertificateCreation(configurationWrapper) {

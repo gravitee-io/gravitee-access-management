@@ -16,7 +16,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
 import { AppConfig } from "../../../../../../config/app.config";
-import { PlatformService } from "../../../../../services/platform.service";
+import { OrganizationService } from "../../../../../services/organization.service";
 import { ReporterService } from "../../../../../services/reporter.service";
 import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
 import { SnackbarService } from "../../../../../services/snackbar.service";
@@ -30,7 +30,7 @@ export class ReporterComponent implements OnInit {
   @ViewChild('reporterForm') form: any;
 
   private domainId: string;
-  private adminContext = false;
+  private organizationContext = false;
   configurationIsValid: boolean = true;
   configurationPristine: boolean = true;
   reporterSchema: any;
@@ -41,7 +41,7 @@ export class ReporterComponent implements OnInit {
 
   constructor(private route: ActivatedRoute,
               private router: Router,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private reporterService: ReporterService,
               private breadcrumbService: BreadcrumbService,
               private snackbarService: SnackbarService) {
@@ -49,12 +49,12 @@ export class ReporterComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
     this.reporter = this.route.snapshot.data['reporter'];
     this.reporterConfiguration = JSON.parse(this.reporter.configuration);
     this.updateReporterConfiguration = this.reporterConfiguration;
-    this.platformService.reporterSchema(this.reporter.type).subscribe(data => {
+    this.organizationService.reporterSchema(this.reporter.type).subscribe(data => {
       this.reporterSchema = data;
       // handle default null values
       let self = this;
@@ -67,7 +67,7 @@ export class ReporterComponent implements OnInit {
 
   update() {
     this.reporter.configuration = JSON.stringify(this.updateReporterConfiguration);
-    this.reporterService.update(this.domainId, this.reporter.id, this.reporter, this.adminContext).subscribe(data => {
+    this.reporterService.update(this.domainId, this.reporter.id, this.reporter, this.organizationContext).subscribe(data => {
       this.reporter = data;
       this.reporterConfiguration = JSON.parse(this.reporter.configuration);
       this.updateReporterConfiguration = this.reporterConfiguration;
@@ -92,7 +92,7 @@ export class ReporterComponent implements OnInit {
   }
 
   initBreadcrumb() {
-    if (this.adminContext) {
+    if (this.organizationContext) {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/audits/settings/' + this.reporter.id + '$', this.reporter.name);
     } else {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/audits/settings/' + this.reporter.id + '$', this.reporter.name);

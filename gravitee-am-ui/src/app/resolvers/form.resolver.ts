@@ -18,16 +18,16 @@ import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/rou
 import {Observable, of} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {FormService} from '../services/form.service';
-import {PlatformService} from '../services/platform.service';
+import {OrganizationService} from '../services/organization.service';
 
 @Injectable()
 export class FormResolver implements Resolve<any> {
 
-  constructor(private formService: FormService, private platformService: PlatformService) { }
+  constructor(private formService: FormService, private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     if (state.url.startsWith('/settings')) {
-      return this.platformService.forms('LOGIN')
+      return this.organizationService.forms('LOGIN')
         .pipe(
           catchError(__ => {
             return of({});
