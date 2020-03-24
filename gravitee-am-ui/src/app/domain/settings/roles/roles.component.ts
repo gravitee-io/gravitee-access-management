@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { RoleService } from "../../../services/role.service";
-import { DialogService } from "../../../services/dialog.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../services/snackbar.service";
-import { AppConfig } from "../../../../config/app.config";
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
+import {RoleService} from '../../../services/role.service';
+import {DialogService} from '../../../services/dialog.service';
+import {SnackbarService} from '../../../services/snackbar.service';
 
 @Component({
   selector: 'app-roles',
@@ -29,19 +28,18 @@ export class DomainSettingsRolesComponent implements OnInit {
   roles: any[];
   domainId: string;
 
-  constructor(private roleService: RoleService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute, private router: Router) { }
+  constructor(private roleService: RoleService,
+              private dialogService: DialogService,
+              private snackbarService: SnackbarService,
+              private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
-    }
     this.roles = this.route.snapshot.data['roles'];
   }
 
   get isEmpty() {
-    return !this.roles || this.roles.length == 0;
+    return !this.roles || this.roles.length === 0;
   }
 
   loadRoles() {
@@ -55,7 +53,7 @@ export class DomainSettingsRolesComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.roleService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("Role deleted");
+            this.snackbarService.open('Role deleted');
             this.loadRoles();
           });
         }

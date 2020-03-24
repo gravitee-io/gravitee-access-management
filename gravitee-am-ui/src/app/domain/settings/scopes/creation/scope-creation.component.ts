@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ScopeService } from "../../../../services/scope.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import {AppConfig} from "../../../../../config/app.config";
-import * as moment from "moment";
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {ScopeService} from '../../../../services/scope.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-creation',
@@ -27,20 +26,17 @@ import * as moment from "moment";
 })
 export class ScopeCreationComponent implements OnInit {
   private domainId: string;
-  private adminContext: boolean;
   scope: any = {};
   expiresIn: any;
   unitTime: any;
 
-  constructor(private scopeService: ScopeService, private router: Router, private route: ActivatedRoute,
-              private snackbarService : SnackbarService) { }
+  constructor(private scopeService: ScopeService,
+              private router: Router,
+              private route: ActivatedRoute,
+              private snackbarService: SnackbarService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
-      this.adminContext = true;
-    }
   }
 
   create() {
@@ -49,12 +45,8 @@ export class ScopeCreationComponent implements OnInit {
       this.scope.expiresIn = moment.duration(this.expiresIn, this.unitTime).asSeconds();
     }
     this.scopeService.create(this.domainId, this.scope).subscribe(data => {
-      this.snackbarService.open("Scope " + data.name + " created");
-      if (this.adminContext) {
-        this.router.navigate(['/settings', 'management', 'scopes', data.id]);
-      } else {
-        this.router.navigate(['/domains', this.domainId, 'settings', 'scopes', data.id]);
-      }
+    this.snackbarService.open('Scope ' + data.name + ' created');
+    this.router.navigate(['/domains', this.domainId, 'settings', 'scopes', data.id]);
     });
   }
 

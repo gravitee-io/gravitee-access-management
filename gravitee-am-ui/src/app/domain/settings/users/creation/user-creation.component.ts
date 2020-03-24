@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ComponentFactoryResolver, ViewContainerRef, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {SnackbarService} from "../../../../services/snackbar.service";
-import {UserService} from "../../../../services/user.service";
-import {AppConfig} from "../../../../../config/app.config";
-import {animate, style, transition, trigger} from "@angular/animations";
-import {UserClaimComponent} from "./user-claim.component";
+import {Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {animate, style, transition, trigger} from '@angular/animations';
+import {SnackbarService} from '../../../../services/snackbar.service';
+import {UserService} from '../../../../services/user.service';
+import {ProviderService} from '../../../../services/provider.service';
+import {UserClaimComponent} from './user-claim.component';
 import * as _ from 'lodash';
-import {ProviderService} from "../../../../services/provider.service";
 
 @Component({
   selector: 'user-creation',
@@ -39,7 +38,6 @@ import {ProviderService} from "../../../../services/provider.service";
 })
 export class UserCreationComponent implements OnInit {
   private domainId: string;
-  private adminContext: boolean;
   preRegistration: boolean = false;
   hidePassword: boolean = true;
   useEmailAsUsername: boolean = false;
@@ -58,17 +56,13 @@ export class UserCreationComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.domainId = AppConfig.settings.authentication.domainId;
-      this.adminContext = true;
-    }
-
     this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
       this.userProviders = response;
     });
   }
 
   create() {
+    // TODO we should be able to create platform users
     // set additional information
     if (this.userClaims && Object.keys(this.userClaims).length > 0) {
       let additionalInformation = {};
@@ -80,12 +74,8 @@ export class UserCreationComponent implements OnInit {
     // set pre-registration
     this.user.preRegistration = this.preRegistration;
     this.userService.create(this.domainId, this.user).subscribe(data => {
-      this.snackbarService.open("User " + data.username + " created");
-      if (this.adminContext) {
-        this.router.navigate(['/settings', 'management', 'users', data.id]);
-      } else {
-        this.router.navigate(['/domains', this.domainId, 'settings', 'users', data.id]);
-      }
+      this.snackbarService.open('User ' + data.username + ' created');
+      this.router.navigate(['/domains', this.domainId, 'settings', 'users', data.id]);
     });
   }
 

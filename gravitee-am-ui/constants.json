@@ -1,12 +1,3 @@
 {
-  "portalTitle": "Access Management",
-  "baseURL": "http://localhost:8093/management",
-  "defaultOrganizationId": "DEFAULT",
-  "defaultEnvironmentId": "DEFAULT",
-  "authentication": {
-    "domainId": "admin",
-    "authorize": "http://localhost:8093/management/auth/authorize",
-    "redirectUri": "http://localhost:4200/login/callback",
-    "logoutUri": "http://localhost:8093/management/auth/logout?target_url=http://localhost:4200/logout/callback"
-  }
+  "baseURL": "http://localhost:8093/management"
 }

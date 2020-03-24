@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { DomainService } from "../services/domain.service";
-import {AppConfig} from "../../config/app.config";
+import {Injectable} from '@angular/core';
+import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
+import {Observable} from 'rxjs';
+import {DomainService} from '../services/domain.service';
 
 @Injectable()
 export class DomainResolver implements Resolve<any> {
@@ -25,10 +24,10 @@ export class DomainResolver implements Resolve<any> {
   constructor(private domainService: DomainService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = AppConfig.settings.authentication.domainId;
-    if (!state.url.startsWith('/settings')) {
-      domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
-    }
+    const domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') :
+      route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') :
+        route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') :
+          route.parent.parent.parent.paramMap.get('domainId');
     return this.domainService.get(domainId);
   }
 

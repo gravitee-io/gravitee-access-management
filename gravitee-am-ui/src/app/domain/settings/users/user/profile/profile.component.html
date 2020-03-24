@@ -86,7 +86,7 @@
             <div fxLayout="column" style="padding: 20px;">
               <mat-slide-toggle
                 (change)="enableUser($event)"
-                [checked]="isUserEnabled()">
+                [checked]="isUserEnabled()" [disabled]="adminContext">
                 Enable User
               </mat-slide-toggle>
               <mat-hint style="font-size: 75%;">Enable or disable user to restrict application access.

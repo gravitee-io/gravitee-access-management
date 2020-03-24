@@ -15,18 +15,13 @@ import {map} from 'rxjs/operators';
  * limitations under the License.
  */
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, Subject} from "rxjs";
-import {HttpClient} from "@angular/common/http";
-import {AppConfig} from "../../config/app.config";
+import {HttpClient} from '@angular/common/http';
+import {BehaviorSubject, Observable, Subject} from 'rxjs';
+import {AppConfig} from '../../config/app.config';
 
 @Injectable()
 export class AuthService {
-  private domainId: string = AppConfig.settings.domainId;
-  private clientId: string = AppConfig.settings.authentication.clientId;
-  private redirectUri: string = AppConfig.settings.authentication.redirectUri;
-  private _authorizationEndpoint: string = AppConfig.settings.authentication.authorize + '?redirect_uri=' + this.redirectUri;
   private userInfoUrl: string = AppConfig.settings.baseURL + '/user';
-  private _logoutEndpoint: string = AppConfig.settings.authentication.logoutUri;
   private currentUser: any;
   private domainPermissions: any[];
   private applicationPermissions: any[];
@@ -45,14 +40,6 @@ export class AuthService {
   handleAuthentication(): Observable<boolean> {
     // authentication success
     return Observable.create(observer => observer.next(true));
-  }
-
-  authorizationEndpoint(): string {
-    return this._authorizationEndpoint;
-  }
-
-  logoutEndpoint(): string {
-    return this._logoutEndpoint;
   }
 
   userInfo(): Observable<any> {
