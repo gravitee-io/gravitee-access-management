@@ -16,7 +16,7 @@
 import { Injectable } from '@angular/core';
 import { AppConfig } from "../../config/app.config";
 import { HttpClient } from "@angular/common/http";
-import { PlatformService } from "./platform.service";
+import { OrganizationService } from "./organization.service";
 import * as moment from 'moment';
 
 @Injectable()
@@ -24,7 +24,7 @@ export class AuditService {
   private auditsURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
-              private platformService: PlatformService) { }
+              private organizationService: OrganizationService) { }
 
   findByDomain(domainId, page, size): any  {
     let from = moment().subtract(1, 'days').valueOf();
@@ -36,9 +36,9 @@ export class AuditService {
     return this.http.get(this.auditsURL + domainId + '/audits/' + auditId);
   }
 
-  search(domainId, page, size, type, status, user, from, to, adminContext): any {
-    if (adminContext) {
-      return this.platformService.audits(page, size, type, status, user, from, to);
+  search(domainId, page, size, type, status, user, from, to, organizationContext): any {
+    if (organizationContext) {
+      return this.organizationService.audits(page, size, type, status, user, from, to);
     }
 
     return this.http.get(this.auditsURL + domainId + '/audits?page=' + page + '&size=' + size +

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {PlatformService} from '../../../../../../services/platform.service';
+import {OrganizationService} from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'factor-creation-step2',
@@ -29,10 +29,10 @@ export class FactorCreationStep2Component implements OnInit {
   configuration: any;
   factorSchema: any = {};
 
-  constructor(private platformService: PlatformService) { }
+  constructor(private organizationService: OrganizationService) { }
 
   ngOnInit() {
-    this.platformService.factorSchema(this.factor.type).subscribe(data => {
+    this.organizationService.factorSchema(this.factor.type).subscribe(data => {
       this.factorSchema = data;
       // set the grant_type value
       if (this.factorSchema.properties.factorType) {

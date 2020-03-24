@@ -29,7 +29,7 @@ import { NgForm } from "@angular/forms";
 })
 export class ProviderRolesComponent implements OnInit {
   private domainId: string;
-  private adminContext = false;
+  private organizationContext = false;
   private provider: any;
   roles: any;
   providerRoleMapper: any = {};
@@ -45,7 +45,7 @@ export class ProviderRolesComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
     this.provider = this.route.snapshot.parent.data['provider'];
     this.roles = this.route.snapshot.data['roles'];
@@ -97,7 +97,7 @@ export class ProviderRolesComponent implements OnInit {
 
   update() {
     this.provider.roleMapper = this.providerRoleMapper;
-    this.providerService.update(this.domainId, this.provider.id, this.provider, this.adminContext).subscribe(data => {
+    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
       this.snackbarService.open("Role mapping updated");
     })
   }

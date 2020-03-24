@@ -17,14 +17,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
 import { Observable } from "rxjs";
-import { PlatformService } from "./platform.service";
+import { OrganizationService } from "./organization.service";
 
 @Injectable()
 export class ProviderService {
   private providersURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
-              private platformService: PlatformService) { }
+              private organizationService: OrganizationService) { }
 
   findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.providersURL + domainId + "/identities");
@@ -38,16 +38,16 @@ export class ProviderService {
     return this.http.get<any>(this.providersURL + domainId + "/identities/" + id);
   }
 
-  create(domainId, provider, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.createIdentityProvider(provider);
+  create(domainId, provider, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.createIdentityProvider(provider);
     }
     return this.http.post<any>(this.providersURL + domainId + "/identities", provider);
   }
 
-  update(domainId, id, provider, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.updateIdentityProvider(id, provider);
+  update(domainId, id, provider, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.updateIdentityProvider(id, provider);
     }
     return this.http.put<any>(this.providersURL + domainId + "/identities/" + id, {
       'name' : provider.name,
@@ -57,9 +57,9 @@ export class ProviderService {
     });
   }
 
-  delete(domainId, id, adminContext): Observable<any> {
-    if (adminContext) {
-      return this.platformService.deleteIdentityProvider(id);
+  delete(domainId, id, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.deleteIdentityProvider(id);
     }
     return this.http.delete<any>(this.providersURL + domainId + "/identities/" + id);
   }

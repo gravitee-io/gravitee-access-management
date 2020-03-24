@@ -17,18 +17,18 @@ import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { ProviderService } from "../services/provider.service";
-import { PlatformService } from "../services/platform.service";
+import { OrganizationService } from "../services/organization.service";
 
 @Injectable()
 export class ProviderResolver implements Resolve<any> {
 
   constructor(private providerService: ProviderService,
-              private platformService: PlatformService) { }
+              private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     const providerId = route.paramMap.get('providerId');
     if (state.url.startsWith('/settings')) {
-      return this.platformService.identityProvider(providerId);
+      return this.organizationService.identityProvider(providerId);
     }
     const domainId = route.parent.parent.paramMap.get('domainId');
     return this.providerService.get(domainId, providerId);

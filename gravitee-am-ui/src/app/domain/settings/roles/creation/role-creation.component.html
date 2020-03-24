@@ -21,7 +21,7 @@
   <div>
     <form (ngSubmit)="create()" #roleForm="ngForm" fxLayout="column" fxFlex="70">
       <div class="gv-form-section">
-        <mat-form-field *ngIf="adminContext" appearance="outline" floatLabel="always">
+        <mat-form-field *ngIf="organizationContext" appearance="outline" floatLabel="always">
           <mat-label>Scope</mat-label>
           <mat-select placeholder="Scope" [(ngModel)]="role.scope" name="scope" required>
             <mat-option *ngFor="let roleScope of roleScopes" [value]="roleScope">{{ roleScope }}</mat-option>
@@ -51,9 +51,9 @@
       <div class="gv-page-description-content">
         <p>
           Role determines how users can access protected resources.
-          <span *ngIf="!adminContext">Each role has a set of permissions to limit user actions.</span>
+          <span *ngIf="!organizationContext">Each role has a set of permissions to limit user actions.</span>
         </p>
-        <div *ngIf="adminContext">
+        <div *ngIf="organizationContext">
           <p>
             Each role has a scope to specify what a user can do on a specific part of the Admin Portal.
           </p>

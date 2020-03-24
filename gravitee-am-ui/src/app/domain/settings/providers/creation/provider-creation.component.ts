@@ -27,7 +27,7 @@ import {SnackbarService} from '../../../../services/snackbar.service';
 export class ProviderCreationComponent implements OnInit {
   public provider: any = {};
   private domainId: string;
-  private adminContext: boolean;
+  private organizationContext: boolean;
   configurationIsValid = false;
   @ViewChild ('stepper') stepper: MatStepper;
 
@@ -39,15 +39,15 @@ export class ProviderCreationComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
   }
 
   create() {
     this.provider.configuration = JSON.stringify(this.provider.configuration);
-    this.providerService.create(this.domainId, this.provider, this.adminContext).subscribe(data => {
+    this.providerService.create(this.domainId, this.provider, this.organizationContext).subscribe(data => {
       this.snackbarService.open('Provider ' + data.name + ' created');
-      if (this.adminContext) {
+      if (this.organizationContext) {
         this.router.navigate(['/settings', 'management', 'providers', data.id]);
       } else {
         this.router.navigate(['/domains', this.domainId, 'settings', 'providers', data.id]);

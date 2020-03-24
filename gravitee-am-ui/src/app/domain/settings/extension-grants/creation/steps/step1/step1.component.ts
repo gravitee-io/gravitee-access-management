@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { PlatformService } from "../../../../../../services/platform.service";
+import { OrganizationService } from "../../../../../../services/organization.service";
 
 @Component({
   selector: 'extension-grant-creation-step1',
@@ -29,11 +29,11 @@ export class ExtensionGrantCreationStep1Component implements OnInit {
   extensionGrants: any[];
   selectedExtensionGrantTypeId: string;
 
-  constructor(private platformService: PlatformService) {
+  constructor(private organizationService: OrganizationService) {
   }
 
   ngOnInit() {
-    this.platformService.extensionGrants().subscribe(data => this.extensionGrants = data);
+    this.organizationService.extensionGrants().subscribe(data => this.extensionGrants = data);
   }
 
   selectExtensionGrantType() {

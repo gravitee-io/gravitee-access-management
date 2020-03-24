@@ -19,7 +19,7 @@ import {RoleService} from '../../../services/role.service';
 import {DialogService} from '../../../services/dialog.service';
 import {AppConfig} from '../../../../config/app.config';
 import {SnackbarService} from '../../../services/snackbar.service';
-import {PlatformService} from '../../../services/platform.service';
+import {OrganizationService} from '../../../services/organization.service';
 
 @Component({
   selector: 'app-settings-management-roles',
@@ -31,7 +31,7 @@ export class ManagementRolesComponent implements OnInit {
   roles: any[];
 
   constructor(private roleService: RoleService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
               private route: ActivatedRoute) { }
@@ -45,7 +45,7 @@ export class ManagementRolesComponent implements OnInit {
   }
 
   loadRoles() {
-    this.platformService.roles().subscribe(response => this.roles = response);
+    this.organizationService.roles().subscribe(response => this.roles = response);
   }
 
   delete(id, event) {
@@ -54,7 +54,7 @@ export class ManagementRolesComponent implements OnInit {
       .confirm('Delete Role', 'Are you sure you want to delete this role ?')
       .subscribe(res => {
         if (res) {
-          this.platformService.deleteRole(id).subscribe(response => {
+          this.organizationService.deleteRole(id).subscribe(response => {
             this.snackbarService.open('Role deleted');
             this.loadRoles();
           });

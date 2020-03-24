@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { PlatformService } from "../../../../../../services/platform.service";
+import { OrganizationService } from "../../../../../../services/organization.service";
 
 @Component({
   selector: 'factor-creation-step1',
@@ -29,11 +29,11 @@ export class FactorCreationStep1Component implements OnInit {
   factors: any[];
   selectedFactorTypeId: string;
 
-  constructor(private platformService: PlatformService) {
+  constructor(private organizationService: OrganizationService) {
   }
 
   ngOnInit() {
-    this.platformService.factors().subscribe(data => this.factors = data);
+    this.organizationService.factors().subscribe(data => this.factors = data);
   }
 
   selectFactorType() {

@@ -25,7 +25,7 @@ import { AppConfig } from "../../../../../config/app.config";
 })
 export class GroupComponent implements OnInit {
   private domainId: string;
-  private adminContext = false;
+  private organizationContext = false;
   group: any;
   navLinks: any = [
     {'href': 'settings' , 'label': 'Settings'},
@@ -41,13 +41,13 @@ export class GroupComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.group = this.route.snapshot.data['group'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
     this.initBreadcrumb();
   }
 
   initBreadcrumb() {
-    if (this.adminContext) {
+    if (this.organizationContext) {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/groups/' + this.group.id + '$', this.group.name);
       this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/groups/members', 'Members');
     } else {

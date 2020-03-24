@@ -18,7 +18,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { AppConfig } from "../../../../config/app.config";
 import { AuditService } from "../../../services/audit.service";
 import * as moment from 'moment';
-import { PlatformService } from "../../../services/platform.service";
+import { OrganizationService } from "../../../services/organization.service";
 import { UserService } from "../../../services/user.service";
 import { FormControl } from "@angular/forms";
 import * as _ from 'lodash';
@@ -31,7 +31,7 @@ import * as _ from 'lodash';
 export class AuditsComponent implements OnInit {
   private startDateChanged = false;
   private endDateChanged = false;
-  private adminContext = false;
+  private organizationContext = false;
   @ViewChild('auditsTable') table: any;
   userCtrl = new FormControl();
   audits: any[];
@@ -93,13 +93,13 @@ export class AuditsComponent implements OnInit {
   constructor(private route: ActivatedRoute,
               private router: Router,
               private auditService: AuditService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private userService: UserService) {
     this.page.pageNumber = 0;
     this.page.size = 10;
     this.userCtrl.valueChanges
       .subscribe(searchTerm => {
-        this.userService.search(this.domainId, searchTerm + '*', 0, 30, this.adminContext).subscribe(response => {
+        this.userService.search(this.domainId, searchTerm + '*', 0, 30, this.organizationContext).subscribe(response => {
           this.filteredUsers = response.data;
         });
       });
@@ -108,10 +108,10 @@ export class AuditsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
     // load event types
-    this.platformService.auditEventTypes().subscribe(data => this.eventTypes = data);
+    this.organizationService.auditEventTypes().subscribe(data => this.eventTypes = data);
     // load audits
     this.search();
   }
@@ -236,7 +236,7 @@ export class AuditsComponent implements OnInit {
     let to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
     let user = this.selectedUser || (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
     this.loadingIndicator = true;
-    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to, this.adminContext).subscribe(pagedAudits => {
+    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to, this.organizationContext).subscribe(pagedAudits => {
       this.page.totalElements = pagedAudits.totalCount;
       this.audits = pagedAudits.data;
       this.selectedUser = null;

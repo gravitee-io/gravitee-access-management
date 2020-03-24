@@ -15,16 +15,16 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import { PlatformService } from './platform.service';
+import { OrganizationService } from './organization.service';
 
-describe('PlatformService', () => {
+describe('OrganizationService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PlatformService]
+      providers: [OrganizationService]
     });
   });
 
-  it('should ...', inject([PlatformService], (service: PlatformService) => {
+  it('should ...', inject([OrganizationService], (service: OrganizationService) => {
     expect(service).toBeTruthy();
   }));
 });

@@ -24,7 +24,7 @@ import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/compo
 })
 export class UserComponent implements OnInit {
   private domainId: string;
-  private adminContext = false;
+  private organizationContext = false;
   user: any;
   avatarUrl: string;
   navLinks: any = [];
@@ -38,7 +38,7 @@ export class UserComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.user = this.route.snapshot.data['user'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
     this.initNavLinks();
     this.initAvatar();
@@ -47,7 +47,7 @@ export class UserComponent implements OnInit {
 
   initNavLinks() {
     this.navLinks.push({'href': 'profile' , 'label': 'Profile'});
-    if (!this.adminContext) {
+    if (!this.organizationContext) {
       this.navLinks.push({'href': 'applications' , 'label': 'Authorized Apps'});
       this.navLinks.push({'href': 'factors' , 'label': 'Multi-Factor Authentication'});
     }
@@ -55,7 +55,7 @@ export class UserComponent implements OnInit {
   }
 
   initBreadcrumb() {
-    if (this.adminContext) {
+    if (this.organizationContext) {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/users/' + this.user.id + '$', this.user.username);
     } else {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '$', this.user.username);

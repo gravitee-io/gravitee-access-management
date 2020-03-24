@@ -18,7 +18,7 @@ import { UserService} from "../../../services/user.service";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
 import { ActivatedRoute, Router } from "@angular/router";
-import { PlatformService } from "../../../services/platform.service";
+import { OrganizationService } from "../../../services/organization.service";
 import {AuthService} from "../../../services/auth.service";
 
 @Component({
@@ -28,7 +28,7 @@ import {AuthService} from "../../../services/auth.service";
 })
 export class UsersComponent implements OnInit {
   private searchValue: string;
-  adminContext: boolean;
+  organizationContext: boolean;
   pagedUsers: any;
   users: any[];
   domainId: string;
@@ -36,7 +36,7 @@ export class UsersComponent implements OnInit {
   createMode: boolean;
 
   constructor(private userService: UserService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
               private authService: AuthService,
@@ -49,7 +49,7 @@ export class UsersComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
       this.createMode = false;
     } else {
       this.createMode = this.authService.isAdmin() || this.authService.hasPermissions(['domain_user_create']);
@@ -65,8 +65,8 @@ export class UsersComponent implements OnInit {
 
   loadUsers() {
     let findUsers = (this.searchValue) ?
-      this.userService.search(this.domainId, this.searchValue + '*', this.page.pageNumber, this.page.size, this.adminContext) :
-      (this.adminContext ? this.platformService.users(this.page.pageNumber, this.page.size) : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size));
+      this.userService.search(this.domainId, this.searchValue + '*', this.page.pageNumber, this.page.size, this.organizationContext) :
+      (this.organizationContext ? this.organizationService.users(this.page.pageNumber, this.page.size) : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size));
 
     findUsers.subscribe(pagedUsers => {
       this.page.totalElements = pagedUsers.totalCount;

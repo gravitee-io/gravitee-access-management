@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../../services/snackbar.service";
 import { GroupService } from "../../../../services/group.service";
-import { PlatformService } from "../../../../services/platform.service";
+import { OrganizationService } from "../../../../services/organization.service";
 
 @Component({
   selector: 'group-creation',
@@ -26,11 +26,11 @@ import { PlatformService } from "../../../../services/platform.service";
 })
 export class GroupCreationComponent implements OnInit {
   private domainId: string;
-  private adminContext: boolean;
+  private organizationContext: boolean;
   group: any = {};
 
   constructor(private groupService: GroupService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private router: Router,
               private route: ActivatedRoute,
               private snackbarService: SnackbarService) { }
@@ -38,13 +38,13 @@ export class GroupCreationComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
   }
 
   create() {
-    if (this.adminContext) {
-      this.platformService.createGroup(this.group).subscribe(data => {
+    if (this.organizationContext) {
+      this.organizationService.createGroup(this.group).subscribe(data => {
         this.snackbarService.open('Group ' + data.name + ' created');
         this.router.navigate(['/settings', 'management', 'groups', data.id]);
       });

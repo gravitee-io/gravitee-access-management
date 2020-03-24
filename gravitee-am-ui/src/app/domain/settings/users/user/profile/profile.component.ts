@@ -29,7 +29,7 @@ import * as _ from 'lodash';
 })
 export class UserProfileComponent implements OnInit {
   private domainId: string;
-  adminContext: boolean;
+  organizationContext: boolean;
   @ViewChild('userForm') form: any;
   @ViewChild('passwordForm') passwordForm: any;
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
@@ -52,7 +52,7 @@ export class UserProfileComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
       this.canEdit = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_update']);
       this.canDelete = this.authService.isAdmin() || this.authService.hasPermissions(['management_user_delete']);
     } else {
@@ -148,7 +148,7 @@ export class UserProfileComponent implements OnInit {
   }
 
   editMode() {
-    return this.user.internal && !this.adminContext;
+    return this.user.internal && !this.organizationContext;
   }
 
   isEmptyObject(obj) {

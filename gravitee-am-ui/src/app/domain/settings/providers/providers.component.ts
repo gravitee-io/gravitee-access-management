@@ -19,7 +19,7 @@ import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
 import {ActivatedRoute, Router} from "@angular/router";
 import { AppConfig } from "../../../../config/app.config";
-import {PlatformService} from "../../../services/platform.service";
+import {OrganizationService} from "../../../services/organization.service";
 
 @Component({
   selector: 'app-providers',
@@ -28,7 +28,7 @@ import {PlatformService} from "../../../services/platform.service";
 })
 export class DomainSettingsProvidersComponent implements OnInit {
   private providers: any[];
-  private adminContext = false;
+  private organizationContext = false;
   private identityProviderTypes: any = {
     'ldap-am-idp' : 'LDAP / AD',
     'mongo-am-idp' : 'MongoDB',
@@ -46,7 +46,7 @@ export class DomainSettingsProvidersComponent implements OnInit {
   domainId: string;
 
   constructor(private providerService: ProviderService,
-              private platformService: PlatformService,
+              private organizationService: OrganizationService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
@@ -56,14 +56,14 @@ export class DomainSettingsProvidersComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.adminContext = true;
+      this.organizationContext = true;
     }
     this.providers = this.route.snapshot.data['providers'];
   }
 
   loadProviders() {
-    if (this.adminContext) {
-      this.platformService.identityProviders().subscribe(response => this.providers = response);
+    if (this.organizationContext) {
+      this.organizationService.identityProviders().subscribe(response => this.providers = response);
     } else {
       this.providerService.findByDomain(this.domainId).subscribe(response => this.providers = response);
     }
@@ -93,7 +93,7 @@ export class DomainSettingsProvidersComponent implements OnInit {
       .confirm('Delete Provider', 'Are you sure you want to delete this provider ?')
       .subscribe(res => {
         if (res) {
-          this.providerService.delete(this.domainId, id, this.adminContext).subscribe(response => {
+          this.providerService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
             this.snackbarService.open('Provider deleted');
             this.loadProviders();
           });
