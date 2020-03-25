@@ -1,5 +1,29 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/214?closed=1[AM - 2.10.10 (2020-03-25)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [identity-provider] OIDC provider - encode the redirect URI https://github.com/gravitee-io/issues/issues/3324[#3324]
+- [identity-provider] OIDC provider - use the id_token returned by the OpenID Provider when using the code flow AND the option "use ID token for user info" https://github.com/gravitee-io/issues/issues/3270[#3270]
+
+*_Management-ui_*
+
+- Clients pagination doesn't work https://github.com/gravitee-io/issues/issues/3309[#3309]
+
+=== Features
+
+*_Management_*
+
+- Search clients https://github.com/gravitee-io/issues/issues/3310[#3310]
+
+*_Management-ui_*
+
+- Theme customization https://github.com/gravitee-io/issues/issues/3341[#3341]
+
+
 == https://github.com/gravitee-io/issues/milestone/209?closed=1[AM - 2.10.9 (2020-02-19)]
 
 === Bug fixes
