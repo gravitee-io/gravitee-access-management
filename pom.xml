@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>18-SNAPSHOT</version>
+        <version>18</version>
     </parent>
 
     <groupId>io.gravitee.am</groupId>
@@ -46,8 +46,8 @@
 
     <properties>
         <gravitee-common.version>1.15.0</gravitee-common.version>
-        <gravitee-plugin.version>1.12.0-SNAPSHOT</gravitee-plugin.version>
-        <gravitee-node.version>1.7.0-SNAPSHOT</gravitee-node.version>
+        <gravitee-plugin.version>1.12.0</gravitee-plugin.version>
+        <gravitee-node.version>1.7.0</gravitee-node.version>
         <gravitee-reporter.version>1.13.0</gravitee-reporter.version>
         <gravitee-gateway-api.version>1.16.1</gravitee-gateway-api.version>
         <gravitee-expression-language.version>1.2.0</gravitee-expression-language.version>
