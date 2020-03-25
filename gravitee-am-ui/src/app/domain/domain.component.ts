@@ -78,7 +78,7 @@ export class DomainComponent implements OnInit {
     });
   }
 
-  private hasPermissions(permissions): boolean{
+  hasPermissions(permissions): boolean{
     return this.authService.hasPermissions(permissions);
   }
 

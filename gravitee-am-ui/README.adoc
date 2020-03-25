@@ -1,50 +1,42 @@
-= Gravitee.io AM administration UI
+= Gravitee.io AM Portal
 
-== Prerequisites
+This project was generated with https://github.com/angular/angular-cli[Angular CLI].
 
-Gravitee.io AM UI is a Angular application and requires Node 6.9.0 or higher, together with NPM 3 or higher.
-This project was generated with link:https://github.com/angular/angular-cli[Angular CLI] version 1.0.0.
+== Install
 
-[source,bash]
-[subs="attributes"]
-$ // Install Angular CLI
-$ npm install -g @angular/cli
+- Install http://nodejs.org[nodejs] 10.9.0 or later, it comes with http://npmjs.org[npm]
+- Install the Angular CLI
+```
+npm install -g @angular/cli
+```
+- Then install node modules with:
+```
+npm install
+```
+
+== Development server
+
+Run `npm run start` for a dev server. Navigate to `http://localhost:4200/`.
+The app will automatically reload if you change any of the source files.
+
+== Code scaffolding
+
+Run `ng generate component component-name` to generate a new component.
+You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
 == Build
 
-[source,bash]
-[subs="attributes"]
-$ git clone https://github.com/gravitee-io/graviteeio-access-management.git
-$ cd gravitee-am-ui
-$ npm install
+Run `npm run build` to build the project.
+The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
 
-== Launch
+== Running unit tests
 
-[source,bash]
-[subs="attributes"]
-$ ng serve
+Run `npm run test` to execute the unit tests via https://karma-runner.github.io[Karma].
 
-Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+== Running end-to-end tests
 
-== Working with Angular CLI
+Run `npm run e2e` to execute the end-to-end tests via http://www.protractortest.org/[Protractor].
 
-=== Code scaffolding
+== Further help
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive/pipe/service/class/module`.
-
-=== Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
-
-=== Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-=== Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-Before running the tests make sure you are serving the app via `ng serve`.
-
-=== Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+To get more help on the Angular CLI use `ng help` or go check out the https://github.com/angular/angular-cli/blob/master/README.md[Angular CLI README].
