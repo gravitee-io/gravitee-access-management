@@ -15,12 +15,8 @@
  */
 package io.gravitee.am.management.services.sync;
 
-import io.gravitee.am.management.core.event.DomainEvent;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.service.EventService;
-import io.gravitee.am.service.OrganizationService;
-import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.common.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
