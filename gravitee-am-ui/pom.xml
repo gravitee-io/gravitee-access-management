@@ -22,7 +22,7 @@
   <modelVersion>4.0.0</modelVersion>
   <properties>
     <frontend-maven-plugin.version>1.6</frontend-maven-plugin.version>
-    <node.version>v8.9.4</node.version>
+    <node.version>v12.16.1</node.version>
   </properties>
 
   <parent>
