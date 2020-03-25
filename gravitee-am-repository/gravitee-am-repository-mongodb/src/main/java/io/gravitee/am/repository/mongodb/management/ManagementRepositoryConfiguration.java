@@ -26,6 +26,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import java.net.URI;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,5 +49,14 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
     @Bean(name = "managementMongoTemplate")
     public MongoDatabase mongoOperations() {
         return mongo.getDatabase(getDatabaseName());
+    }
+
+    private String getDatabaseName() {
+        String uri = environment.getProperty("management.mongodb.uri");
+        if (uri != null && ! uri.isEmpty()) {
+            return URI.create(uri).getPath().substring(1);
+        }
+
+        return environment.getProperty("management.mongodb.dbname", "gravitee-am");
     }
 }

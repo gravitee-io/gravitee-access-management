@@ -17,6 +17,12 @@
 -->
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Applications</h1>
+  <div *ngIf="!isEmpty" class="applications-search">
+    <mat-form-field>
+      <mat-icon matPrefix="">search</mat-icon>
+      <input type="text" matInput placeholder="Search" (input)="onSearch($event)">
+    </mat-form-field>
+  </div>
   <div class="gv-page-content" *ngIf="!isEmpty">
     <ngx-datatable class="material"
                    [columnMode]="'flex'"

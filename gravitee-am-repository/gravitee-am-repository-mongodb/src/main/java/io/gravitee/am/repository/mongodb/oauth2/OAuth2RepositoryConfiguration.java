@@ -26,6 +26,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import java.net.URI;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,4 +51,12 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
         return mongo.getDatabase(getDatabaseName());
     }
 
+    private String getDatabaseName() {
+        String uri = environment.getProperty("oauth2.mongodb.uri");
+        if (uri != null && ! uri.isEmpty()) {
+            return URI.create(uri).getPath().substring(1);
+        }
+
+        return environment.getProperty("oauth2.mongodb.dbname", "gravitee-am");
+    }
 }

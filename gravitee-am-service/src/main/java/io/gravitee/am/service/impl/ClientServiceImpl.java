@@ -108,6 +108,19 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    public Single<Page<Client>> search(String domain, String query, int page, int size) {
+        LOGGER.debug("Search clients for domain {} and with query {}", domain, query);
+        return applicationService.search(domain, query, page, size)
+                .map(pagedApplications -> {
+                    Set<Client> clients = pagedApplications.getData()
+                            .stream()
+                            .map(Application::convert)
+                            .collect(Collectors.toSet());
+                    return new Page(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
+                });
+    }
+
+    @Override
     public Single<Page<Client>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("Find clients by domain", domain);
         return applicationService.findByDomain(domain, page, size)

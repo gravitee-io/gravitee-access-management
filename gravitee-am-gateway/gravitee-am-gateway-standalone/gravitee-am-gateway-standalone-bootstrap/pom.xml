@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>gravitee-am-gateway-standalone-bootstrap</artifactId>
-    <name>Gravitee IO - Access Management - Gateway - Standalone - Boostrap</name>
+    <name>Gravitee IO - Access Management - Gateway - Standalone - Bootstrap</name>
 
     <build>
         <plugins>
@@ -40,7 +40,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>false</addClasspath>
-                            <mainClass>io.gravitee.am.gateway.boostrap.Bootstrap</mainClass>
+                            <mainClass>io.gravitee.am.gateway.bootstrap.Bootstrap</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

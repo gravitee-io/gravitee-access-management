@@ -46,6 +46,9 @@ public interface ClientService {
     @Deprecated
     Single<Set<Client>> search(String domain, String query);
 
+    @Deprecated
+    Single<Page<Client>> search(String domain, String query, int page, int size);
+
     Single<Set<Client>> findByDomain(String domain);
 
     Single<Page<Client>> findByDomain(String domain, int page, int size);

@@ -26,6 +26,7 @@ import { ApplicationService } from "../../services/application.service";
 })
 export class ApplicationsComponent implements OnInit {
   private applications: any[];
+  private searchValue: string;
   domainId: string;
   newApplicationRouterLink: any[] = ['/dashboard', 'applications', 'new'];
   page: any = {};
@@ -34,6 +35,8 @@ export class ApplicationsComponent implements OnInit {
               private snackbarService: SnackbarService,
               private applicationService: ApplicationService,
               private route: ActivatedRoute) {
+    this.page.pageNumber = 0;
+    this.page.size = 10;
   }
 
   ngOnInit() {
@@ -46,8 +49,17 @@ export class ApplicationsComponent implements OnInit {
     }
   }
 
+  onSearch(event) {
+    this.searchValue = event.target.value;
+    this.loadApps();
+  }
+
   loadApps() {
-    this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size).subscribe(pagedApps => {
+    const findApps = (this.searchValue) ?
+      this.applicationService.search(this.domainId, this.searchValue + '*') :
+      this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+
+    findApps.subscribe(pagedApps => {
       this.page.totalElements = pagedApps.totalCount;
       this.applications = pagedApps.data;
     });
@@ -59,10 +71,6 @@ export class ApplicationsComponent implements OnInit {
   }
 
   get isEmpty() {
-    return !this.applications || this.applications.length === 0;
-  }
-
-  logoUrl(app) {
-    return 'assets/application-type-icons/' + app.type.toLowerCase() + '.png';
+    return !this.applications || this.applications.length === 0 && !this.searchValue;
   }
 }

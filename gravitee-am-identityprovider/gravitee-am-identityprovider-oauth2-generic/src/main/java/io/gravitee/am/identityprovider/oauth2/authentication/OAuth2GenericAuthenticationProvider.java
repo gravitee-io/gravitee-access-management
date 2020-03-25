@@ -50,6 +50,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
@@ -99,8 +100,8 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
         try {
             UriBuilder builder = UriBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
             builder.addParameter(Parameters.CLIENT_ID, configuration.getClientId());
-            builder.addParameter(Parameters.REDIRECT_URI, redirectUri);
             builder.addParameter(Parameters.RESPONSE_TYPE, configuration.getResponseType());
+            // append scopes
             if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
                 builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, configuration.getScopes()));
             }
@@ -108,10 +109,12 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
             if (!io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())) {
                 builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
             }
+            // append redirect_uri
+            builder.addParameter(Parameters.REDIRECT_URI, configuration.isEncodeRedirectUri() ? UriBuilder.encodeURIComponent(redirectUri) : redirectUri);
 
             Request request = new Request();
             request.setMethod(HttpMethod.GET);
-            request.setUri(builder.build().toString());
+            request.setUri(builder.buildString());
             return request;
         } catch (Exception e) {
             LOGGER.error("An error occurs while building OpenID Connect Sign In URL", e);
@@ -181,7 +184,13 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
 
-                    String accessToken = httpResponse.bodyAsJsonObject().getString(ACCESS_TOKEN_PARAMETER);
+                    JsonObject response = httpResponse.bodyAsJsonObject();
+                    String accessToken = response.getString(ACCESS_TOKEN_PARAMETER);
+                    if (configuration.isUseIdTokenForUserInfo()) {
+                        // put the id_token in context for later use
+                        String idToken = response.getString(ID_TOKEN_PARAMETER);
+                        authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
+                    }
                     return new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
                 });
 

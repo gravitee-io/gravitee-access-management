@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.standalone.boostrap;
+package io.gravitee.am.management.standalone.bootstrap;
 
 import java.io.File;
 import java.lang.reflect.Method;

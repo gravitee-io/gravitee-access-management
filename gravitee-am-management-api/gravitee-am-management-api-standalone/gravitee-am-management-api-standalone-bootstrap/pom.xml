@@ -27,7 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gravitee-am-management-api-standalone-bootstrap</artifactId>
-    <name>Gravitee IO - Access Management - Management API - Standalone - Boostrap</name>
+    <name>Gravitee IO - Access Management - Management API - Standalone - Bootstrap</name>
 
     <build>
         <plugins>
@@ -39,7 +39,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>false</addClasspath>
-                            <mainClass>io.gravitee.am.management.standalone.boostrap.Bootstrap</mainClass>
+                            <mainClass>io.gravitee.am.management.standalone.bootstrap.Bootstrap</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

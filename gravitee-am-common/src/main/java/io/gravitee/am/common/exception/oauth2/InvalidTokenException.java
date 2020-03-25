@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.common.exception.oauth2;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.common.http.HttpStatusCode;
 
 /**
@@ -33,11 +34,24 @@ import io.gravitee.common.http.HttpStatusCode;
  */
 public class InvalidTokenException extends OAuth2Exception {
 
+    private JWT jwt;
+    private String details;
+
     public InvalidTokenException() {
     }
 
     public InvalidTokenException(String message) {
         super(message);
+    }
+
+    public InvalidTokenException(String message, String details) {
+        this(message);
+        this.details = details;
+    }
+
+    public InvalidTokenException(String message, String details, JWT jwt) {
+        this(message, details);
+        this.jwt = jwt;
     }
 
     public InvalidTokenException(String message, Throwable cause) {
@@ -52,5 +66,13 @@ public class InvalidTokenException extends OAuth2Exception {
     @Override
     public int getHttpStatusCode() {
         return HttpStatusCode.UNAUTHORIZED_401;
+    }
+
+    public JWT getJwt() {
+        return jwt;
+    }
+
+    public String getDetails() {
+        return details;
     }
 }

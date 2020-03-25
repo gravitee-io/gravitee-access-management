@@ -15,14 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import com.mongodb.client.model.IndexOptions;
-import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
-import io.reactivex.Single;
-import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -32,8 +26,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @author GraviteeSource Team
  */
 public abstract class AbstractManagementMongoRepository extends AbstractMongoRepository {
-
-    private final Logger logger = LoggerFactory.getLogger(AbstractManagementMongoRepository.class);
 
     protected static final String FIELD_REFERENCE_TYPE = "referenceType";
     protected static final String FIELD_REFERENCE_ID = "referenceId";

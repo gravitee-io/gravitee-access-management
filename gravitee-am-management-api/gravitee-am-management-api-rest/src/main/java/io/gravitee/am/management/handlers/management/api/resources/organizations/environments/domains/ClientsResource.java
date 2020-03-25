@@ -25,6 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.permissions.RolePermission;
 import io.gravitee.am.model.permissions.RolePermissionAction;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -46,7 +47,6 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -79,19 +79,30 @@ public class ClientsResource extends AbstractResource {
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(@PathParam("domain") String _domain,
                      @QueryParam("q") String query,
+                     @QueryParam("page") Integer page,
+                     @QueryParam("size") Integer size,
                      @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
+        int requestedPage = page == null ? 0 : page;
+        int requestedSize = size == null ? 100 : Math.min(100, size);
+
         domainService.findById(_domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(_domain)))
-                .flatMapSingle(domain -> getClients(_domain, query)
-                        .map(clients -> filterResources(clients, ReferenceType.APPLICATION, authenticatedUser))
-                        .map(clients -> {
-                            List<ClientListItem> sortedClients = clients.stream()
+                .flatMapSingle(domain -> getClients(_domain, query, requestedPage, requestedSize)
+                        .map(pagedClients -> {
+                            filterResources(pagedClients.getData(), ReferenceType.APPLICATION, authenticatedUser);
+                            return pagedClients;
+                        })
+                        .map(pagedClients -> {
+                            List<ClientListItem> sortedClients = pagedClients.getData().stream()
                                     .map(clientEnhancer.enhanceClient(Collections.singletonMap(_domain, domain)))
                                     .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getClientId(), o2.getClientId()))
                                     .collect(Collectors.toList());
-                            return Response.ok(sortedClients).build();
+                            if (page == null || size == null) {
+                                return sortedClients;
+                            }
+                            return new Page(sortedClients, pagedClients.getCurrentPage(), pagedClients.getTotalCount());
                         })
                 )
                 .subscribe(
@@ -137,11 +148,11 @@ public class ClientsResource extends AbstractResource {
         return resourceContext.getResource(ClientResource.class);
     }
 
-    private Single<Set<Client>> getClients(String domainId, String query) {
+    private Single<Page<Client>> getClients(String domainId, String query, int page, int size) {
         if (query != null) {
-            return clientService.search(domainId, query);
+            return clientService.search(domainId, query, page, size);
         } else {
-            return clientService.findByDomain(domainId);
+            return clientService.findByDomain(domainId, page, size);
         }
     }
 }
