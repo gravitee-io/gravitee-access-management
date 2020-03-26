@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.gs-sidenav {
-  background-color: #383C48 !important;
-}
 
-.gs-sidenav .navigation-header {
-  background-color: #383C48 !important;
-}
+/* You can configure custom theme by overwriting css elements */
+/* This following example change the background color of the left side navigation HTML element */
+/*
+  .gs-sidenav:not(.gs-sidenav-settings) {
+    background-color: #383C48 !important;
+  }
+  .gs-sidenav:not(.gs-sidenav-settings) .navigation-header {
+    background-color: #383C48 !important;
+  }
+*/
