@@ -212,11 +212,6 @@ public class UserResource extends AbstractResource {
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
-    @Path("roles")
-    public UserRolesResource getUserRolesResource() {
-        return resourceContext.getResource(UserRolesResource.class);
-    }
-
     private Single<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
         if (userEntity.getSource() != null) {
             return identityProviderService.findById(userEntity.getSource())

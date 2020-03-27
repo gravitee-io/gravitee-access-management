@@ -153,6 +153,12 @@ public abstract class JerseySpringTest {
     @Autowired
     protected PermissionService permissionService;
 
+    @Autowired
+    protected OrganizationService organizationService;
+
+    @Autowired
+    protected MembershipService membershipService;
+
     @Before
     public void init() {
        when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
@@ -315,6 +321,11 @@ public abstract class JerseySpringTest {
         @Bean
         public PermissionService permissionService(){
             return mock(PermissionService.class);
+        }
+
+        @Bean
+        public MembershipService membershipService(){
+            return mock(MembershipService.class);
         }
     }
 

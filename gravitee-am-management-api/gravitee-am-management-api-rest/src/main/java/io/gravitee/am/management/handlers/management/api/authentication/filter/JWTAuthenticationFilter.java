@@ -19,11 +19,13 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
 import io.gravitee.common.http.HttpHeaders;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -34,6 +36,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -61,10 +64,14 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     private String jwtCookieDomain;
     private Key key;
 
+    @Autowired
+    private Http401UnauthorizedEntryPoint http401UnauthorizedEntryPoint;
+
     public JWTAuthenticationFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
         super(requiresAuthenticationRequestMatcher);
         setAuthenticationManager(new NoopAuthenticationManager());
         setAuthenticationSuccessHandler(new JWTAuthenticationSuccessHandler());
+        setAuthenticationFailureHandler(new JWTAuthenticationFailureHandler());
     }
 
     @Override
@@ -154,20 +161,27 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     }
 
-    private static class JWTAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+    private class JWTAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
         @Override
         public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
             // We do not need to do anything extra on REST authentication success, because there is no page to redirect to
         }
+    }
 
+    private class JWTAuthenticationFailureHandler implements AuthenticationFailureHandler {
+
+        @Override
+        public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
+            http401UnauthorizedEntryPoint.commence(request, response, exception);
+        }
     }
 
     private String remoteAddress(HttpServletRequest httpServerRequest) {
         String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;

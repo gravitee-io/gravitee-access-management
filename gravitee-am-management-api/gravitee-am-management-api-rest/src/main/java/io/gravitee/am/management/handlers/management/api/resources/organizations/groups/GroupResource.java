@@ -109,9 +109,4 @@ public class GroupResource extends AbstractResource {
     public GroupMembersResource getGroupMembersResource() {
         return resourceContext.getResource(GroupMembersResource.class);
     }
-
-    @Path("roles")
-    public GroupRolesResource getGroupRolesResource() {
-        return resourceContext.getResource(GroupRolesResource.class);
-    }
 }

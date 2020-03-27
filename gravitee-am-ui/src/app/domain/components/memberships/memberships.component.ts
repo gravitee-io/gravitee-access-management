@@ -18,6 +18,7 @@ import {FormControl} from "@angular/forms";
 import {OrganizationService} from "../../../services/organization.service";
 import {DialogService} from "../../../services/dialog.service";
 import * as _ from 'lodash';
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-memberships',
@@ -48,7 +49,8 @@ export class MembershipsComponent implements OnInit, OnChanges {
   displayReset = false;
 
   constructor(private organizationService: OrganizationService,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private authService: AuthService) {
     this.userCtrl.valueChanges
       .subscribe(searchTerm => {
         if (searchTerm && typeof searchTerm === 'string') {
@@ -132,8 +134,16 @@ export class MembershipsComponent implements OnInit, OnChanges {
       });
   }
 
+  isEditable(membership) {
+    return !this.isPrimaryOwner(membership) && !this.isMySelf(membership);
+  }
+
   isPrimaryOwner(membership) {
     return membership.roleName && membership.roleName.endsWith('_PRIMARY_OWNER');
+  }
+
+  isMySelf(membership) {
+    return this.authService.user().sub === membership.memberId && membership.memberType === 'user';
   }
 
   private initMembers() {

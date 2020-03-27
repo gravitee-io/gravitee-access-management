@@ -140,6 +140,23 @@ export class OrganizationService {
     return this.http.delete<any>(this.organizationURL + '/roles/' + roleId);
   }
 
+
+  members(): Observable<any> {
+    return this.http.get<any>(this.organizationURL + '/members');
+  }
+
+  addMember(memberId, memberType, role) {
+    return this.http.post<any>(this.organizationURL + '/members', {
+      'memberId': memberId,
+      'memberType': memberType,
+      'role': role
+    });
+  }
+
+  removeMember(membershipId) {
+    return this.http.delete<any>(this.organizationURL + '/members/' + membershipId);
+  }
+
   createForm(form): Observable<any> {
     return this.http.post<any>(this.organizationURL + '/forms/', form);
   }

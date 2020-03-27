@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
+package io.gravitee.am.management.handlers.management.api.resources.organizations.members;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.common.http.MediaType;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -29,37 +30,40 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import java.util.Collections;
+import javax.ws.rs.core.Response;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserRoleResource extends AbstractResource {
+public class MemberResource extends AbstractResource {
 
     @Autowired
-    private UserService userService;
+    private OrganizationService organizationService;
+
+    @Autowired
+    private MembershipService membershipService;
 
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Revoke user role",
-            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+    @ApiOperation(value = "Remove a membership of the organization",
+            notes = "User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Roles successfully revoked", response = User.class),
+            @ApiResponse(code = 204, message = "Membership successfully deleted"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void revokeRoles(
+    public void removeMember(
             @PathParam("organizationId") String organizationId,
-            @PathParam("user") String user,
-            @PathParam("role") String role,
+            @PathParam("member") String membershipId,
             @Suspended final AsyncResponse response) {
-
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
-                .andThen(userService.revokeRoles(ReferenceType.ORGANIZATION, organizationId, user, Collections.singletonList(role), authenticatedUser))
-                .subscribe(response::resume, response::resume);
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_MEMBER, Acl.DELETE)
+                .andThen(organizationService.findById(organizationId)
+                        .flatMapCompletable(irrelevant -> membershipService.delete(membershipId, authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

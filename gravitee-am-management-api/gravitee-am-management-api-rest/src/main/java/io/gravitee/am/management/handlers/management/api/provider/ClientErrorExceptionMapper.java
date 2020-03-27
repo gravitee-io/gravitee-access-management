@@ -15,25 +15,27 @@
  */
 package io.gravitee.am.management.handlers.management.api.provider;
 
-import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Provider
-public class NotFoundExceptionMapper extends AbstractExceptionMapper<NotFoundException>  {
+public class ClientErrorExceptionMapper extends AbstractExceptionMapper<ClientErrorException> {
 
     @Override
-    public Response toResponse(final NotFoundException e) {
-        final Response.Status error = Response.Status.NOT_FOUND;
+    public Response toResponse(final ClientErrorException e) {
+
+        final Response.Status status = e.getResponse().getStatusInfo().toEnum();
+
         return Response
-            .status(error)
-            .type(MediaType.APPLICATION_JSON_TYPE)
-            .entity(convert(e, error.getStatusCode()))
-            .build();
+                .status(status)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(convert(e, status.getStatusCode()))
+                .build();
     }
 }

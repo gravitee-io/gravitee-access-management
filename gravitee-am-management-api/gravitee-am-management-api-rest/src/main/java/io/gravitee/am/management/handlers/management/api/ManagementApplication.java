@@ -50,8 +50,7 @@ public class ManagementApplication extends ResourceConfig {
         register(ManagementExceptionMapper.class);
         register(UnrecognizedPropertyExceptionMapper.class);
         register(ThrowableMapper.class);
-        register(NotFoundExceptionMapper.class);
-        register(BadRequestExceptionMapper.class);
+        register(ClientErrorExceptionMapper.class);
         register(Oauth2ExceptionMapper.class);
         register(ValidationExceptionMapper.class);
         register(JsonMappingExceptionMapper.class);
