@@ -34,7 +34,14 @@ public class MembershipAuditBuilder extends ManagementAuditBuilder<MembershipAud
         if (EventType.MEMBERSHIP_CREATED.equals(getType()) || EventType.MEMBERSHIP_UPDATED.equals(getType())) {
             setNewValue(membership);
         }
-        domain(membership.getDomain());
+
+        if (membership.getReferenceType() == ReferenceType.DOMAIN || membership.getReferenceType() == ReferenceType.APPLICATION) {
+            domain(membership.getDomain());
+        } else {
+            referenceType(membership.getReferenceType());
+            referenceId(membership.getReferenceId());
+        }
+
         setTarget(membership.getId(), EntityType.MEMBERSHIP, null, membership.getId(), ReferenceType.DOMAIN, membership.getDomain());
         return this;
     }

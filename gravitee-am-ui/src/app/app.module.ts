@@ -153,6 +153,7 @@ import { ExtensionGrantCreationStep2Component } from "./domain/settings/extensio
 import { MaterialFileComponent } from "./components/json-schema-form/material-file.component";
 import { ManagementComponent } from "./settings/management/management.component";
 import { ManagementGeneralComponent } from "./settings/management/general/general.component";
+import { SettingsMembershipsComponent } from "./settings/memberships/memberships.component";
 import { FormsComponent } from "./domain/components/forms/forms.component";
 import { FormComponent, FormInfoDialog } from "./domain/components/forms/form/form.component";
 import { FormService } from "./services/form.service";
@@ -341,6 +342,7 @@ import {IdenticonHashDirective} from "./directives/identicon-hash.directive";
     MaterialFileComponent,
     ManagementComponent,
     ManagementGeneralComponent,
+    SettingsMembershipsComponent,
     FormsComponent,
     FormComponent,
     FormInfoDialog,

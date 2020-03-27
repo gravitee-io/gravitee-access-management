@@ -22,6 +22,7 @@ import io.gravitee.am.management.handlers.management.api.resources.organizations
 import io.gravitee.am.management.handlers.management.api.resources.organizations.forms.FormsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.groups.GroupsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.idps.IdentityProvidersResource;
+import io.gravitee.am.management.handlers.management.api.resources.organizations.members.MembersResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.roles.RolesResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.search.SearchResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.settings.SettingsResource;
@@ -94,6 +95,11 @@ public class OrganizationResource extends AbstractResource {
     @Path("audits")
     public AuditsResource getAuditsResource() {
         return resourceContext.getResource(AuditsResource.class);
+    }
+
+    @Path("members")
+    public MembersResource getMembersResource() {
+        return resourceContext.getResource(MembersResource.class);
     }
 
     @Path("tags")

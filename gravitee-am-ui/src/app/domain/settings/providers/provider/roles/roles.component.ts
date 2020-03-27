@@ -55,13 +55,21 @@ export class ProviderRolesComponent implements OnInit {
   }
 
   add() {
-    let dialogRef = this.dialog.open(CreateRoleMapperComponent, { data: { domain: this.domainId, roles: this.roles }, width : '700px'});
+    let dialogRef = this.dialog.open(CreateRoleMapperComponent, { data: { domain: this.domainId, roles: this.roles, organizationContext: this.organizationContext }, width : '700px'});
 
     dialogRef.afterClosed().subscribe(mapper => {
       if (mapper) {
         let errorMessages = [];
         let roleMapped = false;
-        mapper.roles.forEach(role => {
+        let mapperRoles;
+
+        if(Array.isArray(mapper.roles)) {
+          mapperRoles = mapper.roles;
+        } else {
+          mapperRoles = [ mapper.roles ];
+        }
+
+        mapperRoles.forEach(role => {
           // no mapping for this role
           if (!this.providerRoleMapper.hasOwnProperty(role)) {
             if (mapper.user) {

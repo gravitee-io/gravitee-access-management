@@ -27,11 +27,7 @@ export class GroupComponent implements OnInit {
   private domainId: string;
   private organizationContext = false;
   group: any;
-  navLinks: any = [
-    {'href': 'settings' , 'label': 'Settings'},
-    {'href': 'members' , 'label': 'Members'},
-    {'href': 'roles' , 'label': 'Roles'},
-  ];
+  navLinks: any = [ ];
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -43,7 +39,17 @@ export class GroupComponent implements OnInit {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
+    this.initNavLinks();
     this.initBreadcrumb();
+  }
+
+  initNavLinks() {
+    this.navLinks.push({'href': 'settings' , 'label': 'Settings'});
+    this.navLinks.push({'href': 'members' , 'label': 'Members'});
+
+    if (!this.organizationContext) {
+      this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
+    }
   }
 
   initBreadcrumb() {

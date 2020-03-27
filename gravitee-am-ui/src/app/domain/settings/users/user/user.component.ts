@@ -50,8 +50,8 @@ export class UserComponent implements OnInit {
     if (!this.organizationContext) {
       this.navLinks.push({'href': 'applications' , 'label': 'Authorized Apps'});
       this.navLinks.push({'href': 'factors' , 'label': 'Multi-Factor Authentication'});
+      this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
     }
-    this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
   }
 
   initBreadcrumb() {

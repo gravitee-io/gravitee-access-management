@@ -41,14 +41,4 @@ public final class Permissions {
     public static PermissionAcls or(PermissionAcls... permissionAcls) {
         return new OrPermissionAcls(permissionAcls);
     }
-
-    public static void main(String[] args) {
-
-        or(
-                and(of(ReferenceType.DOMAIN, "#1", Permission.DOMAIN_SETTINGS, Acl.CREATE),
-                        of(ReferenceType.ORGANIZATION, "#1", Permission.DOMAIN_SETTINGS, Acl.CREATE)),
-                and(of(ReferenceType.DOMAIN, "#1", Permission.DOMAIN_SETTINGS, Acl.CREATE),
-                        of(ReferenceType.ORGANIZATION, "#1", Permission.DOMAIN_SETTINGS, Acl.CREATE))
-        );
-    }
 }

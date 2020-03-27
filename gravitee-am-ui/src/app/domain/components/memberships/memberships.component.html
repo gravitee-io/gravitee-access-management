@@ -69,19 +69,19 @@
       </ngx-datatable-column>
       <ngx-datatable-column name="Role" [flexGrow]="2" [cellClass]="'membership-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <mat-form-field *ngIf="!isPrimaryOwner(row)">
+          <mat-form-field *ngIf="isEditable(row)">
             <mat-select name="memberUserRole" [value]="row.roleId" (selectionChange)="update(row.memberId, row.memberType, $event)" [disabled]="!editMode">
               <mat-option *ngFor="let role of roles" [value]="role.id">
                 <span>{{ role.name }}</span>
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <p class="primary-owner-membership" *ngIf="isPrimaryOwner(row)">{{row.roleName}}</p>
+          <p class="primary-owner-membership" *ngIf="!isEditable(row)">{{row.roleName}}</p>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="members-actions" *ngIf="deleteMode && !isPrimaryOwner(row)">
+          <div fxLayout="row" class="members-actions" *ngIf="deleteMode && isEditable(row)">
             <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">clear</mat-icon></button>
           </div>
         </ng-template>

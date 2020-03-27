@@ -17,7 +17,7 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to roles</small></a>
-  <h1>{{role.scope}}:{{role.name}}</h1>
+  <h1>{{role.assignableType}}:{{role.name}}</h1>
   <div fxLayout="row">
     <div fxFlex="70">
       <form (keydown.enter)="false" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column">

@@ -25,10 +25,9 @@ import io.gravitee.am.management.handlers.management.api.authentication.handler.
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationProvider;
-import io.gravitee.am.management.handlers.management.api.authentication.web.RestAuthenticationEntryPoint;
+import io.gravitee.am.management.handlers.management.api.authentication.web.*;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetailsSource;
-import io.gravitee.am.management.handlers.management.api.authentication.web.XForwardedAwareRedirectStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -76,6 +75,9 @@ public class SecurityConfiguration {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private Http401UnauthorizedEntryPoint http401UnauthorizedEntryPoint;
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) {
@@ -166,7 +168,7 @@ public class SecurityConfiguration {
                     .csrf()
                         .disable()
                 .exceptionHandling()
-                    .authenticationEntryPoint(restAuthenticationEntryPoint())
+                    .authenticationEntryPoint(http401UnauthorizedEntryPoint)
                     .and()
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         }
@@ -234,11 +236,6 @@ public class SecurityConfiguration {
     @Bean
     public Filter jwtAuthenticationFilter() {
         return new JWTAuthenticationFilter(new AntPathRequestMatcher("/**"));
-    }
-
-    @Bean
-    public AuthenticationEntryPoint restAuthenticationEntryPoint() {
-        return new RestAuthenticationEntryPoint();
     }
 
     @Bean

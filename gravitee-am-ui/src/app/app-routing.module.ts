@@ -66,6 +66,7 @@ import {ScopesResolver} from "./resolvers/scopes.resolver";
 import {ScopeCreationComponent} from "./domain/settings/scopes/creation/scope-creation.component";
 import {ScopeComponent} from './domain/settings/scopes/scope/scope.component';
 import {SettingsComponent} from "./settings/settings.component";
+import {SettingsMembershipsComponent} from "./settings/memberships/memberships.component";
 import {DummyComponent} from "./components/dummy/dummy.component";
 import {UsersComponent} from "./domain/settings/users/users.component";
 import {UsersResolver} from "./resolvers/users.resolver";
@@ -204,6 +205,22 @@ const routes: Routes = [
               },
               perms: {
                 only: ['organization_settings_read']
+              }
+            }
+          },
+          { path: 'members',
+            component: SettingsMembershipsComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              members: MembershipsResolver
+            },
+            data: {
+              menu: {
+                label: 'User and group access',
+                section: 'Settings'
+              },
+              perms: {
+                only: ['organization_member_read']
               }
             }
           },

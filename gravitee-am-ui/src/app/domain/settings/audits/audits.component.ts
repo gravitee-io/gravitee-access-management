@@ -155,6 +155,12 @@ export class AuditsComponent implements OnInit {
 
   getTargetUrl(row) {
     let routerLink = [];
+
+    if(row.target.type === 'MEMBERSHIP') {
+      // Membership doesn't have link;
+      return routerLink;
+    }
+
     if ('organization' === row.target.referenceType) {
       routerLink.push('/settings');
       routerLink.push('management');

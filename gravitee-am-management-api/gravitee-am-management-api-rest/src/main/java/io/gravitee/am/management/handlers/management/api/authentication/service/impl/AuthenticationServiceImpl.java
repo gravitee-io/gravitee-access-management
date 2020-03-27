@@ -24,19 +24,23 @@ import io.gravitee.am.management.handlers.management.api.authentication.provider
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.apache.commons.lang3.EnumUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 
@@ -109,10 +113,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         newUser.setReferenceId(organizationId);
                         newUser.setLoggedAt(new Date());
                         newUser.setLoginsCount(1l);
-                        newUser.setRoles(principal.getRoles());
                         newUser.setAdditionalInformation(principal.getAdditionalInformation());
                         return userService.create(newUser)
-                                .flatMap(user -> setOrganizationUserRole(user.getId(), user.getReferenceId())
+                                .flatMap(user -> setRoles(principal, user)
                                         .map(membership -> user));
                     }
                     return Single.error(ex);
@@ -141,20 +144,36 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * Note: this business code should not be here and will be moved to a dedicated UserService when the following issue
      * will be handled https://github.com/gravitee-io/issues/issues/3323
      */
-    private Single<Membership> setOrganizationUserRole(String userId, String organizationId) {
+    private Single<Membership> setRoles(User principal, io.gravitee.am.model.User user) {
 
-        // To access AM portal, a user must, at least have the ORGANIZATION[READ] permission (granted by the ORGANIZATION_USER role).
-        return roleService.findSystemRole(SystemRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)
-                .switchIfEmpty(Maybe.error(new TechnicalManagementException(String.format("Cannot add user membership to organization %s. Unable to find ORGANIZATION_USER role", organizationId))))
+        final Maybe<Role> defaultRoleObs = roleService.findSystemRole(SystemRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION);
+        Maybe<Role> roleObs = defaultRoleObs;
+
+        if (principal.getRoles() != null && !principal.getRoles().isEmpty()) {
+            // We allow only one role in AM portal. Get the first (should not append).
+            String roleId = principal.getRoles().get(0);
+
+            roleObs = roleService.findById(user.getReferenceType(), user.getReferenceId(), roleId)
+                    .toMaybe()
+                    .onErrorResumeNext(throwable -> {
+                        if (throwable instanceof RoleNotFoundException) {
+                            return roleService.findById(ReferenceType.PLATFORM, Platform.DEFAULT, roleId).toMaybe();
+                        } else {
+                            return defaultRoleObs;
+                        }
+                    });
+        }
+
+        Membership membership = new Membership();
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId(user.getId());
+        membership.setReferenceType(user.getReferenceType());
+        membership.setReferenceId(user.getReferenceId());
+
+        return roleObs.switchIfEmpty(Maybe.error(new TechnicalManagementException(String.format("Cannot add user membership to organization %s. Unable to find ORGANIZATION_USER role", user.getReferenceId()))))
                 .flatMapSingle(role -> {
-                    Membership membership = new Membership();
                     membership.setRoleId(role.getId());
-                    membership.setMemberType(MemberType.USER);
-                    membership.setMemberId(userId);
-                    membership.setReferenceType(ReferenceType.ORGANIZATION);
-                    membership.setReferenceId(organizationId);
-
-                    return membershipService.addOrUpdate(organizationId, membership);
+                    return membershipService.addOrUpdate(user.getReferenceId(), membership);
                 });
     }
 }
