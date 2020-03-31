@@ -17,6 +17,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.permissions.PermissionAcls;
+import io.gravitee.am.management.service.permissions.Permissions;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
@@ -27,6 +29,7 @@ import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -42,10 +45,11 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-import static java.util.Collections.emptySet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -83,45 +87,20 @@ public class ApplicationResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.READ),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> applicationService.findById(application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(app ->
-                                permissionService.findAllPermissions(authenticatedUser, ReferenceType.APPLICATION, application)
-                                        .map(applicationPermissions -> {
-
-                                            if (!applicationPermissions.getOrDefault(Permission.APPLICATION_IDENTITY_PROVIDER, emptySet()).contains(Acl.READ)) {
-                                                app.setIdentities(null);
-                                            }
-                                            if (!applicationPermissions.getOrDefault(Permission.APPLICATION_CERTIFICATE, emptySet()).contains(Acl.READ)) {
-                                                app.setCertificate(null);
-                                            }
-                                            if (!applicationPermissions.getOrDefault(Permission.APPLICATION_METADATA, emptySet()).contains(Acl.READ)) {
-                                                app.setMetadata(null);
-                                            }
-                                            if (app.getSettings() != null) {
-                                                if (!applicationPermissions.getOrDefault(Permission.APPLICATION_USER_ACCOUNT, emptySet()).contains(Acl.READ)) {
-                                                    app.getSettings().setAccount(null);
-                                                }
-                                                if (!applicationPermissions.getOrDefault(Permission.APPLICATION_SETTINGS, emptySet()).contains(Acl.READ)) {
-                                                    app.getSettings().setAdvanced(null);
-                                                }
-                                            }
-
-                                            return app;
-                                        })))
+                        .flatMapSingle(app -> findAllPermissions(authenticatedUser, organizationId, environmentId, domain, application)
+                                .map(userPermissions -> filterApplicationInfos(app, userPermissions))))
                 .map(application1 -> {
                     if (!application1.getDomain().equalsIgnoreCase(domain)) {
                         throw new BadRequestException("Application does not belong to domain");
                     }
                     return Response.ok(application1).build();
                 })
-                .subscribe(response::resume, response::resume);
+                .subscribe(response::resume, t-> response.resume(t));
     }
 
     @PATCH
@@ -185,10 +164,7 @@ public class ApplicationResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.DELETE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION, Acl.DELETE)
                 .andThen(applicationService.delete(application, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
@@ -212,10 +188,7 @@ public class ApplicationResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_OAUTH2, Acl.READ),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_OAUTH2, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_OAUTH2, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_OAUTH2, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_OPENID, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> applicationService.renewClientSecret(domain, application, authenticatedUser)))
@@ -241,13 +214,35 @@ public class ApplicationResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.UPDATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.UPDATE)))
+        Completable.merge(patchApplication.getRequiredPermissions().stream()
+                .map(permission -> checkAnyPermission(organizationId, environmentId, domain, application, permission, Acl.UPDATE))
+                .collect(Collectors.toList()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(patch -> applicationService.patch(domain, application, patchApplication, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Application filterApplicationInfos(Application app, Map<ReferenceType, Map<Permission, Set<Acl>>> userPermissions) {
+
+        if (!hasAnyPermission(userPermissions, Permission.APPLICATION_IDENTITY_PROVIDER, Acl.READ)) {
+            app.setIdentities(null);
+        }
+        if (!hasAnyPermission(userPermissions, Permission.APPLICATION_CERTIFICATE, Acl.READ)) {
+            app.setCertificate(null);
+        }
+        if (app.getSettings() != null) {
+            if (!hasAnyPermission(userPermissions, Permission.APPLICATION_SETTINGS, Acl.READ)) {
+                app.setMetadata(null);
+                app.getSettings().setAdvanced(null);
+                app.getSettings().setAccount(null);
+            }
+
+            if (!hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {
+                app.getSettings().setOauth(null);
+            }
+        }
+
+        return app;
     }
 }

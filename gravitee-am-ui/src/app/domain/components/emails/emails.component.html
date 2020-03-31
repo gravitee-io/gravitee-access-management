@@ -41,7 +41,8 @@
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div fxLayout="row" class="emails-actions">
           <mat-icon *ngIf="!row.enabled" matTooltip="Domain settings {{appId ? 'or application type ' : ''}} does not allow '{{row.name}}' email template customisation">block</mat-icon>
-          <a  *ngIf="row.enabled" mat-icon-button [routerLink]="['email']" [queryParams]="{template: row.template}"><mat-icon matTooltip="Edit email template">edit</mat-icon></a>
+          <a  *ngIf="row.enabled && canView()" mat-icon-button [routerLink]="['email']" [queryParams]="{template: row.template}"><mat-icon matTooltip="Edit email template">edit</mat-icon></a>
+          <mat-icon *ngIf="row.enabled && !canView()" matTooltip="You don't have required permission">block</mat-icon>
         </div>
       </ng-template>
     </ngx-datatable-column>

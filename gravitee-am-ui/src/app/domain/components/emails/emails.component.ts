@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-emails',
@@ -24,15 +25,30 @@ import {ActivatedRoute} from "@angular/router";
 export class EmailsComponent implements OnInit {
   appId: string;
   @Input() emails: any[];
+  private viewPermission: String;
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private router: Router,
+              private route: ActivatedRoute,
+              private authService: AuthService) { }
 
   ngOnInit() {
     this.appId = this.route.snapshot.parent.parent.params['appId'];
+
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.viewPermission = 'organization_form_read';
+    } else if (this.appId) {
+      this.viewPermission = 'application_form_read';
+    } else {
+      this.viewPermission = 'domain_form_read';
+    }
   }
 
   isEmpty() {
     return !this.emails || this.emails.length == 0;
+  }
+
+  canView(): boolean {
+    return this.authService.hasPermissions([this.viewPermission]);
   }
 
   getRowClass(row) {

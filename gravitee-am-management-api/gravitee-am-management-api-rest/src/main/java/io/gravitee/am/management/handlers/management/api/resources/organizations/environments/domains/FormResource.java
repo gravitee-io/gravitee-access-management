@@ -79,9 +79,7 @@ public class FormResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FORM, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FORM, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FORM, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FORM, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> formService.update(domain, form, updateForm, authenticatedUser)))
@@ -105,9 +103,7 @@ public class FormResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FORM, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FORM, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FORM, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FORM, Acl.DELETE)
                 .andThen(formService.delete(domain, form, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

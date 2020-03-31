@@ -76,9 +76,7 @@ public class FormsResource extends AbstractResource {
             @NotNull @QueryParam("template") Template formTemplate,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FORM, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FORM, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FORM, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FORM, Acl.READ)
                 .andThen(formService.findByDomainAndTemplate(domain, formTemplate.template()))
                 .map(form -> Response.ok(form).build())
                 .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build())
@@ -105,9 +103,7 @@ public class FormsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FORM, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FORM, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FORM, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FORM, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> formService.create(domain, newForm, authenticatedUser)

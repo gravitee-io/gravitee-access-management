@@ -41,7 +41,7 @@
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <button mat-icon-button (click)="publicKey(row.id, $event)"><mat-icon matTooltip="Get public key">vpn_key</mat-icon></button>
-            <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_certificate_read']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
             <button *hasPermission="['domain_certificate_delete']" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
           </div>
         </ng-template>

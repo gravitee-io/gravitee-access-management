@@ -58,8 +58,7 @@ public class EnvironmentResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Create or update an environment",
-            notes = "User must have the ORGANIZATION_ENVIRONMENT[CREATE] permission on the specified organization " +
-                    "or ORGANIZATION_ENVIRONMENT[CREATE] permission on the platform")
+            notes = "User must have the ORGANIZATION_ENVIRONMENT[CREATE] permission on the platform.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Environment successfully created or updated"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -71,8 +70,7 @@ public class EnvironmentResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.ORGANIZATION, organizationId, Permission.ENVIRONMENT, Acl.CREATE),
-                of(ReferenceType.PLATFORM, Platform.DEFAULT, Permission.ENVIRONMENT, Acl.CREATE)))
+        checkPermissions(of(ReferenceType.PLATFORM, Platform.DEFAULT, Permission.ENVIRONMENT, Acl.CREATE))
                 .andThen(environmentService.createOrUpdate(organizationId, environmentId, newEnvironment, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }

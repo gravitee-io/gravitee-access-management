@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
@@ -45,7 +46,8 @@ public class DomainResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
         mockDomain.setName("domain-name");
 
-        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), eq(ReferenceType.DOMAIN), eq(domainId));
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.DOMAIN))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
 
         final Response response = target("domains").path(domainId).request().get();

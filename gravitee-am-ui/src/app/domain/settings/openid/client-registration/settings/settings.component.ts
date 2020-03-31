@@ -42,7 +42,7 @@ export class ClientRegistrationSettingsComponent implements OnInit {
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    this.readonly = !this.authService.hasPermissions(['domain_dcr_create', 'domain_dcr_update']);
+    this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
   }
 
   enableDynamicClientRegistration(event) {

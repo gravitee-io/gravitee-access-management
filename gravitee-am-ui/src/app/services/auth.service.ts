@@ -74,6 +74,11 @@ export class AuthService {
         (this.applicationPermissions && this.applicationPermissions.indexOf(v) >= 0));
   }
 
+  hasAnyPermissions(permissions): boolean {
+
+    return permissions.some(permission => this.hasPermissions([permission]) === true);
+  }
+
   unauthorized() {
     this.subject.next('Unauthorized');
   }

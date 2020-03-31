@@ -220,7 +220,7 @@ const routes: Routes = [
                 section: 'Settings'
               },
               perms: {
-                only: ['organization_member_read']
+                only: ['organization_member_list']
               }
             }
           },
@@ -253,7 +253,7 @@ const routes: Routes = [
                 section: 'Identities'
               },
               perms: {
-                only: ['organization_identity_provider_read']
+                only: ['organization_identity_provider_list']
               }
             }
           },
@@ -293,31 +293,7 @@ const routes: Routes = [
                 section: 'Security'
               },
               perms: {
-                only: ['organization_audit_read']
-              }
-            }
-          },
-          { path: 'audits/settings',
-            component: AuditsSettingsComponent,
-            canActivate: [AuthGuard],
-            resolve: {
-              reporters: ReportersResolver
-            },
-            data: {
-              perms: {
-                only: ['organization_audit_read']
-              }
-            }
-          },
-          { path: 'audits/settings/:reporterId',
-            component: ReporterComponent,
-            canActivate: [AuthGuard],
-            resolve: {
-              reporter: ReporterResolver
-            },
-            data: {
-              perms: {
-                only: ['organization_audit_read']
+                only: ['organization_audit_list']
               }
             }
           },
@@ -345,7 +321,7 @@ const routes: Routes = [
                 section: 'User Management'
               },
               perms: {
-                only: ['organization_user_read']
+                only: ['organization_user_list']
               }
             }
           },
@@ -381,7 +357,7 @@ const routes: Routes = [
                 section: 'User Management'
               },
               perms: {
-                only: ['organization_group_read']
+                only: ['organization_group_list']
               }
             }
           },
@@ -425,7 +401,7 @@ const routes: Routes = [
                 section: 'User Management',
               },
               perms: {
-                only: ['organization_role_read']
+                only: ['organization_role_list']
               }
             }
           },
@@ -463,7 +439,7 @@ const routes: Routes = [
                 section: 'Deployment'
               },
               perms: {
-                only: ['organization_tag_read']
+                only: ['organization_tag_list']
               }
             }
           },
@@ -557,7 +533,7 @@ const routes: Routes = [
             canActivate: [AuthGuard],
             data: {
               perms: {
-                only: ['application_identity_provider_read']
+                only: ['application_identity_provider_list']
               }
             }
           },
@@ -574,7 +550,7 @@ const routes: Routes = [
                     section: 'Design'
                   },
                   perms: {
-                    only: ['application_form_read']
+                    only: ['application_form_list', 'application_form_read']
                   }
                 }
               },
@@ -598,7 +574,7 @@ const routes: Routes = [
                     section: 'Design'
                   },
                   perms: {
-                    only: ['application_email_template_read']
+                    only: ['application_email_template_list', 'application_email_template_read']
                   }
                 }
               },
@@ -642,7 +618,7 @@ const routes: Routes = [
                     section: 'Settings'
                   },
                   perms: {
-                    only: ['application_metadata_read']
+                    only: ['application_settings_read']
                   }
                 }
               },
@@ -656,7 +632,7 @@ const routes: Routes = [
                     section: 'Settings'
                   },
                   perms: {
-                    only: ['application_oauth2_read']
+                    only: ['application_openid_read']
                   }
                 }
               },
@@ -672,7 +648,7 @@ const routes: Routes = [
                     section: 'Settings'
                   },
                   perms: {
-                    only: ['application_member_read']
+                    only: ['application_member_list']
                   }
                 }
               },
@@ -685,7 +661,7 @@ const routes: Routes = [
                     section: 'Security'
                   },
                   perms: {
-                    only: ['application_factor_read']
+                    only: ['application_factor_list']
                   },
                   types: {
                     only: ['WEB', 'NATIVE', 'BROWSER']
@@ -701,7 +677,7 @@ const routes: Routes = [
                     section: 'Security'
                   },
                   perms: {
-                    only: ['application_user_account_read']
+                    only: ['application_settings_read']
                   },
                   types: {
                     only: ['WEB', 'NATIVE', 'BROWSER']
@@ -718,7 +694,7 @@ const routes: Routes = [
                     section: 'Security'
                   },
                   perms: {
-                    only: ['application_certificate_read']
+                    only: ['application_certificate_list']
                   }
                 }
               }
@@ -771,7 +747,7 @@ const routes: Routes = [
                 section: 'Settings'
               },
               perms: {
-                only: ['domain_login_settings_read']
+                only: ['domain_settings_read']
               }
             }
           },
@@ -787,7 +763,7 @@ const routes: Routes = [
                 section: 'Settings'
               },
               perms: {
-                only: ['domain_member_read']
+                only: ['domain_member_list']
               }
             }
           },
@@ -801,7 +777,7 @@ const routes: Routes = [
                 section: 'Design'
               },
               perms: {
-                only: ['domain_form_read']
+                only: ['domain_form_list', 'domain_form_read']
               }
             }
           },
@@ -821,7 +797,7 @@ const routes: Routes = [
                 section: 'Design'
               },
               perms: {
-                only: ['domain_email_template_read']
+                only: ['domain_email_template_list', 'domain_email_template_read']
               }
             }
           },
@@ -843,7 +819,7 @@ const routes: Routes = [
                 section: 'Design'
               },
               perms: {
-                only: ['domain_extension_point_read']
+                only: ['domain_extension_point_list']
               }
             }
           },
@@ -859,7 +835,7 @@ const routes: Routes = [
                 section: 'Identities'
               },
               perms: {
-                only: ['domain_identity_provider_read']
+                only: ['domain_identity_provider_list']
               }
             }
           },
@@ -893,7 +869,7 @@ const routes: Routes = [
                 section: 'Security'
               },
               perms: {
-                only: ['domain_factor_read']
+                only: ['domain_factor_list']
               }
             }
           },
@@ -928,7 +904,7 @@ const routes: Routes = [
                 section: 'Security'
               },
               perms: {
-                only: ['domain_audit_read']
+                only: ['domain_audit_list']
               }
             }
           },
@@ -940,7 +916,7 @@ const routes: Routes = [
             },
             data: {
               perms: {
-                only: ['domain_audit_update']
+                only: ['domain_reporter_list']
               }
             }
           },
@@ -948,12 +924,22 @@ const routes: Routes = [
             component: ReporterComponent,
             resolve: {
               reporter: ReporterResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_reporter_read']
+              }
             }
           },
           { path: 'audits/:auditId',
             component: AuditComponent,
             resolve: {
               audit: AuditResolver
+            },
+            data: {
+              perms: {
+                only: ['domain_audit_read']
+              }
             }
           },
           { path: 'account',
@@ -968,7 +954,7 @@ const routes: Routes = [
                 section: 'Security'
               },
               perms: {
-                only: ['domain_user_account_read']
+                only: ['domain_settings_read']
               }
             }
           },
@@ -984,7 +970,7 @@ const routes: Routes = [
                 section: 'Security'
               },
               perms: {
-                only: ['domain_certificate_read']
+                only: ['domain_certificate_list']
               }
             }
           },
@@ -1016,7 +1002,7 @@ const routes: Routes = [
                 section: 'User Management'
               },
               perms: {
-                only: ['domain_user_read']
+                only: ['domain_user_list']
               }
             }
           },
@@ -1062,7 +1048,7 @@ const routes: Routes = [
                 section: 'User Management'
               },
               perms: {
-                only: ['domain_group_read']
+                only: ['domain_group_list']
               }
             }
           },
@@ -1106,7 +1092,7 @@ const routes: Routes = [
                 section: 'User Management',
               },
               perms: {
-                only: ['domain_role_read']
+                only: ['domain_role_list']
               }
             }
           },
@@ -1164,7 +1150,7 @@ const routes: Routes = [
                 section: 'OAuth 2.0'
               },
               perms: {
-                only: ['domain_scope_read']
+                only: ['domain_scope_list']
               }
             }
           },
@@ -1201,7 +1187,7 @@ const routes: Routes = [
                 section: 'OAuth 2.0'
               },
               perms: {
-                only: ['domain_extension_grant_read']
+                only: ['domain_extension_grant_list']
               }
             }
           },
@@ -1240,7 +1226,7 @@ const routes: Routes = [
                 section: 'Openid'
               },
               perms: {
-                only: ['domain_dcr_read']
+                only: ['domain_openid_read']
               }
             },
             children: [

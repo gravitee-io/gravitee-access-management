@@ -71,9 +71,7 @@ public class UserRoleResource extends AbstractResource {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(endUser -> userService.revokeRoles(ReferenceType.DOMAIN, domain, user, Collections.singletonList(role), authenticatedUser)))

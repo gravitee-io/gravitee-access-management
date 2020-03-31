@@ -66,9 +66,10 @@ public class ScopesResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List scopes for a security domain",
-            notes = "User must have the DOMAIN_SCOPE[READ] permission on the specified domain " +
-                    "or DOMAIN_SCOPE[READ] permission on the specified environment " +
-                    "or DOMAIN_SCOPE[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_SCOPE[LIST] permission on the specified domain " +
+                    "or DOMAIN_SCOPE[LIST] permission on the specified environment " +
+                    "or DOMAIN_SCOPE[LIST] permission on the specified organization " +
+                    "Each returned scope is filtered and contains only basic information such as id, key, name, description, isSystem and isDiscovery.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List scopes for a security domain",
                     response = ClientListItem.class, responseContainer = "Set"),
@@ -79,12 +80,11 @@ public class ScopesResource extends AbstractResource {
             @PathParam("domain") String domain,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_SCOPE, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SCOPE, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SCOPE, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.LIST)
                 .andThen(scopeService.findByDomain(domain)
                         .map(scopes -> {
                             List<Scope> sortedScopes = scopes.stream()
+                                    .map(this::filterScopeInfos)
                                     .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getKey(), o2.getKey()))
                                     .collect(Collectors.toList());
                             return Response.ok(sortedScopes).build();
@@ -112,9 +112,7 @@ public class ScopesResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_SCOPE, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SCOPE, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SCOPE, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> scopeService.create(domain, newScope, authenticatedUser)
@@ -129,5 +127,17 @@ public class ScopesResource extends AbstractResource {
     @Path("{scope}")
     public ScopeResource getScopeResource() {
         return resourceContext.getResource(ScopeResource.class);
+    }
+
+    private Scope filterScopeInfos(Scope scope) {
+        Scope filteredScope = new Scope();
+        filteredScope.setId(scope.getId());
+        filteredScope.setKey(scope.getKey());
+        filteredScope.setName(scope.getName());
+        filteredScope.setSystem(scope.isSystem());
+        filteredScope.setDiscovery(scope.isDiscovery());
+        filteredScope.setDescription(scope.getDescription());
+
+        return  filteredScope;
     }
 }

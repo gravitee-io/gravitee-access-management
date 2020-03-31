@@ -33,14 +33,10 @@ export class ApplicationAdvancedComponent implements OnInit {
     const appId = this.route.snapshot.parent.params['appId'];
     if (this.canNavigate(['application_settings_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'general']);
-    } else if (this.canNavigate(['application_metadata_read'])) {
-      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'metadata']);
-    } else if (this.canNavigate(['application_oauth_read'])) {
+    }else if (this.canNavigate(['application_oauth_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'oauth2']);
-    } else if (this.canNavigate(['application_member_read'])) {
+    } else if (this.canNavigate(['application_member_list'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'members']);
-    } else if (this.canNavigate(['application_user_account_read'])) {
-      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'account']);
     } else if (this.canNavigate(['application_certificate_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'certificates']);
     } else if (this.canNavigate(['application_factor_read'])) {

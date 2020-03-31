@@ -88,10 +88,7 @@ public class ClientEmailsResource extends AbstractResource {
             @NotNull @QueryParam("template") Template emailTemplate,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.READ),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.READ)
                 .andThen(emailTemplateService.findByDomainAndClientAndTemplate(domain, client, emailTemplate.template())
                         .map(email -> Response.ok(email).build())
                         .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build()))
@@ -119,10 +116,7 @@ public class ClientEmailsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.CREATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> clientService.findById(client))

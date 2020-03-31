@@ -17,9 +17,9 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
-import io.gravitee.am.management.handlers.management.api.model.CertificateListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateService;
@@ -68,11 +68,12 @@ public class CertificatesResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered certificates for a security domain",
-            notes = "User must have the DOMAIN_CERTIFICATE[READ] permission on the specified domain " +
-                    "or DOMAIN_CERTIFICATE[READ] permission on the specified environment " +
-                    "or DOMAIN_CERTIFICATE[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_CERTIFICATE[LIST] permission on the specified domain " +
+                    "or DOMAIN_CERTIFICATE[LIST] permission on the specified environment " +
+                    "or DOMAIN_CERTIFICATE[LIST] permission on the specified organization. " +
+                    "Each returned certificate is filtered and contains only basic information such as id, name and type.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered certificates for a security domain", response = CertificateListItem.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered certificates for a security domain", response = Certificate.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -80,15 +81,13 @@ public class CertificatesResource extends AbstractResource {
             @PathParam("domain") String domain,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_CERTIFICATE, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_CERTIFICATE, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> certificateService.findByDomain(domain)
                                 .map(certificates -> {
-                                    List<CertificateListItem> sortedCertificates = certificates.stream()
-                                            .map(CertificateListItem::new)
+                                    List<Certificate> sortedCertificates = certificates.stream()
+                                            .map(this::filterCertificateInfos)
                                             .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                                             .collect(Collectors.toList());
                                     return Response.ok(sortedCertificates).build();
@@ -115,9 +114,7 @@ public class CertificatesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_CERTIFICATE, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_CERTIFICATE, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(schema -> certificateService.create(domain, newCertificate, authenticatedUser))
@@ -136,5 +133,14 @@ public class CertificatesResource extends AbstractResource {
     @Path("{certificate}")
     public CertificateResource getCertificateResource() {
         return resourceContext.getResource(CertificateResource.class);
+    }
+
+    private Certificate filterCertificateInfos(Certificate certificate) {
+        Certificate filteredCertificate = new Certificate();
+        filteredCertificate.setId(certificate.getId());
+        filteredCertificate.setName(certificate.getName());
+        filteredCertificate.setType(certificate.getType());
+
+        return filteredCertificate;
     }
 }

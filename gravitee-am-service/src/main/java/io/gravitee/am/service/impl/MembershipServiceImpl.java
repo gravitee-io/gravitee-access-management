@@ -46,7 +46,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -187,9 +186,9 @@ public class MembershipServiceImpl implements MembershipService {
 
         return Single.zip(userService.findByIdIn(userIds), groupService.findByIdIn(groupIds), roleService.findByIdIn(roleIds), (users, groups, roles) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
-            metadata.put("users", users.stream().collect(Collectors.toMap(user -> user.getId(), user -> convert(user))));
-            metadata.put("groups", groups.stream().collect(Collectors.toMap(group -> group.getId(), group -> convert(group))));
-            metadata.put("roles", roles.stream().collect(Collectors.toMap(Role::getId, Function.identity())));
+            metadata.put("users", users.stream().collect(Collectors.toMap(io.gravitee.am.model.User::getId, this::convert)));
+            metadata.put("groups", groups.stream().collect(Collectors.toMap(Group::getId, this::convert)));
+            metadata.put("roles", roles.stream().collect(Collectors.toMap(Role::getId, this::filter)));
             return metadata;
         });
     }
@@ -227,6 +226,13 @@ public class MembershipServiceImpl implements MembershipService {
         member.setId(group.getId());
         member.setDisplayName(group.getName());
         return member;
+    }
+
+    private Role filter(Role role) {
+        Role filteredRole = new Role();
+        filteredRole.setId(role.getId());
+        filteredRole.setName(role.getName());
+        return filteredRole;
     }
 
     /**

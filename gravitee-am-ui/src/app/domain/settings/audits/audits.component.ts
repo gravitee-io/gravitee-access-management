@@ -22,6 +22,7 @@ import { OrganizationService } from "../../../services/organization.service";
 import { UserService } from "../../../services/user.service";
 import { FormControl } from "@angular/forms";
 import * as _ from 'lodash';
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-audits',
@@ -94,7 +95,8 @@ export class AuditsComponent implements OnInit {
               private router: Router,
               private auditService: AuditService,
               private organizationService: OrganizationService,
-              private userService: UserService) {
+              private userService: UserService,
+              private authService: AuthService) {
     this.page.pageNumber = 0;
     this.page.size = 10;
     this.userCtrl.valueChanges

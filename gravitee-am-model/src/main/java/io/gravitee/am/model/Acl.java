@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public enum Acl {
     CREATE,
     READ,
+    LIST,
     UPDATE,
     DELETE;
 

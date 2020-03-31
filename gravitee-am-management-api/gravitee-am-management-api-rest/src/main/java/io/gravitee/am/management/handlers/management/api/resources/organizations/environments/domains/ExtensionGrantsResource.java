@@ -16,9 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.ExtensionGrantListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -64,11 +64,12 @@ public class ExtensionGrantsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered extension grants for a security domain",
-            notes = "User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain " +
-                    "or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment " +
-                    "or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain " +
+                    "or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment " +
+                    "or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. " +
+                    "Each returned extension grant is filtered and contains only basic information such as id, name and type.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered extension grants for a security domain", response = ExtensionGrantListItem.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered extension grants for a security domain", response = ExtensionGrant.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -76,15 +77,13 @@ public class ExtensionGrantsResource extends AbstractResource {
             @PathParam("domain") String domain,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_EXTENSION_GRANT, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_EXTENSION_GRANT, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_EXTENSION_GRANT, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_GRANT, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> extensionGrantService.findByDomain(domain)
                                 .map(extensionGrants -> {
-                                    List<ExtensionGrantListItem> sortedExtensionGrants = extensionGrants.stream()
-                                            .map(ExtensionGrantListItem::new)
+                                    List<ExtensionGrant> sortedExtensionGrants = extensionGrants.stream()
+                                            .map(this::filterExtensionGrantInfos)
                                             .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                                             .collect(Collectors.toList());
                                     return Response.ok(sortedExtensionGrants).build();
@@ -111,9 +110,7 @@ public class ExtensionGrantsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_EXTENSION_GRANT, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_EXTENSION_GRANT, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_EXTENSION_GRANT, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_GRANT, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> extensionGrantService.create(domain, newExtensionGrant, authenticatedUser)
@@ -127,5 +124,14 @@ public class ExtensionGrantsResource extends AbstractResource {
     @Path("{extensionGrant}")
     public ExtensionGrantResource getTokenGranterResource() {
         return resourceContext.getResource(ExtensionGrantResource.class);
+    }
+
+    private ExtensionGrant filterExtensionGrantInfos(ExtensionGrant extensionGrant) {
+        ExtensionGrant filteredExtensionGrant = new ExtensionGrant();
+        filteredExtensionGrant.setId(extensionGrant.getId());
+        filteredExtensionGrant.setName(extensionGrant.getName());
+        filteredExtensionGrant.setType(extensionGrant.getType());
+
+        return filteredExtensionGrant;
     }
 }

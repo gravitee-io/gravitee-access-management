@@ -83,9 +83,7 @@ public class IdentityProviderResource extends AbstractResource {
             @PathParam("identity") String identityProvider,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> identityProviderService.findById(identityProvider))
@@ -117,11 +115,10 @@ public class IdentityProviderResource extends AbstractResource {
             @PathParam("identity") String identity,
             @ApiParam(name = "identity", required = true) @Valid @NotNull UpdateIdentityProvider updateIdentityProvider,
             @Suspended final AsyncResponse response) {
+
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser))
@@ -144,11 +141,10 @@ public class IdentityProviderResource extends AbstractResource {
             @PathParam("domain") String domain,
             @PathParam("identity") String identity,
             @Suspended final AsyncResponse response) {
+
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.DELETE)
                 .andThen(identityProviderService.delete(domain, identity, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

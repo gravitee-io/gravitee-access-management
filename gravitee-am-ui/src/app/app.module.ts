@@ -240,6 +240,7 @@ import { ApplicationPermissionsResolver } from "./resolvers/application-permissi
 import { DomainPermissionsResolver } from "./resolvers/domain-permissions.resolver";
 import { AuthGuard } from "./guards/auth-guard.service";
 import { HasPermissionDirective } from "./directives/has-permission.directive";
+import { HasAnyPermissionDirective } from "./directives/has-any-permission.directive";
 import { AnalyticsService } from "./services/analytics.service";
 import { DashboardComponent } from "./domain/components/dashboard/dashboard.component";
 import { WidgetComponent } from "./components/widget/widget.component";
@@ -404,6 +405,7 @@ import { IdenticonHashDirective } from "./directives/identicon-hash.directive";
     ManagementRoleComponent,
     MembershipsComponent,
     HasPermissionDirective,
+    HasAnyPermissionDirective,
     IdenticonHashDirective,
     DashboardComponent,
     WidgetComponent,

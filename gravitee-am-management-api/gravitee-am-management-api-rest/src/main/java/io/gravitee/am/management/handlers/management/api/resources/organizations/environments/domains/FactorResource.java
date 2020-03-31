@@ -77,9 +77,7 @@ public class FactorResource extends AbstractResource {
             @PathParam("factor") String factor,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FACTOR, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FACTOR, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FACTOR, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> factorService.findById(factor))
@@ -112,9 +110,7 @@ public class FactorResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FACTOR, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FACTOR, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FACTOR, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> factorService.update(domain, policy, updateFactor, authenticatedUser)))
@@ -138,9 +134,7 @@ public class FactorResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FACTOR, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FACTOR, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FACTOR, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.DELETE)
                 .andThen(factorService.delete(domain, factor, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

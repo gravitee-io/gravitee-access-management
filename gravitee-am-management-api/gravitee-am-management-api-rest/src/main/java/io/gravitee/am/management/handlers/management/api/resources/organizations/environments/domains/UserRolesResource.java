@@ -81,9 +81,7 @@ public class UserRolesResource extends AbstractResource {
             @PathParam("user") String user,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> userService.findById(user))
@@ -116,9 +114,7 @@ public class UserRolesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(endUser -> userService.assignRoles(ReferenceType.DOMAIN, domain, user, roles, authenticatedUser)))

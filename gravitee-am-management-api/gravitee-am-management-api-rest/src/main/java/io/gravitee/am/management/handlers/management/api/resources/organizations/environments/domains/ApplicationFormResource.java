@@ -80,10 +80,7 @@ public class ApplicationFormResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.UPDATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_FORM, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_FORM, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_FORM, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> applicationService.findById(application))
@@ -111,10 +108,7 @@ public class ApplicationFormResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.DELETE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_FORM, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_FORM, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_FORM, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.DELETE)
                 .andThen(formService.delete(domain, form, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

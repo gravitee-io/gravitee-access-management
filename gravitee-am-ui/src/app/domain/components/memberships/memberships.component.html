@@ -16,8 +16,8 @@
 
 -->
 <div class="memberships-content">
-  <div class="gv-form-section">
-    <div fxLayout="row" fxLayoutGap="10px" *ngIf="createMode">
+  <div class="gv-form-section" *ngIf="createMode">
+    <div fxLayout="row" fxLayoutGap="10px">
       <mat-form-field appearance="outline" floatLabel="always" fxFlex="20">
         <mat-select placeholder="Type" name="memberType" [(ngModel)]="selectedMemberType">
           <mat-option [value]="'user'">

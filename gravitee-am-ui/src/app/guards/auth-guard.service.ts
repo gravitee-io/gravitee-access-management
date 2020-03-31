@@ -30,7 +30,6 @@ export class AuthGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
 
-
     // if no permission required, continue
     if (!route.data || !route.data.perms || !route.data.perms.only) {
       return true;
@@ -80,6 +79,6 @@ export class AuthGuard implements CanActivate {
   }
 
   private isAuthorized(requiredPerms): boolean {
-    return this.authService.hasPermissions(requiredPerms);
+    return this.authService.hasAnyPermissions(requiredPerms);
   }
 }

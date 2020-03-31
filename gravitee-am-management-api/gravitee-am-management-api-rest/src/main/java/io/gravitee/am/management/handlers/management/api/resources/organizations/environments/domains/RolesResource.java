@@ -64,9 +64,10 @@ public class RolesResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered roles for a security domain",
-            notes = "User must have the DOMAIN_ROLE[READ] permission on the specified domain " +
-                    "or DOMAIN_ROLE[READ] permission on the specified environment " +
-                    "or DOMAIN_ROLE[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_ROLE[LIST] permission on the specified domain " +
+                    "or DOMAIN_ROLE[LIST] permission on the specified environment " +
+                    "or DOMAIN_ROLE[LIST] permission on the specified organization. " +
+                    "Each returned role is filtered and contains only basic information such as id and name.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered roles for a security domain", response = Role.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -76,14 +77,13 @@ public class RolesResource extends AbstractResource {
             @PathParam("domain") String domain,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_ROLE, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_ROLE, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_ROLE, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_ROLE, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> roleService.findByDomain(domain)
                                 .map(roles -> {
                                     List<Role> sortedRoles = roles.stream()
+                                            .map(this::filterRoleInfos)
                                             .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                                             .collect(Collectors.toList());
                                     return Response.ok(sortedRoles).build();
@@ -110,9 +110,7 @@ public class RolesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_ROLE, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_ROLE, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_ROLE, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_ROLE, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> roleService.create(domain, newRole, authenticatedUser)
@@ -126,5 +124,13 @@ public class RolesResource extends AbstractResource {
     @Path("{role}")
     public RoleResource getRoleResource() {
         return resourceContext.getResource(RoleResource.class);
+    }
+
+    private Role filterRoleInfos(Role role) {
+        Role filteredRole = new Role();
+        filteredRole.setId(role.getId());
+        filteredRole.setName(role.getName());
+
+        return filteredRole;
     }
 }

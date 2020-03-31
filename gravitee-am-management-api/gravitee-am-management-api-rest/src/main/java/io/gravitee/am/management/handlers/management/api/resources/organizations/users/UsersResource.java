@@ -42,6 +42,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Comparator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -68,7 +70,9 @@ public class UsersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List users of the organization",
-            notes = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
+            notes = "User must have the ORGANIZATION_USER[LIST] permission on the specified organization. " +
+                    "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
+                    "Last login and identity provider name will be also returned if current user has ORGANIZATION_USER[READ] permission on the organization.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List users of the organization", response = User.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -79,7 +83,8 @@ public class UsersResource extends AbstractResource {
             @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
-        Single<Page<User>> usersPageObs = null;
+        io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+        final Single<Page<User>> usersPageObs;
 
         if (query != null) {
             usersPageObs = userService.search(ReferenceType.ORGANIZATION, organizationId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
@@ -87,23 +92,14 @@ public class UsersResource extends AbstractResource {
             usersPageObs = userService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
         }
 
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.READ)
-                .andThen(usersPageObs.flatMap(pagedUsers ->
-                        Observable.fromIterable(pagedUsers.getData())
-                                .flatMapSingle(user -> {
-                                    if (user.getSource() != null) {
-                                        return identityProviderService.findById(user.getSource())
-                                                .map(idP -> {
-                                                    user.setSource(idP.getName());
-                                                    return user;
-                                                })
-                                                .defaultIfEmpty(user)
-                                                .toSingle();
-                                    }
-                                    return Single.just(user);
-                                })
-                                .toSortedList(Comparator.comparing(User::getUsername))
-                                .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))))
+        permissionService.findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
+                .flatMap(organizationPermissions ->
+                        checkPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.LIST)
+                                .andThen(usersPageObs.flatMap(pagedUsers ->
+                                        Observable.fromIterable(pagedUsers.getData())
+                                                .flatMapSingle(user -> filterUserInfos(organizationPermissions, user))
+                                                .toSortedList(Comparator.comparing(User::getUsername))
+                                                .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount())))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -147,5 +143,29 @@ public class UsersResource extends AbstractResource {
     @Path("{user}")
     public UserResource getUserResource() {
         return resourceContext.getResource(UserResource.class);
+    }
+
+    private Single<User> filterUserInfos(Map<Permission, Set<Acl>> organizationPermissions, User user) {
+
+        User filteredUser = new User();
+        filteredUser.setId(user.getId());
+        filteredUser.setUsername(user.getUsername());
+        filteredUser.setDisplayName(user.getDisplayName());
+
+        if (hasPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.READ)) {
+            filteredUser.setLoggedAt(user.getLoggedAt());
+
+            if (user.getSource() != null) {
+                return identityProviderService.findById(user.getSource())
+                        .map(idP -> {
+                            filteredUser.setSource(idP.getName());
+                            return filteredUser;
+                        })
+                        .defaultIfEmpty(filteredUser)
+                        .toSingle();
+            }
+        }
+
+        return Single.just(filteredUser);
     }
 }

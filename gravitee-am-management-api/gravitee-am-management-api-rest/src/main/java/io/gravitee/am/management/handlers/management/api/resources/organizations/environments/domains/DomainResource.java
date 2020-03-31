@@ -41,12 +41,8 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-
-import java.util.Collections;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-import static java.util.Collections.emptySet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -67,9 +63,7 @@ public class DomainResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a security domain",
-            notes = "User must have the DOMAIN[READ] permission on the specified domain " +
-                    "or DOMAIN[READ] permission on the specified environment " +
-                    "or DOMAIN[READ] permission on the specified organization. " +
+            notes = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
                     "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
                     "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")
     @ApiResponses({
@@ -83,39 +77,11 @@ public class DomainResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domainId, Permission.DOMAIN, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(domain ->
-                                permissionService.findAllPermissions(authenticatedUser, ReferenceType.DOMAIN, domainId)
-                                        .map(domainPermissions -> {
-
-                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_USER_ACCOUNT, emptySet()).contains(Acl.READ)) {
-                                                domain.setAccountSettings(null);
-                                            }
-                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_IDENTITY_PROVIDER, emptySet()).contains(Acl.READ)) {
-                                                domain.setIdentities(null);
-                                            }
-                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_FORM, emptySet()).contains(Acl.READ)) {
-                                                domain.setLoginForm(null);
-                                            }
-                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_LOGIN_SETTINGS, emptySet()).contains(Acl.READ)) {
-                                                domain.setLoginSettings(null);
-                                            }
-                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_DCR, emptySet()).contains(Acl.READ)) {
-                                                domain.setOidc(null);
-                                            }
-                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_SCIM, emptySet()).contains(Acl.READ)) {
-                                                domain.setScim(null);
-                                            }
-                                            if (!domainPermissions.getOrDefault(Permission.DOMAIN_SETTINGS, emptySet()).contains(Acl.READ)) {
-                                                domain.setTags(null);
-                                            }
-
-                                            return domain;
-                                        })))
+                        .flatMapSingle(domain -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
+                                .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -138,7 +104,6 @@ public class DomainResource extends AbstractResource {
 
         updateInternal(organizationId, environmentId, domainId, domainToPatch, response);
     }
-
 
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
@@ -175,9 +140,7 @@ public class DomainResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.DELETE)
                 .andThen(domainService.delete(domain, authenticatedUser)
                         .doOnComplete(() -> auditReporterManager.removeReporter(domain)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
@@ -272,11 +235,31 @@ public class DomainResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domainId, Permission.DOMAIN_SETTINGS, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_SETTINGS, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_SETTINGS, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
                 .andThen(domainService.patch(domainId, domainToPatch, authenticatedUser))
                 .subscribe(domain -> response.resume(Response.ok(domain).build()), response::resume);
     }
 
+    private Domain filterDomainInfos(Domain domain, Map<ReferenceType, Map<Permission, Set<Acl>>> userPermissions) {
+
+        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)) {
+            domain.setIdentities(null);
+        }
+        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_FORM, Acl.READ)) {
+            domain.setLoginForm(null);
+        }
+        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_OPENID, Acl.READ)) {
+            domain.setOidc(null);
+        }
+        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_SCIM, Acl.READ)) {
+            domain.setScim(null);
+        }
+        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_SETTINGS, Acl.READ)) {
+            domain.setTags(null);
+            domain.setAccountSettings(null);
+            domain.setLoginSettings(null);
+        }
+
+        return domain;
+    }
 }

@@ -22,11 +22,10 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -41,10 +40,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
@@ -65,15 +61,15 @@ public class MembersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List members for an organization",
-            notes = "User must have ORGANIZATION_MEMBER[READ] permission on the specified organization")
+            notes = "User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List members for an organization", response = MembershipListItem.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void list(
+    public void getMembers(
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
 
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_MEMBER, Acl.READ)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_MEMBER, Acl.LIST)
                 .andThen(organizationService.findById(organizationId)
                         .flatMap(organization -> membershipService.findByReference(organization.getId(), ReferenceType.ORGANIZATION))
                         .flatMap(memberships -> membershipService.getMetadata(memberships).map(metadata -> new MembershipListItem(memberships, metadata))))

@@ -65,9 +65,10 @@ public class PoliciesResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered policies for a security domain",
-            notes = "User must have the DOMAIN_EXTENSION_POINT[READ] permission on the specified domain " +
-                    "or DOMAIN_EXTENSION_POINT[READ] permission on the specified environment " +
-                    "or DOMAIN_EXTENSION_POINT[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_EXTENSION_POINT[LIST] permission on the specified domain " +
+                    "or DOMAIN_EXTENSION_POINT[LIST] permission on the specified environment " +
+                    "or DOMAIN_EXTENSION_POINT[LIST] permission on the specified organization. " +
+                    "Except if user has DOMAIN_EXTENSION_POINT[READ] permission on the domain, environment or organization, each returned extension point is filtered and contains only basic information such as id and name, order and isEnabled.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered policies for a security domain", response = Policy.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -77,17 +78,19 @@ public class PoliciesResource extends AbstractResource {
             @PathParam("domain") String domain,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_EXTENSION_POINT, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_EXTENSION_POINT, Acl.READ)))
+        User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> policyService.findByDomain(domain))
+                        .flatMap(policies ->
+                                hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.READ)
+                                        .map(hasPermission -> policies.stream().map(policy -> filterPolicyInfos(hasPermission, policy))
+                                                .sorted(Comparator.comparing(Policy::getOrder))
+                                                .collect(Collectors.toList())))
                         .map(policies -> policies.stream().collect(Collectors.groupingBy(Policy::getExtensionPoint)))
-                        .map(result -> {
-                            result.forEach((key, value) -> value.sort(Comparator.comparing(Policy::getOrder)));
-                            return result;
-                        }))
+                )
                 .subscribe(response::resume, response::resume);
     }
 
@@ -110,9 +113,7 @@ public class PoliciesResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_EXTENSION_POINT, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_EXTENSION_POINT, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> policyService.create(domain, newPolicy, authenticatedUser))
@@ -142,9 +143,7 @@ public class PoliciesResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_EXTENSION_POINT, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_EXTENSION_POINT, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> policyService.update(domain, policies, authenticatedUser))
@@ -159,5 +158,20 @@ public class PoliciesResource extends AbstractResource {
     @Path("{policy}")
     public PolicyResource getPolicyResource() {
         return resourceContext.getResource(PolicyResource.class);
+    }
+
+    private Policy filterPolicyInfos(Boolean hasPermission, Policy policy) {
+        if (hasPermission) {
+            return policy;
+        }
+
+        Policy filteredPolicy = new Policy();
+        filteredPolicy.setId(policy.getId());
+        filteredPolicy.setName(policy.getName());
+        filteredPolicy.setOrder(policy.getOrder());
+        filteredPolicy.setEnabled(policy.isEnabled());
+        filteredPolicy.setExtensionPoint(policy.getExtensionPoint());
+
+        return filteredPolicy;
     }
 }

@@ -30,6 +30,14 @@ public class MembershipCriteria {
 
     private String userId;
 
+    public MembershipCriteria() {
+        super();
+    }
+
+    public MembershipCriteria(String userId) {
+        this.userId = userId;
+    }
+
     public Optional<List<String>> getGroupIds() {
 
         return Optional.ofNullable(groupIds);

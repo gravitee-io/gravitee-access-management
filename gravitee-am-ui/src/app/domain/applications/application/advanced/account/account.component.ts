@@ -40,7 +40,7 @@ export class ApplicationAccountSettingsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.application = this.route.snapshot.parent.parent.data['application'];
     this.accountSettings = this.application.settings.account || { 'inherited' : true };
-    this.readonly = !this.authService.hasPermissions(['application_user_account_update']);
+    this.readonly = !this.authService.hasPermissions(['application_settings_update']);
   }
 
   updateAccountSettings(accountSettings) {
