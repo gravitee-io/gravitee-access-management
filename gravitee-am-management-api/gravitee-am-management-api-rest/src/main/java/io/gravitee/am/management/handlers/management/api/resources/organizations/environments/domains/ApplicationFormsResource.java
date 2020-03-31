@@ -75,7 +75,6 @@ public class ApplicationFormsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Form successfully fetched"),
             @ApiResponse(code = 500, message = "Internal server error")})
-//     })
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
@@ -84,10 +83,7 @@ public class ApplicationFormsResource extends AbstractResource {
             @NotNull @QueryParam("template") Template emailTemplate,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.READ),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_FORM, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_FORM, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_FORM, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.READ)
                 .andThen(formService.findByDomainAndClientAndTemplate(domain, application, emailTemplate.template()))
                 .map(form -> Response.ok(form).build())
                 .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build())
@@ -115,10 +111,7 @@ public class ApplicationFormsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_FORM, Acl.CREATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_FORM, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_FORM, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_FORM, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> applicationService.findById(application))

@@ -59,7 +59,7 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
     this.domain = this.route.snapshot.data['domain'];
     this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
     this.templateIsEnabled = this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled;
-    this.readonly = !this.authService.hasPermissions(['domain_dcr_create', 'domain_dcr_update']);
+    this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
     this.initEmptyStateMessage();
 
     const datasource = _.map(this.route.snapshot.data['apps'].data,  app => <Client>{

@@ -31,6 +31,7 @@ import {AuthService} from "../../../../services/auth.service";
 export class ManagementRoleComponent implements OnInit {
   private createPermissions: any[];
   private readPermissions: any[];
+  private listPermissions: any[];
   private updatePermissions: any[];
   private deletePermissions: any[];
   private deleteMode: boolean;
@@ -120,6 +121,7 @@ export class ManagementRoleComponent implements OnInit {
   private initPermissions() {
     this.createPermissions = this.role.availablePermissions.map(p => p + '_create');
     this.readPermissions = this.role.availablePermissions.map(p => p + '_read');
+    this.listPermissions = this.role.availablePermissions.map(p => p + '_list');
     this.updatePermissions = this.role.availablePermissions.map(p => p + '_update');
     this.deletePermissions = this.role.availablePermissions.map(p => p + '_delete');
   }
@@ -132,6 +134,9 @@ export class ManagementRoleComponent implements OnInit {
         break;
       case 'read':
         array = this.readPermissions;
+        break;
+      case 'list':
+        array = this.listPermissions;
         break;
       case 'update':
         array = this.updatePermissions;

@@ -81,10 +81,7 @@ public class ApplicationEmailResource extends AbstractResource {
             @ApiParam(name = "email", required = true) @Valid @NotNull UpdateEmail updateEmail,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.UPDATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> applicationService.findById(application))
@@ -111,10 +108,7 @@ public class ApplicationEmailResource extends AbstractResource {
             @PathParam("email") String email,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE)
                 .andThen(emailTemplateService.delete(email)
                         .andThen(emailManager.deleteEmail(email)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);

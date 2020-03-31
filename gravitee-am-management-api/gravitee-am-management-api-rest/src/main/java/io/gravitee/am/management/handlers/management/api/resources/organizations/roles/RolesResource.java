@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.model.NewRole;
@@ -53,7 +54,8 @@ public class RolesResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered roles of the organization",
-            notes = "User must have the ORGANIZATION_ROLE[READ] permission on the specified organization")
+            notes = "User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. " +
+                    "Each returned role is filtered and contains only basic information such as id, name, isSystem and assignableType.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered roles of the organization", response = RoleEntity.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -62,8 +64,9 @@ public class RolesResource extends AbstractResource {
             @QueryParam("type") ReferenceType type,
             @Suspended final AsyncResponse response) {
 
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ROLE, Acl.READ)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ROLE, Acl.LIST)
                 .andThen(roleService.findAllAssignable(ReferenceType.ORGANIZATION, organizationId, type)
+                        .map(this::filterRoleInfos)
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                         .toList())
                 .subscribe(response::resume, response::resume);
@@ -95,5 +98,15 @@ public class RolesResource extends AbstractResource {
     @Path("{role}")
     public RoleResource getRoleResource() {
         return resourceContext.getResource(RoleResource.class);
+    }
+
+    private Role filterRoleInfos(Role role) {
+        Role filteredRole = new Role();
+        filteredRole.setId(role.getId());
+        filteredRole.setName(role.getName());
+        filteredRole.setSystem(role.isSystem());
+        filteredRole.setAssignableType(role.getAssignableType());
+
+        return filteredRole;
     }
 }

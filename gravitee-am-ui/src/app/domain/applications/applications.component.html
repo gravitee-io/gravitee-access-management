@@ -46,7 +46,7 @@
               <svg width="40" height="40" [identiconHash]="row.name"></svg>
             </div>
             <div class="app-information" fxLayout="column">
-              <a [routerLink]="['/domains', row.domain, 'applications', row.id]">{{row.name}}</a>
+              <a [routerLink]="['/domains', domainId, 'applications', row.id]">{{row.name}}</a>
               <small>{{row.type}}</small>
             </div>
           </div>

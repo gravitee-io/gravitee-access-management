@@ -79,9 +79,9 @@ public class MembersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List members for a security domain",
-            notes = "User must have the DOMAIN_MEMBER[READ] permission on the specified domain " +
-                    "or DOMAIN_MEMBER[READ] permission on the specified environment " +
-                    "or DOMAIN_MEMBER[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_MEMBER[LIST] permission on the specified domain " +
+                    "or DOMAIN_MEMBER[LIST] permission on the specified environment " +
+                    "or DOMAIN_MEMBER[LIST] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List members for a security domain", response = MembershipListItem.class),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -91,13 +91,12 @@ public class MembersResource extends AbstractResource {
             @PathParam("domain") String domain,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_MEMBER, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_MEMBER, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_MEMBER, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_MEMBER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(domain1 -> membershipService.findByReference(domain1.getId(), ReferenceType.DOMAIN))
-                        .flatMap(memberships -> membershipService.getMetadata(memberships).map(metadata -> new MembershipListItem(memberships, metadata))))
+                        .flatMap(memberships -> membershipService.getMetadata(memberships)
+                                .map(metadata -> new MembershipListItem(memberships, metadata))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -124,9 +123,7 @@ public class MembersResource extends AbstractResource {
         membership.setReferenceId(domain);
         membership.setReferenceType(ReferenceType.DOMAIN);
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_MEMBER, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_MEMBER, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_MEMBER, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_MEMBER, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(domain1 -> membershipService.addOrUpdate(organizationId, membership, authenticatedUser))
@@ -154,9 +151,7 @@ public class MembersResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
                 .andThen(permissionService.findAllPermissions(authenticatedUser, ReferenceType.DOMAIN, domain)
                 .map(Permission::flatten))
                 .subscribe(response::resume, response::resume);
@@ -175,5 +170,4 @@ public class MembersResource extends AbstractResource {
 
         return membership;
     }
-
 }

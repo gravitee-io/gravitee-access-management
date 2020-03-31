@@ -49,7 +49,7 @@
                       (change)="enablePolicy($event, policy)"
                       [checked]="isPolicyEnabled(policy)" [disabled]="readonly">
                     </mat-slide-toggle>
-                    <button style="margin-left: 5px;" mat-icon-button matTooltip="Settings" (click)="loadPolicy($event, policy)">
+                    <button style="margin-left: 5px;" mat-icon-button matTooltip="Settings" (click)="loadPolicy($event, policy)" *hasPermission="['domain_extension_point_read']">
                       <mat-icon>settings</mat-icon>
                     </button>
                     <button mat-icon-button matTooltip="Delete" (click)="deletePolicy($event, policy)" *hasPermission="['domain_extension_point_delete']">

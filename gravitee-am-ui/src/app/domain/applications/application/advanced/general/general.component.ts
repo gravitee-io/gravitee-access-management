@@ -80,7 +80,7 @@ export class ApplicationGeneralComponent implements OnInit {
     });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
-    this.renewSecretMode = this.authService.hasPermissions(['application_oauth2_update']);
+    this.renewSecretMode = this.authService.hasPermissions(['application_openid_update']);
   }
 
 

@@ -39,6 +39,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
 import static io.gravitee.am.management.service.permissions.Permissions.or;
@@ -62,9 +63,10 @@ public class FactorsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered factors for a security domain",
-            notes = "User must have the DOMAIN_FACTOR[READ] permission on the specified domain " +
-                    "or DOMAIN_FACTOR[READ] permission on the specified environment " +
-                    "or DOMAIN_FACTOR[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_FACTOR[LIST] permission on the specified domain " +
+                    "or DOMAIN_FACTOR[LIST] permission on the specified environment " +
+                    "or DOMAIN_FACTOR[LIST] permission on the specified organization " +
+                    "Each returned factor is filtered and contains only basic information such as id, name and factor type.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered factors for a security domain", response = Factor.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -74,16 +76,11 @@ public class FactorsResource extends AbstractResource {
             @PathParam("domain") String domain,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FACTOR, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FACTOR, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FACTOR, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(___ -> factorService.findByDomain(domain))
-                        .map(factors -> {
-                            factors.forEach(f -> f.setConfiguration(null));
-                            return factors;
-                        }))
+                        .map(factors -> factors.stream().map(this::filterFactorInfos).collect(Collectors.toList())))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -106,9 +103,7 @@ public class FactorsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_FACTOR, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_FACTOR, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_FACTOR, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> factorService.create(domain, newFactor, authenticatedUser))
@@ -122,5 +117,14 @@ public class FactorsResource extends AbstractResource {
     @Path("{factor}")
     public FactorResource getFactorResource() {
         return resourceContext.getResource(FactorResource.class);
+    }
+
+    private Factor filterFactorInfos(Factor factor) {
+        Factor filteredFactor = new Factor();
+        filteredFactor.setId(factor.getId());
+        filteredFactor.setName(factor.getName());
+        filteredFactor.setFactorType(factor.getFactorType());
+
+        return filteredFactor;
     }
 }

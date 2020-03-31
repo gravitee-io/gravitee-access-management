@@ -85,10 +85,7 @@ public class ClientResource extends AbstractResource {
             @PathParam("client") String client,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION, Acl.READ),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> clientService.findById(client))
@@ -121,10 +118,7 @@ public class ClientResource extends AbstractResource {
             @ApiParam(name = "client", required = true) @Valid @NotNull PatchClient patchClient,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION, Acl.UPDATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> clientService.patch(domain, client, patchClient)))
@@ -151,10 +145,7 @@ public class ClientResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION, Acl.UPDATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> this.applyDefaultResponseType(patchClient))
@@ -180,10 +171,7 @@ public class ClientResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION, Acl.DELETE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION, Acl.DELETE)
                 .andThen(clientService.delete(client, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()),
                         response::resume);
@@ -208,10 +196,10 @@ public class ClientResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION_OAUTH2, Acl.UPDATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_OAUTH2, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_OAUTH2, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_OAUTH2, Acl.UPDATE)))
+        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION_OPENID, Acl.UPDATE),
+                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_OPENID, Acl.UPDATE),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_OPENID, Acl.UPDATE),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_OPENID, Acl.UPDATE)))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> clientService.renewClientSecret(domain, client, authenticatedUser)))

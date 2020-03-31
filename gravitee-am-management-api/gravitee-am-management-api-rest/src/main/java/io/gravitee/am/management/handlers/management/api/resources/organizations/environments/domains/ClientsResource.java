@@ -74,11 +74,13 @@ public class ClientsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered clients for a security domain",
-            notes = "User must have DOMAIN[READ] permission on the specified domain, environment or organization " +
-                    "AND either APPLICATION[READ] permission on each domain's client " +
+            notes = "User must have the APPLICATION[LIST] permission on the specified domain " +
+                    "or APPLICATION[LIST] permission on the specified environment " +
+                    "or APPLICATION[LIST] permission on the specified organization " +
+                    "AND either APPLICATION[READ] permission on each domain's application " +
                     "or APPLICATION[READ] permission on the specified domain " +
                     "or APPLICATION[READ] permission on the specified environment " +
-                    "or APPLICATION[READ] permission on the specified organization)")
+                    "or APPLICATION[READ] permission on the specified organization).")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered clients for a security domain",
                     response = ClientListItem.class, responseContainer = "Set"),
@@ -96,19 +98,13 @@ public class ClientsResource extends AbstractResource {
         int requestedPage = page == null ? 0 : page;
         int requestedSize = size == null ? 100 : Math.min(100, size);
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domainId, Permission.DOMAIN, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.APPLICATION, Acl.LIST)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(domain -> getClients(domainId, query, requestedPage, requestedSize)
                                 .flatMap(pagedClients ->
                                         Maybe.concat(pagedClients.getData().stream()
-                                                .map(client -> hasPermission(authenticatedUser,
-                                                        or(of(ReferenceType.APPLICATION, client.getId(), Permission.APPLICATION, Acl.READ),
-                                                                of(ReferenceType.DOMAIN, domainId, Permission.APPLICATION, Acl.READ),
-                                                                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.READ),
-                                                                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.READ)))
+                                                .map(client -> hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, client.getId(), Permission.APPLICATION, Acl.READ)
                                                         .filter(Boolean::booleanValue)
                                                         .map(permit -> client)).collect(Collectors.toList()))
                                                 .toList()
@@ -145,9 +141,7 @@ public class ClientsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> clientService.create(domain, newClient, authenticatedUser)

@@ -38,8 +38,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,7 +58,8 @@ public class IdentityProvidersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered identity providers of the organization",
-            notes = "User must have the ORGANIZATION_IDENTITY_PROVIDER[READ] permission on the specified organization")
+            notes = "User must have the ORGANIZATION_IDENTITY_PROVIDER[LIST] permission on the specified organization. " +
+                    "Each returned identity provider is filtered and contains only basic information such as id, name, type and isExternal.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered identity providers of the organization", response = IdentityProvider.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -69,7 +68,7 @@ public class IdentityProvidersResource extends AbstractResource {
             @QueryParam("userProvider") boolean userProvider,
             @Suspended final AsyncResponse response) {
 
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.READ)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.LIST)
                 .andThen(identityProviderService.findAll(ReferenceType.ORGANIZATION, organizationId)
                         .flatMapObservable(Observable::fromIterable)
                         .filter(identityProvider -> {
@@ -78,13 +77,9 @@ public class IdentityProvidersResource extends AbstractResource {
                             }
                             return true;
                         })
-                        .toList()
-                        .map(identities -> {
-                            List<IdentityProvider> sortedIdentityProviders = identities.stream()
-                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                    .collect(Collectors.toList());
-                            return Response.ok(sortedIdentityProviders).build();
-                        }))
+                        .map(this::filterIdentityProviderInfos)
+                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                        .toList())
                 .subscribe(response::resume, response::resume);
     }
 
@@ -116,5 +111,15 @@ public class IdentityProvidersResource extends AbstractResource {
     @Path("{identity}")
     public IdentityProviderResource getIdentityProviderResource() {
         return resourceContext.getResource(IdentityProviderResource.class);
+    }
+
+    private IdentityProvider filterIdentityProviderInfos(IdentityProvider identityProvider) {
+        IdentityProvider filteredIdentityProvider = new IdentityProvider();
+        filteredIdentityProvider.setId(identityProvider.getId());
+        filteredIdentityProvider.setName(identityProvider.getName());
+        filteredIdentityProvider.setType(identityProvider.getType());
+        filteredIdentityProvider.setExternal(identityProvider.isExternal());
+
+        return filteredIdentityProvider;
     }
 }

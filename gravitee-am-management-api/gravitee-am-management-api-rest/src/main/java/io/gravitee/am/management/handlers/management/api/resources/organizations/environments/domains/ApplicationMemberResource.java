@@ -72,10 +72,7 @@ public class ApplicationMemberResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_MEMBER, Acl.DELETE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_MEMBER, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_MEMBER, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_MEMBER, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_MEMBER, Acl.DELETE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> applicationService.findById(application))

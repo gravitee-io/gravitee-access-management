@@ -15,11 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -37,6 +39,8 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
 import static io.gravitee.am.management.service.permissions.Permissions.or;
@@ -60,9 +64,10 @@ public class ReportersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered reporters for a security domain",
-            notes = "User must have the DOMAIN_REPORTER[READ] permission on the specified domain " +
-                    "or DOMAIN_REPORTER[READ] permission on the specified environment " +
-                    "or DOMAIN_REPORTER[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_REPORTER[LIST] permission on the specified domain " +
+                    "or DOMAIN_REPORTER[LIST] permission on the specified environment " +
+                    "or DOMAIN_REPORTER[LIST] permission on the specified organization. " +
+                    "Except if user has DOMAIN_REPORTER[READ] permission on the domain, environment or organization, each returned reporter is filtered and contains only basic information such as id and name and type.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered reporters for a security domain", response = Reporter.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -73,17 +78,36 @@ public class ReportersResource extends AbstractResource {
             @QueryParam("userProvider") boolean userProvider,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_REPORTER, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_REPORTER, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_REPORTER, Acl.READ)))
+        User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> reporterService.findByDomain(domain)))
+                .flatMap(reporters ->
+                        hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
+                                .map(hasPermission -> {
+                                    if (hasPermission) {
+                                        return reporters;
+                                    }
+
+                                    return reporters.stream().map(this::filterReporterInfos).collect(Collectors.toList());
+                                })
+                )
                 .subscribe(response::resume, response::resume);
     }
 
     @Path("{reporter}")
     public ReporterResource getReporterResource() {
         return resourceContext.getResource(ReporterResource.class);
+    }
+
+    private Reporter filterReporterInfos(Reporter reporter) {
+        Reporter filteredReporter = new Reporter();
+        filteredReporter.setId(reporter.getId());
+        filteredReporter.setName(reporter.getName());
+        filteredReporter.setType(reporter.getType());
+
+        return filteredReporter;
     }
 }

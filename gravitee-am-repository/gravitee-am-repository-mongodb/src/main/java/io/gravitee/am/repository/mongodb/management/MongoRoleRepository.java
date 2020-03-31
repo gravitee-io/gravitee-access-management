@@ -120,7 +120,13 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
 
         if (roleMongo.getPermissions() != null) {
             Map<Permission, Set<Acl>> permissions = new HashMap<>();
-            roleMongo.getPermissions().forEach((key, value) -> permissions.put(Permission.valueOf(key), new HashSet<>(value)));
+            roleMongo.getPermissions().forEach((key, value) -> {
+                try {
+                    permissions.put(Permission.valueOf(key), new HashSet<>(value));
+                } catch (IllegalArgumentException iae) {
+                    // Ignore invalid Permission enum.
+                }
+            });
 
             role.setPermissions(permissions);
         }

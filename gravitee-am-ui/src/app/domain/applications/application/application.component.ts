@@ -48,16 +48,15 @@ export class ApplicationComponent implements OnInit {
       _.remove(this.navLinks, { href: 'idp' });
       _.remove(this.navLinks, { href: 'design' });
     }
-    if (!this.canDisplay(['application_identity_provider_read'])) {
+    if (!this.canDisplay(['application_identity_provider_list'])) {
       _.remove(this.navLinks, { href: 'idp' });
     }
-    if (!this.canDisplay(['application_email_template_read']) && !this.canDisplay(['application_form_read'])) {
+    if (!this.canDisplay(['application_email_template_list', 'application_email_template_read', 'application_form_list', 'application_form_read'])) {
       _.remove(this.navLinks, { href: 'design' });
     }
-    if (!this.canDisplay(['application_metadata_read'])
+    if (!this.canDisplay(['application_settings_read'])
             && !this.canDisplay(['application_oauth_read'])
-            && !this.canDisplay(['application_user_account_read'])
-            && !this.canDisplay(['application_certificate_read'])
+            && !this.canDisplay(['application_certificate_list'])
           ) {
       _.remove(this.navLinks, { href: 'settings' });
     }
@@ -74,6 +73,6 @@ export class ApplicationComponent implements OnInit {
   }
 
   private canDisplay(permissions): boolean {
-    return this.authService.hasPermissions(permissions);
+    return this.authService.hasAnyPermissions(permissions);
   }
 }

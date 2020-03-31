@@ -83,9 +83,7 @@ public class CertificateResource extends AbstractResource {
             @PathParam("certificate") String certificate,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_CERTIFICATE, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_CERTIFICATE, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> certificateService.findById(certificate))
@@ -102,9 +100,9 @@ public class CertificateResource extends AbstractResource {
     @GET
     @Path("key")
     @ApiOperation(value = "Get the certificate public key",
-            notes = "User must have the DOMAIN_CERTIFICATE[READ] permission on the specified domain " +
-                    "or DOMAIN_CERTIFICATE[READ] permission on the specified environment " +
-                    "or DOMAIN_CERTIFICATE[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN[READ] permission on the specified domain " +
+                    "or DOMAIN[READ] permission on the specified environment " +
+                    "or DOMAIN[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Certificate key successfully fetched", response = String.class),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -115,9 +113,8 @@ public class CertificateResource extends AbstractResource {
             @PathParam("certificate") String certificate,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_CERTIFICATE, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_CERTIFICATE, Acl.READ)))
+        // FIXME: should we create a DOMAIN_CERTIFICATE_KEY permission instead ?
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
                 .andThen(certificateService.getCertificateProvider(certificate)
                         .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
                         .flatMapSingle(CertificateProvider::publicKey))
@@ -144,9 +141,7 @@ public class CertificateResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_CERTIFICATE, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_CERTIFICATE, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, authenticatedUser))
@@ -175,9 +170,7 @@ public class CertificateResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_CERTIFICATE, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_CERTIFICATE, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_CERTIFICATE, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.DELETE)
                 .andThen(certificateService.delete(certificate, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

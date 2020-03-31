@@ -33,6 +33,7 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.SingleSource;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -78,9 +79,11 @@ public class UsersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List users for a security domain",
-            notes = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
-                    "or DOMAIN_USER[READ] permission on the specified environment " +
-                    "or DOMAIN_USER[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_USER[LIST] permission on the specified domain " +
+                    "or DOMAIN_USER[LIST] permission on the specified environment " +
+                    "or DOMAIN_USER[LIST] permission on the specified organization. " +
+                    "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
+                    "Last login and identity provider name will be also returned if current user has DOMAIN_USER[READ] permission on the domain, environment or organization.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List users for a security domain", response = User.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -93,9 +96,9 @@ public class UsersResource extends AbstractResource {
             @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.READ)))
+        io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> {
@@ -106,22 +109,11 @@ public class UsersResource extends AbstractResource {
                             }
                         })
                         .flatMap(pagedUsers ->
-                                Observable.fromIterable(pagedUsers.getData())
-                                        .flatMapSingle(user -> {
-                                            if (user.getSource() != null) {
-                                                return identityProviderService.findById(user.getSource())
-                                                        .map(idP -> {
-                                                            user.setSource(idP.getName());
-                                                            return user;
-                                                        })
-                                                        .defaultIfEmpty(user)
-                                                        .toSingle();
-                                            }
-                                            return Single.just(user);
-                                        })
-                                        .toSortedList(Comparator.comparing(User::getUsername))
-                                        .map(users -> new Page(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
-                        ))
+                                hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
+                                        .flatMap(hasPermission -> Observable.fromIterable(pagedUsers.getData())
+                                                .flatMapSingle(user -> filterUserInfos(hasPermission, user))
+                                                .toSortedList(Comparator.comparing(User::getUsername))
+                                                .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount())))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -159,9 +151,7 @@ public class UsersResource extends AbstractResource {
             }
         }
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_USER, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_USER, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_USER, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(userProvider -> userService.create(domain, newUser, authenticatedUser))
@@ -175,5 +165,28 @@ public class UsersResource extends AbstractResource {
     @Path("{user}")
     public UserResource getUserResource() {
         return resourceContext.getResource(UserResource.class);
+    }
+
+    private Single<User> filterUserInfos(Boolean hasPermission, User user) {
+        User filteredUser = new User();
+        filteredUser.setId(user.getId());
+        filteredUser.setUsername(user.getUsername());
+        filteredUser.setDisplayName(user.getDisplayName());
+
+        if (hasPermission) {
+            filteredUser.setLoggedAt(user.getLoggedAt());
+
+            if (user.getSource() != null) {
+                return identityProviderService.findById(user.getSource())
+                        .map(idP -> {
+                            filteredUser.setSource(idP.getName());
+                            return filteredUser;
+                        })
+                        .defaultIfEmpty(filteredUser)
+                        .toSingle();
+            }
+        }
+
+        return Single.just(filteredUser);
     }
 }

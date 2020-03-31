@@ -22,14 +22,19 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -45,6 +50,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,24 +84,21 @@ public class ApplicationMembersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List members for an application",
-            notes = "User must have APPLICATION_MEMBER[READ] permission on the specified application " +
-                    "or APPLICATION_MEMBER[READ] permission on the specified domain " +
-                    "or APPLICATION_MEMBER[READ] permission on the specified environment " +
-                    "or APPLICATION_MEMBER[READ] permission on the specified organization")
+            notes = "User must have APPLICATION_MEMBER[LIST] permission on the specified application " +
+                    "or APPLICATION_MEMBER[LIST] permission on the specified domain " +
+                    "or APPLICATION_MEMBER[LIST] permission on the specified environment " +
+                    "or APPLICATION_MEMBER[LIST] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List members for an application", response = MembershipListItem.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void list(
+    public void getMembers(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_MEMBER, Acl.READ),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_MEMBER, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_MEMBER, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_MEMBER, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_MEMBER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> applicationService.findById(application))
@@ -130,19 +133,17 @@ public class ApplicationMembersResource extends AbstractResource {
         membership.setReferenceId(application);
         membership.setReferenceType(ReferenceType.APPLICATION);
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION_MEMBER, Acl.CREATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_MEMBER, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_MEMBER, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_MEMBER, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_MEMBER, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> applicationService.findById(application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                         .flatMapSingle(__ -> membershipService.addOrUpdate(organizationId, membership, authenticatedUser))
-                        .map(membership1 -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application + "/members/" + membership1.getId()))
-                                .entity(membership1)
-                                .build()))
+                        .flatMap(membership1 -> addDomainUserRoleIfNecessary(organizationId, domain, newMembership, authenticatedUser)
+                                .andThen(Single.just(Response
+                                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application + "/members/" + membership1.getId()))
+                                        .entity(membership1)
+                                        .build()))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -166,10 +167,7 @@ public class ApplicationMembersResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, application, Permission.APPLICATION, Acl.READ),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION, Acl.READ)
                 .andThen(permissionService.findAllPermissions(authenticatedUser, ReferenceType.APPLICATION, application)
                         .map(Permission::flatten))
                 .subscribe(response::resume, response::resume);
@@ -189,4 +187,36 @@ public class ApplicationMembersResource extends AbstractResource {
         return membership;
     }
 
+    /**
+     * When adding membership to an application, some permission are necessary on the application's domain.
+     * These permissions are available through the DOMAIN_USER.
+     * For convenience, to to limit the number of actions an administrator must do to affect role on an application, the group or user will also inherit the DOMAIN_USER role on the application's domain.
+     *
+     * If the group or user already has a role on the domain, nothing is done.
+     *
+     * WARNING: this behavior is likely to change in the near future.
+     */
+    private Completable addDomainUserRoleIfNecessary(String organizationId, String domainId, NewMembership newMembership, User authenticatedUser) {
+
+        MembershipCriteria criteria = new MembershipCriteria();
+
+        if (newMembership.getMemberType() == MemberType.USER) {
+            criteria.setUserId(newMembership.getMemberId());
+        } else {
+            criteria.setGroupIds(Arrays.asList(newMembership.getMemberId()));
+        }
+
+        return membershipService.findByCriteria(ReferenceType.DOMAIN, domainId, criteria)
+                .switchIfEmpty(roleService.findSystemRole(SystemRole.DOMAIN_USER, ReferenceType.DOMAIN)
+                        .flatMapSingle(role -> {
+                            final Membership domainMembership = new Membership();
+                            domainMembership.setMemberId(newMembership.getMemberId());
+                            domainMembership.setMemberType(newMembership.getMemberType());
+                            domainMembership.setRoleId(role.getId());
+                            domainMembership.setReferenceId(domainId);
+                            domainMembership.setReferenceType(ReferenceType.DOMAIN);
+                            return membershipService.addOrUpdate(organizationId, domainMembership, authenticatedUser);
+                        }).toFlowable())
+                .ignoreElements();
+    }
 }

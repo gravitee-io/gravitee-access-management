@@ -76,9 +76,7 @@ public class AnalyticsResource extends AbstractResource {
         query.setInterval(param.getInterval());
         query.setSize(param.getSize());
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_ANALYTICS, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_ANALYTICS, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_ANALYTICS, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_ANALYTICS, Acl.READ)
                 .andThen(analyticsService.execute(query))
                 .subscribe(response::resume, response::resume);
     }

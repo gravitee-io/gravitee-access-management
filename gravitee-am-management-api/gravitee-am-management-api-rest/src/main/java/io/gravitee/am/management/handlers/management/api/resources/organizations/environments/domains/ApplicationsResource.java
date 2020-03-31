@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.ApplicationListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
@@ -70,14 +69,15 @@ public class ApplicationsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered applications for a security domain",
-            notes = "User must have DOMAIN[READ] permission on the specified domain, environment or organization " +
+            notes = "User must have the APPLICATION[LIST] permission on the specified domain, environment or organization " +
                     "AND either APPLICATION[READ] permission on each domain's application " +
                     "or APPLICATION[READ] permission on the specified domain " +
                     "or APPLICATION[READ] permission on the specified environment " +
-                    "or APPLICATION[READ] permission on the specified organization)")
+                    "or APPLICATION[READ] permission on the specified organization. " +
+                    "Each returned application is filtered and contains only basic information such as id, name, description and isEnabled.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List registered applications for a security domain",
-                    response = ApplicationListItem.class, responseContainer = "List"),
+                    response = Application.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -89,9 +89,7 @@ public class ApplicationsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> {
@@ -101,18 +99,15 @@ public class ApplicationsResource extends AbstractResource {
                                 return applicationService.findByDomain(domain, page, Integer.min(size, MAX_APPLICATIONS_SIZE_PER_PAGE));
                             }
                         })
-                        .flatMap(pagedApplications ->
-                                Maybe.concat(pagedApplications.getData().stream()
-                                        .map(p -> hasPermission(authenticatedUser,
-                                                or(of(ReferenceType.APPLICATION, p.getId(), Permission.APPLICATION, Acl.READ),
-                                                        of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.READ),
-                                                        of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.READ),
-                                                        of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.READ)))
+                        .flatMap(pagedApplications -> Maybe.concat(
+                                pagedApplications.getData().stream()
+                                        .map(application -> hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, application.getId(), Permission.APPLICATION, Acl.READ)
                                                 .filter(Boolean::booleanValue)
-                                                .map(permit -> p)).collect(Collectors.toList()))
-                                        .sorted((a1, a2) -> a2.getUpdatedAt().compareTo(a1.getUpdatedAt()))
-                                        .toList()
-                                        .map(applications -> new Page<>(applications, pagedApplications.getCurrentPage(), applications.size()))))
+                                                .map(__ -> filterApplicationInfos(application)))
+                                        .collect(Collectors.toList()))
+                                .sorted((a1, a2) -> a2.getUpdatedAt().compareTo(a1.getUpdatedAt()))
+                                .toList()
+                                .map(applications -> new Page<>(applications, pagedApplications.getCurrentPage(), applications.size()))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -136,9 +131,7 @@ public class ApplicationsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.APPLICATION, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> applicationService.create(domain, newApplication, authenticatedUser)
@@ -152,5 +145,17 @@ public class ApplicationsResource extends AbstractResource {
     @Path("{application}")
     public ApplicationResource getApplicationResource() {
         return resourceContext.getResource(ApplicationResource.class);
+    }
+
+    private Application filterApplicationInfos(Application application) {
+        Application filteredApplication = new Application();
+        filteredApplication.setId(application.getId());
+        filteredApplication.setName(application.getName());
+        filteredApplication.setType(application.getType());
+        filteredApplication.setEnabled(application.isEnabled());
+        filteredApplication.setTemplate(application.isTemplate());
+        filteredApplication.setUpdatedAt(application.getUpdatedAt());
+
+        return filteredApplication;
     }
 }

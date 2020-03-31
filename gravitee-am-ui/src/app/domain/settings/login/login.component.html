@@ -38,7 +38,7 @@
             <mat-hint style="font-size: 75%;">Enable Self-service password reset (SSPR) that allows users who have forgotten their password to ask for a new one.</mat-hint>
           </div>
         </div>
-        <div fxLayout="row" *hasPermission="['domain_login_settings_update']">
+        <div fxLayout="row" *hasPermission="['domain_settings_update']">
           <button mat-raised-button [disabled]="!formChanged" type="submit">SAVE</button>
         </div>
       </form>

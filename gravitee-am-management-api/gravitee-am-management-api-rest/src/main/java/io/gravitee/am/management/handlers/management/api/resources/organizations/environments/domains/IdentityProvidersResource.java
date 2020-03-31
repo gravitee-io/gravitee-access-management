@@ -16,10 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.IdentityProviderListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -41,8 +41,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
 import static io.gravitee.am.management.service.permissions.Permissions.or;
@@ -70,11 +68,12 @@ public class IdentityProvidersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered identity providers for a security domain",
-            notes = "User must have the DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified domain " +
-                    "or DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified environment " +
-                    "or DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified domain " +
+                    "or DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified environment " +
+                    "or DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified organization. " +
+                    "Each returned identity provider is filtered and contains only basic information such as id, name and type.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered identity providers for a security domain", response = IdentityProviderListItem.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered identity providers for a security domain", response = IdentityProvider.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -83,9 +82,9 @@ public class IdentityProvidersResource extends AbstractResource {
             @QueryParam("userProvider") boolean userProvider,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)))
+        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST),
+                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST),
+                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST)))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.findByDomain(domain))
@@ -96,14 +95,9 @@ public class IdentityProvidersResource extends AbstractResource {
                             }
                             return true;
                         })
-                        .toList()
-                        .map(identities -> {
-                            List<IdentityProviderListItem> sortedIdentityProviders = identities.stream()
-                                    .map(IdentityProviderListItem::new)
-                                    .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                    .collect(Collectors.toList());
-                            return Response.ok(sortedIdentityProviders).build();
-                        }))
+                        .map(this::filterIdentityProviderInfos)
+                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                        .toList())
                 .subscribe(response::resume, response::resume);
     }
 
@@ -143,5 +137,14 @@ public class IdentityProvidersResource extends AbstractResource {
     @Path("{identity}")
     public IdentityProviderResource getIdentityProviderResource() {
         return resourceContext.getResource(IdentityProviderResource.class);
+    }
+
+    private IdentityProvider filterIdentityProviderInfos(IdentityProvider identityProvider) {
+        IdentityProvider filteredIdentityProvider = new IdentityProvider();
+        filteredIdentityProvider.setId(identityProvider.getId());
+        filteredIdentityProvider.setName(identityProvider.getName());
+        filteredIdentityProvider.setType(identityProvider.getType());
+
+        return filteredIdentityProvider;
     }
 }

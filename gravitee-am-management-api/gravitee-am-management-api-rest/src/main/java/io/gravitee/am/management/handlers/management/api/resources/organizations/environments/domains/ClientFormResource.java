@@ -80,10 +80,7 @@ public class ClientFormResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION_FORM, Acl.UPDATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_FORM, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_FORM, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_FORM, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION_FORM, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> clientService.findById(client))
@@ -110,10 +107,7 @@ public class ClientFormResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION_FORM, Acl.DELETE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_FORM, Acl.DELETE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_FORM, Acl.DELETE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_FORM, Acl.DELETE)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION_FORM, Acl.DELETE)
                 .andThen(formService.delete(domain, form, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

@@ -84,10 +84,7 @@ public class ClientFormsResource extends AbstractResource {
             @NotNull @QueryParam("template") Template emailTemplate,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION_FORM, Acl.READ),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_FORM, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_FORM, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_FORM, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION_FORM, Acl.READ)
                 .andThen(formService.findByDomainAndClientAndTemplate(domain, client, emailTemplate.template())
                         .map(form -> Response.ok(form).build())
                         .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build()))
@@ -116,10 +113,7 @@ public class ClientFormsResource extends AbstractResource {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION_FORM, Acl.CREATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_FORM, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_FORM, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_FORM, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION_FORM, Acl.DELETE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> clientService.findById(client))

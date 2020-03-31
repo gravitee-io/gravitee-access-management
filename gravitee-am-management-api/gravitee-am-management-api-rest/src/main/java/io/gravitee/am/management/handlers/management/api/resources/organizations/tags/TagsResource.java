@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Tag;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.TagService;
 import io.gravitee.am.service.model.NewTag;
@@ -54,7 +55,8 @@ public class TagsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "List sharding tags",
-            notes = "User must have the ORGANIZATION_TAG[READ] permission on the specified organization")
+            notes = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
+            "Each returned tag is filtered and contains only basic information such as id and name.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List all the sharding tags", response = Domain.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -62,8 +64,9 @@ public class TagsResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
 
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_TAG, Acl.READ)
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_TAG, Acl.LIST)
                 .andThen(tagService.findAll(organizationId))
+                .map(this::filterTagInfos)
                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                 .toList()
                 .subscribe(response::resume, response::resume);
@@ -99,4 +102,11 @@ public class TagsResource extends AbstractResource {
         return resourceContext.getResource(TagResource.class);
     }
 
+    private Tag filterTagInfos(Tag tag) {
+        Tag filteredTag = new Tag();
+        filteredTag.setId(tag.getId());
+        filteredTag.setName(tag.getName());
+
+        return filteredTag;
+    }
 }

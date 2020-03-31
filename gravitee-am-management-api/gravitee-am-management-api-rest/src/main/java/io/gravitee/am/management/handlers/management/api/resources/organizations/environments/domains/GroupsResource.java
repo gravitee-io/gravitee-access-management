@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.GroupService;
@@ -39,6 +40,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
 import static io.gravitee.am.management.service.permissions.Permissions.or;
@@ -65,9 +67,10 @@ public class GroupsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List groups for a security domain",
-            notes = "User must have the DOMAIN_GROUP[READ] permission on the specified domain " +
-                    "or DOMAIN_GROUP[READ] permission on the specified environment " +
-                    "or DOMAIN_GROUP[READ] permission on the specified organization")
+            notes = "User must have the DOMAIN_GROUP[LIST] permission on the specified domain " +
+                    "or DOMAIN_GROUP[LIST] permission on the specified environment " +
+                    "or DOMAIN_GROUP[LIST] permission on the specified organization. " +
+                    "Each returned group is filtered and contains only basic information such as id and name.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List groups for a security domain", response = Group.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -79,12 +82,11 @@ public class GroupsResource extends AbstractResource {
             @QueryParam("size") @DefaultValue(MAX_GROUPS_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_GROUP, Acl.READ),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_GROUP, Acl.READ),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_GROUP, Acl.READ)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> groupService.findByDomain(domain, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))))
+                        .flatMapSingle(irrelevant -> groupService.findByDomain(domain, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE)))
+                        .map(groupPage -> new Page<>(groupPage.getData().stream().map(this::filterGroupInfos).collect(Collectors.toList()), groupPage.getCurrentPage(), groupPage.getTotalCount())))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -107,9 +109,7 @@ public class GroupsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_GROUP, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_GROUP, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_GROUP, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> groupService.create(domain, newGroup, authenticatedUser))
@@ -123,5 +123,13 @@ public class GroupsResource extends AbstractResource {
     @Path("{group}")
     public GroupResource getGroupResource() {
         return resourceContext.getResource(GroupResource.class);
+    }
+
+    private Group filterGroupInfos(Group group) {
+        Group filteredGroup = new Group();
+        filteredGroup.setId(group.getId());
+        filteredGroup.setName(group.getName());
+
+        return filteredGroup;
     }
 }
