@@ -32,7 +32,7 @@ import {AuthService} from "../../../services/auth.service";
 export class AuditsComponent implements OnInit {
   private startDateChanged = false;
   private endDateChanged = false;
-  private organizationContext = false;
+  organizationContext = false;
   @ViewChild('auditsTable') table: any;
   userCtrl = new FormControl();
   audits: any[];
@@ -289,5 +289,9 @@ export class AuditsComponent implements OnInit {
   clearUserInput() {
     this.selectedUser = null;
     this.userCtrl.reset();
+  }
+
+  hasPermissions(permissions) {
+    this.authService.hasPermissions(permissions);
   }
 }
