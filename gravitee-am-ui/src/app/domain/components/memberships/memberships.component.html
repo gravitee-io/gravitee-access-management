@@ -17,14 +17,19 @@
 -->
 <div class="memberships-content">
   <div class="gv-form-section">
-    <div class="gv-form-section-title">
-      <h5>Users</h5>
-      <small>Add a user by their username</small>
-      <mat-divider></mat-divider>
-    </div>
-
     <div fxLayout="row" fxLayoutGap="10px" *ngIf="createMode">
-      <mat-form-field appearance="outline" floatLabel="always">
+      <mat-form-field appearance="outline" floatLabel="always" fxFlex="20">
+        <mat-select placeholder="Type" name="memberType" [(ngModel)]="selectedMemberType">
+          <mat-option [value]="'user'">
+            <span>User</span>
+          </mat-option>
+          <mat-option [value]="'group'">
+            <span>Group</span>
+          </mat-option>
+        </mat-select>
+        <mat-hint>The member's type.</mat-hint>
+      </mat-form-field>
+      <mat-form-field *ngIf="selectedMemberType === 'user'" appearance="outline" floatLabel="always" fxFlex="100">
         <mat-label><mat-icon matPrefix>search</mat-icon></mat-label>
         <input matInput placeholder="Enter username" [matAutocomplete]="auto" [formControl]="userCtrl"/>
         <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onUserSelectionChanged($event)" [displayWith]="displayUserFn">
@@ -34,79 +39,18 @@
             <small style="color:grey;">{{user.source}}</small>
           </mat-option>
         </mat-autocomplete>
-        <mat-hint>The user's username.</mat-hint>
+        <mat-hint>The user's name.</mat-hint>
       </mat-form-field>
-      <mat-form-field appearance="outline" floatLabel="always">
-        <mat-select placeholder="Role" name="userRole" [(ngModel)]="selectedUserRole">
-          <mat-option *ngFor="let role of roles" [value]="role.id">
-            <span>{{ role.name }}</span>
-          </mat-option>
-        </mat-select>
-        <mat-hint>The role's name.</mat-hint>
-      </mat-form-field>
-      <div>
-        <button style="margin-top: 7px;" mat-stroked-button (click)="addUserMembership($event)" [disabled]="!selectedUser || !selectedUserRole">+ ADD</button>
-      </div>
-    </div>
-
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='userMembers'>
-      <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'membership-name-cell'">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="membership-header" fxLayout="row">
-            <div class="user-avatar">
-              <img [src]="avatarUrl(row)" alt="Photo of a {{row.name}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="40"/>
-            </div>
-            <div class="membership-information" fxLayout="column">
-              <h3>{{row.name}}</h3>
-            </div>
-          </div>
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Role" [flexGrow]="2" [cellClass]="'membership-name-cell'">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <mat-form-field *ngIf="isEditable(row)">
-            <mat-select name="memberUserRole" [value]="row.roleId" (selectionChange)="update(row.memberId, row.memberType, $event)" [disabled]="!editMode">
-              <mat-option *ngFor="let role of roles" [value]="role.id">
-                <span>{{ role.name }}</span>
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <p class="primary-owner-membership" *ngIf="!isEditable(row)">{{row.roleName}}</p>
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="members-actions" *ngIf="deleteMode && isEditable(row)">
-            <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">clear</mat-icon></button>
-          </div>
-        </ng-template>
-      </ngx-datatable-column>
-    </ngx-datatable>
-  </div>
-
-  <div class="gv-form-section">
-    <div class="gv-form-section-title">
-      <h5>Groups</h5>
-      <small>Add a group by their name</small>
-      <mat-divider></mat-divider>
-    </div>
-
-    <div fxLayout="row" fxLayoutGap="10px" *ngIf="createMode">
-      <mat-form-field appearance="outline" floatLabel="always">
-        <mat-select placeholder="Group" name="group" [(ngModel)]="selectedGroup">
+      <mat-form-field *ngIf="selectedMemberType === 'group'" appearance="outline" floatLabel="always" fxFlex="100">
+        <mat-select placeholder="Group" name="group" [(ngModel)]="selectedMember">
           <mat-option *ngFor="let group of filteredGroups" [value]="group.id">
             <span>{{ group.name }}</span>
           </mat-option>
         </mat-select>
         <mat-hint>The group's name.</mat-hint>
       </mat-form-field>
-      <mat-form-field appearance="outline" floatLabel="always">
-        <mat-select placeholder="Role" name="groupRole" [(ngModel)]="selectedGroupRole">
+      <mat-form-field appearance="outline" floatLabel="always" fxFlex="20">
+        <mat-select placeholder="Role" name="userRole" [(ngModel)]="selectedRole">
           <mat-option *ngFor="let role of roles" [value]="role.id">
             <span>{{ role.name }}</span>
           </mat-option>
@@ -114,46 +58,56 @@
         <mat-hint>The role's name.</mat-hint>
       </mat-form-field>
       <div>
-        <button style="margin-top: 7px;" mat-stroked-button (click)="addGroupMembership($event)" [disabled]="!selectedGroup || !selectedGroupRole">+ ADD</button>
+        <button style="margin-top: 7px;" mat-stroked-button (click)="addMembership($event)" [disabled]="!selectedMember || !selectedRole">+ ADD</button>
       </div>
     </div>
-
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='groupMembers'>
-      <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'membership-name-cell'">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div class="membership-header" fxLayout="row">
-            <div class="membership-icon">
-              <mat-icon>group</mat-icon>
-            </div>
-            <div class="membership-information" fxLayout="column">
-              <h3>{{row.name}}</h3>
-            </div>
-          </div>
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Role" [flexGrow]="2" [cellClass]="'membership-name-cell'">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <mat-form-field>
-            <mat-select name="memberGroupRole" [value]="row.roleId" (selectionChange)="update(row.memberId, row.memberType, $event)" [disabled]="!editMode">
-              <mat-option *ngFor="let role of roles" [value]="role.id">
-                <span>{{ role.name }}</span>
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-          <div fxLayout="row" class="members-actions" *ngIf="deleteMode">
-            <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">clear</mat-icon></button>
-          </div>
-        </ng-template>
-      </ngx-datatable-column>
-    </ngx-datatable>
   </div>
+
+  <ngx-datatable class="material" *ngIf="dataLoaded"
+                 [columnMode]="'flex'"
+                 [headerHeight]="40"
+                 [footerHeight]="40"
+                 [rowHeight]="50"
+                 [rows]='members'
+                 [sorts]="[{ prop: 'memberType', dir: 'desc' }]">
+    <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'membership-name-cell'">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <div class="membership-header" fxLayout="row">
+          <div *ngIf="row.memberType === 'user'" class="user-avatar">
+            <img [src]="avatarUrl(row)" alt="Photo of a {{row.name}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="40"/>
+          </div>
+          <div *ngIf="row.memberType === 'group'" class="membership-icon">
+            <mat-icon>group</mat-icon>
+          </div>
+          <div class="membership-information" fxLayout="column">
+            <h3>{{row.name}}</h3>
+          </div>
+        </div>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="Type" [flexGrow]="1" prop="memberType">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <p>{{row.memberType}}</p>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="Role" [flexGrow]="2" prop="roleName">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <mat-form-field *ngIf="isEditable(row)" style="margin-top: -12px;">
+          <mat-select name="memberRole" [value]="row.roleId" (selectionChange)="update(row.memberId, row.memberType, $event)" [disabled]="!editMode">
+            <mat-option *ngFor="let role of roles" [value]="role.id">
+              <span>{{ role.name }}</span>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <p class="primary-owner-membership" *ngIf="!isEditable(row)">{{row.roleName}}</p>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="" [flexGrow]="1">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <div fxLayout="row" class="members-actions" *ngIf="deleteMode && isEditable(row)">
+          <button mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">clear</mat-icon></button>
+        </div>
+      </ng-template>
+    </ngx-datatable-column>
+  </ngx-datatable>
 </div>

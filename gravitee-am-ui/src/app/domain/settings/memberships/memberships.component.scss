@@ -1,0 +1,42 @@
+p {
+  font-size: smaller;
+  margin: 5px 0;
+}
+
+ngx-datatable {
+  p {
+    margin: 0;
+    font-size: inherit;
+  }
+  .membership-header {
+    margin: 5px;
+    align-items: center;
+    .membership-icon {
+      margin: 0 12px 0 0;
+    }
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      margin: 0 12px 0 0;
+      img {
+        border-radius: 50%;
+      }
+    }
+    .membership-information {
+      h3 {
+        font-size: 14px;
+        font-weight: normal;
+        margin: 0;
+      }
+      small {
+        color: rgba(0,0,0,.54);
+      }
+    }
+  }
+}
+
+:host {
+  /deep/ .membership-name-cell {
+    padding: 0 !important;
+  }
+}

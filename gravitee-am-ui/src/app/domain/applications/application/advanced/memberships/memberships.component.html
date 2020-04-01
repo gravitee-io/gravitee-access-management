@@ -16,25 +16,51 @@
 
 -->
 <div>
-  <div fxLayout="row">
-    <div fxFlex="70">
-      <app-memberships [members]="members"
-                       [roleType]="applicationRoleType"
-                       [createMode]="createMode"
-                       [editMode]="editMode"
-                       [deleteMode]="deleteMode"
-                       (userMembershipAdded)="addUserMembership($event)"
-                       (groupMembershipAdded)="addGroupMembership($event)"
-                       (membershipDeleted)="delete($event)"
-                       (membershipUpdated)="update($event)"></app-memberships>
-    </div>
-    <div class="gv-page-description" fxFlex>
-      <h3>Application access</h3>
-      <div class="gv-page-description-content">
-        <p>
-          Grant access to this application by adding users and groups.
-        </p>
+  <div fxLayout="column">
+    <div class="gv-form-section">
+      <div class="gv-form-section-title">
+        <h5>Administrative roles</h5>
+        <mat-divider></mat-divider>
+      </div>
+      <div>
+        <p>Administrators can be used to grant access to specific areas of this resource. Depending of the role permissions, administrators can have full access to this resource.</p>
+        <p>Administrator users are managed separately from application users; administrator accounts represent users that can access to the administration portal.</p>
+        <p>The users/groups listed here can either view and/or edit this resource configuration.</p>
+        <p *ngIf="isEditable()">Administrators and administrative roles can be assigned at the organization level <a (click)="openDialog()" class="gv-back-link" style="cursor: pointer;">here</a>.</p>
       </div>
     </div>
+    <ngx-datatable class="material"
+                   [columnMode]="'flex'"
+                   [headerHeight]="40"
+                   [footerHeight]="40"
+                   [rowHeight]="50"
+                   [rows]='members'
+                   [sorts]="[{ prop: 'memberType', dir: 'desc' }]">
+      <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'membership-name-cell'">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="membership-header" fxLayout="row">
+            <div *ngIf="row.memberType === 'user'" class="user-avatar">
+              <img [src]="avatarUrl(row)" alt="Photo of a {{row.name}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="40"/>
+            </div>
+            <div *ngIf="row.memberType === 'group'" class="membership-icon">
+              <mat-icon>group</mat-icon>
+            </div>
+            <div class="membership-information" fxLayout="column">
+              <h3>{{row.name}}</h3>
+            </div>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Type" [flexGrow]="2" prop="memberType">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <p>{{row.memberType}}</p>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Role" [flexGrow]="2" prop="roleName">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <small><b>{{row.roleName}}</b></small>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
   </div>
 </div>

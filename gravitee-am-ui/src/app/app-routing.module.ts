@@ -216,7 +216,7 @@ const routes: Routes = [
             },
             data: {
               menu: {
-                label: 'User and group access',
+                label: 'Administrative roles',
                 section: 'Settings'
               },
               perms: {
@@ -234,7 +234,7 @@ const routes: Routes = [
             data: {
               menu: {
                 label: 'Login Page',
-                section: 'Settings'
+                section: 'Design'
               },
               perms: {
                 only: ['organization_form_read']
@@ -668,7 +668,7 @@ const routes: Routes = [
                 },
                 data: {
                   menu: {
-                    label: 'User and group access',
+                    label: 'Administrative roles',
                     section: 'Settings'
                   },
                   perms: {
@@ -759,22 +759,6 @@ const routes: Routes = [
               }
             }
           },
-          { path: 'members',
-            component: DomainSettingsMembershipsComponent,
-            canActivate: [AuthGuard],
-            resolve: {
-              members: MembershipsResolver
-            },
-            data: {
-              menu: {
-                label: 'User and group access',
-                section: 'Settings'
-              },
-              perms: {
-                only: ['domain_member_read']
-              }
-            }
-          },
           { path: 'login',
             component: DomainSettingsLoginComponent,
             canActivate: [AuthGuard],
@@ -791,6 +775,22 @@ const routes: Routes = [
               }
             }
           },
+          { path: 'members',
+            component: DomainSettingsMembershipsComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              members: MembershipsResolver
+            },
+            data: {
+              menu: {
+                label: 'Administrative roles',
+                section: 'Settings'
+              },
+              perms: {
+                only: ['domain_member_read']
+              }
+            }
+          },
           { path: 'forms',
             component: DomainSettingsFormsComponent,
             canActivate: [AuthGuard],
@@ -798,7 +798,7 @@ const routes: Routes = [
             data: {
               menu: {
                 label: 'Forms',
-                section: 'Settings'
+                section: 'Design'
               },
               perms: {
                 only: ['domain_form_read']
@@ -818,7 +818,7 @@ const routes: Routes = [
             data: {
               menu: {
                 label: 'Emails',
-                section: 'Settings'
+                section: 'Design'
               },
               perms: {
                 only: ['domain_email_template_read']

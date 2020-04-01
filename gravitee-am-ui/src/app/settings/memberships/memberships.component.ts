@@ -26,7 +26,7 @@ import {AuthService} from "../../services/auth.service";
   styleUrls: ['./memberships.component.scss']
 })
 export class SettingsMembershipsComponent implements OnInit {
-  organizationRoleType = 'ORGANIZATION';
+  roleType = 'ORGANIZATION';
   members: any;
   createMode = false;
   editMode = false;
@@ -41,25 +41,17 @@ export class SettingsMembershipsComponent implements OnInit {
 
   ngOnInit() {
     this.members = this.route.snapshot.data['members'];
-    this.createMode = this.authService.hasPermissions(['domain_member_create']);
-    this.editMode = this.authService.hasPermissions(['domain_member_update']);
-    this.deleteMode = this.authService.hasPermissions(['domain_member_delete']);
+    this.createMode = this.authService.hasPermissions(['organization_member_create']);
+    this.editMode = this.authService.hasPermissions(['organization_member_update']);
+    this.deleteMode = this.authService.hasPermissions(['organization_member_delete']);
   }
 
-  addUserMembership(membership) {
-    this.organizationService.addMember(membership.memberId, 'USER', membership.role).subscribe(response => {
+  add(membership) {
+    this.organizationService.addMember(membership.memberId, membership.memberType, membership.role).subscribe(response => {
       this.reloadMembers();
       this.snackbarService.open('Member added');
     });
 
-  }
-
-  addGroupMembership(membership) {
-    event.preventDefault();
-    this.organizationService.addMember(membership.memberId, 'GROUP', membership.role).subscribe(response => {
-      this.reloadMembers();
-      this.snackbarService.open('Member added');
-    });
   }
 
   delete(membershipId) {
