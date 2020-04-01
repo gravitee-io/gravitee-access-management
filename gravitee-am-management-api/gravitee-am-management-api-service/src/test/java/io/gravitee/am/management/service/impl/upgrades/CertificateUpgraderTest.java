@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.management.service.impl.upgrades;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.service.impl.upgrades.CertificateUpgrader;

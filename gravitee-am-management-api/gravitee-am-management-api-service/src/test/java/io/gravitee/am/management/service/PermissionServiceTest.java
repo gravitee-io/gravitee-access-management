@@ -90,7 +90,7 @@ public class PermissionServiceTest {
         Role role = new Role();
         role.setId(ROLE_ID);
         role.setAssignableType(ReferenceType.ORGANIZATION);
-        role.setPermissions(Permission.of(ORGANIZATION, READ));
+        role.setPermissionAcls(Permission.of(ORGANIZATION, READ));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), argThat(criteria -> criteria.getUserId().get().equals(user.getId())
@@ -122,7 +122,7 @@ public class PermissionServiceTest {
         Role role = new Role();
         role.setId(ROLE_ID);
         role.setAssignableType(ReferenceType.ORGANIZATION);
-        role.setPermissions(Permission.of(ORGANIZATION, READ));
+        role.setPermissionAcls(Permission.of(ORGANIZATION, READ));
 
         Group group = new Group();
         group.setId(GROUP_ID);
@@ -184,12 +184,12 @@ public class PermissionServiceTest {
         Role organizationRole = new Role();
         organizationRole.setId(ROLE_ID);
         organizationRole.setAssignableType(ReferenceType.ORGANIZATION);
-        organizationRole.setPermissions(Permission.of(ORGANIZATION, READ));
+        organizationRole.setPermissionAcls(Permission.of(ORGANIZATION, READ));
 
         Role domainRole = new Role();
         domainRole.setId(ROLE_ID2);
         domainRole.setAssignableType(ReferenceType.DOMAIN);
-        domainRole.setPermissions(Permission.of(DOMAIN, READ));
+        domainRole.setPermissionAcls(Permission.of(DOMAIN, READ));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
@@ -228,12 +228,12 @@ public class PermissionServiceTest {
         Role organizationRole = new Role();
         organizationRole.setId(ROLE_ID);
         organizationRole.setAssignableType(ReferenceType.ORGANIZATION);
-        organizationRole.setPermissions(Permission.of(ORGANIZATION, READ));
+        organizationRole.setPermissionAcls(Permission.of(ORGANIZATION, READ));
 
         Role domainRole = new Role();
         domainRole.setId(ROLE_ID2);
         domainRole.setAssignableType(ReferenceType.DOMAIN);
-        domainRole.setPermissions(Permission.of(DOMAIN, CREATE));
+        domainRole.setPermissionAcls(Permission.of(DOMAIN, CREATE));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
@@ -272,12 +272,12 @@ public class PermissionServiceTest {
         Role organizationRole = new Role();
         organizationRole.setId(ROLE_ID);
         organizationRole.setAssignableType(ReferenceType.ORGANIZATION);
-        organizationRole.setPermissions(Permission.of(ORGANIZATION, READ));
+        organizationRole.setPermissionAcls(Permission.of(ORGANIZATION, READ));
 
         Role domainRole = new Role();
         domainRole.setId(ROLE_ID2);
         domainRole.setAssignableType(ReferenceType.DOMAIN);
-        domainRole.setPermissions(Permission.of(DOMAIN, CREATE));
+        domainRole.setPermissionAcls(Permission.of(DOMAIN, CREATE));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
@@ -309,7 +309,7 @@ public class PermissionServiceTest {
         Role role = new Role();
         role.setId(ROLE_ID);
         role.setAssignableType(ReferenceType.ORGANIZATION);
-        role.setPermissions(Permission.of(DOMAIN, READ, CREATE)); // The permission create is set on organization but expected on a domain.
+        role.setPermissionAcls(Permission.of(DOMAIN, READ, CREATE)); // The permission create is set on organization but expected on a domain.
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(membership));
@@ -341,7 +341,7 @@ public class PermissionServiceTest {
         Role role = new Role();
         role.setId(ROLE_ID);
         role.setAssignableType(ReferenceType.ORGANIZATION);// The role is assignable to organization only by affected to an application.
-        role.setPermissions(Permission.of(APPLICATION, READ));
+        role.setPermissionAcls(Permission.of(APPLICATION, READ));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
         when(membershipService.findByCriteria(eq(ReferenceType.APPLICATION), eq(APPLICATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(membership));
@@ -388,12 +388,12 @@ public class PermissionServiceTest {
         Role organizationRole = new Role();
         organizationRole.setId(ROLE_ID);
         organizationRole.setAssignableType(ReferenceType.ORGANIZATION);
-        organizationRole.setPermissions(Permission.of(ORGANIZATION, READ)); // READ permission come from role associated to user.
+        organizationRole.setPermissionAcls(Permission.of(ORGANIZATION, READ)); // READ permission come from role associated to user.
 
         Role groupRole = new Role();
         groupRole.setId(ROLE_ID2);
         groupRole.setAssignableType(ReferenceType.ORGANIZATION);
-        groupRole.setPermissions(Permission.of(ORGANIZATION, CREATE)); // CREATE permission come from role associated to group of the user.
+        groupRole.setPermissionAcls(Permission.of(ORGANIZATION, CREATE)); // CREATE permission come from role associated to group of the user.
 
         Group group = new Group();
         group.setId(GROUP_ID);
@@ -436,12 +436,12 @@ public class PermissionServiceTest {
         Role organizationRole = new Role();
         organizationRole.setId(ROLE_ID);
         organizationRole.setAssignableType(ReferenceType.ORGANIZATION);
-        organizationRole.setPermissions(Permission.of(ORGANIZATION, READ)); // READ permission come from role associated to user.
+        organizationRole.setPermissionAcls(Permission.of(ORGANIZATION, READ)); // READ permission come from role associated to user.
 
         Role groupRole = new Role();
         groupRole.setId(ROLE_ID2);
         groupRole.setAssignableType(ReferenceType.ORGANIZATION);
-        groupRole.setPermissions(Permission.of(ORGANIZATION, CREATE)); // CREATE permission come from role associated to group of the user.
+        groupRole.setPermissionAcls(Permission.of(ORGANIZATION, CREATE)); // CREATE permission come from role associated to group of the user.
 
         Group group = new Group();
         group.setId(GROUP_ID);

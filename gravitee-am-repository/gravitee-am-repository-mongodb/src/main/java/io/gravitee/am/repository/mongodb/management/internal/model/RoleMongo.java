@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.codecs.pojo.annotations.BsonId;
 
@@ -43,7 +42,7 @@ public class RoleMongo extends Auditable {
 
     private boolean system;
 
-    private Map<String, Set<Acl>> permissions;
+    private Map<String, Set<Acl>> permissionAcls;
 
     private List<String> oauthScopes;
 
@@ -118,12 +117,12 @@ public class RoleMongo extends Auditable {
         this.assignableType = assignableType;
     }
 
-    public Map<String, Set<Acl>> getPermissions() {
-        return permissions;
+    public Map<String, Set<Acl>> getPermissionAcls() {
+        return permissionAcls;
     }
 
-    public void setPermissions(Map<String, Set<Acl>> permissions) {
-        this.permissions = permissions;
+    public void setPermissionAcls(Map<String, Set<Acl>> permissionAcls) {
+        this.permissionAcls = permissionAcls;
     }
 
     public List<String> getOauthScopes() {

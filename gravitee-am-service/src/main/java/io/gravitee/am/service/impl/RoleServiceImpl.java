@@ -42,7 +42,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.Acl.*;
 
@@ -191,7 +190,7 @@ public class RoleServiceImpl implements RoleService {
                                 Role roleToUpdate = new Role(oldRole);
                                 roleToUpdate.setName(updateRole.getName());
                                 roleToUpdate.setDescription(updateRole.getDescription());
-                                roleToUpdate.setPermissions(Permission.unflatten(updateRole.getPermissions()));
+                                roleToUpdate.setPermissionAcls(Permission.unflatten(updateRole.getPermissions()));
                                 roleToUpdate.setOauthScopes(updateRole.getOauthScopes());
                                 roleToUpdate.setUpdatedAt(new Date());
                                 return roleRepository.update(roleToUpdate)
@@ -289,7 +288,7 @@ public class RoleServiceImpl implements RoleService {
                         LOGGER.debug("Update a system role {}", role.getAssignableType() + ":" + role.getName());
                         // update the role
                         role.setId(currentRole.getId());
-                        role.setPermissions(role.getPermissions());
+                        role.setPermissionAcls(role.getPermissionAcls());
                         role.setUpdatedAt(new Date());
                         return roleRepository.update(role)
                                 .flatMap(role1 -> {
@@ -326,7 +325,7 @@ public class RoleServiceImpl implements RoleService {
 
     private boolean permissionsAreEquals(Role role1, Role role2) {
 
-        return Objects.equals(role1.getPermissions(), role2.getPermissions())
+        return Objects.equals(role1.getPermissionAcls(), role2.getPermissionAcls())
                 && Objects.equals(role1.getOauthScopes(), role2.getOauthScopes());
     }
 
@@ -403,7 +402,7 @@ public class RoleServiceImpl implements RoleService {
         role.setAssignableType(assignableType);
         role.setReferenceType(ReferenceType.PLATFORM);
         role.setReferenceId(Platform.DEFAULT);
-        role.setPermissions(permissions);
+        role.setPermissionAcls(permissions);
 
         return role;
     }

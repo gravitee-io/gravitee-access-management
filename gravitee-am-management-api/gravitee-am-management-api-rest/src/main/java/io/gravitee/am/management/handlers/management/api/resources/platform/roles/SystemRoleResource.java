@@ -73,7 +73,7 @@ public class SystemRoleResource extends AbstractResource {
         RoleEntity roleEntity = new RoleEntity(role);
 
         roleEntity.setAvailablePermissions(Permission.allPermissions(role.getAssignableType()).stream().map(permission -> permission.name().toLowerCase()).collect(Collectors.toList()));
-        roleEntity.setPermissions(Permission.flatten(role.getPermissions()));
+        roleEntity.setPermissions(Permission.flatten(role.getPermissionAcls()));
 
         return roleEntity;
     }
