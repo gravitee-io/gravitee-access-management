@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges} from '@angular/core';
-import {FormControl} from "@angular/forms";
-import {OrganizationService} from "../../../services/organization.service";
-import {DialogService} from "../../../services/dialog.service";
+import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
+import {FormControl} from '@angular/forms';
+import {OrganizationService} from '../../../services/organization.service';
+import {DialogService} from '../../../services/dialog.service';
+import {AuthService} from '../../../services/auth.service';
 import * as _ from 'lodash';
-import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-memberships',
@@ -27,25 +27,23 @@ import {AuthService} from "../../../services/auth.service";
 })
 export class MembershipsComponent implements OnInit, OnChanges {
   @Input('roleType') roleType: any;
-  @Input('members') members: any;
+  @Input('members') resourceMembers: any;
   @Input('createMode') createMode: boolean;
   @Input('editMode') editMode: boolean;
   @Input('deleteMode') deleteMode: boolean;
-  @Output() userMembershipAdded = new EventEmitter<any>();
-  @Output() groupMembershipAdded = new EventEmitter<any>();
+  @Output() membershipAdded = new EventEmitter<any>();
   @Output() membershipDeleted = new EventEmitter<any>();
   @Output() membershipUpdated = new EventEmitter<any>();
-  userMembers: any[] = [];
-  groupMembers: any[] = [];
+  dataLoaded: boolean;
+  members: any[];
+  selectedMemberType = 'user';
+  selectedMember: any;
+  selectedRole: any;
   groups: any[];
   roles: any[];
   userCtrl = new FormControl();
   filteredUsers: any[];
   filteredGroups: any[];
-  selectedUser: any;
-  selectedGroup: any;
-  selectedUserRole: any;
-  selectedGroupRole: any;
   displayReset = false;
 
   constructor(private organizationService: OrganizationService,
@@ -55,27 +53,28 @@ export class MembershipsComponent implements OnInit, OnChanges {
       .subscribe(searchTerm => {
         if (searchTerm && typeof searchTerm === 'string') {
           this.organizationService.searchUsers(searchTerm + '*', 0, 30).subscribe(response => {
-            this.filteredUsers = response.data.filter(user => _.map(this.userMembers, 'memberId').indexOf(user.id) === -1);
+            this.filteredUsers = response.data.filter(user => _.map(this.members, 'memberId').indexOf(user.id) === -1);
           });
         }
       });
   }
 
   ngOnInit() {
-    this.initMembers();
     this.loadRoles();
     this.loadGroups();
+    const that = this;
+    setTimeout(function() { that.dataLoaded = true; }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    const members = changes.members;
-    if (members.currentValue) {
-      this.initMembers();
+    const members = changes.resourceMembers;
+    if (members && members.currentValue) {
+      this.members = members.currentValue;
     }
   }
 
   onUserSelectionChanged(event) {
-    this.selectedUser = event.option.value['id'];
+    this.selectedMember = event.option.value['id'];
     this.displayReset = true;
   }
 
@@ -83,26 +82,18 @@ export class MembershipsComponent implements OnInit, OnChanges {
     return user ? user.username : undefined;
   }
 
-  addUserMembership(event) {
+  addMembership(event) {
     event.preventDefault();
     const membership = {};
-    membership['memberId'] = this.selectedUser;
-    membership['role'] = this.selectedUserRole;
-    this.userMembershipAdded.emit(membership);
-    this.selectedUser = null;
-    this.selectedUserRole = null;
+    membership['memberId'] = this.selectedMember;
+    membership['role'] = this.selectedRole;
+    membership['memberType'] = this.selectedMemberType.toUpperCase();
+    this.membershipAdded.emit(membership);
+    this.selectedMember = null;
+    this.selectedRole = null;
     this.userCtrl.reset();
     this.filteredUsers = [];
-  }
-
-  addGroupMembership(event) {
-    event.preventDefault();
-    const membership = {};
-    membership['memberId'] = this.selectedGroup;
-    membership['role'] = this.selectedGroupRole;
-    this.groupMembershipAdded.emit(membership);
-    this.selectedGroup = null;
-    this.selectedGroupRole = null;
+    this.filterGroups();
   }
 
   avatarUrl(user) {
@@ -116,6 +107,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
       .subscribe(res => {
         if (res) {
           this.membershipDeleted.emit(membershipId);
+          this.filterGroups();
         }
       });
   }
@@ -130,6 +122,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
           member['memberType'] = memberType;
           member['role'] = event.value;
           this.membershipUpdated.emit(member);
+          this.filterGroups();
         }
       });
   }
@@ -146,24 +139,6 @@ export class MembershipsComponent implements OnInit, OnChanges {
     return this.authService.user().sub === membership.memberId && membership.memberType === 'user';
   }
 
-  private initMembers() {
-    const memberships = this.members.memberships;
-    const metadata = this.members.metadata;
-    this.userMembers = _.map(_.filter(memberships, {memberType: 'user'}), m => {
-      m.name = (metadata['users'][m.memberId]) ? metadata['users'][m.memberId].displayName : 'Unknown user';
-      m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
-      return m;
-    });
-    this.groupMembers = _.map(_.filter(memberships, {memberType: 'group'}), m => {
-      m.name = (metadata['groups'][m.memberId]) ? metadata['groups'][m.memberId].displayName : 'Unknown group';
-      m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
-      return m;
-    });
-    if (this.groups) {
-      this.filterGroups();
-    }
-  }
-
   private loadRoles() {
     this.organizationService.roles(this.roleType).subscribe(response => {
       this.roles = response;
@@ -178,6 +153,6 @@ export class MembershipsComponent implements OnInit, OnChanges {
   }
 
   private filterGroups() {
-    this.filteredGroups = this.groups.filter(group => _.map(this.groupMembers, 'memberId').indexOf(group.id) === -1);
+    this.filteredGroups = this.groups.filter(group => _.map(this.members, 'memberId').indexOf(group.id) === -1);
   }
 }

@@ -95,7 +95,10 @@ import { DomainSettingsEmailsComponent } from "./domain/settings/emails/emails.c
 import { DomainSettingsEmailComponent } from "./domain/settings/emails/email/email.component";
 import { DomainSettingsAccountComponent } from "./domain/settings/account/account.component";
 import { DomainSettingsPoliciesComponent, PoliciesInfoDialog } from "./domain/settings/policies/policies.component";
-import { DomainSettingsMembershipsComponent } from "./domain/settings/memberships/memberships.component";
+import {
+  DomainMembershipsDialog,
+  DomainSettingsMembershipsComponent
+} from "./domain/settings/memberships/memberships.component";
 import { DomainSettingsFactorsComponent } from "./domain/settings/factors/factors.component";
 import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
@@ -223,7 +226,10 @@ import { ApplicationOAuth2Component, ClaimsInfoDialog, CreateClaimComponent } fr
 import { ApplicationScopeComponent } from "./domain/applications/application/advanced/oauth2/scopes/application-scope.component";
 import { ApplicationCertificatesComponent } from "./domain/applications/application/advanced/certificates/certificates.component";
 import { ApplicationMetadataComponent } from "./domain/applications/application/advanced/metadata/metadata.component";
-import { ApplicationMembershipsComponent } from "./domain/applications/application/advanced/memberships/memberships.component";
+import {
+  ApplicationMembershipsComponent,
+  ApplicationMembershipsDialog
+} from "./domain/applications/application/advanced/memberships/memberships.component";
 import { ApplicationFactorsComponent } from "./domain/applications/application/advanced/factors/factors.component";
 import { ManagementRolesComponent } from "./settings/management/roles/roles.component";
 import { ManagementRoleComponent } from "./settings/management/roles/role/role.component";
@@ -252,7 +258,7 @@ import { FactorCreationStep2Component } from "./domain/settings/factors/creation
 import { FactorFormComponent } from "./domain/settings/factors/factor/form/form.component";
 import { FactorResolver } from "./resolvers/factor.resolver";
 import { EnrolledFactorsResolver } from "./resolvers/enrolled-factors.resolver";
-import {IdenticonHashDirective} from "./directives/identicon-hash.directive";
+import { IdenticonHashDirective } from "./directives/identicon-hash.directive";
 
 @NgModule({
   declarations: [
@@ -406,7 +412,9 @@ import {IdenticonHashDirective} from "./directives/identicon-hash.directive";
     WidgetChartGaugeComponent,
     WidgetDataTableComponent,
     WidgetCountComponent,
-    LoaderComponent
+    LoaderComponent,
+    DomainMembershipsDialog,
+    ApplicationMembershipsDialog
   ],
   imports: [
     BrowserModule,
@@ -516,7 +524,9 @@ import {IdenticonHashDirective} from "./directives/identicon-hash.directive";
     PoliciesInfoDialog,
     ClaimsInfoDialog,
     AddUserRolesComponent,
-    AddGroupRolesComponent
+    AddGroupRolesComponent,
+    DomainMembershipsDialog,
+    ApplicationMembershipsDialog
   ],
   bootstrap: [AppComponent]
 })

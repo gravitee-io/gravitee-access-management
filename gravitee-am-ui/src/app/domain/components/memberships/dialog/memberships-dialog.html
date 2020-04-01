@@ -15,10 +15,20 @@
     limitations under the License.
 
 -->
-<div class="gv-page-container">
-  <h1>Administrative roles</h1>
-  <div class="gv-page-content" fxLayout="row">
-    <div fxFlex="70">
+<mat-toolbar mat-dialog-title>
+  <span style="display: flex; flex: 1 1 auto;"></span>
+  <h1>Administrative settings for <b>{{resource?.name}}</b></h1>
+  <span style="display: flex; flex: 1 1 auto;"></span>
+  <button (click)="close()" mat-icon-button><mat-icon>close</mat-icon></button>
+</mat-toolbar>
+<div mat-dialog-content>
+  <mat-drawer-container>
+    <mat-drawer mode="side" opened>
+      <span>Administrative roles</span>
+    </mat-drawer>
+    <mat-drawer-content>
+      <h4>Administrative roles</h4>
+      <p>Grant access to your resource by adding users and groups.</p>
       <app-memberships [members]="members"
                        [roleType]="roleType"
                        [createMode]="createMode"
@@ -27,14 +37,6 @@
                        (membershipAdded)="add($event)"
                        (membershipDeleted)="delete($event)"
                        (membershipUpdated)="update($event)"></app-memberships>
-    </div>
-    <div class="gv-page-description" fxFlex>
-      <h3>Organization access</h3>
-      <div class="gv-page-description-content">
-        <p>
-          Grant access to organization by adding users and groups.
-        </p>
-      </div>
-    </div>
-  </div>
+    </mat-drawer-content>
+  </mat-drawer-container>
 </div>

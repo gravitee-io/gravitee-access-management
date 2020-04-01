@@ -55,7 +55,21 @@ export class ApplicationService {
   }
 
   members(domainId, id): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + "/applications/" + id + "/members");
+    return this.http.get<any>(this.appsURL + domainId + "/applications/" + id + "/members")
+      .pipe(map(response => {
+        const memberships = response.memberships;
+        const metadata = response.metadata;
+        const members = memberships.map(m => {
+          m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
+          if (m.memberType === 'user') {
+            m.name = (metadata['users'][m.memberId]) ? metadata['users'][m.memberId].displayName : 'Unknown user';
+          } else if (m.memberType === 'group') {
+            m.name = (metadata['groups'][m.memberId]) ? metadata['groups'][m.memberId].displayName : 'Unknown group';
+          }
+          return m;
+        });
+        return members;
+      }));
   }
 
   addMember(domainId, id, memberId, memberType, role) {

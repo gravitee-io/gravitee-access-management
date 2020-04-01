@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
-import { Subject , Observable} from "rxjs";
-import {map} from "rxjs/operators";
-import {AuthService} from "./auth.service";
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {AuthService} from './auth.service';
+import {AppConfig} from '../../config/app.config';
+import {Observable, Subject} from 'rxjs';
+import {map} from 'rxjs/operators';
 
 @Injectable()
 export class DomainService {
@@ -58,7 +58,7 @@ export class DomainService {
 
   patchOpenidDCRSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
-       'oidc':domain.oidc
+       'oidc': domain.oidc
     });
   }
 
@@ -89,7 +89,21 @@ export class DomainService {
   }
 
   members(id): Observable<any> {
-    return this.http.get<any>(this.domainsURL + id + '/members');
+    return this.http.get<any>(this.domainsURL + id + '/members')
+      .pipe(map(response => {
+        const memberships = response.memberships;
+        const metadata = response.metadata;
+        const members = memberships.map(m => {
+          m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
+          if (m.memberType === 'user') {
+            m.name = (metadata['users'][m.memberId]) ? metadata['users'][m.memberId].displayName : 'Unknown user';
+          } else if (m.memberType === 'group') {
+            m.name = (metadata['groups'][m.memberId]) ? metadata['groups'][m.memberId].displayName : 'Unknown group';
+          }
+          return m;
+        });
+        return members;
+      }));
   }
 
   addMember(id, memberId, memberType, role) {
