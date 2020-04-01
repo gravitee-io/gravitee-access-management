@@ -118,9 +118,9 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         role.setAssignableType(roleMongo.getAssignableType() == null ? null : ReferenceType.valueOf(roleMongo.getAssignableType()));
         role.setSystem(roleMongo.isSystem());
 
-        if (roleMongo.getPermissions() != null) {
+        if (roleMongo.getPermissionAcls() != null) {
             Map<Permission, Set<Acl>> permissions = new HashMap<>();
-            roleMongo.getPermissions().forEach((key, value) -> {
+            roleMongo.getPermissionAcls().forEach((key, value) -> {
                 try {
                     permissions.put(Permission.valueOf(key), new HashSet<>(value));
                 } catch (IllegalArgumentException iae) {
@@ -128,7 +128,7 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
                 }
             });
 
-            role.setPermissions(permissions);
+            role.setPermissionAcls(permissions);
         }
 
         role.setOauthScopes(roleMongo.getOauthScopes());
@@ -150,7 +150,7 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         roleMongo.setReferenceId(role.getReferenceId());
         roleMongo.setAssignableType(role.getAssignableType() == null ? null : role.getAssignableType().name());
         roleMongo.setSystem(role.isSystem());
-        roleMongo.setPermissions(role.getPermissions() == null ? null : role.getPermissions().entrySet().stream().collect(Collectors.toMap(o -> o.getKey().name(), Map.Entry::getValue)));
+        roleMongo.setPermissionAcls(role.getPermissionAcls() == null ? null : role.getPermissionAcls().entrySet().stream().collect(Collectors.toMap(o -> o.getKey().name(), Map.Entry::getValue)));
         roleMongo.setOauthScopes(role.getOauthScopes());
         roleMongo.setCreatedAt(role.getCreatedAt());
         roleMongo.setUpdatedAt(role.getUpdatedAt());

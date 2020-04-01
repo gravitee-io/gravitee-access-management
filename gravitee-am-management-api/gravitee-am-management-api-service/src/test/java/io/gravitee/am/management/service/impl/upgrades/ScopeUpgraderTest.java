@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.management.service.impl.upgrades.ScopeUpgrader;
 import io.gravitee.am.model.Domain;
@@ -174,7 +174,7 @@ public class ScopeUpgraderTest {
 
         final Role role = new Role();
         role.setId("role-id");
-        role.setPermissions(null);
+        role.setPermissionAcls(null);
 
         when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
         when(scopeService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet())).thenReturn(Single.just(Collections.singleton(domainScope)));

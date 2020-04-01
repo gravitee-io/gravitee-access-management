@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.management.service.impl.upgrades.DefaultOrganizationUpgrader;
+import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
 import io.gravitee.am.model.*;
-import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.repository.management.api.search.MembershipCriteria;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
-import io.gravitee.am.service.model.UpdateIdentityProvider;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Before;
@@ -35,7 +32,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,23 +52,20 @@ public class DefaultOrganizationUpgraderTest {
     private OrganizationService organizationService;
 
     @Mock
-    private RoleService roleService;
-
-    @Mock
     private IdentityProviderService identityProviderService;
 
     @Mock
     private UserService userService;
 
     @Mock
-    private MembershipService membershipService;
+    private MembershipHelper membershipHelper;
 
     private DefaultOrganizationUpgrader cut;
 
     @Before
     public void before() {
 
-        cut = new DefaultOrganizationUpgrader(organizationService, roleService, identityProviderService, userService, membershipService);
+        cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper);
     }
 
     @Test
@@ -80,9 +73,6 @@ public class DefaultOrganizationUpgraderTest {
 
         IdentityProvider idp = new IdentityProvider();
         idp.setId("test");
-
-        final Role adminRole = new Role();
-        adminRole.setId("role-id");
 
         User adminUser = new User();
         adminUser.setId("admin-id");
@@ -95,11 +85,7 @@ public class DefaultOrganizationUpgraderTest {
                 && user.getSource().equals(idp.getId())
                 && user.getReferenceType() == ReferenceType.ORGANIZATION
                 && user.getReferenceId().equals(Organization.DEFAULT)))).thenReturn(Single.just(adminUser));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), argThat(criteria -> criteria.getUserId().get().equals(adminUser.getId())))).thenReturn(Flowable.empty());
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(adminRole));
-        when(membershipService.addOrUpdate(eq(Organization.DEFAULT), argThat(membership ->
-                membership.getRoleId().equals(adminRole.getId()) && membership.getMemberType() == MemberType.USER && membership.getMemberId().equals(adminUser.getId())
-                        && membership.getReferenceType() == ReferenceType.ORGANIZATION && membership.getReferenceId().equals(Organization.DEFAULT)))).thenReturn(Single.just(new Membership()));
+        doNothing().when(membershipHelper).setOrganizationAdminRole(argThat(user -> user.getId().equals(adminUser.getId())));
 
         assertTrue(cut.upgrade());
     }
@@ -110,9 +96,6 @@ public class DefaultOrganizationUpgraderTest {
         IdentityProvider idp = new IdentityProvider();
         idp.setId("test");
         idp.setType("idpType");
-
-        final Role adminRole = new Role();
-        adminRole.setId("role-id");
 
         Organization defaultOrganization = new Organization();
         defaultOrganization.setId(Organization.DEFAULT);
@@ -134,9 +117,6 @@ public class DefaultOrganizationUpgraderTest {
         idp.setExternal(false);
         idp.setConfiguration("{}"); // no admin user.
         idp.setRoleMapper(Collections.singletonMap("role1", new String[]{"username=test"}));
-
-        final Role adminRole = new Role();
-        adminRole.setId("role-id");
 
         Organization defaultOrganization = new Organization();
         defaultOrganization.setId(Organization.DEFAULT);
@@ -183,9 +163,6 @@ public class DefaultOrganizationUpgraderTest {
         idp.setConfiguration(DefaultOrganizationUpgrader.DEFAULT_INLINE_IDP_CONFIG);
         idp.setRoleMapper(new HashMap<>());
 
-        final Role adminRole = new Role();
-        adminRole.setId("role-id");
-
         User adminUser = new User();
         adminUser.setId("admin-id");
 
@@ -197,16 +174,14 @@ public class DefaultOrganizationUpgraderTest {
         when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.singletonList(idp)));
         when(userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, "admin", idp.getId())).thenReturn(Maybe.empty());
         when(userService.create(any(User.class))).thenReturn(Single.just(adminUser));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(adminRole));
-        when(membershipService.addOrUpdate(eq(Organization.DEFAULT), any(Membership.class))).thenReturn(Single.just(new Membership()));
+        doNothing().when(membershipHelper).setOrganizationAdminRole(argThat(user -> user.getId().equals(adminUser.getId())));
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
     }
 
     @Test
-    public void shouldNotUpdateAdminUser_adminAlreadyHasRoles() {
+    public void shouldNotUpdateAdminUser_adminAlreadyExist() {
 
         IdentityProvider idp = new IdentityProvider();
         idp.setId("inlineIdpId");
@@ -215,14 +190,11 @@ public class DefaultOrganizationUpgraderTest {
         idp.setConfiguration(DefaultOrganizationUpgrader.DEFAULT_INLINE_IDP_CONFIG);
         idp.setRoleMapper(new HashMap<>());
 
-        final Role adminRole = new Role();
-        adminRole.setId("role-id");
-
         User adminUser = new User();
         adminUser.setId("adminId");
         adminUser.setUsername("admin");
         adminUser.setLoginsCount(10);
-        adminUser.setRoles(Arrays.asList(adminRole.getId()));
+        adminUser.setRoles(Arrays.asList("role-id"));
 
         Organization defaultOrganization = new Organization();
         defaultOrganization.setId(Organization.DEFAULT);
@@ -230,44 +202,9 @@ public class DefaultOrganizationUpgraderTest {
 
         when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(defaultOrganization));
         when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.singletonList(idp)));
-        when(userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, "admin", idp.getId())).thenReturn(Maybe.just(adminUser));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class))).thenReturn(Flowable.just(new Membership()));
-
+        when(userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, "admin", idp.getId())).thenReturn(Maybe.just(adminUser)); // Admin already exists.
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
-        assertTrue(cut.upgrade());
-    }
 
-    @Test
-    public void shouldNotCreateAdminUser_addAdminRole() {
-
-        IdentityProvider idp = new IdentityProvider();
-        idp.setId("inlineIdpId");
-        idp.setType("inline-am-idp");
-        idp.setExternal(false);
-        idp.setConfiguration(DefaultOrganizationUpgrader.DEFAULT_INLINE_IDP_CONFIG);
-        idp.setRoleMapper(new HashMap<>());
-
-        final Role adminRole = new Role();
-        adminRole.setId("role-id");
-
-        User adminUser = new User();
-        adminUser.setId("adminId");
-        adminUser.setUsername("admin");
-        adminUser.setLoginsCount(10);
-        adminUser.setRoles(new ArrayList<>()); // Admin user doesn't have 'admin' role yet.
-
-        Organization defaultOrganization = new Organization();
-        defaultOrganization.setId(Organization.DEFAULT);
-        defaultOrganization.setIdentities(Arrays.asList("inlineIdpId"));
-
-        when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(defaultOrganization));
-        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.singletonList(idp)));
-        when(userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, "admin", idp.getId())).thenReturn(Maybe.just(adminUser));
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(adminRole));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
-        when(membershipService.addOrUpdate(eq(Organization.DEFAULT), any(Membership.class))).thenReturn(Single.just(new Membership()));
-
-        when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
     }
 

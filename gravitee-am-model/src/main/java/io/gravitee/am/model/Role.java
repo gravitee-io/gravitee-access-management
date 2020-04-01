@@ -36,7 +36,7 @@ public class Role {
     private String referenceId;
     private ReferenceType assignableType;
     private boolean system;
-    private Map<Permission, Set<Acl>> permissions;
+    private Map<Permission, Set<Acl>> permissionAcls;
     private List<String> oauthScopes;
     private Date createdAt;
     private Date updatedAt;
@@ -51,7 +51,7 @@ public class Role {
         this.referenceType = other.referenceType;
         this.referenceId = other.referenceId;
         this.assignableType = other.assignableType;
-        this.permissions = other.permissions;
+        this.permissionAcls = other.permissionAcls;
         this.oauthScopes = other.oauthScopes;
         this.system = other.system;
         this.createdAt = other.createdAt;
@@ -111,12 +111,12 @@ public class Role {
         this.system = system;
     }
 
-    public Map<Permission, Set<Acl>> getPermissions() {
-        return permissions;
+    public Map<Permission, Set<Acl>> getPermissionAcls() {
+        return permissionAcls;
     }
 
-    public void setPermissions(Map<Permission, Set<Acl>> permissions) {
-        this.permissions = permissions;
+    public void setPermissionAcls(Map<Permission, Set<Acl>> permissionAcls) {
+        this.permissionAcls = permissionAcls;
     }
 
     public Date getCreatedAt() {

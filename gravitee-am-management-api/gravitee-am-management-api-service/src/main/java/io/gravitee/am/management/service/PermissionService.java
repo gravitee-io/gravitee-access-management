@@ -100,7 +100,7 @@ public class PermissionService {
 
             // Need to check the membership role is well assigned (ie: the role is assignable with the membership type).
             if (role != null && role.getAssignableType() == membership.getReferenceType()) {
-                Map<Permission, Set<Acl>> rolePermissions = role.getPermissions();
+                Map<Permission, Set<Acl>> rolePermissions = role.getPermissionAcls();
 
                 // Compute membership permission acls.
                 rolePermissions.forEach((permission, acls) -> {
