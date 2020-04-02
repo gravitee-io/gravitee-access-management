@@ -13,27 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {ActivatedRoute, NavigationEnd, Router, RouterEvent} from '@angular/router';
 import {AuthService} from '../../../../services/auth.service';
+import {filter} from 'rxjs/operators';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-application-advanced',
   templateUrl: './advanced.component.html',
   styleUrls: ['./advanced.component.scss']
 })
-export class ApplicationAdvancedComponent implements OnInit {
+export class ApplicationAdvancedComponent implements OnInit, OnDestroy {
+  private subscription: Subscription;
 
   constructor(private router: Router,
               private route: ActivatedRoute,
-              private authService: AuthService) { }
+              private authService: AuthService) {
+    this.subscription = this.router.events.pipe(
+      filter((event: RouterEvent) => event instanceof NavigationEnd)
+    ).subscribe(next  => {
+      if (next.url.endsWith('settings')) {
+        this.loadPermissions();
+      }
+    });
+  }
 
-  ngOnInit(): void {
+  ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
+
+  private loadPermissions(): void {
     const domainId = this.route.snapshot.parent.parent.params['domainId'];
     const appId = this.route.snapshot.parent.params['appId'];
     if (this.canNavigate(['application_settings_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'general']);
-    }else if (this.canNavigate(['application_oauth_read'])) {
+    } else if (this.canNavigate(['application_oauth_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'oauth2']);
     } else if (this.canNavigate(['application_member_list'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'members']);
