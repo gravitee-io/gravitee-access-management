@@ -42,8 +42,6 @@ public class DomainMongo extends Auditable {
 
     private String path;
 
-    private LoginFormMongo loginForm;
-
     private Set<String> identities;
 
     private OIDCSettingsMongo oidc;
@@ -106,14 +104,6 @@ public class DomainMongo extends Auditable {
 
     public void setPath(String path) {
         this.path = path;
-    }
-
-    public LoginFormMongo getLoginForm() {
-        return loginForm;
-    }
-
-    public void setLoginForm(LoginFormMongo loginForm) {
-        this.loginForm = loginForm;
     }
 
     public Set<String> getIdentities() {

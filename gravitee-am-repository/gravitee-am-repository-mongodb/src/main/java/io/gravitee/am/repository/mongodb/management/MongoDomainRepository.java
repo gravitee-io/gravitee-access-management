@@ -20,7 +20,6 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -35,7 +34,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static com.mongodb.client.model.Filters.*;
@@ -115,7 +113,6 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setDescription(domainMongo.getDescription());
         domain.setEnabled(domainMongo.isEnabled());
         domain.setMaster(domainMongo.isMaster());
-        domain.setLoginForm(convert(domainMongo.getLoginForm()));
         domain.setIdentities(domainMongo.getIdentities());
         domain.setOidc(convert(domainMongo.getOidc()));
         domain.setScim(convert(domainMongo.getScim()));
@@ -141,7 +138,6 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setDescription(domain.getDescription());
         domainMongo.setEnabled(domain.isEnabled());
         domainMongo.setMaster(domain.isMaster());
-        domainMongo.setLoginForm(convert(domain.getLoginForm()));
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setOidc(convert(domain.getOidc()));
         domainMongo.setScim(convert(domain.getScim()));
@@ -151,30 +147,6 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setReferenceType(domain.getReferenceType());
         domainMongo.setReferenceId(domain.getReferenceId());
         return domainMongo;
-    }
-
-    private LoginForm convert(LoginFormMongo loginFormMongo) {
-        if (loginFormMongo == null) {
-            return null;
-        }
-
-        LoginForm loginForm = new LoginForm();
-        loginForm.setEnabled(loginFormMongo.isEnabled());
-        loginForm.setContent(loginFormMongo.getContent());
-        loginForm.setAssets(loginFormMongo.getAssets());
-        return loginForm;
-    }
-
-    private LoginFormMongo convert(LoginForm loginForm) {
-        if (loginForm == null) {
-            return null;
-        }
-
-        LoginFormMongo formMongo = new LoginFormMongo();
-        formMongo.setEnabled(loginForm.isEnabled());
-        formMongo.setContent(loginForm.getContent());
-        formMongo.setAssets(loginForm.getAssets());
-        return formMongo;
     }
 
     private OIDCSettings convert(OIDCSettingsMongo oidcMongo) {

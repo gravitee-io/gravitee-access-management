@@ -245,9 +245,6 @@ public class DomainResource extends AbstractResource {
         if (!hasAnyPermission(userPermissions, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)) {
             domain.setIdentities(null);
         }
-        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_FORM, Acl.READ)) {
-            domain.setLoginForm(null);
-        }
         if (!hasAnyPermission(userPermissions, Permission.DOMAIN_OPENID, Acl.READ)) {
             domain.setOidc(null);
         }
