@@ -52,10 +52,6 @@ export class DomainSettingsMembershipsComponent implements OnInit {
     this.deleteMode = this.authService.hasPermissions(['domain_member_delete']);
   }
 
-  avatarUrl(user) {
-    return 'assets/material-letter-icons/' + user.name.charAt(0).toUpperCase() + '.svg';
-  }
-
   openDialog(): void {
     const dialogRef = this.dialog.open(DomainMembershipsDialog, {
       panelClass: 'no-padding-dialog-container',

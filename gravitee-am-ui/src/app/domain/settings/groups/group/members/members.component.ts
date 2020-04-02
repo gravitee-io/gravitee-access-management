@@ -114,13 +114,6 @@ export class GroupMembersComponent implements OnInit {
     return !user.accountNonLocked && user.accountLockedUntil > new Date();
   }
 
-  avatarUrl(user) {
-    if (user.additionalInformation && user.additionalInformation['picture']) {
-      return user.additionalInformation['picture'];
-    }
-    return 'assets/material-letter-icons/' + user.username.charAt(0).toUpperCase() + '.svg';
-  }
-
   userLink(user) {
     if (this.organizationContext) {
       return '/settings/management/users/' + user.id;

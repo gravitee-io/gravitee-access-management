@@ -171,6 +171,7 @@ public class UsersResource extends AbstractResource {
         User filteredUser = new User();
         filteredUser.setId(user.getId());
         filteredUser.setUsername(user.getUsername());
+        filteredUser.setEnabled(user.isEnabled());
         filteredUser.setDisplayName(user.getDisplayName());
 
         if (hasPermission) {

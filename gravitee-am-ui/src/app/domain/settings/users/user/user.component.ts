@@ -41,7 +41,6 @@ export class UserComponent implements OnInit {
       this.organizationContext = true;
     }
     this.initNavLinks();
-    this.initAvatar();
     this.initBreadcrumb();
   }
 
@@ -61,13 +60,5 @@ export class UserComponent implements OnInit {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '$', this.user.username);
       this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '/applications$', 'Authorized Apps');
     }
-  }
-
-  initAvatar() {
-    if (this.user.additionalInformation && this.user.additionalInformation['picture']) {
-      this.avatarUrl = this.user.additionalInformation['picture'];
-      return;
-    }
-    this.avatarUrl = 'assets/material-letter-icons/' + this.user.username.charAt(0).toUpperCase() + '.svg';
   }
 }

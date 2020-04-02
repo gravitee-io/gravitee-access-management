@@ -23,30 +23,29 @@ mat-toolbar {
     font-weight: 500;
   }
   .userAccountMenu {
+    margin-top: 10px;
     mat-icon {
       color: grey;
       font-size: 16px;
       width: 16px;
       height: 16px;
-      line-height: 16px;
+      line-height: 0px;
     }
   }
 }
 
-/deep/ .mat-toolbar-row {
-  height: 60px !important;
-}
-
-/deep/ .mat-menu-panel {
-  max-width: 380px !important;
-}
-
-/deep/ .mat-menu-content {
-  padding-bottom: 2px !important;
-}
-
 .userAccount {
   width: 380px;
+  .userAccountInfo {
+    h3 {
+      font-size: 14px;
+      font-weight: normal;
+      margin: 0;
+    }
+    small {
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
   .userAccountActions {
     border-top: 1px solid rgb(226, 229, 231);
   }
@@ -67,4 +66,16 @@ mat-toolbar {
       }
     }
   }
+}
+
+/deep/ .mat-toolbar-row {
+  height: 60px !important;
+}
+
+/deep/ .mat-menu-panel {
+  max-width: 380px !important;
+}
+
+/deep/ .mat-menu-content {
+  padding-bottom: 2px !important;
 }

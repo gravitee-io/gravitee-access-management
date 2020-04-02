@@ -260,6 +260,7 @@ import { FactorFormComponent } from "./domain/settings/factors/factor/form/form.
 import { FactorResolver } from "./resolvers/factor.resolver";
 import { EnrolledFactorsResolver } from "./resolvers/enrolled-factors.resolver";
 import { IdenticonHashDirective } from "./directives/identicon-hash.directive";
+import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 
 @NgModule({
   declarations: [
@@ -416,7 +417,8 @@ import { IdenticonHashDirective } from "./directives/identicon-hash.directive";
     WidgetCountComponent,
     LoaderComponent,
     DomainMembershipsDialog,
-    ApplicationMembershipsDialog
+    ApplicationMembershipsDialog,
+    UserAvatarComponent
   ],
   imports: [
     BrowserModule,

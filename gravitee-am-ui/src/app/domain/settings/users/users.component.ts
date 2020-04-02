@@ -102,11 +102,4 @@ export class UsersComponent implements OnInit {
   accountLocked(user) {
     return !user.accountNonLocked && user.accountLockedUntil > new Date();
   }
-
-  avatarUrl(user) {
-    if (user.additionalInformation && user.additionalInformation['picture']) {
-      return user.additionalInformation['picture'];
-    }
-    return 'assets/material-letter-icons/' + user.username.charAt(0).toUpperCase() + '.svg';
-  }
 }

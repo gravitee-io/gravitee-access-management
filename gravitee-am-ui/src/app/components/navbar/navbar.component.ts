@@ -64,7 +64,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   get user() {
-    return this.authService.user() != null ? this.authService.user().preferred_username : null;
+    return this.authService.user() != null ? this.authService.user() : null;
   }
 
   listDomains() {
@@ -75,10 +75,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
     this.router.navigateByUrl('/dummy', { skipLocationChange: true })
       .then(() => this.router.navigate(routerLink));
-  }
-
-  avatarUrl(user) {
-    return user ? 'assets/material-letter-icons/' + user.charAt(0).toUpperCase() + '.svg' : '';
   }
 
   private initNavLinks() {
