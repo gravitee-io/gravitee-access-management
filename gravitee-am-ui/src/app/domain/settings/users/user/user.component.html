@@ -19,7 +19,7 @@
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to users</small></a>
   <div class="user-header" fxLayout="row">
     <div class="user-avatar">
-      <img [src]="avatarUrl" alt="Photo of a {{user.username}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="80"/>
+      <app-user-avatar [user]="user" [width]="'80'"></app-user-avatar>
     </div>
     <div class="user-information" fxLayout="column">
       <span class="user-display-name">{{user.displayName}}</span>

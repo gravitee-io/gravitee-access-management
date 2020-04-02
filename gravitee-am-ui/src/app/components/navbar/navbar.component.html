@@ -15,43 +15,48 @@
     limitations under the License.
 
 -->
-<mat-toolbar>
-    <div class="gv-breadcrumb" [ngClass]="{'gv-breadcrumb-min': reducedMode}">
-      <gv-breadcrumb *ngIf="!router.url.startsWith('/h')"></gv-breadcrumb>
-    </div>
-    <span class="fill-remaining-space"></span>
-    <span class="currentDomain">{{currentResource?.name | lowercase}}</span>
-    <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()">
-      <img [src]="avatarUrl(user)" alt="Photo of a {{user}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="30"/>
-      <mat-icon>keyboard_arrow_down</mat-icon>
-    </button>
-</mat-toolbar>
+<div *ngIf="user">
+  <mat-toolbar>
+      <div class="gv-breadcrumb" [ngClass]="{'gv-breadcrumb-min': reducedMode}">
+        <gv-breadcrumb *ngIf="!router.url.startsWith('/h')"></gv-breadcrumb>
+      </div>
+      <span class="fill-remaining-space"></span>
+      <div fxLayout="row" style="align-items: center;">
+      <span class="currentDomain">{{currentResource?.name | lowercase}}</span>
+      <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()">
+        <app-user-avatar [user]="user" [width]="'30'"></app-user-avatar>
+        <mat-icon>keyboard_arrow_down</mat-icon>
+      </button>
+      </div>
+  </mat-toolbar>
 
-<mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false">
-  <div class="userAccount" fxLayout="column">
-    <div class="userAccountProfile" fxLayout="row">
-      <img [src]="avatarUrl(user)" alt="Photo of a {{user}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="80"/>
-      <div class="userAccountInfo" fxLayoutAlign="start center" style="margin: 20px;">
-        <span>{{user}}</span>
+  <mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false">
+    <div class="userAccount" fxLayout="column">
+      <div class="userAccountProfile" fxLayout="row">
+        <app-user-avatar [user]="user" [width]="'80'"></app-user-avatar>
+        <div class="userAccountInfo" fxLayout="column" style="margin: 20px;">
+          <h3>{{user.name}}</h3>
+          <small>{{user.preferred_username}}</small>
+        </div>
+      </div>
+      <div class="userAccountActions first">
+        <mat-list>
+          <h3 matSubheader>Domains</h3>
+          <a (click)="goTo(['/domains', domain.id])" *ngFor="let domain of domains" mat-menu-item>
+            <mat-list-item [ngClass]="{'domain-disabled':!domain.enabled}">
+                <mat-icon mat-list-icon>domain</mat-icon>
+                <h4 matLine >{{domain.name}}</h4>
+                <span *ngIf="!domain.enabled"><mat-icon class="domain-disabled-icon"><i class="material-icons">priority_high</i></mat-icon> domain disabled</span>
+            </mat-list-item>
+          </a>
+        </mat-list>
+      </div>
+      <div class="userAccountActions" *ngFor="let link of navLinks">
+        <a [routerLink]="link.href" mat-menu-item>
+          <mat-icon>{{link.icon}}</mat-icon>
+          <span>{{link.label}}</span>
+        </a>
       </div>
     </div>
-    <div class="userAccountActions first">
-      <mat-list>
-        <h3 matSubheader>Domains</h3>
-        <a (click)="goTo(['/domains', domain.id])" *ngFor="let domain of domains" mat-menu-item>
-          <mat-list-item [ngClass]="{'domain-disabled':!domain.enabled}">
-              <mat-icon mat-list-icon>domain</mat-icon>
-              <h4 matLine >{{domain.name}}</h4>
-              <span *ngIf="!domain.enabled"><mat-icon class="domain-disabled-icon"><i class="material-icons">priority_high</i></mat-icon> domain disabled</span>
-          </mat-list-item>
-        </a>
-      </mat-list>
-    </div>
-    <div class="userAccountActions" *ngFor="let link of navLinks">
-      <a [routerLink]="link.href" mat-menu-item>
-        <mat-icon>{{link.icon}}</mat-icon>
-        <span>{{link.label}}</span>
-      </a>
-    </div>
-  </div>
-</mat-menu>
+  </mat-menu>
+</div>

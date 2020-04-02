@@ -46,7 +46,7 @@
                  matBadgeSize="small"
                  [ngClass]="(row.enabled && !accountLocked(row)) ? 'user-enabled': (!row.enabled ? 'user-disabled' : accountLocked(row) ? 'user-locked' : '')"
                  [matTooltip]="(row.enabled && !accountLocked(row)) ? 'User enabled': (!row.enabled ? 'User disabled' : accountLocked(row) ? 'User locked' : '')">
-              <img [src]="avatarUrl(row)" alt="Photo of a {{row.username}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="40"/>
+              <app-user-avatar [user]="row" [width]="'40'"></app-user-avatar>
             </div>
             <div class="user-information" fxLayout="column">
               <a [routerLink]="[row.id]" *ngIf="authService.hasPermissions(['domain_user_read'])">{{row.displayName}}</a>

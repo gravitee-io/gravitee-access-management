@@ -40,7 +40,7 @@
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="membership-header" fxLayout="row">
             <div *ngIf="row.memberType === 'user'" class="user-avatar">
-              <img [src]="avatarUrl(row)" alt="Photo of a {{row.name}}" (error)="userAvatar.src = 'assets/default-account-icon.png'" #userAvatar width="40"/>
+              <app-user-avatar [user]="row" [width]="'40'"></app-user-avatar>
             </div>
             <div *ngIf="row.memberType === 'group'" class="membership-icon">
               <mat-icon>group</mat-icon>

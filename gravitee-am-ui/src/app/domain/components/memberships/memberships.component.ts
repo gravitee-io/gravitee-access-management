@@ -96,10 +96,6 @@ export class MembershipsComponent implements OnInit, OnChanges {
     this.filterGroups();
   }
 
-  avatarUrl(user) {
-    return 'assets/material-letter-icons/' + user.name.charAt(0).toUpperCase() + '.svg';
-  }
-
   delete(membershipId, event) {
     event.preventDefault();
     this.dialogService
