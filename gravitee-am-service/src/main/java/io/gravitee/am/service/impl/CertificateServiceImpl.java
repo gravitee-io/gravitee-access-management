@@ -58,6 +58,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -80,6 +81,7 @@ public class CertificateServiceImpl implements CertificateService {
      */
     private final Logger LOGGER = LoggerFactory.getLogger(CertificateServiceImpl.class);
 
+    @Lazy
     @Autowired
     private CertificateRepository certificateRepository;
 

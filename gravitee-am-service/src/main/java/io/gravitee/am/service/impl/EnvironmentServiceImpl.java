@@ -47,7 +47,6 @@ public class EnvironmentServiceImpl implements EnvironmentService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EnvironmentServiceImpl.class);
 
-
     private final EnvironmentRepository environmentRepository;
 
     private final OrganizationService organizationService;

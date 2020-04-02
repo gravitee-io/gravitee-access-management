@@ -38,6 +38,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -52,6 +53,7 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginAttemptServiceImpl.class);
 
+    @Lazy
     @Autowired
     private LoginAttemptRepository loginAttemptRepository;
 

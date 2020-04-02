@@ -61,21 +61,18 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
-            <version>${vertx.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
-            <version>${vertx.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-shiro</artifactId>
-            <version>${vertx.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -110,6 +107,4 @@
             </plugin>
         </plugins>
     </build>
-
-
 </project>

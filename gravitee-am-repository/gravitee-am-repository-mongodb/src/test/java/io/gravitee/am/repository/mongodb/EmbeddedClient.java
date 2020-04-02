@@ -22,14 +22,20 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import de.flapdoodle.embed.mongo.Command;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import de.flapdoodle.embed.mongo.MongodStarter;
 import de.flapdoodle.embed.mongo.config.IMongodConfig;
 import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
 import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.process.config.IRuntimeConfig;
+import de.flapdoodle.embed.process.config.io.ProcessOutput;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -44,6 +50,8 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  */
 public class EmbeddedClient implements InitializingBean, DisposableBean {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmbeddedClient.class);
+
     static MongodProcess mongod;
     static MongodExecutable mongodExecutable;
 
@@ -57,10 +65,16 @@ public class EmbeddedClient implements InitializingBean, DisposableBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
+
         final IMongodConfig mongodConfig = new MongodConfigBuilder()
                 .version(Version.Main.PRODUCTION).build();
 
-        MongodStarter runtime = MongodStarter.getDefaultInstance();
+        IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder()
+                .defaultsWithLogger(Command.MongoD, logger)
+                .processOutput(ProcessOutput.getDefaultInstanceSilent())
+                .build();
+
+        MongodStarter runtime = MongodStarter.getInstance(runtimeConfig);
 
         MongodExecutable mongodExecutable = runtime.prepare(mongodConfig);
         mongod = mongodExecutable.start();

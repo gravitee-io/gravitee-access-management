@@ -16,7 +16,6 @@
 package io.gravitee.am.management.standalone.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.management.repository.spring.RepositoryConfiguration;
 import io.gravitee.am.management.service.spring.ServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.management.standalone.server.ManagementApiServer;
@@ -30,11 +29,11 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
+import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.reactivex.core.Vertx;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -51,7 +50,6 @@ import org.springframework.context.annotation.Import;
         ManagementApiServer.class,
         ServiceConfiguration.class,
         io.gravitee.am.service.spring.ServiceConfiguration.class,
-        RepositoryConfiguration.class,
         IdentityProviderConfiguration.class,
         CertificateConfiguration.class,
         ExtensionGrantConfiguration.class,
@@ -80,5 +78,10 @@ public class StandaloneConfiguration {
     @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
+    }
+
+    @Bean
+    public RepositoryScopeProvider repositoryScopeProvider() {
+        return new io.gravitee.am.repository.RepositoryScopeProvider();
     }
 }

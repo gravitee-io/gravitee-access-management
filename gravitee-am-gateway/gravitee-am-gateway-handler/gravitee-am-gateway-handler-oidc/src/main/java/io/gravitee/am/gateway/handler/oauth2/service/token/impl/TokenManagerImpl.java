@@ -26,6 +26,7 @@ import io.gravitee.common.service.AbstractService;
 import io.reactivex.processors.PublishProcessor;
 import io.reactivex.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 import java.util.concurrent.TimeUnit;
 
@@ -38,9 +39,11 @@ public class TokenManagerImpl extends AbstractService implements TokenManager {
     private static final Integer bulkActions = 1000;
     private static final Long flushInterval = 1l;
 
+    @Lazy
     @Autowired
     private AccessTokenRepository accessTokenRepository;
 
+    @Lazy
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 

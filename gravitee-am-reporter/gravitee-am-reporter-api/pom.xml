@@ -35,7 +35,6 @@
         <dependency>
             <groupId>io.gravitee.reporter</groupId>
             <artifactId>gravitee-reporter-api</artifactId>
-            <version>${gravitee-reporter.version}</version>
         </dependency>
 
         <dependency>
@@ -48,8 +47,6 @@
         <dependency>
             <groupId>io.reactivex.rxjava2</groupId>
             <artifactId>rxjava</artifactId>
-            <version>${rxjava.version}</version>
         </dependency>
     </dependencies>
-
 </project>

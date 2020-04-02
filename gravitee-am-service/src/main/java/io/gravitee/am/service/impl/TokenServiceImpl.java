@@ -28,6 +28,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -42,9 +43,11 @@ public class TokenServiceImpl implements TokenService {
     @Autowired
     private ApplicationService applicationService;
 
+    @Lazy
     @Autowired
     private AccessTokenRepository accessTokenRepository;
 
+    @Lazy
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 

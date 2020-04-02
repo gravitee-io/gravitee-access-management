@@ -24,8 +24,8 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.JacksonDeserializer;
-import io.jsonwebtoken.io.JacksonSerializer;
+import io.jsonwebtoken.jackson.io.JacksonDeserializer;
+import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.Key;
@@ -85,11 +85,11 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
             io.gravitee.am.certificate.api.Key providerKey = provider.key().blockingGet();
             Key signingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPrivate() : (Key) providerKey.getValue();
             Key verifyingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPublic() : (Key) providerKey.getValue();
-            jjwtParser = Jwts.parser().deserializeJsonWith(new JacksonDeserializer(objectMapper)).setSigningKey(verifyingKey);
-            jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer(objectMapper)).signWith(signingKey).setHeaderParam(JwsHeader.KEY_ID, providerKey.getKeyId());
+            jjwtParser = Jwts.parserBuilder().deserializeJsonWith(new JacksonDeserializer<>(objectMapper)).setSigningKey(verifyingKey).build();
+            jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer<>(objectMapper)).signWith(signingKey).setHeaderParam(JwsHeader.KEY_ID, providerKey.getKeyId());
         } catch (UnsupportedOperationException ex) {
-            jjwtParser = Jwts.parser().deserializeJsonWith(new JacksonDeserializer(objectMapper));
-            jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer(objectMapper));
+            jjwtParser = Jwts.parserBuilder().deserializeJsonWith(new JacksonDeserializer<>(objectMapper)).build();
+            jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer<>(objectMapper));
         }
 
         certificateProvider.setJwtParser(new JJWTParser(jjwtParser));
