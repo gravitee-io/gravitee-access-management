@@ -29,6 +29,15 @@
     <groupId>io.gravitee.am.management.standalone</groupId>
     <artifactId>gravitee-am-management-api-standalone</artifactId>
     <name>Gravitee IO - Access Management - Management API - Standalone</name>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>1.7.26</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <packaging>pom</packaging>
 
     <modules>

@@ -39,14 +39,10 @@
         <dependency>
             <groupId>io.gravitee.gateway</groupId>
             <artifactId>gravitee-gateway-api</artifactId>
-            <version>${gravitee-gateway-api.version}</version>
         </dependency>
         <dependency>
             <groupId>io.gravitee.el</groupId>
             <artifactId>gravitee-expression-language</artifactId>
-            <version>${gravitee-expression-language.version}</version>
         </dependency>
     </dependencies>
-
-
 </project>

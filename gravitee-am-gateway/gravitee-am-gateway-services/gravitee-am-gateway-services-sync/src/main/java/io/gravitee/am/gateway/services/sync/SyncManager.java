@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 import java.text.Collator;
@@ -70,15 +71,19 @@ public class SyncManager implements InitializingBean {
     @Autowired
     private Environment environment;
 
+    @Lazy
     @Autowired
     private DomainRepository domainRepository;
 
+    @Lazy
     @Autowired
     private EventRepository eventRepository;
 
+    @Lazy
     @Autowired
     private ApplicationRepository applicationRepository;
 
+    @Lazy
     @Autowired
     private CertificateRepository certificateRepository;
 

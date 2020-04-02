@@ -22,6 +22,7 @@ import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +36,7 @@ public class ClientsToApplicationsUpgrader implements Upgrader, Ordered {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientsToApplicationsUpgrader.class);
 
     // use repository instead of service to fetch the remaining old clients
+    @Lazy
     @Autowired
     private ClientRepository clientRepository;
 

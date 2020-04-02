@@ -26,7 +26,6 @@
         <version>3.0.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.gravitee.am.identityprovider</groupId>
     <artifactId>gravitee-am-identityprovider-api</artifactId>
     <packaging>jar</packaging>
 
@@ -50,15 +49,12 @@
         <dependency>
             <groupId>io.gravitee.gateway</groupId>
             <artifactId>gravitee-gateway-api</artifactId>
-            <version>${gravitee-gateway-api.version}</version>
         </dependency>
 
         <!-- RxJava 2 -->
         <dependency>
             <groupId>io.reactivex.rxjava2</groupId>
             <artifactId>rxjava</artifactId>
-            <version>${rxjava.version}</version>
         </dependency>
     </dependencies>
-
 </project>

@@ -31,6 +31,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 
 import java.util.Date;
 
@@ -43,12 +44,15 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
     @Value("${authorization.code.validity:60000}")
     private int authorizationCodeValidity;
 
+    @Lazy
     @Autowired
     private AuthorizationCodeRepository authorizationCodeRepository;
 
+    @Lazy
     @Autowired
     private AccessTokenRepository accessTokenRepository;
 
+    @Lazy
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 

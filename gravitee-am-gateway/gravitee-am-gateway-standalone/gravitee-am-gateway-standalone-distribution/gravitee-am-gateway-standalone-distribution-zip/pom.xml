@@ -27,7 +27,6 @@
         <version>3.0.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.gravitee.am.gateway.standalone</groupId>
     <artifactId>gravitee-am-gateway-standalone-distribution-zip</artifactId>
     <name>Gravitee IO - Access Management - Gateway - Standalone - Distribution - Zip</name>
     <packaging>pom</packaging>

@@ -19,20 +19,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <artifactId>gravitee-am-factor</artifactId>
         <groupId>io.gravitee.am.factor</groupId>
         <version>3.0.0-SNAPSHOT</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gravitee-am-factor-otp</artifactId>
     <name>Gravitee IO - Access Management - Factor - OTP</name>
-
-    <properties>
-        <zxing.version>3.4.0</zxing.version>
-        <commons-codec.version>1.14</commons-codec.version>
-    </properties>
 
     <dependencies>
         <!-- Gravitee.io -->
@@ -47,7 +43,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
-            <version>${spring.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -55,13 +50,11 @@
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
-            <version>${zxing.version}</version>
         </dependency>
 
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>${commons-codec.version}</version>
         </dependency>
     </dependencies>
 

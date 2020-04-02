@@ -27,6 +27,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.Instant;
 import java.util.Date;
@@ -46,6 +47,7 @@ public class IntrospectionTokenServiceImpl implements IntrospectionTokenService 
     @Autowired
     private ClientSyncService clientService;
 
+    @Lazy
     @Autowired
     private AccessTokenRepository accessTokenRepository;
 

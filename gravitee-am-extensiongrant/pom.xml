@@ -19,12 +19,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>io.gravitee.am</groupId>
         <artifactId>gravitee-am-parent</artifactId>
         <version>3.0.0-SNAPSHOT</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.gravitee.am.extensiongrant</groupId>
     <artifactId>gravitee-am-extensiongrant</artifactId>
@@ -37,5 +38,4 @@
         <module>gravitee-am-extensiongrant-api</module>
         <module>gravitee-am-extensiongrant-jwtbearer</module>
     </modules>
-
 </project>
