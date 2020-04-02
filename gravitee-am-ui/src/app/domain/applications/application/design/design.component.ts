@@ -13,32 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {ActivatedRoute, NavigationEnd, Router, RouterEvent} from '@angular/router';
 import {AuthService} from '../../../../services/auth.service';
+import {filter} from 'rxjs/operators';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-application-design',
   templateUrl: './design.component.html',
   styleUrls: ['./design.component.scss']
 })
-export class ApplicationDesignComponent implements OnInit {
+export class ApplicationDesignComponent implements OnInit, OnDestroy {
+  private subscription: Subscription;
 
   constructor(private authService: AuthService,
               private router: Router,
-              private route: ActivatedRoute) { }
+              private route: ActivatedRoute) {
+    this.subscription = this.router.events.pipe(
+      filter((event: RouterEvent) => event instanceof NavigationEnd)
+    ).subscribe(next  => {
+      if (next.url.endsWith('design')) {
+        this.loadPermissions();
+      }
+    });
+  }
 
   ngOnInit(): void {
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
+
+  private loadPermissions(): void {
     const domainId = this.route.snapshot.parent.parent.params['domainId'];
     const appId = this.route.snapshot.parent.params['appId'];
-    if (this.canNavigate(['application_form_read'])) {
+    if (this.canNavigate(['application_form_list', 'application_form_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'design', 'forms']);
-    } else if (this.canNavigate(['application_email_template_read'])) {
+    } else if (this.canNavigate(['application_email_template_list', 'application_email_template_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'design', 'emails']);
     }
   }
 
   private canNavigate(permissions): boolean {
-    return this.authService.hasPermissions(permissions);
+    return this.authService.hasAnyPermissions(permissions);
   }
 }
