@@ -70,8 +70,11 @@ if (adminDomain != null) {
     db.getCollection("organizations").update({"_id": "DEFAULT"}, organization, {"upsert": true});
 }
 
-// Migrate all other domains to default environment.
-db.getCollection("domains").updateMany({}, {"$set": {"referenceId": "DEFAULT", "referenceType": "ENVIRONMENT"}});
+// Migrate all other domains to default environment and remove useless loginForm field
+db.getCollection("domains").updateMany({}, {
+    "$unset": {"loginForm": ""},
+    "$set": {"referenceId": "DEFAULT", "referenceType": "ENVIRONMENT"}
+});
 
 // Moving to referenceType / referenceId
 db.getCollection("identities").updateMany({}, {"$rename": {"domain": "referenceId"}});

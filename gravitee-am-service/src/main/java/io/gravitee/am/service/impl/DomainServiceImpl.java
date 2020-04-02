@@ -460,27 +460,6 @@ public class DomainServiceImpl implements DomainService {
                 });
     }
 
-    @Override
-    public Single<Domain> deleteLoginForm(String domainId) {
-        LOGGER.debug("Delete login form of an existing domain: {}", domainId);
-        return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(domain -> {
-                    domain.setLoginForm(null);
-                    domain.setUpdatedAt(new Date());
-
-                    return domainRepository.update(domain);
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-
-                    LOGGER.error("An error occurs while trying to update login form domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to update login form domain", ex));
-                });
-    }
-
     private Single<Domain> createSystemScopes(Domain domain) {
         return Observable.fromArray(io.gravitee.am.common.oidc.Scope.values())
                 .flatMapSingle(systemScope -> {

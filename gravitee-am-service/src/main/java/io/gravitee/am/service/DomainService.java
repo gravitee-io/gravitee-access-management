@@ -53,8 +53,6 @@ public interface DomainService {
 
     Single<Domain> setMasterDomain(String domainId, boolean isMaster);
 
-    Single<Domain> deleteLoginForm(String domainId);
-
     Completable delete(String domain, User principal);
 
     default Single<Domain> create(String organizationId, String environmentId, NewDomain domain) {

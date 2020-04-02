@@ -16,7 +16,6 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.login.LoginForm;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
@@ -70,8 +69,6 @@ public class Domain implements Resource {
      */
     private String path;
 
-    private LoginForm loginForm;
-
     private Set<String> identities;
 
     private OIDCSettings oidc;
@@ -106,7 +103,6 @@ public class Domain implements Resource {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.path = other.path;
-        this.loginForm = other.loginForm;
         this.identities = other.identities;
         this.oidc = other.oidc;
         this.loginSettings = other.loginSettings;
@@ -179,14 +175,6 @@ public class Domain implements Resource {
 
     public void setPath(String path) {
         this.path = path;
-    }
-
-    public LoginForm getLoginForm() {
-        return loginForm;
-    }
-
-    public void setLoginForm(LoginForm loginForm) {
-        this.loginForm = loginForm;
     }
 
     public Set<String> getIdentities() {

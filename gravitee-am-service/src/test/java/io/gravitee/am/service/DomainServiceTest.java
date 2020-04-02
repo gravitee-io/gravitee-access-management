@@ -585,44 +585,6 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldDeleteLoginForm() {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
-
-        TestObserver testObserver = domainService.deleteLoginForm(DOMAIN_ID).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(domainRepository, times(1)).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldDeleteLoginForm_domainNotFound() {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.empty());
-
-        TestObserver testObserver = domainService.deleteLoginForm(DOMAIN_ID).test();
-
-        testObserver.assertError(DomainNotFoundException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, never()).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldDeleteLoginForm_technicalException() {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(TechnicalException::new));
-
-        TestObserver testObserver = domainService.deleteLoginForm(DOMAIN_ID).test();
-
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, never()).update(any(Domain.class));
-    }
-
-    @Test
     public void shouldSetMasterDomain() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
