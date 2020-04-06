@@ -145,6 +145,8 @@ public class RoleServiceImpl implements RoleService {
                     role.setName(newRole.getName());
                     role.setDescription(newRole.getDescription());
                     role.setAssignableType(newRole.getAssignableType());
+                    role.setPermissionAcls(new HashMap<>());
+                    role.setOauthScopes(new ArrayList<>());
                     role.setCreatedAt(new Date());
                     role.setUpdatedAt(role.getCreatedAt());
                     return roleRepository.create(role);

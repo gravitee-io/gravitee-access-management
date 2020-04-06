@@ -157,7 +157,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     .toMaybe()
                     .onErrorResumeNext(throwable -> {
                         if (throwable instanceof RoleNotFoundException) {
-                            return roleService.findById(ReferenceType.PLATFORM, Platform.DEFAULT, roleId).toMaybe();
+                            return roleService.findById(ReferenceType.PLATFORM, Platform.DEFAULT, roleId).toMaybe()
+                                    .switchIfEmpty(defaultRoleObs)
+                                    .onErrorResumeNext(defaultRoleObs);
                         } else {
                             return defaultRoleObs;
                         }
