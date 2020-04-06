@@ -26,6 +26,11 @@ export class RolesResolver implements Resolve<any> {
               private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+
+    if (state.url.startsWith('/settings/management/providers')) {
+      return this.organizationService.roles('ORGANIZATION');
+    }
+
     if (state.url.startsWith('/settings')) {
       return this.organizationService.roles();
     }
