@@ -135,12 +135,12 @@ public class SyncManager implements InitializingBean {
     private void deployDomains() {
         logger.info("Starting security domains initialization ...");
         Set<Domain> domains = domainRepository.findAll()
-                // remove master domains and disabled domains
+                // remove disabled domains
                 .map(registeredDomains -> {
                     if (registeredDomains != null) {
                         return registeredDomains
                                 .stream()
-                                .filter(domain -> !domain.isMaster() && domain.isEnabled())
+                                .filter(Domain::isEnabled)
                                 .collect(Collectors.toSet());
                     }
                     return Collections.<Domain>emptySet();

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -44,12 +45,11 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import javax.annotation.Priority;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.security.Principal;
 
@@ -161,7 +161,7 @@ public abstract class JerseySpringTest {
 
     @Before
     public void init() {
-       when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
+        when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
     }
 
     @Configuration
@@ -319,12 +319,12 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public PermissionService permissionService(){
+        public PermissionService permissionService() {
             return mock(PermissionService.class);
         }
 
         @Bean
-        public MembershipService membershipService(){
+        public MembershipService membershipService() {
             return mock(MembershipService.class);
         }
     }
@@ -333,7 +333,7 @@ public abstract class JerseySpringTest {
 
     public final WebTarget target(final String path) {
 
-        if("domains".equals(path)) {
+        if ("domains".equals(path)) {
             return _jerseyTest.target("organizations").path("DEFAULT").path("environments").path("DEFAULT").path(path);
         }
 
@@ -395,7 +395,7 @@ public abstract class JerseySpringTest {
 
     /**
      * Allows to read response entity using object mapper instead of jersey's own implementation.
-     * It is especially useful to ensure objects are deserialize from json using same feature (ex: lower cased enum, ...).
+     * It is especially useful to ensure objects are deserialized from json using same feature (ex: lower cased enum, ...).
      *
      * @param response the jaxrs response.
      * @param clazz the type of entity
@@ -406,10 +406,29 @@ public abstract class JerseySpringTest {
     protected <T> T readEntity(Response response, Class<T> clazz) {
 
         try {
-            if(clazz == String.class) {
+            if (clazz == String.class) {
                 return (T) response.readEntity(String.class);
             }
             return objectMapper.readValue(response.readEntity(String.class), clazz);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Allows to put entity using object mapper instead of jersey's own implementation.
+     * It is especially useful to ensure objects are serialized to json using same feature (ex: lower cased enum, ...).
+     *
+     * @param webTarget the jersey web target.
+     * @param value the entity to put.
+     * @param <T> the type of entity.
+     *
+     * @return the resulted {@link Response}.
+     */
+    protected <T> Response put(WebTarget webTarget, T value) {
+
+        try {
+            return webTarget.request().put(Entity.entity(objectMapper.writeValueAsString(value), MediaType.APPLICATION_JSON_TYPE));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

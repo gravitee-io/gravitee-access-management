@@ -142,7 +142,7 @@ public class PatchApplication {
     /**
      * Returns the list of required permission depending on what fields are filled.
      *
-     * Ex: if settings.oauth is filled, {@link Permission#APPLICATION_OPENID} will be added to the list of required permission cause it means the user want to update this information.
+     * Ex: if settings.oauth is filled, {@link Permission#APPLICATION_OPENID} will be added to the list of required permissions cause it means the user want to update this information.
      *
      * @return the list of required permissions.
      */

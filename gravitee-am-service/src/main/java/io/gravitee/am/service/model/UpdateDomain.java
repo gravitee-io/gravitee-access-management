@@ -50,10 +50,6 @@ public class UpdateDomain {
      */
     private String path;
 
-    private Set<String> identities;
-
-    private Set<String> oauth2Identities;
-
     private SCIMSettings scim;
 
     private LoginSettings loginSettings;
@@ -90,22 +86,6 @@ public class UpdateDomain {
 
     public void setPath(String path) {
         this.path = path;
-    }
-
-    public Set<String> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(Set<String> identities) {
-        this.identities = identities;
-    }
-
-    public Set<String> getOauth2Identities() {
-        return oauth2Identities;
-    }
-
-    public void setOauth2Identities(Set<String> oauth2Identities) {
-        this.oauth2Identities = oauth2Identities;
     }
 
     public SCIMSettings getScim() {

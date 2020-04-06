@@ -16,14 +16,21 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -52,10 +59,10 @@ public class PatchDomainTest {
         Domain result = patch.patch(toPatch);
 
         //check.
-        assertNotNull("was expecting a domain",result);
-        assertEquals("description should have been updated","expectedDescription", result.getDescription());
-        assertNull("name should have been set to null",result.getName());
-        assertEquals("path should not be updated","expectedPath", result.getPath());
+        assertNotNull("was expecting a domain", result);
+        assertEquals("description should have been updated", "expectedDescription", result.getDescription());
+        assertNull("name should have been set to null", result.getName());
+        assertEquals("path should not be updated", "expectedPath", result.getPath());
     }
 
     @Test
@@ -77,10 +84,10 @@ public class PatchDomainTest {
         Domain result = patch.patch(toPatch);
 
         //check.
-        assertNotNull("was expecting a domain",result);
+        assertNotNull("was expecting a domain", result);
         assertNotNull(result.getOidc());
         assertNotNull(result.getOidc().getClientRegistrationSettings());
-        assertFalse("should have been disabled",result.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+        assertFalse("should have been disabled", result.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
     }
 
     @Test
@@ -101,9 +108,63 @@ public class PatchDomainTest {
         Domain result = patch.patch(toPatch);
 
         //check.
-        assertNotNull("was expecting a domain",result);
+        assertNotNull("was expecting a domain", result);
         assertNotNull(result.getOidc());
         assertNotNull(result.getOidc().getClientRegistrationSettings());
-        assertTrue("should have been enabled",result.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+        assertTrue("should have been enabled", result.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+    }
+
+    @Test
+    public void testGetRequiredPermissions() {
+
+        PatchDomain patchDomain = new PatchDomain();
+        assertEquals(Collections.emptySet(), patchDomain.getRequiredPermissions());
+
+        patchDomain.setName(Optional.of("patchName"));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setDescription(Optional.of("patchDescription"));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setEnabled(Optional.of(true));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setPath(Optional.of("patchPath"));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setLoginSettings(Optional.of(new LoginSettings()));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setAccountSettings(Optional.of(new AccountSettings()));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setTags(Optional.of(Collections.singleton("patchTag")));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        PatchOIDCSettings oidcSettings = new PatchOIDCSettings();
+        patchDomain.setOidc(Optional.of(oidcSettings));
+        assertEquals(Collections.emptySet(), patchDomain.getRequiredPermissions());
+        oidcSettings.setClientRegistrationSettings(Optional.of(new PatchClientRegistrationSettings()));
+        oidcSettings.setRedirectUriStrictMatching(Optional.of(true));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_OPENID)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setScim(Optional.of(new SCIMSettings()));
+        assertEquals(new HashSet<>(Arrays.asList( Permission.DOMAIN_SCIM)), patchDomain.getRequiredPermissions());
+
+        // Check multiple permissions.
+        patchDomain = new PatchDomain();
+        patchDomain.setPath(Optional.of("patchPath"));
+        patchDomain.setOidc(Optional.of(oidcSettings));
+        patchDomain.setScim(Optional.of(new SCIMSettings()));
+
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS, Permission.DOMAIN_OPENID, Permission.DOMAIN_SCIM)), patchDomain.getRequiredPermissions());
     }
 }

@@ -51,8 +51,6 @@ public interface DomainService {
 
     Single<Domain> patch(String domainId, PatchDomain domain, User principal);
 
-    Single<Domain> setMasterDomain(String domainId, boolean isMaster);
-
     Completable delete(String domain, User principal);
 
     default Single<Domain> create(String organizationId, String environmentId, NewDomain domain) {

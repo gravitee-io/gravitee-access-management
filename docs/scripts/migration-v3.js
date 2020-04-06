@@ -72,7 +72,7 @@ if (adminDomain != null) {
 
 // Migrate all other domains to default environment and remove useless loginForm field
 db.getCollection("domains").updateMany({}, {
-    "$unset": {"loginForm": ""},
+    "$unset": {"loginForm": "", "master": "", "identities": ""},
     "$set": {"referenceId": "DEFAULT", "referenceType": "ENVIRONMENT"}
 });
 

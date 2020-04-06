@@ -20,10 +20,12 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -40,7 +42,6 @@ public class PatchDomain {
     private Optional<String> description;
     private Optional<Boolean> enabled;
     private Optional<String> path;
-    private Optional<Set<String>> identities;
     @JsonProperty("oidc")
     private Optional<PatchOIDCSettings> oidc;
     private Optional<SCIMSettings> scim;
@@ -78,14 +79,6 @@ public class PatchDomain {
 
     public void setPath(Optional<String> path) {
         this.path = path;
-    }
-
-    public Optional<Set<String>> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(Optional<Set<String>> identities) {
-        this.identities = identities;
     }
 
     public Optional<PatchOIDCSettings> getOidc() {
@@ -136,7 +129,6 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setPath, this.getPath());
-        SetterUtils.safeSet(toPatch::setIdentities, this.getIdentities());
         SetterUtils.safeSet(toPatch::setScim, this.getScim());
         SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
@@ -152,5 +144,39 @@ public class PatchDomain {
         }
 
         return toPatch;
+    }
+
+
+    /**
+     * Returns the list of required permission depending on what fields are filled.
+     *
+     * Ex: if settings.oauth is filled, {@link Permission#APPLICATION_OPENID} will be added to the list of required permissions cause it means the user want to update this information.
+     *
+     * @return the list of required permissions.
+     */
+    public Set<Permission> getRequiredPermissions() {
+
+        Set<Permission> requiredPermissions = new HashSet<>();
+
+        if (name != null && name.isPresent()
+                || description != null && description.isPresent()
+                || enabled != null && enabled.isPresent()
+                || path != null && path.isPresent()
+                || loginSettings != null && loginSettings.isPresent()
+                || accountSettings != null && accountSettings.isPresent()
+                || tags != null && tags.isPresent()) {
+
+            requiredPermissions.add(Permission.DOMAIN_SETTINGS);
+        }
+
+        if (oidc != null && oidc.isPresent()) {
+            requiredPermissions.addAll(oidc.get().getRequiredPermissions());
+        }
+
+        if (scim != null && scim.isPresent()) {
+            requiredPermissions.add(Permission.DOMAIN_SCIM);
+        }
+
+        return requiredPermissions;
     }
 }

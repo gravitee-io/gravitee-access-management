@@ -18,9 +18,12 @@ package io.gravitee.am.service.model.openid;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -71,5 +74,18 @@ public class PatchOIDCSettings {
         }
 
         return toPatch;
+    }
+
+
+    public Set<Permission> getRequiredPermissions() {
+
+        Set<Permission> requiredPermissions = new HashSet<>();
+
+        if (clientRegistrationSettings != null && clientRegistrationSettings.isPresent()
+                || redirectUriStrictMatching != null && redirectUriStrictMatching.isPresent()) {
+            requiredPermissions.add(Permission.DOMAIN_OPENID);
+        }
+
+        return requiredPermissions;
     }
 }
