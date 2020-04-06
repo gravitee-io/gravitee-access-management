@@ -180,10 +180,10 @@ public class ClientResource extends AbstractResource {
     @POST
     @Path("secret/_renew")
     @ApiOperation(value = "Renew client secret",
-            notes = "User must have the APPLICATION_OAUTH2[UPDATE] permission on the specified client " +
-                    "or APPLICATION_OAUTH2[UPDATE] permission on the specified domain " +
-                    "or APPLICATION_OAUTH2[UPDATE] permission on the specified environment " +
-                    "or APPLICATION_OAUTH2[UPDATE] permission on the specified organization.")
+            notes = "User must have the APPLICATION_OPENID[UPDATE] permission on the specified client " +
+                    "or APPLICATION_OPENID[UPDATE] permission on the specified domain " +
+                    "or APPLICATION_OPENID[UPDATE] permission on the specified environment " +
+                    "or APPLICATION_OPENID[UPDATE] permission on the specified organization.")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses({
             @ApiResponse(code = 200, message = "Client secret successfully updated", response = Client.class),

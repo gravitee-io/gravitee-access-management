@@ -22,6 +22,8 @@ import io.gravitee.am.management.service.permissions.Permissions;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
@@ -45,10 +47,7 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -100,7 +99,7 @@ public class ApplicationResource extends AbstractResource {
                     }
                     return Response.ok(application1).build();
                 })
-                .subscribe(response::resume, t-> response.resume(t));
+                .subscribe(response::resume, t -> response.resume(t));
     }
 
     @PATCH
@@ -172,10 +171,10 @@ public class ApplicationResource extends AbstractResource {
     @POST
     @Path("secret/_renew")
     @ApiOperation(value = "Renew application secret",
-            notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
-                    "or APPLICATION_OAUTH2[UPDATE] permission on the specified domain " +
-                    "or APPLICATION_OAUTH2[UPDATE] permission on the specified environment " +
-                    "or APPLICATION_OAUTH2[UPDATE] permission on the specified organization")
+            notes = "User must have APPLICATION_OPENID[UPDATE] permission on the specified application " +
+                    "or APPLICATION_OPENID[UPDATE] permission on the specified domain " +
+                    "or APPLICATION_OPENID[UPDATE] permission on the specified environment " +
+                    "or APPLICATION_OPENID[UPDATE] permission on the specified organization")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses({
             @ApiResponse(code = 200, message = "Application secret successfully updated", response = Application.class),
@@ -213,36 +212,68 @@ public class ApplicationResource extends AbstractResource {
     public void updateInternal(String organizationId, String environmentId, String domain, String application, PatchApplication patchApplication, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
+        Set<Permission> requiredPermissions = patchApplication.getRequiredPermissions();
 
-        Completable.merge(patchApplication.getRequiredPermissions().stream()
-                .map(permission -> checkAnyPermission(organizationId, environmentId, domain, application, permission, Acl.UPDATE))
-                .collect(Collectors.toList()))
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(patch -> applicationService.patch(domain, application, patchApplication, authenticatedUser)))
-                .subscribe(response::resume, response::resume);
+        if (requiredPermissions.isEmpty()) {
+            // If there is no require permission, it means there is nothing to update. This is not a valid request.
+            response.resume(new BadRequestException("You need to specify at least one value to update."));
+        } else {
+            Completable.merge(patchApplication.getRequiredPermissions().stream()
+                    .map(permission -> checkAnyPermission(organizationId, environmentId, domain, application, permission, Acl.UPDATE))
+                    .collect(Collectors.toList()))
+                    .andThen(domainService.findById(domain)
+                            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                            .flatMapSingle(patch -> applicationService.patch(domain, application, patchApplication, authenticatedUser)
+                                    .flatMap(updatedApplication -> findAllPermissions(authenticatedUser, organizationId, environmentId, domain, application)
+                                            .map(userPermissions -> filterApplicationInfos(updatedApplication, userPermissions)))))
+                    .subscribe(response::resume, response::resume);
+        }
     }
 
-    private Application filterApplicationInfos(Application app, Map<ReferenceType, Map<Permission, Set<Acl>>> userPermissions) {
+    private Application filterApplicationInfos(Application application, Map<ReferenceType, Map<Permission, Set<Acl>>> userPermissions) {
 
-        if (!hasAnyPermission(userPermissions, Permission.APPLICATION_IDENTITY_PROVIDER, Acl.READ)) {
-            app.setIdentities(null);
+        Application filteredApplication = new Application();
+
+        if (hasAnyPermission(userPermissions, Permission.APPLICATION, Acl.READ)) {
+            filteredApplication.setId(application.getId());
+            filteredApplication.setName(application.getName());
+            filteredApplication.setType(application.getType());
+            filteredApplication.setDescription(application.getDescription());
+            filteredApplication.setDomain(application.getDomain());
+            filteredApplication.setEnabled(application.isEnabled());
+            filteredApplication.setTemplate(application.isTemplate());
+            filteredApplication.setCreatedAt(application.getCreatedAt());
+            filteredApplication.setUpdatedAt(application.getUpdatedAt());
         }
-        if (!hasAnyPermission(userPermissions, Permission.APPLICATION_CERTIFICATE, Acl.READ)) {
-            app.setCertificate(null);
+
+        if(hasAnyPermission(userPermissions, Permission.APPLICATION_FACTOR, Acl.READ)){
+            filteredApplication.setFactors(application.getFactors());
         }
-        if (app.getSettings() != null) {
-            if (!hasAnyPermission(userPermissions, Permission.APPLICATION_SETTINGS, Acl.READ)) {
-                app.setMetadata(null);
-                app.getSettings().setAdvanced(null);
-                app.getSettings().setAccount(null);
+
+        if (hasAnyPermission(userPermissions, Permission.APPLICATION_IDENTITY_PROVIDER, Acl.READ)) {
+            filteredApplication.setIdentities(application.getIdentities());
+        }
+
+        if (hasAnyPermission(userPermissions, Permission.APPLICATION_CERTIFICATE, Acl.READ)) {
+            filteredApplication.setCertificate(application.getCertificate());
+        }
+
+        if (application.getSettings() != null) {
+
+            ApplicationSettings filteredApplicationSettings = new ApplicationSettings();
+            filteredApplication.setSettings(filteredApplicationSettings);
+
+            if (hasAnyPermission(userPermissions, Permission.APPLICATION_SETTINGS, Acl.READ)) {
+                filteredApplication.setMetadata(application.getMetadata());
+                filteredApplicationSettings.setAdvanced(application.getSettings().getAdvanced());
+                filteredApplicationSettings.setAccount(application.getSettings().getAccount());
             }
 
-            if (!hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {
-                app.getSettings().setOauth(null);
+            if (hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {
+                filteredApplicationSettings.setOauth(application.getSettings().getOauth());
             }
         }
 
-        return app;
+        return filteredApplication;
     }
 }

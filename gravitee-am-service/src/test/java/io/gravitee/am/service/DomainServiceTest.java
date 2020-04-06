@@ -19,12 +19,10 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
-import io.gravitee.am.service.exception.DomainDeleteMasterException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.DomainServiceImpl;
@@ -552,17 +550,6 @@ public class DomainServiceTest {
         testObserver.assertNotComplete();
     }
 
-
-    @Test
-    public void shouldNotDeleteMasterDomain() throws TechnicalException {
-        when(domain.isMaster()).thenReturn(true);
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
-
-        TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
-        testObserver.assertError(DomainDeleteMasterException.class);
-        testObserver.assertNotComplete();
-    }
-
     @Test
     public void shouldDelete_technicalException() {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(TechnicalException::new));
@@ -582,43 +569,5 @@ public class DomainServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
-    }
-
-    @Test
-    public void shouldSetMasterDomain() {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
-
-        TestObserver testObserver = domainService.setMasterDomain(DOMAIN_ID, true).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(domainRepository, times(1)).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldSetMasterDomain_domainNotFound() {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.empty());
-
-        TestObserver testObserver = domainService.setMasterDomain(DOMAIN_ID, true).test();
-
-        testObserver.assertError(DomainNotFoundException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, never()).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldSetMasterDomain_technicalException() {
-        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.error(TechnicalException::new));
-
-        TestObserver testObserver = domainService.setMasterDomain(DOMAIN_ID, true).test();
-
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, never()).update(any(Domain.class));
     }
 }

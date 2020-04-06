@@ -50,11 +50,6 @@ public class Domain implements Resource {
     private boolean enabled;
 
     /**
-     * Domain master flag.
-     */
-    private boolean master;
-
-    /**
      * Domain creation date
      */
     private Date createdAt;
@@ -68,8 +63,6 @@ public class Domain implements Resource {
      * Domain HTTP path
      */
     private String path;
-
-    private Set<String> identities;
 
     private OIDCSettings oidc;
 
@@ -99,11 +92,9 @@ public class Domain implements Resource {
         this.name = other.name;
         this.description = other.description;
         this.enabled = other.enabled;
-        this.master = other.master;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.path = other.path;
-        this.identities = other.identities;
         this.oidc = other.oidc;
         this.loginSettings = other.loginSettings;
         this.scim = other.scim;
@@ -145,14 +136,6 @@ public class Domain implements Resource {
         this.enabled = enabled;
     }
 
-    public boolean isMaster() {
-        return master;
-    }
-
-    public void setMaster(boolean master) {
-        this.master = master;
-    }
-
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -175,14 +158,6 @@ public class Domain implements Resource {
 
     public void setPath(String path) {
         this.path = path;
-    }
-
-    public Set<String> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(Set<String> identities) {
-        this.identities = identities;
     }
 
     public OIDCSettings getOidc() {

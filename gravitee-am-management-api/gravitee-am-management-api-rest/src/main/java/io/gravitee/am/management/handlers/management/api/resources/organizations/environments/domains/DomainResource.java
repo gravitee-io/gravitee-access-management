@@ -26,6 +26,7 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -43,6 +44,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -231,32 +233,55 @@ public class DomainResource extends AbstractResource {
         return resourceContext.getResource(FactorsResource.class);
     }
 
-    private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain domainToPatch, final AsyncResponse response) {
+    private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain patchDomain, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
+        Set<Permission> requiredPermissions = patchDomain.getRequiredPermissions();
 
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
-                .andThen(domainService.patch(domainId, domainToPatch, authenticatedUser))
-                .subscribe(domain -> response.resume(Response.ok(domain).build()), response::resume);
+        if (requiredPermissions.isEmpty()) {
+            // If there is no require permission, it means there is nothing to update. This is not a valid request.
+            response.resume(new BadRequestException("You need to specify at least one value to update."));
+        } else {
+            Completable.merge(requiredPermissions.stream()
+                    .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, permission, Acl.UPDATE))
+                    .collect(Collectors.toList()))
+                    .andThen(domainService.patch(domainId, patchDomain, authenticatedUser)
+                            .flatMap(domain -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId)
+                                    .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
+                    .subscribe(response::resume, response::resume);
+        }
     }
 
     private Domain filterDomainInfos(Domain domain, Map<ReferenceType, Map<Permission, Set<Acl>>> userPermissions) {
 
-        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.READ)) {
-            domain.setIdentities(null);
-        }
-        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_OPENID, Acl.READ)) {
-            domain.setOidc(null);
-        }
-        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_SCIM, Acl.READ)) {
-            domain.setScim(null);
-        }
-        if (!hasAnyPermission(userPermissions, Permission.DOMAIN_SETTINGS, Acl.READ)) {
-            domain.setTags(null);
-            domain.setAccountSettings(null);
-            domain.setLoginSettings(null);
+        Domain filteredDomain = new Domain();
+
+        if (hasAnyPermission(userPermissions, Permission.DOMAIN, Acl.READ)) {
+            filteredDomain.setId(domain.getId());
+            filteredDomain.setName(domain.getName());
+            filteredDomain.setDescription(domain.getDescription());
+            filteredDomain.setEnabled(domain.isEnabled());
+            filteredDomain.setCreatedAt(domain.getCreatedAt());
+            filteredDomain.setUpdatedAt(domain.getUpdatedAt());
+            filteredDomain.setPath(domain.getPath());
+            filteredDomain.setReferenceType(domain.getReferenceType());
+            filteredDomain.setReferenceId(domain.getReferenceId());
         }
 
-        return domain;
+        if (hasAnyPermission(userPermissions, Permission.DOMAIN_OPENID, Acl.READ)) {
+            filteredDomain.setOidc(domain.getOidc());
+        }
+
+        if (hasAnyPermission(userPermissions, Permission.DOMAIN_SCIM, Acl.READ)) {
+            filteredDomain.setScim(domain.getScim());
+        }
+
+        if (hasAnyPermission(userPermissions, Permission.DOMAIN_SETTINGS, Acl.READ)) {
+            filteredDomain.setLoginSettings(domain.getLoginSettings());
+            filteredDomain.setAccountSettings(domain.getAccountSettings());
+            filteredDomain.setTags(domain.getTags());
+        }
+
+        return filteredDomain;
     }
 }

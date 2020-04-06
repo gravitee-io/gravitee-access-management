@@ -38,11 +38,7 @@ public class DomainMongo extends Auditable {
 
     private boolean enabled;
 
-    private boolean master;
-
     private String path;
-
-    private Set<String> identities;
 
     private OIDCSettingsMongo oidc;
 
@@ -82,14 +78,6 @@ public class DomainMongo extends Auditable {
         this.description = description;
     }
 
-    public boolean isMaster() {
-        return master;
-    }
-
-    public void setMaster(boolean master) {
-        this.master = master;
-    }
-
     public boolean isEnabled() {
         return enabled;
     }
@@ -104,14 +92,6 @@ public class DomainMongo extends Auditable {
 
     public void setPath(String path) {
         this.path = path;
-    }
-
-    public Set<String> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(Set<String> identities) {
-        this.identities = identities;
     }
 
     public OIDCSettingsMongo getOidc() {

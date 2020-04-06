@@ -112,8 +112,6 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setName(domainMongo.getName());
         domain.setDescription(domainMongo.getDescription());
         domain.setEnabled(domainMongo.isEnabled());
-        domain.setMaster(domainMongo.isMaster());
-        domain.setIdentities(domainMongo.getIdentities());
         domain.setOidc(convert(domainMongo.getOidc()));
         domain.setScim(convert(domainMongo.getScim()));
         domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
@@ -137,8 +135,6 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setName(domain.getName());
         domainMongo.setDescription(domain.getDescription());
         domainMongo.setEnabled(domain.isEnabled());
-        domainMongo.setMaster(domain.isMaster());
-        domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setOidc(convert(domain.getOidc()));
         domainMongo.setScim(convert(domain.getScim()));
         domainMongo.setLoginSettings(convert(domain.getLoginSettings()));

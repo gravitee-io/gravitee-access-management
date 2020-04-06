@@ -235,9 +235,6 @@ public class DomainServiceImpl implements DomainService {
                     domain.setName(updateDomain.getName());
                     domain.setDescription(updateDomain.getDescription());
                     domain.setEnabled(updateDomain.isEnabled());
-                    domain.setIdentities(updateDomain.getIdentities());
-                    // master flag is set programmatically (keep old value)
-                    domain.setMaster(oldDomain.isMaster());
                     domain.setCreatedAt(oldDomain.getCreatedAt());
                     domain.setUpdatedAt(new Date());
                     //As it is not managed by UpdateDomain, we keep old value
@@ -317,36 +314,10 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Single<Domain> setMasterDomain(String domainId, boolean isMaster) {
-        LOGGER.debug("Set master flag for domain: {}", domainId);
-        return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(oldDomain -> {
-                    oldDomain.setMaster(isMaster);
-                    oldDomain.setUpdatedAt(new Date());
-                    return domainRepository.update(oldDomain);
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-
-                    LOGGER.error("An error occurs while trying to set master flag for domain {}", domainId, ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to set master flag for a domain", ex));
-                });
-    }
-
-    @Override
     public Completable delete(String domainId, User principal) {
         LOGGER.debug("Delete security domain {}", domainId);
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(domain -> {
-                    if (domain.isMaster()) {
-                        throw new DomainDeleteMasterException(domainId);
-                    }
-                    return Single.just(domain);
-                })
                 .flatMapCompletable(domain -> {
                     // delete applications
                     return applicationService.findByDomain(domainId)
