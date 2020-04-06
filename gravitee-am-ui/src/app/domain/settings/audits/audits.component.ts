@@ -292,6 +292,6 @@ export class AuditsComponent implements OnInit {
   }
 
   hasPermissions(permissions) {
-    this.authService.hasPermissions(permissions);
+    return this.authService.hasPermissions(permissions);
   }
 }
