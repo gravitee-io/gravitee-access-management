@@ -33,6 +33,7 @@ export class AuditsComponent implements OnInit {
   private startDateChanged = false;
   private endDateChanged = false;
   organizationContext = false;
+  requiredReadPermission: string;
   @ViewChild('auditsTable') table: any;
   userCtrl = new FormControl();
   audits: any[];
@@ -111,6 +112,9 @@ export class AuditsComponent implements OnInit {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
+      this.requiredReadPermission = 'organization_audit_read';
+    } else {
+      this.requiredReadPermission = 'domain_audit_read';
     }
     // load event types
     this.organizationService.auditEventTypes().subscribe(data => this.eventTypes = data);

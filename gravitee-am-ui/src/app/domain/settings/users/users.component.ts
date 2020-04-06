@@ -29,6 +29,7 @@ import {AuthService} from "../../../services/auth.service";
 export class UsersComponent implements OnInit {
   private searchValue: string;
   organizationContext: boolean;
+  requiredReadPermission: string;
   pagedUsers: any;
   users: any[];
   domainId: string;
@@ -51,8 +52,10 @@ export class UsersComponent implements OnInit {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.createMode = false;
+      this.requiredReadPermission = 'organization_user_read';
     } else {
       this.createMode = this.authService.hasPermissions(['domain_user_create']);
+      this.requiredReadPermission = 'domain_user_read';
     }
     this.pagedUsers = this.route.snapshot.data['users'];
     this.users = this.pagedUsers.data;
@@ -101,5 +104,9 @@ export class UsersComponent implements OnInit {
 
   accountLocked(user) {
     return !user.accountNonLocked && user.accountLockedUntil > new Date();
+  }
+
+  hasReadPermissions(): boolean {
+    return this.authService.hasPermissions([this.requiredReadPermission]);
   }
 }
