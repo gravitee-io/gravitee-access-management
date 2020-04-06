@@ -37,6 +37,7 @@ public class UserEntity extends User {
         setFirstName(user.getFirstName());
         setLastName(user.getLastName());
         setTitle(user.getTitle());
+        setPicture(user.getPicture());
         setAccountNonExpired(user.isAccountNonExpired());
         setAccountNonLocked(user.isAccountNonLocked());
         setAccountLockedAt(user.getAccountLockedAt());

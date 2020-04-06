@@ -151,6 +151,7 @@ public class UsersResource extends AbstractResource {
         filteredUser.setId(user.getId());
         filteredUser.setUsername(user.getUsername());
         filteredUser.setDisplayName(user.getDisplayName());
+        filteredUser.setPicture(user.getPicture());
 
         if (hasPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.READ)) {
             filteredUser.setLoggedAt(user.getLoggedAt());
