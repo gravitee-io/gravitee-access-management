@@ -54,6 +54,8 @@ public class User {
 
     private String preferredLanguage;
 
+    private String picture;
+
     private List<Attribute> emails;
 
     private List<Attribute> phoneNumbers;
@@ -126,6 +128,7 @@ public class User {
         this.title = other.title;
         this.type = other.type;
         this.preferredLanguage = other.preferredLanguage;
+        this.picture = other.picture;
         this.emails = other.emails != null ? new ArrayList<>(other.emails) : null;
         this.phoneNumbers = other.phoneNumbers != null ? new ArrayList<>(other.phoneNumbers) : null;
         this.ims = other.ims != null ? new ArrayList<>(other.ims) : null;
@@ -270,6 +273,23 @@ public class User {
 
     public void setPreferredLanguage(String preferredLanguage) {
         this.preferredLanguage = preferredLanguage;
+    }
+
+    public String getPicture() {
+        if (picture == null) {
+            if (photos != null && !photos.isEmpty()) {
+                // fall back to SCIM photos
+                picture = photos.stream().filter(Attribute::isPrimary).map(Attribute::getValue).findFirst().orElse(photos.get(0).getValue());
+            } else if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.PICTURE) != null) {
+                // fall back to OIDC standard claims
+                picture = (String) getAdditionalInformation().get(StandardClaims.PICTURE);
+            }
+        }
+        return picture;
+    }
+
+    public void setPicture(String picture) {
+        this.picture = picture;
     }
 
     public List<Attribute> getEmails() {

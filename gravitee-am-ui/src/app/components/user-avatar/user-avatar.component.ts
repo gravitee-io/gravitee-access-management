@@ -23,17 +23,16 @@ export class UserAvatarComponent implements OnInit {
   @Input() user: any;
   @Input() width: string;
   url: string;
+  username: string;
 
   constructor() { }
 
   ngOnInit() {
-    if (this.user.additionalInformation && this.user.additionalInformation['picture']) {
-      this.url = this.user.additionalInformation['picture'];
-    }
-    if (this.user.username) {
-      this.url = 'assets/material-letter-icons/' + this.user.username.charAt(0).toUpperCase() + '.png';
+    this.username = this.user.username ? this.user.username : this.user.name;
+    if (this.user.picture) {
+      this.url = this.user.picture;
     } else {
-      this.url = 'assets/material-letter-icons/' + this.user.name.charAt(0).toUpperCase() + '.png';
+      this.url = 'assets/material-letter-icons/' + this.username.charAt(0).toUpperCase() + '.png';
     }
   }
 
