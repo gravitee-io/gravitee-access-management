@@ -28,7 +28,7 @@
           </p>
           <ul>
             <li>The application's domain : <b>{{application.domain}}</b></li>
-            <li>The application's client ID (OAuth 2.0) : <b>{{application.settings?.oauth?.clientId}}</b></li>
+            <li>The application's client ID (OAuth 2.0) : <b>{{clientId}}</b></li>
           </ul>
           <blockquote>
             <p>
@@ -49,7 +49,7 @@
           <p>
             To set up authentication in your application and display to users the login page, you have to redirect your users to the following URL :
           </p>
-          <pre>https://auth.mycompany.com/{{application.domain}}/oauth/authorize?client_id={{application.settings.oauth.clientId}}&response_type=code&redirect_uri={{redirectUris[0].value}}</pre>
+          <pre>https://auth.mycompany.com/{{application.domain}}/oauth/authorize?client_id={{clientId}}&response_type=code&redirect_uri={{redirectUri}}</pre>
           <p>Users will be redirected to the login page and will start the Authentication Flow.</p>
           <blockquote>
             <p>
@@ -57,7 +57,7 @@
             </p>
           </blockquote>
           <p>Once users have been authenticated they will be redirected to your application URL :</p>
-          <pre>{{redirectUris[0].value}}</pre>
+          <pre>{{redirectUri}}</pre>
           <p>Either with :</p>
           <ul>
             <li>an <b>authorization_code</b></li>
@@ -71,7 +71,7 @@
           <pre>curl -X POST \
           https://auth.mycompany.com/{{application.domain}}/oauth/token \
           -H 'Content-Type: application/x-www-form-urlencoded' \
-          -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUris[0].value}}&client_id={{application.settings.oauth.clientId}}'
+          -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUri}}&client_id={{clientId}}'
           </pre>
           <h2>Get user information</h2>
           <p>The user's profile information can be extracted from the ID token or by calling the following URL :</p>
@@ -114,7 +114,7 @@
           <pre>curl -X POST \
           https://auth.mycompany.com/{{application.domain}}/oauth/token \
           -H 'Content-Type: application/x-www-form-urlencoded' \
-          -d 'grant_type=client_credentials&client_id={{application.settings.oauth.clientId}}&client_secret={{application.settings.oauth.clientId}}'
+          -d 'grant_type=client_credentials&client_id={{clientId}}&client_secret={{clientSecret}}'
           </pre>
           <p>If the request is valid, the authorization server will issue an access token to make authorized calls to the APIs.</p>
           <h2>Call your APIs</h2>

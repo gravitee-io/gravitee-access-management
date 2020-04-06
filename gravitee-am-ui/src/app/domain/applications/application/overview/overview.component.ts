@@ -17,6 +17,7 @@ import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import * as _ from 'lodash';
 import {SnackbarService} from "../../../../services/snackbar.service";
+import {AuthService} from "../../../../services/auth.service";
 
 @Component({
   selector: 'application-overview',
@@ -26,22 +27,29 @@ import {SnackbarService} from "../../../../services/snackbar.service";
 export class ApplicationOverviewComponent implements OnInit {
   domain: any;
   application: any;
-  applicationOAuthSettings: any = {};
-  applicationAdvancedSettings: any = {};
-  redirectUris: any[] = [];
+  redirectUri: string;
+  clientId: string;
+  clientSecret: string;
 
-  constructor(private route: ActivatedRoute) {
+  constructor(private route: ActivatedRoute,
+              private authService: AuthService) {
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.application = this.route.snapshot.parent.data['application'];
-    this.applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
-    this.applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
-    this.applicationOAuthSettings.redirectUris = this.applicationOAuthSettings.redirectUris || [];
-    this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) {
-      return {value: item};
-    });
+
+    var applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
+
+    if (this.authService.hasPermissions(['application_openid_read'])) {
+      this.clientId = applicationOAuthSettings.clientId;
+      this.clientSecret = applicationOAuthSettings.clientSecret;
+      this.redirectUri = applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined ? applicationOAuthSettings.redirectUris[0] : 'Not defined' ;
+    } else {
+      this.clientId = 'Insufficient permission';
+      this.clientSecret = 'Insufficient permission';
+      this.redirectUri = 'Insufficient permission';
+    }
   }
 
   isServiceApp(): boolean {
