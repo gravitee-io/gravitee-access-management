@@ -108,7 +108,7 @@
         </ng-template>
       </ngx-datatable-row-detail>
       <!-- Column Templates -->
-      <ngx-datatable-column *hasPermission="['organization_audit_read']">
+      <ngx-datatable-column *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" let-expanded="expanded" ngx-datatable-cell-template>
           <a class="expanded"
             href="javascript:void(0)"
@@ -150,7 +150,7 @@
           </mat-chip-list>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Actions" [flexGrow]="1" *hasPermission="['organization_audit_read']">
+      <ngx-datatable-column name="Actions" [flexGrow]="1" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>

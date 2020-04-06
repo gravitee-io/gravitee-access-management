@@ -49,25 +49,25 @@
               <app-user-avatar [user]="row" [width]="'40'"></app-user-avatar>
             </div>
             <div class="user-information" fxLayout="column">
-              <a [routerLink]="[row.id]" *ngIf="authService.hasPermissions(['domain_user_read'])">{{row.displayName}}</a>
-              <span *ngIf="!authService.hasPermissions(['domain_user_read'])">{{row.displayName}}</span>
+              <a [routerLink]="[row.id]" *ngIf="hasReadPermissions()">{{row.displayName}}</a>
+              <span *ngIf="!hasReadPermissions()">{{row.displayName}}</span>
               <small>{{row.username}}</small>
             </div>
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Identity Provider" [flexGrow]="2" *hasPermission="['domain_user_read']">
+      <ngx-datatable-column name="Identity Provider" [flexGrow]="2" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{row.source}}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Last login" [flexGrow]="2" *hasPermission="['domain_user_read']">
+      <ngx-datatable-column name="Last login" [flexGrow]="2" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span *ngIf="(row.loggedAt)">{{row.loggedAt | humanDate}}</span>
           <span *ngIf="!(row.loggedAt)">Never logged in</span>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Actions" [flexGrow]="1" *hasPermission="['domain_user_read']">
+      <ngx-datatable-column name="Actions" [flexGrow]="1" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-icon-button [routerLink]="[row.id]"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
