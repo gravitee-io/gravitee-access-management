@@ -16,7 +16,7 @@
 
 -->
 <div fxLayout="column">
-  <mat-card class="domain-banner" *ngIf="!domain.enabled">
+  <mat-card class="domain-banner" *ngIf="!domain.enabled && hasPermissions(['domain_settings_update'])">
     <mat-icon>warning</mat-icon>
     <p class="domain-banner-text"><strong>{{domain.name}}</strong> domain is disabled, <span (click)="enable()">click here</span> to enable the domain.</p>
   </mat-card>
