@@ -106,6 +106,7 @@ public class TagsResource extends AbstractResource {
         Tag filteredTag = new Tag();
         filteredTag.setId(tag.getId());
         filteredTag.setName(tag.getName());
+        filteredTag.setDescription(tag.getDescription());
 
         return filteredTag;
     }

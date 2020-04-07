@@ -107,6 +107,7 @@ public class GroupsResource extends AbstractResource {
         Group filteredGroup = new Group();
         filteredGroup.setId(group.getId());
         filteredGroup.setName(group.getName());
+        filteredGroup.setDescription(group.getDescription());
 
         return filteredGroup;
     }
