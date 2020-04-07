@@ -130,6 +130,7 @@ public class RolesResource extends AbstractResource {
         Role filteredRole = new Role();
         filteredRole.setId(role.getId());
         filteredRole.setName(role.getName());
+        filteredRole.setDescription(role.getDescription());
 
         return filteredRole;
     }
