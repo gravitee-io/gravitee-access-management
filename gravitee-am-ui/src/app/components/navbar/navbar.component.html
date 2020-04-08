@@ -18,7 +18,7 @@
 <div *ngIf="user">
   <mat-toolbar>
       <div class="gv-breadcrumb" [ngClass]="{'gv-breadcrumb-min': reducedMode}">
-        <gv-breadcrumb *ngIf="!router.url.startsWith('/h')"></gv-breadcrumb>
+        <gv-breadcrumb *ngIf="displayBreadcrumb()"></gv-breadcrumb>
       </div>
       <span class="fill-remaining-space"></span>
       <div fxLayout="row" style="align-items: center;">

@@ -35,7 +35,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   domains: any[];
   currentResource: any = {};
   navLinks: any = [
-    {'href': '/h/domains/new' , 'label': 'Create domain', 'icon': 'add'},
+    {'href': '/domains/new' , 'label': 'Create domain', 'icon': 'add'},
     {'href': '/settings' , 'label': 'Global settings', 'icon': 'settings'},
     {'href': '/logout' , 'label': 'Sign out', 'icon': 'exit_to_app'},
   ];
@@ -77,9 +77,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
       .then(() => this.router.navigate(routerLink));
   }
 
+  displayBreadcrumb(): boolean {
+    return !this.router.url.startsWith('/domains/new') &&
+      !this.router.url.startsWith('/login') &&
+      !this.router.url.startsWith('/logout') &&
+      !this.router.url.startsWith('/404');
+  }
+
+
   private initNavLinks() {
     if (!this.canDisplay(['domain_create'])) {
-      _.remove(this.navLinks, { href: '/h/domains/new' });
+      _.remove(this.navLinks, { href: '/domains/new' });
     }
     if (!this.canDisplay(['organization_settings_read'])) {
       _.remove(this.navLinks, { href: '/settings' });
