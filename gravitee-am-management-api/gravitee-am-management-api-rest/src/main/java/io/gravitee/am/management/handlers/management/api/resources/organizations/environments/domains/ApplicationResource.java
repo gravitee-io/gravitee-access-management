@@ -17,19 +17,17 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.permissions.PermissionAcls;
-import io.gravitee.am.management.service.permissions.Permissions;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchApplication;
+import io.gravitee.am.service.model.PatchApplicationType;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -47,7 +45,8 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -140,10 +139,36 @@ public class ApplicationResource extends AbstractResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("application") String application,
-            @ApiParam(name = "client", required = true) @Valid @NotNull PatchApplication patchApplication,
+            @ApiParam(name = "application", required = true) @Valid @NotNull PatchApplication patchApplication,
             @Suspended final AsyncResponse response) {
 
         updateInternal(organizationId, environmentId, domain, application, patchApplication, response);
+    }
+
+    @PUT
+    @Path("type")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Update an application type",
+            notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
+                    "or APPLICATION[UPDATE] permission on the specified domain " +
+                    "or APPLICATION[UPDATE] permission on the specified environment " +
+                    "or APPLICATION[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Application type successfully updated", response = Application.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void update(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @ApiParam(name = "type", required = true) @Valid @NotNull PatchApplicationType patchApplicationType,
+            @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION, Acl.UPDATE)
+                .andThen(applicationService.updateType(domain, application, patchApplicationType.getType(), authenticatedUser))
+                .subscribe(response::resume, response::resume);
     }
 
     @DELETE

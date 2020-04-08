@@ -54,6 +54,12 @@ export class ApplicationService {
     return this.http.post<any>(this.appsURL + domainId + "/applications/" + id + "/secret/_renew", {});
   }
 
+  updateType(domainId, id, type): Observable<any> {
+    return this.http.put<any>(this.appsURL + domainId + "/applications/" + id + "/type", {
+      'type': type
+    });
+  }
+
   members(domainId, id): Observable<any> {
     return this.http.get<any>(this.appsURL + domainId + "/applications/" + id + "/members")
       .pipe(map(response => {

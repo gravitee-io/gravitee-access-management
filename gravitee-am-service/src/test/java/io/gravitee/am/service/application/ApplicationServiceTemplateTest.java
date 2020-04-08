@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.application;
 
+import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -24,6 +25,7 @@ import io.gravitee.am.service.impl.application.ApplicationServiceTemplate;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -75,5 +77,32 @@ public class ApplicationServiceTemplateTest {
         Assert.assertTrue(oAuthSettings1.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
         Assert.assertTrue(oAuthSettings1.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
         Assert.assertTrue(oAuthSettings1.getGrantTypes().size() == 1 && oAuthSettings1.getGrantTypes().contains(GrantType.PASSWORD));
+    }
+
+    @Test
+    public void shouldChangeType() {
+        Application application = new Application();
+        application.setType(ApplicationType.SERVICE);
+        application.setName("app-name");
+
+        ApplicationOAuthSettings existingOAuthSettings = new ApplicationOAuthSettings();
+        existingOAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT));
+        existingOAuthSettings.setClientType(ClientType.PUBLIC);
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(existingOAuthSettings);
+        application.setSettings(settings);
+
+        applicationServiceTemplate.changeType(application);
+
+        Assert.assertNotNull(application);
+        Assert.assertNotNull(application.getSettings());
+        Assert.assertNotNull(application.getSettings().getOauth());
+
+        ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
+        Assert.assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
+        Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
+        Assert.assertTrue((oAuthSettings.getGrantTypes().size() == 1 && oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)));
+        Assert.assertTrue(oAuthSettings.getClientType().equals(ClientType.CONFIDENTIAL));
+        Assert.assertTrue(oAuthSettings.getResponseTypes().isEmpty());
     }
 }

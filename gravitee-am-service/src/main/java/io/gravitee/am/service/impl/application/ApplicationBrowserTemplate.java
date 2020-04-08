@@ -42,6 +42,17 @@ public class ApplicationBrowserTemplate extends ApplicationAbstractTemplate {
 
     @Override
     public void handle(Application application) {
+        // assign values
+        update(application, false);
+    }
+
+    @Override
+    public void changeType(Application application) {
+        // force default values
+        update(application, true);
+    }
+
+    private void update(Application application, boolean force) {
         // check for null values
         if (application.getSettings() == null) {
             application.setSettings(new ApplicationSettings());
@@ -58,8 +69,9 @@ public class ApplicationBrowserTemplate extends ApplicationAbstractTemplate {
         oAuthSettings.setClientName(oAuthSettings.getClientName() == null ? application.getName() : oAuthSettings.getClientName());
         oAuthSettings.setClientType(ClientType.PUBLIC);
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);
-        // browser applications should have implicit, code flow
-        if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
+
+        if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
+            // browser applications should have implicit, code flow
             oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT));
             oAuthSettings.setResponseTypes(
                     Arrays.asList(ResponseType.CODE_TOKEN, ResponseType.CODE_ID_TOKEN, ResponseType.CODE_ID_TOKEN_TOKEN,
@@ -85,5 +97,4 @@ public class ApplicationBrowserTemplate extends ApplicationAbstractTemplate {
             oAuthSettings.setResponseTypes(new ArrayList<>(defaultResponseTypes));
         }
     }
-
 }

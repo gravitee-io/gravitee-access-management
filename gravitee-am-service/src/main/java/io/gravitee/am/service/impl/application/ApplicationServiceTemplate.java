@@ -45,6 +45,17 @@ public class ApplicationServiceTemplate implements ApplicationTemplate {
      */
     @Override
     public void handle(Application application) {
+        // assign values
+        update(application, false);
+    }
+
+    @Override
+    public void changeType(Application application) {
+        // force default values
+        update(application, true);
+    }
+
+    private void update(Application application, boolean force) {
         // check for null values
         if (application.getSettings() == null) {
             application.setSettings(new ApplicationSettings());
@@ -60,8 +71,9 @@ public class ApplicationServiceTemplate implements ApplicationTemplate {
         oAuthSettings.setClientName(oAuthSettings.getClientName() == null ? application.getName() : oAuthSettings.getClientName());
         oAuthSettings.setClientType(ClientType.CONFIDENTIAL);
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);
-        // service applications must have client_credentials
-        if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
+
+        if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
+            // service applications must have client_credentials
             oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
             oAuthSettings.setResponseTypes(Collections.emptyList());
         }

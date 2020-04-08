@@ -87,7 +87,6 @@ export class ApplicationGeneralComponent implements OnInit {
   update() {
     const data: any = {};
     data.name = this.application.name;
-    data.type = this.applicationType;
     data.description = this.application.description;
     data.settings = {};
     data.settings.oauth = { 'redirectUris' : _.map(this.redirectUris, 'value') };
@@ -129,6 +128,21 @@ export class ApplicationGeneralComponent implements OnInit {
       });
   }
 
+  changeApplicationType() {
+    this.dialogService
+      .confirm('Change application type', 'Are you sure you want to change the type of the application ?')
+      .subscribe(res => {
+        if (res) {
+          this.applicationService.updateType(this.domainId, this.application.id, this.applicationType).subscribe(data => {
+            this.application = data;
+            this.snackbarService.open('Application type changed');
+            this.router.navigateByUrl('/dummy', { skipLocationChange: true })
+              .then(() => this.router.navigate(['/domains', this.domainId, 'applications', this.application.id]));
+          });
+        }
+      });
+  }
+
   addRedirectUris(event) {
     event.preventDefault();
     if (!this.redirectUris.some(el => el.value === this.redirectUri)) {
@@ -164,6 +178,6 @@ export class ApplicationGeneralComponent implements OnInit {
   }
 
   displaySection(): boolean {
-    return this.application.type !== 'SERVICE';
+    return this.application.type !== 'service';
   }
 }

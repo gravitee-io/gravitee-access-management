@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
@@ -58,6 +59,8 @@ public interface ApplicationService {
     Single<Application> create(Application application);
 
     Single<Application> update(Application application);
+
+    Single<Application> updateType(String domain, String id, ApplicationType type, User principal);
 
     Single<Application> patch(String domain, String id, PatchApplication patchApplication, User principal);
 
