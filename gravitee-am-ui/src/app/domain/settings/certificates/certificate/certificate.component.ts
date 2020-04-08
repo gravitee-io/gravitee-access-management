@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { OrganizationService } from "../../../../services/organization.service";
-import { CertificateService}  from "../../../../services/certificate.service";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { DialogService } from "../../../../services/dialog.service";
+import { ActivatedRoute, Router } from '@angular/router';
+import { BreadcrumbService } from '../../../../services/breadcrumb.service';
+import { OrganizationService } from '../../../../services/organization.service';
+import { CertificateService}  from '../../../../services/certificate.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { DialogService } from '../../../../services/dialog.service';
 
 @Component({
   selector: 'app-certificate',

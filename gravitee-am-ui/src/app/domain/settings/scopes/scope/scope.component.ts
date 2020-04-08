@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { ScopeService } from "../../../../services/scope.service";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import * as moment from "moment";
-import { NgForm } from "@angular/forms";
-import { DialogService } from "../../../../services/dialog.service";
-import {AuthService} from "../../../../services/auth.service";
+import { NgForm } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ScopeService } from '../../../../services/scope.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { BreadcrumbService } from '../../../../services/breadcrumb.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { AuthService } from '../../../../services/auth.service';
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-scope',

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { AppConfig } from "../../../../../../config/app.config";
-import { OrganizationService } from "../../../../../services/organization.service";
-import { ReporterService } from "../../../../../services/reporter.service";
-import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { SnackbarService } from "../../../../../services/snackbar.service";
+import { ActivatedRoute, Router } from '@angular/router';
+import { OrganizationService } from '../../../../../services/organization.service';
+import { ReporterService } from '../../../../../services/reporter.service';
+import { BreadcrumbService } from '../../../../../services/breadcrumb.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-reporter',

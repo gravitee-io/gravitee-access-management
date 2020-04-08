@@ -20,10 +20,15 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.permissions.*;
+import io.gravitee.am.model.permissions.DefaultRole;
+import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -33,8 +38,8 @@ import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.RoleAuditBuilder;
-import io.reactivex.*;
 import io.reactivex.Observable;
+import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,13 +114,25 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Maybe<Role> findSystemRole(SystemRole systemRole, ReferenceType assignableType) {
-        LOGGER.debug("Find system role : {} for the scope : {}", systemRole.name(), assignableType);
+        LOGGER.debug("Find system role : {} for the type : {}", systemRole.name(), assignableType);
         return roleRepository.findByNameAndAssignableType(ReferenceType.PLATFORM, Platform.DEFAULT, systemRole.name(), assignableType)
                 .filter(Role::isSystem)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find system role : {} for type : {}", systemRole.name(), assignableType, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find system role : %s for type : %s", systemRole.name(), assignableType), ex));
+                });
+    }
+
+    @Override
+    public Maybe<Role> findDefaultRole(String organizationId, DefaultRole defaultRole, ReferenceType assignableType) {
+        LOGGER.debug("Find default role {} of organization {} for the type {}", defaultRole.name(), organizationId, assignableType);
+        return roleRepository.findByNameAndAssignableType(ReferenceType.ORGANIZATION, organizationId, defaultRole.name(), assignableType)
+                .filter(Role::isDefaultRole)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find default role {} of organization {} for the type {}", defaultRole.name(), organizationId, assignableType, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find default role %s of organization %s for type %s", defaultRole.name(), organizationId, assignableType), ex));
                 });
     }
 
@@ -179,11 +196,16 @@ public class RoleServiceImpl implements RoleService {
         LOGGER.debug("Update a role {} for {} {}", id, referenceType, referenceId);
 
         return findById(referenceType, referenceId, id)
-                .map(role -> {
+                .flatMap(role -> {
                     if (role.isSystem()) {
-                        throw new SystemRoleUpdateException(id);
+                        return Single.error(new SystemRoleUpdateException(role.getName()));
                     }
-                    return role;
+
+                    if(role.isDefaultRole() && !role.getName().equals(updateRole.getName())) {
+                        return Single.error(new DefaultRoleUpdateException(role.getName()));
+                    }
+
+                    return Single.just(role);
                 })
                 .flatMap(oldRole -> {
                     // check if role name is unique
@@ -251,11 +273,21 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Completable createOrUpdateSystemRoles() {
 
-        List<Role> roles = buildAllSystemRoles();
+        List<Role> roles = buildSystemRoles();
 
         return Observable.fromIterable(roles)
                 .flatMapCompletable(this::upsert);
     }
+
+    @Override
+    public Completable createDefaultRoles(String organizationId) {
+
+        List<Role> roles = buildDefaultRoles(organizationId);
+
+        return Observable.fromIterable(roles)
+                .flatMapCompletable(this::upsert);
+    }
+
 
     private Completable upsert(Role role) {
         return roleRepository.findByNameAndAssignableType(role.getReferenceType(), role.getReferenceId(), role.getName(), role.getAssignableType())
@@ -341,11 +373,11 @@ public class RoleServiceImpl implements RoleService {
                 .filter(role -> assignableType == null || role.getAssignableType() == assignableType);
     }
 
-    private static List<Role> buildAllSystemRoles() {
+    private static List<Role> buildSystemRoles() {
 
         List<Role> roles = new ArrayList<>();
 
-        // Create PRIMARY_OWNER and ADMIN roles (we consider admin and primary owner have same permissions).
+        // Create PRIMARY_OWNER roles and PLATFORM_ADMIN role.
         Map<Permission, Set<Acl>> organizationAdminPermissions = Permission.allPermissionAcls(ReferenceType.ORGANIZATION);
         Map<Permission, Set<Acl>> platformAdminPermissions = Permission.allPermissionAcls(ReferenceType.PLATFORM);
         Map<Permission, Set<Acl>> domainAdminPermissions = Permission.allPermissionAcls(ReferenceType.DOMAIN);
@@ -355,16 +387,38 @@ public class RoleServiceImpl implements RoleService {
         organizationAdminPermissions.put(Permission.ORGANIZATION_SETTINGS, Acl.of(READ, UPDATE));
         organizationAdminPermissions.put(Permission.ORGANIZATION_AUDIT, Acl.of(READ, LIST));
 
+        domainAdminPermissions.put(Permission.DOMAIN, Acl.of(READ, UPDATE, LIST, DELETE));
         domainAdminPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE));
         domainAdminPermissions.put(Permission.DOMAIN_AUDIT, Acl.of(READ, LIST));
 
-        roles.add(buildSystemRole("PLATFORM_ADMIN", ReferenceType.PLATFORM, platformAdminPermissions));
-        roles.add(buildSystemRole("ORGANIZATION_ADMIN", ReferenceType.ORGANIZATION, organizationAdminPermissions));
-        roles.add(buildSystemRole("DOMAIN_ADMIN", ReferenceType.DOMAIN, domainAdminPermissions));
-        roles.add(buildSystemRole("APPLICATION_ADMIN", ReferenceType.APPLICATION, applicationAdminPermissions));
-        roles.add(buildSystemRole("ORGANIZATION_PRIMARY_OWNER", ReferenceType.ORGANIZATION, organizationAdminPermissions));
-        roles.add(buildSystemRole("DOMAIN_PRIMARY_OWNER", ReferenceType.DOMAIN, domainAdminPermissions));
-        roles.add(buildSystemRole("APPLICATION_PRIMARY_OWNER", ReferenceType.APPLICATION, applicationAdminPermissions));
+        roles.add(buildSystemRole(SystemRole.PLATFORM_ADMIN.name(), ReferenceType.PLATFORM, platformAdminPermissions));
+        roles.add(buildSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER.name(), ReferenceType.ORGANIZATION, organizationAdminPermissions));
+        roles.add(buildSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER.name(), ReferenceType.DOMAIN, domainAdminPermissions));
+        roles.add(buildSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER.name(), ReferenceType.APPLICATION, applicationAdminPermissions));
+
+        return roles;
+    }
+
+    private List<Role> buildDefaultRoles(String organizationId) {
+
+        List<Role> roles = new ArrayList<>();
+
+        // Create OWNER and USER roles.
+        Map<Permission, Set<Acl>> organizationOwnerPermissions = Permission.allPermissionAcls(ReferenceType.ORGANIZATION);
+        Map<Permission, Set<Acl>> domainOwnerPermissions = Permission.allPermissionAcls(ReferenceType.DOMAIN);
+        Map<Permission, Set<Acl>> applicationOwnerPermissions = Permission.allPermissionAcls(ReferenceType.APPLICATION);
+
+        organizationOwnerPermissions.put(Permission.ORGANIZATION, Acl.of(READ));
+        organizationOwnerPermissions.put(Permission.ORGANIZATION_SETTINGS, Acl.of(READ, UPDATE));
+        organizationOwnerPermissions.put(Permission.ORGANIZATION_AUDIT, Acl.of(READ, LIST));
+
+        domainOwnerPermissions.put(Permission.DOMAIN, Acl.of(READ, UPDATE, LIST));
+        domainOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE));
+        domainOwnerPermissions.put(Permission.DOMAIN_AUDIT, Acl.of(READ, LIST));
+
+        roles.add(buildDefaultRole(DefaultRole.ORGANIZATION_OWNER.name(), ReferenceType.ORGANIZATION, organizationId, organizationOwnerPermissions));
+        roles.add(buildDefaultRole(DefaultRole.DOMAIN_OWNER.name(), ReferenceType.DOMAIN, organizationId, domainOwnerPermissions));
+        roles.add(buildDefaultRole(DefaultRole.APPLICATION_OWNER.name(), ReferenceType.APPLICATION, organizationId, applicationOwnerPermissions));
 
         // Create USER roles.
         Map<Permission, Set<Acl>> organizationUserPermissions = new HashMap<>();
@@ -388,22 +442,37 @@ public class RoleServiceImpl implements RoleService {
 
         applicationUserPermissions.put(Permission.APPLICATION, Acl.of(READ));
 
-        roles.add(buildSystemRole("ORGANIZATION_USER", ReferenceType.ORGANIZATION, organizationUserPermissions));
-        roles.add(buildSystemRole("DOMAIN_USER", ReferenceType.DOMAIN, domainUserPermissions));
-        roles.add(buildSystemRole("APPLICATION_USER", ReferenceType.APPLICATION, applicationUserPermissions));
+        roles.add(buildDefaultRole(DefaultRole.ORGANIZATION_USER.name(), ReferenceType.ORGANIZATION, organizationId, organizationUserPermissions));
+        roles.add(buildDefaultRole(DefaultRole.DOMAIN_USER.name(), ReferenceType.DOMAIN, organizationId, domainUserPermissions));
+        roles.add(buildDefaultRole(DefaultRole.APPLICATION_USER.name(), ReferenceType.APPLICATION, organizationId, applicationUserPermissions));
 
         return roles;
     }
 
     private static Role buildSystemRole(String name, ReferenceType assignableType, Map<Permission, Set<Acl>> permissions) {
 
+        Role systemRole = buildRole(name, assignableType, ReferenceType.PLATFORM, Platform.DEFAULT, permissions);
+        systemRole.setSystem(true);
+
+        return systemRole;
+    }
+
+    private static Role buildDefaultRole(String name, ReferenceType assignableType, String organizationId, Map<Permission, Set<Acl>> permissions) {
+
+        Role defaultRole = buildRole(name, assignableType, ReferenceType.ORGANIZATION, organizationId, permissions);
+        defaultRole.setDefaultRole(true);
+
+        return defaultRole;
+    }
+
+    private static Role buildRole(String name, ReferenceType assignableType, ReferenceType referenceType, String referenceId, Map<Permission, Set<Acl>> permissions) {
+
         Role role = new Role();
         role.setId(RandomString.generate());
         role.setName(name);
-        role.setSystem(true);
         role.setAssignableType(assignableType);
-        role.setReferenceType(ReferenceType.PLATFORM);
-        role.setReferenceId(Platform.DEFAULT);
+        role.setReferenceType(referenceType);
+        role.setReferenceId(referenceId);
         role.setPermissionAcls(permissions);
 
         return role;

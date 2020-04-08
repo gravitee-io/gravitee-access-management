@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {AfterViewInit, Component, ElementRef, Inject, Input, OnInit, ViewChild} from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
-import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { AppConfig } from "../../../../../config/app.config";
-import { FormService } from "../../../../services/form.service";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { DialogService } from "../../../../services/dialog.service";
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material";
+import { AfterViewInit, Component, ElementRef, Inject, Input, OnInit, ViewChild } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material';
+import { ActivatedRoute, Router } from '@angular/router';
+import { BreadcrumbService } from '../../../../services/breadcrumb.service';
+import { FormService } from '../../../../services/form.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { DialogService } from '../../../../services/dialog.service';
 
 export interface DialogData {
   rawTemplate: string;

@@ -53,6 +53,7 @@
               <div fxLayout="row">
                 <a [routerLink]="[row.id]" [queryParams]="{system:row.system}">{{row.name}}</a>
                 <mat-chip-list *ngIf="row.system"><mat-chip>system</mat-chip></mat-chip-list>
+                <mat-chip-list *ngIf="row.defaultRole"><mat-chip class="mat-default-chip">default</mat-chip></mat-chip-list>
               </div>
               <small>{{row.description}}</small>
             </div>

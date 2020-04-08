@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {MatInput} from "@angular/material";
-import {ActivatedRoute, Router} from "@angular/router";
-import {DomainService} from "../../../services/domain.service";
-import {DialogService} from "../../../services/dialog.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {BreadcrumbService} from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import {AuthService} from "../../../services/auth.service";
-import * as _ from "lodash";
-import {NavbarService} from "../../../components/navbar/navbar.service";
+import {MatInput} from '@angular/material';
+import {ActivatedRoute, Router} from '@angular/router';
+import {DomainService} from '../../../services/domain.service';
+import {DialogService} from '../../../services/dialog.service';
+import {SnackbarService} from '../../../services/snackbar.service';
+import {BreadcrumbService} from '../../../services/breadcrumb.service';
+import {AuthService} from '../../../services/auth.service';
+import {NavbarService} from '../../../components/navbar/navbar.service';
+import * as _ from 'lodash';
 
 export interface Tag {
   id: string;

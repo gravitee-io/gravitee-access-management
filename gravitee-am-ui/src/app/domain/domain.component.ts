@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {SidenavService} from "../components/sidenav/sidenav.service";
-import {BreadcrumbService} from "../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import {DomainService} from "../services/domain.service";
-import {NavbarService} from "../components/navbar/navbar.service";
-import {SnackbarService} from "../services/snackbar.service";
-import {AuthService} from "../services/auth.service";
+import {ActivatedRoute, Router} from '@angular/router';
+import {SidenavService} from '../components/sidenav/sidenav.service';
+import {BreadcrumbService} from '../services/breadcrumb.service';
+import {DomainService} from '../services/domain.service';
+import {NavbarService} from '../components/navbar/navbar.service';
+import {SnackbarService} from '../services/snackbar.service';
+import {AuthService} from '../services/auth.service';
 
 @Component({
   selector: 'app-domain',

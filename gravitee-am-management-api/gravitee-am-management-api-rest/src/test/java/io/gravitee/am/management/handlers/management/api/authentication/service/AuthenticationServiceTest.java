@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.authentication.service
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.handlers.management.api.authentication.service.impl.AuthenticationServiceImpl;
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
@@ -84,7 +85,7 @@ public class AuthenticationServiceTest {
         when(userServiceMock.findByUsernameAndSource(ReferenceType.ORGANIZATION, ORGANIZATION_ID, userDetailsMock.getUsername(), null)).thenReturn(Maybe.empty());
         when(userServiceMock.create(any(io.gravitee.am.model.User.class))).thenReturn(Single.just(user));
         when(userServiceMock.enhance(any())).thenReturn(Single.just(user));
-        when(roleServiceMock.findSystemRole(SystemRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(new Role()));
+        when(roleServiceMock.findDefaultRole(ORGANIZATION_ID, DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(new Role()));
         when(membershipServiceMock.addOrUpdate(eq(ORGANIZATION_ID), any(Membership.class))).thenReturn(Single.just(new Membership()));
         authenticationService.onAuthenticationSuccess(authenticationMock);
 

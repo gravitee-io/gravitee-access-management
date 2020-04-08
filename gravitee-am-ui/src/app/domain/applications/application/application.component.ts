@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {BreadcrumbService} from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import {ActivatedRoute} from '@angular/router';
+import {AuthService} from '../../../services/auth.service';
+import {BreadcrumbService} from '../../../services/breadcrumb.service';
 import * as _ from 'lodash';
-import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-application',

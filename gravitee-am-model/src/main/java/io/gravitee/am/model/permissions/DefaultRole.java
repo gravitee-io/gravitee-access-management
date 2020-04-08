@@ -16,23 +16,12 @@
 package io.gravitee.am.model.permissions;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum SystemRole {
-    PLATFORM_ADMIN(true),
-    ORGANIZATION_PRIMARY_OWNER(false),
-    DOMAIN_PRIMARY_OWNER(false),
-    ENVIRONMENT_PRIMARY_OWNER(false),
-    APPLICATION_PRIMARY_OWNER(false);
-
-    private boolean internalOnly;
-
-    SystemRole(boolean internalOnly) {
-        this.internalOnly = internalOnly;
-    }
-
-    public boolean isInternalOnly() {
-        return internalOnly;
-    }
+public enum DefaultRole {
+    ORGANIZATION_OWNER, ORGANIZATION_USER,
+    DOMAIN_OWNER, DOMAIN_USER,
+    ENVIRONMENT_OWNER,
+    APPLICATION_OWNER, APPLICATION_USER;
 }

@@ -23,11 +23,9 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
-import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.Platform;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
@@ -146,7 +144,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      */
     private Single<Membership> setRoles(User principal, io.gravitee.am.model.User user) {
 
-        final Maybe<Role> defaultRoleObs = roleService.findSystemRole(SystemRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION);
+        final Maybe<Role> defaultRoleObs = roleService.findDefaultRole(user.getReferenceId(), DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION);
         Maybe<Role> roleObs = defaultRoleObs;
 
         if (principal.getRoles() != null && !principal.getRoles().isEmpty()) {

@@ -106,6 +106,7 @@ public class RolesResource extends AbstractResource {
         filteredRole.setName(role.getName());
         filteredRole.setDescription(role.getDescription());
         filteredRole.setSystem(role.isSystem());
+        filteredRole.setDefaultRole(role.isDefaultRole());
         filteredRole.setAssignableType(role.getAssignableType());
 
         return filteredRole;

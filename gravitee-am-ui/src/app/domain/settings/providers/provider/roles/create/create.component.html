@@ -29,7 +29,7 @@
     <h5 style="color: grey; margin:  5px 0 15px 0;">Roles</h5>
     <mat-form-field>
       <mat-select placeholder="Roles" name="roles" ngModel [multiple]="!data.organizationContext" required>
-        <mat-option *ngFor="let role of data.roles" [value]="role.id">{{ role.name }}</mat-option>
+        <mat-option *ngFor="let role of data.roles" [value]="role.id" [disabled]="role.name.endsWith('_PRIMARY_OWNER') && role.system === true">{{ role.name }}</mat-option>
       </mat-select>
     </mat-form-field>
   </form>

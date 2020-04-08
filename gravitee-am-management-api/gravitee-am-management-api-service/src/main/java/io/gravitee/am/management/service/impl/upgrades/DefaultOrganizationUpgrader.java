@@ -67,7 +67,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                 // Need to create an inline provider and an admin user for this newly created default organization.
                 IdentityProvider inlineProvider = createInlineProvider();
                 User adminUser = createAdminUser(inlineProvider);
-                membershipHelper.setOrganizationAdminRole(adminUser);
+                membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
             } else {
                 logger.info("One or more organizations already exist. Check if default organization is up to date");
 
@@ -93,9 +93,9 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                             User adminUser = userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, ADMIN_USERNAME, inlineIdp.getId()).blockingGet();
 
                             if (adminUser == null) {
-                                // Create the admin user with organization admin role on the default organization.
+                                // Create the admin user with organization primary owner role on the default organization.
                                 adminUser = createAdminUser(inlineIdp);
-                                membershipHelper.setOrganizationAdminRole(adminUser);
+                                membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
                             }
                         }
                     }

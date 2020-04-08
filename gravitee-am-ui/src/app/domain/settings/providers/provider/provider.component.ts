@@ -15,7 +15,7 @@
  */
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {BreadcrumbService} from '../../../../../libraries/ng2-breadcrumb/components/breadcrumbService';
+import {BreadcrumbService} from '../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-provider',

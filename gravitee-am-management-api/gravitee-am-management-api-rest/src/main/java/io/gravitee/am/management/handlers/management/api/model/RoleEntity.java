@@ -37,6 +37,7 @@ public class RoleEntity {
     private List<String> permissions;
     private List<String> availablePermissions;
     private boolean system;
+    private boolean defaultRole;
     private Date createdAt;
     private Date updatedAt;
 
@@ -52,6 +53,7 @@ public class RoleEntity {
         this.referenceId = other.getReferenceId();
         this.assignableType = other.getAssignableType() == null ? null : other.getAssignableType().name();
         this.system = other.isSystem();
+        this.defaultRole = other.isDefaultRole();
         this.createdAt = other.getCreatedAt();
         this.updatedAt = other.getUpdatedAt();
     }
@@ -142,5 +144,13 @@ public class RoleEntity {
 
     public void setAssignableType(String assignableType) {
         this.assignableType = assignableType;
+    }
+
+    public boolean isDefaultRole() {
+        return defaultRole;
+    }
+
+    public void setDefaultRole(boolean defaultRole) {
+        this.defaultRole = defaultRole;
     }
 }

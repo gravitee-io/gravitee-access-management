@@ -117,6 +117,7 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         role.setReferenceId(roleMongo.getReferenceId());
         role.setAssignableType(roleMongo.getAssignableType() == null ? null : ReferenceType.valueOf(roleMongo.getAssignableType()));
         role.setSystem(roleMongo.isSystem());
+        role.setDefaultRole(roleMongo.isDefaultRole());
 
         if (roleMongo.getPermissionAcls() != null) {
             Map<Permission, Set<Acl>> permissions = new HashMap<>();
@@ -150,6 +151,7 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         roleMongo.setReferenceId(role.getReferenceId());
         roleMongo.setAssignableType(role.getAssignableType() == null ? null : role.getAssignableType().name());
         roleMongo.setSystem(role.isSystem());
+        roleMongo.setDefaultRole(role.isDefaultRole());
         roleMongo.setPermissionAcls(role.getPermissionAcls() == null ? null : role.getPermissionAcls().entrySet().stream().collect(Collectors.toMap(o -> o.getKey().name(), Map.Entry::getValue)));
         roleMongo.setOauthScopes(role.getOauthScopes());
         roleMongo.setCreatedAt(role.getCreatedAt());

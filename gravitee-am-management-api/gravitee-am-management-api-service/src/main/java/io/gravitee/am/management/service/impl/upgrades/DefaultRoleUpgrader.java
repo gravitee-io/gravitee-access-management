@@ -21,13 +21,12 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
-import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
@@ -59,21 +58,21 @@ public class DefaultRoleUpgrader implements Upgrader, Ordered {
         logger.info("Applying default roles upgrade");
 
         try {
-            Boolean organizationAdminRoleNotExists = roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION).isEmpty().blockingGet();
+            Boolean organizationOwnerRoleNotExists = roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION).isEmpty().blockingGet();
             Throwable throwable = roleService.createOrUpdateSystemRoles().blockingGet();
 
             if (throwable != null) {
                 throw throwable;
-            } else if (organizationAdminRoleNotExists) {
-                Role organizationAdminRole = roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION).blockingGet();
+            } else if (organizationOwnerRoleNotExists) {
+                Role organizationOwnerRole = roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION).blockingGet();
 
-                // Must grant admin power to all existing users to be iso-functional with v2 where all users could do everything.
+                // Must grant owner power to all existing users to be iso-functional with v2 where all users could do everything.
                 Page<User> userPage;
                 int page = 0;
 
                 do {
                     userPage = userService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT, page, PAGE_SIZE).blockingGet();
-                    userPage.getData().forEach(user -> membershipHelper.setRole(user, organizationAdminRole));
+                    userPage.getData().forEach(user -> membershipHelper.setRole(user, organizationOwnerRole));
                     page++;
                 } while (userPage.getData().size() == PAGE_SIZE);
             }

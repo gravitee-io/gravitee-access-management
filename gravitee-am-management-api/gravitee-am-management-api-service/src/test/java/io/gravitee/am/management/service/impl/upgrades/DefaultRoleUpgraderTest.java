@@ -21,7 +21,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
@@ -73,13 +73,13 @@ public class DefaultRoleUpgraderTest {
     public void shouldCreateSystemRoles() {
 
         when(roleService.createOrUpdateSystemRoles()).thenReturn(Completable.complete());
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(new Role()));
+        when(roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(new Role()));
 
         cut.upgrade();
     }
 
     @Test
-    public void shouldCreateSystemRoles_setAdminRoleToExistingUsers() {
+    public void shouldCreateSystemRoles_setOwnerRoleToExistingUsers() {
 
         int totalUsers = 22;
 
@@ -94,7 +94,7 @@ public class DefaultRoleUpgraderTest {
 
         when(roleService.createOrUpdateSystemRoles()).thenReturn(Completable.complete());
 
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION))
+        when(roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION))
                 .thenReturn(Maybe.empty()) // Role does not exist at start.
                 .thenReturn(Maybe.just(adminRole)); // Role has been created.
 
@@ -118,7 +118,7 @@ public class DefaultRoleUpgraderTest {
     public void shouldCreateSystemRoles_technicalError() {
 
         when(roleService.createOrUpdateSystemRoles()).thenReturn(Completable.error(TechnicalException::new));
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION)).thenReturn(Maybe.empty());
+        when(roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.empty());
 
         assertFalse(cut.upgrade());
     }

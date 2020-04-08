@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { BreadcrumbService } from "../../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { DialogService } from "../../../../../services/dialog.service";
-import { GroupService } from "../../../../../services/group.service";
-import {AuthService} from "../../../../../services/auth.service";
+import { ActivatedRoute, Router } from '@angular/router';
+import { BreadcrumbService } from '../../../../../services/breadcrumb.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { GroupService } from '../../../../../services/group.service';
+import {AuthService} from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-group-settings',
