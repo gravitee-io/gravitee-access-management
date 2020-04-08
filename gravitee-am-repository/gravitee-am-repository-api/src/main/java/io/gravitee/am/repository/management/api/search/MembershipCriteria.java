@@ -30,6 +30,8 @@ public class MembershipCriteria {
 
     private String userId;
 
+    private String roleId;
+
     public MembershipCriteria() {
         super();
     }
@@ -47,6 +49,12 @@ public class MembershipCriteria {
 
         return Optional.ofNullable(userId);
     }
+
+    public Optional<String> getRoleId() {
+
+        return Optional.ofNullable(roleId);
+    }
+
 
     public boolean isLogicalOR() {
         return logicalOR;
@@ -66,6 +74,11 @@ public class MembershipCriteria {
 
     public MembershipCriteria setUserId(String userId) {
         this.userId = userId;
+        return this;
+    }
+
+    public MembershipCriteria setRoleId(String roleId) {
+        this.roleId = roleId;
         return this;
     }
 }

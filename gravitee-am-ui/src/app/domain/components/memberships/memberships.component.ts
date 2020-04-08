@@ -131,6 +131,10 @@ export class MembershipsComponent implements OnInit, OnChanges {
     return membership.roleName && membership.roleName.endsWith('_PRIMARY_OWNER');
   }
 
+  isRoleDisabled(role) {
+    return role.name.endsWith('_PRIMARY_OWNER') && role.system === true;
+  }
+
   isMySelf(membership) {
     return this.authService.user().sub === membership.memberId && membership.memberType === 'user';
   }

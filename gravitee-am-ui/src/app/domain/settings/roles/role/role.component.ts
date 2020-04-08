@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
-import { RoleService } from "../../../../services/role.service";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { MatInput } from "@angular/material/input";
-import * as _ from "lodash";
-import { DialogService } from "../../../../services/dialog.service";
-import {AuthService} from "../../../../services/auth.service";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatInput } from '@angular/material/input';
+import { RoleService } from '../../../../services/role.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { BreadcrumbService } from '../../../../services/breadcrumb.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { AuthService } from '../../../../services/auth.service';
+import * as _ from 'lodash';
 
 export interface Scope {
   id: string;

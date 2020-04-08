@@ -13,26 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.permissions;
+package io.gravitee.am.service.exception;
+
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum SystemRole {
-    PLATFORM_ADMIN(true),
-    ORGANIZATION_PRIMARY_OWNER(false),
-    DOMAIN_PRIMARY_OWNER(false),
-    ENVIRONMENT_PRIMARY_OWNER(false),
-    APPLICATION_PRIMARY_OWNER(false);
+public class DefaultRoleUpdateException extends AbstractManagementException {
 
-    private boolean internalOnly;
+    private final String role;
 
-    SystemRole(boolean internalOnly) {
-        this.internalOnly = internalOnly;
+    public DefaultRoleUpdateException(String role) {
+        this.role = role;
     }
 
-    public boolean isInternalOnly() {
-        return internalOnly;
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
+
+    @Override
+    public String getMessage() {
+        return "Role [" + role + "] is flag as default. Its name cannot be updated.";
     }
 }

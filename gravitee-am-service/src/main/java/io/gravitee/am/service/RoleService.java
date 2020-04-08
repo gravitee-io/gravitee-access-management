@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
@@ -45,6 +46,8 @@ public interface RoleService {
 
     Maybe<Role> findSystemRole(SystemRole systemRole, ReferenceType assignableType);
 
+    Maybe<Role> findDefaultRole(String organizationId, DefaultRole defaultRole, ReferenceType assignableType);
+
     Single<Set<Role>> findByIdIn(List<String> ids);
 
     Single<Role> create(ReferenceType referenceType, String referenceId, NewRole newRole, User principal);
@@ -71,4 +74,5 @@ public interface RoleService {
         return delete(referenceType, referenceId, roleId, null);
     }
 
+    Completable createDefaultRoles(String organizationId);
 }

@@ -21,6 +21,7 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.model.NewOrganization;
 import io.gravitee.am.service.model.PatchOrganization;
@@ -37,7 +38,7 @@ import java.util.Collections;
 import java.util.Date;
 
 /**
- * @author Florent CHAMFROY (forent.chamfroy at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -47,11 +48,15 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     private final OrganizationRepository organizationRepository;
 
+    private final RoleService roleService;
+
     private final AuditService auditService;
 
     public OrganizationServiceImpl(@Lazy OrganizationRepository organizationRepository,
+                                   RoleService roleService,
                                    AuditService auditService) {
         this.organizationRepository = organizationRepository;
+        this.roleService = roleService;
         this.auditService = auditService;
     }
 
@@ -71,7 +76,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         organization.setDescription("Default organization");
         organization.setDomainRestrictions(Collections.emptyList());
 
-        // No need to create default organization of one or more organizations already exist.
+        // No need to create default organization if one or more organizations already exist.
         return organizationRepository.count()
                 .filter(aLong -> aLong == 0)
                 .flatMap(aLong -> createInternal(organization, null).toMaybe());
@@ -116,6 +121,8 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         // Creates an organization and set ownership.
         return organizationRepository.create(toCreate)
+                .flatMap(createdOrganization -> roleService.createDefaultRoles(createdOrganization.getId())
+                        .andThen(Single.just(createdOrganization)))
                 .doOnSuccess(organization -> auditService.report(AuditBuilder.builder(OrganizationAuditBuilder.class).type(EventType.ORGANIZATION_CREATED).organization(organization).principal(owner)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(OrganizationAuditBuilder.class).type(EventType.ORGANIZATION_CREATED).organization(toCreate).principal(owner).throwable(throwable)));
     }

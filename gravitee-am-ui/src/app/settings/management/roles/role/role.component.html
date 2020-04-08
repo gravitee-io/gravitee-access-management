@@ -24,7 +24,7 @@
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required [readonly]="readonly">
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required [readonly]="readonly" [disabled]="role.system || role.defaultRole">
             <mat-hint>A name for your role.</mat-hint>
           </mat-form-field>
 

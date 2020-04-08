@@ -46,6 +46,8 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     private static final String FIELD_REFERENCE_TYPE = "referenceType";
     private static final String FIELD_MEMBER_ID = "memberId";
     public static final String FIELD_MEMBER_TYPE = "memberType";
+    public static final String FIELD_ROLE = "role";
+
     private MongoCollection<MembershipMongo> membershipsCollection;
 
     @PostConstruct
@@ -74,6 +76,10 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
 
         if (criteria.getUserId().isPresent()) {
             eqUserId = and(eq(FIELD_MEMBER_TYPE, MemberType.USER.name()), eq(FIELD_MEMBER_ID, criteria.getUserId().get()));
+        }
+
+        if (criteria.getRoleId().isPresent()) {
+            eqUserId = eq(FIELD_ROLE, criteria.getRoleId().get());
         }
 
         return toBsonFilter(criteria.isLogicalOR(), eqGroupId, eqUserId)

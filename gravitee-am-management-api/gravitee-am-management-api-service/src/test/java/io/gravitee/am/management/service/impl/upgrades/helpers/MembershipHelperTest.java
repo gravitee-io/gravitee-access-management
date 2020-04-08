@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.upgrades.helpers;
 
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.MembershipService;
@@ -28,8 +29,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Arrays;
 
 import static org.mockito.Mockito.*;
 
@@ -55,23 +54,23 @@ public class MembershipHelperTest {
     }
 
     @Test
-    public void shouldSetOrganizationAdminRole() {
+    public void shouldSetOrganizationPrimaryOwnerRole() {
 
         User user = new User();
         user.setId("user-id");
 
-        final Role adminRole = new Role();
-        adminRole.setId("role-id");
+        final Role primaryOwnerRole = new Role();
+        primaryOwnerRole.setId("role-id");
 
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class))).thenReturn(Flowable.empty()); // user has no role yet.
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(adminRole));
+        when(roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(primaryOwnerRole));
         when(membershipService.addOrUpdate(eq(Organization.DEFAULT), any(Membership.class))).thenReturn(Single.just(new Membership()));
 
-        cut.setOrganizationAdminRole(user);
+        cut.setOrganizationPrimaryOwnerRole(user);
     }
 
     @Test
-    public void shouldNotSetOrganizationAdminRole_alreadyHasARole() {
+    public void shouldNotSetOrganizationPrimaryOwnerRole_alreadyHasARole() {
 
         User user = new User();
         user.setId("user-id");
@@ -80,8 +79,8 @@ public class MembershipHelperTest {
         adminRole.setId("role-id");
 
         when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class))).thenReturn(Flowable.just(new Membership()));
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(adminRole));
+        when(roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(adminRole));
 
-        cut.setOrganizationAdminRole(user);
+        cut.setOrganizationPrimaryOwnerRole(user);
     }
 }

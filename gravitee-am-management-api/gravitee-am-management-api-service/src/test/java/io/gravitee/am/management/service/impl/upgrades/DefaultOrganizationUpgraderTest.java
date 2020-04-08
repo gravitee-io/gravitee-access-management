@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.management.service.impl.upgrades.DefaultOrganizationUpgrader;
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
 import io.gravitee.am.model.*;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -85,7 +84,7 @@ public class DefaultOrganizationUpgraderTest {
                 && user.getSource().equals(idp.getId())
                 && user.getReferenceType() == ReferenceType.ORGANIZATION
                 && user.getReferenceId().equals(Organization.DEFAULT)))).thenReturn(Single.just(adminUser));
-        doNothing().when(membershipHelper).setOrganizationAdminRole(argThat(user -> user.getId().equals(adminUser.getId())));
+        doNothing().when(membershipHelper).setOrganizationPrimaryOwnerRole(argThat(user -> user.getId().equals(adminUser.getId())));
 
         assertTrue(cut.upgrade());
     }
@@ -174,7 +173,7 @@ public class DefaultOrganizationUpgraderTest {
         when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.singletonList(idp)));
         when(userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, "admin", idp.getId())).thenReturn(Maybe.empty());
         when(userService.create(any(User.class))).thenReturn(Single.just(adminUser));
-        doNothing().when(membershipHelper).setOrganizationAdminRole(argThat(user -> user.getId().equals(adminUser.getId())));
+        doNothing().when(membershipHelper).setOrganizationPrimaryOwnerRole(argThat(user -> user.getId().equals(adminUser.getId())));
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());

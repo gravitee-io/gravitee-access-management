@@ -36,6 +36,7 @@ public class Role {
     private String referenceId;
     private ReferenceType assignableType;
     private boolean system;
+    private boolean defaultRole;
     private Map<Permission, Set<Acl>> permissionAcls;
     private List<String> oauthScopes;
     private Date createdAt;
@@ -54,6 +55,7 @@ public class Role {
         this.permissionAcls = other.permissionAcls;
         this.oauthScopes = other.oauthScopes;
         this.system = other.system;
+        this.defaultRole = other.defaultRole;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -109,6 +111,14 @@ public class Role {
 
     public void setSystem(boolean system) {
         this.system = system;
+    }
+
+    public boolean isDefaultRole() {
+        return defaultRole;
+    }
+
+    public void setDefaultRole(boolean defaultRole) {
+        this.defaultRole = defaultRole;
     }
 
     public Map<Permission, Set<Acl>> getPermissionAcls() {

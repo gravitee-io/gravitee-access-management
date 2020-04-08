@@ -28,6 +28,7 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.Member;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
@@ -39,6 +40,7 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.reactivex.internal.operators.maybe.MaybeError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,7 +118,7 @@ public class MembershipServiceImpl implements MembershipService {
         LOGGER.debug("Add or update membership {}", membership);
 
         return checkMember(organizationId, membership)
-                .andThen(checkRole(organizationId, membership.getRoleId(), membership.getReferenceType(), membership.getReferenceId()))
+                .andThen(checkRole(organizationId, membership))
                 .andThen(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
@@ -244,28 +246,45 @@ public class MembershipServiceImpl implements MembershipService {
 
         if (MemberType.USER.equals(membership.getMemberType())) {
             return userService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
-                    .toCompletable();
+                    .ignoreElement();
         } else {
             return groupService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
-                    .toCompletable();
+                    .ignoreElement();
         }
     }
 
     /**
      * Role must exists and be of the platform roles (i.e master domain)
-     * @param role
+     * @param membership the membership to check role on.
      * @return
      */
-    private Completable checkRole(String organizationId, String role, ReferenceType referenceType, String referenceId) {
-        return roleService.findById(role)
-                .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
+    private Completable checkRole(String organizationId, Membership membership) {
+        return roleService.findById(membership.getRoleId())
+                .switchIfEmpty(Maybe.error(new RoleNotFoundException(membership.getRoleId())))
+                .flatMap(role -> {
+                    // If role is a 'PRIMARY_OWNER' role, need to check if it is already assigned or not.
+                    if (role.isSystem() && role.getName().endsWith("_PRIMARY_OWNER")) {
+
+                        if(membership.getMemberType() == MemberType.GROUP) {
+                            return Maybe.error(new InvalidRoleException("This role cannot be assigned to a group"));
+                        }
+
+                        MembershipCriteria criteria = new MembershipCriteria();
+                        criteria.setRoleId(membership.getRoleId());
+                        return membershipRepository.findByCriteria(membership.getReferenceType(), membership.getReferenceId(), criteria)
+                                .count()
+                                .flatMapMaybe(count -> count >= 1 ? Maybe.error(new SinglePrimaryOwnerException(membership.getReferenceType())) : Maybe.just(role));
+                    }
+
+                    return Maybe.just(role);
+                })
                 // Role must be set on the right entity type.
-                .filter(role1 -> role1.getAssignableType().equals(referenceType) &&
+                .filter(role1 -> role1.getAssignableType().equals(membership.getReferenceType()) &&
                         // Role can be either a system role, either an organization role, either a domain role.
                         (role1.isSystem()
                                 || (role1.getReferenceType() == ReferenceType.ORGANIZATION && organizationId.equals(role1.getReferenceId()))
-                                || (role1.getReferenceType() == referenceType && referenceId.equals(role1.getReferenceId()))))
+                                || (role1.getReferenceType() == membership.getReferenceType() && membership.getReferenceId().equals(role1.getReferenceId()))))
                 .switchIfEmpty(Single.error(new InvalidRoleException("Invalid role")))
-                .toCompletable();
+                .ignoreElement();
     }
 }

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { DomainService } from "../../services/domain.service";
-import { SnackbarService } from "../../services/snackbar.service";
-import { Router } from "@angular/router";
-import { BreadcrumbService } from "../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import { Router } from '@angular/router';
+import { DomainService } from '../../services/domain.service';
+import { SnackbarService } from '../../services/snackbar.service';
+import { BreadcrumbService } from '../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-creation',

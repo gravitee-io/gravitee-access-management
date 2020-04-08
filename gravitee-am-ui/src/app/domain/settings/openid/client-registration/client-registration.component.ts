@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
-import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import { ActivatedRoute } from '@angular/router';
+import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-openid-client-registration',

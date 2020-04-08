@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {AppConfig} from "../../../../../config/app.config";
-import {RoleService} from "../../../../services/role.service";
-import {SnackbarService} from "../../../../services/snackbar.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {BreadcrumbService} from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import {DialogService} from "../../../../services/dialog.service";
-import {OrganizationService} from "../../../../services/organization.service";
-import {AuthService} from "../../../../services/auth.service";
+import {ActivatedRoute, Router} from '@angular/router';
+import {SnackbarService} from '../../../../services/snackbar.service';
+import {BreadcrumbService} from '../../../../services/breadcrumb.service';
+import {DialogService} from '../../../../services/dialog.service';
+import {OrganizationService} from '../../../../services/organization.service';
+import {AuthService} from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-settings-management-role',
@@ -54,6 +52,7 @@ export class ManagementRoleComponent implements OnInit {
     this.readonly = this.role.system || (!this.authService.hasPermissions(['organization_role_update']));
     this.deleteMode = this.authService.hasPermissions(['organization_role_delete']);
     this.initPermissions();
+    this.initBreadcrumb();
   }
 
   update() {
@@ -145,5 +144,9 @@ export class ManagementRoleComponent implements OnInit {
         array = this.deletePermissions;
     }
     return array;
+  }
+
+  initBreadcrumb() {
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/roles/'+this.role.id+'(:?.*)?$', this.role.name.toLowerCase());
   }
 }

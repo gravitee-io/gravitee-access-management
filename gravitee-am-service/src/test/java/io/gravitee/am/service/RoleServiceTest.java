@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.permissions.DefaultRole;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.service.exception.*;
@@ -53,6 +56,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class RoleServiceTest {
 
+    public static final String ORGANIZATION_ID = "orga#1";
     @InjectMocks
     private RoleService roleService = new RoleServiceImpl();
 
@@ -219,6 +223,34 @@ public class RoleServiceTest {
     }
 
     @Test
+    public void shouldUpdate_defaultRolePermissions() {
+        UpdateRole updateRole = new UpdateRole();
+        updateRole.setName(DefaultRole.DOMAIN_USER.name());
+        updateRole.setPermissions(Permission.flatten(Collections.singletonMap(Permission.DOMAIN, Collections.singleton(Acl.READ))));
+
+        Role role = new Role();
+        role.setName(DefaultRole.DOMAIN_USER.name());
+        role.setDefaultRole(true); // should be able to update a default role.
+        role.setReferenceType(ReferenceType.ORGANIZATION);
+        role.setReferenceId(ORGANIZATION_ID);
+
+        when(roleRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role")).thenReturn(Maybe.just(role));
+        when(roleRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID)).thenReturn(Flowable.empty());
+        when(roleRepository.update(argThat(r -> r.getPermissionAcls().equals(Permission.unflatten(updateRole.getPermissions()))))).thenReturn(Single.just(role));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = roleService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role", updateRole, null).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(roleRepository, times(1)).findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role");
+        verify(roleRepository, times(1)).findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID);
+        verify(roleRepository, times(1)).update(any(Role.class));
+    }
+
+    @Test
     public void shouldUpdate_technicalException() {
         UpdateRole updateRole = Mockito.mock(UpdateRole.class);
         when(roleRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-role")).thenReturn(Maybe.error(TechnicalException::new));
@@ -273,19 +305,49 @@ public class RoleServiceTest {
 
     @Test
     public void shouldNotUpdate_systemRole() {
-        UpdateRole updateRole = Mockito.mock(UpdateRole.class);
-        Role role = Mockito.mock(Role.class);
-        when(role.isSystem()).thenReturn(true);
-        when(roleRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-role")).thenReturn(Maybe.just(role));
+        UpdateRole updateRole = new UpdateRole();
 
-        TestObserver testObserver = roleService.update(DOMAIN, "my-role", updateRole).test();
+        Role role = new Role();
+        role.setSystem(true);
+        role.setReferenceType(ReferenceType.ORGANIZATION);
+        role.setReferenceId(ORGANIZATION_ID);
+
+        when(roleRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role")).thenReturn(Maybe.just(role));
+
+        TestObserver testObserver = roleService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role", updateRole, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNotComplete();
         testObserver.assertError(SystemRoleUpdateException.class);
 
-        verify(roleRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-role");
-        verify(roleRepository, never()).findAll(ReferenceType.DOMAIN, DOMAIN);
+        verify(roleRepository, times(1)).findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role");
+        verify(roleRepository, never()).findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID);
+        verify(roleRepository, never()).update(any(Role.class));
+    }
+
+    @Test
+    public void shouldNotUpdate_defaultRoleName() {
+
+        UpdateRole updateRole = new UpdateRole();
+        updateRole.setName("new name");
+
+        Role role = new Role();
+        role.setId("my-role");
+        role.setName(DefaultRole.DOMAIN_USER.name());
+        role.setDefaultRole(true);
+        role.setReferenceType(ReferenceType.ORGANIZATION);
+        role.setReferenceId(ORGANIZATION_ID);
+
+        when(roleRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role")).thenReturn(Maybe.just(role));
+
+        TestObserver testObserver = roleService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role", updateRole, null).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(DefaultRoleUpdateException.class);
+
+        verify(roleRepository, times(1)).findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role");
+        verify(roleRepository, never()).findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID);
         verify(roleRepository, never()).update(any(Role.class));
     }
 
@@ -303,6 +365,8 @@ public class RoleServiceTest {
 
     @Test
     public void shouldDelete_technicalException() {
+
+        when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
         when(roleRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-role"))).thenReturn(Maybe.just(new Role()));
         when(roleRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 

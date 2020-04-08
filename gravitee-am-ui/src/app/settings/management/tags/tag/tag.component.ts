@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from "@angular/core";
-import {ActivatedRoute, Router} from "@angular/router";
-import {SnackbarService} from "../../../../services/snackbar.service";
-import {BreadcrumbService} from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import {TagService} from "../../../../services/tag.service";
-import {NgForm} from "@angular/forms";
-import {DialogService} from "../../../../services/dialog.service";
-import {AuthService} from "../../../../services/auth.service";
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {NgForm} from '@angular/forms';
+import {ActivatedRoute, Router} from '@angular/router';
+import {SnackbarService} from '../../../../services/snackbar.service';
+import {BreadcrumbService} from '../../../../services/breadcrumb.service';
+import {TagService} from '../../../../services/tag.service';
+import {DialogService} from '../../../../services/dialog.service';
+import {AuthService} from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-tag',

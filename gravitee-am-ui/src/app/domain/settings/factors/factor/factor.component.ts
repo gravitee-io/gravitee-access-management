@@ -15,7 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router} from '@angular/router';
-import { BreadcrumbService } from '../../../../../libraries/ng2-breadcrumb/components/breadcrumbService';
+import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 import { OrganizationService } from '../../../../services/organization.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DialogService } from '../../../../services/dialog.service';

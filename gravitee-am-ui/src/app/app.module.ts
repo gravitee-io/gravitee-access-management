@@ -104,7 +104,6 @@ import { ProvidersResolver } from "./resolvers/providers.resolver";
 import { ProviderResolver } from "./resolvers/provider.resolver";
 import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
 import { CreateMapperComponent, ProviderMappersComponent } from './domain/settings/providers/provider/mappers/mappers.component';
-import { Ng2BreadcrumbModule } from "libraries/ng2-breadcrumb/app.module";
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
 import { CertificateCreationComponent } from './domain/settings/certificates/creation/certificate-creation.component';
 import { CertificateComponent } from './domain/settings/certificates/certificate/certificate.component';
@@ -261,6 +260,7 @@ import { FactorResolver } from "./resolvers/factor.resolver";
 import { EnrolledFactorsResolver } from "./resolvers/enrolled-factors.resolver";
 import { IdenticonHashDirective } from "./directives/identicon-hash.directive";
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
+import { BreadcrumbService } from './services/breadcrumb.service';
 
 @NgModule({
   declarations: [
@@ -433,11 +433,11 @@ import { UserAvatarComponent } from './components/user-avatar/user-avatar.compon
     NgxDatatableModule,
     MaterialDesignFrameworkModule,
     CodemirrorModule,
-    Ng2BreadcrumbModule.forRoot(),
     ClipboardModule,
     HighchartsChartModule
   ],
   providers: [
+    BreadcrumbService,
     DomainService,
     ProviderService,
     SidenavService,

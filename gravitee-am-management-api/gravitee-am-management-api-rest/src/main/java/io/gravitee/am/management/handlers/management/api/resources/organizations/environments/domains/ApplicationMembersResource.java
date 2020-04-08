@@ -23,6 +23,7 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
@@ -207,7 +208,7 @@ public class ApplicationMembersResource extends AbstractResource {
         }
 
         return membershipService.findByCriteria(ReferenceType.DOMAIN, domainId, criteria)
-                .switchIfEmpty(roleService.findSystemRole(SystemRole.DOMAIN_USER, ReferenceType.DOMAIN)
+                .switchIfEmpty(roleService.findDefaultRole(organizationId, DefaultRole.DOMAIN_USER, ReferenceType.DOMAIN)
                         .flatMapSingle(role -> {
                             final Membership domainMembership = new Membership();
                             domainMembership.setMemberId(newMembership.getMemberId());

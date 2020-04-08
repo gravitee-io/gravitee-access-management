@@ -42,6 +42,8 @@ public class RoleMongo extends Auditable {
 
     private boolean system;
 
+    private boolean defaultRole;
+
     private Map<String, Set<Acl>> permissionAcls;
 
     private List<String> oauthScopes;
@@ -131,5 +133,13 @@ public class RoleMongo extends Auditable {
 
     public void setOauthScopes(List<String> oauthScopes) {
         this.oauthScopes = oauthScopes;
+    }
+
+    public boolean isDefaultRole() {
+        return defaultRole;
+    }
+
+    public void setDefaultRole(boolean defaultRole) {
+        this.defaultRole = defaultRole;
     }
 }

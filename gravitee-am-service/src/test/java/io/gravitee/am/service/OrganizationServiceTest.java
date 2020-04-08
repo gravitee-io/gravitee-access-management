@@ -29,6 +29,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.OrganizationServiceImpl;
 import io.gravitee.am.service.model.NewOrganization;
 import io.gravitee.am.service.model.PatchOrganization;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -40,7 +41,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -60,6 +60,9 @@ public class OrganizationServiceTest {
     private OrganizationRepository organizationRepository;
 
     @Mock
+    private RoleService roleService;
+
+    @Mock
     private AuditService auditService;
 
     private OrganizationService cut;
@@ -67,7 +70,7 @@ public class OrganizationServiceTest {
     @Before
     public void before() {
 
-        cut = new OrganizationServiceImpl(organizationRepository, auditService);
+        cut = new OrganizationServiceImpl(organizationRepository, roleService, auditService);
     }
 
     @Test
@@ -113,6 +116,7 @@ public class OrganizationServiceTest {
 
         when(organizationRepository.count()).thenReturn(Single.just(0L));
         when(organizationRepository.create(argThat(organization -> organization.getId().equals(Organization.DEFAULT)))).thenReturn(Single.just(defaultOrganization));
+        when(roleService.createDefaultRoles("DEFAULT")).thenReturn(Completable.complete());
 
         TestObserver<Organization> obs = cut.createDefault().test();
 
@@ -178,6 +182,7 @@ public class OrganizationServiceTest {
 
         when(organizationRepository.findById(ORGANIZATION_ID)).thenReturn(Maybe.empty());
         when(organizationRepository.create(argThat(organization -> organization.getId().equals(ORGANIZATION_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        when(roleService.createDefaultRoles(ORGANIZATION_ID)).thenReturn(Completable.complete());
 
         NewOrganization newOrganization = new NewOrganization();
         newOrganization.setName("TestName");

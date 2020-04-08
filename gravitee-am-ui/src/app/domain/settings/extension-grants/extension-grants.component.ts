@@ -18,7 +18,7 @@ import {ActivatedRoute} from '@angular/router';
 import {DialogService} from 'app/services/dialog.service';
 import {SnackbarService} from '../../../services/snackbar.service';
 import {ExtensionGrantService} from '../../../services/extension-grant.service';
-import {BreadcrumbService} from "../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
+import {BreadcrumbService} from '../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-extension-grants',

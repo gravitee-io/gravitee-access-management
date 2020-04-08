@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { BreadcrumbService } from "../../../../../libraries/ng2-breadcrumb/components/breadcrumbService";
-import { ActivatedRoute, Router } from "@angular/router";
-import { AppConfig } from "../../../../../config/app.config";
+import { ActivatedRoute, Router } from '@angular/router';
+import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-group',

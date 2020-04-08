@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl.upgrades.helpers;
 
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.MembershipService;
@@ -40,14 +41,14 @@ public class MembershipHelper {
     }
 
     /**
-     * Helper method to set ORGANIZATION_ADMIN role to the specified user.
+     * Helper method to set ORGANIZATION_PRIMARY_OWNER role to the specified user.
      * Note: if the user already has a role, nothing is done.
      *
      * @param user the user to define the role on.
      */
-    public void setOrganizationAdminRole(User user) {
+    public void setOrganizationPrimaryOwnerRole(User user) {
 
-        Role adminRole = roleService.findSystemRole(SystemRole.ORGANIZATION_ADMIN, ReferenceType.ORGANIZATION).blockingGet();
+        Role adminRole = roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION).blockingGet();
 
         setRole(user, adminRole);
     }
