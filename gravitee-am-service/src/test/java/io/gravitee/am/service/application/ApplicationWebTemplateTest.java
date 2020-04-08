@@ -85,6 +85,33 @@ public class ApplicationWebTemplateTest {
         Assert.assertTrue(oAuthSettings1.getResponseTypes().containsAll(responseTypes));
     }
 
+    @Test
+    public void shouldChangeType() {
+        Application application = new Application();
+        application.setType(ApplicationType.WEB);
+        application.setName("app-name");
+
+        ApplicationOAuthSettings existingOAuthSettings = new ApplicationOAuthSettings();
+        existingOAuthSettings.setGrantTypes(Arrays.asList(GrantType.CLIENT_CREDENTIALS));
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(existingOAuthSettings);
+        application.setSettings(settings);
+
+        applicationServiceTemplate.changeType(application);
+
+        Assert.assertNotNull(application);
+        Assert.assertNotNull(application.getSettings());
+        Assert.assertNotNull(application.getSettings().getOauth());
+
+        ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
+        Assert.assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
+        Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
+        Assert.assertTrue(!oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS));
+        Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.PASSWORD)));
+        List<String> responseTypes = new ArrayList<>(defaultAuthorizationCodeResponseTypes());
+        Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(responseTypes));
+    }
+
     private static Set<String> defaultAuthorizationCodeResponseTypes() {
         return new HashSet<>(Arrays.asList(CODE, CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN));
     }

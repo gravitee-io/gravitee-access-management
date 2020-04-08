@@ -46,6 +46,17 @@ public class ApplicationNativeTemplate extends ApplicationAbstractTemplate {
 
     @Override
     public void handle(Application application) {
+        // assign values
+        update(application, false);
+    }
+
+    @Override
+    public void changeType(Application application) {
+        // force default values
+        update(application, true);
+    }
+
+    private void update(Application application, boolean force) {
         // check for null values
         if (application.getSettings() == null) {
             application.setSettings(new ApplicationSettings());
@@ -63,8 +74,8 @@ public class ApplicationNativeTemplate extends ApplicationAbstractTemplate {
         oAuthSettings.setClientType(ClientType.PUBLIC);
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.NATIVE);
 
-        // set grant types and response types
-        if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
+        if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
+            // set grant types and response types
             oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT, GrantType.PASSWORD));
             oAuthSettings.setResponseTypes(Arrays.asList(CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN, ID_TOKEN, ID_TOKEN_TOKEN, CODE, TOKEN));
         } else {

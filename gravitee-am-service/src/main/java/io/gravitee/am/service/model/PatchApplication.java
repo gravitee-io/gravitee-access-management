@@ -16,11 +16,13 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Application;
-import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,7 +30,6 @@ import java.util.*;
  */
 public class PatchApplication {
 
-    private Optional<ApplicationType> type;
     private Optional<String> name;
     private Optional<String> description;
     private Optional<Boolean> enabled;
@@ -38,14 +39,6 @@ public class PatchApplication {
     private Optional<String> certificate;
     private Optional<Map<String, Object>> metadata;
     private Optional<PatchApplicationSettings> settings;
-
-    public Optional<ApplicationType> getType() {
-        return type;
-    }
-
-    public void setType(Optional<ApplicationType> type) {
-        this.type = type;
-    }
 
     public Optional<String> getName() {
         return name;
@@ -123,7 +116,6 @@ public class PatchApplication {
         // create new object for audit purpose (patch json result)
         Application toPatch = new Application(_toPatch);
 
-        SetterUtils.safeSet(toPatch::setType, this.getType());
         SetterUtils.safeSet(toPatch::setName, this.getName());
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
@@ -150,8 +142,7 @@ public class PatchApplication {
 
         Set<Permission> requiredPermissions = new HashSet<>();
 
-        if (type != null && type.isPresent()
-                || name != null && name.isPresent()
+        if (name != null && name.isPresent()
                 || description != null && description.isPresent()
                 || enabled != null && enabled.isPresent()
                 || template != null && template.isPresent()

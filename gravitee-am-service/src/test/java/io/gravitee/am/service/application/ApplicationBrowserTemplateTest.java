@@ -86,6 +86,31 @@ public class ApplicationBrowserTemplateTest {
         Assert.assertTrue(oAuthSettings1.getResponseTypes().containsAll(responseTypes));
     }
 
+    @Test
+    public void shouldChangeType() {
+        Application application = new Application();
+        application.setType(ApplicationType.BROWSER);
+        application.setName("app-name");
+
+        ApplicationOAuthSettings existingOAuthSettings = new ApplicationOAuthSettings();
+        existingOAuthSettings.setGrantTypes(Arrays.asList(GrantType.CLIENT_CREDENTIALS));
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(existingOAuthSettings);
+        application.setSettings(settings);
+
+        applicationServiceTemplate.changeType(application);
+
+        ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
+        Assert.assertNotNull(application);
+        Assert.assertNotNull(application.getSettings());
+        Assert.assertNotNull(application.getSettings().getOauth());
+        Assert.assertTrue(!oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS));
+        Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT)));
+        List<String> responseTypes = new ArrayList<>(defaultAuthorizationCodeResponseTypes());
+        responseTypes.addAll(defaultImplicitResponseTypes());
+        Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(responseTypes));
+    }
+
     private static Set<String> defaultAuthorizationCodeResponseTypes() {
         return new HashSet<>(Arrays.asList(CODE, CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN));
     }

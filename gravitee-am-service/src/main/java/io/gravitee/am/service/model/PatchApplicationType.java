@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl.application;
+package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.Application;
+import io.gravitee.am.model.application.ApplicationType;
+
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ApplicationTemplate {
+public class PatchApplicationType {
 
-    boolean canHandle(Application application);
+    @NotNull
+    private ApplicationType type;
 
-    void handle(Application application);
+    public ApplicationType getType() {
+        return type;
+    }
 
-    void changeType(Application application);
+    public void setType(ApplicationType type) {
+        this.type = type;
+    }
 }

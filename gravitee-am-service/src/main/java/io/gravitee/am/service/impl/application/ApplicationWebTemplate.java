@@ -42,6 +42,17 @@ public class ApplicationWebTemplate extends ApplicationAbstractTemplate {
 
     @Override
     public void handle(Application application) {
+        // assign values
+        update(application, false);
+    }
+
+    @Override
+    public void changeType(Application application) {
+        // force default values
+        update(application, true);
+    }
+
+    private void update(Application application, boolean force) {
         // check for null values
         if (application.getSettings() == null) {
             application.setSettings(new ApplicationSettings());
@@ -58,8 +69,8 @@ public class ApplicationWebTemplate extends ApplicationAbstractTemplate {
         oAuthSettings.setClientName(oAuthSettings.getClientName() == null ? application.getName() : oAuthSettings.getClientName());
         oAuthSettings.setClientType(ClientType.CONFIDENTIAL);
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);
-        // web applications should have code and password flow
-        if (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty()) {
+        if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
+            // web applications should have code and password flow
             oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.PASSWORD));
             oAuthSettings.setResponseTypes(new ArrayList<>(defaultAuthorizationCodeResponseTypes()));
         } else {

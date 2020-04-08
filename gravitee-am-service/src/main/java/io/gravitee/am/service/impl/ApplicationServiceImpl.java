@@ -272,6 +272,27 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Single<Application> updateType(String domain, String id, ApplicationType type, User principal) {
+        LOGGER.debug("Update application {} type to {} for domain {}", id, type, domain);
+
+        return applicationRepository.findById(id)
+                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
+                .flatMapSingle(existingApplication -> {
+                    Application toPatch = new Application(existingApplication);
+                    toPatch.setType(type);
+                    applicationTemplateManager.changeType(toPatch);
+                    return update0(domain, existingApplication, toPatch, principal);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to patch an application", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to patch an application", ex));
+                });
+    }
+
+    @Override
     public Single<Application> patch(String domain, String id, PatchApplication patchApplication, User principal) {
         LOGGER.debug("Patch an application {} for domain {}", id, domain);
 

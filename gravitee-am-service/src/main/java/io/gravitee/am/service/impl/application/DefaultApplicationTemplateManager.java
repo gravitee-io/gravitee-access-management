@@ -41,6 +41,14 @@ public class DefaultApplicationTemplateManager implements ApplicationTemplateMan
     }
 
     @Override
+    public void changeType(Application application) {
+        templates.stream()
+                .filter(applicationTemplate -> applicationTemplate.canHandle(application))
+                .findFirst()
+                .get().changeType(application);
+    }
+
+    @Override
     public void afterPropertiesSet() {
         templates = new ArrayList<>();
         templates.add(new ApplicationServiceTemplate());
