@@ -1,0 +1,30 @@
+.not-found-container {
+  margin: 100px 0px 0px 150px;
+  .not-found-content {
+    .not-found-content-header {
+      width: 600px;
+      color: #000;
+      margin-bottom: 32px;
+      text-align: left;
+      font-weight: 500;
+      font-size: 40px;
+      line-height: 48px;
+      white-space: pre-wrap;
+    }
+    .not-found-content-description {
+      border-top: 8px solid #2196f3;
+      width: 732px;
+      margin-bottom: 32px;
+      text-align: left;
+      h2 {
+        margin: 4rem 0;
+        opacity: .5;
+      }
+    }
+    .not-found-content-actions {
+      button {
+        min-width: 100px;
+      }
+    }
+  }
+}

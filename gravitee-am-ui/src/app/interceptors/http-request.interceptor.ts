@@ -1,3 +1,5 @@
+
+import {tap} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -13,20 +15,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from "@angular/core";
-import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from "@angular/common/http";
-import {Observable} from "rxjs";
+
+import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {Router} from '@angular/router';
+import {Observable} from 'rxjs';
+import {SnackbarService} from '../services/snackbar.service';
+import {AuthService} from '../services/auth.service';
 
 @Injectable()
 export class HttpRequestInterceptor implements HttpInterceptor {
 
-  intercept(req: HttpRequest<any>, next: HttpHandler):
-    Observable<HttpEvent<any>> {
+  constructor(private snackbarService: SnackbarService,
+              private authService: AuthService,
+              private router: Router) {}
 
-    req = req.clone({
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    request = request.clone({
       withCredentials: true
     });
 
-    return next.handle(req);
+    return next.handle(request).pipe(tap((event: HttpEvent<any>) => {
+      if (event instanceof HttpResponse) {
+        // do stuff with response if you want
+      }
+    }, (err: any) => {
+      if (err.status === 404) {
+        this.router.navigate(['/404']);
+      }
+      if (err instanceof HttpErrorResponse) {
+        if (err.status === 401) {
+          this.snackbarService.open('The authentication session expires or the user is not authorized');
+          this.authService.unauthorized();
+        } else if (err.status === 403) {
+          this.snackbarService.open('Access denied');
+        } else {
+          this.snackbarService.open(err.error.message || 'Server error');
+        }
+      }
+    }));
   }
 }
