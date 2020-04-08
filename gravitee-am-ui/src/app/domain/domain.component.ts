@@ -51,8 +51,10 @@ export class DomainComponent implements OnInit {
     if (this.router.url.indexOf('applications') === -1 && this.router.url.indexOf('settings') === -1) {
       if (this.canNavigate(['domain_analytics_read'])) {
         this.router.navigate(['/domains', this.domain.id, 'dashboard']);
-      } else {
+      } else if (this.canNavigate(['application_list'])) {
         this.router.navigate(['/domains', this.domain.id, 'applications']);
+      } else {
+        this.router.navigate(['/domains', this.domain.id, 'settings']);
       }
     } else {
       this.router.navigateByUrl(this.router.url);

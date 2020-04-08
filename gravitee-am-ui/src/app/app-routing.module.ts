@@ -504,6 +504,9 @@ const routes: Routes = [
           menu: {
             label: 'Applications',
             icon: 'devices',
+          },
+          perms: {
+            only: ['application_list']
           }
         }
       },
