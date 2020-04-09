@@ -28,12 +28,19 @@ import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
 import io.gravitee.common.component.LifecycleComponent;
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpHeadersValues;
+import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.service.AbstractService;
+import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,6 +69,9 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     @Autowired
     private Router router;
 
+    @Autowired
+    private Environment environment;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -71,6 +81,9 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
         // start security domain protocols (openid-connect, scim, ...)
         startSecurityDomainProtocols();
+
+        // set default 404 handler
+        router.route().last().handler(this::sendNotFound);
     }
 
     @Override
@@ -153,4 +166,23 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         });
     }
 
+    private void sendNotFound(RoutingContext context) {
+        // Need to check if we are effectively on the right domain before send a "404 - endpoint not found".
+        // Indeed, this handler is invoked by Vertx for '/test/unknown' and '/testOther/unknown' even if we set it on the '/test' context path.
+        if (context.request().path().equals(contextPath()) || context.request().path().startsWith(contextPath() + "/")) {
+            // Send a NOT_FOUND HTTP status code (404)  if domain's sub url didn't match any route.
+            HttpServerResponse serverResponse = context.response();
+            serverResponse.setStatusCode(HttpStatusCode.NOT_FOUND_404);
+
+            String message = environment.getProperty("http.domain.errors[404].message", "No endpoint matches the request URI.");
+            serverResponse.headers().set(HttpHeaders.CONTENT_LENGTH, Integer.toString(message.length()));
+            serverResponse.headers().set(HttpHeaders.CONTENT_TYPE, "text/plain");
+            serverResponse.headers().set(HttpHeaders.CONNECTION, HttpHeadersValues.CONNECTION_CLOSE);
+            serverResponse.write(Buffer.buffer(message));
+
+            serverResponse.end();
+        } else {
+            context.next();
+        }
+    }
 }
