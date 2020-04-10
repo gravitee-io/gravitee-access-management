@@ -107,7 +107,7 @@ public class ApplicationsResource extends AbstractResource {
                                         .collect(Collectors.toList()))
                                 .sorted((a1, a2) -> a2.getUpdatedAt().compareTo(a1.getUpdatedAt()))
                                 .toList()
-                                .map(applications -> new Page<>(applications, pagedApplications.getCurrentPage(), applications.size()))))
+                                .map(applications -> new Page<>(applications, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount()))))
                 .subscribe(response::resume, response::resume);
     }
 

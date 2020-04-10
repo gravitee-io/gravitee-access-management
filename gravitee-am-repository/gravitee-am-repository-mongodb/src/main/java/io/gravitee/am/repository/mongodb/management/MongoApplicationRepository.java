@@ -61,12 +61,14 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES= "settings.oauth.grantTypes";
+    private static final String FIELD_UPDATED_AT = "updatedAt";
     private MongoCollection<ApplicationMongo> applicationsCollection;
 
     @PostConstruct
     public void init() {
         applicationsCollection = mongoOperations.getCollection("applications", ApplicationMongo.class);
         super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(applicationsCollection, new Document(FIELD_UPDATED_AT, -1));
         super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1));
         super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1));
         super.createIndex(applicationsCollection, new Document(FIELD_IDENTITIES, 1));
@@ -82,14 +84,14 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments()).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find().skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find().sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
     @Override
     public Single<Page<Application>> findByDomain(String domain, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain))).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(eq(FIELD_DOMAIN, domain)).skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
@@ -110,7 +112,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 searchQuery);
 
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery)).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(mongoQuery).skip(size * (page - 1)).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
