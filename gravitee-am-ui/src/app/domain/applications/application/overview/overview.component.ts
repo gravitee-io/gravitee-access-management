@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import * as _ from 'lodash';
-import {SnackbarService} from "../../../../services/snackbar.service";
 import {AuthService} from "../../../../services/auth.service";
+import {SnackbarService} from "../../../../services/snackbar.service";
 
 @Component({
   selector: 'application-overview',
@@ -28,31 +27,68 @@ export class ApplicationOverviewComponent implements OnInit {
   domain: any;
   application: any;
   redirectUri: string;
+  grantTypes: string[] = [];
   clientId: string;
   clientSecret: string;
+  safeClientSecret: string;
+  hidden: string = '********';
+  safeAuthorizationHeader: string;
+  authorizationHeader: string;
+  entrypoint: any;
+  @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
 
   constructor(private route: ActivatedRoute,
-              private authService: AuthService) {
+              private authService: AuthService,
+              private snackbarService: SnackbarService) {
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
+    this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.application = this.route.snapshot.parent.data['application'];
-
+    this.safeClientSecret = this.hidden;
+    this.safeAuthorizationHeader = this.hidden;
     var applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
 
     if (this.authService.hasPermissions(['application_openid_read'])) {
+      this.grantTypes = applicationOAuthSettings.grantTypes;
       this.clientId = applicationOAuthSettings.clientId;
       this.clientSecret = applicationOAuthSettings.clientSecret;
       this.redirectUri = applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined ? applicationOAuthSettings.redirectUris[0] : 'Not defined' ;
+      this.authorizationHeader = btoa(this.clientId + ':' + this.clientSecret);
     } else {
       this.clientId = 'Insufficient permission';
       this.clientSecret = 'Insufficient permission';
       this.redirectUri = 'Insufficient permission';
+      this.authorizationHeader = 'Insufficient permission';
     }
   }
 
   isServiceApp(): boolean {
     return this.application.type.toLowerCase() === 'service';
+  }
+
+  valueCopied(message: string) {
+    this.snackbarService.open(message);
+  }
+
+  copyToClipboard(element: HTMLElement, sensitiveReplacement?) {
+
+    this.copyText.nativeElement.value = element.textContent.replace(this.hidden, sensitiveReplacement ? sensitiveReplacement : '');;
+    this.copyText.nativeElement.select();
+    document.execCommand('copy');
+    this.valueCopied('Copied to clipboard');
+  }
+
+  isHidden(value): boolean {
+    return value === this.hidden;
+  }
+
+  getAuthorizationFlowResponseType(): string {
+    if(this.grantTypes.includes('authorization_code')) {
+      return 'code';
+    } else {
+      return 'token';
+    }
   }
 }

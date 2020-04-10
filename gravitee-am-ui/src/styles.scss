@@ -267,3 +267,30 @@ p.gv-plugin-creation-description {
   background-color: #039be5;
   color: #fafafa;
 }
+
+div.code {
+  overflow: auto;
+  white-space: pre;
+  background: #f5f5f5!important;
+  border-color: transparent!important;
+  margin-bottom: 24px;
+  padding: 0px 20px;
+  font-size: 1em;
+
+  button {
+    width: auto;
+    float: right;
+    margin-left: 20px;
+    background: #f5f5f5!important;
+  }
+
+  pre {
+    width: auto;
+    overflow: auto;
+    white-space: pre-wrap;
+
+    &.multiline {
+      white-space: unset;
+    }
+  }
+}

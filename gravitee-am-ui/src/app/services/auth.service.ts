@@ -39,7 +39,7 @@ export class AuthService {
 
   handleAuthentication(): Observable<boolean> {
     // authentication success
-    return Observable.create(observer => observer.next(true));
+    return new Observable(observer => observer.next(true));
   }
 
   userInfo(): Observable<any> {
@@ -54,7 +54,7 @@ export class AuthService {
   }
 
   logout(): Observable<boolean> {
-    return Observable.create(observer => {
+    return new Observable(observer => {
       observer.next(true);
     });
   }

@@ -20,14 +20,20 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
+import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -42,9 +48,12 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -61,6 +70,9 @@ public class DomainResource extends AbstractResource {
 
     @Autowired
     private AuditReporterManager auditReporterManager;
+
+    @Autowired
+    private EntrypointService entrypointService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -146,6 +158,31 @@ public class DomainResource extends AbstractResource {
                 .andThen(domainService.delete(domain, authenticatedUser)
                         .doOnComplete(() -> auditReporterManager.removeReporter(domain)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+    }
+
+    @GET
+    @Path("/entrypoints")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get the matching gateway entrypoint of the domain",
+            notes = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
+                    "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
+                    "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Domain entrypoint", response = Entrypoint.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void getEntrypoints(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @Suspended final AsyncResponse response) {
+
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> entrypointService.findAll(organizationId)
+                                .toList()
+                                .map(entrypoints -> filterEntrypoints(entrypoints, domain))))
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("clients")
@@ -283,5 +320,26 @@ public class DomainResource extends AbstractResource {
         }
 
         return filteredDomain;
+    }
+
+    /**
+     * Filter a list of entrypoints depending on domain tags.
+     * Given a domain with tags [ A, B ], then entrypoint must has either A or B tag defined.
+     * If no entrypoint has been retained, the default entrypoint is returned.
+     *
+     * @param domain the domain.
+     * @return a filtered list of entrypoints.
+     */
+    private List<Entrypoint> filterEntrypoints(List<Entrypoint> entrypoints, Domain domain) {
+
+        List<Entrypoint> filteredEntrypoints = entrypoints.stream().filter(entrypoint -> entrypoint.isDefaultEntrypoint()
+                || (entrypoint.getTags() != null && !entrypoint.getTags().isEmpty() && domain.getTags() != null && entrypoint.getTags().stream().anyMatch(tag -> domain.getTags().contains(tag)))).collect(Collectors.toList());
+
+        if (filteredEntrypoints.size() > 1) {
+            // Remove default entrypoint if another entrypoint has matched.
+            filteredEntrypoints.removeIf(Entrypoint::isDefaultEntrypoint);
+        }
+
+        return filteredEntrypoints;
     }
 }

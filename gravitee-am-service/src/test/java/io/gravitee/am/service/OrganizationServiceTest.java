@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -63,6 +64,9 @@ public class OrganizationServiceTest {
     private RoleService roleService;
 
     @Mock
+    private EntrypointService entrypointService;
+
+    @Mock
     private AuditService auditService;
 
     private OrganizationService cut;
@@ -70,7 +74,7 @@ public class OrganizationServiceTest {
     @Before
     public void before() {
 
-        cut = new OrganizationServiceImpl(organizationRepository, roleService, auditService);
+        cut = new OrganizationServiceImpl(organizationRepository, roleService, entrypointService, auditService);
     }
 
     @Test
@@ -117,6 +121,7 @@ public class OrganizationServiceTest {
         when(organizationRepository.count()).thenReturn(Single.just(0L));
         when(organizationRepository.create(argThat(organization -> organization.getId().equals(Organization.DEFAULT)))).thenReturn(Single.just(defaultOrganization));
         when(roleService.createDefaultRoles("DEFAULT")).thenReturn(Completable.complete());
+        when(entrypointService.createDefault("DEFAULT")).thenReturn(Single.just(new Entrypoint()));
 
         TestObserver<Organization> obs = cut.createDefault().test();
 
@@ -183,6 +188,7 @@ public class OrganizationServiceTest {
         when(organizationRepository.findById(ORGANIZATION_ID)).thenReturn(Maybe.empty());
         when(organizationRepository.create(argThat(organization -> organization.getId().equals(ORGANIZATION_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(roleService.createDefaultRoles(ORGANIZATION_ID)).thenReturn(Completable.complete());
+        when(entrypointService.createDefault(ORGANIZATION_ID)).thenReturn(Single.just(new Entrypoint()));
 
         NewOrganization newOrganization = new NewOrganization();
         newOrganization.setName("TestName");

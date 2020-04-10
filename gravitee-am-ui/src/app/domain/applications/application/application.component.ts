@@ -30,6 +30,7 @@ export class ApplicationComponent implements OnInit {
   logoUrl: string;
   navLinks: any = [
     {'href': 'overview' , 'label': 'Overview', 'icon': 'more_vert'},
+    {'href': 'endpoints' , 'label': 'Endpoints', 'icon': 'transform'},
     {'href': 'idp' , 'label': 'Identity Providers', 'icon': 'swap_horiz'},
     {'href': 'design' , 'label': 'Design', 'icon': 'palette'},
     {'href': 'settings', 'label': 'Settings', 'icon': 'settings'}

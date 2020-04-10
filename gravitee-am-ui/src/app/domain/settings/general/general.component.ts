@@ -54,39 +54,36 @@ export class DomainSettingsGeneralComponent implements OnInit {
 
   ngOnInit() {
     this.domain = this.route.snapshot.parent.data['domain'];
-    this.tags = this.route.snapshot.data['tags'];
+
+    if(this.domain.tags === undefined) {
+      this.domain.tags = [];
+    }
+
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
     this.initTags();
   }
 
   initTags() {
-    let that = this;
-    // Merge with existing tag
-    this.selectedTags = _.map(this.domain.tags, function(t) {
-      let tag = _.find(that.tags, { 'id': t });
-      if (tag !== undefined) {
-        return tag;
-      }
-
-      return undefined;
-    });
-
-    this.tags = _.difference(this.tags, this.selectedTags);
+    let tags = this.route.snapshot.data['tags'];
+    this.selectedTags = this.domain.tags.map(t => _.find(tags, { 'id': t })).filter(t => typeof t !== 'undefined');
+    this.tags = _.difference(tags, this.selectedTags);
   }
 
   addTag(event) {
     this.selectedTags = this.selectedTags.concat(_.remove(this.tags, { 'id': event.option.value }));
-    this.chipInput['nativeElement'].blur();
-    this.formChanged = true;
+    this.tagsChanged();
   }
 
-  removeTag(permission) {
-    this.tags = this.tags.concat(_.remove(this.selectedTags, function(selectPermission) {
-      return selectPermission.key === permission.key;
-    }));
+  removeTag(tag) {
+    this.selectedTags = this.selectedTags.filter(t => t.id !== tag.id);
+    this.tags.push(tag);
+    this.tagsChanged();
+  }
 
+  tagsChanged() {
     this.chipInput['nativeElement'].blur();
     this.formChanged = true;
+    this.domain.tags = _.map(this.selectedTags, tag => tag.id);
   }
 
   enableDomain(event) {
@@ -95,8 +92,6 @@ export class DomainSettingsGeneralComponent implements OnInit {
   }
 
   update() {
-    this.domain.tags = _.map(this.selectedTags, tag => tag.id);
-
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe(response => {
       this.domain = response;
       this.domainService.notify(this.domain);

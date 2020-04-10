@@ -162,7 +162,7 @@ export class AuditsComponent implements OnInit {
   getTargetUrl(row) {
     let routerLink = [];
 
-    if(row.target.type === 'MEMBERSHIP') {
+    if (row.target.type === 'MEMBERSHIP') {
       // Membership doesn't have link;
       return routerLink;
     }
@@ -173,27 +173,29 @@ export class AuditsComponent implements OnInit {
     } else {
       routerLink.push('/domains');
       routerLink.push(row.target.referenceId);
+
       if (row.target.type !== 'CLIENT' && row.target.type !== 'APPLICATION') {
         routerLink.push('settings');
       }
+    }
 
-      if (row.target.type !== 'DOMAIN') {
-        if (row.target.type !== 'IDENTITY_PROVIDER') {
-          if (row.target.type === 'CLIENT') {
-            routerLink.push('applications');
-          } else {
-            routerLink.push(row.target.type.toLowerCase() + 's');
-          }
+    if (row.target.type !== 'DOMAIN') {
+      if (row.target.type !== 'IDENTITY_PROVIDER') {
+        if (row.target.type === 'CLIENT') {
+          routerLink.push('applications');
         } else {
-          routerLink.push('providers');
+          routerLink.push(row.target.type.toLowerCase() + 's');
         }
-        if (row.target.type === 'FORM' || row.target.type === 'EMAIL') {
-          routerLink.push(row.target.type.toLowerCase());
-        } else {
-          routerLink.push(row.target.id);
-        }
+      } else {
+        routerLink.push('providers');
+      }
+      if (row.target.type === 'FORM' || row.target.type === 'EMAIL') {
+        routerLink.push(row.target.type.toLowerCase());
+      } else {
+        routerLink.push(row.target.id);
       }
     }
+
     return routerLink;
   }
 

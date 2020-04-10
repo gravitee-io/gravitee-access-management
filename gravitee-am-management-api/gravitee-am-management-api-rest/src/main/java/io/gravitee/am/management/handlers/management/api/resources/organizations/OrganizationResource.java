@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.audits.AuditsResource;
+import io.gravitee.am.management.handlers.management.api.resources.organizations.entrypoints.EntrypointsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.EnvironmentsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.forms.FormsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.groups.GroupsResource;
@@ -104,6 +105,11 @@ public class OrganizationResource extends AbstractResource {
     @Path("tags")
     public TagsResource getTagsResource() {
         return resourceContext.getResource(TagsResource.class);
+    }
+
+    @Path("entrypoints")
+    public EntrypointsResource getEntrypointsResource() {
+        return resourceContext.getResource(EntrypointsResource.class);
     }
 
     @Path("roles")

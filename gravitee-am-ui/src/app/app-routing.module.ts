@@ -47,6 +47,7 @@ import {LogoutCallbackComponent} from './logout/callback/callback.component';
 import {LogoutComponent} from './logout/logout.component';
 import {DomainsResolver} from './resolvers/domains.resolver';
 import {DomainResolver} from './resolvers/domain.resolver';
+import {DomainEntrypointResolver} from "./resolvers/domain-entrypoint.resolver";
 import {DomainPermissionsResolver} from './resolvers/domain-permissions.resolver';
 import {ProvidersResolver} from './resolvers/providers.resolver';
 import {ProviderResolver} from './resolvers/provider.resolver';
@@ -117,6 +118,7 @@ import {ApplicationsResolver} from './resolvers/applications.resolver';
 import {ApplicationCreationComponent} from './domain/applications/creation/application-creation.component';
 import {ApplicationComponent} from './domain/applications/application/application.component';
 import {ApplicationOverviewComponent} from './domain/applications/application/overview/overview.component';
+import {ApplicationEndpointsComponent} from './domain/applications/application/endpoints/endpoints.component';
 import {ApplicationResolver} from './resolvers/application.resolver';
 import {ApplicationPermissionsResolver} from './resolvers/application-permissions.resolver';
 import {ApplicationIdPComponent} from './domain/applications/application/idp/idp.component';
@@ -146,6 +148,11 @@ import {FactorComponent} from './domain/settings/factors/factor/factor.component
 import {FactorResolver} from './resolvers/factor.resolver';
 import {EnrolledFactorsResolver} from './resolvers/enrolled-factors.resolver';
 import {NotFoundComponent} from './not-found/not-found.component';
+import {EntrypointsComponent} from "./settings/management/entrypoints/entrypoints.component";
+import {EntrypointCreationComponent} from "./settings/management/entrypoints/creation/entrypoint-creation.component";
+import {EntrypointComponent} from "./settings/management/entrypoints/entrypoint/entrypoint.component";
+import {EntrypointResolver} from "./resolvers/entrypoint.resolver";
+import {EntrypointsResolver} from "./resolvers/entrypoints.resolver";
 
 const routes: Routes = [
   {
@@ -465,6 +472,45 @@ const routes: Routes = [
                 only: ['organization_tag_read']
               }
             }
+          },
+          { path: 'entrypoints',
+            component: EntrypointsComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              entrypoints: EntrypointsResolver
+            },
+            data: {
+              menu: {
+                label: 'Entrypoints',
+                section: 'Deployment'
+              },
+              perms: {
+                only: ['organization_entrypoint_list']
+              }
+            }
+          },
+          { path: 'entrypoints/new',
+            component: EntrypointCreationComponent,
+            canActivate: [AuthGuard],
+            data: {
+              perms: {
+                only: ['organization_entrypoint_create']
+              }
+            }
+          },
+          {
+            path: 'entrypoints/:entrypointId',
+            component: EntrypointComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              entrypoint: EntrypointResolver,
+                tags: TagsResolver
+            },
+            data: {
+              perms: {
+                only: ['organization_entrypoint_read']
+              }
+            }
           }
         ]
       }
@@ -540,7 +586,17 @@ const routes: Routes = [
         },
         children: [
           { path: '', redirectTo: 'overview', pathMatch: 'full' },
-          { path: 'overview', component: ApplicationOverviewComponent, resolve: { domain: DomainResolver } },
+          { path: 'overview', component: ApplicationOverviewComponent,
+            resolve: {
+              domain: DomainResolver,
+              entrypoint: DomainEntrypointResolver
+            }
+          },{ path: 'endpoints', component: ApplicationEndpointsComponent,
+            resolve: {
+              domain: DomainResolver,
+              entrypoint: DomainEntrypointResolver
+            }
+          },
           { path: 'idp',
             component: ApplicationIdPComponent,
             canActivate: [AuthGuard],

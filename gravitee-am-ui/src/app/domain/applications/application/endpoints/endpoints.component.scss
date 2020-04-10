@@ -1,0 +1,17 @@
+mat-form-field {
+  margin-top: 10px;
+}
+input {
+  font-family: monospace;
+}
+
+:host {
+  ::ng-deep {
+    .mat-form-field-appearance-outline.mat-form-field-disabled .mat-form-field-outline {
+      background: #f5f5f5;
+    }
+    .mat-input-element:disabled {
+      color: rgba(0, 0, 0, 0.87);
+    }
+  }
+}

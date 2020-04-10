@@ -75,6 +75,7 @@ import { LogoutComponent } from './logout/logout.component';
 import { LogoutCallbackComponent } from './logout/callback/callback.component';
 import { DomainsResolver } from './resolvers/domains.resolver';
 import { DomainResolver } from './resolvers/domain.resolver';
+import {DomainEntrypointResolver} from "./resolvers/domain-entrypoint.resolver";
 import { DomainDashboardComponent } from './domain/dashboard/dashboard.component';
 import { DomainSettingsComponent } from './domain/settings/settings.component';
 import { DomainSettingsGeneralComponent } from './domain/settings/general/general.component';
@@ -195,6 +196,12 @@ import { TagService } from './services/tag.service';
 import { TagsComponent } from './settings/management/tags/tags.component';
 import { TagCreationComponent } from './settings/management/tags/creation/tag-creation.component';
 import { TagComponent } from './settings/management/tags/tag/tag.component';
+import { EntrypointsResolver } from './resolvers/entrypoints.resolver';
+import { EntrypointResolver } from './resolvers/entrypoint.resolver';
+import { EntrypointService } from './services/entrypoint.service';
+import { EntrypointsComponent } from './settings/management/entrypoints/entrypoints.component';
+import { EntrypointCreationComponent } from './settings/management/entrypoints/creation/entrypoint-creation.component';
+import { EntrypointComponent } from './settings/management/entrypoints/entrypoint/entrypoint.component';
 import { AccountSettingsComponent } from './domain/components/account/account-settings.component';
 import { HttpRequestInterceptor } from './interceptors/http-request.interceptor';
 import { PolicyFormComponent } from './domain/settings/policies/policy/form/form.component';
@@ -211,6 +218,7 @@ import { ApplicationCreationStep1Component } from './domain/applications/creatio
 import { ApplicationCreationStep2Component } from './domain/applications/creation/steps/step2/step2.component';
 import { ApplicationComponent } from './domain/applications/application/application.component';
 import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
+import { ApplicationEndpointsComponent } from './domain/applications/application/endpoints/endpoints.component';
 import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
 import { ApplicationIdPComponent } from './domain/applications/application/idp/idp.component';
 import { ApplicationDesignComponent } from './domain/applications/application/design/design.component';
@@ -375,6 +383,9 @@ import { NotFoundComponent } from './not-found/not-found.component';
     TagsComponent,
     TagCreationComponent,
     TagComponent,
+    EntrypointsComponent,
+    EntrypointCreationComponent,
+    EntrypointComponent,
     AccountSettingsComponent,
     PolicyFormComponent,
     PoliciesInfoDialog,
@@ -387,6 +398,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
     ApplicationCreationStep2Component,
     ApplicationComponent,
     ApplicationOverviewComponent,
+    ApplicationEndpointsComponent,
     ApplicationGeneralComponent,
     ApplicationIdPComponent,
     ApplicationDesignComponent,
@@ -455,6 +467,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
     AppConfig,
     DomainsResolver,
     DomainResolver,
+    DomainEntrypointResolver,
     ProvidersResolver,
     ProviderResolver,
     CertificatesResolver,
@@ -488,6 +501,9 @@ import { NotFoundComponent } from './not-found/not-found.component';
     TagService,
     TagsResolver,
     TagResolver,
+    EntrypointService,
+    EntrypointsResolver,
+    EntrypointResolver,
     PolicyService,
     PoliciesResolver,
     ApplicationService,
