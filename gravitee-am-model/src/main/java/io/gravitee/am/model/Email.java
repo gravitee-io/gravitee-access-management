@@ -40,6 +40,10 @@ public class Email {
     public Email() {
     }
 
+    public Email(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public Email(Email other) {
         this.id = other.id;
         this.enabled = other.enabled;

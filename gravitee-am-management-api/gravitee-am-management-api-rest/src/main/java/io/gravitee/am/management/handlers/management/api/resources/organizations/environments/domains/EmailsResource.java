@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
@@ -83,7 +84,7 @@ public class EmailsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EMAIL_TEMPLATE, Acl.READ)
                 .andThen(emailTemplateService.findByDomainAndTemplate(domain, emailTemplate.template()))
                 .map(email -> Response.ok(email).build())
-                .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build())
+                .defaultIfEmpty(Response.ok(new Email(false)).build())
                 .subscribe(response::resume, response::resume);
     }
 

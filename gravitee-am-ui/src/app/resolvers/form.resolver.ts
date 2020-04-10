@@ -15,10 +15,9 @@
  */
 import {Injectable} from '@angular/core';
 import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {Observable, of} from 'rxjs';
-import {catchError} from 'rxjs/operators';
 import {FormService} from '../services/form.service';
 import {OrganizationService} from '../services/organization.service';
+import {Observable} from 'rxjs';
 
 @Injectable()
 export class FormResolver implements Resolve<any> {
@@ -27,22 +26,12 @@ export class FormResolver implements Resolve<any> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     if (state.url.startsWith('/settings')) {
-      return this.organizationService.forms('LOGIN')
-        .pipe(
-          catchError(__ => {
-            return of({});
-          })
-        );
+      return this.organizationService.forms('LOGIN');
     }
     const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
     const appId = route.parent.parent.paramMap.get('appId');
     const template = route.queryParams['template'];
-    return this.formService.get(domainId, appId, template)
-      .pipe(
-        catchError(__ => {
-          return of({});
-        })
-      );
+    return this.formService.get(domainId, appId, template);
   }
 
 }
