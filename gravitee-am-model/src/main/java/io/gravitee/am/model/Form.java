@@ -37,6 +37,10 @@ public class Form {
     public Form() {
     }
 
+    public Form(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public Form(Form other) {
         this.id = other.id;
         this.enabled = other.enabled;

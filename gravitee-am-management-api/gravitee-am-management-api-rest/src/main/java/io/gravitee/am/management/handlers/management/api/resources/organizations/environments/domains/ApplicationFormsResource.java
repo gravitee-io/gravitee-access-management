@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
@@ -86,7 +87,7 @@ public class ApplicationFormsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.READ)
                 .andThen(formService.findByDomainAndClientAndTemplate(domain, application, emailTemplate.template()))
                 .map(form -> Response.ok(form).build())
-                .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build())
+                .defaultIfEmpty(Response.ok(new Form(false)).build())
                 .subscribe(response::resume, response::resume);
     }
 

@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable , of} from "rxjs";
-import { EmailService } from "../services/email.service";
-import {catchError} from "rxjs/operators";
+import {Injectable} from '@angular/core';
+import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
+import {EmailService} from '../services/email.service';
+import {Observable} from 'rxjs';
 
 @Injectable()
 export class EmailResolver implements Resolve<any> {
@@ -25,16 +24,11 @@ export class EmailResolver implements Resolve<any> {
   constructor(private emailService: EmailService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let emailTemplate = route.queryParams['template'];
-    let domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
-    let appId = route.parent.parent.paramMap.get('appId');
+    const emailTemplate = route.queryParams['template'];
+    const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
+    const appId = route.parent.parent.paramMap.get('appId');
 
-    return this.emailService.get(domainId, appId, emailTemplate)
-      .pipe(
-        catchError(__ => {
-          return of({});
-        })
-      );;
+    return this.emailService.get(domainId, appId, emailTemplate);
   }
 
 }
