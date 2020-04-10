@@ -18,7 +18,7 @@
 <div>
   <div>
     <div fxFlex="70">
-      <form (ngSubmit)="update()" fxLayout="column" #applicationForm="ngForm">
+      <form (ngSubmit)="update()" (keydown.enter)="false" fxLayout="column" #applicationForm="ngForm">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
@@ -61,7 +61,7 @@
             <div fxLayout="row" fxLayoutGap="10px" *ngIf="editMode">
               <div fxFlex="90">
                 <mat-form-field appearance="outline" floatLabel="always">
-                  <input matInput type="text" placeholder="Enter a redirect URI" name="redirectUri" [value]="redirectUri || ''" (input)='redirectUri = $event.target.value'>
+                  <input matInput type="text" placeholder="Enter a redirect URI" name="redirectUri" (keydown.enter)="addRedirectUris($event)" [value]="redirectUri || ''" (input)='redirectUri = $event.target.value'>
                 </mat-form-field>
               </div>
               <div>

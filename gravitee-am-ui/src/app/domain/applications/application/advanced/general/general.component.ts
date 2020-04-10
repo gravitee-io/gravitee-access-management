@@ -93,6 +93,7 @@ export class ApplicationGeneralComponent implements OnInit {
     data.settings.advanced = { 'skipConsent' : this.applicationAdvancedSettings.skipConsent };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
       this.application = response;
+      this.route.snapshot.parent.parent.data['application'] = this.application;
       this.application.type = this.application.type.toUpperCase();
       this.form.reset(this.application);
       this.formChanged = false;
@@ -145,13 +146,15 @@ export class ApplicationGeneralComponent implements OnInit {
 
   addRedirectUris(event) {
     event.preventDefault();
-    if (!this.redirectUris.some(el => el.value === this.redirectUri)) {
-      this.redirectUris.push({value: this.redirectUri});
-      this.redirectUris = [...this.redirectUris];
-      this.redirectUri = null;
-      this.formChanged = true;
-    } else {
-      this.snackbarService.open(`Error : redirect URI "${this.redirectUri}" already exists`);
+    if (this.redirectUri) {
+      if (!this.redirectUris.some(el => el.value === this.redirectUri)) {
+        this.redirectUris.push({value: this.redirectUri});
+        this.redirectUris = [...this.redirectUris];
+        this.redirectUri = null;
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open(`Error : redirect URI "${this.redirectUri}" already exists`);
+      }
     }
   }
 
