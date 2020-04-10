@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.OrganizationNotFoundException;
@@ -27,6 +28,7 @@ import io.gravitee.am.service.model.NewOrganization;
 import io.gravitee.am.service.model.PatchOrganization;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.OrganizationAuditBuilder;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -50,13 +52,17 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     private final RoleService roleService;
 
+    private final EntrypointService entrypointService;
+
     private final AuditService auditService;
 
     public OrganizationServiceImpl(@Lazy OrganizationRepository organizationRepository,
                                    RoleService roleService,
+                                   EntrypointService entrypointService,
                                    AuditService auditService) {
         this.organizationRepository = organizationRepository;
         this.roleService = roleService;
+        this.entrypointService = entrypointService;
         this.auditService = auditService;
     }
 
@@ -121,8 +127,10 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         // Creates an organization and set ownership.
         return organizationRepository.create(toCreate)
-                .flatMap(createdOrganization -> roleService.createDefaultRoles(createdOrganization.getId())
-                        .andThen(Single.just(createdOrganization)))
+                .flatMap(createdOrganization ->
+                        Completable.mergeArrayDelayError(entrypointService.createDefault(createdOrganization.getId()).ignoreElement(),
+                                roleService.createDefaultRoles(createdOrganization.getId()))
+                                .andThen(Single.just(createdOrganization)))
                 .doOnSuccess(organization -> auditService.report(AuditBuilder.builder(OrganizationAuditBuilder.class).type(EventType.ORGANIZATION_CREATED).organization(organization).principal(owner)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(OrganizationAuditBuilder.class).type(EventType.ORGANIZATION_CREATED).organization(toCreate).principal(owner).throwable(throwable)));
     }

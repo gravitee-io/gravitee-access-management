@@ -1,0 +1,14 @@
+.gv-page-container {
+  ngx-datatable {
+    .entrypoint-name {
+      h3 {
+        font-size: 14px;
+        font-weight: normal;
+        margin: 0;
+      }
+      small {
+        color: rgba(0, 0, 0, .54);
+      }
+    }
+  }
+}

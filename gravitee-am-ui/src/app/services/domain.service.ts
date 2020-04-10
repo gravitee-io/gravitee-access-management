@@ -36,6 +36,26 @@ export class DomainService {
     return this.http.get<any>(this.domainsURL + id);
   }
 
+  getEntrypoints(id: string): Observable<any> {
+    return this.http.get<any>(this.domainsURL + id + '/entrypoints');
+  }
+
+  getEntrypoint(id: string): Observable<any> {
+    return this.getEntrypoints(id)
+      .pipe(map(entrypoints => {
+        let entrypoint;
+
+        if (entrypoints.length == 1) {
+          entrypoint = entrypoints[0];
+        } else {
+          entrypoint = entrypoints.filter(e => !e.defaultEntrypoint)[0];
+        }
+
+        return entrypoint;
+      }));
+  }
+
+
   create(domain): Observable<any> {
     return this.http.post<any>(this.domainsURL, domain);
   }

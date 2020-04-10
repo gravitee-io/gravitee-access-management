@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -49,9 +49,13 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -158,6 +162,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected MembershipService membershipService;
+
+    @Autowired
+    protected EntrypointService entrypointService;
 
     @Before
     public void init() {
@@ -327,6 +334,11 @@ public abstract class JerseySpringTest {
         public MembershipService membershipService() {
             return mock(MembershipService.class);
         }
+
+        @Bean
+        public EntrypointService entrypointService() {
+            return mock(EntrypointService.class);
+        }
     }
 
     private JerseyTest _jerseyTest;
@@ -409,7 +421,17 @@ public abstract class JerseySpringTest {
             if (clazz == String.class) {
                 return (T) response.readEntity(String.class);
             }
+
             return objectMapper.readValue(response.readEntity(String.class), clazz);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected <T> List<T> readListEntity(Response response, Class<T> entityClazz) {
+
+        try {
+            return objectMapper.readValue(response.readEntity(String.class), objectMapper.getTypeFactory().constructCollectionType(List.class, entityClazz));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -429,6 +451,15 @@ public abstract class JerseySpringTest {
 
         try {
             return webTarget.request().put(Entity.entity(objectMapper.writeValueAsString(value), MediaType.APPLICATION_JSON_TYPE));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected <T> Response post(WebTarget webTarget, T value) {
+
+        try {
+            return webTarget.request().post(Entity.entity(objectMapper.writeValueAsString(value), MediaType.APPLICATION_JSON_TYPE));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

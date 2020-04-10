@@ -23,6 +23,7 @@ import { BreadcrumbService } from '../../../../../services/breadcrumb.service';
 import { DomainService } from '../../../../../services/domain.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import * as _ from 'lodash';
+import {AppConfig} from "../../../../../../config/app.config";
 
 @Component({
   selector: 'provider-settings',
@@ -35,6 +36,7 @@ export class ProviderSettingsComponent implements OnInit {
   private certificates: any[];
   organizationContext = false;
   domain: any = {};
+  entrypoint: any = {};
   configurationIsValid: boolean = true;
   configurationPristine: boolean = true;
   providerSchema: any;
@@ -59,8 +61,10 @@ export class ProviderSettingsComponent implements OnInit {
     }
     if (this.organizationContext) {
       this.organizationService.settings().subscribe(data => this.domain = data);
+      this.entrypoint = { url: AppConfig.settings.baseURL};
     } else {
       this.domainService.get(this.domainId).subscribe(data => this.domain = data);
+      this.domainService.getEntrypoint(this.domainId).subscribe(data => this.entrypoint = data);
     }
     this.provider = this.route.snapshot.parent.data['provider'];
     this.providerConfiguration = JSON.parse(this.provider.configuration);

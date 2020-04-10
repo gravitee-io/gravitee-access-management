@@ -41,4 +41,5 @@ public interface EntityType {
     String FACTOR = "FACTOR";
     String ORGANIZATION = "ORGANIZATION";
     String ENVIRONMENT = "ENVIRONMENT";
+    String ENTRYPOINT = "ENTRYPOINT";
 }

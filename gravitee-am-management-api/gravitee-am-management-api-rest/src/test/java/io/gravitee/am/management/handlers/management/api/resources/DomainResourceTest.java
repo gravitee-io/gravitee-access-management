@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -29,16 +30,14 @@ import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
 
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -49,6 +48,16 @@ import static org.mockito.Mockito.doReturn;
  * @author GraviteeSource Team
  */
 public class DomainResourceTest extends JerseySpringTest {
+
+
+    public static final String ORGANIZATION_ID = "orga-1";
+    public static final String ENTRYPOINT_ID1 = "entrypoint-1";
+    public static final String ENVIRONMENT_ID = "env-1";
+    public static final String DOMAIN_ID = "domain-1";
+    public static final String TAG_ID2 = "tag#2";
+    public static final String TAG_ID1 = "tag#1";
+    public static final String ENTRYPOINT_ID2 = "entrypoint-2";
+    public static final String ENTRYPOINT_ID_DEFAULT = "DEFAULT";
 
     @Test
     public void shouldGetDomain() {
@@ -221,6 +230,139 @@ public class DomainResourceTest extends JerseySpringTest {
 
         final Response response = put(target("domains").path("domain-id"), patchDomain);
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetEntrypoints_entrypoint1() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Arrays.asList(TAG_ID2));
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Collections.emptyList());
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>(Arrays.asList(TAG_ID1, TAG_ID2)));
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final Response response = target("organizations")
+                .path(ORGANIZATION_ID)
+                .path("environments")
+                .path(ENVIRONMENT_ID)
+                .path("domains")
+                .path(DOMAIN_ID)
+                .path("entrypoints").request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        List<Entrypoint> entrypoints = readListEntity(response, Entrypoint.class);
+
+        assertEquals(1, entrypoints.size());
+        assertTrue(entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID1)));
+    }
+
+    @Test
+    public void shouldGetEntrypoints_default() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Collections.emptyList());
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Collections.emptyList());
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>());
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final Response response = target("organizations")
+                .path(ORGANIZATION_ID)
+                .path("environments")
+                .path(ENVIRONMENT_ID)
+                .path("domains")
+                .path(DOMAIN_ID)
+                .path("entrypoints").request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        List<Entrypoint> entrypoints = readListEntity(response, Entrypoint.class);
+
+        assertEquals(1, entrypoints.size());
+        assertTrue(entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID_DEFAULT)));
+    }
+
+    @Test
+    public void shouldGetEntrypoints_Entrypoint1And2() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Arrays.asList(TAG_ID1));
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Arrays.asList(TAG_ID2));
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>(Arrays.asList(TAG_ID1, TAG_ID2)));
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(mockDomain.getId());
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final Response response = target("organizations")
+                .path(ORGANIZATION_ID)
+                .path("environments")
+                .path(ENVIRONMENT_ID)
+                .path("domains")
+                .path(DOMAIN_ID)
+                .path("entrypoints").request().get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        List<Entrypoint> entrypoints = readListEntity(response, Entrypoint.class);
+
+        assertEquals(2, entrypoints.size());
+        assertTrue(entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID1)));
+        assertTrue(entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID2)));
     }
 
     private Domain buildDomainMock() {

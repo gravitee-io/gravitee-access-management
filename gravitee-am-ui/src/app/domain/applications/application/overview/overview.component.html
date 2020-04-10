@@ -49,7 +49,14 @@
           <p>
             To set up authentication in your application and display to users the login page, you have to redirect your users to the following URL :
           </p>
-          <pre>https://auth.mycompany.com/{{application.domain}}/oauth/authorize?client_id={{clientId}}&response_type=code&redirect_uri={{redirectUri}}</pre>
+
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorize);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pre_authorize>{{entrypoint.url}}/{{application.domain}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{redirectUri}}</pre>
+          </div>
+
           <p>Users will be redirected to the login page and will start the Authentication Flow.</p>
           <blockquote>
             <p>
@@ -57,7 +64,14 @@
             </p>
           </blockquote>
           <p>Once users have been authenticated they will be redirected to your application URL :</p>
-          <pre>{{redirectUri}}</pre>
+
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_redirect_uri);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pre_redirect_uri>{{redirectUri}}</pre>
+          </div>
+
           <p>Either with :</p>
           <ul>
             <li>an <b>authorization_code</b></li>
@@ -68,33 +82,58 @@
               An extra step is required if the response_type=code, exchange the authorization_code for an access_token.
             </p>
           </blockquote>
-          <pre>curl -X POST \
-          https://auth.mycompany.com/{{application.domain}}/oauth/token \
-          -H 'Content-Type: application/x-www-form-urlencoded' \
-          -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUri}}&client_id={{clientId}}'
-          </pre>
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorization_code_exchange, authorizationHeader);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <button *ngIf="!isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeAuthorizationHeader = hidden;">
+              <mat-icon>visibility_off</mat-icon>
+            </button>
+            <button *ngIf="isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeAuthorizationHeader = authorizationHeader">
+              <mat-icon>visibility</mat-icon>
+            </button>
+
+            <pre #pre_authorization_code_exchange class="multiline">curl -X POST \
+  {{entrypoint.url}}/{{application.domain}}/oauth/token \
+  -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUri}}&client_id={{clientId}}'</pre>
+          </div>
+
           <h2>Get user information</h2>
           <p>The user's profile information can be extracted from the ID token or by calling the following URL :</p>
-          <pre>curl -X GET \
-          https://auth.mycompany.com/{{application.domain}}/oidc/userinfo \
-          -H 'Authorization: Bearer access_token'
-          </pre>
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_userinfo);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pre_userinfo class="multiline">curl -X GET \
+  {{entrypoint.url}}/{{application.domain}}/oidc/userinfo \
+  -H 'Authorization: Bearer access_token'</pre>
+          </div>
           <p>
             The profile information is used to display their name and hide/show some UI actions according to their permissions.
           </p>
+
           <h2>Call your APIs</h2>
           <p>
             Most of your applications require data from APIs. Some of those resources have restricted access, so that only authenticated users with sufficient privileges can access them.
           </p>
-          <pre>curl -X GET \
-          https://api.mycompany.com/api/v1/data \
-          -H 'Authorization: Bearer access_token'
-          </pre>
+          <div class="code">
+            <pre class="multiline">curl -X GET \
+  https://api.mycompany.com/api/v1/data \
+  -H 'Authorization: Bearer access_token'</pre>
+          </div>
+
           <h2>Log the User Out</h2>
           <p>
             Any authenticated users who want to invalidate their session can navigate to the following URL :
           </p>
-          <pre>https://auth.mycompany.com/{{application.domain}}/logout</pre>
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_logout);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pre_logout>{{entrypoint.url}}/{{application.domain}}/logout</pre>
+          </div>
           <blockquote>
             <p>
               By default access tokens and refresh tokens are not revoked. You can add the invalidate_tokens=true query parameter to the request to invalidate current user tokens.
@@ -109,22 +148,37 @@
         <div *ngIf="isServiceApp()">
           <h1>Machine to machine interaction</h1>
           <p>A Service application represents a program that interacts with APIs where there is no user involved.</p>
+
           <h2>Getting an access token</h2>
           <p>You can request an access token using the OAuth 2.0 client credentials grant type.</p>
-          <pre>curl -X POST \
-          https://auth.mycompany.com/{{application.domain}}/oauth/token \
-          -H 'Content-Type: application/x-www-form-urlencoded' \
-          -d 'grant_type=client_credentials&client_id={{clientId}}&client_secret={{clientSecret}}'
-          </pre>
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_token, clientSecret);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <button *ngIf="!isHidden(safeClientSecret)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeClientSecret = hidden;">
+              <mat-icon>visibility_off</mat-icon>
+            </button>
+            <button *ngIf="isHidden(safeClientSecret)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeClientSecret = clientSecret">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <pre #pre_token class="multiline">curl -X POST \
+  {{entrypoint.url}}/{{application.domain}}/oauth/token \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=client_credentials&client_id={{clientId}}&client_secret={{safeClientSecret}}'</pre>
+          </div>
           <p>If the request is valid, the authorization server will issue an access token to make authorized calls to the APIs.</p>
+
           <h2>Call your APIs</h2>
           <p>Use your access_token in your request via the Authorization HTTP header to obtain authorized access to the APIs.</p>
-          <pre>curl -X GET \
-          https://api.mycompany.com/api/v1/data \
-          -H 'Authorization: Bearer access_token'
-          </pre>
+          <div class="code">
+            <pre class="multiline">curl -X GET \
+  https://api.mycompany.com/api/v1/data \
+  -H 'Authorization: Bearer access_token'
+            </pre>
+          </div>
         </div>
       </div>
     </div>
   </div>
+  <textarea name="copyText" #copyText id="" style="opacity: 0;height: 0; width: 0; margin: 0; border: 0"></textarea>
 </div>

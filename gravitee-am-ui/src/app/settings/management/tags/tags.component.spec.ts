@@ -15,9 +15,9 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TagsComponent } from './users.component';
+import { TagsComponent } from './tags.component';
 
-describe('UsersComponent', () => {
+describe('TagsComponent', () => {
   let component: TagsComponent;
   let fixture: ComponentFixture<TagsComponent>;
 
