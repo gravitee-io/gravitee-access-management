@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "0753b192-d61f-48a2-8858-636b1cc2b149",
+		"_postman_id": "c6a4fd56-c41a-4215-a902-a65c45ac8c99",
 		"name": "Gravitee.io - AM - User Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -102,7 +102,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"user-domain\", \n\t\"description\": \"test System for Cross-domain Identity Management specifications\"\n}"
+							"raw": "{\n\t\"name\": \"user-domain\", \n\t\"description\": \"test System for User Management specifications\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/domains/",
@@ -205,7 +205,8 @@
 					},
 					"response": []
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "User Management",
@@ -497,6 +498,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -718,6 +720,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -769,9 +772,11 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				},
 				{
@@ -1067,6 +1072,8 @@
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
 													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData).to.not.have.property('registrationUserUri');",
+													"    pm.expect(jsonData).to.not.have.property('registrationAccessToken');",
 													"    pm.expect(jsonData.internal).to.eql(true);",
 													"    pm.expect(jsonData.enabled).to.eql(true);",
 													"    pm.expect(jsonData.preRegistration).to.eql(false);",
@@ -1224,6 +1231,229 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Pre-Register",
+							"item": [
+								{
+									"name": "Patch domain - dynamic user registration",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "29adabbe-3199-4e82-afb7-851bdd50b1bb",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"accountSettings\": {\n    \"dynamicUserRegistration\": true\n  }\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"UM - pre-register user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    let domain = pm.environment.get(\"domain\");",
+													"    ",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData).to.have.property('registrationUserUri');",
+													"    pm.expect(jsonData).to.have.property('registrationAccessToken');",
+													"    pm.expect(jsonData.internal).to.eql(true);",
+													"    pm.expect(jsonData.enabled).to.eql(false);",
+													"    pm.expect(jsonData.preRegistration).to.eql(true);",
+													"    pm.expect(jsonData.registrationCompleted).to.eql(false);",
+													"    pm.expect(jsonData.source).to.eql('default-idp-'+domain)",
+													"    pm.environment.set('userTemp', jsonData.id);",
+													"    pm.environment.set('userRegistrationURI', jsonData.registrationUserUri);",
+													"    pm.environment.set('userRegistrationToken', jsonData.registrationAccessToken);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"firstName\": \"John\",\n\t\"lastName\": \"Doe\",\n\t\"username\": \"john.doe\",\n\t\"email\": \"john.doe@mail.com\",\n\t\"preRegistration\": true\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Initiate post registration flow",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to confirm registration page\", function() {",
+													"    pm.response.to.be.ok;",
+													"    var responseHTML = cheerio(pm.response.text());",
+													"    tests['Redirect to confirm registration page'] = responseHTML.find('p').text().includes('Thanks for signing up, please complete the form to activate your account');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"id": "904f0113-b2b9-4645-9511-48bb10791506",
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{userRegistrationURI}}?token={{userRegistrationToken}}",
+											"host": [
+												"{{userRegistrationURI}}"
+											],
+											"query": [
+												{
+													"key": "token",
+													"value": "{{userRegistrationToken}}"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userTemp}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"domains",
+												"{{domain}}",
+												"users",
+												"{{userTemp}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -1387,6 +1617,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -1440,6 +1671,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -1556,9 +1788,11 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				},
 				{
@@ -1842,6 +2076,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -2005,6 +2240,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -2123,6 +2359,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -2239,6 +2476,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -2292,6 +2530,7 @@
 									"response": []
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						},
 						{
@@ -2462,9 +2701,11 @@
 									}
 								}
 							],
+							"protocolProfileBehavior": {},
 							"_postman_isSubFolder": true
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				},
 				{
@@ -2587,6 +2828,7 @@
 							"response": []
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				},
 				{
@@ -3266,9 +3508,11 @@
 							"response": []
 						}
 					],
+					"protocolProfileBehavior": {},
 					"_postman_isSubFolder": true
 				}
-			]
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "Delete domain",
@@ -3316,5 +3560,6 @@
 			},
 			"response": []
 		}
-	]
+	],
+	"protocolProfileBehavior": {}
 }

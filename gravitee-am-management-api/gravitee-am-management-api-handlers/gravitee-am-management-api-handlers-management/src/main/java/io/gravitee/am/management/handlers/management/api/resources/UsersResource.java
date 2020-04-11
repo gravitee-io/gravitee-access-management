@@ -138,9 +138,7 @@ public class UsersResource extends AbstractResource {
             }
         }
 
-        domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(userProvider -> userService.create(domain, newUser, authenticatedUser))
+        userService.create(domain, newUser, authenticatedUser)
                 .map(user -> Response
                         .created(URI.create("/domains/" + domain + "/users/" + user.getId()))
                         .entity(user)
