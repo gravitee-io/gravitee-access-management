@@ -196,6 +196,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         user.setInternal(userMongo.isInternal());
         user.setPreRegistration(userMongo.isPreRegistration());
         user.setRegistrationCompleted(userMongo.isRegistrationCompleted());
+        user.setRegistrationUserUri(userMongo.getRegistrationUserUri());
+        user.setRegistrationAccessToken(userMongo.getRegistrationAccessToken());
         user.setDomain(userMongo.getDomain());
         user.setSource(userMongo.getSource());
         user.setClient(userMongo.getClient());
@@ -238,6 +240,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         userMongo.setInternal(user.isInternal());
         userMongo.setPreRegistration(user.isPreRegistration());
         userMongo.setRegistrationCompleted(user.isRegistrationCompleted());
+        userMongo.setRegistrationUserUri(user.getRegistrationUserUri());
+        userMongo.setRegistrationAccessToken(user.getRegistrationAccessToken());
         userMongo.setDomain(user.getDomain());
         userMongo.setSource(user.getSource());
         userMongo.setClient(user.getClient());

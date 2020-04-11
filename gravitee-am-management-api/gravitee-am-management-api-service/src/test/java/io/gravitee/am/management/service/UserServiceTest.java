@@ -15,26 +15,32 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.Client;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.jsonwebtoken.JwtBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -62,6 +68,9 @@ public class UserServiceTest {
     private AuditService auditService;
 
     @Mock
+    private DomainService domainService;
+
+    @Mock
     private ClientService clientService;
 
     @Mock
@@ -73,44 +82,70 @@ public class UserServiceTest {
     @Mock
     private RoleService roleService;
 
+    @Mock
+    private JwtBuilder jwtBuilder;
+
+    @Before
+    public void setUp() {
+        ((UserServiceImpl) userService).setExpireAfter(24 * 3600);
+    }
+
     @Test
     public void shouldCreateUser_invalid_identity_provider() {
         final String domain = "domain";
 
+        Domain domain1 = mock(Domain.class);
+        when(domain1.getId()).thenReturn(domain);
+
         NewUser newUser = mock(NewUser.class);
+        when(newUser.getUsername()).thenReturn("username");
         when(newUser.getSource()).thenReturn("unknown-idp");
 
+        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserProviderNotFoundException.class);
+        verify(commonUserService, never()).create(any());
     }
 
     @Test
     public void shouldNotCreateUser_unknown_client() {
         final String domain = "domain";
 
+        Domain domain1 = mock(Domain.class);
+        when(domain1.getId()).thenReturn(domain);
+
         NewUser newUser = mock(NewUser.class);
+        when(newUser.getUsername()).thenReturn("username");
         when(newUser.getSource()).thenReturn("idp");
         when(newUser.getClient()).thenReturn("client");
 
         UserProvider userProvider = mock(UserProvider.class);
 
+        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(clientService.findById(newUser.getClient())).thenReturn(Maybe.empty());
         when(clientService.findByDomainAndClientId(domain, newUser.getClient())).thenReturn(Maybe.empty());
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
         testObserver.assertNotComplete();
         testObserver.assertError(ClientNotFoundException.class);
+        verify(commonUserService, never()).create(any());
     }
 
     @Test
     public void shouldNotCreateUser_invalid_client() {
         final String domain = "domain";
 
+        Domain domain1 = mock(Domain.class);
+        when(domain1.getId()).thenReturn(domain);
+
         NewUser newUser = mock(NewUser.class);
+        when(newUser.getUsername()).thenReturn("username");
         when(newUser.getSource()).thenReturn("idp");
         when(newUser.getClient()).thenReturn("client");
 
@@ -119,12 +154,50 @@ public class UserServiceTest {
         Client client = mock(Client.class);
         when(client.getDomain()).thenReturn("other-domain");
 
+        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(clientService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
         testObserver.assertNotComplete();
         testObserver.assertError(ClientNotFoundException.class);
+        verify(commonUserService, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotCreateUser_user_already_exists() {
+        final String domain = "domain";
+
+        Domain domain1 = mock(Domain.class);
+        when(domain1.getId()).thenReturn(domain);
+
+        NewUser newUser = mock(NewUser.class);
+        when(newUser.getUsername()).thenReturn("username");
+        when(newUser.getSource()).thenReturn("idp");
+
+        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(new User()));
+
+        TestObserver<User> testObserver = userService.create(domain, newUser).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(UserAlreadyExistsException.class);
+        verify(commonUserService, never()).create(any());
+    }
+
+    @Test
+    public void shouldPreRegisterUser() {
+        shouldPreRegisterUser(false, false);
+    }
+
+    @Test
+    public void shouldPreRegisterUser_dynamicUserRegistration_domainLevel() {
+        shouldPreRegisterUser(true, false);
+    }
+
+    @Test
+    public void shouldPreRegisterUser_dynamicUserRegistration_clientLevel() {
+        shouldPreRegisterUser(true, true);
     }
 
     @Test
@@ -326,6 +399,64 @@ public class UserServiceTest {
         testObserver.assertNotComplete();
         testObserver.assertError(RoleNotFoundException.class);
         verify(commonUserService, never()).update(any());
+    }
+
+    private void shouldPreRegisterUser(boolean dynamicUserRegistration, boolean clientLevel) {
+        final String domain = "domain";
+
+        AccountSettings accountSettings;
+        if (dynamicUserRegistration) {
+            accountSettings = mock(AccountSettings.class);
+            when(accountSettings.isDynamicUserRegistration()).thenReturn(true);
+        } else {
+            accountSettings = new AccountSettings();
+        }
+
+        JwtBuilder mockJwtBuilder = mock(JwtBuilder.class);
+        when(mockJwtBuilder.compact()).thenReturn("token");
+
+        Domain domain1 = mock(Domain.class);
+        when(domain1.getId()).thenReturn(domain);
+        if (!clientLevel) {
+            when(domain1.getAccountSettings()).thenReturn(accountSettings);
+        }
+
+        NewUser newUser = mock(NewUser.class);
+        when(newUser.getUsername()).thenReturn("username");
+        when(newUser.getSource()).thenReturn("idp");
+        when(newUser.getClient()).thenReturn("client");
+        when(newUser.isPreRegistration()).thenReturn(true);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
+
+        Client client = mock(Client.class);
+        when(client.getDomain()).thenReturn("domain");
+        if (clientLevel) {
+            when(client.getAccountSettings()).thenReturn(accountSettings);
+        }
+        when(jwtBuilder.setClaims(anyMap())).thenReturn(mockJwtBuilder);
+        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(clientService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
+        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
+
+        TestObserver<User> testObserver = userService.create(domain, newUser).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(commonUserService, times(1)).create(any());
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        verify(commonUserService).create(argument.capture());
+
+        if (dynamicUserRegistration) {
+            Assert.assertNotNull(argument.getValue().getRegistrationUserUri());
+            Assert.assertNotNull(argument.getValue().getRegistrationAccessToken());
+            Assert.assertEquals("token", argument.getValue().getRegistrationAccessToken());
+        } else {
+            Assert.assertNull(argument.getValue().getRegistrationUserUri());
+            Assert.assertNull(argument.getValue().getRegistrationAccessToken());
+        }
     }
 
 }

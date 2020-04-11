@@ -88,6 +88,10 @@ public class User {
 
     private boolean registrationCompleted;
 
+    private String registrationUserUri;
+
+    private String registrationAccessToken;
+
     private String domain;
 
     private String source;
@@ -138,6 +142,8 @@ public class User {
         this.internal = other.internal;
         this.preRegistration = other.preRegistration;
         this.registrationCompleted = other.registrationCompleted;
+        this.registrationUserUri = other.registrationUserUri;
+        this.registrationAccessToken = other.registrationAccessToken;
         this.domain = other.domain;
         this.source = other.source;
         this.client = other.client;
@@ -370,6 +376,22 @@ public class User {
 
     public void setRegistrationCompleted(boolean registrationCompleted) {
         this.registrationCompleted = registrationCompleted;
+    }
+
+    public String getRegistrationUserUri() {
+        return registrationUserUri;
+    }
+
+    public void setRegistrationUserUri(String registrationUserUri) {
+        this.registrationUserUri = registrationUserUri;
+    }
+
+    public String getRegistrationAccessToken() {
+        return registrationAccessToken;
+    }
+
+    public void setRegistrationAccessToken(String registrationAccessToken) {
+        this.registrationAccessToken = registrationAccessToken;
     }
 
     public String getDomain() {
