@@ -70,8 +70,10 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                     return;
                 }
 
+                // the client might has been upgraded after authentication process, get the new value
+                Client authenticatedClient = authHandler.result();
                 // put client in context and continue
-                routingContext.put(CLIENT_CONTEXT_KEY, client);
+                routingContext.put(CLIENT_CONTEXT_KEY, authenticatedClient);
                 routingContext.next();
             });
 
