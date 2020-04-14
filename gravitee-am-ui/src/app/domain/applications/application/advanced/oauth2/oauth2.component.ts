@@ -38,6 +38,7 @@ export class ApplicationOAuth2Component implements OnInit {
   tokenEndpointAuthMethods: any[] = [
     { name : 'client_secret_basic', value: 'client_secret_basic'},
     { name : 'client_secret_post', value: 'client_secret_post'},
+    { name : 'client_secret_jwt', value: 'client_secret_jwt'},
     { name : 'private_key_jwt', value: 'private_key_jwt'},
     { name : 'none', value: 'none'}
   ];
