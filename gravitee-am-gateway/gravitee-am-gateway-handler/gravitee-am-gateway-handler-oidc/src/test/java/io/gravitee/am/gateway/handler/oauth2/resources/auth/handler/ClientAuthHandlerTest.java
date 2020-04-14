@@ -155,6 +155,18 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldInvoke_clientCredentials_clientSecret_clientSecretJWTTokenAuthMethod() throws Exception {
+        final String clientId = "client-id";
+        Client client = mock(Client.class);
+        when(clientAssertionService.assertClient(eq("type"), eq("myToken"), anyString())).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.POST,
+                "/oauth/token?client_assertion_type=type&client_assertion=myToken",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
     public void shouldNotInvoke_clientCredentials_publicClient() throws Exception {
         final String clientId = "public-client-id";
         Client client = mock(Client.class);

@@ -68,9 +68,12 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
 
     @Override
     public boolean canHandle(Client client, HttpServerRequest request) {
-        if (client != null && ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(client.getTokenEndpointAuthMethod())) {
+        if (client != null && (
+                ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(client.getTokenEndpointAuthMethod()) ||
+                        ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(client.getTokenEndpointAuthMethod()))) {
             return true;
         }
+
         if ((client == null || client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty())
                 && getClientAssertion(request) != null && getClientAssertionType(request) != null) {
             return true;
