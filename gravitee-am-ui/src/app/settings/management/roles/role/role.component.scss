@@ -1,8 +1,8 @@
 table {
+  width: 100%;
   background: transparent;
   .mat-row,
   .mat-header-row {
-    display: flex;
     border-bottom: 1px solid #e2e5e7;
     align-items: center;
     min-height: 48px;
@@ -10,11 +10,18 @@ table {
   }
   .mat-cell,
   .mat-header-cell {
-    flex: 1;
     overflow: hidden;
     word-wrap: break-word;
-    &.center {
+    font-size: 12px;
+    font-weight: bold;
+    &.acl {
+      width: 70px;
       text-align: center;
+    }
+    &.acl-header {
+      width: 70px;
+      text-align: center;
+      background-color: rgb(250, 250, 250);
     }
   }
 }

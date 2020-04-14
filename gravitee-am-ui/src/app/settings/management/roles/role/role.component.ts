@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {NgForm} from '@angular/forms';
+import {MatTableDataSource} from '@angular/material/table';
 import {ActivatedRoute, Router} from '@angular/router';
 import {SnackbarService} from '../../../../services/snackbar.service';
 import {BreadcrumbService} from '../../../../services/breadcrumb.service';
@@ -27,12 +29,9 @@ import {AuthService} from '../../../../services/auth.service';
   styleUrls: ['./role.component.scss']
 })
 export class ManagementRoleComponent implements OnInit {
-  private createPermissions: any[];
-  private readPermissions: any[];
-  private listPermissions: any[];
-  private updatePermissions: any[];
-  private deletePermissions: any[];
+  @ViewChild('roleForm') form: NgForm;
   private deleteMode: boolean;
+  allPermissions: MatTableDataSource<any>;
   role: any;
   formChanged = false;
   permissions: any[];
@@ -44,21 +43,46 @@ export class ManagementRoleComponent implements OnInit {
               private router: Router,
               private breadcrumbService: BreadcrumbService,
               private authService: AuthService,
-              private dialogService: DialogService) { }
+              private dialogService: DialogService) {
+  }
 
   ngOnInit() {
     this.role = this.route.snapshot.data['role'];
     this.role.permissions = this.role.permissions || [];
     this.readonly = this.role.system || (!this.authService.hasPermissions(['organization_role_update']));
     this.deleteMode = this.authService.hasPermissions(['organization_role_delete']);
-    this.initPermissions();
+    this.initPermissionsDatasource();
     this.initBreadcrumb();
   }
 
+  private initPermissionsDatasource() {
+
+    this.allPermissions = new MatTableDataSource(this.role.availablePermissions.map(p => ({
+      permission: p,
+      create: this.role.permissions.includes(p + '_create'),
+      read: this.role.permissions.includes(p + '_read'),
+      list: this.role.permissions.includes(p + '_list'),
+      update: this.role.permissions.includes(p + '_update'),
+      delete: this.role.permissions.includes(p + '_delete')
+    })));
+  }
+
   update() {
+    this.role.permissions = this.allPermissions.data.map(p => {
+      const perms = [];
+      p.create === true ? perms.push(p.permission + '_create') : null;
+      p.read === true ? perms.push(p.permission + '_read') : null;
+      p.list === true ? perms.push(p.permission + '_list') : null;
+      p.update === true ? perms.push(p.permission + '_update') : null;
+      p.delete === true ? perms.push(p.permission + '_delete') : null;
+      return perms;
+    }).reduce((x, y) => x.concat(y), []);
+
     this.organizationService.updateRole(this.role.id, this.role).subscribe(data => {
       this.role = data;
       this.formChanged = false;
+      this.initPermissionsDatasource();
+      this.form.reset(this.role);
       this.snackbarService.open('Role updated');
     });
   }
@@ -81,72 +105,20 @@ export class ManagementRoleComponent implements OnInit {
       })
   }
 
-  changePermission(event) {
-    let permission = event.source.value;
-    if (event.checked) {
-      if (!this.hasPermission(permission)) {
-        this.role.permissions.push(permission);
-      }
-    } else {
-      this.role.permissions.splice(this.role.permissions.indexOf(permission), 1);
-    }
-    this.formChanged = true;
-  }
-
-  hasPermission(permission) {
-    return this.role.permissions.indexOf(permission) != -1;
-  }
-
   changePermissions(event) {
-    let action = event.source.value;
-    let array = this.getPermissions(action);
-    if (event.checked) {
-      array.forEach(p => {
-        if (!this.hasPermission(p)) {
-          this.role.permissions.push(p);
-        }
-      });
-    } else {
-      this.role.permissions = this.role.permissions.filter(p => !array.includes(p));
-    }
+    this.allPermissions.data.forEach(p => p[event.source.value] = event.checked);
     this.formChanged = true;
   }
 
   hasPermissions(action) {
-    let array = this.getPermissions(action);
-    return array.every(elem => this.role.permissions.indexOf(elem) > -1);
-  }
-
-  private initPermissions() {
-    this.createPermissions = this.role.availablePermissions.map(p => p + '_create');
-    this.readPermissions = this.role.availablePermissions.map(p => p + '_read');
-    this.listPermissions = this.role.availablePermissions.map(p => p + '_list');
-    this.updatePermissions = this.role.availablePermissions.map(p => p + '_update');
-    this.deletePermissions = this.role.availablePermissions.map(p => p + '_delete');
-  }
-
-  private getPermissions(action) {
-    let array = [];
-    switch (action) {
-      case 'create':
-        array = this.createPermissions;
-        break;
-      case 'read':
-        array = this.readPermissions;
-        break;
-      case 'list':
-        array = this.listPermissions;
-        break;
-      case 'update':
-        array = this.updatePermissions;
-        break;
-      case 'delete':
-        array = this.deletePermissions;
-    }
-    return array;
+    return this.allPermissions.data.every(p => p[action] === true);
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/roles/'+this.role.id+'(:?.*)?$', this.role.name.toLowerCase());
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/roles/' + this.role.id + '(:?.*)?$', this.role.name.toLowerCase());
+  }
+
+  applyFilter(filterValue) {
+    this.allPermissions.filter = filterValue.trim().toLowerCase();
   }
 }
