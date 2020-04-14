@@ -27,7 +27,7 @@ import java.util.Base64;
  * credentials not intended for handling by end-users) MUST be less than
  * or equal to 2^(-128) and SHOULD be less than or equal to 2^(-160).
  *
- * This random generator use a 160-bit (20 byte) random value that is then URL-safe base64-encoded.
+ * This random generator use a 256-bit (32 byte) random value that is then URL-safe base64-encoded.
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -38,7 +38,7 @@ public final class SecureRandomString {
     private static final Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
 
     public static String generate() {
-        byte[] buffer = new byte[20];
+        byte[] buffer = new byte[32];
         random.nextBytes(buffer);
         return encoder.encodeToString(buffer);
     }
