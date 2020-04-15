@@ -5521,10 +5521,14 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
+								"id": "fc11924c-c3fe-44fd-aa6b-927a339e72fb",
 								"exec": [
-									"pm.test(\"Status code is 404\", function () {",
-									"    pm.response.to.have.status(404);",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    ",
+									"    var body = JSON.parse(responseBody);",
+									"    pm.expect(body).to.have.property('enabled');",
+									"    pm.expect(body.enabled).to.eql(false);",
 									"});"
 								],
 								"type": "text/javascript"

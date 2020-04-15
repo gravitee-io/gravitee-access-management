@@ -28,9 +28,9 @@ import {BreadcrumbService} from "../../../../../../services/breadcrumb.service";
   styleUrls: ['./application.component.scss']
 })
 export class UserApplicationComponent implements OnInit {
-  private application: any;
   private domainId: string;
   private userId: string;
+  application: any;
   clientId: string;
   consents: any[];
   canRevoke: boolean;
