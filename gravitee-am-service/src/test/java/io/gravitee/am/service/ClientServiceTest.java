@@ -43,6 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 
+import static io.gravitee.am.service.impl.ClientServiceImpl.DEFAULT_CLIENT_NAME;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -262,18 +263,57 @@ public class ClientServiceTest {
     @Test
     public void shouldCreate() {
         NewClient newClient = Mockito.mock(NewClient.class);
-        Application createClient = Mockito.mock(Application.class);
+        Application createApplication = Mockito.mock(Application.class);
 
         when(newClient.getClientId()).thenReturn("my-client");
-        when(applicationService.create(any(Application.class))).thenReturn(Single.just(createClient));
+        when(applicationService.create(any(Application.class))).thenReturn(Single.just(createApplication));
 
-        TestObserver testObserver = clientService.create(DOMAIN, newClient).test();
+        TestObserver<Client> testObserver = clientService.create(DOMAIN, newClient).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationService, times(1)).create(any(Application.class));
+        verify(applicationService, times(1)).create(argThat(application -> application.getName().equals(newClient.getClientId())));
+    }
+
+    @Test
+    public void shouldCreate_withoutClientId() {
+        NewClient newClient = Mockito.mock(NewClient.class);
+        Application createApplication = Mockito.mock(Application.class);
+
+        when(newClient.getClientId()).thenReturn(null);
+        when(applicationService.create(any(Application.class))).thenReturn(Single.just(createApplication));
+
+        TestObserver<Client> testObserver = clientService.create(DOMAIN, newClient).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Check the application name is equals to 'Unknown Client' (to avoid having generated uuid as application name).
+        verify(applicationService, times(1)).create(argThat(application -> application.getName().equals(DEFAULT_CLIENT_NAME)));
+    }
+
+    @Test
+    public void shouldCreate_withClientName() {
+        String customClientName = "My custom client name";
+
+        NewClient newClient = Mockito.mock(NewClient.class);
+        Application createApplication = Mockito.mock(Application.class);
+
+        when(newClient.getClientId()).thenReturn(null);
+        when(newClient.getClientName()).thenReturn(customClientName);
+        when(applicationService.create(any(Application.class))).thenReturn(Single.just(createApplication));
+
+        TestObserver<Client> testObserver = clientService.create(DOMAIN, newClient).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Check the application name is customized when client name has been specified.
+        verify(applicationService, times(1)).create(argThat(application -> application.getName().equals(customClientName)));
     }
 
     @Test
@@ -457,7 +497,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    public void update_clientCredentials_ok() {
+    public void   update_clientCredentials_ok() {
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
 
         Client toUpdate = new Client();

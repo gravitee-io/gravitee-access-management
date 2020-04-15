@@ -20,6 +20,7 @@ import {DialogService} from "../../../../../../services/dialog.service";
 import {UserService} from "../../../../../../services/user.service";
 import * as _ from 'lodash';
 import {AuthService} from "../../../../../../services/auth.service";
+import {BreadcrumbService} from "../../../../../../services/breadcrumb.service";
 
 @Component({
   selector: 'app-user-application',
@@ -27,6 +28,7 @@ import {AuthService} from "../../../../../../services/auth.service";
   styleUrls: ['./application.component.scss']
 })
 export class UserApplicationComponent implements OnInit {
+  private application: any;
   private domainId: string;
   private userId: string;
   clientId: string;
@@ -38,15 +40,19 @@ export class UserApplicationComponent implements OnInit {
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
               private userService: UserService,
+              private breadcrumbService: BreadcrumbService,
               private authService: AuthService) {
   }
 
   ngOnInit() {
+    this.application = this.route.snapshot.data['application'];
     this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
     this.userId = this.route.snapshot.parent.params['userId'];
     this.consents = this.route.snapshot.data['consents'];
-    this.clientId = this.consents[0] ? this.consents[0].clientEntity.name : this.route.snapshot.params['clientId'];
+    this.clientId = this.route.snapshot.queryParamMap.get('clientId');
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
+
+    this.initBreadcrumb();
   }
 
   revokeApplication(event) {
@@ -56,7 +62,7 @@ export class UserApplicationComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.userService.revokeConsents(this.domainId, this.userId, this.clientId).subscribe(response => {
-            this.snackbarService.open('Access for application ' + this.clientId + ' revoked');
+            this.snackbarService.open('Access for application ' + this.application.name + ' revoked');
             this.router.navigate(['/domains', this.domainId, 'settings', 'users', this.userId, 'applications']);
           });
         }
@@ -98,4 +104,7 @@ export class UserApplicationComponent implements OnInit {
     };
   }
 
+  initBreadcrumb() {
+    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.userId + '/applications/'+this.application.id+'.*$', this.application.name);
+  }
 }

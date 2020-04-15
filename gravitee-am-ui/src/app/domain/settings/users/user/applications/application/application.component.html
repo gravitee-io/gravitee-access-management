@@ -19,7 +19,7 @@
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to authorized apps</small></a>
   <div>
     <div fxLayout="row" style="align-items: center;">
-      <h1>{{clientId}}</h1>
+      <h1>{{application.name}}</h1>
       <div fxFlex fxLayoutAlign="end">
         <button *ngIf="canRevokeAccess() && canRevoke" style="height: 40px;" mat-stroked-button color="warn" (click)="revokeApplication($event)">Revoke access</button>
       </div>

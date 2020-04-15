@@ -347,10 +347,7 @@ const routes: Routes = [
             },
             children: [
               { path: '', redirectTo: 'profile', pathMatch: 'full' },
-              { path: 'profile', component: UserProfileComponent },
-              { path: 'applications', component: UserApplicationsComponent, resolve: {consents: ConsentsResolver}},
-              { path: 'applications/:clientId', component: UserApplicationComponent, resolve: {consents: ConsentsResolver}},
-              { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
+              { path: 'profile', component: UserProfileComponent }
             ]
           },
           { path: 'groups',
@@ -393,8 +390,7 @@ const routes: Routes = [
             children: [
               { path: '', redirectTo: 'settings', pathMatch: 'full' },
               { path: 'settings', component: GroupSettingsComponent },
-              { path: 'members', component: GroupMembersComponent, resolve: { members : GroupMembersResolver}},
-              { path: 'roles', component: GroupRolesComponent, resolve: { roles : GroupRolesResolver}}
+              { path: 'members', component: GroupMembersComponent, resolve: { members : GroupMembersResolver}}
             ]
           },
           { path: 'roles',
@@ -1100,7 +1096,7 @@ const routes: Routes = [
               { path: '', redirectTo: 'profile', pathMatch: 'full' },
               { path: 'profile', component: UserProfileComponent },
               { path: 'applications', component: UserApplicationsComponent, resolve: {consents: ConsentsResolver}},
-              { path: 'applications/:clientId', component: UserApplicationComponent, resolve: {consents: ConsentsResolver}},
+              { path: 'applications/:appId', component: UserApplicationComponent, resolve: {application: ApplicationResolver, consents: ConsentsResolver}},
               { path: 'factors', component: UserFactorsComponent, resolve: {factors: EnrolledFactorsResolver}},
               { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
             ]
