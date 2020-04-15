@@ -16,13 +16,19 @@
 package io.gravitee.am.gateway.vertx;
 
 import io.vertx.core.http.HttpServerOptions;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.ConfigurableEnvironment;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class VertxHttpServerConfiguration {
+public class VertxHttpServerConfiguration implements InitializingBean {
+
+    @Autowired
+    private ConfigurableEnvironment environment;
 
     @Value("${http.port:8092}")
     private int port;
@@ -35,9 +41,6 @@ public class VertxHttpServerConfiguration {
 
     @Value("${http.alpn:false}")
     private boolean alpn;
-
-    @Value("${http.ssl.clientAuth:false}")
-    private boolean clientAuth;
 
     @Value("${http.ssl.keystore.path:#{null}}")
     private String keyStorePath;
@@ -65,6 +68,8 @@ public class VertxHttpServerConfiguration {
 
     @Value("${http.tcpKeepAlive:true}")
     private boolean tcpKeepAlive;
+
+    private ClientAuthMode clientAuth;
 
     public int getPort() {
         return port;
@@ -122,14 +127,6 @@ public class VertxHttpServerConfiguration {
         this.trustStorePath = trustStorePath;
     }
 
-    public boolean isClientAuth() {
-        return clientAuth;
-    }
-
-    public void setClientAuth(boolean clientAuth) {
-        this.clientAuth = clientAuth;
-    }
-
     public boolean isCompressionSupported() {
         return compressionSupported;
     }
@@ -176,5 +173,44 @@ public class VertxHttpServerConfiguration {
 
     public void setTrustStoreType(String trustStoreType) {
         this.trustStoreType = trustStoreType;
+    }
+
+    public ClientAuthMode getClientAuth() {
+        return clientAuth;
+    }
+
+    public void setClientAuth(ClientAuthMode clientAuth) {
+        this.clientAuth = clientAuth;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        String sClientAuthMode = environment.getProperty("http.ssl.clientAuth", ClientAuthMode.NONE.name());
+
+        if (sClientAuthMode.equalsIgnoreCase(Boolean.TRUE.toString())) {
+            clientAuth = ClientAuthMode.REQUIRED;
+        } else if (sClientAuthMode.equalsIgnoreCase(Boolean.FALSE.toString())) {
+            clientAuth = ClientAuthMode.NONE;
+        } else {
+            clientAuth = ClientAuthMode.valueOf(sClientAuthMode.toUpperCase());
+        }
+    }
+
+    public enum ClientAuthMode {
+        /**
+         * No client authentication is requested or required.
+         */
+        NONE,
+
+        /**
+         * Accept authentication if presented by client. If this option is set and the client chooses
+         * not to provide authentication information about itself, the negotiations will continue.
+         */
+        REQUEST,
+
+        /**
+         * Require client to present authentication, if not presented then negotiations will be declined.
+         */
+        REQUIRED
     }
 }

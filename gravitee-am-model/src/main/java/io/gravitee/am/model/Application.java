@@ -283,6 +283,11 @@ public class Application implements Resource {
                 client.setEnhanceScopesWithUserPermissions(oAuthSettings.isEnhanceScopesWithUserPermissions());
                 client.setScopeApprovals(oAuthSettings.getScopeApprovals());
                 client.setTokenCustomClaims(oAuthSettings.getTokenCustomClaims());
+                client.setTlsClientAuthSubjectDn(oAuthSettings.getTlsClientAuthSubjectDn());
+                client.setTlsClientAuthSanDns(oAuthSettings.getTlsClientAuthSanDns());
+                client.setTlsClientAuthSanEmail(oAuthSettings.getTlsClientAuthSanEmail());
+                client.setTlsClientAuthSanIp(oAuthSettings.getTlsClientAuthSanIp());
+                client.setTlsClientAuthSanUri(oAuthSettings.getTlsClientAuthSanUri());
             }
 
             if (applicationSettings.getAdvanced() != null) {

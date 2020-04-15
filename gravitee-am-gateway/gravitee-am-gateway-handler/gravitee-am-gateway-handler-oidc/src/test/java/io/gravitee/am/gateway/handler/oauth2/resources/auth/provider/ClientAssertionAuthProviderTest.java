@@ -78,7 +78,6 @@ public class ClientAssertionAuthProviderTest {
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
 
-
     @Test
     public void unauthorized_invalidClient_assertion_type() throws Exception {
         Client client = mock(Client.class);

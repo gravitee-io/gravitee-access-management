@@ -57,7 +57,11 @@ public class VertxHttpServerFactory implements FactoryBean<HttpServer> {
             options.setSsl(httpServerConfiguration.isSecured());
             options.setUseAlpn(httpServerConfiguration.isAlpn());
 
-            if (httpServerConfiguration.isClientAuth()) {
+            if (httpServerConfiguration.getClientAuth() == VertxHttpServerConfiguration.ClientAuthMode.NONE) {
+                options.setClientAuth(ClientAuth.NONE);
+            } else if (httpServerConfiguration.getClientAuth() == VertxHttpServerConfiguration.ClientAuthMode.REQUEST) {
+                options.setClientAuth(ClientAuth.REQUEST);
+            } else if (httpServerConfiguration.getClientAuth() == VertxHttpServerConfiguration.ClientAuthMode.REQUIRED) {
                 options.setClientAuth(ClientAuth.REQUIRED);
             }
 

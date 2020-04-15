@@ -43,6 +43,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenS
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.service.AbstractService;
@@ -125,6 +126,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private AuthenticationFlowHandler authenticationFlowHandler;
 
+    @Autowired
+    private JWKService jwkService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -149,7 +153,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         final Router oauth2Router = Router.router(vertx);
 
         // client auth handler
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService);
 
         // static handler
         staticHandler(oauth2Router);

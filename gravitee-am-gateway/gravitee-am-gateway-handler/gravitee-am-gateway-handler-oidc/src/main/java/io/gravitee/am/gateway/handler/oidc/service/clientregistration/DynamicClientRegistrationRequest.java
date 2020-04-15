@@ -132,7 +132,6 @@ public class DynamicClientRegistrationRequest {
     @JsonProperty("request_uris")
     private Optional<List<String>> requestUris;
 
-
     /*******************************************************************************
      * Oauth2 metadata in addition to RFC specification
      * https://tools.ietf.org/html/rfc7591#section-2
@@ -151,6 +150,25 @@ public class DynamicClientRegistrationRequest {
 
     @JsonProperty("software_statement")
     private Optional<String> softwareStatement; //Should be JWT
+
+    /*******************************************************************************
+     * Client certificate authentication metadata in addition to RFC specification
+     * https://tools.ietf.org/html/rfc8705#section-2.1.2
+     ********************************************************************************/
+    @JsonProperty("tls_client_auth_subject_dn")
+    private Optional<String> tlsClientAuthSubjectDn;
+
+    @JsonProperty("tls_client_auth_san_dns")
+    private Optional<String> tlsClientAuthSanDns;
+
+    @JsonProperty("tls_client_auth_san_uri")
+    private Optional<String> tlsClientAuthSanUri;
+
+    @JsonProperty("tls_client_auth_san_ip")
+    private Optional<String> tlsClientAuthSanIp;
+
+    @JsonProperty("tls_client_auth_san_email")
+    private Optional<String> tlsClientAuthSanEmail;
 
     // GETTER AND SETTERS //
 
@@ -430,6 +448,46 @@ public class DynamicClientRegistrationRequest {
         this.softwareStatement = softwareStatement;
     }
 
+    public Optional<String> getTlsClientAuthSubjectDn() {
+        return tlsClientAuthSubjectDn;
+    }
+
+    public void setTlsClientAuthSubjectDn(Optional<String> tlsClientAuthSubjectDn) {
+        this.tlsClientAuthSubjectDn = tlsClientAuthSubjectDn;
+    }
+
+    public Optional<String> getTlsClientAuthSanDns() {
+        return tlsClientAuthSanDns;
+    }
+
+    public void setTlsClientAuthSanDns(Optional<String> tlsClientAuthSanDns) {
+        this.tlsClientAuthSanDns = tlsClientAuthSanDns;
+    }
+
+    public Optional<String> getTlsClientAuthSanUri() {
+        return tlsClientAuthSanUri;
+    }
+
+    public void setTlsClientAuthSanUri(Optional<String> tlsClientAuthSanUri) {
+        this.tlsClientAuthSanUri = tlsClientAuthSanUri;
+    }
+
+    public Optional<String> getTlsClientAuthSanIp() {
+        return tlsClientAuthSanIp;
+    }
+
+    public void setTlsClientAuthSanIp(Optional<String> tlsClientAuthSanIp) {
+        this.tlsClientAuthSanIp = tlsClientAuthSanIp;
+    }
+
+    public Optional<String> getTlsClientAuthSanEmail() {
+        return tlsClientAuthSanEmail;
+    }
+
+    public void setTlsClientAuthSanEmail(Optional<String> tlsClientAuthSanEmail) {
+        this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
+    }
+
     @Override
     public String toString() {
         return "ClientPayload{clientName='" + (clientName!=null?clientName.orElse(""):"") + "\'}";
@@ -475,6 +533,13 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setSoftwareVersion, this.getSoftwareVersion());
         SetterUtils.safeSet(client::setSoftwareStatement, this.getSoftwareStatement());
 
+        /* set client certificate-based authentication */
+        SetterUtils.safeSet(client::setTlsClientAuthSubjectDn, this.getTlsClientAuthSubjectDn());
+        SetterUtils.safeSet(client::setTlsClientAuthSanDns, this.getTlsClientAuthSanDns());
+        SetterUtils.safeSet(client::setTlsClientAuthSanEmail, this.getTlsClientAuthSanEmail());
+        SetterUtils.safeSet(client::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
+        SetterUtils.safeSet(client::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
+
         return client;
     }
 
@@ -517,6 +582,13 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.set(client::setSoftwareId, this.getSoftwareId());
         SetterUtils.set(client::setSoftwareVersion, this.getSoftwareVersion());
         SetterUtils.set(client::setSoftwareStatement, this.getSoftwareStatement());
+
+        /* set client certificate-based authentication */
+        SetterUtils.safeSet(client::setTlsClientAuthSubjectDn, this.getTlsClientAuthSubjectDn());
+        SetterUtils.safeSet(client::setTlsClientAuthSanDns, this.getTlsClientAuthSanDns());
+        SetterUtils.safeSet(client::setTlsClientAuthSanEmail, this.getTlsClientAuthSanEmail());
+        SetterUtils.safeSet(client::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
+        SetterUtils.safeSet(client::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
 
         return client;
     }

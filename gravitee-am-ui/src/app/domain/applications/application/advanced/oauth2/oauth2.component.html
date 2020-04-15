@@ -63,6 +63,40 @@
           </div>
         </div>
 
+        <div class="gv-form-section" *ngIf="applicationOauthSettings.tokenEndpointAuthMethod === 'tls_client_auth'">
+          <div class="gv-form-section-title">
+            <h5>Advanced MTLS Client authentication</h5>
+            <small>Mutual TLS for OAuth Client Authentication requires a single subject distinguished name (DN) or a single subject alternative name (SAN) to authenticate the client. Only one subject name value of any type is used for each client.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <div fxLayout="column" fxLayoutGap="10px">
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+                <input matInput type="text" placeholder="subject distinguished name" name="tlsClientAuthSubjectDn" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.tlsClientAuthSubjectDn" [disabled]="readonly" />
+                <mat-hint>The expected subject distinguished name of the certificate (as defined in RFC4514)</mat-hint>
+              </mat-form-field>
+            </div>
+            <div fxLayout="column" fxLayoutGap="10px">
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+                <input matInput type="text" placeholder="dNSName SAN entry" name="tlsClientAuthSanDns" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.tlsClientAuthSanDns" [disabled]="readonly" />
+                <mat-hint>The expected dNSName SAN entry in the certificate</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+                <input matInput type="text" placeholder="uniformResourceIdentifier SAN entry" name="tlsClientAuthSanUri" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.tlsClientAuthSanUri" [disabled]="readonly" />
+                <mat-hint>The expected uniformResourceIdentifier SAN entry in the certificate</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+                <input matInput type="text" placeholder="iPAddress SAN entry" name="tlsClientAuthSanIp" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.tlsClientAuthSanIp" [disabled]="readonly" />
+                <mat-hint>The expected iPAddress SAN entry in the certificate</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+                <input matInput type="text" placeholder="rfc822Name SAN entry" name="tlsClientAuthSanEmail" (ngModelChange)="modelChanged($event)" [(ngModel)]="applicationOauthSettings.tlsClientAuthSanEmail" [disabled]="readonly" />
+                <mat-hint>The expected rfc822Name SAN entry in the certificate</mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
         <div class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Scopes</h5>

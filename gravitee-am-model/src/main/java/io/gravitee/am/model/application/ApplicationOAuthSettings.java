@@ -226,6 +226,16 @@ public class ApplicationOAuthSettings {
      */
     private List<TokenClaim> tokenCustomClaims;
 
+    private String tlsClientAuthSubjectDn;
+
+    private String tlsClientAuthSanDns;
+
+    private String tlsClientAuthSanUri;
+
+    private String tlsClientAuthSanIp;
+
+    private String tlsClientAuthSanEmail;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -277,6 +287,11 @@ public class ApplicationOAuthSettings {
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
         this.idTokenValiditySeconds = other.idTokenValiditySeconds;
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims): null;
+        this.tlsClientAuthSubjectDn = other.tlsClientAuthSubjectDn;
+        this.tlsClientAuthSanDns = other.tlsClientAuthSanDns;
+        this.tlsClientAuthSanEmail = other.tlsClientAuthSanEmail;
+        this.tlsClientAuthSanIp = other.tlsClientAuthSanIp;
+        this.tlsClientAuthSanUri = other.tlsClientAuthSanUri;
     }
 
     public String getClientId() {
@@ -653,5 +668,45 @@ public class ApplicationOAuthSettings {
 
     public void setTokenCustomClaims(List<TokenClaim> tokenCustomClaims) {
         this.tokenCustomClaims = tokenCustomClaims;
+    }
+
+    public String getTlsClientAuthSubjectDn() {
+        return tlsClientAuthSubjectDn;
+    }
+
+    public void setTlsClientAuthSubjectDn(String tlsClientAuthSubjectDn) {
+        this.tlsClientAuthSubjectDn = tlsClientAuthSubjectDn;
+    }
+
+    public String getTlsClientAuthSanDns() {
+        return tlsClientAuthSanDns;
+    }
+
+    public void setTlsClientAuthSanDns(String tlsClientAuthSanDns) {
+        this.tlsClientAuthSanDns = tlsClientAuthSanDns;
+    }
+
+    public String getTlsClientAuthSanUri() {
+        return tlsClientAuthSanUri;
+    }
+
+    public void setTlsClientAuthSanUri(String tlsClientAuthSanUri) {
+        this.tlsClientAuthSanUri = tlsClientAuthSanUri;
+    }
+
+    public String getTlsClientAuthSanIp() {
+        return tlsClientAuthSanIp;
+    }
+
+    public void setTlsClientAuthSanIp(String tlsClientAuthSanIp) {
+        this.tlsClientAuthSanIp = tlsClientAuthSanIp;
+    }
+
+    public String getTlsClientAuthSanEmail() {
+        return tlsClientAuthSanEmail;
+    }
+
+    public void setTlsClientAuthSanEmail(String tlsClientAuthSanEmail) {
+        this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
     }
 }

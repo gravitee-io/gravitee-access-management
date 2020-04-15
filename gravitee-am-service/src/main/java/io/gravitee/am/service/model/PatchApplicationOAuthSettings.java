@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -75,6 +76,11 @@ public class PatchApplicationOAuthSettings {
     private Optional<Integer> refreshTokenValiditySeconds;
     private Optional<Integer> idTokenValiditySeconds;
     private Optional<List<TokenClaim>> tokenCustomClaims;
+    private Optional<String> tlsClientAuthSubjectDn;
+    private Optional<String> tlsClientAuthSanDns;
+    private Optional<String> tlsClientAuthSanUri;
+    private Optional<String> tlsClientAuthSanIp;
+    private Optional<String> tlsClientAuthSanEmail;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -428,6 +434,46 @@ public class PatchApplicationOAuthSettings {
         this.tokenCustomClaims = tokenCustomClaims;
     }
 
+    public Optional<String> getTlsClientAuthSubjectDn() {
+        return tlsClientAuthSubjectDn;
+    }
+
+    public void setTlsClientAuthSubjectDn(Optional<String> tlsClientAuthSubjectDn) {
+        this.tlsClientAuthSubjectDn = tlsClientAuthSubjectDn;
+    }
+
+    public Optional<String> getTlsClientAuthSanDns() {
+        return tlsClientAuthSanDns;
+    }
+
+    public void setTlsClientAuthSanDns(Optional<String> tlsClientAuthSanDns) {
+        this.tlsClientAuthSanDns = tlsClientAuthSanDns;
+    }
+
+    public Optional<String> getTlsClientAuthSanUri() {
+        return tlsClientAuthSanUri;
+    }
+
+    public void setTlsClientAuthSanUri(Optional<String> tlsClientAuthSanUri) {
+        this.tlsClientAuthSanUri = tlsClientAuthSanUri;
+    }
+
+    public Optional<String> getTlsClientAuthSanIp() {
+        return tlsClientAuthSanIp;
+    }
+
+    public void setTlsClientAuthSanIp(Optional<String> tlsClientAuthSanIp) {
+        this.tlsClientAuthSanIp = tlsClientAuthSanIp;
+    }
+
+    public Optional<String> getTlsClientAuthSanEmail() {
+        return tlsClientAuthSanEmail;
+    }
+
+    public void setTlsClientAuthSanEmail(Optional<String> tlsClientAuthSanEmail) {
+        this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -478,6 +524,11 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setRefreshTokenValiditySeconds, this.getRefreshTokenValiditySeconds());
         SetterUtils.safeSet(toPatch::setIdTokenValiditySeconds, this.getIdTokenValiditySeconds());
         SetterUtils.safeSet(toPatch::setTokenCustomClaims, this.getTokenCustomClaims());
+        SetterUtils.safeSet(toPatch::setTlsClientAuthSubjectDn, this.getTlsClientAuthSubjectDn());
+        SetterUtils.safeSet(toPatch::setTlsClientAuthSanDns, this.getTlsClientAuthSanDns());
+        SetterUtils.safeSet(toPatch::setTlsClientAuthSanEmail, this.getTlsClientAuthSanEmail());
+        SetterUtils.safeSet(toPatch::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
+        SetterUtils.safeSet(toPatch::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
 
         return toPatch;
     }
