@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -656,9 +657,11 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> validateTokenEndpointAuthMethod(Application application) {
-        String tokenEndpointAuthMethod = application.getSettings().getOauth().getTokenEndpointAuthMethod();
-        if (ApplicationType.SERVICE.equals(application.getType()) && (tokenEndpointAuthMethod != null && ClientAuthenticationMethod.NONE.equals(tokenEndpointAuthMethod))) {
-            return Single.error(new InvalidClientMetadataException("Invalid token_endpoint_auth_method for service application"));
+        ApplicationOAuthSettings oauthSettings = application.getSettings().getOauth();
+        String tokenEndpointAuthMethod = oauthSettings.getTokenEndpointAuthMethod();
+        if ((ApplicationType.SERVICE.equals(application.getType()) || (oauthSettings.getGrantTypes() != null && oauthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)))
+                && (tokenEndpointAuthMethod != null && ClientAuthenticationMethod.NONE.equals(tokenEndpointAuthMethod))) {
+            return Single.error(new InvalidClientMetadataException("Invalid token_endpoint_auth_method for service application (client_credentials grant type)"));
         }
         return Single.just(application);
     }
