@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 import {Component, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import {NgForm} from '@angular/forms';
+import {MatDialog} from '@angular/material';
+import {MatDialogRef} from '@angular/material/dialog';
+import {ActivatedRoute} from '@angular/router';
+import {ApplicationService} from '../../../../../services/application.service';
+import {SnackbarService} from '../../../../../services/snackbar.service';
+import {AuthService} from '../../../../../services/auth.service';
 import * as _ from 'lodash';
-import * as moment from "moment";
-import {MatDialog} from "@angular/material";
-import {ApplicationService} from "../../../../../services/application.service";
-import {SnackbarService} from "../../../../../services/snackbar.service";
-import {NgForm} from "@angular/forms";
-import {MatDialogRef} from "@angular/material/dialog";
-import {AuthService} from "../../../../../services/auth.service";
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-application-oauth2',
@@ -43,11 +43,11 @@ export class ApplicationOAuth2Component implements OnInit {
     { name : 'none', value: 'none'}
   ];
   grantTypes: any[] = [
-    { name: 'AUTHORIZATION CODE', value: 'authorization_code', checked: false },
-    { name: 'IMPLICIT', value: 'implicit', checked: false },
-    { name: 'REFRESH TOKEN', value: 'refresh_token', checked: false },
+    { name: 'AUTHORIZATION CODE', value: 'authorization_code', checked: false, disabled: false },
+    { name: 'IMPLICIT', value: 'implicit', checked: false, disabled: false  },
+    { name: 'REFRESH TOKEN', value: 'refresh_token', checked: false, disabled: false  },
     { name: 'PASSWORD', value: 'password', checked: false },
-    { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false }
+    { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false, disabled: false  }
   ];
   customGrantTypes: any[];
   selectedScopes: any[];
@@ -120,6 +120,11 @@ export class ApplicationOAuth2Component implements OnInit {
   initGrantTypes() {
     this.grantTypes.forEach(grantType => {
       grantType.checked = _.some(this.applicationOauthSettings.grantTypes, authorizedGrantType => authorizedGrantType.toLowerCase() === grantType.value.toLowerCase());
+      if (this.applicationOauthSettings.tokenEndpointAuthMethod &&
+        'none' === this.applicationOauthSettings.tokenEndpointAuthMethod &&
+        'client_credentials' === grantType.value) {
+        grantType.disabled = true;
+      }
     })
   }
 
@@ -128,8 +133,8 @@ export class ApplicationOAuth2Component implements OnInit {
     this.customGrantTypes.forEach(customGrantType => {
       customGrantType.value = customGrantType.grantType + '~' + customGrantType.id;
       customGrantType.checked = _.some(this.applicationOauthSettings.grantTypes, authorizedGrantType => {
-        return authorizedGrantType.toLowerCase() === customGrantType.value.toLowerCase()
-          || (authorizedGrantType.toLowerCase() === customGrantType.grantType && customGrantType.createdAt === oldestExtensionGrant.createdAt);
+        return authorizedGrantType.toLowerCase() === customGrantType.value.toLowerCase() ||
+          (authorizedGrantType.toLowerCase() === customGrantType.grantType && customGrantType.createdAt === oldestExtensionGrant.createdAt);
       });
     });
   }
@@ -142,7 +147,7 @@ export class ApplicationOAuth2Component implements OnInit {
     // Merge with existing scope
     this.selectedScopes = [];
     this.applicationOauthSettings.scopes.forEach(scope => {
-      let definedScope = _.find(this.scopes, {key: scope});
+      const definedScope = _.find(this.scopes, {key: scope});
       if (definedScope) {
         this.selectedScopes.push(definedScope);
       }
@@ -238,18 +243,28 @@ export class ApplicationOAuth2Component implements OnInit {
 
   addClaim(claim) {
     if (claim) {
-      claim.id = Math.random().toString(36).substring(7);
-      this.applicationOauthSettings.tokenCustomClaims.push(claim);
-      this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
-      this.formChanged = true;
+      if (!this.claimExits(claim)) {
+        claim.id = Math.random().toString(36).substring(7);
+        this.applicationOauthSettings.tokenCustomClaims.push(claim);
+        this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open('Claim already exists');
+      }
     }
   }
 
+  claimExits(claim): boolean {
+    return _.find(this.applicationOauthSettings.tokenCustomClaims, function(el) {
+      return el.tokenType === claim.tokenType && el.claimName === claim.claimName;
+    });
+  }
+
   updateClaim(tokenType, event, cell, rowIndex) {
-    let claim = event.target.value;
+    const claim = event.target.value;
     if (claim) {
       this.editing[rowIndex + '-' + cell] = false;
-      let index = _.findIndex(this.applicationOauthSettings.tokenCustomClaims, {id: rowIndex});
+      const index = _.findIndex(this.applicationOauthSettings.tokenCustomClaims, {id: rowIndex});
       this.applicationOauthSettings.tokenCustomClaims[index][cell] = claim;
       this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
       this.formChanged = true;
@@ -265,12 +280,8 @@ export class ApplicationOAuth2Component implements OnInit {
     this.formChanged = true;
   }
 
-  claimExits(tokenType, attribute): boolean {
-    return _.find(this.applicationOauthSettings.tokenCustomClaims, function(el) { return  el.tokenType === tokenType && el.claimName === attribute; })
-  }
-
   claimsIsEmpty() {
-    return this.applicationOauthSettings.tokenCustomClaims.length == 0;
+    return this.applicationOauthSettings.tokenCustomClaims.length === 0;
   }
 
   openDialog(event) {
@@ -280,6 +291,18 @@ export class ApplicationOAuth2Component implements OnInit {
 
   toggleExpandGroup(group) {
     this.table.groupHeader.toggleExpandGroup(group);
+  }
+
+  tokenEndpointAuthMethodChanged(value) {
+    const clientCredentials = this.grantTypes.find(grantType => grantType.value === 'client_credentials');
+    if ('none' === value) {
+      // remove client_credentials flow if 'none' token endpoint auth method is selected
+      clientCredentials.checked = false;
+      clientCredentials.disabled = true;
+    } else {
+      clientCredentials.disabled = false;
+    }
+    this.modelChanged(value);
   }
 
   modelChanged(model) {

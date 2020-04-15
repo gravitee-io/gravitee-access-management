@@ -29,7 +29,7 @@
               <mat-checkbox name="grantTypes"
                             value="{{grantType.value}}"
                             [checked]="grantType.checked"
-                            (change)="selectGrantType($event)" [disabled]="readonly">
+                            (change)="selectGrantType($event)" [disabled]="readonly || grantType.disabled">
                 <span style="font-size: 14px;">{{grantType.name | titlecase}}</span>
               </mat-checkbox>
             </div>
@@ -54,7 +54,7 @@
           <div>
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Type</mat-label>
-              <mat-select placeholder="Change the token auth method" name="tokenAuthMethod" [(ngModel)]="applicationOauthSettings.tokenEndpointAuthMethod" (ngModelChange)="modelChanged($event)" [disabled]="readonly">
+              <mat-select placeholder="Change the token auth method" name="tokenAuthMethod" [(ngModel)]="applicationOauthSettings.tokenEndpointAuthMethod" (ngModelChange)="tokenEndpointAuthMethodChanged($event)" [disabled]="readonly">
                 <mat-option><em>Based on incoming request</em></mat-option>
                 <mat-option *ngFor="let tokenEndpointAuthMethod of tokenEndpointAuthMethods" [value]="tokenEndpointAuthMethod.value" [disabled]="tokenEndpointAuthMethod.disabled">{{ tokenEndpointAuthMethod.name }}</mat-option>
               </mat-select>
