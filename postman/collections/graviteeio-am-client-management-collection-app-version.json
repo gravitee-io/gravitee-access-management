@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "45d26c37-05e8-4478-813d-070eb7e159ed",
+    "_postman_id": "b25d07d1-51e2-4031-9612-207050b989a7",
     "name": "Gravitee.io - AM - Application Management",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -507,6 +507,72 @@
               "response": []
             },
             {
+              "name": "Set type Web application",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"is webapp\", function () {",
+                      "    var body = JSON.parse(responseBody);",
+                      "    pm.expect(body).to.have.property('settings');",
+                      "    pm.expect(body.settings).to.have.property('oauth');",
+                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code', 'password']);",
+                      "    pm.expect(body.settings.oauth.responseTypes).to.eql(['code','code id_token token','code id_token','code token']);",
+                      "    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n\t\"type\": \"WEB\"\n}"
+                },
+                "url": {
+                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
+                  "host": [
+                    "{{management_url}}"
+                  ],
+                  "path": [
+                    "management",
+                    "organizations",
+                    "{{defaultOrganizationId}}",
+                    "environments",
+                    "{{defaultEnvironmentId}}",
+                    "domains",
+                    "{{domain}}",
+                    "applications",
+                    "{{app}}",
+                    "type"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
               "name": "Web application - authorization_code",
               "event": [
                 {
@@ -551,7 +617,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n\t\"type\": \"WEB\",\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+                  "raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
                 },
                 "url": {
                   "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -568,6 +634,72 @@
                     "{{domain}}",
                     "applications",
                     "{{app}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Set type Single Page Application",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"is webapp\", function () {",
+                      "    var body = JSON.parse(responseBody);",
+                      "    pm.expect(body).to.have.property('settings');",
+                      "    pm.expect(body.settings).to.have.property('oauth');",
+                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code', 'implicit']);",
+                      "    pm.expect(body.settings.oauth.responseTypes).to.eql(['code token', 'code id_token', 'code id_token token', 'id_token', 'id_token token', 'code', 'token']);",
+                      "    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n\t\"type\": \"BROWSER\"\n}"
+                },
+                "url": {
+                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
+                  "host": [
+                    "{{management_url}}"
+                  ],
+                  "path": [
+                    "management",
+                    "organizations",
+                    "{{defaultOrganizationId}}",
+                    "environments",
+                    "{{defaultEnvironmentId}}",
+                    "domains",
+                    "{{domain}}",
+                    "applications",
+                    "{{app}}",
+                    "type"
                   ]
                 }
               },
@@ -614,7 +746,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n\t\"type\": \"BROWSER\",\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"implicit\"],\n\t\t\t\"responseTypes\": [\"token\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+                  "raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"implicit\"],\n\t\t\t\"responseTypes\": [\"token\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
                 },
                 "url": {
                   "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -631,6 +763,72 @@
                     "{{domain}}",
                     "applications",
                     "{{app}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Set type Mobile application",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"is webapp\", function () {",
+                      "    var body = JSON.parse(responseBody);",
+                      "    pm.expect(body).to.have.property('settings');",
+                      "    pm.expect(body.settings).to.have.property('oauth');",
+                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code', 'implicit', 'password']);",
+                      "    pm.expect(body.settings.oauth.responseTypes).to.eql(['code token', 'code id_token', 'code id_token token', 'id_token', 'id_token token', 'code', 'token']);",
+                      "    pm.expect(body.settings.oauth.applicationType).to.eql('native');",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n\t\"type\": \"NATIVE\"\n}"
+                },
+                "url": {
+                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
+                  "host": [
+                    "{{management_url}}"
+                  ],
+                  "path": [
+                    "management",
+                    "organizations",
+                    "{{defaultOrganizationId}}",
+                    "environments",
+                    "{{defaultEnvironmentId}}",
+                    "domains",
+                    "{{domain}}",
+                    "applications",
+                    "{{app}}",
+                    "type"
                   ]
                 }
               },
@@ -682,7 +880,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n\t\"type\": \"NATIVE\",\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"com.gravitee.app://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\",\"refresh_token\"],\n\t\t\t\"applicationType\": \"native\",\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+                  "raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"com.gravitee.app://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\",\"refresh_token\"],\n\t\t\t\"applicationType\": \"native\",\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
                 },
                 "url": {
                   "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -699,6 +897,72 @@
                     "{{domain}}",
                     "applications",
                     "{{app}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Set type Server application",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"is webapp\", function () {",
+                      "    var body = JSON.parse(responseBody);",
+                      "    pm.expect(body).to.have.property('settings');",
+                      "    pm.expect(body.settings).to.have.property('oauth');",
+                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['client_credentials']);",
+                      "    pm.expect(body.settings.oauth.responseTypes).to.eql([]);",
+                      "    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n\t\"type\": \"SERVICE\"\n}"
+                },
+                "url": {
+                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
+                  "host": [
+                    "{{management_url}}"
+                  ],
+                  "path": [
+                    "management",
+                    "organizations",
+                    "{{defaultOrganizationId}}",
+                    "environments",
+                    "{{defaultEnvironmentId}}",
+                    "domains",
+                    "{{domain}}",
+                    "applications",
+                    "{{app}}",
+                    "type"
                   ]
                 }
               },
@@ -750,7 +1014,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n\t\"type\": \"SERVICE\",\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t \"redirectUris\": [],\n\t\t\t  \"grantTypes\": [\"client_credentials\"],\n\t\t\t  \"responseTypes\": [],\n\t\t\t  \"applicationType\": \"web\",\n\t\t\t  \"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+                  "raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t \"redirectUris\": [],\n\t\t\t  \"grantTypes\": [\"client_credentials\"],\n\t\t\t  \"responseTypes\": [],\n\t\t\t  \"applicationType\": \"web\",\n\t\t\t  \"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
                 },
                 "url": {
                   "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",

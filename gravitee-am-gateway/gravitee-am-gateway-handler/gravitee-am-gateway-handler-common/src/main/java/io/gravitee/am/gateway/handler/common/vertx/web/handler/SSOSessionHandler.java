@@ -152,7 +152,7 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
             }
 
             // both clients are sharing the same provider, continue
-            if (requestedClient.getIdentities() == null || requestedClient.getIdentities().contains(user.getSource())) {
+            if (requestedClient.getIdentities() != null && requestedClient.getIdentities().contains(user.getSource())) {
                 return Completable.complete();
             }
 
