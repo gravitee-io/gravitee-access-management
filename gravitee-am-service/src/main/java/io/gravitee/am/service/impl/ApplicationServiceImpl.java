@@ -192,7 +192,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
-        LOGGER.debug("Find application by domain: {} and client_id", domain, clientId);
+        LOGGER.debug("Find application by domain: {} and client_id {}", domain, clientId);
         return applicationRepository.findByDomainAndClientId(domain, clientId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find an application using its domain: {} and client_id : {}", domain, clientId, ex);

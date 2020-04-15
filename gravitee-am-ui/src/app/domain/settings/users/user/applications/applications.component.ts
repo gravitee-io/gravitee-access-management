@@ -47,7 +47,7 @@ export class UserApplicationsComponent implements OnInit {
     this.user = this.route.snapshot.parent.data['user'];
     this.consents = _.sortBy(this.route.snapshot.data['consents'], 'updatedAt').reverse();
     this.appConsentsGrouped  = _.groupBy(this.consents, 'clientId');
-    this.appConsents = _.sortedUniqBy(this.consents, 'clientId');
+    this.appConsents = _.uniqBy(this.consents, 'clientId');
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
   }
 
@@ -62,7 +62,7 @@ export class UserApplicationsComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.userService.revokeConsents(this.domainId, this.user.id, consent.clientId).subscribe(response => {
-            this.snackbarService.open('Access for application '+ consent.clientId + ' revoked');
+            this.snackbarService.open('Access for application '+ consent.clientEntity.name + ' revoked');
             this.loadConsents();
           });
         }

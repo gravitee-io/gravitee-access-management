@@ -56,6 +56,7 @@ import java.util.stream.Collectors;
 @Component
 public class ClientServiceImpl implements ClientService {
 
+    public static final String DEFAULT_CLIENT_NAME = "Unknown Client";
     private final Logger LOGGER = LoggerFactory.getLogger(ClientServiceImpl.class);
 
     @Autowired
@@ -264,17 +265,26 @@ public class ClientServiceImpl implements ClientService {
             return Single.error(new InvalidClientMetadataException("No domain set on client"));
         }
 
+        boolean clientIdGenerated = false;
+
         /* openid response metadata */
         client.setId(RandomString.generate());
         //client_id & client_secret may be already informed if created through UI
         if(client.getClientId()==null) {
             client.setClientId(SecureRandomString.generate());
+            clientIdGenerated = true;
         }
         if(client.getClientSecret()==null || client.getClientSecret().trim().isEmpty()) {
             client.setClientSecret(SecureRandomString.generate());
         }
         if(client.getClientName()==null || client.getClientName().trim().isEmpty()) {
-            client.setClientName("Unknown Client");
+
+            if(clientIdGenerated) {
+                client.setClientName(DEFAULT_CLIENT_NAME);
+            } else {
+                // ClientId has been provided by user, reuse it as clientName.
+                client.setClientName(client.getClientId());
+            }
         }
 
         /* GRAVITEE.IO custom fields */
@@ -335,7 +345,7 @@ public class ClientServiceImpl implements ClientService {
         application.setCreatedAt(client.getCreatedAt());
         application.setUpdatedAt(client.getUpdatedAt());
         // set application name
-        application.setName(client.getClientName() != null ? client.getClientName() : client.getClientId());
+        application.setName(client.getClientName());
         // set application type
         application.setType(getType(client));
         // set application settings
