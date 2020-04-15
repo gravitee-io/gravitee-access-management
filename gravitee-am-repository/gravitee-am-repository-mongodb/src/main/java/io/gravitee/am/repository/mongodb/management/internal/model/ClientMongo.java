@@ -121,6 +121,16 @@ public class ClientMongo extends Auditable {
 
     private int idTokenValiditySeconds;
 
+    private String tlsClientAuthSubjectDn;
+
+    private String tlsClientAuthSanDns;
+
+    private String tlsClientAuthSanUri;
+
+    private String tlsClientAuthSanIp;
+
+    private String tlsClientAuthSanEmail;
+
     /**
      * Security domain associated to the client
      */
@@ -588,6 +598,46 @@ public class ClientMongo extends Auditable {
 
     public void setMetadata(Document metadata) {
         this.metadata = metadata;
+    }
+
+    public String getTlsClientAuthSubjectDn() {
+        return tlsClientAuthSubjectDn;
+    }
+
+    public void setTlsClientAuthSubjectDn(String tlsClientAuthSubjectDn) {
+        this.tlsClientAuthSubjectDn = tlsClientAuthSubjectDn;
+    }
+
+    public String getTlsClientAuthSanDns() {
+        return tlsClientAuthSanDns;
+    }
+
+    public void setTlsClientAuthSanDns(String tlsClientAuthSanDns) {
+        this.tlsClientAuthSanDns = tlsClientAuthSanDns;
+    }
+
+    public String getTlsClientAuthSanUri() {
+        return tlsClientAuthSanUri;
+    }
+
+    public void setTlsClientAuthSanUri(String tlsClientAuthSanUri) {
+        this.tlsClientAuthSanUri = tlsClientAuthSanUri;
+    }
+
+    public String getTlsClientAuthSanIp() {
+        return tlsClientAuthSanIp;
+    }
+
+    public void setTlsClientAuthSanIp(String tlsClientAuthSanIp) {
+        this.tlsClientAuthSanIp = tlsClientAuthSanIp;
+    }
+
+    public String getTlsClientAuthSanEmail() {
+        return tlsClientAuthSanEmail;
+    }
+
+    public void setTlsClientAuthSanEmail(String tlsClientAuthSanEmail) {
+        this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
     }
 
     @Override

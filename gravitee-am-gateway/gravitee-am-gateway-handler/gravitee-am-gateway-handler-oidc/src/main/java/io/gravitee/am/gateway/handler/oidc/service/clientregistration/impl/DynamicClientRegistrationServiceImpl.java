@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
@@ -279,7 +280,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateUserinfoSigningAlgorithm)
                 .flatMap(this::validateUserinfoEncryptionAlgorithm)
                 .flatMap(this::validateIdTokenSigningAlgorithm)
-                .flatMap(this::validateIdTokenEncryptionAlgorithm);
+                .flatMap(this::validateIdTokenEncryptionAlgorithm)
+                .flatMap(this::validateTlsClientAuth)
+                .flatMap(this::validateSelfSignedClientAuth);
     }
 
     /**
@@ -507,6 +510,82 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             request.setScope(Optional.of(String.join(SCOPE_DELIMITER,domain.getOidc().getClientRegistrationSettings().getDefaultScopes())));
         }
 
+        return Single.just(request);
+    }
+
+    /**
+     * <p>
+     *    A client using the "tls_client_auth" authentication method MUST use exactly one of the
+     *    below metadata parameters to indicate the certificate subject value that the authorization server is
+     *    to expect when authenticating the respective client.
+     * </p>
+     * <a href="https://tools.ietf.org/html/rfc8705#section-2.1.2">Client Registration Metadata</a>
+     *
+     * @param request DynamicClientRegistrationRequest
+     * @return DynamicClientRegistrationRequest
+     */
+    private Single<DynamicClientRegistrationRequest> validateTlsClientAuth(DynamicClientRegistrationRequest request) {
+        if(request.getTokenEndpointAuthMethod() != null &&
+                request.getTokenEndpointAuthMethod().isPresent() &&
+                ClientAuthenticationMethod.TLS_CLIENT_AUTH.equalsIgnoreCase(request.getTokenEndpointAuthMethod().get())) {
+
+            if ((request.getTlsClientAuthSubjectDn() == null || ! request.getTlsClientAuthSubjectDn().isPresent()) &&
+                    (request.getTlsClientAuthSanDns() == null || ! request.getTlsClientAuthSanDns().isPresent()) &&
+                    (request.getTlsClientAuthSanIp() == null || ! request.getTlsClientAuthSanIp().isPresent()) &&
+                    (request.getTlsClientAuthSanEmail() == null || ! request.getTlsClientAuthSanEmail().isPresent()) &&
+                    (request.getTlsClientAuthSanUri() == null || ! request.getTlsClientAuthSanUri().isPresent())) {
+                return Single.error(new InvalidClientMetadataException("Missing TLS parameter for tls_client_auth."));
+            }
+
+            if (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent() && (
+                    request.getTlsClientAuthSanDns().isPresent() || request.getTlsClientAuthSanEmail().isPresent() ||
+                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+            } else if (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent() && (
+                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanEmail().isPresent() ||
+                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+            } else if (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent() && (
+                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanDns().isPresent() ||
+                            request.getTlsClientAuthSanEmail().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+            } else if (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent() && (
+                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanDns().isPresent() ||
+                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+            } else if (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent() && (
+                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanDns().isPresent() ||
+                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanEmail().isPresent())) {
+                return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+            }
+        }
+
+        return Single.just(request);
+    }
+
+    /**
+     * <p>
+     *    This method of mutual-TLS OAuth client authentication is intended to
+     *    support client authentication using self-signed certificates.  As a
+     *    prerequisite, the client registers its X.509 certificates (using
+     *    "jwks" defined in [RFC7591]) or a reference to a trusted source for
+     *    its X.509 certificates (using "jwks_uri" from [RFC7591]) with the
+     *    authorization server.
+     * </p>
+     * <a href="https://tools.ietf.org/html/rfc8705#section-2.2.2">Client Registration Metadata</a>
+     *
+     * @param request DynamicClientRegistrationRequest
+     * @return DynamicClientRegistrationRequest
+     */
+    private Single<DynamicClientRegistrationRequest> validateSelfSignedClientAuth(DynamicClientRegistrationRequest request) {
+        if (request.getTokenEndpointAuthMethod() != null &&
+                request.getTokenEndpointAuthMethod().isPresent() &&
+                ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equalsIgnoreCase(request.getTokenEndpointAuthMethod().get())) {
+            if ((request.getJwks() == null || !request.getJwks().isPresent()) &&
+                    (request.getJwksUri() == null || !request.getJwksUri().isPresent())) {
+                return Single.error(new InvalidClientMetadataException("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri."));
+            }
+        }
         return Single.just(request);
     }
 

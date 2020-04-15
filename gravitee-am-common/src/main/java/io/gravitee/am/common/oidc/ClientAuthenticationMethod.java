@@ -19,8 +19,10 @@ package io.gravitee.am.common.oidc;
  * OpenID Connect Client Authentication methods
  *
  * See <a href="https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication">9. Client Authentication/a>
+ * See <a href="https://tools.ietf.org/html/rfc8705#section-2">2.  Mutual TLS for OAuth Client Authentication</a>
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface ClientAuthenticationMethod {
@@ -52,4 +54,14 @@ public interface ClientAuthenticationMethod {
      * The Client does not authenticate itself at the Token Endpoint, either because it uses only the Implicit Flow (and so does not use the Token Endpoint) or because it is a Public Client with no Client Secret or other authentication mechanism.
      */
     String NONE = "none";
+
+    /**
+     * Utilizing a PKI client certificate used in a TLS connection.
+     */
+    String TLS_CLIENT_AUTH = "tls_client_auth";
+
+    /**
+     * Utilizing a self-signed client certificate used in a TLS connection.
+     */
+    String SELF_SIGNED_TLS_CLIENT_AUTH = "self_signed_tls_client_auth";
 }

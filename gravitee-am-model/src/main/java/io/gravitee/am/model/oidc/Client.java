@@ -33,14 +33,13 @@ import java.util.*;
  *
  * See https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata
  */
-
 public class Client implements Cloneable, Resource {
 
     public final static int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
     public final static int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
     public final static int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
-    public final static List<String> DEFAULT_GRANT_TYPES =  Arrays.asList(GrantType.AUTHORIZATION_CODE);
-    public final static List<String> DEFAULT_RESPONSE_TYPES = Arrays.asList(ResponseType.CODE);
+    public final static List<String> DEFAULT_GRANT_TYPES = Collections.singletonList(GrantType.AUTHORIZATION_CODE);
+    public final static List<String> DEFAULT_RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
 
     private String id;
 
@@ -132,6 +131,16 @@ public class Client implements Cloneable, Resource {
     private int refreshTokenValiditySeconds = DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS;
 
     private int idTokenValiditySeconds = DEFAULT_ID_TOKEN_VALIDITY_SECONDS;
+
+    private String tlsClientAuthSubjectDn;
+
+    private String tlsClientAuthSanDns;
+
+    private String tlsClientAuthSanUri;
+
+    private String tlsClientAuthSanIp;
+
+    private String tlsClientAuthSanEmail;
 
     /**
      * Security domain associated to the client
@@ -699,6 +708,46 @@ public class Client implements Cloneable, Resource {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
+    }
+
+    public String getTlsClientAuthSubjectDn() {
+        return tlsClientAuthSubjectDn;
+    }
+
+    public void setTlsClientAuthSubjectDn(String tlsClientAuthSubjectDn) {
+        this.tlsClientAuthSubjectDn = tlsClientAuthSubjectDn;
+    }
+
+    public String getTlsClientAuthSanDns() {
+        return tlsClientAuthSanDns;
+    }
+
+    public void setTlsClientAuthSanDns(String tlsClientAuthSanDns) {
+        this.tlsClientAuthSanDns = tlsClientAuthSanDns;
+    }
+
+    public String getTlsClientAuthSanUri() {
+        return tlsClientAuthSanUri;
+    }
+
+    public void setTlsClientAuthSanUri(String tlsClientAuthSanUri) {
+        this.tlsClientAuthSanUri = tlsClientAuthSanUri;
+    }
+
+    public String getTlsClientAuthSanIp() {
+        return tlsClientAuthSanIp;
+    }
+
+    public void setTlsClientAuthSanIp(String tlsClientAuthSanIp) {
+        this.tlsClientAuthSanIp = tlsClientAuthSanIp;
+    }
+
+    public String getTlsClientAuthSanEmail() {
+        return tlsClientAuthSanEmail;
+    }
+
+    public void setTlsClientAuthSanEmail(String tlsClientAuthSanEmail) {
+        this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
     }
 
     @Override

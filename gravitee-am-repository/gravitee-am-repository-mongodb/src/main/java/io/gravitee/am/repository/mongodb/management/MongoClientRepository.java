@@ -131,6 +131,11 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setTokenCustomClaims(getTokenClaims(clientMongo.getTokenCustomClaims()));
         client.setTemplate(clientMongo.isTemplate());
         client.setMetadata(clientMongo.getMetadata());
+        client.setTlsClientAuthSanDns(clientMongo.getTlsClientAuthSanDns());
+        client.setTlsClientAuthSanEmail(clientMongo.getTlsClientAuthSanEmail());
+        client.setTlsClientAuthSanIp(clientMongo.getTlsClientAuthSanIp());
+        client.setTlsClientAuthSanUri(clientMongo.getTlsClientAuthSanUri());
+        client.setTlsClientAuthSubjectDn(clientMongo.getTlsClientAuthSubjectDn());
         return client;
     }
 
@@ -197,6 +202,11 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setTokenCustomClaims(getMongoTokenClaims(client.getTokenCustomClaims()));
         clientMongo.setTemplate(client.isTemplate());
         clientMongo.setMetadata(client.getMetadata() != null ? new Document((Map)client.getMetadata()) : new Document());
+        clientMongo.setTlsClientAuthSanDns(client.getTlsClientAuthSanDns());
+        clientMongo.setTlsClientAuthSanEmail(client.getTlsClientAuthSanEmail());
+        clientMongo.setTlsClientAuthSanIp(client.getTlsClientAuthSanIp());
+        clientMongo.setTlsClientAuthSanUri(client.getTlsClientAuthSanUri());
+        clientMongo.setTlsClientAuthSubjectDn(client.getTlsClientAuthSubjectDn());
         return clientMongo;
     }
 

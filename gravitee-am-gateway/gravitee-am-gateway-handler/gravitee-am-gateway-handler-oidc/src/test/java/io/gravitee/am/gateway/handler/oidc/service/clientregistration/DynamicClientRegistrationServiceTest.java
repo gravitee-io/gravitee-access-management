@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl;
@@ -478,6 +479,59 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNotComplete();
         assertTrue("Should have only one exception", testObserver.errorCount()==1);
         assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("request_uris:"));
+    }
+
+    @Test
+    public void create_invalidTlsParameters_noTlsField() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.TLS_CLIENT_AUTH));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
+        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().equals("Missing TLS parameter for tls_client_auth."));
+    }
+
+    @Test
+    public void create_invalidTlsParameters_multipleTlsField() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.TLS_CLIENT_AUTH));
+        request.setTlsClientAuthSubjectDn(Optional.of("subject-dn"));
+        request.setTlsClientAuthSanDns(Optional.of("san-dns"));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
+        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().equals("The tls_client_auth must use exactly one of the TLS parameters."));
+    }
+
+    @Test
+    public void create_invalidSelfSignedClient_noJWKS() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertNotComplete();
+        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().equals("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri."));
+    }
+
+    @Test
+    public void create_validSelfSignedClient() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setJwks(Optional.of(new JWKSet()));
+        request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
     }
 
     @Test

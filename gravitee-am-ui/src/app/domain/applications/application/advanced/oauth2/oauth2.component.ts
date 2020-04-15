@@ -40,6 +40,8 @@ export class ApplicationOAuth2Component implements OnInit {
     { name : 'client_secret_post', value: 'client_secret_post'},
     { name : 'client_secret_jwt', value: 'client_secret_jwt'},
     { name : 'private_key_jwt', value: 'private_key_jwt'},
+    { name : 'Mutual TLS - PKI Mutual (tls_client_auth)', value: 'tls_client_auth'},
+    { name : 'Mutual TLS - Self-Signed Certificate Mutual (self_signed_tls_client_auth)', value: 'self_signed_tls_client_auth'},
     { name : 'none', value: 'none'}
   ];
   grantTypes: any[] = [

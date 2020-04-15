@@ -74,6 +74,11 @@ public class ApplicationOAuthSettingsMongo {
     private int refreshTokenValiditySeconds;
     private int idTokenValiditySeconds;
     private List<TokenClaimMongo> tokenCustomClaims;
+    private String tlsClientAuthSubjectDn;
+    private String tlsClientAuthSanDns;
+    private String tlsClientAuthSanUri;
+    private String tlsClientAuthSanIp;
+    private String tlsClientAuthSanEmail;
 
     public String getClientId() {
         return clientId;
@@ -449,5 +454,45 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setTokenCustomClaims(List<TokenClaimMongo> tokenCustomClaims) {
         this.tokenCustomClaims = tokenCustomClaims;
+    }
+
+    public String getTlsClientAuthSubjectDn() {
+        return tlsClientAuthSubjectDn;
+    }
+
+    public void setTlsClientAuthSubjectDn(String tlsClientAuthSubjectDn) {
+        this.tlsClientAuthSubjectDn = tlsClientAuthSubjectDn;
+    }
+
+    public String getTlsClientAuthSanDns() {
+        return tlsClientAuthSanDns;
+    }
+
+    public void setTlsClientAuthSanDns(String tlsClientAuthSanDns) {
+        this.tlsClientAuthSanDns = tlsClientAuthSanDns;
+    }
+
+    public String getTlsClientAuthSanUri() {
+        return tlsClientAuthSanUri;
+    }
+
+    public void setTlsClientAuthSanUri(String tlsClientAuthSanUri) {
+        this.tlsClientAuthSanUri = tlsClientAuthSanUri;
+    }
+
+    public String getTlsClientAuthSanIp() {
+        return tlsClientAuthSanIp;
+    }
+
+    public void setTlsClientAuthSanIp(String tlsClientAuthSanIp) {
+        this.tlsClientAuthSanIp = tlsClientAuthSanIp;
+    }
+
+    public String getTlsClientAuthSanEmail() {
+        return tlsClientAuthSanEmail;
+    }
+
+    public void setTlsClientAuthSanEmail(String tlsClientAuthSanEmail) {
+        this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
     }
 }

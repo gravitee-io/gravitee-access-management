@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
@@ -47,12 +48,15 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     @Mock
     private ClientAssertionService clientAssertionService;
 
+    @Mock
+    private JWKService jwkService;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.post("/oauth/token")
-                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService))
+                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(new ExceptionHandler());
     }

@@ -290,7 +290,11 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setRefreshTokenValiditySeconds(other.getRefreshTokenValiditySeconds());
         applicationOAuthSettingsMongo.setIdTokenValiditySeconds(other.getIdTokenValiditySeconds());
         applicationOAuthSettingsMongo.setTokenCustomClaims(getMongoTokenClaims(other.getTokenCustomClaims()));
-
+        applicationOAuthSettingsMongo.setTlsClientAuthSubjectDn(other.getTlsClientAuthSubjectDn());
+        applicationOAuthSettingsMongo.setTlsClientAuthSanDns(other.getTlsClientAuthSanDns());
+        applicationOAuthSettingsMongo.setTlsClientAuthSanEmail(other.getTlsClientAuthSanEmail());
+        applicationOAuthSettingsMongo.setTlsClientAuthSanIp(other.getTlsClientAuthSanIp());
+        applicationOAuthSettingsMongo.setTlsClientAuthSanUri(other.getTlsClientAuthSanUri());
         return applicationOAuthSettingsMongo;
     }
 
@@ -346,6 +350,11 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setRefreshTokenValiditySeconds(other.getRefreshTokenValiditySeconds());
         applicationOAuthSettings.setIdTokenValiditySeconds(other.getIdTokenValiditySeconds());
         applicationOAuthSettings.setTokenCustomClaims(getTokenClaims(other.getTokenCustomClaims()));
+        applicationOAuthSettings.setTlsClientAuthSubjectDn(other.getTlsClientAuthSubjectDn());
+        applicationOAuthSettings.setTlsClientAuthSanDns(other.getTlsClientAuthSanDns());
+        applicationOAuthSettings.setTlsClientAuthSanEmail(other.getTlsClientAuthSanEmail());
+        applicationOAuthSettings.setTlsClientAuthSanIp(other.getTlsClientAuthSanIp());
+        applicationOAuthSettings.setTlsClientAuthSanUri(other.getTlsClientAuthSanUri());
 
         return applicationOAuthSettings;
     }
