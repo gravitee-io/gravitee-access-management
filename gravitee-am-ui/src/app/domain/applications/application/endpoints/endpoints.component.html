@@ -49,7 +49,7 @@
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>UserInfo endpoint</mat-label>
         <input matInput type="text" name="userInfoEndpoint" [value]="endpoint('/oidc/userinfo')" disabled>
-        <mat-hint>The authorization endpoint is used to obtain an OAuth 2.0 token using either authorization code or implicit grant type</mat-hint>
+        <mat-hint>The user info endpoint allows client applications to retrieve information about an authenticated user</mat-hint>
         <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oidc/userinfo')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
@@ -63,6 +63,12 @@
         <input matInput type="text" name="openIdConfigurationEndpoint" [value]="endpoint('/oidc/.well-known/openid-configuration')" disabled>
         <mat-hint>The OpenId configuration endpoint allows third party systems to get the complete OpenId configuration</mat-hint>
         <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oidc/.well-known/openid-configuration')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+      </mat-form-field>
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label>JWKs endpoint</mat-label>
+        <input matInput type="text" name="jwksEndpoint" [value]="endpoint('/oidc/.well-known/jwks.json')" disabled>
+        <mat-hint>Exposes the JWKs (JSON Web Keys) used to sign or encrypt JWTs issued by the authorization server</mat-hint>
+        <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oidc/.well-known/jwks.json')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>SCIM Configuration endpoint</mat-label>
