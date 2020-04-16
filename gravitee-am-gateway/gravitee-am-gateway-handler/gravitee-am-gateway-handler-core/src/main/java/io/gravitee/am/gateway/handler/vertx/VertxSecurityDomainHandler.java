@@ -102,7 +102,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     }
 
     public String contextPath() {
-        return '/' + domain.getPath();
+        return '/' + domain.getPath() + '/';
     }
 
     private void startRootProtocol() {
@@ -167,22 +167,16 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     }
 
     private void sendNotFound(RoutingContext context) {
-        // Need to check if we are effectively on the right domain before send a "404 - endpoint not found".
-        // Indeed, this handler is invoked by Vertx for '/test/unknown' and '/testOther/unknown' even if we set it on the '/test' context path.
-        if (context.request().path().equals(contextPath()) || context.request().path().startsWith(contextPath() + "/")) {
-            // Send a NOT_FOUND HTTP status code (404)  if domain's sub url didn't match any route.
-            HttpServerResponse serverResponse = context.response();
-            serverResponse.setStatusCode(HttpStatusCode.NOT_FOUND_404);
+        // Send a NOT_FOUND HTTP status code (404)  if domain's sub url didn't match any route.
+        HttpServerResponse serverResponse = context.response();
+        serverResponse.setStatusCode(HttpStatusCode.NOT_FOUND_404);
 
-            String message = environment.getProperty("http.domain.errors[404].message", "No endpoint matches the request URI.");
-            serverResponse.headers().set(HttpHeaders.CONTENT_LENGTH, Integer.toString(message.length()));
-            serverResponse.headers().set(HttpHeaders.CONTENT_TYPE, "text/plain");
-            serverResponse.headers().set(HttpHeaders.CONNECTION, HttpHeadersValues.CONNECTION_CLOSE);
-            serverResponse.write(Buffer.buffer(message));
+        String message = environment.getProperty("http.domain.errors[404].message", "No endpoint matches the request URI.");
+        serverResponse.headers().set(HttpHeaders.CONTENT_LENGTH, Integer.toString(message.length()));
+        serverResponse.headers().set(HttpHeaders.CONTENT_TYPE, "text/plain");
+        serverResponse.headers().set(HttpHeaders.CONNECTION, HttpHeadersValues.CONNECTION_CLOSE);
+        serverResponse.write(Buffer.buffer(message));
 
-            serverResponse.end();
-        } else {
-            context.next();
-        }
+        serverResponse.end();
     }
 }
