@@ -26,6 +26,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.manager.
 import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationProvider;
 import io.gravitee.am.management.handlers.management.api.authentication.web.*;
+import io.gravitee.am.management.handlers.management.api.authentication.web.LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetailsSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,6 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.*;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
