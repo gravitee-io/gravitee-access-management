@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
@@ -44,6 +45,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
@@ -134,6 +136,12 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private RequestObjectService requestObjectService;
 
+    @Autowired
+    private JWTService jwtService;
+
+    @Autowired
+    private JWEService jweService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -180,7 +188,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestResolveHandler())
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService, domain))
                 .handler(new AuthorizationEndpoint(flow))
-                .failureHandler(new AuthorizationRequestFailureHandler(domain));
+                .failureHandler(new AuthorizationRequestFailureHandler(domain, openIDDiscoveryService, jwtService, jweService));
 
         // Authorization consent endpoint
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler(clientSyncService);

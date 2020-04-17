@@ -80,6 +80,10 @@ public interface Parameters {
      * This parameter enables OpenID Connect requests to be passed by reference, rather than by value.
      */
     String REQUEST_URI = "request_uri";
+    /**
+     * This parameter enables OpenID Connect response to be passed in a single, self-contained parameter and to be optionally signed and/or encrypted.
+     */
+    String RESPONSE = "response";
 
     Collection<String> values = Arrays.asList(NONCE, DISPLAY, PROMPT, MAX_AGE, UI_LOCALES, CLAIMS_LOCALES, ID_TOKEN_HINT, LOGIN_HINT, ACR_VALUES, CLAIMS,
                 REGISTRATION, REQUEST, REQUEST_URI);

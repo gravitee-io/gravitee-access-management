@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
+import com.nimbusds.jose.JWSAlgorithm;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
@@ -862,6 +863,30 @@ public class DynamicClientRegistrationServiceTest {
                 client.getJwks() == null &&
                 client.getSectorIdentifierUri() == null
         );
+        verify(clientService, times(1)).create(any());
+    }
+
+    @Test
+    public void create_unsupportedAuthorizationSigningAlgorithmPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setAuthorizationSignedResponseAlg(Optional.of("unknownSigningAlg"));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported authorization signing algorithm");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_undefinedAuthorizationSigningAlgorithmPayload() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> client.getAuthorizationSignedResponseAlg().equals(JWSAlgorithm.RS256.getName()));
         verify(clientService, times(1)).create(any());
     }
 }

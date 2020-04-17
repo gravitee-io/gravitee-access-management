@@ -295,6 +295,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setTlsClientAuthSanEmail(other.getTlsClientAuthSanEmail());
         applicationOAuthSettingsMongo.setTlsClientAuthSanIp(other.getTlsClientAuthSanIp());
         applicationOAuthSettingsMongo.setTlsClientAuthSanUri(other.getTlsClientAuthSanUri());
+        applicationOAuthSettingsMongo.setAuthorizationSignedResponseAlg(other.getAuthorizationSignedResponseAlg());
+        applicationOAuthSettingsMongo.setAuthorizationEncryptedResponseAlg(other.getAuthorizationEncryptedResponseAlg());
+        applicationOAuthSettingsMongo.setAuthorizationEncryptedResponseEnc(other.getAuthorizationEncryptedResponseEnc());
         return applicationOAuthSettingsMongo;
     }
 
@@ -355,6 +358,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setTlsClientAuthSanEmail(other.getTlsClientAuthSanEmail());
         applicationOAuthSettings.setTlsClientAuthSanIp(other.getTlsClientAuthSanIp());
         applicationOAuthSettings.setTlsClientAuthSanUri(other.getTlsClientAuthSanUri());
+        applicationOAuthSettings.setAuthorizationSignedResponseAlg(other.getAuthorizationSignedResponseAlg());
+        applicationOAuthSettings.setAuthorizationEncryptedResponseAlg(other.getAuthorizationEncryptedResponseAlg());
+        applicationOAuthSettings.setAuthorizationEncryptedResponseEnc(other.getAuthorizationEncryptedResponseEnc());
 
         return applicationOAuthSettings;
     }

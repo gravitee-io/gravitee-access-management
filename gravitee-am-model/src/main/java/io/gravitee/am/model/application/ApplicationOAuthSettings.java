@@ -236,6 +236,21 @@ public class ApplicationOAuthSettings {
 
     private String tlsClientAuthSanEmail;
 
+    /**
+     * JWS alg algorithm [JWA] REQUIRED for signing Authorization Responses.
+     */
+    private String authorizationSignedResponseAlg;
+
+    /**
+     * JWE [JWE] alg algorithm [JWA] REQUIRED for encrypting Authorization Responses.
+     */
+    private String authorizationEncryptedResponseAlg;
+
+    /**
+     * JWE enc algorithm [JWA] REQUIRED for encrypting Authorization Responses.
+     */
+    private String authorizationEncryptedResponseEnc;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -292,6 +307,9 @@ public class ApplicationOAuthSettings {
         this.tlsClientAuthSanEmail = other.tlsClientAuthSanEmail;
         this.tlsClientAuthSanIp = other.tlsClientAuthSanIp;
         this.tlsClientAuthSanUri = other.tlsClientAuthSanUri;
+        this.authorizationSignedResponseAlg = other.authorizationSignedResponseAlg;
+        this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
+        this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
     }
 
     public String getClientId() {
@@ -708,5 +726,29 @@ public class ApplicationOAuthSettings {
 
     public void setTlsClientAuthSanEmail(String tlsClientAuthSanEmail) {
         this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
+    }
+
+    public String getAuthorizationSignedResponseAlg() {
+        return authorizationSignedResponseAlg;
+    }
+
+    public void setAuthorizationSignedResponseAlg(String authorizationSignedResponseAlg) {
+        this.authorizationSignedResponseAlg = authorizationSignedResponseAlg;
+    }
+
+    public String getAuthorizationEncryptedResponseAlg() {
+        return authorizationEncryptedResponseAlg;
+    }
+
+    public void setAuthorizationEncryptedResponseAlg(String authorizationEncryptedResponseAlg) {
+        this.authorizationEncryptedResponseAlg = authorizationEncryptedResponseAlg;
+    }
+
+    public String getAuthorizationEncryptedResponseEnc() {
+        return authorizationEncryptedResponseEnc;
+    }
+
+    public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
+        this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
     }
 }

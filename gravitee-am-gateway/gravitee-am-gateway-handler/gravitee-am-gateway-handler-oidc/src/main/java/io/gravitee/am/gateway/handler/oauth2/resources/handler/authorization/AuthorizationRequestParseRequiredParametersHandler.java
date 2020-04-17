@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseModeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.vertx.core.Handler;
@@ -61,6 +62,9 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
         // proceed response type parameter
         parseResponseTypeParameter(context);
 
+        // proceed response mode parameter
+        parseResponseModeParameter(context);
+
         // proceed client_id parameter
         parseClientIdParameter(context);
 
@@ -94,6 +98,20 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
         List<String> responseTypesSupported = openIDDiscoveryService.getConfiguration("/").getResponseTypesSupported();
         if (!responseTypesSupported.contains(responseType)) {
             throw new UnsupportedResponseTypeException("Unsupported response type: " + responseType);
+        }
+    }
+
+    private void parseResponseModeParameter(RoutingContext context) {
+        String responseMode = context.request().getParam(Parameters.RESPONSE_MODE);
+
+        if (responseMode == null) {
+            return;
+        }
+
+        // get supported response modes
+        List<String> responseModesSupported = openIDDiscoveryService.getConfiguration("/").getResponseModesSupported();
+        if (!responseModesSupported.contains(responseMode)) {
+            throw new UnsupportedResponseModeException("Unsupported response mode: " + responseMode);
         }
     }
 

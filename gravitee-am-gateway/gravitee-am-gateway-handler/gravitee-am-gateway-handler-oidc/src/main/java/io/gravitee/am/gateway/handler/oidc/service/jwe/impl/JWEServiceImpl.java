@@ -170,6 +170,30 @@ public class JWEServiceImpl implements JWEService {
                 });
     }
 
+    public Single<String> encryptAuthorization(String signedJwt, Client client) {
+        //Return input without encryption if client does not require JWE or algorithm is set to none
+        if (client.getAuthorizationEncryptedResponseAlg() == null || JWEAlgorithm.NONE.getName().equals(client.getAuthorizationEncryptedResponseAlg())) {
+            return Single.just(signedJwt);
+        }
+
+        JWEObject jwe = new JWEObject(
+                new JWEHeader.Builder(
+                        JWEAlgorithm.parse(client.getAuthorizationEncryptedResponseAlg()),
+                        EncryptionMethod.parse(client.getAuthorizationEncryptedResponseEnc()!=null?client.getAuthorizationEncryptedResponseEnc(): JWAlgorithmUtils.getDefaultAuthorizationResponseEnc())
+                ).contentType("JWT").build(),
+                new Payload(signedJwt)
+        );
+
+        return encrypt(jwe,client)
+                .onErrorResumeNext(throwable -> {
+                    if(throwable instanceof OAuth2Exception) {
+                        return Single.error(throwable);
+                    }
+                    LOGGER.error(throwable.getMessage(), throwable);
+                    return Single.error(new ServerErrorException("Unable to encrypt authorization"));
+                });
+    }
+
     private Single<String> encrypt(JWEObject jwe, Client client) {
 
         JWEAlgorithm algorithm = jwe.getHeader().getAlgorithm();

@@ -288,6 +288,9 @@ public class Application implements Resource {
                 client.setTlsClientAuthSanEmail(oAuthSettings.getTlsClientAuthSanEmail());
                 client.setTlsClientAuthSanIp(oAuthSettings.getTlsClientAuthSanIp());
                 client.setTlsClientAuthSanUri(oAuthSettings.getTlsClientAuthSanUri());
+                client.setAuthorizationSignedResponseAlg(oAuthSettings.getAuthorizationSignedResponseAlg());
+                client.setAuthorizationEncryptedResponseAlg(oAuthSettings.getAuthorizationEncryptedResponseAlg());
+                client.setAuthorizationEncryptedResponseEnc(oAuthSettings.getAuthorizationEncryptedResponseEnc());
             }
 
             if (applicationSettings.getAdvanced() != null) {

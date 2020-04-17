@@ -430,6 +430,9 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
         oAuthSettings.setScopeApprovals(client.getScopeApprovals());
         oAuthSettings.setTokenCustomClaims(client.getTokenCustomClaims());
+        oAuthSettings.setAuthorizationSignedResponseAlg(client.getAuthorizationSignedResponseAlg());
+        oAuthSettings.setAuthorizationEncryptedResponseAlg(client.getAuthorizationEncryptedResponseAlg());
+        oAuthSettings.setAuthorizationEncryptedResponseEnc(client.getAuthorizationEncryptedResponseEnc());
 
         // advanced settings
         ApplicationAdvancedSettings advancedSettings = new ApplicationAdvancedSettings();

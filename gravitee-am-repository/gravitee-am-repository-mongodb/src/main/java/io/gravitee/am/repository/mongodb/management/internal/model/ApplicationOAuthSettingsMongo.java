@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import io.gravitee.am.model.oidc.JWKSet;
 import org.bson.Document;
 
 import java.util.Date;
@@ -79,6 +78,9 @@ public class ApplicationOAuthSettingsMongo {
     private String tlsClientAuthSanUri;
     private String tlsClientAuthSanIp;
     private String tlsClientAuthSanEmail;
+    private String authorizationSignedResponseAlg;
+    private String authorizationEncryptedResponseAlg;
+    private String authorizationEncryptedResponseEnc;
 
     public String getClientId() {
         return clientId;
@@ -494,5 +496,29 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setTlsClientAuthSanEmail(String tlsClientAuthSanEmail) {
         this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
+    }
+
+    public String getAuthorizationSignedResponseAlg() {
+        return authorizationSignedResponseAlg;
+    }
+
+    public void setAuthorizationSignedResponseAlg(String authorizationSignedResponseAlg) {
+        this.authorizationSignedResponseAlg = authorizationSignedResponseAlg;
+    }
+
+    public String getAuthorizationEncryptedResponseAlg() {
+        return authorizationEncryptedResponseAlg;
+    }
+
+    public void setAuthorizationEncryptedResponseAlg(String authorizationEncryptedResponseAlg) {
+        this.authorizationEncryptedResponseAlg = authorizationEncryptedResponseAlg;
+    }
+
+    public String getAuthorizationEncryptedResponseEnc() {
+        return authorizationEncryptedResponseEnc;
+    }
+
+    public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
+        this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
     }
 }

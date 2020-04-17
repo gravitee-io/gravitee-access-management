@@ -23,6 +23,7 @@ import io.gravitee.am.model.oidc.Client;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -193,6 +194,20 @@ public class DynamicClientRegistrationResponse {
 
     @JsonProperty("updated_at")
     private Date updatedAt;
+
+    /*******************************************************************************
+     * Metadata in same order than the openid JARM specification
+     * https://openid.net//specs/openid-financial-api-jarm.html#client-metadata
+     ********************************************************************************/
+
+    @JsonProperty("authorization_signed_response_alg")
+    private String authorizationSignedResponseAlg;
+
+    @JsonProperty("authorization_encrypted_response_alg")
+    private String authorizationEncryptedResponseAlg;
+
+    @JsonProperty("authorization_encrypted_response_enc")
+    private String authorizationEncryptedResponseEnc;
 
     /*******************************************************************************
      * Additional metadata
@@ -565,6 +580,30 @@ public class DynamicClientRegistrationResponse {
         this.updatedAt = updatedAt;
     }
 
+    public String getAuthorizationSignedResponseAlg() {
+        return authorizationSignedResponseAlg;
+    }
+
+    public void setAuthorizationSignedResponseAlg(String authorizationSignedResponseAlg) {
+        this.authorizationSignedResponseAlg = authorizationSignedResponseAlg;
+    }
+
+    public String getAuthorizationEncryptedResponseAlg() {
+        return authorizationEncryptedResponseAlg;
+    }
+
+    public void setAuthorizationEncryptedResponseAlg(String authorizationEncryptedResponseAlg) {
+        this.authorizationEncryptedResponseAlg = authorizationEncryptedResponseAlg;
+    }
+
+    public String getAuthorizationEncryptedResponseEnc() {
+        return authorizationEncryptedResponseEnc;
+    }
+
+    public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
+        this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
+    }
+
     public static DynamicClientRegistrationResponse fromClient(Client client) {
         DynamicClientRegistrationResponse response = new DynamicClientRegistrationResponse();
 
@@ -613,6 +652,9 @@ public class DynamicClientRegistrationResponse {
         response.setEnabled(client.isEnabled());
         response.setCreatedAt(client.getCreatedAt());
         response.setUpdatedAt(client.getUpdatedAt());
+        response.setAuthorizationSignedResponseAlg(client.getAuthorizationSignedResponseAlg());
+        response.setAuthorizationEncryptedResponseAlg(client.getAuthorizationEncryptedResponseAlg());
+        response.setAuthorizationEncryptedResponseEnc(client.getAuthorizationEncryptedResponseEnc());
 
         return response;
     }

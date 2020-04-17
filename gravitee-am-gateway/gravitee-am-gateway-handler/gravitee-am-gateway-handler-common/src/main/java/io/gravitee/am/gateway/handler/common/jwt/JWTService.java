@@ -53,6 +53,14 @@ public interface JWTService {
     Single<String> encodeUserinfo(JWT jwt, Client client);
 
     /**
+     * Encode raw JWT to JWT signed representation using authorization_signed_response_alg Client preferences.
+     * @param jwt JWT to encode
+     * @param client client which want to sign the token
+     * @return JWT signed string representation
+     */
+    Single<String> encodeAuthorization(JWT jwt, Client client);
+
+    /**
      * Decode JWT signed string representation to JWT
      * @param jwt JWT to decode
      * @param client client which want to decode the token

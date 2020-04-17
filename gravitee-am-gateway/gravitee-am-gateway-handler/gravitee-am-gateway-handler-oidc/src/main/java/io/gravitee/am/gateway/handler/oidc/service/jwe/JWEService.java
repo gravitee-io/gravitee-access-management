@@ -42,4 +42,12 @@ public interface JWEService {
     Single<String> encryptUserinfo(String signedJwt, Client client);
 
     Single<JWT> decrypt(String jwt, Client client);
+
+    /**
+     * Encode raw JWT to JWT signed representation using authorization_encrypted_response_alg Client preferences.
+     * @param signedJwt Signed JWT to encrypt
+     * @param client client which want to encrypt the token
+     * @return JWT encrypted string representation
+     */
+    Single<String> encryptAuthorization(String signedJwt, Client client);
 }

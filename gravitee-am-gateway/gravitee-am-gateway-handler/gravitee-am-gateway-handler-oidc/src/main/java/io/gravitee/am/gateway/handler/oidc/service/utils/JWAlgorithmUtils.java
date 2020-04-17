@@ -36,7 +36,7 @@ import static com.nimbusds.jose.JWEAlgorithm.*;
 public class JWAlgorithmUtils {
 
     /**
-     * Unless we want specific values for id_token, userinfo and so on, we will share same settings.
+     * Unless we want specific values for id_token, userinfo, authorization and so on, we will share same settings.
      */
     private static final Set<String> SUPPORTED_SIGNING_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             JWSAlgorithm.RS256.getName(), JWSAlgorithm.RS384.getName(), JWSAlgorithm.RS512.getName(),
@@ -172,6 +172,62 @@ public class JWAlgorithmUtils {
      * @return True if algorithm is supported, false otherwise.
      */
     public static boolean isValidIdTokenResponseEnc(String algorithm) {
+        return SUPPORTED_CONTENT_ENCRYPTION_ALG.contains(algorithm);
+    }
+
+    /**
+     * Authorization
+     */
+    /**
+     * @return the supported list of authorization response signing algorithm.
+     */
+    public static List<String> getSupportedAuthorizationSigningAlg() {
+        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    /**
+     * Throw InvalidClientMetadataException if null or contains unsupported authorization response signing algorithm.
+     * @param signingAlg String authorization response signing algorithm to validate.
+     * @return True if signingAlg is supported, false otherwise.
+     */
+    public static boolean isValidAuthorizationSigningAlg(String signingAlg) {
+        return SUPPORTED_SIGNING_ALG.contains(signingAlg);
+    }
+
+    /**
+     * @return the supported list of authorization response key encryption algorithm.
+     */
+    public static List<String> getSupportedAuthorizationResponseAlg() {
+        return Collections.unmodifiableList(SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    /**
+     * @param algorithm String authorization response key encryption algorithm to validate.
+     * @return True if algorithm is supported, false otherwise.
+     */
+    public static boolean isValidAuthorizationResponseAlg(String algorithm) {
+        return SUPPORTED_KEY_ENCRYPTION_ALG.contains(algorithm);
+    }
+
+    /**
+     * @return the supported list of authorization response content encryption algorithm.
+     */
+    public static List<String> getSupportedAuthorizationResponseEnc() {
+        return Collections.unmodifiableList(SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    /**
+     * @return the default authorization response content encryption algorithm when authorization_encrypted_response_alg is informed
+     */
+    public static String getDefaultAuthorizationResponseEnc() {
+        return EncryptionMethod.A128CBC_HS256.getName();
+    }
+
+    /**
+     * @param algorithm String authorization response content encryption algorithm to validate.
+     * @return True if algorithm is supported, false otherwise.
+     */
+    public static boolean isValidAuthorizationResponseEnc(String algorithm) {
         return SUPPORTED_CONTENT_ENCRYPTION_ALG.contains(algorithm);
     }
 }
