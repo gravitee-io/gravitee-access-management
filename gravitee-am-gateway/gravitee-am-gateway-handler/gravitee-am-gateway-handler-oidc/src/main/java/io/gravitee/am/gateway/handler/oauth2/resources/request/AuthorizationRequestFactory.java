@@ -72,6 +72,7 @@ public final class AuthorizationRequestFactory {
         String scope = request.params().get(Parameters.SCOPE);
         authorizationRequest.setScopes(scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
         authorizationRequest.setState(request.params().get(Parameters.STATE));
+        authorizationRequest.setResponseMode(request.params().get(Parameters.RESPONSE_MODE));
         authorizationRequest.setAdditionalParameters(extractAdditionalParameters(request));
 
         // set OIDC information

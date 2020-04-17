@@ -170,6 +170,20 @@ public class DynamicClientRegistrationRequest {
     @JsonProperty("tls_client_auth_san_email")
     private Optional<String> tlsClientAuthSanEmail;
 
+    /*******************************************************************************
+     * Metadata in same order than the openid JARM specification
+     * https://openid.net//specs/openid-financial-api-jarm.html#client-metadata
+     ********************************************************************************/
+
+    @JsonProperty("authorization_signed_response_alg")
+    private Optional<String> authorizationSignedResponseAlg;
+
+    @JsonProperty("authorization_encrypted_response_alg")
+    private Optional<String> authorizationEncryptedResponseAlg;
+
+    @JsonProperty("authorization_encrypted_response_enc")
+    private Optional<String> authorizationEncryptedResponseEnc;
+
     // GETTER AND SETTERS //
 
     public Optional<List<String>> getRedirectUris() {
@@ -488,6 +502,30 @@ public class DynamicClientRegistrationRequest {
         this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
     }
 
+    public Optional<String> getAuthorizationSignedResponseAlg() {
+        return authorizationSignedResponseAlg;
+    }
+
+    public void setAuthorizationSignedResponseAlg(Optional<String> authorizationSignedResponseAlg) {
+        this.authorizationSignedResponseAlg = authorizationSignedResponseAlg;
+    }
+
+    public Optional<String> getAuthorizationEncryptedResponseAlg() {
+        return authorizationEncryptedResponseAlg;
+    }
+
+    public void setAuthorizationEncryptedResponseAlg(Optional<String> authorizationEncryptedResponseAlg) {
+        this.authorizationEncryptedResponseAlg = authorizationEncryptedResponseAlg;
+    }
+
+    public Optional<String> getAuthorizationEncryptedResponseEnc() {
+        return authorizationEncryptedResponseEnc;
+    }
+
+    public void setAuthorizationEncryptedResponseEnc(Optional<String> authorizationEncryptedResponseEnc) {
+        this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
+    }
+
     @Override
     public String toString() {
         return "ClientPayload{clientName='" + (clientName!=null?clientName.orElse(""):"") + "\'}";
@@ -526,6 +564,9 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setDefaultACRvalues, this.getDefaultACRvalues());
         SetterUtils.safeSet(client::setInitiateLoginUri, this.getInitiateLoginUri());
         SetterUtils.safeSet(client::setRequestUris, this.getRequestUris());
+        SetterUtils.safeSet(client::setAuthorizationSignedResponseAlg, this.getAuthorizationSignedResponseAlg());
+        SetterUtils.safeSet(client::setAuthorizationEncryptedResponseAlg, this.getAuthorizationEncryptedResponseAlg());
+        SetterUtils.safeSet(client::setAuthorizationEncryptedResponseEnc, this.getAuthorizationEncryptedResponseEnc());
 
         /* set oauth2 request metadata */
         SetterUtils.safeSet(client::setScopes, this.getScope());
@@ -576,6 +617,9 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.set(client::setDefaultACRvalues, this.getDefaultACRvalues());
         SetterUtils.set(client::setInitiateLoginUri, this.getInitiateLoginUri());
         SetterUtils.set(client::setRequestUris, this.getRequestUris());
+        SetterUtils.set(client::setAuthorizationSignedResponseAlg, this.getAuthorizationSignedResponseAlg());
+        SetterUtils.set(client::setAuthorizationEncryptedResponseAlg, this.getAuthorizationEncryptedResponseAlg());
+        SetterUtils.set(client::setAuthorizationEncryptedResponseEnc, this.getAuthorizationEncryptedResponseEnc());
 
         /* set oauth2 request metadata */
         SetterUtils.set(client::setScopes, this.getScope());

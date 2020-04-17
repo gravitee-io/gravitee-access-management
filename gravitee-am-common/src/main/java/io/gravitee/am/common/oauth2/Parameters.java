@@ -41,8 +41,11 @@ public interface Parameters {
      */
     String RESPONSE_TYPE = "response_type";
 
+    /**
+     * The client informs the authorization server of the mechanism to be used for returning Authorization Response
+     * parameters from the Authorization_endpoint.
+     */
     String RESPONSE_MODE = "response_mode";
-
     /**
      * The authorization server redirects the user-agent to the client's redirection endpoint previously established with the
      *  authorization server during the client registration process or when making the authorization request.
@@ -123,7 +126,7 @@ public interface Parameters {
      */
     String VTR = "vtr";
 
-    Collection<String> values = Arrays.asList(CLIENT_ID, CLIENT_SECRET, RESPONSE_TYPE, REDIRECT_URI, SCOPE, STATE, CODE, GRANT_TYPE, USERNAME, PASSWORD,
+    Collection<String> values = Arrays.asList(CLIENT_ID, CLIENT_SECRET, RESPONSE_TYPE, RESPONSE_MODE, REDIRECT_URI, SCOPE, STATE, CODE, GRANT_TYPE, USERNAME, PASSWORD,
                 REFRESH_TOKEN, ASSERTION, CLIENT_ASSERTION, CLIENT_ASSERTION_TYPE, CODE_VERIFIER, CODE_CHALLENGE, CODE_CHALLENGE_METHOD,
                 CLAIM_TOKEN, PCT, RPT, TICKET, VTR);
 }

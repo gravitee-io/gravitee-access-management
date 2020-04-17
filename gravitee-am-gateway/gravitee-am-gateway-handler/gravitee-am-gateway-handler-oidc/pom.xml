@@ -32,6 +32,12 @@
     <dependencies>
         <!-- Gravitee.io dependencies -->
         <dependency>
+            <groupId>io.gravitee.am.common</groupId>
+            <artifactId>gravitee-am-common</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-api</artifactId>
             <version>${project.version}</version>

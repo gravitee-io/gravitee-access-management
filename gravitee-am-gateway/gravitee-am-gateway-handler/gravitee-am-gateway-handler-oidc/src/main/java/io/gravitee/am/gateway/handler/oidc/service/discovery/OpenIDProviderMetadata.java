@@ -153,6 +153,15 @@ public class OpenIDProviderMetadata {
     @JsonProperty("op_tos_uri")
     private String opTosUri;
 
+    @JsonProperty("authorization_signing_alg_values_supported")
+    private List<String> authorizationSigningAlgValuesSupported;
+
+    @JsonProperty("authorization_encryption_alg_values_supported")
+    private List<String> authorizationEncryptionAlgValuesSupported;
+
+    @JsonProperty("authorization_encryption_enc_values_supported")
+    private List<String> authorizationEncryptionEncValuesSupported;
+
     public String getIssuer() {
         return issuer;
     }
@@ -479,5 +488,29 @@ public class OpenIDProviderMetadata {
 
     public void setOpTosUri(String opTosUri) {
         this.opTosUri = opTosUri;
+    }
+
+    public List<String> getAuthorizationSigningAlgValuesSupported() {
+        return authorizationSigningAlgValuesSupported;
+    }
+
+    public void setAuthorizationSigningAlgValuesSupported(List<String> authorizationSigningAlgValuesSupported) {
+        this.authorizationSigningAlgValuesSupported = authorizationSigningAlgValuesSupported;
+    }
+
+    public List<String> getAuthorizationEncryptionAlgValuesSupported() {
+        return authorizationEncryptionAlgValuesSupported;
+    }
+
+    public void setAuthorizationEncryptionAlgValuesSupported(List<String> authorizationEncryptionAlgValuesSupported) {
+        this.authorizationEncryptionAlgValuesSupported = authorizationEncryptionAlgValuesSupported;
+    }
+
+    public List<String> getAuthorizationEncryptionEncValuesSupported() {
+        return authorizationEncryptionEncValuesSupported;
+    }
+
+    public void setAuthorizationEncryptionEncValuesSupported(List<String> authorizationEncryptionEncValuesSupported) {
+        this.authorizationEncryptionEncValuesSupported = authorizationEncryptionEncValuesSupported;
     }
 }

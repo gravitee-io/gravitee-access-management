@@ -15,18 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl;
 
+import com.nimbusds.jose.JWSAlgorithm;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
-import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
@@ -262,7 +263,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateClientPatchRequest(DynamicClientRegistrationRequest request) {
         LOGGER.debug("Validating dynamic client registration payload : patch");
-        //redirect_uri is mandatory in the request, but in case of patch we may ommit it...
+        //redirect_uri is mandatory in the request, but in case of patch we may omit it...
         return this.validateClientRegistrationRequest(request,true);
     }
 
@@ -284,7 +285,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateIdTokenSigningAlgorithm)
                 .flatMap(this::validateIdTokenEncryptionAlgorithm)
                 .flatMap(this::validateTlsClientAuth)
-                .flatMap(this::validateSelfSignedClientAuth);
+                .flatMap(this::validateSelfSignedClientAuth)
+                .flatMap(this::validateAuthorizationSigningAlgorithm)
+                .flatMap(this::validateAuthorizationEncryptionAlgorithm);
     }
 
     /**
@@ -512,6 +515,45 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             request.setScope(Optional.of(String.join(SCOPE_DELIMITER,domain.getOidc().getClientRegistrationSettings().getDefaultScopes())));
         }
 
+        return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateAuthorizationSigningAlgorithm(DynamicClientRegistrationRequest request) {
+        // Signing an authorization response is required
+        // As per https://bitbucket.org/openid/fapi/src/master/Financial_API_JWT_Secured_Authorization_Response_Mode.md#markdown-header-5-client-metadata
+        // If unspecified, the default algorithm to use for signing authorization responses is RS256. The algorithm none is not allowed.
+        if (request.getAuthorizationSignedResponseAlg() == null || !request.getAuthorizationSignedResponseAlg().isPresent()) {
+            request.setAuthorizationSignedResponseAlg(Optional.of(JWSAlgorithm.RS256.getName()));
+        }
+
+        if (!JWAlgorithmUtils.isValidAuthorizationSigningAlg(request.getAuthorizationSignedResponseAlg().get())) {
+            return Single.error(new InvalidClientMetadataException("Unsupported authorization signing algorithm"));
+        }
+
+        return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateAuthorizationEncryptionAlgorithm(DynamicClientRegistrationRequest request) {
+        if ((request.getAuthorizationEncryptedResponseEnc() != null && request.getAuthorizationEncryptedResponseEnc().isPresent()) &&
+                (request.getAuthorizationEncryptedResponseAlg() == null || !request.getAuthorizationEncryptedResponseAlg().isPresent())) {
+            return Single.error(new InvalidClientMetadataException("When authorization_encrypted_response_enc is included, authorization_encrypted_response_alg MUST also be provided"));
+        }
+
+        // If authorization_encrypted_response_alg is provided, it must be valid.
+        if (request.getAuthorizationEncryptedResponseAlg() != null && request.getAuthorizationEncryptedResponseAlg().isPresent()) {
+            if (!JWAlgorithmUtils.isValidAuthorizationResponseAlg(request.getAuthorizationEncryptedResponseAlg().get())) {
+                return Single.error(new InvalidClientMetadataException("Unsupported authorization_encrypted_response_alg value"));
+            }
+
+            if (request.getAuthorizationEncryptedResponseEnc() != null && request.getAuthorizationEncryptedResponseEnc().isPresent()) {
+                if (!JWAlgorithmUtils.isValidAuthorizationResponseEnc(request.getAuthorizationEncryptedResponseEnc().get())) {
+                    return Single.error(new InvalidClientMetadataException("Unsupported authorization_encrypted_response_enc value"));
+                }
+            } else {
+                // Apply default value if authorization_encrypted_response_alg is informed and not authorization_encrypted_response_enc.
+                request.setAuthorizationEncryptedResponseEnc(Optional.of(JWAlgorithmUtils.getDefaultAuthorizationResponseEnc()));
+            }
+        }
         return Single.just(request);
     }
 

@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.jwt.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JWSAlgorithm;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
@@ -73,11 +74,29 @@ public class JWTServiceImpl implements JWTService {
     }
 
     @Override
+    public Single<String> encodeAuthorization(JWT jwt, Client client) {
+        // Signing an authorization response is required
+        // As per https://bitbucket.org/openid/fapi/src/master/Financial_API_JWT_Secured_Authorization_Response_Mode.md#markdown-header-5-client-metadata
+        // If unspecified, the default algorithm to use for signing authorization responses is RS256. The algorithm none is not allowed.
+        String signedResponseAlg = client.getAuthorizationSignedResponseAlg();
+
+        // To ensure backward compatibility
+        if (signedResponseAlg == null) {
+            signedResponseAlg = JWSAlgorithm.RS256.getName();
+        }
+
+        return certificateManager.findByAlgorithm(signedResponseAlg)
+                .switchIfEmpty(certificateManager.get(client.getCertificate()))
+                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
+    }
+
+    @Override
     public Single<JWT> decodeAndVerify(String jwt, Client client) {
         return certificateManager.get(client.getCertificate())
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
                 .flatMapSingle(certificateProvider -> decode(certificateProvider, jwt))
-                .map(claims -> new JWT(claims));
+                .map(JWT::new);
     }
 
     @Override
@@ -91,7 +110,6 @@ public class JWTServiceImpl implements JWTService {
                 emitter.onError(new InvalidTokenException("The access token is invalid", ex));
             }
         });
-
     }
 
     private Single<String> sign(CertificateProvider certificateProvider, JWT jwt) {

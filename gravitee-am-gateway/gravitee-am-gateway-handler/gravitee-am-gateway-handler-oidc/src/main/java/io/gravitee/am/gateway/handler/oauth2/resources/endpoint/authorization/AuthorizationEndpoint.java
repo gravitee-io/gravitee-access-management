@@ -15,11 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
+import io.gravitee.am.gateway.handler.oauth2.exception.JWTOAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.response.jwt.JWTAuthorizationResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
@@ -28,6 +35,8 @@ import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.

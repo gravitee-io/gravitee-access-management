@@ -15,12 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.flow;
 
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
+import io.gravitee.am.gateway.handler.oauth2.service.response.jwt.JWTAuthorizationResponse;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
+import org.springframework.context.ApplicationContext;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,6 +37,10 @@ import java.util.Objects;
 public abstract class AbstractFlow implements Flow {
 
     private final List<String> responseTypes;
+    private ApplicationContext applicationContext;
+    private OpenIDDiscoveryService openIDDiscoveryService;
+    private JWTService jwtService;
+    private JWEService jweService;
 
     public AbstractFlow(final List<String> responseTypes) {
         Objects.requireNonNull(responseTypes);
@@ -44,8 +54,44 @@ public abstract class AbstractFlow implements Flow {
 
     @Override
     public Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, Client client, User endUser) {
-        return prepareResponse(authorizationRequest, client, endUser);
+        return prepareResponse(authorizationRequest, client, endUser)
+                .flatMap(response -> processResponse(response, authorizationRequest, client, endUser));
     }
 
     protected abstract Single<AuthorizationResponse> prepareResponse(AuthorizationRequest authorizationRequest, Client client, User endUser);
+
+    private Single<AuthorizationResponse> processResponse(AuthorizationResponse authorizationResponse, AuthorizationRequest authorizationRequest, Client client, User endUser) {
+        // Response Mode is not supplied by the client, process the response as usual
+        if (authorizationRequest.getResponseMode() == null || !authorizationRequest.getResponseMode().endsWith("jwt")) {
+            return Single.just(authorizationResponse);
+        }
+
+        // Create JWT Response
+        JWTAuthorizationResponse jwtAuthorizationResponse = JWTAuthorizationResponse.from(authorizationResponse);
+        jwtAuthorizationResponse.setIss(openIDDiscoveryService.getIssuer(authorizationRequest.getOrigin()));
+        jwtAuthorizationResponse.setAud(client.getClientId());
+        // There is nothing about expiration. We admit to use the one settled for IdToken validity
+        jwtAuthorizationResponse.setExp(Instant.now().plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());
+
+        // Sign if needed, else return unsigned JWT
+        return jwtService.encodeAuthorization(jwtAuthorizationResponse.build(), client)
+                // Encrypt if needed, else return JWT
+                .flatMap(authorization -> jweService.encryptAuthorization(authorization, client))
+                .map(token -> {
+                    jwtAuthorizationResponse.setResponseType(authorizationRequest.getResponseType());
+                    jwtAuthorizationResponse.setResponseMode(authorizationRequest.getResponseMode());
+                    jwtAuthorizationResponse.setToken(token);
+                    return jwtAuthorizationResponse;
+                });
+    }
+
+    void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
+    void afterPropertiesSet() {
+        this.openIDDiscoveryService = applicationContext.getBean(OpenIDDiscoveryService.class);
+        this.jwtService = applicationContext.getBean(JWTService.class);
+        this.jweService = applicationContext.getBean(JWEService.class);
+    }
 }

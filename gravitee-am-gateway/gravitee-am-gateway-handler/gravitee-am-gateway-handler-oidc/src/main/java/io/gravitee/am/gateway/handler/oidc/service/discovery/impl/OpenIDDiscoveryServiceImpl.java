@@ -24,7 +24,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
-import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
@@ -83,7 +82,9 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         // supported parameters
         openIDProviderMetadata.setScopesSupported(scopeService.getDiscoveryScope());
         openIDProviderMetadata.setResponseTypesSupported(ResponseTypeUtils.getSupportedResponseTypes());
-        openIDProviderMetadata.setResponseModesSupported(Arrays.asList(ResponseMode.QUERY, ResponseMode.FRAGMENT));
+        openIDProviderMetadata.setResponseModesSupported(Arrays.asList(ResponseMode.QUERY, ResponseMode.FRAGMENT,
+                io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT,
+                io.gravitee.am.common.oidc.ResponseMode.JWT));
         openIDProviderMetadata.setGrantTypesSupported(GrantTypeUtils.getSupportedGrantTypes());
         openIDProviderMetadata.setIdTokenSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenSigningAlg());
         openIDProviderMetadata.setIdTokenEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenResponseAlg());
@@ -96,7 +97,9 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setUserinfoSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedUserinfoSigningAlg());
         openIDProviderMetadata.setUserinfoEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedUserinfoResponseAlg());
         openIDProviderMetadata.setUserinfoEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedUserinfoResponseEnc());
-
+        openIDProviderMetadata.setAuthorizationSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedAuthorizationSigningAlg());
+        openIDProviderMetadata.setAuthorizationEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedAuthorizationResponseAlg());
+        openIDProviderMetadata.setAuthorizationEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedAuthorizationResponseEnc());
         return openIDProviderMetadata;
     }
 

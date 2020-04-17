@@ -142,6 +142,12 @@ public class Client implements Cloneable, Resource {
 
     private String tlsClientAuthSanEmail;
 
+    private String authorizationSignedResponseAlg;
+
+    private String authorizationEncryptedResponseAlg;
+
+    private String authorizationEncryptedResponseEnc;
+
     /**
      * Security domain associated to the client
      */
@@ -241,6 +247,9 @@ public class Client implements Cloneable, Resource {
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
         this.template = other.template;
         this.metadata = other.metadata != null ? new HashMap<>(other.metadata) : null;
+        this.authorizationSignedResponseAlg = other.authorizationSignedResponseAlg;
+        this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
+        this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
     }
 
     public String getId() {
@@ -748,6 +757,30 @@ public class Client implements Cloneable, Resource {
 
     public void setTlsClientAuthSanEmail(String tlsClientAuthSanEmail) {
         this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
+    }
+
+    public String getAuthorizationSignedResponseAlg() {
+        return authorizationSignedResponseAlg;
+    }
+
+    public void setAuthorizationSignedResponseAlg(String authorizationSignedResponseAlg) {
+        this.authorizationSignedResponseAlg = authorizationSignedResponseAlg;
+    }
+
+    public String getAuthorizationEncryptedResponseAlg() {
+        return authorizationEncryptedResponseAlg;
+    }
+
+    public void setAuthorizationEncryptedResponseAlg(String authorizationEncryptedResponseAlg) {
+        this.authorizationEncryptedResponseAlg = authorizationEncryptedResponseAlg;
+    }
+
+    public String getAuthorizationEncryptedResponseEnc() {
+        return authorizationEncryptedResponseEnc;
+    }
+
+    public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
+        this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
     }
 
     @Override

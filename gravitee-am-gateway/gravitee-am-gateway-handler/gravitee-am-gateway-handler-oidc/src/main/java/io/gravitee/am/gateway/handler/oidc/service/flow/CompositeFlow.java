@@ -30,6 +30,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,9 @@ public class CompositeFlow implements Flow, InitializingBean  {
 
     @Autowired
     private IDTokenService idTokenService;
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Override
     public boolean handle(String responseType) {
@@ -76,6 +80,8 @@ public class CompositeFlow implements Flow, InitializingBean  {
     private void addFlow(Flow flow) {
         Objects.requireNonNull(flow);
         flows.add(flow);
+        ((AbstractFlow) flow).setApplicationContext(applicationContext);
+        ((AbstractFlow) flow).afterPropertiesSet();
     }
 
 }
