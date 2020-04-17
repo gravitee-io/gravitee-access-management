@@ -547,7 +547,7 @@
                       "    pm.expect(body.responseTypes).to.eql(['code']);",
                       "    pm.expect(body.applicationType).to.eql('web');",
                       "    ",
-                      "    pm.expect(body.clientName).to.eql('Unknown Client');",
+                      "    pm.expect(body.clientName).to.eql('my-client');",
                       "    pm.expect(body.tokenEndpointAuthMethod).to.eql('client_secret_basic');",
                       "    pm.expect(body.requireAuthTime).to.eql(false);",
                       "    pm.expect(body.accessTokenValiditySeconds).to.eql(7200);",
