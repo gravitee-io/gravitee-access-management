@@ -32,6 +32,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.impl.ClientServiceImpl;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
 import io.reactivex.Flowable;
@@ -130,6 +131,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private Single<Client> createClientFromRequest(DynamicClientRegistrationRequest request, String basePath) {
         Client client = new Client();
         client.setClientId(SecureRandomString.generate());
+        client.setClientName(ClientServiceImpl.DEFAULT_CLIENT_NAME);
         client.setDomain(domain.getId());
 
         return this.validateClientRegistrationRequest(request)
@@ -170,7 +172,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         template.setDomain(domain.getId());
         template.setId(null);
         template.setClientSecret(null);
-        template.setClientName(null);
+        template.setClientName(ClientServiceImpl.DEFAULT_CLIENT_NAME);
         template.setRedirectUris(null);
         template.setSectorIdentifierUri(null);
         template.setJwks(null);
