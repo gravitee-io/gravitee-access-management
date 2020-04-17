@@ -30,6 +30,7 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.impl.ClientServiceImpl;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -802,7 +803,7 @@ public class DynamicClientRegistrationServiceTest {
                 client.getClientId() != null &&
                 !client.getClientId().equals("shouldBeReplaced") &&
                 client.getRedirectUris() == null &&
-                client.getClientName() == null &&
+                client.getClientName().equals(ClientServiceImpl.DEFAULT_CLIENT_NAME) &&
                 client.getClientSecret() == null &&
                 client.getJwks() == null &&
                 client.getSectorIdentifierUri() == null
