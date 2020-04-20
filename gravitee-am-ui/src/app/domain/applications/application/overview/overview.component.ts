@@ -15,8 +15,8 @@
  */
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {AuthService} from "../../../../services/auth.service";
-import {SnackbarService} from "../../../../services/snackbar.service";
+import {AuthService} from '../../../../services/auth.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'application-overview',
@@ -31,10 +31,11 @@ export class ApplicationOverviewComponent implements OnInit {
   clientId: string;
   clientSecret: string;
   safeClientSecret: string;
-  hidden: string = '********';
+  hidden = '********';
   safeAuthorizationHeader: string;
   authorizationHeader: string;
   entrypoint: any;
+  tokenEndpointAuthMethod: string;
   @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
 
   constructor(private route: ActivatedRoute,
@@ -48,7 +49,7 @@ export class ApplicationOverviewComponent implements OnInit {
     this.application = this.route.snapshot.parent.data['application'];
     this.safeClientSecret = this.hidden;
     this.safeAuthorizationHeader = this.hidden;
-    var applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
+    const applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
 
     if (this.authService.hasPermissions(['application_openid_read'])) {
       this.grantTypes = applicationOAuthSettings.grantTypes;
@@ -56,6 +57,7 @@ export class ApplicationOverviewComponent implements OnInit {
       this.clientSecret = applicationOAuthSettings.clientSecret;
       this.redirectUri = applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined ? applicationOAuthSettings.redirectUris[0] : 'Not defined' ;
       this.authorizationHeader = btoa(this.clientId + ':' + this.clientSecret);
+      this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
     } else {
       this.clientId = 'Insufficient permission';
       this.clientSecret = 'Insufficient permission';
@@ -73,8 +75,7 @@ export class ApplicationOverviewComponent implements OnInit {
   }
 
   copyToClipboard(element: HTMLElement, sensitiveReplacement?) {
-
-    this.copyText.nativeElement.value = element.textContent.replace(this.hidden, sensitiveReplacement ? sensitiveReplacement : '');;
+    this.copyText.nativeElement.value = element.textContent.replace(this.hidden, sensitiveReplacement ? sensitiveReplacement : '');
     this.copyText.nativeElement.select();
     document.execCommand('copy');
     this.valueCopied('Copied to clipboard');
@@ -85,10 +86,14 @@ export class ApplicationOverviewComponent implements OnInit {
   }
 
   getAuthorizationFlowResponseType(): string {
-    if(this.grantTypes.includes('authorization_code')) {
+    if (this.grantTypes.includes('authorization_code')) {
       return 'code';
     } else {
       return 'token';
     }
   }
+
+  displayAuthBasicExample(): boolean {
+    return !this.tokenEndpointAuthMethod || this.tokenEndpointAuthMethod === 'client_secret_basic';
+  };
 }

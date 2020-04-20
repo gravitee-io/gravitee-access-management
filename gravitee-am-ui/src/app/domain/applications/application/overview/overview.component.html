@@ -151,18 +151,34 @@
 
           <h2>Getting an access token</h2>
           <p>You can request an access token using the OAuth 2.0 client credentials grant type.</p>
-          <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_token, clientSecret);">
+          <div class="code" *ngIf="displayAuthBasicExample()">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_auth_basic_token, authorizationHeader)">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <button *ngIf="!isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeAuthorizationHeader = hidden;">
+              <mat-icon>visibility_off</mat-icon>
+            </button>
+            <button *ngIf="isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeAuthorizationHeader = authorizationHeader;">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <pre #pre_auth_basic_token class="multiline">curl -X POST \
+              {{entrypoint.url}}/{{application.domain}}/oauth/token \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
+  -d 'grant_type=client_credentials'</pre>
+          </div>
+          <div class="code" *ngIf="!displayAuthBasicExample()">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_post_token, clientSecret)">
               <mat-icon>content_copy</mat-icon>
             </button>
             <button *ngIf="!isHidden(safeClientSecret)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeClientSecret = hidden;">
               <mat-icon>visibility_off</mat-icon>
             </button>
-            <button *ngIf="isHidden(safeClientSecret)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeClientSecret = clientSecret">
+            <button *ngIf="isHidden(safeClientSecret)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeClientSecret = clientSecret;">
               <mat-icon>visibility</mat-icon>
             </button>
-            <pre #pre_token class="multiline">curl -X POST \
-  {{entrypoint.url}}/{{application.domain}}/oauth/token \
+            <pre #pre_post_token class="multiline">curl -X POST \
+              {{entrypoint.url}}/{{application.domain}}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=client_credentials&client_id={{clientId}}&client_secret={{safeClientSecret}}'</pre>
           </div>
