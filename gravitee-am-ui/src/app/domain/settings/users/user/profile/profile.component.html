@@ -61,7 +61,7 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-            <a (click)="addDynamicComponent()" *ngIf="editMode() && canEdit">(+) add user attribute</a>
+            <a (click)="addDynamicComponent()" class="gv-accent-link" *ngIf="editMode() && canEdit">(+) add user attribute</a>
             <template #dynamic></template>
             <div *ngFor="let keyValuePair of userAdditionalInformation | mapToIterable">
               <div *ngIf="keyValuePair.value" fxLayout="row">

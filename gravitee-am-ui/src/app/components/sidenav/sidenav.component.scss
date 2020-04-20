@@ -1,5 +1,4 @@
-$bgColor: #383B48;
-$fontColor: #fff;
+$fontColor: #fdfdfd;
 $bgSettingsColor: #fafafa;
 $fontSettingsColor: #637282;
 $sidenavWidth: 200px;
@@ -19,10 +18,10 @@ $sidenavHeaderHeight: 64px;
 :host {
   /deep/ .mat-toolbar {
     padding: 0 16px 0 7px;
+    background: transparent;
   }
 }
 .navigation-header {
-  background-color: $bgColor;
   height: 100px;
   min-height: 100px;
   .logo-image {
@@ -58,14 +57,13 @@ $sidenavHeaderHeight: 64px;
   }
 }
 
-.gs-sidenav {
+.gv-sidenav {
   @include min-max-width($sidenavWidth);
   img.logo-image {
     margin-left: 15px;
   }
-  background-color: $bgColor;
 }
-.gs-sidenav-min {
+.gv-sidenav-min {
   @include min-max-width($sidenavMinWidth);
   img.logo-image {
     margin-left: 0px;
@@ -77,7 +75,7 @@ $sidenavHeaderHeight: 64px;
     }
   }
 }
-.gs-sidenav-settings {
+.gv-sidenav-settings {
   background-color: $bgSettingsColor;
   .navigation-header {
     background-color: $bgSettingsColor;

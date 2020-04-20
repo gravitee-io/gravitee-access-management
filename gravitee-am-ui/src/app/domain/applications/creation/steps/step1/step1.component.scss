@@ -8,26 +8,24 @@
     mat-card {
       margin: 10px;
       box-shadow: none;
-      border: 1px solid rgba(0, 0, 0, 0.12);
+      &:not(.selected) {
+        border: 1px solid rgba(0, 0, 0, 0.12);
+      }
       &:hover {
         cursor: pointer;
-      }
-      &.selected {
-        border: 1px solid #2295F3;
       }
       mat-card-content {
         text-align: center;
         margin-top: 10px;
         i {
           font-size: 55px;
-          border: 1px solid #e5e5e5;
+          &:not(.selected) {
+            border: 1px solid #e5e5e5;
+          }
           border-radius: 50%;
           width: 130px;
           line-height: 130px;
           height: 130px;
-          &.selected {
-            border: 1px solid #2295F3;
-          }
         }
         p {
           color: #999;

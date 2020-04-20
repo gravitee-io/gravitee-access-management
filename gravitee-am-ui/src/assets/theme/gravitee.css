@@ -17,10 +17,10 @@
 /* You can configure custom theme by overwriting css elements */
 /* This following example change the background color of the left side navigation HTML element */
 /*
-  .gs-sidenav:not(.gs-sidenav-settings) {
+  .gv-sidenav:not(.gv-sidenav-settings) {
     background-color: #383C48 !important;
   }
-  .gs-sidenav:not(.gs-sidenav-settings) .navigation-header {
+  .gv-sidenav:not(.gv-sidenav-settings) .navigation-header {
     background-color: #383C48 !important;
   }
 */

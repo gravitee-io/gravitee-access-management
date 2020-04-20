@@ -7,20 +7,6 @@ form {
     background: #fff;
     border-radius: 4px;
   }
-  .application-scopes {
-    a {
-      cursor: pointer;
-      font-size: 75%;
-      color: #2196f3;
-    }
-  }
-  .type-section {
-    width: 50%;
-  }
-  .type-selection {
-    display: inline-flex;
-    width: 100%;
-  }
 }
 
 :host /deep/ .ngx-datatable.material .datatable-footer {

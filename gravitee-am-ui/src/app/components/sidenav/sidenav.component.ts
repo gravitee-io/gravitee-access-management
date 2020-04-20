@@ -16,12 +16,12 @@ import {filter} from 'rxjs/operators';
  * limitations under the License.
  */
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, NavigationEnd, ActivatedRoute } from "@angular/router";
-import { SidenavService } from "./sidenav.service";
-import { Subscription} from "rxjs";
-import { AppConfig } from "../../../config/app.config";
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { SidenavService } from './sidenav.service';
+import { AppConfig } from '../../../config/app.config';
+import { AuthGuard } from '../../guards/auth-guard.service';
+import { Subscription} from 'rxjs';
 import * as _ from 'lodash';
-import { AuthGuard } from "../../guards/auth-guard.service";
 
 @Component({
   selector: 'gv-sidenav',
@@ -46,7 +46,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    for (let route of this.router.config) {
+    for (const route of this.router.config) {
       if (route.data && route.data.menu && route.data.menu.firstLevel) {
         this.paths.push(route);
       }
@@ -62,36 +62,36 @@ export class SidenavComponent implements OnInit, OnDestroy {
   }
 
   watchRoute() {
-    let that = this;
+    const that = this;
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd))
       .subscribe(event => {
-        for (let route of that.paths) {
+        for (const route of that.paths) {
           route.data.menu.active = false;
         }
-        this.displayFirstLevel = false;
+        this.displayFirstLevel = true;
         this.displaySettingsLevel = false;
-        let currentSnapshot = this.currentRoute.root.firstChild.snapshot;
+        const currentSnapshot = this.currentRoute.root.firstChild.snapshot;
         if (currentSnapshot.data && currentSnapshot.data.menu) {
           // check if we display first level menu items
-          let displayFirstLevel = currentSnapshot.data.menu.displayFirstLevel;
-          this.displayFirstLevel = (typeof displayFirstLevel != 'undefined') ? displayFirstLevel : true;
+          const displayFirstLevel = currentSnapshot.data.menu.displayFirstLevel;
+          this.displayFirstLevel = (typeof displayFirstLevel !== 'undefined') ? displayFirstLevel : true;
           // check if we display settings level menu items
           if (currentSnapshot.data.menu.displaySettingsLevel) {
-            let displaySettingsLevel = currentSnapshot.data.menu.displaySettingsLevel;
-            this.displaySettingsLevel = (typeof displaySettingsLevel != 'undefined') ? displaySettingsLevel : false;
+            const displaySettingsLevel = currentSnapshot.data.menu.displaySettingsLevel;
+            this.displaySettingsLevel = (typeof displaySettingsLevel !== 'undefined') ? displaySettingsLevel : false;
           }
           // check if we active first level menu
-          let activeParentPath = currentSnapshot.data.menu.activeParentPath;
+          const activeParentPath = currentSnapshot.data.menu.activeParentPath;
           if (activeParentPath) {
-            let path = _.find(that.paths, path => path.path === activeParentPath);
+            const path = _.find(that.paths, p => p.path === activeParentPath);
             if (path) {
               path.data.menu.active = true;
             }
           }
         }
         this.currentSubPaths = [];
-        let _currentSubPaths = this.router.routerState.snapshot.url.split('/');
+        const _currentSubPaths = this.router.routerState.snapshot.url.split('/');
         if (_currentSubPaths.length > 2) {
           this.currentSubPaths = this.subPaths[_currentSubPaths[1]];
           if (this.currentSubPaths) {
