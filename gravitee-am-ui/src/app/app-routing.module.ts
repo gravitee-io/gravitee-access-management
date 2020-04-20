@@ -148,18 +148,17 @@ import {FactorComponent} from './domain/settings/factors/factor/factor.component
 import {FactorResolver} from './resolvers/factor.resolver';
 import {EnrolledFactorsResolver} from './resolvers/enrolled-factors.resolver';
 import {NotFoundComponent} from './not-found/not-found.component';
-import {EntrypointsComponent} from "./settings/management/entrypoints/entrypoints.component";
-import {EntrypointCreationComponent} from "./settings/management/entrypoints/creation/entrypoint-creation.component";
-import {EntrypointComponent} from "./settings/management/entrypoints/entrypoint/entrypoint.component";
-import {EntrypointResolver} from "./resolvers/entrypoint.resolver";
-import {EntrypointsResolver} from "./resolvers/entrypoints.resolver";
+import {EntrypointsComponent} from './settings/management/entrypoints/entrypoints.component';
+import {EntrypointCreationComponent} from './settings/management/entrypoints/creation/entrypoint-creation.component';
+import {EntrypointComponent} from './settings/management/entrypoints/entrypoint/entrypoint.component';
+import {EntrypointResolver} from './resolvers/entrypoint.resolver';
+import {EntrypointsResolver} from './resolvers/entrypoints.resolver';
 
 const routes: Routes = [
   {
     path: 'settings', component: SettingsComponent,
     data: {
       menu: {
-        displayFirstLevel: false,
         displaySettingsLevel: true
       }
     },
@@ -516,6 +515,9 @@ const routes: Routes = [
     component: DomainCreationComponent,
     canActivate: [AuthGuard],
     data: {
+      menu: {
+        displayFirstLevel: false
+      },
       perms: {
         only: ['domain_create']
       }
@@ -526,11 +528,6 @@ const routes: Routes = [
     resolve: {
       domain: DomainResolver,
       permissions: DomainPermissionsResolver
-    },
-    data: {
-      menu: {
-        displayFirstLevel: false
-      }
     },
     children: [
       { path: '', component: DomainComponent },

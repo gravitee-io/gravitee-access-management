@@ -36,14 +36,12 @@
     word-wrap: break-word;
     width: 100%;
     font-size: 14px;
-    color: #006CAB;
     text-decoration: none;
     cursor: pointer;
     &:hover {
       background: rgba(0,0,0,.04);
     }
     &.active {
-      color: #2196f3;
       font-weight: bold;
     }
   }

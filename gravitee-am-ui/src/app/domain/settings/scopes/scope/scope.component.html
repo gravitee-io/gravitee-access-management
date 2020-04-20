@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div class="scope-container">
-  <a [routerLink]="['..']" class="back-link"><small><< Back to scopes</small></a>
+<div class="gv-page-container">
+  <a [routerLink]="['..']" class="gv-back-link"><small><< Back to scopes</small></a>
   <h1>{{scope.name}}</h1>
-  <div class="scope-content">
+  <div>
     <div fxLayout="column" fxFlex="70">
       <form (keydown.enter)="false" (ngSubmit)="update()" #scopeForm="ngForm" fxLayout="column">
         <div class="gv-form-section">
@@ -88,19 +88,19 @@
         </div>
       </form>
 
-      <div class="scope-delete-zone" fxLayout="column" *ngIf="!scope.system && deleteMode">
+      <div class="gv-page-delete-zone" fxLayout="column" *ngIf="!scope.system && deleteMode">
         <p>This operation cannot be undone.</p>
         Scope will be deleted, clients and users will not be able to use this scope as permission access.
-        <div class="scope-delete-button" fxLayout="row">
+        <div class="gv-page-delete-button" fxLayout="row">
           <span fxFlex></span>
           <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
         </div>
       </div>
     </div>
 
-    <div class="scope-description" fxFlex>
+    <div class="gv-page-description" fxFlex>
       <h3>Manage Scope</h3>
-      <div class="scope-description-content">
+      <div class="gv-page-description-content">
         <p>
           Scopes provide a way to limit the amount of access to a resource.
         </p>

@@ -21,11 +21,7 @@ ngx-datatable {
 :host /deep/ .member-name-cell {
   padding: 0 !important;
   a {
-    color: #006CAB;
     text-decoration: none;
-    &:hover {
-      color: #2196f3;
-    }
   }
 }
 

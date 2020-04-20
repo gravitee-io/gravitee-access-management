@@ -1,16 +1,127 @@
 /* You can add global styles to this file, and also import other style files */
-@import '~@angular/material/theming';
 @import '~@swimlane/ngx-datatable/release/themes/material.css';
 @import '~@swimlane/ngx-datatable/release/assets/icons.css';
 @import '~codemirror/lib/codemirror.css';
-@import 'assets/theme/gravitee.css';
+@import '~@angular/material/theming';
 @include mat-core();
 
+/* Theme */
+$graviteeio-am-primary-palette: (
+  50: #fdfdfd,
+  100: #cfd8dc,
+  200: #b0bec5,
+  300: #90a4ae,
+  400: #78909c,
+  500: #607d8b,
+  600: #546e7a,
+  700: #455a64,
+  800: #37474f,
+  900: #263238,
+  A100: #cfd8dc,
+  A200: #b0bec5,
+  A400: #78909c,
+  A700: #455a64,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $light-primary-text,
+    500: $light-primary-text,
+    600: $light-primary-text,
+    700: $light-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text,
+    A100: $dark-primary-text,
+    A200: $dark-primary-text,
+    A400: $light-primary-text,
+    A700: $light-primary-text,
+  )
+);
+
+$graviteeio-am-accent-palette: (
+  50: #e3f2fd,
+  100: #bbdefb,
+  200: #90caf9,
+  300: #64b5f6,
+  400: #42a5f5,
+  500: #86C3D0,
+  600: #1e88e5,
+  700: #1976d2,
+  800: #1565c0,
+  900: #0d47a1,
+  A100: #82b1ff,
+  A200: #448aff,
+  A400: #2979ff,
+  A700: #2962ff,
+  contrast: (
+    50: $dark-primary-text,
+    100: $dark-primary-text,
+    200: $dark-primary-text,
+    300: $dark-primary-text,
+    400: $dark-primary-text,
+    500: $light-primary-text,
+    600: $light-primary-text,
+    700: $light-primary-text,
+    800: $light-primary-text,
+    900: $light-primary-text,
+    A100: $dark-primary-text,
+    A200: $light-primary-text,
+    A400: $light-primary-text,
+    A700: $light-primary-text,
+  )
+);
+
 /* Configure theme */
-$graviteeio-am-app-primary: mat-palette($mat-blue-grey);
-$graviteeio-am-candy-app-accent:  mat-palette($mat-blue);
-$graviteeio-am-theme: mat-light-theme($graviteeio-am-app-primary, $graviteeio-am-candy-app-accent);
-@include angular-material-theme($graviteeio-am-theme);
+$graviteeio-am-primary: mat-palette($graviteeio-am-primary-palette);
+$graviteeio-am-accent:  mat-palette($graviteeio-am-accent-palette);
+$graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-am-accent);
+@mixin graviteeio-am-theme($theme) {
+  $primary: map-get($theme, primary);
+  $accent: map-get($theme, accent);
+  .gv-sidenav {
+    background-color: mat-color($accent, 500);
+  }
+  .mat-step-header .mat-step-icon-selected, .mat-step-header .mat-step-icon-state-edit, .mat-step-header .mat-step-icon-state-done {
+    background-color: mat-color($accent, 500);
+  }
+  a {
+    color: mat-color($primary, 600);
+    &.active, &:hover {
+      color: mat-color($accent, 500);
+    }
+    &.gv-accent-link {
+      color: mat-color($accent, 500);
+      &:hover {
+        color: mat-color($accent, 500);
+      }
+    }
+  }
+  .gv-accent-color {
+    color: mat-color($accent, 500);
+  }
+  .mat-chip.mat-default-chip {
+    background-color: mat-color($accent, 500);
+    color: mat-color($primary, 50);
+  }
+  .application-creation-step1-container {
+    .application-creation-step1-content {
+      mat-card {
+        &.selected, i.selected {
+          border: 1px solid mat-color($accent, 500);
+        }
+      }
+    }
+  }
+  .not-found-content-description {
+    border-top: 8px solid mat-color($accent, 500);;
+  }
+  .gv-splash-screen {
+    background: #fdfdfd
+  }
+}
+@include angular-material-theme($graviteeio-am-main-theme);
+@include graviteeio-am-theme($graviteeio-am-main-theme);
 
 /* Material Icons */
 @font-face {
@@ -37,15 +148,12 @@ $graviteeio-am-theme: mat-light-theme($graviteeio-am-app-primary, $graviteeio-am
   word-wrap: normal;
   white-space: nowrap;
   direction: ltr;
-
   /* Support for all WebKit browsers. */
   -webkit-font-smoothing: antialiased;
   /* Support for Safari and Chrome. */
   text-rendering: optimizeLegibility;
-
   /* Support for Firefox. */
   -moz-osx-font-smoothing: grayscale;
-
   /* Support for IE. */
   font-feature-settings: 'liga';
 }
@@ -158,12 +266,11 @@ mat-horizontal-stepper {
   }
 }
 
-.mat-step-header .mat-step-icon-selected, .mat-step-header .mat-step-icon-state-edit, .mat-step-header .mat-step-icon-state-done {
-  background-color: #2295F3;
-}
-
 .gv-splash-screen {
-  background: rgb(45, 50, 62) url('assets/gravitee_logo_anim.gif') no-repeat center center;
+  background-image: url('assets/loader.gif');
+  background-size: 10%;
+  background-repeat: no-repeat;
+  background-position: center center;
   bottom: 0;
   left: 0;
   position: absolute;
@@ -239,12 +346,7 @@ mat-horizontal-stepper {
 }
 
 a.gv-back-link {
-  color: #006CAB;
   text-decoration: none;
-  &:hover {
-    color: #2196f3;
-    text-decoration: underline;
-  }
   mat-icon {
     vertical-align: middle;
     margin-top: -2px;
@@ -263,32 +365,23 @@ p.gv-plugin-creation-description {
   padding: 0;
 }
 
-.mat-chip.mat-default-chip {
-  background-color: #039be5;
-  color: #fafafa;
-}
-
 div.code {
   overflow: auto;
   white-space: pre;
-  background: #f5f5f5!important;
-  border-color: transparent!important;
+  background: #f5f5f5;
+  border-color: transparent;
   margin-bottom: 24px;
   padding: 0px 20px;
   font-size: 1em;
-
   button {
     width: auto;
     float: right;
     margin-left: 20px;
-    background: #f5f5f5!important;
   }
-
   pre {
     width: auto;
     overflow: auto;
     white-space: pre-wrap;
-
     &.multiline {
       white-space: unset;
     }

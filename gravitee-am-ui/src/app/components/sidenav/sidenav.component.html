@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="gs-sidenav" fxLayout="column" fxFlex [ngClass]="{'gs-sidenav-min': reducedMode, 'gs-sidenav-settings': displaySettingsLevel}">
+<div class="gv-sidenav" fxLayout="column" fxFlex [ngClass]="{'gv-sidenav-min': reducedMode, 'gv-sidenav-settings': displaySettingsLevel}">
   <mat-toolbar class="navigation-header" fxLayout="row" fxLayoutAlign="space-between center">
     <a [routerLink]="['']" style="text-decoration: none;" [matTooltip]="title + ' / ' + version" [matTooltipPosition]="'right'">
     <div fxLayout="row" fxLayoutAlign="center center">
@@ -27,22 +27,14 @@
   <mat-list class="sidenav-list">
     <!-- First level menus -->
     <div *ngIf="displayFirstLevel">
-      <mat-list-item *ngFor="let path of paths">
-        <a [routerLink]="path.path" title="{{path.data.menu.label}}"
-           routerLinkActive="sidenav-active" [routerLinkActiveOptions]="{ exact: true }" [ngClass]="{'sidenav-active': path.data.menu.active}">
-          <mat-icon>{{path.data.menu.icon}}</mat-icon>
-          <span *ngIf="!reducedMode">{{path.data.menu.label}}</span>
+      <mat-list-item *ngFor="let subPath of currentSubPaths">
+        <a [routerLink]="subPath.fullPath" title="{{subPath.data.menu.label}}"
+           routerLinkActive="sidenav-active">
+          <mat-icon>{{subPath.data.menu.icon}}</mat-icon>
+          <span *ngIf="!reducedMode">{{subPath.data.menu.label}}</span>
         </a>
       </mat-list-item>
     </div>
-
-    <mat-list-item *ngFor="let subPath of currentSubPaths">
-      <a [routerLink]="subPath.fullPath" title="{{subPath.data.menu.label}}"
-         routerLinkActive="sidenav-active">
-        <mat-icon>{{subPath.data.menu.icon}}</mat-icon>
-        <span *ngIf="!reducedMode">{{subPath.data.menu.label}}</span>
-      </a>
-    </mat-list-item>
   </mat-list>
 
   <mat-list class="sidenav-footer">
