@@ -252,6 +252,7 @@ public class UserServiceImpl implements UserService {
                     // if user was in pre-registration mode, end the registration process
                     if (user.isPreRegistration()) {
                         user.setRegistrationCompleted(true);
+                        user.setEnabled(true);
                     }
                     user.setPassword(null);
                     user.setExternalId(idpUser.getId());
