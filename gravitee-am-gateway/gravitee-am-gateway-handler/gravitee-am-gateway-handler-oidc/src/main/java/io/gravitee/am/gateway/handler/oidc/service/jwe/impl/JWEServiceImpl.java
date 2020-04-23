@@ -15,39 +15,23 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.jwe.impl;
 
-import com.nimbusds.jose.EncryptionMethod;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWEAlgorithm;
-import com.nimbusds.jose.JWEEncrypter;
-import com.nimbusds.jose.JWEHeader;
-import com.nimbusds.jose.JWEObject;
-import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.crypto.AESEncrypter;
-import com.nimbusds.jose.crypto.DirectEncrypter;
-import com.nimbusds.jose.crypto.ECDHEncrypter;
-import com.nimbusds.jose.crypto.PasswordBasedEncrypter;
-import com.nimbusds.jose.crypto.RSAEncrypter;
-import com.nimbusds.jose.crypto.X25519Encrypter;
-import com.nimbusds.jose.crypto.impl.AESCryptoProvider;
-import com.nimbusds.jose.crypto.impl.DirectCryptoProvider;
-import com.nimbusds.jose.crypto.impl.ECDHCryptoProvider;
-import com.nimbusds.jose.crypto.impl.PasswordBasedCryptoProvider;
-import com.nimbusds.jose.crypto.impl.RSACryptoProvider;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.*;
+import com.nimbusds.jose.crypto.impl.*;
 import com.nimbusds.jose.jwk.KeyType;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jwt.EncryptedJWT;
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTParser;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKFilter;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKConverter;
-import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKFilter;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
+import io.gravitee.am.model.jose.*;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.jose.ECKey;
-import io.gravitee.am.model.jose.JWK;
-import io.gravitee.am.model.jose.OCTKey;
-import io.gravitee.am.model.jose.OKPKey;
-import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -57,6 +41,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.function.Predicate;
 
 /**
+ *
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
@@ -65,12 +51,12 @@ public class JWEServiceImpl implements JWEService {
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(JWEServiceImpl.class);
 
     @Autowired
-    JWKService jwkService;
+    private JWKService jwkService;
 
     @Override
     public Single<String> encryptIdToken(String signedJwt, Client client) {
         //Return input without encryption if client does not require JWE or algorithm is set to none
-        if(client.getIdTokenEncryptedResponseAlg()==null || JWEAlgorithm.NONE.equals(client.getIdTokenEncryptedResponseAlg())) {
+        if (client.getIdTokenEncryptedResponseAlg() == null || JWEAlgorithm.NONE.getName().equalsIgnoreCase(client.getIdTokenEncryptedResponseAlg())) {
             return Single.just(signedJwt);
         }
 
@@ -95,7 +81,7 @@ public class JWEServiceImpl implements JWEService {
     @Override
     public Single<String> encryptUserinfo(String signedJwt, Client client) {
         //Return input without encryption if client does not require JWE or algorithm is set to none
-        if(client.getUserinfoEncryptedResponseAlg()==null || JWEAlgorithm.NONE.equals(client.getUserinfoEncryptedResponseAlg())) {
+        if(client.getUserinfoEncryptedResponseAlg()==null || JWEAlgorithm.NONE.getName().equalsIgnoreCase(client.getUserinfoEncryptedResponseAlg())) {
             return Single.just(signedJwt);
         }
 
@@ -114,6 +100,73 @@ public class JWEServiceImpl implements JWEService {
                     }
                     LOGGER.error(throwable.getMessage(), throwable);
                     return Single.error(new ServerErrorException("Unable to encrypt userinfo"));
+                });
+    }
+
+    @Override
+    public Single<JWT> decrypt(String jwt, Client client) {
+        try {
+            // Parse a first time to check if the JWT is encrypted
+            JWT parsedJwt = JWTParser.parse(jwt);
+
+            if (parsedJwt instanceof EncryptedJWT) {
+
+                JWEObject jweObject = JWEObject.parse(jwt);
+
+                JWEAlgorithm algorithm = jweObject.getHeader().getAlgorithm();
+
+                //RSA decryption
+                if (RSACryptoProvider.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+                    return decrypt(jweObject, client, JWKFilter.RSA_KEY_ENCRYPTION(), jwk ->
+                            new RSADecrypter(JWKConverter.convert((RSAKey) jwk))
+                    );
+                }
+                //Curve decryption (Elliptic "EC" & Edward "OKP")
+                else if (ECDHCryptoProvider.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+                    return decrypt(jweObject, client, JWKFilter.CURVE_KEY_ENCRYPTION(), jwk -> {
+                        if (KeyType.EC.getValue().equals(jwk.getKty())) {
+                            return new ECDHDecrypter(JWKConverter.convert((ECKey) jwk));
+                        }
+                        return new X25519Decrypter(JWKConverter.convert((OKPKey) jwk));
+                    });
+                }
+                //AES decryption ("OCT" keys)
+                else if (AESCryptoProvider.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+                    return decrypt(jweObject, client, JWKFilter.OCT_KEY_ENCRYPTION(algorithm), jwk ->
+                            new AESDecrypter(JWKConverter.convert((OCTKey) jwk))
+                    );
+                }
+                //Direct decryption ("OCT" keys)
+                else if (DirectCryptoProvider.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+                    return decrypt(jweObject, client, JWKFilter.OCT_KEY_ENCRYPTION(jweObject.getHeader().getEncryptionMethod()), jwk ->
+                            new DirectDecrypter(JWKConverter.convert((OCTKey) jwk))
+                    );
+                }
+                //Password Base decryption ("OCT" keys)
+                else if (PasswordBasedCryptoProvider.SUPPORTED_ALGORITHMS.contains(algorithm)) {
+                    return decrypt(jweObject, client, JWKFilter.OCT_KEY_ENCRYPTION(), jwk -> {
+                        OctetSequenceKey octKey = JWKConverter.convert((OCTKey) jwk);
+                        return new PasswordBasedDecrypter(octKey.getKeyValue().decode());
+                    });
+                }
+
+                return Single.error(new ServerErrorException("Unable to perform Json Web Decryption, unsupported algorithm: " + algorithm.getName()));
+            } else {
+                return Single.just(parsedJwt);
+            }
+        } catch (Exception ex) {
+            return Single.error(ex);
+        }
+    }
+
+    private Single<JWT> decrypt(JWEObject jwe, Client client, Predicate<JWK> filter, JWEDecrypterFunction<JWK, JWEDecrypter> function) {
+        return jwkService.getKeys(client)
+                .flatMap(jwkSet -> jwkService.filter(jwkSet, filter))
+                .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("no matching key found to decrypt")))
+                .flatMapSingle(jwk -> Single.just(function.apply(jwk)))
+                .map(decrypter -> {
+                    jwe.decrypt(decrypter);
+                    return jwe.getPayload().toSignedJWT();
                 });
     }
 
@@ -159,7 +212,7 @@ public class JWEServiceImpl implements JWEService {
                 );
             });
         }
-        return Single.error(new ServerErrorException("Unable to perform Json Web Encryption, unsupported algorithm"+algorithm.getName()));
+        return Single.error(new ServerErrorException("Unable to perform Json Web Encryption, unsupported algorithm: "+algorithm.getName()));
     }
 
     private Single<String> encrypt(JWEObject jwe, Client client, Predicate<JWK> filter, JWEEncrypterFunction<JWK, JWEEncrypter> function) {
@@ -171,6 +224,11 @@ public class JWEServiceImpl implements JWEService {
                     jwe.encrypt(encrypter);
                     return jwe.serialize();
                 });
+    }
+
+    @FunctionalInterface
+    private interface JWEDecrypterFunction<JWK, JWEDecrypter> {
+        JWEDecrypter apply(JWK jwk) throws JOSEException;
     }
 
     @FunctionalInterface

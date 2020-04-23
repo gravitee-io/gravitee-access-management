@@ -17,6 +17,7 @@ package io.gravitee.am.model.jose;
 
 /**
  * See <a href="https://tools.ietf.org/html/rfc7638#section-3.2">3.2. JWK Members Used in the Thumbprint Computation</a>
+ * See <a href="https://tools.ietf.org/html/draft-jones-jose-json-private-and-symmetric-key-00#section-3.1">JWK Parameters for Elliptic Curve Private Keys</a>
  *
  *  The required members for an Elliptic Curve public key, in lexicographic order, are:
  *    - "crv"
@@ -25,6 +26,7 @@ package io.gravitee.am.model.jose;
  *    - "y"
  *
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ECKey extends JWK {
@@ -36,6 +38,11 @@ public class ECKey extends JWK {
     private String crv;
     private String x;
     private String y;
+
+    /**
+     * Private key value for the Elliptic private key.
+     */
+    private String d;
 
     public String getCrv() {
         return crv;
@@ -59,5 +66,17 @@ public class ECKey extends JWK {
 
     public void setY(String y) {
         this.y = y;
+    }
+
+    public String getD() {
+        return d;
+    }
+
+    public void setD(String d) {
+        this.d = d;
+    }
+
+    public boolean isPrivate() {
+        return d != null;
     }
 }

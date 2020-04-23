@@ -45,6 +45,14 @@ public class JWKMongo {
     private String e;
     private String n;
 
+    /* RSA Private Key properties */
+    private String d;
+    private String p;
+    private String q;
+    private String dp;
+    private String dq;
+    private String qi;
+
     /* EC Key properties (including OKP) */
     private String crv;
     private String x;
@@ -52,7 +60,6 @@ public class JWKMongo {
 
     /* OCT Key properties */
     private String k;
-
 
     public String getKty() {
         return kty;
@@ -172,5 +179,53 @@ public class JWKMongo {
 
     public void setK(String k) {
         this.k = k;
+    }
+
+    public String getD() {
+        return d;
+    }
+
+    public void setD(String d) {
+        this.d = d;
+    }
+
+    public String getP() {
+        return p;
+    }
+
+    public void setP(String p) {
+        this.p = p;
+    }
+
+    public String getQ() {
+        return q;
+    }
+
+    public void setQ(String q) {
+        this.q = q;
+    }
+
+    public String getDp() {
+        return dp;
+    }
+
+    public void setDp(String dp) {
+        this.dp = dp;
+    }
+
+    public String getDq() {
+        return dq;
+    }
+
+    public void setDq(String dq) {
+        this.dq = dq;
+    }
+
+    public String getQi() {
+        return qi;
+    }
+
+    public void setQi(String qi) {
+        this.qi = qi;
     }
 }

@@ -145,7 +145,7 @@ public class OpenIDProviderMetadata {
     private Boolean requestUriParameterSupported = Boolean.TRUE;
 
     @JsonProperty("require_request_uri_registration")
-    private Boolean requireRequestUriRegistration = Boolean.TRUE;
+    private Boolean requireRequestUriRegistration = Boolean.FALSE;
 
     @JsonProperty("op_policy_uri")
     private String opPolicyUri;
