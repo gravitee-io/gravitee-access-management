@@ -41,9 +41,11 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
+import io.gravitee.am.gateway.handler.oidc.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.service.AbstractService;
@@ -129,6 +131,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private JWKService jwkService;
 
+    @Autowired
+    private RequestObjectService requestObjectService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -167,8 +172,10 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         // Authorization endpoint
         oauth2Router.route(HttpMethod.GET,"/authorize")
                 .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
-                .handler(new AuthorizationRequestParseClientHandler(domain, clientSyncService))
+                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new AuthorizationRequestValidateParametersHandler(domain))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler())
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService, domain))

@@ -17,6 +17,7 @@ package io.gravitee.am.model.jose;
 
 /**
  * See <a href="https://tools.ietf.org/html/rfc8037#appendix-A.3">JWK Thumbprint Canonicalization</a>
+ * See <a href="https://tools.ietf.org/html/draft-jones-jose-json-private-and-symmetric-key-00#section-4">JWK Parameters for Symmetric Keys</a>
  *
  *  The required members for an Octet Key Pair public key, in lexicographic order, are:
  *    - "crv"
@@ -24,9 +25,10 @@ package io.gravitee.am.model.jose;
  *    - "x"
  *
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OKPKey extends JWK{
+public class OKPKey extends JWK {
 
     public OKPKey() {
         setKty(KeyType.OKP.getKeyType());
@@ -34,6 +36,11 @@ public class OKPKey extends JWK{
 
     private String crv;
     private String x;
+
+    /**
+     * Private key value for the Octet Key Pair private key.
+     */
+    private String d;
 
     public String getCrv() {
         return crv;
@@ -49,5 +56,17 @@ public class OKPKey extends JWK{
 
     public void setX(String x) {
         this.x = x;
+    }
+
+    public String getD() {
+        return d;
+    }
+
+    public void setD(String d) {
+        this.d = d;
+    }
+
+    public boolean isPrivate() {
+        return d != null;
     }
 }

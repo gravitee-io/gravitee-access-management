@@ -40,6 +40,9 @@ public interface Parameters {
      * The client informs the authorization server of the desired grant type using the response_type parameter.
      */
     String RESPONSE_TYPE = "response_type";
+
+    String RESPONSE_MODE = "response_mode";
+
     /**
      * The authorization server redirects the user-agent to the client's redirection endpoint previously established with the
      *  authorization server during the client registration process or when making the authorization request.

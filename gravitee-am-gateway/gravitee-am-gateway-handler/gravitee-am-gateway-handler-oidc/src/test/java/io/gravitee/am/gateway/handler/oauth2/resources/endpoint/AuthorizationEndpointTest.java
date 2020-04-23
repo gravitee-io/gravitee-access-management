@@ -22,10 +22,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestFailureHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseClientHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequiredParametersHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.*;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.*;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
@@ -106,8 +103,9 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(sessionHandler);
         router.route(HttpMethod.GET, "/oauth/authorize")
                 .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
-                .handler(new AuthorizationRequestParseClientHandler(domain, clientSyncService))
+                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new AuthorizationRequestValidateParametersHandler(domain))
                 .handler(authorizationEndpointHandler);
         router.route()
                 .failureHandler(new AuthorizationRequestFailureHandler(domain));

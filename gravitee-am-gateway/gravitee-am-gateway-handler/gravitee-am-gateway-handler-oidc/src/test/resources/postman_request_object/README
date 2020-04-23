@@ -1,0 +1,6 @@
+
+# Generate the certificates used by postman tests
+
+openssl req -newkey rsa:2048 -nodes -keyout request_object.key -x509 -days 365 -out request_object.crt
+openssl pkcs12 -export  -inkey request_object.key -in request_object.crt -out request_object.p12
+

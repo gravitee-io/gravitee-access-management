@@ -31,6 +31,8 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.impl.JWKServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.impl.JWSServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
+import io.gravitee.am.gateway.handler.oidc.service.request.impl.RequestObjectServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -76,5 +78,10 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     @Bean
     public JWSService jwsService() {
         return new JWSServiceImpl();
+    }
+
+    @Bean
+    public RequestObjectService requestObjectService() {
+        return new RequestObjectServiceImpl();
     }
 }

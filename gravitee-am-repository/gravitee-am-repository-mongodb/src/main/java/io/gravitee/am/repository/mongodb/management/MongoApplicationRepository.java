@@ -485,16 +485,31 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     private RSAKey convertRSA(JWKMongo rsaKeyMongo) {
         RSAKey key = new RSAKey();
+
+        // Public key
         key.setE(rsaKeyMongo.getE());
         key.setN(rsaKeyMongo.getN());
+
+        // Private key
+        key.setD(rsaKeyMongo.getD());
+        key.setP(rsaKeyMongo.getP());
+        key.setQ(rsaKeyMongo.getQ());
+        key.setDp(rsaKeyMongo.getDp());
+        key.setDq(rsaKeyMongo.getDq());
+        key.setQi(rsaKeyMongo.getQi());
         return key;
     }
 
     private ECKey convertEC(JWKMongo ecKeyMongo) {
         ECKey key = new ECKey();
+
+        // Public key
         key.setCrv(ecKeyMongo.getCrv());
         key.setX(ecKeyMongo.getX());
         key.setY(ecKeyMongo.getY());
+
+        // Private key
+        key.setD(ecKeyMongo.getD());
         return key;
     }
 
@@ -508,6 +523,10 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         OKPKey key = new OKPKey();
         key.setCrv(ecKeyMongo.getCrv());
         key.setX(ecKeyMongo.getX());
+
+        // Private key
+        key.setD(ecKeyMongo.getD());
+
         return key;
     }
 
@@ -553,6 +572,12 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         JWKMongo key = new JWKMongo();
         key.setE(rsaKey.getE());
         key.setN(rsaKey.getN());
+        key.setD(rsaKey.getD());
+        key.setP(rsaKey.getP());
+        key.setQ(rsaKey.getQ());
+        key.setDp(rsaKey.getDp());
+        key.setDq(rsaKey.getDq());
+        key.setQi(rsaKey.getQi());
         return key;
     }
 
@@ -561,6 +586,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         key.setCrv(ecKey.getCrv());
         key.setX(ecKey.getX());
         key.setY(ecKey.getY());
+        key.setD(ecKey.getD());
         return key;
     }
 
@@ -568,6 +594,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         JWKMongo key = new JWKMongo();
         key.setCrv(okpKey.getCrv());
         key.setX(okpKey.getX());
+        key.setD(okpKey.getD());
         return key;
     }
 

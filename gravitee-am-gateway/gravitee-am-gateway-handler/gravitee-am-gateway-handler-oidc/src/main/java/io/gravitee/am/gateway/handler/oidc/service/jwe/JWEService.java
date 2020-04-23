@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.jwe;
 
+import com.nimbusds.jwt.JWT;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 
@@ -39,4 +40,6 @@ public interface JWEService {
      * @return JWT encrypted string representation
      */
     Single<String> encryptUserinfo(String signedJwt, Client client);
+
+    Single<JWT> decrypt(String jwt, Client client);
 }
