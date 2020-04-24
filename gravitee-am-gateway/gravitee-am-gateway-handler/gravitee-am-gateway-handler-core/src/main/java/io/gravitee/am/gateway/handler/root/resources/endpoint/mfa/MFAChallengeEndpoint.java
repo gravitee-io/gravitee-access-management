@@ -82,24 +82,30 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     }
 
     private void renderMFAPage(RoutingContext routingContext) {
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-        final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-        final Factor factor = getFactor(routingContext, client, endUser);
-        final String error = routingContext.request().getParam(ERROR_PARAM);
-        routingContext.put("factor", factor);
-        routingContext.put("action", routingContext.request().uri());
-        routingContext.put(ERROR_PARAM, error);
+        try {
+            final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+            final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            final Factor factor = getFactor(routingContext, client, endUser);
+            final String error = routingContext.request().getParam(ERROR_PARAM);
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().uri(), null);
+            routingContext.put("factor", factor);
+            routingContext.put("action", action);
+            routingContext.put(ERROR_PARAM, error);
 
-        // render the mfa challenge page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render MFA challenge page", res.cause());
-                routingContext.fail(res.cause());
-            }
-        });
+            // render the mfa challenge page
+            engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+                if (res.succeeded()) {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(res.result());
+                } else {
+                    logger.error("Unable to render MFA challenge page", res.cause());
+                    routingContext.fail(res.cause());
+                }
+            });
+        } catch (Exception ex) {
+            logger.error("An error occurs while rendering MFA challenge page", ex);
+            routingContext.fail(503);
+        }
     }
 
     private void verifyCode(RoutingContext routingContext) {
