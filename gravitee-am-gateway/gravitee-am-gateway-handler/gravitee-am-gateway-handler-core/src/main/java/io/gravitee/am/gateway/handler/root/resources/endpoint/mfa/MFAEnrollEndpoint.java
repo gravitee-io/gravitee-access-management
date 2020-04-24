@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
@@ -80,31 +81,37 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
     }
 
     private void renderPage(RoutingContext routingContext) {
-        final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-        final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
+        try {
+            final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+            final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().uri(), null);
 
-        // load factor providers
-        load(factors, endUser, h -> {
-            if (h.failed()) {
-                logger.error("An error occurs while loading factor providers", h.cause());
-                routingContext.fail(503);
-                return;
-            }
-            // put factors in context
-            routingContext.put("factors", h.result());
-            routingContext.put("action", routingContext.request().uri());
-            // render the mfa enroll page
-            engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-                if (res.succeeded()) {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(res.result());
-                } else {
-                    logger.error("Unable to render MFA enroll page", res.cause());
-                    routingContext.fail(res.cause());
+            // load factor providers
+            load(factors, endUser, h -> {
+                if (h.failed()) {
+                    logger.error("An error occurs while loading factor providers", h.cause());
+                    routingContext.fail(503);
+                    return;
                 }
+                // put factors in context
+                routingContext.put("factors", h.result());
+                routingContext.put("action", action);
+                // render the mfa enroll page
+                engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+                    if (res.succeeded()) {
+                        routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                        routingContext.response().end(res.result());
+                    } else {
+                        logger.error("Unable to render MFA enroll page", res.cause());
+                        routingContext.fail(res.cause());
+                    }
+                });
             });
-        });
+        } catch (Exception ex) {
+            logger.error("An error occurs while rendering MFA enroll page", ex);
+            routingContext.fail(503);
+        }
     }
 
     private void saveEnrollment(RoutingContext routingContext) {
