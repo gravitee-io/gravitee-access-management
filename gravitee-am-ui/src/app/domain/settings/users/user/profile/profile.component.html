@@ -96,30 +96,37 @@
               <mat-divider></mat-divider>
               <div fxLayout="row" style="padding: 20px;">
                 <div fxLayout="column" fxFlex="75">
-                  <div fxLayout="row" style="color: orange;"><mat-icon>warning</mat-icon><h4 style="margin-top: 5px;">User does not complete registration</h4></div>
-                  <span>An email will be sent to the user asking to complete his account.</span>
+                  <div fxLayout="row" style="color: orange; align-items: center;">
+                    <mat-icon>warning</mat-icon>
+                    <h4 style="margin: 0; font-weight: 400;">User does not complete registration</h4>
+                  </div>
+                  <mat-hint style="font-size: 75%;">An email will be sent to the user asking to complete his account.</mat-hint>
                 </div>
-                <button (click)="resendConfirmationRegistration($event)" mat-stroked-button color="primary">SEND CONFIRMATION</button>
+                <button (click)="resendConfirmationRegistration($event)" mat-stroked-button color="accent">SEND CONFIRMATION</button>
               </div>
             </div>
             <div fxLayout="column" *ngIf="accountLocked(user)">
               <mat-divider></mat-divider>
               <div fxLayout="row" style="padding: 20px;">
                 <div fxLayout="column" fxFlex="75">
-                  <div fxLayout="row" style="color: red;"><mat-icon>blocked</mat-icon><h4 style="margin-top: 5px;">User account is locked</h4></div>
-                  <span>The account is locked due to to many failed login attempts. Unlock the user to regain access.</span>
+                  <div fxLayout="row" style="color: red; align-items: center;">
+                    <mat-icon>blocked</mat-icon>
+                    <h4 style="margin: 0; font-weight: 400;">User account is locked</h4>
+                  </div>
+                  <mat-hint style="font-size: 75%;">The account is locked due to to many failed login attempts. Unlock the user to regain access.</mat-hint>
                 </div>
-                <button (click)="unlock($event)" mat-stroked-button color="primary">UNLOCK ACCOUNT</button>
+                <button (click)="unlock($event)" mat-stroked-button color="accent">UNLOCK ACCOUNT</button>
               </div>
             </div>
             <div *ngIf="editMode()" fxLayout="column">
               <mat-divider></mat-divider>
-              <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="background: #f1f1f1; border: none;">
-                <mat-form-field style="margin-right: 20px" fxFlex="72">
+              <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="margin-top: 20px;">
+                <mat-form-field style="margin: 0px 15px 0px 15px;" fxFlex="70" appearance="outline" floatLabel="always">
+                  <mat-label>Password</mat-label>
                   <input matInput type="password" name="password" placeholder="Password" required [(ngModel)]="password"/>
                   <mat-hint>User's password</mat-hint>
                 </mat-form-field>
-                <button style="height:36px; margin-top: 20px;" mat-stroked-button color="primary" [disabled]="!passwordForm.valid || passwordForm.pristine" type="submit">RESET PASSWORD</button>
+                <button style="min-width: 180px; height:36px; margin-top: 8px;" mat-stroked-button color="accent" [disabled]="!passwordForm.valid || passwordForm.pristine" type="submit">RESET PASSWORD</button>
               </form>
             </div>
           </div>
