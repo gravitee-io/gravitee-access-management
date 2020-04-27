@@ -19,7 +19,7 @@
   <mat-toolbar class="navigation-header" fxLayout="row" fxLayoutAlign="space-between center">
     <a [routerLink]="['']" style="text-decoration: none;" [matTooltip]="title + ' / ' + version" [matTooltipPosition]="'right'">
     <div fxLayout="row" fxLayoutAlign="center center">
-        <img class="logo-image" [ngClass]="{'reduce-mode': reducedMode}" src="assets/theme/GRAVITEE_LOGO1-01.png"/>
+        <img class="logo-image" [ngClass]="{'reduce-mode': reducedMode}" [src]="'assets/theme/logo_gravitee.png'" (error)="mainLogo.src='assets/GRAVITEE_LOGO1-01.png'" #mainLogo/>
     </div>
     </a>
   </mat-toolbar>

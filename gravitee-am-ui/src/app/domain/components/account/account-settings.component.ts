@@ -88,6 +88,15 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     return this.accountSettings && this.accountSettings.loginAttemptsDetectionEnabled;
   }
 
+  enableDynamicUserRegistration(event) {
+    this.accountSettings.dynamicUserRegistration = event.checked;
+    this.formChanged = true;
+  }
+
+  isDynamicUserRegistrationEnabled() {
+    return this.accountSettings && this.accountSettings.dynamicUserRegistration;
+  }
+
   enableCompleteRegistration(event) {
     this.accountSettings.completeRegistrationWhenResetPassword = event.checked;
     this.formChanged = true;

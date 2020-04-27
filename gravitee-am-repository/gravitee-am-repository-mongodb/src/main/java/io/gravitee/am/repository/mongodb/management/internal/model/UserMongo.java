@@ -53,6 +53,8 @@ public class UserMongo extends Auditable {
     private boolean internal;
     private boolean preRegistration;
     private boolean registrationCompleted;
+    private String registrationUserUri;
+    private String registrationAccessToken;
     private String referenceType;
     private String referenceId;
     private String source;
@@ -232,6 +234,22 @@ public class UserMongo extends Auditable {
 
     public void setRegistrationCompleted(boolean registrationCompleted) {
         this.registrationCompleted = registrationCompleted;
+    }
+
+    public String getRegistrationUserUri() {
+        return registrationUserUri;
+    }
+
+    public void setRegistrationUserUri(String registrationUserUri) {
+        this.registrationUserUri = registrationUserUri;
+    }
+
+    public String getRegistrationAccessToken() {
+        return registrationAccessToken;
+    }
+
+    public void setRegistrationAccessToken(String registrationAccessToken) {
+        this.registrationAccessToken = registrationAccessToken;
     }
 
     public String getReferenceType() {

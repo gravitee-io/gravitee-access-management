@@ -91,11 +91,18 @@
         <h5>Management</h5>
         <mat-divider></mat-divider>
       </div>
-
       <div>
         <div fxLayout="column">
           <mat-slide-toggle
-            (change)="enableCompleteRegistration($event)"
+              (change)="enableDynamicUserRegistration($event)"
+            [checked]="isDynamicUserRegistrationEnabled()">
+            Dynamic user registration
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Upon successful pre-registration, returns the newly-created User with location of the User Registration Endpoint to finalize the account. No email will be sent to the User (works only on the management side with the POST /users endpoint).</mat-hint>
+        </div>
+        <div fxLayout="column" style="margin-top: 10px;">
+          <mat-slide-toggle
+          (change)="enableCompleteRegistration($event)"
             [checked]="isCompleteRegistrationEnabled()" [disabled]="readonly">
             Complete user registration (Reset Password)
           </mat-slide-toggle>

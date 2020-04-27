@@ -20,16 +20,16 @@ import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
@@ -45,10 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -96,6 +93,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    private DomainService domainService;
+
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
         return userService.search(referenceType, referenceId, query, page, size);
@@ -133,79 +133,100 @@ public class UserServiceImpl implements UserService {
         if (newUser.getSource() == null && referenceType == ReferenceType.DOMAIN) {
             newUser.setSource(DEFAULT_IDP_PREFIX + referenceId);
         }
-
-        // check user provider
-        return identityProviderManager.getUserProvider(newUser.getSource())
-                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
-                // check client
-                .flatMapSingle(userProvider -> {
-                    if (newUser.getClient() != null && referenceType == ReferenceType.DOMAIN) {
-                        return checkClient(referenceId, newUser.getClient())
-                                .flatMapSingle(client -> {
-                                    newUser.setClient(client.getId());
-                                    return Single.just(userProvider);
-                                });
-                    }
-                    return Single.just(userProvider);
-                })
-                // save the user
-                .flatMap(userProvider -> {
-                    // user is flagged as internal user
-                    newUser.setInternal(true);
-                    if (newUser.isPreRegistration()) {
-                        newUser.setPassword(null);
-                        newUser.setRegistrationCompleted(false);
-                        newUser.setEnabled(false);
-                    } else {
-                        newUser.setRegistrationCompleted(true);
-                        newUser.setEnabled(true);
-                        newUser.setDomain(referenceType == ReferenceType.DOMAIN ? referenceId : null);
-                    }
-
-                    // store user in its identity provider
-                    return userProvider.create(convert(newUser))
-                            // if a user is already in the identity provider but not in the AM users collection,
-                            // it means that the user is coming from a pre-filled AM compatible identity provider (user creation enabled)
-                            // try to create the user with the idp user information
-                            .onErrorResumeNext(ex -> {
-                                if (ex instanceof UserAlreadyExistsException) {
-                                    userProvider.findByUsername(newUser.getUsername())
-                                            .flatMapSingle(idpUser -> userService.findByUsernameAndSource(referenceType, referenceId, idpUser.getUsername(), newUser.getSource())
-                                                    .isEmpty()
-                                                    .flatMap(isEmpty -> {
-                                                        if (!isEmpty) {
-                                                            return Single.error(ex);
-                                                        } else {
-                                                            // AM 'users' collection is not made for authentication (but only management stuff)
-                                                            // clear password
-                                                            newUser.setPassword(null);
-                                                            // set external id
-                                                            newUser.setExternalId(idpUser.getId());
-                                                            // set username
-                                                            newUser.setUsername(idpUser.getUsername());
-                                                            return userService.create(referenceType, referenceId, newUser);
-                                                        }
-                                                    }));
+        // check domain
+        return domainService.findById(referenceId)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(referenceId)))
+                .flatMapSingle(domain1 -> {
+                    // check user
+                    return userService.findByDomainAndUsernameAndSource(domain1.getId(), newUser.getUsername(), newUser.getSource())
+                            .isEmpty()
+                            .flatMap(isEmpty -> {
+                                if (!isEmpty) {
+                                    return Single.error(new UserAlreadyExistsException(newUser.getUsername()));
+                                } else {
+                                    // check user provider
+                                    return identityProviderManager.getUserProvider(newUser.getSource())
+                                            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
+                                            .flatMapSingle(userProvider -> {
+                                                // check client
+                                                return checkClient(referenceId, newUser.getClient())
+                                                        .map(Optional::of)
+                                                        .defaultIfEmpty(Optional.empty())
+                                                        .flatMapSingle(optClient -> {
+                                                            Application client = optClient.orElse(null);
+                                                            newUser.setDomain(domain1.getId());
+                                                            newUser.setClient(client != null ? client.getId() : null);
+                                                            // user is flagged as internal user
+                                                            newUser.setInternal(true);
+                                                            if (newUser.isPreRegistration()) {
+                                                                newUser.setPassword(null);
+                                                                newUser.setRegistrationCompleted(false);
+                                                                newUser.setEnabled(false);
+                                                            } else {
+                                                                newUser.setRegistrationCompleted(true);
+                                                                newUser.setEnabled(true);
+                                                                newUser.setDomain(referenceId);
+                                                            }
+                                                            // store user in its identity provider
+                                                            return userProvider.create(convert(newUser))
+                                                                    .map(idpUser -> {
+                                                                        // AM 'users' collection is not made for authentication (but only management stuff)
+                                                                        // clear password
+                                                                        newUser.setPassword(null);
+                                                                        // set external id
+                                                                        newUser.setExternalId(idpUser.getId());
+                                                                        return newUser;
+                                                                    })
+                                                                    // if a user is already in the identity provider but not in the AM users collection,
+                                                                    // it means that the user is coming from a pre-filled AM compatible identity provider (user creation enabled)
+                                                                    // try to create the user with the idp user information
+                                                                    .onErrorResumeNext(ex -> {
+                                                                        if (ex instanceof UserAlreadyExistsException) {
+                                                                            return userProvider.findByUsername(newUser.getUsername())
+                                                                                    // double check user existence for case sensitive
+                                                                                    .flatMapSingle(idpUser -> userService.findByDomainAndUsernameAndSource(domain1.getId(), idpUser.getUsername(), newUser.getSource())
+                                                                                            .isEmpty()
+                                                                                            .map(empty -> {
+                                                                                                if (!empty) {
+                                                                                                    throw new UserAlreadyExistsException(newUser.getUsername());
+                                                                                                } else {
+                                                                                                    // AM 'users' collection is not made for authentication (but only management stuff)
+                                                                                                    // clear password
+                                                                                                    newUser.setPassword(null);
+                                                                                                    // set external id
+                                                                                                    newUser.setExternalId(idpUser.getId());
+                                                                                                    // set username
+                                                                                                    newUser.setUsername(idpUser.getUsername());
+                                                                                                    return newUser;
+                                                                                                }
+                                                                                            }));
+                                                                        } else {
+                                                                            return Single.error(ex);
+                                                                        }
+                                                                    })
+                                                                    .flatMap(newUser1 -> {
+                                                                        User user = transform(newUser1);
+                                                                        AccountSettings accountSettings = getAccountSettings(domain1, client);
+                                                                        if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
+                                                                            user.setRegistrationUserUri(getUserRegistrationUri(domain1.getPath(), "/confirmRegistration"));
+                                                                            user.setRegistrationAccessToken(getUserRegistrationToken(user));
+                                                                        }
+                                                                        return userService.create(user);
+                                                                    })
+                                                                    .doOnSuccess(user -> {
+                                                                        auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user));
+                                                                        // in pre registration mode an email will be sent to the user to complete his account
+                                                                        AccountSettings accountSettings = getAccountSettings(domain1, client);
+                                                                        if (newUser.isPreRegistration() && accountSettings != null && !accountSettings.isDynamicUserRegistration()) {
+                                                                            new Thread(() -> completeUserRegistration(user)).start();
+                                                                        }
+                                                                    })
+                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
+                                                        });
+                                            });
                                 }
-                                return Single.error(ex);
-                            })
-                            .flatMap(idpUser -> {
-                                // AM 'users' collection is not made for authentication (but only management stuff)
-                                // clear password
-                                newUser.setPassword(null);
-                                // set external id
-                                newUser.setExternalId(idpUser.getId());
-                                return userService.create(referenceType, referenceId, newUser);
                             });
-                })
-                .doOnSuccess(user -> {
-                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user));
-                    // in pre registration mode an email will be sent to the user to complete his account
-                    if (newUser.isPreRegistration()) {
-                        new Thread(() -> completeUserRegistration(user)).start();
-                    }
-                })
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
+                });
     }
 
     @Override
@@ -412,6 +433,10 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
+    public void setExpireAfter(Integer expireAfter) {
+        this.expireAfter = expireAfter;
+    }
+
     private Single<User> assignRoles0(ReferenceType referenceType, String referenceId, String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal, boolean revoke) {
         return findById(referenceType, referenceId, userId)
                 .flatMap(oldUser -> {
@@ -434,6 +459,9 @@ public class UserServiceImpl implements UserService {
     }
 
     private Maybe<Application> checkClient(String domain, String client) {
+        if (client == null) {
+            return Maybe.empty();
+        }
         return applicationService.findById(client)
                 .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(domain, client)))
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
@@ -460,11 +488,11 @@ public class UserServiceImpl implements UserService {
     private void completeUserRegistration(User user) {
         final String templateName = getTemplateName(user);
         io.gravitee.am.model.Email email = emailManager.getEmail(templateName, registrationSubject, expireAfter);
-        Email email1 = convert(user, email, "/confirmRegistration", "registrationUrl");
+        Email email1 = buildEmail(user, email, "/confirmRegistration", "registrationUrl");
         emailService.send(email1, user);
     }
 
-    private Email convert(User user, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
+    private Email buildEmail(User user, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
         Map<String, Object> params = prepareEmail(user, email.getExpiresAfter(), redirectUri, redirectUriName);
         Email email1 = new EmailBuilder()
                 .to(user.getEmail())
@@ -478,26 +506,8 @@ public class UserServiceImpl implements UserService {
     }
 
     private Map<String, Object> prepareEmail(User user, int expiresAfter, String redirectUri, String redirectUriName) {
-        // generate a JWT to store user's information and for security purpose
-        final Map<String, Object> claims = new HashMap<>();
-        claims.put(Claims.iat, new Date().getTime() / 1000);
-        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expiresAfter * 1000)).getTime() / 1000);
-        claims.put(Claims.sub, user.getId());
-        if (user.getClient() != null) {
-            claims.put(Claims.aud, user.getClient());
-        }
-        claims.put(StandardClaims.EMAIL, user.getEmail());
-        claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
-        claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
-
-        final String token = jwtBuilder.setClaims(claims).compact();
-
-        String entryPoint = gatewayUrl;
-        if (entryPoint != null && entryPoint.endsWith("/")) {
-            entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
-        }
-
-        String redirectUrl = entryPoint + "/" + user.getReferenceId() + redirectUri + "?token=" + token;
+        final String token = getUserRegistrationToken(user);
+        final String redirectUrl = getUserRegistrationUri(user.getReferenceId(), redirectUri) + "?token=" + token;
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);
@@ -508,11 +518,56 @@ public class UserServiceImpl implements UserService {
         return params;
     }
 
+    private String getUserRegistrationUri(String domain, String redirectUri) {
+        String entryPoint = gatewayUrl;
+        if (entryPoint != null && entryPoint.endsWith("/")) {
+            entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
+        }
+
+        return entryPoint + "/" + domain + redirectUri;
+    }
+
+    private String getUserRegistrationToken(User user) {
+        // generate a JWT to store user's information and for security purpose
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put(Claims.iat, new Date().getTime() / 1000);
+        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expireAfter * 1000)).getTime() / 1000);
+        claims.put(Claims.sub, user.getId());
+        if (user.getClient() != null) {
+            claims.put(Claims.aud, user.getClient());
+        }
+        claims.put(StandardClaims.EMAIL, user.getEmail());
+        claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
+        claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
+
+        return jwtBuilder.setClaims(claims).compact();
+    }
+
     private String getTemplateName(User user) {
         return Template.REGISTRATION_CONFIRMATION.template()
                 + EmailManager.TEMPLATE_NAME_SEPARATOR
                 + user.getReferenceType() + user.getReferenceId()
                 + ((user.getClient() != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + user.getClient() : "");
+    }
+
+    private AccountSettings getAccountSettings(Domain domain, Application application) {
+        if (application == null) {
+            return domain.getAccountSettings();
+        }
+        // if client has no account config return domain config
+        if (application.getSettings() == null) {
+            return domain.getAccountSettings();
+        }
+        if (application.getSettings().getAccount() == null) {
+            return domain.getAccountSettings();
+        }
+        // if client configuration is not inherited return the client config
+        if (!application.getSettings().getAccount().isInherited()) {
+            return application.getSettings().getAccount();
+        }
+
+        // return domain config
+        return domain.getAccountSettings();
     }
 
     private io.gravitee.am.identityprovider.api.User convert(NewUser newUser) {
@@ -533,6 +588,28 @@ public class UserServiceImpl implements UserService {
             newUser.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
         }
         user.setAdditionalInformation(additionalInformation);
+        return user;
+    }
+
+    private User transform(NewUser newUser) {
+        User user = new User();
+        user.setId(RandomString.generate());
+        user.setExternalId(newUser.getExternalId());
+        user.setReferenceId(newUser.getDomain());
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setClient(newUser.getClient());
+        user.setEnabled(newUser.isEnabled());
+        user.setUsername(newUser.getUsername());
+        user.setFirstName(newUser.getFirstName());
+        user.setLastName(newUser.getLastName());
+        user.setEmail(newUser.getEmail());
+        user.setSource(newUser.getSource());
+        user.setInternal(newUser.isInternal());
+        user.setPreRegistration(newUser.isPreRegistration());
+        user.setRegistrationCompleted(newUser.isRegistrationCompleted());
+        user.setAdditionalInformation(newUser.getAdditionalInformation());
+        user.setCreatedAt(new Date());
+        user.setUpdatedAt(user.getCreatedAt());
         return user;
     }
 

@@ -59,6 +59,11 @@ public class AccountSettings {
     private String redirectUriAfterRegistration;
 
     /**
+     * Add user registration url and user registration access token if this option is enabled
+     */
+    private boolean dynamicUserRegistration;
+
+    /**
      * Auto login user after reset password process
      */
     private boolean autoLoginAfterResetPassword;
@@ -146,6 +151,14 @@ public class AccountSettings {
 
     public void setRedirectUriAfterRegistration(String redirectUriAfterRegistration) {
         this.redirectUriAfterRegistration = redirectUriAfterRegistration;
+    }
+
+    public boolean isDynamicUserRegistration() {
+        return dynamicUserRegistration;
+    }
+
+    public void setDynamicUserRegistration(boolean dynamicUserRegistration) {
+        this.dynamicUserRegistration = dynamicUserRegistration;
     }
 
     public boolean isAutoLoginAfterResetPassword() {

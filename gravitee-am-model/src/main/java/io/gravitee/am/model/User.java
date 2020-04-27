@@ -92,6 +92,10 @@ public class User {
 
     private boolean registrationCompleted;
 
+    private String registrationUserUri;
+
+    private String registrationAccessToken;
+
     private ReferenceType referenceType;
 
     private String referenceId;
@@ -147,6 +151,8 @@ public class User {
         this.internal = other.internal;
         this.preRegistration = other.preRegistration;
         this.registrationCompleted = other.registrationCompleted;
+        this.registrationUserUri = other.registrationUserUri;
+        this.registrationAccessToken = other.registrationAccessToken;
         this.referenceType = other.referenceType;
         this.referenceId = other.referenceId;
         this.source = other.source;
@@ -418,6 +424,22 @@ public class User {
 
     public void setRegistrationCompleted(boolean registrationCompleted) {
         this.registrationCompleted = registrationCompleted;
+    }
+
+    public String getRegistrationUserUri() {
+        return registrationUserUri;
+    }
+
+    public void setRegistrationUserUri(String registrationUserUri) {
+        this.registrationUserUri = registrationUserUri;
+    }
+
+    public String getRegistrationAccessToken() {
+        return registrationAccessToken;
+    }
+
+    public void setRegistrationAccessToken(String registrationAccessToken) {
+        this.registrationAccessToken = registrationAccessToken;
     }
 
     public ReferenceType getReferenceType() {
