@@ -1,5 +1,20 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/219?closed=1[AM - 2.10.12 (2020-04-27)]
+
+=== Bug fixes
+
+*_Management-ui_*
+
+- Custom theme is not loaded https://github.com/gravitee-io/issues/issues/3529[#3529]
+
+=== Features
+
+*_Management_*
+
+- Dynamic user registration https://github.com/gravitee-io/issues/issues/3399[#3399]
+
+
 == https://github.com/gravitee-io/issues/milestone/216?closed=1[AM - 2.10.11 (2020-03-26)]
 
 === Bug fixes
