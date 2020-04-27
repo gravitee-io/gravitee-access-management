@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c6a4fd56-c41a-4215-a902-a65c45ac8c99",
+		"_postman_id": "29325db0-7ab4-4779-8ac0-99176c43fa14",
 		"name": "Gravitee.io - AM - User Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -57,12 +57,13 @@
 							]
 						},
 						"url": {
-							"raw": "{{management_url}}/admin/token",
+							"raw": "{{management_url}}/management/auth/token",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
-								"admin",
+								"management",
+								"auth",
 								"token"
 							]
 						}
@@ -105,12 +106,16 @@
 							"raw": "{\n\t\"name\": \"user-domain\", \n\t\"description\": \"test System for User Management specifications\"\n}"
 						},
 						"url": {
-							"raw": "{{management_url}}/management/domains/",
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
 								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
 								"domains",
 								""
 							]
@@ -150,12 +155,16 @@
 							"raw": "{\n  \"enabled\": true\n}"
 						},
 						"url": {
-							"raw": "{{management_url}}/management/domains/{{domain}}",
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
 							"host": [
 								"{{management_url}}"
 							],
 							"path": [
 								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
 								"domains",
 								"{{domain}}"
 							]
@@ -253,12 +262,16 @@
 											"raw": "{\n\t\"wrong\" : \n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles"
@@ -308,12 +321,16 @@
 											"raw": "{\n\t\"description\": \"role description\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles"
@@ -368,12 +385,16 @@
 											"raw": "{\n\t\"name\": \"role name\",\n\t\"description\": \"role description\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles"
@@ -428,12 +449,16 @@
 											"raw": "{\n\t\"name\": \"role 2 name\",\n\t\"description\": \"role 2 description\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles"
@@ -483,12 +508,16 @@
 											"raw": "{\n\t\"name\": \"role name\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles"
@@ -545,12 +574,16 @@
 											"raw": "{\n\t\"name\": \"role name 2\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles/wrong-id",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles/wrong-id",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles",
@@ -590,12 +623,16 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles/{{roleUM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles/{{roleUM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles",
@@ -647,12 +684,16 @@
 											"raw": "{\n\t\"name\": \"role name\",\n\t\"description\": \"new description\",\n\t\"permissions\": [\"read\"]\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles/{{roleUM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles/{{roleUM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles",
@@ -704,12 +745,16 @@
 											"raw": "{\n\t\"name\": \"role 2 name\",\n\t\"description\": \"new description 2\",\n\t\"permissions\": [\"write\"]\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles/{{role2UM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles/{{role2UM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles",
@@ -757,12 +802,16 @@
 											}
 										],
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"roles"
@@ -821,12 +870,16 @@
 											"raw": "{\n\t\"wrong\" : \n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -876,12 +929,16 @@
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -931,12 +988,16 @@
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -986,12 +1047,16 @@
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -1041,12 +1106,16 @@
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barba\",\n\t\"password\": \"password\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -1106,12 +1175,16 @@
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -1161,12 +1234,16 @@
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -1216,12 +1293,16 @@
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.BarBara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -1277,12 +1358,16 @@
 											}
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}"
 											]
@@ -1343,12 +1428,16 @@
 											"raw": "{\n\t\"firstName\": \"John\",\n\t\"lastName\": \"Doe\",\n\t\"username\": \"john.doe\",\n\t\"email\": \"john.doe@mail.com\",\n\t\"preRegistration\": true\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -1372,7 +1461,7 @@
 													"pm.test(\"Should be a redirection to confirm registration page\", function() {",
 													"    pm.response.to.be.ok;",
 													"    var responseHTML = cheerio(pm.response.text());",
-													"    tests['Redirect to confirm registration page'] = responseHTML.find('p').text().includes('Thanks for signing up, please complete the form to activate your account');",
+													"    tests['Redirect to confirm registration page'] = responseHTML.find('span').text().includes('Thanks for signing up, please complete the form to activate your account');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1437,12 +1526,16 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userTemp}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userTemp}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users",
@@ -1500,12 +1593,16 @@
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users/wrong-id",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/wrong-id",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users",
@@ -1545,12 +1642,16 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users",
@@ -1601,12 +1702,16 @@
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"additionalInformation\": {\n\t\t\"profile\":\"https://my.profile.com\"\n\t}\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users",
@@ -1656,12 +1761,16 @@
 											}
 										],
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users"
@@ -1713,12 +1822,16 @@
 											"raw": "[\"wrong-role-id\"]\n"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users",
@@ -1771,12 +1884,16 @@
 											"raw": "[ \"{{roleUM}}\"]"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"users",
@@ -1837,12 +1954,16 @@
 											"raw": "{\n\t\"wrong\" : \n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups"
@@ -1892,12 +2013,16 @@
 											"raw": "{\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups"
@@ -1949,12 +2074,16 @@
 											"raw": "{\n\t\"name\": \"My Group\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups"
@@ -2006,12 +2135,16 @@
 											"raw": "{\n\t\"name\": \"My Group 2\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups"
@@ -2061,12 +2194,16 @@
 											"raw": "{\n\t\"name\": \"My Group\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups"
@@ -2123,12 +2260,16 @@
 											"raw": "{\n\t\"name\": \"My Group\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/wrong-id",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups/wrong-id",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups",
@@ -2168,12 +2309,16 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups/{{groupUM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups",
@@ -2224,12 +2369,16 @@
 											"raw": "{\n\t\"name\": \"My New Group\"\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups/{{groupUM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups",
@@ -2287,12 +2436,16 @@
 											"raw": "{\n\t\"name\": \"My New Group\",\n\t\"members\": [\"wrong-member-id\"]\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups/{{groupUM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups",
@@ -2343,12 +2496,16 @@
 											"raw": "{\n\t\"name\": \"My New Group\",\n\t\"members\": [\"{{userUM}}\"]\n}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups/{{groupUM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups",
@@ -2401,12 +2558,16 @@
 											"raw": "[\"wrong-role-id\"]\n"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups/{{groupUM}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups",
@@ -2459,12 +2620,16 @@
 											"raw": "[ \"{{role2UM}}\"]"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{groupUM}}/roles",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups/{{groupUM}}/roles",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups",
@@ -2515,12 +2680,16 @@
 											}
 										],
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups"
@@ -2571,12 +2740,16 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/wrong-id",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups/wrong-id",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups",
@@ -2616,12 +2789,16 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups/{{group2UM}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups/{{group2UM}}",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups",
@@ -2664,12 +2841,16 @@
 											}
 										],
 										"url": {
-											"raw": "{{management_url}}/management/domains/{{domain}}/groups",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/groups",
 											"host": [
 												"{{management_url}}"
 											],
 											"path": [
 												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
 												"groups"
@@ -2750,12 +2931,16 @@
 									"raw": "{\n  \"clientId\": \"client-um\",\n  \"clientSecret\": \"client-um-secret\"\n}"
 								},
 								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}/clients",
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients",
 									"host": [
 										"{{management_url}}"
 									],
 									"path": [
 										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
 										"domains",
 										"{{domain}}",
 										"clients"
@@ -2777,7 +2962,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -2812,12 +2997,16 @@
 									"raw": "{\n  \"authorizedGrantTypes\": [\"password\"],\n  \"scopes\" : [\"openid\"],\n  \"identities\" : [\"{{identityProvider}}\"],\n  \"enhanceScopesWithUserPermissions\": true\n}"
 								},
 								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}/clients/{{clientUM}}",
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{clientUM}}",
 									"host": [
 										"{{management_url}}"
 									],
 									"path": [
 										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
 										"domains",
 										"{{domain}}",
 										"clients",
@@ -3083,12 +3272,16 @@
 									"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"additionalInformation\": {\n\t\t\"profile\":\"https://my.profile.com\"\n\t},\n\t\"enabled\": false\n}"
 								},
 								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}",
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}",
 									"host": [
 										"{{management_url}}"
 									],
 									"path": [
 										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
 										"domains",
 										"{{domain}}",
 										"users",
@@ -3208,12 +3401,16 @@
 									"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"additionalInformation\": {\n\t\t\"profile\":\"https://my.profile.com\"\n\t},\n\t\"enabled\": true\n}"
 								},
 								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}",
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}",
 									"host": [
 										"{{management_url}}"
 									],
 									"path": [
 										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
 										"domains",
 										"{{domain}}",
 										"users",
@@ -3259,12 +3456,16 @@
 									"raw": "{\n\t\"password\": \"myNewPassword\"\n}"
 								},
 								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}/resetPassword",
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}/resetPassword",
 									"host": [
 										"{{management_url}}"
 									],
 									"path": [
 										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
 										"domains",
 										"{{domain}}",
 										"users",
@@ -3378,12 +3579,16 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}/users/wrong-id",
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/wrong-id",
 									"host": [
 										"{{management_url}}"
 									],
 									"path": [
 										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
 										"domains",
 										"{{domain}}",
 										"users",
@@ -3423,12 +3628,16 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{management_url}}/management/domains/{{domain}}/users/{{userUM}}",
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}",
 									"host": [
 										"{{management_url}}"
 									],
 									"path": [
 										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
 										"domains",
 										"{{domain}}",
 										"users",
@@ -3547,12 +3756,16 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{management_url}}/management/domains/{{domain}}",
+					"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
 					"host": [
 						"{{management_url}}"
 					],
 					"path": [
 						"management",
+						"organizations",
+						"{{defaultOrganizationId}}",
+						"environments",
+						"{{defaultEnvironmentId}}",
 						"domains",
 						"{{domain}}"
 					]
