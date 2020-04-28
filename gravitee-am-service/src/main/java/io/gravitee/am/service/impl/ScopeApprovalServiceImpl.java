@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ScopeApprovalService;
@@ -30,6 +31,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.UserConsentAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +40,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -89,6 +92,21 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                     LOGGER.error("An error occurs while trying to find a scope approval for domain: {}, user: {} and client: {}", domain, user, client);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a scope approval for domain: %s, user: %s and client: %s", domain, user, client), ex));
+                });
+    }
+
+    @Override
+    public Single<List<ScopeApproval>> saveConsent(String domain, Client client, List<ScopeApproval> approvals, User principal) {
+        LOGGER.debug("Save approvals for user: {}", approvals.get(0).getUserId());
+        return Observable.fromIterable(approvals)
+                .flatMapSingle(approval -> scopeApprovalRepository.upsert(approval))
+                .toList()
+                .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).domain(domain).client(client).principal(principal).type(EventType.USER_CONSENT_CONSENTED).approvals(approvals)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).domain(domain).client(client).principal(principal).type(EventType.USER_CONSENT_CONSENTED).throwable(throwable)))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to save consent for domain: {}, client: {} and user: {} ", domain, client.getId(), approvals.get(0).getUserId());
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to save consent for domain: %s, client: %s and user: %s", domain, client.getId(), approvals.get(0).getUserId()), ex));
                 });
     }
 

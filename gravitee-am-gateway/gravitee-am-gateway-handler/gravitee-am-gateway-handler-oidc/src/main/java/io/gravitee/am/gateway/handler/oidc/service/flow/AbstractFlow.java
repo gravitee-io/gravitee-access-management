@@ -15,12 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.flow;
 
-import io.gravitee.am.gateway.handler.oauth2.service.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -33,8 +31,6 @@ import java.util.Objects;
 public abstract class AbstractFlow implements Flow {
 
     private final List<String> responseTypes;
-    private AuthorizationRequestResolver authorizationRequestResolver;
-    private ApprovalService approvalService;
 
     public AbstractFlow(final List<String> responseTypes) {
         Objects.requireNonNull(responseTypes);
@@ -48,34 +44,8 @@ public abstract class AbstractFlow implements Flow {
 
     @Override
     public Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, Client client, User endUser) {
-        return handleRequest(authorizationRequest, client, endUser);
+        return prepareResponse(authorizationRequest, client, endUser);
     }
 
     protected abstract Single<AuthorizationResponse> prepareResponse(AuthorizationRequest authorizationRequest, Client client, User endUser);
-
-    private Single<AuthorizationResponse> handleRequest(AuthorizationRequest authorizationRequest, Client client, User endUser) {
-        return prepareRequest(authorizationRequest, client, endUser)
-                .flatMap(authorizationRequest1 -> obtainEndUserConsent(authorizationRequest1, client, endUser))
-                .flatMap(authorizationRequest1 -> prepareResponse(authorizationRequest1, client, endUser));
-    }
-
-    private Single<AuthorizationRequest> prepareRequest(AuthorizationRequest authorizationRequest, Client client, User endUser) {
-        return authorizationRequestResolver.resolve(authorizationRequest, client, endUser);
-    }
-
-    private Single<AuthorizationRequest> obtainEndUserConsent(AuthorizationRequest authorizationRequest, Client client, User endUser) {
-        return approvalService.checkApproval(authorizationRequest, client, endUser);
-    }
-
-    public void setAuthorizationRequestResolver(AuthorizationRequestResolver authorizationRequestResolver) {
-        this.authorizationRequestResolver = authorizationRequestResolver;
-    }
-
-    public ApprovalService getApprovalService() {
-        return approvalService;
-    }
-
-    public void setApprovalService(ApprovalService approvalService) {
-        this.approvalService = approvalService;
-    }
 }

@@ -48,13 +48,13 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
             routingContext.response()
                     .putHeader(HttpHeaders.LOCATION, proxiedRedirectURI)
                     .setStatusCode(302)
-                    .end("Redirecting to " + proxiedRedirectURI + ".");
+                    .end();
         } catch (Exception e) {
             logger.warn("Failed to decode login redirect url", e);
             routingContext.response()
                     .putHeader(HttpHeaders.LOCATION, redirectURL)
                     .setStatusCode(302)
-                    .end("Redirecting to " + redirectURL + ".");
+                    .end();
         }
     }
 }

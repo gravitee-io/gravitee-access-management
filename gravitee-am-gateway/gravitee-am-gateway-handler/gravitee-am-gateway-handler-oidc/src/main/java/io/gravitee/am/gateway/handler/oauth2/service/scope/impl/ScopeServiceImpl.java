@@ -41,6 +41,11 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
+    public Scope findByKey(String key) {
+        return scopeManager.findByKey(key);
+    }
+
+    @Override
     public List<String> getDiscoveryScope() {
         return scopeManager.findAll()
                 .stream()

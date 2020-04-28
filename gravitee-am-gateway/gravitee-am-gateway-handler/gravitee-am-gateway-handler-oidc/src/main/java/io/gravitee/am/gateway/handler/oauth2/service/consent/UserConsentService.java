@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.service.scope;
+package io.gravitee.am.gateway.handler.oauth2.service.consent;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -25,11 +28,11 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ScopeService {
+public interface UserConsentService {
 
-    Single<Set<Scope>> getAll();
+    Single<Set<String>> checkConsent(Client client, io.gravitee.am.model.User user);
 
-    Scope findByKey(String key);
+    Single<List<ScopeApproval>> saveConsent(Client client, List<ScopeApproval> approvals, User principal);
 
-    List<String> getDiscoveryScope();
+    Single<List<Scope>> getConsentInformation(Set<String> consent);
 }

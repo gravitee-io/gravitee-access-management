@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval;
+package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent;
 
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerResponse;
@@ -30,34 +28,23 @@ import org.slf4j.LoggerFactory;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserApprovalSubmissionEndpoint implements Handler<RoutingContext> {
+public class UserConsentPostEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserApprovalSubmissionEndpoint.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserConsentPostEndpoint.class);
     private static final String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorizationRequest";
-    private Domain domain;
-
-    public UserApprovalSubmissionEndpoint(Domain domain) {
-        this.domain = domain;
-    }
 
     @Override
-    public void handle(RoutingContext context) {
+    public void handle(RoutingContext routingContext) {
         // retrieve authorization request
-        AuthorizationRequest authorizationRequest = context.get(AUTHORIZATION_REQUEST_CONTEXT_KEY);
+        AuthorizationRequest authorizationRequest = routingContext.get(AUTHORIZATION_REQUEST_CONTEXT_KEY);
 
-        // user denied access
-        if (!authorizationRequest.isApproved()) {
-            context.fail(new AccessDeniedException("User denied access"));
-            return;
-        }
-
+        // consent has been processed, replay authorization request
         try {
-            // user approved access, replay authorization request
-            final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(context.request(), "/" + domain.getPath() + "/oauth/authorize", authorizationRequest.parameters().toSingleValueMap());
-            doRedirect(context.response(), authorizationRequestUrl);
+            final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(), authorizationRequest.path(), authorizationRequest.parameters().toSingleValueMap());
+            doRedirect(routingContext.response(), authorizationRequestUrl);
         } catch (Exception e) {
             LOGGER.error("An error occurs while handling authorization approval request", e);
-            context.fail(503);
+            routingContext.fail(503);
         }
     }
 

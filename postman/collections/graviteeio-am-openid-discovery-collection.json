@@ -1,422 +1,421 @@
 {
-  "info": {
-    "_postman_id": "db598bf2-10b4-4cdc-943b-200dc99d0c17",
-    "name": "Gravitee.io - AM - Openid Discovery",
-    "description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "name": "Prepare",
-      "item": [
-        {
-          "name": "Generate admin token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "571e9b59-b9e7-452c-9469-9786ded290a6",
-                "exec": [
-                  "",
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "var token = JSON.parse(responseBody);",
-                  "pm.environment.set('token', token.access_token);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
-              }
-            ],
-            "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                {
-                  "key": "grant_type",
-                  "value": "password",
-                  "type": "text"
-                },
-                {
-                  "key": "username",
-                  "value": "admin",
-                  "type": "text"
-                },
-                {
-                  "key": "password",
-                  "value": "adminadmin",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{management_url}}/management/auth/token",
-              "host": [
-                "{{management_url}}"
-              ],
-              "path": [
-                "management",
-                "auth",
-                "token"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create oidc-discovery domain",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "var jsonData = pm.response.json();",
-                  "pm.environment.set('domain', jsonData.id);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n\t\"name\": \"oidc-discovery\", \n\t\"description\": \"test openid connect discovery specifications\"\n}"
-            },
-            "url": {
-              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
-              "host": [
-                "{{management_url}}"
-              ],
-              "path": [
-                "management",
-                "organizations",
-                "{{defaultOrganizationId}}",
-                "environments",
-                "{{defaultEnvironmentId}}",
-                "domains",
-                ""
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create jks certificate rs512",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "pm.test(\"Extension Grant - create jks certificate\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('id');",
-                  "    pm.environment.set('certificateJksRs512', jsonData.id);",
-                  "});",
-                  "",
-                  "// wait for sync process",
-                  "setTimeout(function(){}, 1000);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "type": "text",
-                "value": "Bearer {{token}}"
-              },
-              {
-                "key": "Content-Type",
-                "name": "Content-Type",
-                "type": "text",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"type\": \"javakeystore-am-certificate\",\n  \"configuration\": \"{\\\"jks\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"server.jks\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2237,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"letmein\\\",\\\"alias\\\":\\\"my4096key\\\",\\\"keypass\\\":\\\"changeme\\\"}\",\n  \"name\": \"my4096key\"\n}"
-            },
-            "url": {
-              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/certificates",
-              "host": [
-                "{{management_url}}"
-              ],
-              "path": [
-                "management",
-                "organizations",
-                "{{defaultOrganizationId}}",
-                "environments",
-                "{{defaultEnvironmentId}}",
-                "domains",
-                "{{domain}}",
-                "certificates"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Start domain",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
-                "exec": [
-                  "// wait for sync process",
-                  "setTimeout(function(){}, 10000);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"enabled\": true\n}"
-            },
-            "url": {
-              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
-              "host": [
-                "{{management_url}}"
-              ],
-              "path": [
-                "management",
-                "organizations",
-                "{{defaultOrganizationId}}",
-                "environments",
-                "{{defaultEnvironmentId}}",
-                "domains",
-                "{{domain}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ],
-      "protocolProfileBehavior": {}
-    },
-    {
-      "name": "Discovery",
-      "item": [
-        {
-          "name": "well-known/openid-configuration",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Check discovery endpoints\", function () {",
-                  "    pm.response.to.be.header('Content-Type', 'application/json');",
-                  "    var body = pm.response.json();",
-                  "    ",
-                  "    pm.expect(body).to.have.property(\"authorization_endpoint\");",
-                  "    pm.expect(body).to.have.property(\"token_endpoint\");",
-                  "    pm.expect(body).to.have.property(\"userinfo_endpoint\");",
-                  "    pm.expect(body).to.have.property(\"jwks_uri\");",
-                  "    pm.expect(body).to.have.property(\"end_session_endpoint\");",
-                  "    pm.expect(body).to.have.property(\"revocation_endpoint\");",
-                  "    pm.expect(body).to.have.property(\"introspection_endpoint\");",
-                  "    pm.expect(body).to.have.property(\"registration_endpoint\");",
-                  "    ",
-                  "    pm.environment.set('authorizationEndpoint', body.authorization_endpoint);",
-                  "    pm.environment.set('tokenEndpoint', body.token_endpoint);",
-                  "    pm.environment.set('userinfoEndpoint', body.userinfo_endpoint);",
-                  "    pm.environment.set('jwksUriEndpoint', body.jwks_uri);",
-                  "    pm.environment.set('logoutEndpoint', body.end_session_endpoint);",
-                  "    pm.environment.set('revocationEndpoint', body.revocation_endpoint);",
-                  "    pm.environment.set('introspectionEndpoint', body.introspection_endpoint);",
-                  "    pm.environment.set('registrationEndpoint', body.registration_endpoint);",
-                  "});",
-                  "",
-                  "pm.test(\"Check discovery properties\", function () {",
-                  "    var body = pm.response.json();",
-                  "    pm.expect(body).to.have.property(\"issuer\");",
-                  "",
-                  "    pm.expect(body).to.have.property(\"scopes_supported\");",
-                  "    pm.expect(body).to.have.property(\"response_types_supported\");",
-                  "    pm.expect(body).to.have.property(\"subject_types_supported\");",
-                  "    pm.expect(body).to.have.property(\"id_token_signing_alg_values_supported\");",
-                  "    pm.expect(body).to.have.property(\"id_token_encryption_alg_values_supported\");",
-                  "    pm.expect(body).to.have.property(\"id_token_encryption_enc_values_supported\");",
-                  "    pm.expect(body).to.have.property(\"userinfo_signing_alg_values_supported\");",
-                  "    pm.expect(body).to.have.property(\"userinfo_encryption_alg_values_supported\");",
-                  "    pm.expect(body).to.have.property(\"userinfo_encryption_enc_values_supported\");",
-                  "    pm.expect(body).to.have.property(\"token_endpoint_auth_methods_supported\");",
-                  "    pm.expect(body).to.have.property(\"claim_types_supported\");",
-                  "    pm.expect(body).to.have.property(\"claims_supported\");",
-                  "    pm.expect(body).to.have.property(\"code_challenge_methods_supported\");",
-                  "    pm.expect(body).to.have.property(\"claims_parameter_supported\");",
-                  "    pm.expect(body).to.have.property(\"request_parameter_supported\");",
-                  "    pm.expect(body).to.have.property(\"request_uri_parameter_supported\");",
-                  "    pm.expect(body).to.have.property(\"require_request_uri_registration\");",
-                  "    ",
-                  "    pm.expect(body.code_challenge_methods_supported).to.eql([ 'plain','S256' ]);",
-                  "    pm.expect(body.scopes_supported).to.eql([ 'address','email','groups','offline_access','openid','phone','profile','roles']);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
-              "host": [
-                "{{gateway_url}}"
-              ],
-              "path": [
-                "{{domain}}",
-                "oidc",
-                ".well-known",
-                "openid-configuration"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "jwks",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "f3428f0d-2f6c-4202-8b16-dfec99b0971a",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Check keys\", function () {",
-                  "    var body = pm.response.json();",
-                  "    pm.expect(body).to.have.property('keys');",
-                  "    ",
-                  "    //Key are not always returned in the same order",
-                  "    tests['Contains two RS key'] = body.keys[0].kty === 'RSA' && body.keys[1].kty === 'RSA';",
-                  "    tests['Contains RSA512'] = body.keys[0].alg === 'RS512' || body.keys[1].alg === 'RS512';",
-                  "    tests['Contains RSA256'] = body.keys[0].alg === 'RS256' || body.keys[1].alg === 'RS256';",
-                  "});",
-                  ""
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{jwksUriEndpoint}}",
-              "host": [
-                "{{jwksUriEndpoint}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ],
-      "protocolProfileBehavior": {}
-    },
-    {
-      "name": "Delete domain",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
-            "exec": [
-              "pm.test(\"Status code is 204\", function () {",
-              "    pm.response.to.have.status(204);",
-              "});"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "DELETE",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          },
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": ""
-        },
-        "url": {
-          "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
-          "host": [
-            "{{management_url}}"
-          ],
-          "path": [
-            "management",
-            "organizations",
-            "{{defaultOrganizationId}}",
-            "environments",
-            "{{defaultEnvironmentId}}",
-            "domains",
-            "{{domain}}"
-          ]
-        }
-      },
-      "response": []
-    }
-  ],
-  "protocolProfileBehavior": {}
+	"info": {
+		"_postman_id": "5b9a65ee-60ac-4920-be92-5e25dad2fcbf",
+		"name": "Gravitee.io - AM - Openid Discovery",
+		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Prepare",
+			"item": [
+				{
+					"name": "Generate admin token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "571e9b59-b9e7-452c-9469-9786ded290a6",
+								"exec": [
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var token = JSON.parse(responseBody);",
+									"pm.environment.set('token', token.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "adminadmin",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{management_url}}/management/auth/token",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create oidc-discovery domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set('domain', jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"oidc-discovery\", \n\t\"description\": \"test openid connect discovery specifications\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create jks certificate rs512",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Extension Grant - create jks certificate\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.environment.set('certificateJksRs512', jsonData.id);",
+									"});",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 1000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"javakeystore-am-certificate\",\n  \"configuration\": \"{\\\"jks\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"server.jks\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2237,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"letmein\\\",\\\"alias\\\":\\\"my4096key\\\",\\\"keypass\\\":\\\"changeme\\\"}\",\n  \"name\": \"my4096key\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/certificates",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"certificates"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
+								"exec": [
+									"// wait for sync process",
+									"setTimeout(function(){}, 10000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"enabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Discovery",
+			"item": [
+				{
+					"name": "well-known/openid-configuration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check discovery endpoints\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    ",
+									"    pm.expect(body).to.have.property(\"authorization_endpoint\");",
+									"    pm.expect(body).to.have.property(\"token_endpoint\");",
+									"    pm.expect(body).to.have.property(\"userinfo_endpoint\");",
+									"    pm.expect(body).to.have.property(\"jwks_uri\");",
+									"    pm.expect(body).to.have.property(\"end_session_endpoint\");",
+									"    pm.expect(body).to.have.property(\"revocation_endpoint\");",
+									"    pm.expect(body).to.have.property(\"introspection_endpoint\");",
+									"    pm.expect(body).to.have.property(\"registration_endpoint\");",
+									"    ",
+									"    pm.environment.set('authorizationEndpoint', body.authorization_endpoint);",
+									"    pm.environment.set('tokenEndpoint', body.token_endpoint);",
+									"    pm.environment.set('userinfoEndpoint', body.userinfo_endpoint);",
+									"    pm.environment.set('jwksUriEndpoint', body.jwks_uri);",
+									"    pm.environment.set('logoutEndpoint', body.end_session_endpoint);",
+									"    pm.environment.set('revocationEndpoint', body.revocation_endpoint);",
+									"    pm.environment.set('introspectionEndpoint', body.introspection_endpoint);",
+									"    pm.environment.set('registrationEndpoint', body.registration_endpoint);",
+									"});",
+									"",
+									"pm.test(\"Check discovery properties\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property(\"issuer\");",
+									"",
+									"    pm.expect(body).to.have.property(\"scopes_supported\");",
+									"    pm.expect(body).to.have.property(\"response_types_supported\");",
+									"    pm.expect(body).to.have.property(\"id_token_signing_alg_values_supported\");",
+									"    pm.expect(body).to.have.property(\"id_token_encryption_alg_values_supported\");",
+									"    pm.expect(body).to.have.property(\"id_token_encryption_enc_values_supported\");",
+									"    pm.expect(body).to.have.property(\"userinfo_signing_alg_values_supported\");",
+									"    pm.expect(body).to.have.property(\"userinfo_encryption_alg_values_supported\");",
+									"    pm.expect(body).to.have.property(\"userinfo_encryption_enc_values_supported\");",
+									"    pm.expect(body).to.have.property(\"token_endpoint_auth_methods_supported\");",
+									"    pm.expect(body).to.have.property(\"claim_types_supported\");",
+									"    pm.expect(body).to.have.property(\"claims_supported\");",
+									"    pm.expect(body).to.have.property(\"code_challenge_methods_supported\");",
+									"    pm.expect(body).to.have.property(\"claims_parameter_supported\");",
+									"    pm.expect(body).to.have.property(\"request_parameter_supported\");",
+									"    pm.expect(body).to.have.property(\"request_uri_parameter_supported\");",
+									"    pm.expect(body).to.have.property(\"require_request_uri_registration\");",
+									"    ",
+									"    pm.expect(body.code_challenge_methods_supported).to.eql([ 'plain','S256' ]);",
+									"    pm.expect(body.scopes_supported).to.eql([ 'address','email','groups','offline_access','openid','phone','profile','roles']);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domain}}",
+								"oidc",
+								".well-known",
+								"openid-configuration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "jwks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f3428f0d-2f6c-4202-8b16-dfec99b0971a",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check keys\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('keys');",
+									"    ",
+									"    //Key are not always returned in the same order",
+									"    tests['Contains two RS key'] = body.keys[0].kty === 'RSA' && body.keys[1].kty === 'RSA';",
+									"    tests['Contains RSA512'] = body.keys[0].alg === 'RS512' || body.keys[1].alg === 'RS512';",
+									"    tests['Contains RSA256'] = body.keys[0].alg === 'RS256' || body.keys[1].alg === 'RS256';",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{jwksUriEndpoint}}",
+							"host": [
+								"{{jwksUriEndpoint}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Delete domain",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
+						"exec": [
+							"pm.test(\"Status code is 204\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+					"host": [
+						"{{management_url}}"
+					],
+					"path": [
+						"management",
+						"organizations",
+						"{{defaultOrganizationId}}",
+						"environments",
+						"{{defaultEnvironmentId}}",
+						"domains",
+						"{{domain}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
 }
