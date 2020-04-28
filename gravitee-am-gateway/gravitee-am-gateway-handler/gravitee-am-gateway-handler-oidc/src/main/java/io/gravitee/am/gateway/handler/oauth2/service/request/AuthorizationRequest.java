@@ -19,7 +19,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationRespo
 import io.gravitee.am.model.oauth2.ScopeApproval;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -53,16 +52,6 @@ public class AuthorizationRequest extends OAuth2Request {
     private AuthorizationResponse response;
 
     /**
-     * User consent parameters
-     */
-    private Map<String, String> approvalParameters;
-
-    /**
-     * Current denied OAuth 2.0 scopes that the end-user need to approved in order to get a valid OAuth 2.0 response (i.e tokens)
-     */
-    private Set<String> deniedScopes;
-
-    /**
      * OpenID Connect Prompt values
      */
     private Set<String> prompts;
@@ -94,22 +83,6 @@ public class AuthorizationRequest extends OAuth2Request {
 
     public void setResponse(AuthorizationResponse response) {
         this.response = response;
-    }
-
-    public Map<String, String> getApprovalParameters() {
-        return approvalParameters;
-    }
-
-    public void setApprovalParameters(Map<String, String> approvalParameters) {
-        this.approvalParameters = approvalParameters;
-    }
-
-    public Set<String> getDeniedScopes() {
-        return deniedScopes;
-    }
-
-    public void setDeniedScopes(Set<String> deniedScopes) {
-        this.deniedScopes = deniedScopes;
     }
 
     public Set<String> getPrompts() {

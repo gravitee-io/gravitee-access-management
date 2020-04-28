@@ -629,7 +629,7 @@
                   "",
                   "    var location = postman.getResponseHeader(\"Location\");",
                   "    pm.environment.set('redirection', location);",
-                  "    tests['Redirect to User Consent'] = location.includes('/oauth/confirm_access');",
+                  "    tests['Redirect to User Consent'] = location.includes('/oauth/consent');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -1043,7 +1043,7 @@
                   "",
                   "    var location = postman.getResponseHeader(\"Location\");",
                   "    pm.environment.set('redirection', location);",
-                  "    tests['Redirect to Authorization Endpoint'] = location.includes('/oauth/confirm_access');",
+                  "    tests['Redirect to Authorization Endpoint'] = location.includes('/oauth/consent');",
                   "});"
                 ],
                 "type": "text/javascript"

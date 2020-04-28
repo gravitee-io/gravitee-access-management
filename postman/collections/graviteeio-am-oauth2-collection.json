@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "2167a2f2-bdee-478f-b0db-32536dc2635a",
+		"_postman_id": "4c940396-e615-4f2c-852a-17981f4ecfff",
 		"name": "Gravitee.io - AM - Oauth2",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -2614,11 +2614,11 @@
 													"    pm.response.to.have.header('Set-Cookie');",
 													"});",
 													"",
-													"pm.test(\"Should be redirected to confirm_access page\", function() {",
+													"pm.test(\"Should be redirected to consent page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/oauth/confirm_access';",
+													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -2760,9 +2760,14 @@
 											]
 										},
 										"url": {
-											"raw": "{{authorizationEndpoint}}",
+											"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
 											"host": [
-												"{{authorizationEndpoint}}"
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"oauth",
+												"consent"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -3222,11 +3227,11 @@
 													"    pm.response.to.have.header('Set-Cookie');",
 													"});",
 													"",
-													"pm.test(\"Should be redirected to confirm_access page\", function() {",
+													"pm.test(\"Should be redirected to consent page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/oauth/confirm_access';",
+													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -3380,9 +3385,14 @@
 											]
 										},
 										"url": {
-											"raw": "{{authorizationEndpoint}}",
+											"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
 											"host": [
-												"{{authorizationEndpoint}}"
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"oauth",
+												"consent"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -3461,11 +3471,11 @@
 													"    pm.response.to.have.header('Location');",
 													"});",
 													"",
-													"pm.test(\"Should be redirected to confirm_access page\", function() {",
+													"pm.test(\"Should be redirected to consent page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/oauth/confirm_access';",
+													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -5159,7 +5169,7 @@
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/oauth/confirm_access';",
+													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -5323,9 +5333,14 @@
 											]
 										},
 										"url": {
-											"raw": "{{authorizationEndpoint}}",
+											"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
 											"host": [
-												"{{authorizationEndpoint}}"
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"oauth",
+												"consent"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -10132,11 +10147,11 @@
 													"    pm.response.to.have.header('Set-Cookie');",
 													"});",
 													"",
-													"pm.test(\"Should be redirected to confirm_access page\", function() {",
+													"pm.test(\"Should be redirected to consent page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let domain = pm.environment.get(\"domain\");",
 													"    ",
-													"    tests['Redirect to login page with client_id'] = location === pm.environment.get('gateway_url') + '/' + domain + '/oauth/confirm_access';",
+													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"    ",
 													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 													"});"
@@ -10291,9 +10306,14 @@
 											]
 										},
 										"url": {
-											"raw": "{{authorizationEndpoint}}",
+											"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
 											"host": [
-												"{{authorizationEndpoint}}"
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"oauth",
+												"consent"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"

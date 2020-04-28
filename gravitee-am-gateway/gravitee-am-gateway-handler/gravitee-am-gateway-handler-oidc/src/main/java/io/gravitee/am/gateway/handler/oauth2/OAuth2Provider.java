@@ -24,26 +24,22 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandle
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
-import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationFailureEndpoint;
-import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval.UserApprovalEndpoint;
-import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.approval.UserApprovalSubmissionEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentPostEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.IntrospectionEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseClientHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequiredParametersHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalFailureHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalProcessHandler;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval.UserApprovalRequestParseHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.*;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentFailureHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentPrepareContextHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentProcessHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.token.TokenRequestParseHandler;
-import io.gravitee.am.gateway.handler.oauth2.service.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
+import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
-import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
@@ -88,10 +84,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private Flow flow;
 
     @Autowired
-    private ApprovalService approvalService;
-
-    @Autowired
-    private ScopeService scopeService;
+    private UserConsentService userConsentService;
 
     @Autowired
     private TokenGranter tokenGranter;
@@ -158,29 +151,6 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         // client auth handler
         final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService);
 
-        // Bind OAuth2 endpoints
-        // Authorization endpoint
-        Handler<RoutingContext> authorizationRequestParseRequiredParametersHandler = new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService);
-        Handler<RoutingContext> authorizationRequestParseClientHandler = new AuthorizationRequestParseClientHandler(domain, clientSyncService);
-        Handler<RoutingContext> authorizationRequestParseParametersHandler = new AuthorizationRequestParseParametersHandler(domain);
-        Handler<RoutingContext> authorizeEndpoint = new AuthorizationEndpoint(flow, domain);
-        Handler<RoutingContext> authorizeFailureEndpoint = new AuthorizationFailureEndpoint(domain);
-        Handler<RoutingContext> userApprovalRequestParseHandler = new UserApprovalRequestParseHandler(clientSyncService);
-        Handler<RoutingContext> userApprovalProcessHandler = new UserApprovalProcessHandler(approvalService, domain);
-        Handler<RoutingContext> userApprovalEndpoint = new UserApprovalEndpoint(scopeService, thymeleafTemplateEngine);
-        Handler<RoutingContext> userApprovalSubmissionEndpoint = new UserApprovalSubmissionEndpoint(domain);
-        Handler<RoutingContext> userApprovalFailureHandler = new UserApprovalFailureHandler(domain);
-
-        // Token endpoint
-        Handler<RoutingContext> tokenEndpoint = new TokenEndpoint(tokenGranter);
-        Handler<RoutingContext> tokenRequestParseHandler = new TokenRequestParseHandler();
-
-        // Introspection endpoint
-        Handler<RoutingContext> introspectionEndpoint = new IntrospectionEndpoint(introspectionService);
-
-        // Revocation token endpoint
-        Handler<RoutingContext> revocationTokenEndpoint = new RevocationTokenEndpoint(revocationTokenService);
-
         // static handler
         staticHandler(oauth2Router);
 
@@ -190,44 +160,56 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         // CSRF handler
         csrfHandler(oauth2Router);
 
-        // declare oauth2 routes
+        // Authorization endpoint
         oauth2Router.route(HttpMethod.GET,"/authorize")
-                .handler(authorizationRequestParseRequiredParametersHandler)
-                .handler(authorizationRequestParseClientHandler)
-                .handler(authorizationRequestParseParametersHandler)
+                .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
+                .handler(new AuthorizationRequestParseClientHandler(domain, clientSyncService))
+                .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authenticationFlowHandler.create())
-                .handler(authorizeEndpoint)
-                .failureHandler(authorizeFailureEndpoint);
-        oauth2Router.route(HttpMethod.POST, "/authorize")
-                .handler(userApprovalRequestParseHandler)
-                .handler(userApprovalProcessHandler)
+                .handler(new AuthorizationRequestResolveHandler())
+                .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService, domain))
+                .handler(new AuthorizationEndpoint(flow))
+                .failureHandler(new AuthorizationRequestFailureHandler(domain));
+
+        // Authorization consent endpoint
+        Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler(clientSyncService);
+        oauth2Router.route(HttpMethod.GET, "/consent")
+                .handler(userConsentPrepareContextHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
+                .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine));
+        oauth2Router.route(HttpMethod.POST, "/consent")
+                .handler(userConsentPrepareContextHandler)
+                .handler(new UserConsentProcessHandler(userConsentService, domain))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
-                .handler(userApprovalSubmissionEndpoint)
-                .failureHandler(userApprovalFailureHandler)
-                .failureHandler(authorizeFailureEndpoint);
+                .handler(new UserConsentPostEndpoint());
+        oauth2Router.route("/consent")
+                .failureHandler(new UserConsentFailureHandler(domain));
+
+        // Token endpoint
         oauth2Router.route(HttpMethod.OPTIONS, "/token")
                 .handler(corsHandler);
         oauth2Router.route(HttpMethod.POST, "/token")
                 .handler(corsHandler)
-                .handler(tokenRequestParseHandler)
+                .handler(new TokenRequestParseHandler())
                 .handler(clientAuthHandler)
-                .handler(tokenEndpoint);
+                .handler(new TokenEndpoint(tokenGranter));
+
+        // Introspection endpoint
         oauth2Router.route(HttpMethod.POST, "/introspect")
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(clientAuthHandler)
-                .handler(introspectionEndpoint);
+                .handler(new IntrospectionEndpoint(introspectionService));
+
+        // Revocation endpoint
         oauth2Router.route(HttpMethod.OPTIONS, "/revoke")
                 .handler(corsHandler);
         oauth2Router.route(HttpMethod.POST, "/revoke")
                 .consumes(MediaType.APPLICATION_FORM_URLENCODED)
                 .handler(corsHandler)
                 .handler(clientAuthHandler)
-                .handler(revocationTokenEndpoint);
-        oauth2Router.route(HttpMethod.GET, "/confirm_access")
-                .handler(userApprovalRequestParseHandler)
-                .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
-                .handler(userApprovalEndpoint)
-                .failureHandler(userApprovalFailureHandler);
+                .handler(new RevocationTokenEndpoint(revocationTokenService));
+
+        // Error endpoint
         oauth2Router.route(HttpMethod.GET, "/error")
                 .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
 
@@ -255,14 +237,14 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(sessionHandler)
                 .handler(ssoSessionHandler);
         router
-                .route("/confirm_access")
+                .route("/consent")
                 .handler(cookieHandler)
                 .handler(sessionHandler)
                 .handler(ssoSessionHandler);
     }
 
     private void csrfHandler(Router router) {
-        router.route("/confirm_access").handler(csrfHandler);
+        router.route("/consent").handler(csrfHandler);
     }
 
     private void errorHandler(Router router) {

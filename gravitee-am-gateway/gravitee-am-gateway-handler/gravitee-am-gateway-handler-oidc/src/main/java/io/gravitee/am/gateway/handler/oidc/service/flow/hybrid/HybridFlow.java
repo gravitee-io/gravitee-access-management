@@ -18,18 +18,16 @@ package io.gravitee.am.gateway.handler.oidc.service.flow.hybrid;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.idtoken.Claims;
-import io.gravitee.am.gateway.handler.oauth2.service.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.HybridResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.AbstractFlow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 
 import java.util.Arrays;
@@ -63,14 +61,10 @@ public class HybridFlow extends AbstractFlow {
     private TokenService tokenService;
     private IDTokenService idTokenService;
 
-    public HybridFlow(AuthorizationRequestResolver authorizationRequestResolver,
-                      ApprovalService approvalService,
-                      AuthorizationCodeService authorizationCodeService,
+    public HybridFlow(AuthorizationCodeService authorizationCodeService,
                       TokenService tokenService,
                       IDTokenService idTokenService) {
         super(RESPONSE_TYPES);
-        setAuthorizationRequestResolver(authorizationRequestResolver);
-        setApprovalService(approvalService);
         this.authorizationCodeService = authorizationCodeService;
         this.tokenService = tokenService;
         this.idTokenService = idTokenService;

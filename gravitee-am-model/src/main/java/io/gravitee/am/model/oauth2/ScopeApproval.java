@@ -51,13 +51,17 @@ public class ScopeApproval {
 
     public ScopeApproval() {}
 
-    public ScopeApproval(String transactionId, String userId, String clientId, String domain, String scope, ApprovalStatus status, Date expiresAt) {
+    public ScopeApproval(String transactionId, String userId, String clientId, String domain, String scope, ApprovalStatus status) {
         this.transactionId = transactionId;
         this.userId = userId;
         this.clientId = clientId;
         this.domain = domain;
         this.scope = scope;
         this.status = status;
+    }
+
+    public ScopeApproval(String transactionId, String userId, String clientId, String domain, String scope, ApprovalStatus status, Date expiresAt) {
+        this(transactionId, userId, clientId, domain, scope, status);
         this.expiresAt = expiresAt;
     }
 

@@ -17,10 +17,12 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -35,11 +37,17 @@ public interface ScopeApprovalService {
 
     Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String user, String client);
 
+    Single<List<ScopeApproval>> saveConsent(String domain, Client client, List<ScopeApproval> approvals, User principal);
+
     Completable revokeByConsent(String domain, String userId, String consentId, User principal);
 
     Completable revokeByUser(String domain, String user, User principal);
 
     Completable revokeByUserAndClient(String domain, String user, String clientId, User principal);
+
+    default Single<List<ScopeApproval>> saveConsent(String domain, Client client, List<ScopeApproval> approvals) {
+        return saveConsent(domain, client, approvals, null);
+    }
 
     default Completable revokeByConsent(String domain, String userId, String consentId) {
         return revokeByConsent(domain, userId, consentId, null);

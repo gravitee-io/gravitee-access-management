@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval;
+package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -32,7 +32,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserApprovalRequestParseHandler implements Handler<RoutingContext> {
+public class UserConsentPrepareContextHandler implements Handler<RoutingContext> {
 
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String USER_CONTEXT_KEY = "user";
@@ -41,7 +41,7 @@ public class UserApprovalRequestParseHandler implements Handler<RoutingContext> 
     private static final String ID_TOKEN_CONTEXT_KEY = "idToken";
     private ClientSyncService clientSyncService;
 
-    public UserApprovalRequestParseHandler(ClientSyncService clientSyncService) {
+    public UserConsentPrepareContextHandler(ClientSyncService clientSyncService) {
         this.clientSyncService = clientSyncService;
     }
 
@@ -69,9 +69,10 @@ public class UserApprovalRequestParseHandler implements Handler<RoutingContext> 
             }
 
             // prepare context
-            Client client = resultHandler.result();
+            Client safeClient = new Client(resultHandler.result());
+            safeClient.setClientSecret(null);
             io.gravitee.am.model.User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
-            prepareContext(routingContext, client, user, authorizationRequest);
+            prepareContext(routingContext, safeClient, user, authorizationRequest);
 
             routingContext.next();
         });

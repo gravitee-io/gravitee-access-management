@@ -16,15 +16,13 @@
 package io.gravitee.am.gateway.handler.oidc.service.flow.authorizationcode;
 
 import io.gravitee.am.common.oauth2.ResponseType;
-import io.gravitee.am.gateway.handler.oauth2.service.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
-import io.gravitee.am.gateway.handler.oidc.service.flow.AbstractFlow;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
-import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.gateway.handler.oidc.service.flow.AbstractFlow;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 
 import java.util.Collections;
@@ -62,10 +60,8 @@ public class AuthorizationCodeFlow extends AbstractFlow {
     private final static List<String> RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
     private AuthorizationCodeService authorizationCodeService;
 
-    public AuthorizationCodeFlow(AuthorizationRequestResolver authorizationRequestResolver, ApprovalService approvalService, AuthorizationCodeService authorizationCodeService) {
+    public AuthorizationCodeFlow(AuthorizationCodeService authorizationCodeService) {
         super(RESPONSE_TYPES);
-        setAuthorizationRequestResolver(authorizationRequestResolver);
-        setApprovalService(approvalService);
         this.authorizationCodeService = authorizationCodeService;
     }
 

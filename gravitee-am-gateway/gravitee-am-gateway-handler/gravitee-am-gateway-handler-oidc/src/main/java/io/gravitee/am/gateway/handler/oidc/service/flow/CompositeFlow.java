@@ -16,18 +16,16 @@
 package io.gravitee.am.gateway.handler.oidc.service.flow;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
-import io.gravitee.am.gateway.handler.oauth2.service.approval.ApprovalService;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
+import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
+import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.authorizationcode.AuthorizationCodeFlow;
 import io.gravitee.am.gateway.handler.oidc.service.flow.hybrid.HybridFlow;
 import io.gravitee.am.gateway.handler.oidc.service.flow.implicit.ImplicitFlow;
-import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequestResolver;
-import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
-import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
@@ -44,10 +42,6 @@ import java.util.Objects;
 public class CompositeFlow implements Flow, InitializingBean  {
 
     private List<Flow> flows = new ArrayList<>();
-    private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver();
-
-    @Autowired
-    private ApprovalService approvalService;
 
     @Autowired
     private AuthorizationCodeService authorizationCodeService;
@@ -74,9 +68,9 @@ public class CompositeFlow implements Flow, InitializingBean  {
 
     @Override
     public void afterPropertiesSet() {
-        addFlow(new AuthorizationCodeFlow(authorizationRequestResolver, approvalService, authorizationCodeService));
-        addFlow(new ImplicitFlow(authorizationRequestResolver, approvalService, tokenService, idTokenService));
-        addFlow(new HybridFlow(authorizationRequestResolver, approvalService, authorizationCodeService, tokenService, idTokenService));
+        addFlow(new AuthorizationCodeFlow(authorizationCodeService));
+        addFlow(new ImplicitFlow(tokenService, idTokenService));
+        addFlow(new HybridFlow(authorizationCodeService, tokenService, idTokenService));
     }
 
     private void addFlow(Flow flow) {

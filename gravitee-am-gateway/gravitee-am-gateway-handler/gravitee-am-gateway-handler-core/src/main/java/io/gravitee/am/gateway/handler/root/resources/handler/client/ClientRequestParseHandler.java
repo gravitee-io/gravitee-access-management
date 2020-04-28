@@ -57,7 +57,9 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
                 return;
             }
 
-            context.put(CLIENT_CONTEXT_KEY, authHandler.result());
+            Client safeClient = new Client(authHandler.result());
+            safeClient.setClientSecret(null);
+            context.put(CLIENT_CONTEXT_KEY, safeClient);
             context.next();
         });
     }

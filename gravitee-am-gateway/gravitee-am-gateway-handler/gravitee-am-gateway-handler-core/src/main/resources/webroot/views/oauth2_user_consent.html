@@ -25,7 +25,7 @@
                 <label>Permissions requested</label>
                 <span><span style="font-weight: bold" th:text="${client.clientName}"></span> is requesting permissions to access your account</span>
             </div>
-            <form role="form" th:id="confirmationForm" th:action="@{authorize}" method="post">
+            <form role="form" th:id="confirmationForm" th:action="@{consent}" method="post">
                 <div class="permissions">
                     <p>This app would like to :</p>
                     <div class="permission" th:each="scope : ${scopes}">

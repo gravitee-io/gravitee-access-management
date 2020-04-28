@@ -222,10 +222,10 @@
         <div>
           <div>
             <div>
-                <h3><span th:text="${client.clientId}"></span> is requesting permissions to access your account</h3>
+                <h3><span th:text="${client.clientName}"></span> is requesting permissions to access your account</h3>
             </div>
             <div>
-              <form role="form" th:action="@{authorize}" method="post">
+              <form role="form" th:action="@{consent}" method="post">
                 <div>
                   <h3>Review permissions</h3>
                   <div th:each="scope : ${scopes}">

@@ -20,10 +20,9 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
-import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
-import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationFailureEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestFailureHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseClientHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequiredParametersHandler;
@@ -34,8 +33,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -81,7 +80,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     private OpenIDDiscoveryService openIDDiscoveryService;
 
     @InjectMocks
-    private AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow, domain);
+    private AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow);
 
     @Override
     public void setUp() throws Exception {
@@ -111,7 +110,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authorizationEndpointHandler);
         router.route()
-                .failureHandler(new AuthorizationFailureEndpoint(domain));
+                .failureHandler(new AuthorizationRequestFailureHandler(domain));
     }
 
     @Test
@@ -385,38 +384,6 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once"));
-                },
-                HttpStatusCode.FOUND_302, "Found", null);
-    }
-
-    @Test
-    public void shouldInvokeAuthorizationEndpoint_approvalPage() throws Exception {
-        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
-        authorizationRequest.setApproved(false);
-
-        final Client client = new Client();
-        client.setId("client-id");
-        client.setClientId("client-id");
-        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
-
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
-
-        router.route().order(-1).handler(routingContext -> {
-            routingContext.put(CLIENT_CONTEXT_KEY, new Client());
-            routingContext.setUser(new User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User())));
-            routingContext.next();
-        });
-
-        when(flow.run(any(), any(), any())).thenReturn(Single.error(new AccessDeniedException("User denied access")));
-
-        testRequest(
-                HttpMethod.GET,
-                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
-                null,
-                resp -> {
-                    String location = resp.headers().get("location");
-                    assertNotNull(location);
-                    assertTrue(location.contains("/test/oauth/confirm_access"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

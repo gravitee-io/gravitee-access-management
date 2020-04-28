@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
+package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
+import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
@@ -55,15 +56,16 @@ import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint implements Handler<RoutingContext> {
+public class AuthorizationRequestFailureHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationFailureEndpoint.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestFailureHandler.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
-    private Domain domain;
+    private static final String USER_CONSENT_COMPLETED_CONTEXT_KEY = "userConsentCompleted";
+    private static final String REQUESTED_CONSENT_CONTEXT_KEY = "requestedConsent";
+    private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private String defaultErrorPagePath;
 
-    public AuthorizationFailureEndpoint(Domain domain) {
-        this.domain = domain;
+    public AuthorizationRequestFailureHandler(Domain domain) {
         defaultErrorPagePath = "/" + domain.getPath() + "/oauth/error";
     }
 
@@ -72,7 +74,7 @@ public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint 
         if (routingContext.failed()) {
             try {
                 AuthorizationRequest request = resolveInitialAuthorizeRequest(routingContext);
-                String defaultProxiedOAuthErrorPage =  UriBuilderRequest.resolveProxyRequest(routingContext.request(),  defaultErrorPagePath, null);
+                String defaultProxiedOAuthErrorPage = UriBuilderRequest.resolveProxyRequest(routingContext.request(),  defaultErrorPagePath, null);
                 Throwable throwable = routingContext.failure();
                 if (throwable instanceof OAuth2Exception) {
                     OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
@@ -109,20 +111,12 @@ public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint 
                 }
             } catch (Exception e) {
                 logger.error("Unable to handle authorization error response", e);
-                doRedirect(routingContext.response(),  "/" + domain.getPath() + "/oauth/error");
+                doRedirect(routingContext.response(),  defaultErrorPagePath);
             } finally {
                 // clean session
                 cleanSession(routingContext);
             }
         }
-    }
-
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
-    }
-
-    private void cleanSession(RoutingContext context) {
-        context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
     }
 
     private String buildRedirectUri(String error, String errorDescription, AuthorizationRequest authorizationRequest) throws URISyntaxException {
@@ -168,5 +162,26 @@ public class AuthorizationFailureEndpoint extends AbstractAuthorizationEndpoint 
             query.forEach((k, v) -> template.addParameter(k, UriBuilder.encodeURIComponent(v)));
         }
         return template.build().toString();
+    }
+
+    private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
+        AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        // we have the authorization request in session if we come from the approval user page
+        if (authorizationRequest != null) {
+            return authorizationRequest;
+        }
+
+        // if none, we have the required request parameters to re-create the authorize request
+        return authorizationRequestFactory.create(routingContext.request());
+    }
+
+    private void cleanSession(RoutingContext context) {
+        context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
+        context.session().remove(USER_CONSENT_COMPLETED_CONTEXT_KEY);
+        context.session().remove(REQUESTED_CONSENT_CONTEXT_KEY);
+    }
+
+    private void doRedirect(HttpServerResponse response, String url) {
+        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 }

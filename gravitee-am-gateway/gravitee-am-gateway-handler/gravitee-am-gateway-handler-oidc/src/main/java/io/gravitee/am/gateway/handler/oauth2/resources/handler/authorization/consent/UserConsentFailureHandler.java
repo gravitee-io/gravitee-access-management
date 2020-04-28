@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.approval;
+package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent;
 
-import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -32,37 +32,28 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * If End-User Consent step failed, we need to clear out the session and redirect the user to the login page with a proper error message.
- *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserApprovalFailureHandler implements Handler<RoutingContext> {
-
-    private static final Logger logger = LoggerFactory.getLogger(UserApprovalFailureHandler.class);
+public class UserConsentFailureHandler implements Handler<RoutingContext> {
+    private static final Logger logger = LoggerFactory.getLogger(UserConsentFailureHandler.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
     private Domain domain;
 
-    public UserApprovalFailureHandler(Domain domain) {
+    public UserConsentFailureHandler(Domain domain) {
         this.domain = domain;
     }
 
     @Override
     public void handle(RoutingContext context) {
         if (context.failed()) {
-            Throwable throwable = context.failure();
-            // oauth 2.0 exception at this step are "business" errors, continue
-            if (throwable instanceof OAuth2Exception) {
-                context.next();
-                return;
-            }
-
             // logout the user
             // but keep the session intact with the original OAuth 2.0 authorization request in order to replay the whole login process
             context.clearUser();
 
             // handle exception
-             if (throwable instanceof PolicyChainException) {
+            Throwable throwable = context.failure();
+            if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
                 handleException(context, policyChainException.key(), policyChainException.getMessage());
             } else {

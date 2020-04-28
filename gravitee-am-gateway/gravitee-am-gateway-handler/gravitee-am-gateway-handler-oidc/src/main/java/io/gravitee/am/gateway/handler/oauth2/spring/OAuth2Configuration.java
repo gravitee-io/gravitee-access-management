@@ -18,12 +18,12 @@ package io.gravitee.am.gateway.handler.oauth2.spring;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
-import io.gravitee.am.gateway.handler.oauth2.service.approval.ApprovalService;
-import io.gravitee.am.gateway.handler.oauth2.service.approval.impl.ApprovalServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.impl.ClientAssertionServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.code.impl.AuthorizationCodeServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
+import io.gravitee.am.gateway.handler.oauth2.service.consent.impl.UserConsentServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
@@ -73,8 +73,8 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public ApprovalService approvalService() {
-        return new ApprovalServiceImpl();
+    public UserConsentService userConsentService() {
+        return new UserConsentServiceImpl();
     }
 
     @Bean
