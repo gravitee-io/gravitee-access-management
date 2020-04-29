@@ -74,10 +74,17 @@ public class WebClientsConfiguration {
     @Value("${reCaptcha.serviceUrl:https://www.google.com/recaptcha/api/siteverify}")
     private String recaptchaServiceUrl;
 
+    @Value("${newsletter.url:https://newsletter.gravitee.io}")
+    private String newsletterURL;
+
     @Bean("recaptchaWebClient")
     protected WebClient recaptchaWebClient(Vertx vertx) throws MalformedURLException {
-
         return createWebClient(vertx, URI.create(recaptchaServiceUrl).toURL());
+    }
+
+    @Bean("newsletterWebClient")
+    protected WebClient newsletterWebClient(Vertx vertx) throws MalformedURLException {
+        return createWebClient(vertx, URI.create(newsletterURL).toURL());
     }
 
     private WebClient createWebClient(Vertx vertx, URL url) {

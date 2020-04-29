@@ -92,6 +92,8 @@ public class User {
 
     private boolean registrationCompleted;
 
+    private Boolean newsletter;
+
     private String registrationUserUri;
 
     private String registrationAccessToken;
@@ -151,6 +153,7 @@ public class User {
         this.internal = other.internal;
         this.preRegistration = other.preRegistration;
         this.registrationCompleted = other.registrationCompleted;
+        this.newsletter = other.newsletter;
         this.registrationUserUri = other.registrationUserUri;
         this.registrationAccessToken = other.registrationAccessToken;
         this.referenceType = other.referenceType;
@@ -198,6 +201,12 @@ public class User {
     }
 
     public String getEmail() {
+        if (email == null) {
+            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.EMAIL) != null) {
+                // fall back to OIDC standard claims
+                email = (String) getAdditionalInformation().get(StandardClaims.EMAIL);
+            }
+        }
         return email;
     }
 
@@ -219,8 +228,8 @@ public class User {
         }
 
         // fall back to combination of first name and last name
-        if (firstName != null) {
-            return firstName + ((lastName != null) ? " " + lastName : "");
+        if (getFirstName() != null) {
+            return getFirstName() + ((getLastName() != null) ? " " + getLastName() : "");
         }
 
         // fall back to standard claims
@@ -242,6 +251,12 @@ public class User {
     }
 
     public String getFirstName() {
+        if (firstName == null) {
+            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
+                // fall back to OIDC standard claims
+                firstName = (String) getAdditionalInformation().get(StandardClaims.GIVEN_NAME);
+            }
+        }
         return firstName;
     }
 
@@ -250,6 +265,12 @@ public class User {
     }
 
     public String getLastName() {
+        if (lastName == null) {
+            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) {
+                // fall back to OIDC standard claims
+                lastName = (String) getAdditionalInformation().get(StandardClaims.FAMILY_NAME);
+            }
+        }
         return lastName;
     }
 
@@ -424,6 +445,14 @@ public class User {
 
     public void setRegistrationCompleted(boolean registrationCompleted) {
         this.registrationCompleted = registrationCompleted;
+    }
+
+    public Boolean isNewsletter() {
+        return newsletter;
+    }
+
+    public void setNewsletter(Boolean newsletter) {
+        this.newsletter = newsletter;
     }
 
     public String getRegistrationUserUri() {

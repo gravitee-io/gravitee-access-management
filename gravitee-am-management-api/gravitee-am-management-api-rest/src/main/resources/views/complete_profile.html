@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Complete Profile</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{assets/material/material.blue_grey-blue.min.css}">
+    <link rel="stylesheet" th:href="@{assets/material/material.icons.css}">
+    <link rel="stylesheet" th:href="@{assets/font-awesome/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{assets/css/complete_profile.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
+</head>
+
+<body>
+<div class="mdl-layout mdl-js-layout">
+    <div class="complete-profile-container">
+        <div class="complete-profile-form">
+            <div class="complete-profile-form-logo">
+                <img th:src="@{assets/images/logo-gravitee.png}" width="200">
+            </div>
+            <div class="complete-profile-form-title">
+                <label>Welcome</label>
+                <span>To complete your account fill out the form below</span>
+            </div>
+            <form role="form" th:action="@{completeProfile}" method="post">
+                <div class="complete-profile-form-content">
+                    <div class="input-textfield">
+                        <label class="w3-text-blue">Email</label>
+                        <input type="email" id="email" name="email" th:value="${user.email}" autofocus="autofocus"/>
+                    </div>
+                    <div class="input-textfield">
+                        <label class="w3-text-blue">First name</label>
+                        <input type="text" id="given_name" name="given_name" th:value="${user.firstName}"/>
+                    </div>
+                    <div class="input-textfield">
+                        <label class="w3-text-blue">Last name</label>
+                        <input type="text" id="family_name" name="family_name" th:value="${user.lastName}"/>
+                    </div>
+                    <label class="mdl-checkbox mdl-js-checkbox" for="newsletter" style="margin-bottom: 10px;">
+                        <input type="checkbox" id="newsletter" name="newsletter" class="mdl-checkbox__input">
+                        <span class="mdl-checkbox__label" style="font-size: smaller;">Subscribe to newsletter and receive information about new versions and updates. View our <a th:href="${privacyPolicyURI}">Privacy Policy</a>.</span>
+                    </label>
+                    <div th:if="${param.error}" class="complete-profile-error-info">
+                        <span class="error">complete_profile_failed</span>
+                    </div>
+                </div>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="complete-profile-form-actions">
+                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Continue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!--[if lt IE 10]>
+<script th:src="@{assets/js/placeholder.js}"></script>
+<![endif]-->
+<script th:src="@{assets/material/material.min.js}"></script>
+<script th:src="@{assets/js/jquery-1.11.1.min.js}"></script>
+<script>
+    $(".mdl-textfield__input").focus(function (){
+        if( !this.value ){
+            $(this).prop('required', true);
+            $(this).parent().addClass('is-invalid');
+        }
+    });
+    $(".mdl-button[type='submit']").click(function (event) {
+        $(this).siblings(".mdl-textfield").addClass('is-invalid');
+        $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
+    });
+</script>
+</body>
+</html>

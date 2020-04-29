@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {AuthService} from "../../../services/auth.service";
+import {ActivatedRoute, Router} from '@angular/router';
+import {AuthService} from '../../../services/auth.service';
 
 @Component({
   selector: 'app-forms',
@@ -45,7 +45,7 @@ export class FormsComponent implements OnInit {
   }
 
   isEmpty() {
-    return !this.forms || this.forms.length == 0;
+    return !this.forms || this.forms.length === 0;
   }
 
   canView(): boolean {

@@ -21,6 +21,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.service.
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
@@ -48,6 +49,9 @@ public class CustomAuthenticationSuccessHandler extends SavedRequestAwareAuthent
 
     @Autowired
     private AuthenticationService authenticationService;
+
+    @Value("${newsletter.enabled:true}")
+    private boolean newsletterEnabled;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -85,9 +89,14 @@ public class CustomAuthenticationSuccessHandler extends SavedRequestAwareAuthent
 
         clearAuthenticationAttributes(request);
 
-        // Use the DefaultSavedRequest URL
-        String targetUrl = savedRequest.getRedirectUrl();
-        logger.debug("Redirecting to DefaultSavedRequest Url: " + targetUrl);
-        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        // if first login and newsletter option enabled, go to complete profile step
+        if (newsletterEnabled && (long) principal.getAdditionalInformation().get("login_count") == 1) {
+            getRedirectStrategy().sendRedirect(request, response, "/auth/completeProfile");
+        } else {
+            // replay the original request
+            String targetUrl = savedRequest.getRedirectUrl();
+            logger.debug("Redirecting to DefaultSavedRequest Url: " + targetUrl);
+            getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        }
     }
 }
