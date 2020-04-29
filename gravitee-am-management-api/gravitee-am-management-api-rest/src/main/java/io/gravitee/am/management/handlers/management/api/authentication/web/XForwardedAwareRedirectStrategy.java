@@ -32,8 +32,8 @@ import java.io.IOException;
  */
 public class XForwardedAwareRedirectStrategy implements RedirectStrategy {
 
-    private final Logger logger = LoggerFactory.getLogger(XForwardedAwareRedirectStrategy.class);
-
+    private static final Logger logger = LoggerFactory.getLogger(XForwardedAwareRedirectStrategy.class);
+    private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
     private boolean contextRelative;
 
     @Override
@@ -62,6 +62,15 @@ public class XForwardedAwareRedirectStrategy implements RedirectStrategy {
             } else {
                 builder.host(host);
             }
+        }
+
+        // handle forwarded path
+        String forwardedPath = request.getHeader(X_FORWARDED_PREFIX);
+        if (forwardedPath != null && !forwardedPath.isEmpty()) {
+            String path = builder.build().getPath();
+            // remove trailing slash
+            forwardedPath = forwardedPath.substring(0, forwardedPath.length() - (forwardedPath.endsWith("/") ? 1 : 0));
+            builder.replacePath(forwardedPath + path);
         }
 
         redirectUrl = response.encodeRedirectURL(builder.build(false).toUriString());

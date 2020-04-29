@@ -25,12 +25,12 @@ export class FormResolver implements Resolve<any> {
   constructor(private formService: FormService, private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+    const template = route.queryParams['template'];
     if (state.url.startsWith('/settings')) {
-      return this.organizationService.forms('LOGIN');
+      return this.organizationService.forms(template);
     }
     const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
     const appId = route.parent.parent.paramMap.get('appId');
-    const template = route.queryParams['template'];
     return this.formService.get(domainId, appId, template);
   }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from '@angular/router';
 
 @Component({
   selector: 'app-domain-forms',
@@ -25,11 +25,16 @@ export class DomainSettingsFormsComponent implements OnInit {
   forms: any[];
   domain: any;
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute,
+              private router: Router) { }
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
-    this.forms = this.getForms();
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.forms = this.getOrganizationForms();
+    } else {
+      this.domain = this.route.snapshot.data['domain'];
+      this.forms = this.getForms();
+    }
   }
 
   getForms() {
@@ -98,6 +103,25 @@ export class DomainSettingsFormsComponent implements OnInit {
         'enabled': true
       }
     ]
+  }
+
+  getOrganizationForms() {
+    return [
+      {
+        'name': 'Login',
+        'description': 'Login page to authenticate users',
+        'template': 'LOGIN',
+        'icon': 'account_box',
+        'enabled': true
+      },
+      {
+        'name': 'Complete profile',
+        'description': 'Enrich user profile after first authentication',
+        'template': 'COMPLETE_PROFILE',
+        'icon': 'person_add',
+        'enabled': true
+      }
+    ];
   }
 
   allowRegister() {

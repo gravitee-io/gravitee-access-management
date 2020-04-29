@@ -28,6 +28,8 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class LoginUrlAuthenticationEntryPoint extends org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint {
 
+    private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
+
     public LoginUrlAuthenticationEntryPoint(String loginFormUrl) {
         super(loginFormUrl);
     }
@@ -53,6 +55,15 @@ public class LoginUrlAuthenticationEntryPoint extends org.springframework.securi
             } else {
                 builder.host(host);
             }
+        }
+
+        // handle forwarded path
+        String forwardedPath = request.getHeader(X_FORWARDED_PREFIX);
+        if (forwardedPath != null && !forwardedPath.isEmpty()) {
+            String path = builder.build().getPath();
+            // remove trailing slash
+            forwardedPath = forwardedPath.substring(0, forwardedPath.length() - (forwardedPath.endsWith("/") ? 1 : 0));
+            builder.replacePath(forwardedPath + path);
         }
 
         return builder.toUriString();

@@ -53,6 +53,7 @@ public class UserMongo extends Auditable {
     private boolean internal;
     private boolean preRegistration;
     private boolean registrationCompleted;
+    private Boolean newsletter;
     private String registrationUserUri;
     private String registrationAccessToken;
     private String referenceType;
@@ -68,7 +69,6 @@ public class UserMongo extends Auditable {
     private List<String> entitlements;
     private List<AddressMongo> addresses;
     private List<CertificateMongo> x509Certificates;
-    private boolean twoFactorAuthenticationEnabled;
     private List<EnrolledFactor> factors;
     private List<String> roles;
     /**
@@ -236,6 +236,14 @@ public class UserMongo extends Auditable {
         this.registrationCompleted = registrationCompleted;
     }
 
+    public Boolean isNewsletter() {
+        return newsletter;
+    }
+
+    public void setNewsletter(Boolean newsletter) {
+        this.newsletter = newsletter;
+    }
+
     public String getRegistrationUserUri() {
         return registrationUserUri;
     }
@@ -354,14 +362,6 @@ public class UserMongo extends Auditable {
 
     public void setX509Certificates(List<CertificateMongo> x509Certificates) {
         this.x509Certificates = x509Certificates;
-    }
-
-    public boolean isTwoFactorAuthenticationEnabled() {
-        return twoFactorAuthenticationEnabled;
-    }
-
-    public void setTwoFactorAuthenticationEnabled(boolean twoFactorAuthenticationEnabled) {
-        this.twoFactorAuthenticationEnabled = twoFactorAuthenticationEnabled;
     }
 
     public List<EnrolledFactor> getFactors() {

@@ -57,11 +57,11 @@
               <p th:text="${warning == 'invalid_password_value'} ? 'Invalid password value. It does not comply with the password policy.' : 'An account already exists with this username.'"></p>
             </div>
             <form th:action="@{register}" method="post">
-              <input class="mdl-textfield__input" type="text" id="firstName" name="firstName"/>
-              <input class="mdl-textfield__input" type="text" id="lastName" name="lastName"/>
-              <input class="mdl-textfield__input" type="text" id="username" name="username"/>
-              <input class="mdl-textfield__input" type="email" id="email" name="email"/>
-              <input class="mdl-textfield__input" type="password" id="password" name="password"/>
+              <input type="text" id="firstName" name="firstName"/>
+              <input type="text" id="lastName" name="lastName"/>
+              <input type="text" id="username" name="username"/>
+              <input type="email" id="email" name="email"/>
+              <input type="password" id="password" name="password"/>
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
               <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
               <a th:href="@{login(client_id=${param.client_id})}"><< Back to login</a>
@@ -351,6 +351,37 @@
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <button type="submit">Verify</button>
             </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
+    <pre *ngIf="data.rawTemplate === 'COMPLETE_PROFILE'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>Complete profile custom</title>
+        </head>
+        <body>
+          <form role="form" th:action="@{completeProfile}" method="post">
+            <div>
+                <label>Email</label>
+                <input type="email" id="email" name="email" th:value="${user.email}" autofocus="autofocus" required/>
+            </div>
+            <div>
+                <label>First name</label>
+                <input type="text" id="given_name" name="given_name" th:value="${user.firstName}" required/>
+            </div>
+            <div>
+                <label>Last name</label>
+                <input type="text" id="family_name" name="family_name" th:value="${user.lastName}" required/>
+            </div>
+            <div th:if="${param.error}">
+                <span>complete_profile_failed</span>
+            </div>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit">Continue</button>
+          </form>
         </body>
         </html>
       ]]>

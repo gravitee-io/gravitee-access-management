@@ -47,7 +47,7 @@ import {LogoutCallbackComponent} from './logout/callback/callback.component';
 import {LogoutComponent} from './logout/logout.component';
 import {DomainsResolver} from './resolvers/domains.resolver';
 import {DomainResolver} from './resolvers/domain.resolver';
-import {DomainEntrypointResolver} from "./resolvers/domain-entrypoint.resolver";
+import {DomainEntrypointResolver} from './resolvers/domain-entrypoint.resolver';
 import {DomainPermissionsResolver} from './resolvers/domain-permissions.resolver';
 import {ProvidersResolver} from './resolvers/providers.resolver';
 import {ProviderResolver} from './resolvers/provider.resolver';
@@ -231,18 +231,25 @@ const routes: Routes = [
               }
             }
           },
-          {
-            path: 'login',
-            component: DomainSettingsFormComponent,
+          { path: 'forms',
+            component: DomainSettingsFormsComponent,
             canActivate: [AuthGuard],
+            data: {
+              menu: {
+                label: 'Forms',
+                section: 'Design'
+              },
+              perms: {
+                only: ['organization_form_list']
+              }
+            }
+          },
+          { path: 'forms/form',
+            component: DomainSettingsFormComponent,
             resolve: {
               form: FormResolver
             },
             data: {
-              menu: {
-                label: 'Login Page',
-                section: 'Design'
-              },
               perms: {
                 only: ['organization_form_read']
               }

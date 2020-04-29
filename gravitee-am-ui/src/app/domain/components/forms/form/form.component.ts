@@ -60,13 +60,11 @@ export class FormComponent implements OnInit, AfterViewInit {
               public dialog: MatDialog) { }
 
   ngOnInit() {
+    this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.domainId = (this.route.snapshot.parent.parent.params['domainId']) ? this.route.snapshot.parent.parent.params['domainId'] : this.route.snapshot.parent.parent.parent.params['domainId'];
     this.appId = this.route.snapshot.parent.parent.params['appId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
-      this.rawTemplate = 'LOGIN';
-    } else {
-      this.rawTemplate = this.route.snapshot.queryParams['template'];
     }
 
     this.form = this.route.snapshot.data['form'];

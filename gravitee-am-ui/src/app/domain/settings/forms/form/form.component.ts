@@ -35,14 +35,16 @@ export class DomainSettingsFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.rawTemplate = 'LOGIN';
-    } else {
-      this.rawTemplate = this.route.snapshot.queryParams['template'];
-    }
-    this.createMode = this.authService.hasPermissions(['domain_form_create']);
-    this.editMode = this.authService.hasPermissions(['domain_form_update']);
-    this.deleteMode = this.authService.hasPermissions(['domain_form_delete']);
+    this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
+    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
+      this.createMode = this.authService.hasPermissions(['organization_form_create']);
+      this.editMode = this.authService.hasPermissions(['organization_form_update']);
+      this.deleteMode = this.authService.hasPermissions(['organization_form_delete']);
+    } else {
+      this.createMode = this.authService.hasPermissions(['domain_form_create']);
+      this.editMode = this.authService.hasPermissions(['domain_form_update']);
+      this.deleteMode = this.authService.hasPermissions(['domain_form_delete']);
+    }
   }
 }

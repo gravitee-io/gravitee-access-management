@@ -33,6 +33,7 @@ public enum Template {
     OAUTH2_USER_CONSENT("oauth2_user_consent"),
     MFA_ENROLL("mfa_enroll"),
     MFA_CHALLENGE("mfa_challenge"),
+    COMPLETE_PROFILE("complete_profile"),
     ERROR("error");
 
     private final String template;
