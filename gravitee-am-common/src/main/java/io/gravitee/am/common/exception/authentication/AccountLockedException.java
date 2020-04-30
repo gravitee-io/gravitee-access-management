@@ -25,6 +25,12 @@ public class AccountLockedException extends AccountStatusException {
 
     public static final String ERROR_CODE = "account_locked";
 
+    public AccountLockedException() { }
+
+    public AccountLockedException(String msg) {
+        super(msg);
+    }
+
     public AccountLockedException(String msg, Map<String, String> details) {
         super(msg, details);
     }

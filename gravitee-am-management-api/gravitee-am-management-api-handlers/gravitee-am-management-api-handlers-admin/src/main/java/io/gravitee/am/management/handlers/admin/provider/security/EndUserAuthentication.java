@@ -18,8 +18,6 @@ package io.gravitee.am.management.handlers.admin.provider.security;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 
-import java.util.Map;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team

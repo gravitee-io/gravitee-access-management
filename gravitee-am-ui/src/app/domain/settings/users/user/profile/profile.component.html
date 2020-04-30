@@ -116,7 +116,7 @@
           <button mat-raised-button [disabled]="(!userForm.valid || userForm.pristine) && !formChanged" type="submit">UPDATE</button>
         </div>
       </form>
-      <div class="user-profile-settings-delete-zone" fxLayout="column" *ngIf="editMode()">
+      <div class="user-profile-settings-delete-zone" fxLayout="column">
         <p>This operation cannot be undone.</p>
         User will be deleted and will no longer be able to sign in to applications.
         <div class="user-profile-settings-delete-button" fxLayout="row">

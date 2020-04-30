@@ -42,6 +42,27 @@ public interface User extends Serializable {
     String getUsername();
 
     /**
+     * Returns the email of the user.
+     *
+     * @return the email
+     */
+    String getEmail();
+
+    /**
+     * Returns the firstname of the user.
+     *
+     * @return the firstname
+     */
+    String getFirstName();
+
+    /**
+     * Returns the lastname of the user.
+     *
+     * @return the lastname
+     */
+    String getLastName();
+
+    /**
      * Returns the credentials of the user. (Useful for user management)
      *
      * @return the credentials

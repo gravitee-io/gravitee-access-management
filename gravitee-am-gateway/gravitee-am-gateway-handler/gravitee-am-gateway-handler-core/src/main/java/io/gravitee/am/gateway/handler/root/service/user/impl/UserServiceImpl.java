@@ -410,12 +410,15 @@ public class UserServiceImpl implements UserService {
 
         Map<String, Object> additionalInformation = new HashMap<>();
         if (user.getFirstName() != null) {
+            idpUser.setFirstName(user.getFirstName());
             additionalInformation.put(StandardClaims.GIVEN_NAME, user.getFirstName());
         }
         if (user.getLastName() != null) {
+            idpUser.setLastName(user.getLastName());
             additionalInformation.put(StandardClaims.FAMILY_NAME, user.getLastName());
         }
         if (user.getEmail() != null) {
+            idpUser.setEmail(user.getEmail());
             additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
         }
         if (user.getAdditionalInformation() != null) {
@@ -433,7 +436,11 @@ public class UserServiceImpl implements UserService {
             }
             extraInformation.put(StandardClaims.SUB, user.getId());
             extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
-            user.setAdditionalInformation(extraInformation);
+            if (user.getAdditionalInformation() != null) {
+                user.getAdditionalInformation().putAll(extraInformation);
+            } else {
+                user.setAdditionalInformation(extraInformation);
+            }
         }
     }
 

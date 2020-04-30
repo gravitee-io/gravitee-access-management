@@ -167,6 +167,8 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 identities.put(identityProvider.getId(), identityProvider);
                 if (userProvider != null) {
                     userProviders.put(identityProvider.getId(), userProvider);
+                } else {
+                    userProviders.remove(identityProvider.getId());
                 }
             }
         } catch (Exception ex) {
