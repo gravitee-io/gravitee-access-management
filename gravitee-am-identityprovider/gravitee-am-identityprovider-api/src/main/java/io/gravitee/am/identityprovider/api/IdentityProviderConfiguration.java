@@ -17,7 +17,12 @@ package io.gravitee.am.identityprovider.api;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface IdentityProviderConfiguration {
+
+    default boolean userProvider() {
+        return false;
+    }
 }

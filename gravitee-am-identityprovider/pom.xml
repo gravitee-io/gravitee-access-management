@@ -39,6 +39,7 @@
         <module>gravitee-am-identityprovider-github</module>
         <module>gravitee-am-identityprovider-mongo</module>
         <module>gravitee-am-identityprovider-oauth2-generic</module>
+        <module>gravitee-am-identityprovider-http</module>
     </modules>
 
     <dependencies>

@@ -15,20 +15,32 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import io.gravitee.am.identityprovider.api.context.EvaluableAuthenticationContext;
+import io.gravitee.am.identityprovider.api.context.EvaluableAuthenticationRequest;
+import io.gravitee.el.TemplateContext;
+import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
 
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class SimpleAuthenticationContext implements AuthenticationContext {
 
-    private final Request request;
-
+    private static final String TEMPLATE_ATTRIBUTE_REQUEST = "request";
+    private static final String TEMPLATE_ATTRIBUTE_CONTEXT = "context";
+    private Request request;
     private final Map<String, Object> attributes = new HashMap<>();
+    private TemplateEngine templateEngine;
+
+    public SimpleAuthenticationContext() { }
 
     public SimpleAuthenticationContext(Request request) {
         this.request = request;
@@ -40,24 +52,49 @@ public class SimpleAuthenticationContext implements AuthenticationContext {
     }
 
     @Override
-    public AuthenticationContext set(String name, Object value) {
+    public Response response() {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public <T> T getComponent(Class<T> componentClass) {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public void setAttribute(String name, Object value) {
         attributes.put(name, value);
-        return this;
     }
 
     @Override
-    public AuthenticationContext remove(String name) {
+    public void removeAttribute(String name) {
         attributes.remove(name);
-        return this;
     }
 
     @Override
-    public Object get(String name) {
+    public Object getAttribute(String name) {
         return attributes.get(name);
     }
 
     @Override
-    public Map<String, Object> attributes() {
-        return this.attributes;
+    public Enumeration<String> getAttributeNames() {
+        return Collections.enumeration(attributes.keySet());
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    @Override
+    public TemplateEngine getTemplateEngine() {
+        if (templateEngine == null) {
+            templateEngine = TemplateEngine.templateEngine();
+
+            TemplateContext templateContext = templateEngine.getTemplateContext();
+            templateContext.setVariable(TEMPLATE_ATTRIBUTE_REQUEST, new EvaluableAuthenticationRequest(request));
+            templateContext.setVariable(TEMPLATE_ATTRIBUTE_CONTEXT, new EvaluableAuthenticationContext(this));
+        }
+        return templateEngine;
     }
 }

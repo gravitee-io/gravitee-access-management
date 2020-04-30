@@ -16,8 +16,8 @@
 package io.gravitee.am.management.handlers.admin.service.impl;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.management.handlers.admin.provider.security.EndUserAuthentication;
-import io.gravitee.am.management.handlers.admin.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.admin.service.AuthenticationService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -62,12 +62,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public User onAuthenticationSuccess(Authentication auth) {
         final io.gravitee.am.identityprovider.api.User principal = (io.gravitee.am.identityprovider.api.User) auth.getPrincipal();
 
-        ManagementAuthenticationContext authenticationContext = new ManagementAuthenticationContext();
+        final EndUserAuthentication authentication = new EndUserAuthentication(principal.getUsername(), null, new SimpleAuthenticationContext());
         Map<String, String> details = auth.getDetails() == null ? new HashMap<>() : new HashMap<>((Map) auth.getDetails());
-        details.forEach(authenticationContext::set);
-        authenticationContext.set(Claims.domain, domain.getId());
-
-        final EndUserAuthentication authentication = new EndUserAuthentication(principal.getUsername(), null, authenticationContext);
+        details.forEach(authentication.getContext()::set);
+        authentication.getContext().set(Claims.domain, domain.getId());
 
         final String source = details.get(SOURCE);
         return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)

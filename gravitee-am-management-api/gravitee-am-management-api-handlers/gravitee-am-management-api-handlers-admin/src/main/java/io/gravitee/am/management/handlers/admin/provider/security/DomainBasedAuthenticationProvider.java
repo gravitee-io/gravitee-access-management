@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.admin.provider.security;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.management.handlers.admin.authentication.WebAuthenticationDetails;
 import io.gravitee.am.management.handlers.admin.security.IdentityProviderManager;
 import io.gravitee.am.model.Domain;
@@ -70,7 +71,7 @@ public class DomainBasedAuthenticationProvider implements AuthenticationProvider
         // Create a end-user authentication for underlying providers associated to the domain
         io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(
                 authentication.getName(),
-                authentication.getCredentials(), new ManagementAuthenticationContext());
+                authentication.getCredentials(), new SimpleAuthenticationContext());
 
         while (iter.hasNext() && user == null) {
             String provider = iter.next();

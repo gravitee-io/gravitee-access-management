@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.admin.provider.security;
+package io.gravitee.am.identityprovider.http.authentication;
 
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
 
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Map;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ManagementAuthenticationContext implements AuthenticationContext {
+public class DummyAuthenticationContext implements AuthenticationContext {
 
-    private final Map<String, Object> attributes = new HashMap<>();
-    private Request request;
+    private final Map<String, Object> attributes;
+    private final Request request;
 
-    public ManagementAuthenticationContext() { }
-
-    public ManagementAuthenticationContext(Request request) {
+    DummyAuthenticationContext(Map<String, Object> attributes, Request request) {
+        this.attributes = attributes;
         this.request = request;
     }
 
@@ -43,24 +44,43 @@ public class ManagementAuthenticationContext implements AuthenticationContext {
     }
 
     @Override
-    public AuthenticationContext set(String name, Object value) {
+    public Response response() {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public <T> T getComponent(Class<T> componentClass) {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public void setAttribute(String name, Object value) {
         attributes.put(name, value);
-        return this;
     }
 
     @Override
-    public AuthenticationContext remove(String name) {
+    public void removeAttribute(String name) {
         attributes.remove(name);
-        return this;
     }
 
     @Override
-    public Object get(String name) {
+    public Object getAttribute(String name) {
         return attributes.get(name);
     }
 
     @Override
-    public Map<String, Object> attributes() {
-        return this.attributes;
+    public Enumeration<String> getAttributeNames() {
+        return Collections.enumeration(attributes.keySet());
     }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    @Override
+    public TemplateEngine getTemplateEngine() {
+        throw new IllegalStateException();
+    }
+
 }
