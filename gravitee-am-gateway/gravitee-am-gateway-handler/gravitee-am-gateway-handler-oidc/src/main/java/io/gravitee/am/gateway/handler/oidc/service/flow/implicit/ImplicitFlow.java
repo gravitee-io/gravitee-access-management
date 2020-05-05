@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oidc.service.flow.implicit;
 
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
+import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
@@ -74,6 +75,7 @@ public class ImplicitFlow extends AbstractFlow {
         oAuth2Request.setGrantType(GrantType.IMPLICIT);
         oAuth2Request.setSupportRefreshToken(false);
         oAuth2Request.setSubject(endUser.getId());
+        oAuth2Request.getContext().put(Claims.s_hash, authorizationRequest.getState());
         if (io.gravitee.am.common.oidc.ResponseType.ID_TOKEN.equals(authorizationRequest.getResponseType())) {
             return idTokenService.create(oAuth2Request, client, endUser)
                     .map(idToken -> {

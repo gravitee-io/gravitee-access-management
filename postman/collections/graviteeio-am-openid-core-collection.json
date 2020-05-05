@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "6257d613-f320-4159-a22b-b37e80e23146",
+		"_postman_id": "206265a5-9b82-4b7a-91d5-455d26a491ac",
 		"name": "Gravitee.io - AM - Openid Core",
 		"description": "Test Openid core specifications: https://openid.net/specs/openid-connect-core-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -3371,6 +3371,7 @@
 													"    ",
 													"    // TODO: find a way to check the value: https://openid.net/specs/openid-connect-core-1_0.html#ImplicitIDToken",
 													"    tests['Contains an at_hash claim'] = jwt.at_hash !== undefined;",
+													"    tests['Does not contain an s_hash claim'] = jwt.s_hash === undefined;",
 													"});"
 												],
 												"type": "text/javascript"
@@ -3741,6 +3742,7 @@
 													"    ",
 													"    tests['Contains a valid nonce claim'] = jwt.nonce === 'n-0S6_WzA2Mj';",
 													"    tests['Does not contain an at_hash claim'] = jwt.at_hash === undefined;",
+													"    tests['Does not contain an s_hash claim'] = jwt.s_hash === undefined;",
 													"});"
 												],
 												"type": "text/javascript"
@@ -4547,6 +4549,12 @@
 											"script": {
 												"id": "73f280ec-f0ac-46ec-9424-0cdecd34f1c8",
 												"exec": [
+													"function parseJwt (token) {",
+													"    var base64Url = token.split('.')[1];",
+													"    var base64 = base64Url.replace('-', '+').replace('_', '/');",
+													"    return JSON.parse(atob(base64));",
+													"}",
+													"",
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
 													"});",
@@ -4566,6 +4574,13 @@
 													"    tests['Does not contain a scope param'] = !location.includes('scope=scope1');",
 													"    tests['Contains an id_token param'] = location.includes('#id_token=');",
 													"    tests['Contains a state param'] = location.includes('state=af0ifjsldkj');",
+													"    ",
+													"    let id_token = location.substring(location.indexOf('id_token=')+9);",
+													"    let jwt = parseJwt(id_token);",
+													"    ",
+													"    tests['Contains a valid nonce claim'] = jwt.nonce === 'n-0S6_WzA2Mj';",
+													"    tests['Does not contain an at_hash claim'] = jwt.at_hash === undefined;",
+													"    tests['Contains a s_hash claim'] = jwt.s_hash === 'bOhtX8F73IMjSPeVAqxyTQ';",
 													"});"
 												],
 												"type": "text/javascript"
@@ -4910,6 +4925,12 @@
 											"script": {
 												"id": "73f280ec-f0ac-46ec-9424-0cdecd34f1c8",
 												"exec": [
+													"function parseJwt (token) {",
+													"    var base64Url = token.split('.')[1];",
+													"    var base64 = base64Url.replace('-', '+').replace('_', '/');",
+													"    return JSON.parse(atob(base64));",
+													"}",
+													"",
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
 													"});",
@@ -4929,6 +4950,13 @@
 													"    tests['Contains a scope param'] = location.includes('scope=scope1');",
 													"    tests['Contains a state param'] = location.includes('state=af0ifjsldkj');",
 													"    tests['Contains an id_token param'] = location.includes('id_token=');",
+													"    ",
+													"    let id_token = location.substring(location.indexOf('id_token=')+9);",
+													"    let jwt = parseJwt(id_token);",
+													"    ",
+													"    tests['Contains a valid nonce claim'] = jwt.nonce === 'n-0S6_WzA2Mj';",
+													"    tests['Contains an at_hash claim'] = jwt.at_hash !== undefined;",
+													"    tests['Contains a s_hash claim'] = jwt.s_hash === 'bOhtX8F73IMjSPeVAqxyTQ';",
 													"});"
 												],
 												"type": "text/javascript"

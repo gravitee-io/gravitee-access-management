@@ -102,7 +102,8 @@ public class AuthorizationRequest extends OAuth2Request {
     }
 
     public OAuth2Request createOAuth2Request() {
-        OAuth2Request oAuth2Request = new OAuth2Request();
+        AuthorizationRequest oAuth2Request = new AuthorizationRequest();
+
         // set technical information
         oAuth2Request.setId(id());
         oAuth2Request.setTransactionId(transactionId());
@@ -122,6 +123,8 @@ public class AuthorizationRequest extends OAuth2Request {
         oAuth2Request.setScopes(getScopes());
         oAuth2Request.setResponseType(getResponseType());
         oAuth2Request.setAdditionalParameters(getAdditionalParameters());
+        oAuth2Request.setState(getState());
+
         return oAuth2Request;
     }
 }
