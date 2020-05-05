@@ -92,14 +92,16 @@ public class IDTokenServiceImpl implements IDTokenService {
                                 // set hash claims (hybrid flow)
                                 if (oAuth2Request.getContext() != null && !oAuth2Request.getContext().isEmpty()) {
                                     oAuth2Request.getContext().forEach((claimName, claimValue) -> {
-                                        CertificateMetadata certificateMetadata = certificateProvider.getProvider().certificateMetadata();
-                                        String digestAlgorithm = defaultDigestAlgorithm;
-                                        if (certificateMetadata != null
-                                                && certificateMetadata.getMetadata() != null
-                                                && certificateMetadata.getMetadata().get(CertificateMetadata.DIGEST_ALGORITHM_NAME) != null) {
-                                            digestAlgorithm = (String) certificateMetadata.getMetadata().get(CertificateMetadata.DIGEST_ALGORITHM_NAME);
+                                        if (claimValue != null) {
+                                            CertificateMetadata certificateMetadata = certificateProvider.getProvider().certificateMetadata();
+                                            String digestAlgorithm = defaultDigestAlgorithm;
+                                            if (certificateMetadata != null
+                                                    && certificateMetadata.getMetadata() != null
+                                                    && certificateMetadata.getMetadata().get(CertificateMetadata.DIGEST_ALGORITHM_NAME) != null) {
+                                                digestAlgorithm = (String) certificateMetadata.getMetadata().get(CertificateMetadata.DIGEST_ALGORITHM_NAME);
+                                            }
+                                            idToken.addAdditionalClaim(claimName, getHashValue((String) claimValue, digestAlgorithm));
                                         }
-                                        idToken.addAdditionalClaim(claimName, getHashValue((String) claimValue, digestAlgorithm));
                                     });
                                 }
                                 return jwtService.encode(idToken, certificateProvider);

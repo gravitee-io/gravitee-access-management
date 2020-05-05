@@ -84,6 +84,7 @@ public class HybridFlow extends AbstractFlow {
                     oAuth2Request.setGrantType(GrantType.HYBRID);
                     oAuth2Request.setSubject(endUser.getId());
                     oAuth2Request.getContext().put(Claims.c_hash, code.getCode());
+                    oAuth2Request.getContext().put(Claims.s_hash, authorizationRequest.getState());
                     switch (authorizationRequest.getResponseType()) {
                         // code id_token response type MUST include both an Authorization Code and an id_token
                         case ResponseType.CODE_ID_TOKEN:

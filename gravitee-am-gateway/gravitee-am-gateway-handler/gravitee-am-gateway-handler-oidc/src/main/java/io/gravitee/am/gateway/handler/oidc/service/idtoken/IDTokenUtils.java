@@ -48,6 +48,13 @@ public final class IDTokenUtils {
      *      The c_hash value is a case sensitive string.
      *      If the ID Token is issued from the Authorization Endpoint with a code, which is the case for the response_type values code id_token and code id_token token,
      *      this is REQUIRED; otherwise, its inclusion is OPTIONAL.
+     * - s_hash
+     *      State hash value.
+     *      Its value is the base64url encoding of the left-most half of the hash of the octets of the ASCII representation
+     *      of the state value, where the hash algorithm used is the hash algorithm used in the alg header parameter of
+     *      the ID Token's JOSE header. For instance, if the alg is HS512, hash the state value with SHA-512, then take
+     *      the left-most 256 bits and base64url encode them. The s_hash value is a case sensitive string.
+     *
      * @param payload code or access token value
      * @param signingAlgorithm hash algorithm used in the alg Header Parameter of the ID Token's JOSE Header.
      * @return payload hash value
