@@ -18,13 +18,13 @@ package io.gravitee.am.gateway.handler.oidc;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
-import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
+import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oidc.resources.endpoint.*;
@@ -34,6 +34,9 @@ import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientRegist
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientRegistrationTemplateHandler;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
@@ -54,6 +57,7 @@ import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class OIDCProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
@@ -83,6 +87,9 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
     private ClientSyncService clientSyncService;
 
     @Autowired
+    private ClientAssertionService clientAssertionService;
+
+    @Autowired
     private JWTService jwtService;
 
     @Autowired
@@ -108,6 +115,9 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private ScopeManager scopeManager;
+
+    @Autowired
+    private RequestObjectService requestObjectService;
 
     @Override
     protected void doStart() throws Exception {
@@ -242,6 +252,20 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(dynamicClientAccessAuthHandler)
                 .handler(dynamicClientAccessTokenHandler)
                 .handler(dynamicClientAccessEndpoint::renewClientSecret);
+
+        // client auth handler
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService);
+
+        // Request object registration
+        oidcRouter
+                .route(HttpMethod.POST, "/ros")
+                .handler(clientAuthHandler)
+                .handler(new RequestObjectRegistrationEndpoint(requestObjectService));
+
+        oidcRouter
+                .route("/ros")
+                .handler(clientAuthHandler)
+                .handler(new RequestObjectRegistrationEndpoint.MethodNotAllowedHandler());
 
         // error handler
         errorHandler(oidcRouter);

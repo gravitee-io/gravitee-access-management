@@ -162,6 +162,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("authorization_encryption_enc_values_supported")
     private List<String> authorizationEncryptionEncValuesSupported;
 
+    @JsonProperty("request_object_endpoint")
+    private String requestObjectEndpoint;
+
     public String getIssuer() {
         return issuer;
     }
@@ -512,5 +515,13 @@ public class OpenIDProviderMetadata {
 
     public void setAuthorizationEncryptionEncValuesSupported(List<String> authorizationEncryptionEncValuesSupported) {
         this.authorizationEncryptionEncValuesSupported = authorizationEncryptionEncValuesSupported;
+    }
+
+    public String getRequestObjectEndpoint() {
+        return requestObjectEndpoint;
+    }
+
+    public void setRequestObjectEndpoint(String requestObjectEndpoint) {
+        this.requestObjectEndpoint = requestObjectEndpoint;
     }
 }

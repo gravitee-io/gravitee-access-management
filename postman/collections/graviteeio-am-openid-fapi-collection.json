@@ -1,0 +1,1712 @@
+{
+	"info": {
+		"_postman_id": "c46b80f0-e294-40d2-ac53-46c24eb693a4",
+		"name": "Gravitee.io - AM - OpenID FAPI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Prepare",
+			"item": [
+				{
+					"name": "Generate admin token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "571e9b59-b9e7-452c-9469-9786ded290a6",
+								"exec": [
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var token = JSON.parse(responseBody);",
+									"pm.environment.set('token', token.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "adminadmin",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{management_url}}/management/auth/token",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create fapi domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"DCR disabled for domain\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.allowLocalhostRedirectUri).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.allowWildCardRedirectUri).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled).to.eql(false);",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled).to.eql(false);",
+									"    ",
+									"    pm.environment.set('domain', jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"fapi\", \n\t\"description\": \"test fapi parameters\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Enable DCR - non open mode",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "286df3a2-0e06-4b00-9614-3b0fd9ceecb9",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"DCR enabled for domain\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": false,\n      \"allowHttpSchemeRedirectUri\": false,\n      \"allowWildCardRedirectUri\": false,\n      \"isDynamicClientRegistrationEnabled\": true,\n      \"isOpenDynamicClientRegistrationEnabled\": false\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete default identity provider",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities/default-idp-{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"identities",
+								"default-idp-{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create in-memory IDP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"pm.environment.set('idp.inmemory', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"identities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get default certificate ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Get default certificate id\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    pm.environment.set('defaultCertificateId', body[0].id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/certificates",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"certificates"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete default certificate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/certificates/{{defaultCertificateId}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"certificates",
+								"{{defaultCertificateId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create jks certificate rs256",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Extension Grant - create jks certificate\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.environment.set('certificateJks', jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"javakeystore-am-certificate\",\n  \"configuration\": \"{\\\"jks\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"server.jks\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2237,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"letmein\\\",\\\"alias\\\":\\\"mytestkey\\\",\\\"keypass\\\":\\\"changeme\\\"}\",\n  \"name\": \"Test\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/certificates",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"certificates"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create jks certificate rs512",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Extension Grant - create jks certificate\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.environment.set('certificateJksRs512', jsonData.id);",
+									"});",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 1000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"javakeystore-am-certificate\",\n  \"configuration\": \"{\\\"jks\\\":\\\"{\\\\\\\"name\\\\\\\":\\\\\\\"server.jks\\\\\\\",\\\\\\\"type\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"size\\\\\\\":2237,\\\\\\\"content\\\\\\\":\\\\\\\"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\\\\\\\"}\\\",\\\"storepass\\\":\\\"letmein\\\",\\\"alias\\\":\\\"my4096key\\\",\\\"keypass\\\":\\\"changeme\\\"}\",\n  \"name\": \"my4096key\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/certificates",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"certificates"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
+								"exec": [
+									"// wait for sync process",
+									"setTimeout(function(){}, 10000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"enabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "well-known/openid-configuration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check discovery endpoints\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    ",
+									"    pm.expect(body).to.have.property(\"authorization_endpoint\");",
+									"    pm.expect(body).to.have.property(\"token_endpoint\");",
+									"    pm.expect(body).to.have.property(\"revocation_endpoint\");",
+									"    pm.expect(body).to.have.property(\"userinfo_endpoint\");",
+									"    pm.expect(body).to.have.property(\"registration_endpoint\");",
+									"    pm.expect(body).to.have.property(\"registration_renew_secret_endpoint\");",
+									"",
+									"    pm.environment.set('issuer', body.issuer);",
+									"    pm.environment.set('rosEndpoint', body.request_object_endpoint);",
+									"    pm.environment.set('authorizationEndpoint', body.authorization_endpoint);",
+									"    pm.environment.set('tokenEndpoint', body.token_endpoint);",
+									"    pm.environment.set('userinfoEndpoint', body.userinfo_endpoint);",
+									"    pm.environment.set('revocationEndpoint', body.revocation_endpoint);",
+									"    pm.environment.set('registrationEndpoint', body.registration_endpoint);",
+									"    pm.environment.set('registrationRenewSecretEndpoint', body.registration_renew_secret_endpoint);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domain}}",
+								"oidc",
+								".well-known",
+								"openid-configuration"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "0ce77e43-6284-4f5b-a017-bd54e115476b",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "5046016d-c53b-48bd-a891-9d77094abeaa",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Create DCR client",
+			"item": [
+				{
+					"name": "Create client",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"pm.environment.set('clientDCR', body.id);",
+									"pm.environment.set('clientId', body.settings.oauth.clientId);",
+									"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 6000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"dcr-client-public-name\",\n  \"type\": \"SERVICE\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"applications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Configure client with DCR enabled",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "576263ed-f6e5-44e3-8519-998efca70a67",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"DCR enabled for client\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.settings.oauth.scopes).to.eql(['dcr_admin']);",
+									"});",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 6000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"scopes\": [\"dcr_admin\"]\n\t\t}\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientDCR}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"applications",
+								"{{clientDCR}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Generate token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has an access_token\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('access_token');",
+									"    pm.expect(body.scope).to.eql('dcr_admin');",
+									"    ",
+									"    pm.environment.set('access_token', body.access_token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "904f0113-b2b9-4645-9511-48bb10791506",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "dcr_admin",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{tokenEndpoint}}",
+							"host": [
+								"{{tokenEndpoint}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "cdb1fec0-ebb8-46c6-b18c-c90d90b2222f",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "513b08a3-c584-4ae2-8cd5-2b43afe70db1",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Request Object Registration",
+			"item": [
+				{
+					"name": "Case - Invalid requests",
+					"item": [
+						{
+							"name": "Generate token for DCR client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has an access_token\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    pm.expect(body.scope).to.eql('dcr_admin');",
+											"    ",
+											"    pm.environment.set('access_token', body.access_token);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{clientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{clientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "dcr_admin",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{tokenEndpoint}}",
+									"host": [
+										"{{tokenEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Register new client",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.client_name).to.eql('client_rs256');",
+											"",
+											"    pm.expect(body).to.have.property('client_id');",
+											"    pm.expect(body).to.have.property('client_secret');",
+											"    ",
+											"    pm.environment.set('ro_client_id', body.client_id);",
+											"    pm.environment.set('ro_client_secret', body.client_secret);",
+											"    ",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 6000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"client_name\":\"client_rs256\",\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"response_types\": [\"code\",\"token\",\"id_token\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\",\"password\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"jwks\": {\n        \"keys\": [\n            {\n            \t\"use\": \"sig\",\n                \"kid\": \"rsa-signature\",\n                \"kty\": \"RSA\",\n                \"e\": \"AQAB\",\n                \"n\": \"4-iLfs52Ta-7s3W_X4-E-f8SwigNhOqigF0Mjoce8mWTQGjS9U1kOuSJKnS9c4gf5vZhBB8iGkufMDvl5nwB0JgcihG6QUiN1NT8WPasJLjRTYQmJNCIYBac0oSZfHIUq8C4kmbFbWqXdp3uB-0l9qalD_HlckBt6lJ4VEb-ntbDpWgQnSxtRDzPZgH_kqJ3sNGnXnd5uNcG1W9v0IC-Wz1-kZ1eFM9-HqfnhGLr4yOr1sSeRQTJUaT12ixSKwn7qBJvnSSUlevIao-Zje2wnvTGVAgsEIuGulw0KWH9hLnYecyTPf3YR7v9sv8ff1qpn0LOmOWOfXYvXqteEcdh9w\"\n            }\n        ]\n    }\n}"
+								},
+								"url": {
+									"raw": "{{registrationEndpoint}}",
+									"host": [
+										"{{registrationEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "With invalid JWT",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Should be an error\", function() {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    ",
+											"    pm.expect(body).to.have.property(\"error\");",
+											"    ",
+											"    pm.expect(body.error).to.eql('invalid_request_object');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{ro_client_secret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{ro_client_id}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "appllication/jws"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "An invalid JWT",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{rosEndpoint}}",
+									"host": [
+										"{{rosEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "With unsigned JWT",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Should be an error\", function() {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    ",
+											"    pm.expect(body).to.have.property(\"error\");",
+											"    pm.expect(body).to.have.property(\"error_description\");",
+											"    ",
+											"    pm.expect(body.error).to.eql('invalid_request_object');",
+											"    pm.expect(body.error_description).to.eql('Request object must be signed');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{ro_client_secret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{ro_client_id}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "appllication/jws"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsImV4cCI6MTU4ODk4MDAyOCwiY2xpZW50X2lkIjoidW5rbm93bl9jbGllbnQifQ.",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{rosEndpoint}}",
+									"host": [
+										"{{rosEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "With invalid signature algorithm",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Should be an error\", function() {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    ",
+											"    pm.expect(body).to.have.property(\"error\");",
+											"    pm.expect(body).to.have.property(\"error_description\");",
+											"    ",
+											"    pm.expect(body.error).to.eql('invalid_request_object');",
+											"    pm.expect(body.error_description).to.eql('Invalid signature');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{ro_client_secret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{ro_client_id}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "appllication/jws",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsImV4cCI6MTU4ODY4NTc2MX0.sx-QW8xbhMuousR5_j7wNg_HQ-2I4T38uQcvUq7RXh0JaWPEoerMMZVXi6UG_-q_kbF4n93G9hxyVCVzcGKrmyNLE5AaNjmFUe2WgYe4JEO59aUjP9QZ3jdw5O3KhEaH6emUDr05gR1ZdI9XR6R4BxzCKaiCUK16cTl_-_0Hwo4oIKO6lj-1DdpS9sVJ_AyvxrQ8JEdjjTKnZTcTx4wiB7-qYBkmWD8HpeO_621i3dxBms4FbFIp9VfbcPrI9_w8aoLd02Gq9GnQaOqekGSeIW3sX1pWOvUdjbSuWJkREhZZJSO00b48UQdLAJgb8mn-Bl9Jvt7JFy-9erXxi6fU_w",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{rosEndpoint}}",
+									"host": [
+										"{{rosEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "With valid signature algorithm - Bad requestObjectSigningAlg",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Should be an error\", function() {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    ",
+											"    pm.expect(body).to.have.property(\"error\");",
+											"    pm.expect(body).to.have.property(\"error_description\");",
+											"    ",
+											"    pm.expect(body.error).to.eql('invalid_request_object');",
+											"    pm.expect(body.error_description).to.eql('Invalid signature');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{ro_client_secret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{ro_client_id}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "appllication/jws",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsInJlZGlyZWN0X3VyaSI6Imh0dHBzOlwvXC9vcC10ZXN0OjYwMDAxXC9hdXRoel9jYiIsImV4cCI6MTU4ODY4MTEzNX0.anyAlDScD_4qQjaj2mejrgG7sV_t9Dbhw9aloaCv7zNhZ0OL1BHBemvQ4zN6yXwvCd9IXOM7_uC6ayquxENnBF8bl53ukNVgzE3x52TEBap6ckXoDEaIdWWB7JukrofH_X0vXwBa2QH3tYSp4BRnXUCbvctADm-gTGv_qNDvZHOCmhSMYdN7HwVkWX5yfYDthQ-F7eS-ZbUH1jQqOAk5QI597p-wxdUq7k6IppQ3_g_x9K-bTZ2FfqkG4izHG0USl3VoyP5_gItPi7m6htKASw6y_L9l1twWAfEdI-uJbdYC4P-3p3fR92tlc_TPBLgpiLe6D4gt8CeUM5jBIsUZkw",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{rosEndpoint}}",
+									"host": [
+										"{{rosEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Case - Nominal",
+					"item": [
+						{
+							"name": "Patch client -  with request_object_signing_alg RS256",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Get client with response types\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.request_object_signing_alg).to.eql('RS256');",
+											"});",
+											"",
+											"pm.test(\"One time Token\", function() {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('registration_access_token');",
+											"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
+											"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
+											"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{registrationAccessToken}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"request_object_signing_alg\": \"RS256\"\n}"
+								},
+								"url": {
+									"raw": "{{registrationClientUri}}",
+									"host": [
+										"{{registrationClientUri}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "With valid signature algorithm",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Should be an error\", function() {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    ",
+											"    pm.expect(body).to.have.property(\"iss\");",
+											"    pm.expect(body).to.have.property(\"aud\");",
+											"    pm.expect(body).to.have.property(\"exp\");",
+											"    pm.expect(body).to.have.property(\"request_uri\");",
+											"    ",
+											"    pm.expect(body.iss).to.eql(pm.environment.get('issuer'));",
+											"    pm.expect(body.aud).to.eql(pm.environment.get('ro_client_id'));",
+											"    tests['Contains a valid uri'] = body.request_uri.startsWith('urn:ros:');",
+											"    ",
+											"    pm.environment.set('request_uri', body.request_uri);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{ro_client_secret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{ro_client_id}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "appllication/jws"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsInJlZGlyZWN0X3VyaSI6Imh0dHBzOlwvXC9vcC10ZXN0OjYwMDAxXC9hdXRoel9jYiIsImV4cCI6MTU4ODY4MTEzNX0.anyAlDScD_4qQjaj2mejrgG7sV_t9Dbhw9aloaCv7zNhZ0OL1BHBemvQ4zN6yXwvCd9IXOM7_uC6ayquxENnBF8bl53ukNVgzE3x52TEBap6ckXoDEaIdWWB7JukrofH_X0vXwBa2QH3tYSp4BRnXUCbvctADm-gTGv_qNDvZHOCmhSMYdN7HwVkWX5yfYDthQ-F7eS-ZbUH1jQqOAk5QI597p-wxdUq7k6IppQ3_g_x9K-bTZ2FfqkG4izHG0USl3VoyP5_gItPi7m6htKASw6y_L9l1twWAfEdI-uJbdYC4P-3p3fR92tlc_TPBLgpiLe6D4gt8CeUM5jBIsUZkw",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{rosEndpoint}}",
+									"host": [
+										"{{rosEndpoint}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Authorize endpoint with existing URN Request object",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+										"exec": [
+											"pm.test(\"Status code is 302\", function () {",
+											"    pm.response.to.have.status(302);",
+											"});",
+											"",
+											"pm.test(\"Should be redirected\", function () {",
+											"    pm.response.to.be.redirection;",
+											"    pm.response.to.have.header('Location');",
+											"});",
+											"",
+											"pm.test(\"Should be a location error\", function() {",
+											"    var location = postman.getResponseHeader('Location');",
+											"    let domain = pm.environment.get(\"domain\");",
+											"    ",
+											"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('ro_client_id'));",
+											"    ",
+											"    // Non overridable field",
+											"    tests['Contains the state'] = location.includes('state=1234-5678-9876');",
+											"    tests['Contains the nonce'] = location.includes('nonce=n-0S6_WzA2Mj');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=https://op-test:60001/authz_cb&state=1234-5678-9876&request_uri={{request_uri}}&scope=openid&nonce=n-0S6_WzA2Mj",
+									"host": [
+										"{{authorizationEndpoint}}"
+									],
+									"query": [
+										{
+											"key": "response_type",
+											"value": "code"
+										},
+										{
+											"key": "client_id",
+											"value": "{{ro_client_id}}"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "https://op-test:60001/authz_cb"
+										},
+										{
+											"key": "state",
+											"value": "1234-5678-9876"
+										},
+										{
+											"key": "request_uri",
+											"value": "{{request_uri}}"
+										},
+										{
+											"key": "scope",
+											"value": "openid"
+										},
+										{
+											"key": "nonce",
+											"value": "n-0S6_WzA2Mj"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Authorize endpoint with invalid URN Request object",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
+										"exec": [
+											"pm.test(\"Status code is 302\", function () {",
+											"    pm.response.to.have.status(302);",
+											"});",
+											"",
+											"pm.test(\"Should be redirected\", function () {",
+											"    pm.response.to.be.redirection;",
+											"    pm.response.to.be.header('Content-Length', '0');",
+											"    pm.response.to.have.header('Location');",
+											"});",
+											"",
+											"pm.test(\"Should be a location error\", function() {",
+											"    var location = postman.getResponseHeader('Location');",
+											"    let domain = pm.environment.get(\"domain\");",
+											"    ",
+											"    tests['Redirect to redirect_uri'] = location.startsWith(\"https://op-test:60001/authz_cb?error\");",
+											"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request_object');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"id": "904f0113-b2b9-4645-9511-48bb10791506",
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=https://op-test:60001/authz_cb&state=1234-5678-9876&request_uri=urn:ros:invalid_id&scope=openid&nonce=n-0S6_WzA2Mj",
+									"host": [
+										"{{authorizationEndpoint}}"
+									],
+									"query": [
+										{
+											"key": "response_type",
+											"value": "code"
+										},
+										{
+											"key": "client_id",
+											"value": "{{ro_client_id}}"
+										},
+										{
+											"key": "redirect_uri",
+											"value": "https://op-test:60001/authz_cb"
+										},
+										{
+											"key": "state",
+											"value": "1234-5678-9876"
+										},
+										{
+											"key": "request_uri",
+											"value": "urn:ros:invalid_id"
+										},
+										{
+											"key": "scope",
+											"value": "openid"
+										},
+										{
+											"key": "nonce",
+											"value": "n-0S6_WzA2Mj"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Delete domain",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
+						"exec": [
+							"pm.test(\"Status code is 204\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+					"host": [
+						"{{management_url}}"
+					],
+					"path": [
+						"management",
+						"organizations",
+						"{{defaultOrganizationId}}",
+						"environments",
+						"{{defaultEnvironmentId}}",
+						"domains",
+						"{{domain}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

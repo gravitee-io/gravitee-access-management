@@ -26,6 +26,11 @@ import io.reactivex.Single;
 public interface RequestObjectService {
 
     /**
+     * The URN prefix used by AS when storing Request Object
+     */
+    String RESOURCE_OBJECT_URN_PREFIX = "urn:ros:";
+
+    /**
      * Validate encryption, signature and read the content of the JWT token.
      *
      * @param request
@@ -42,4 +47,10 @@ public interface RequestObjectService {
      * @return
      */
     Single<JWT> readRequestObjectFromURI(String requestUri, Client client);
+
+    /**
+     * Register a request object for a given Client
+     * @return
+     */
+    Single<RequestObjectRegistrationResponse> registerRequestObject(RequestObjectRegistrationRequest request, Client client);
 }
