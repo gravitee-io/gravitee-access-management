@@ -78,6 +78,12 @@
             <version>${spring-security.version}</version>
         </dependency>
 
+        <!-- Nimbus jose+jwt -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
+
         <!-- Thymeleaf -->
         <dependency>
             <groupId>org.thymeleaf</groupId>

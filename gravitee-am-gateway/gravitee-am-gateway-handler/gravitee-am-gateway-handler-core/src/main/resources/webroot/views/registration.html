@@ -59,6 +59,7 @@
                     </div>
                 </div>
 
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
                 <div style="display: flex; flex-direction: row;">
                     <a th:href="@{login(client_id=${param.client_id})}"><< Back to login</a>

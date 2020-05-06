@@ -49,6 +49,7 @@
                              <small class="error_description">Invalid code</small>
                         </span>
                     </div>
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                     <div class="mfa-challenge-form-actions">
                         <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Verify</button>

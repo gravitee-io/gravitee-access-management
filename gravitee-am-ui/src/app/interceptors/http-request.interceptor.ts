@@ -22,9 +22,12 @@ import {Router} from '@angular/router';
 import {Observable} from 'rxjs';
 import {SnackbarService} from '../services/snackbar.service';
 import {AuthService} from '../services/auth.service';
+import {HttpResponseBase} from "@angular/common/http/src/response";
 
 @Injectable()
 export class HttpRequestInterceptor implements HttpInterceptor {
+
+  private xsrfToken: string;
 
   constructor(private snackbarService: SnackbarService,
               private authService: AuthService,
@@ -32,18 +35,21 @@ export class HttpRequestInterceptor implements HttpInterceptor {
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     request = request.clone({
-      withCredentials: true
+      withCredentials: true,
+      setHeaders: this.xsrfToken ? { 'X-Xsrf-Token': [ this.xsrfToken ]} : {}
     });
 
     return next.handle(request).pipe(tap((event: HttpEvent<any>) => {
       if (event instanceof HttpResponse) {
-        // do stuff with response if you want
+        this.saveXsrfToken(event);
       }
     }, (err: any) => {
       if (err.status === 404) {
         this.router.navigate(['/404']);
       }
       if (err instanceof HttpErrorResponse) {
+        this.saveXsrfToken(err);
+
         if (err.status === 401) {
           this.snackbarService.open('The authentication session expires or the user is not authorized');
           this.authService.unauthorized();
@@ -54,5 +60,14 @@ export class HttpRequestInterceptor implements HttpInterceptor {
         }
       }
     }));
+  }
+
+  private saveXsrfToken(response: HttpResponseBase) {
+
+    let xsrfTokenHeader = response.headers.get('X-Xsrf-Token');
+
+    if(xsrfTokenHeader !== null) {
+      this.xsrfToken = xsrfTokenHeader;
+    }
   }
 }

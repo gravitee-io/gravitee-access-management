@@ -55,16 +55,25 @@ public class JWTGenerator implements InitializingBean {
     @Autowired
     private Environment environment;
 
+
+    public Cookie generateCookie(final String name, final String value, final boolean httpOnly) {
+
+        final Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(httpOnly);
+        cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
+        cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
+        cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
+        cookie.setMaxAge(value == null ? 0 : environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER));
+
+        return cookie;
+    }
+
     public Cookie generateCookie(final User user) {
         int expiresAfter = environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
         Date expirationDate = new Date(System.currentTimeMillis() + expiresAfter * 1000);
         String jwtToken  = generateToken(user, expirationDate);
 
-        final Cookie cookie = new Cookie(authCookieName, "Bearer " + jwtToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
-        cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
-        cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
+        final Cookie cookie = generateCookie(authCookieName, "Bearer " + jwtToken, true);
         cookie.setMaxAge(expiresAfter);
 
         return cookie;

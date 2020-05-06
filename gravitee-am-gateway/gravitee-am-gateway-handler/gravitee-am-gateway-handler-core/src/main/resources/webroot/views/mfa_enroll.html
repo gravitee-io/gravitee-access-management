@@ -58,6 +58,7 @@
                     </div>
                     <input type="hidden" th:name="sharedSecret" th:value="${factor.enrollment.key}" />
                 </div>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="factorId" th:value="${factor.id}" />
                 <div class="mfa-enroll-form-actions">
                     <button type="submit" name="user_mfa_enrollment" value="false" class="button--skipped">Skip for now</button>

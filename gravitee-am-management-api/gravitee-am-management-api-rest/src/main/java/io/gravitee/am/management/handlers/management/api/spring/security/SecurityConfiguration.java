@@ -16,7 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.spring.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository;
+import io.gravitee.am.management.handlers.management.api.authentication.csrf.CsrfRequestMatcher;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.CheckAuthenticationCookieFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.CsrfIncludeFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.JWTAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.RecaptchaFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.SocialAuthenticationFilter;
@@ -50,6 +53,7 @@ import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.*;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -59,6 +63,7 @@ import javax.servlet.Filter;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+import static io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository.DEFAULT_CSRF_HEADER_NAME;
 import static java.util.Arrays.asList;
 
 /**
@@ -129,6 +134,8 @@ public class SecurityConfiguration {
             .addFilterBefore(new RecaptchaFilter(reCaptchaService, objectMapper), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(socialAuthFilter(), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(checkAuthCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class);
+
+            csrf(http);
         }
     }
 
@@ -175,12 +182,12 @@ public class SecurityConfiguration {
                 .and()
                     .httpBasic()
                         .disable()
-                    .csrf()
-                        .disable()
                 .exceptionHandling()
                     .authenticationEntryPoint(http401UnauthorizedEntryPoint)
                     .and()
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+            csrf(http);
         }
 
         @Override
@@ -188,6 +195,20 @@ public class SecurityConfiguration {
             web.ignoring().antMatchers("/swagger.json");
         }
     }
+
+    private HttpSecurity csrf(HttpSecurity security) throws Exception {
+
+        if(environment.getProperty("http.csrf.enabled", Boolean.class, true)) {
+            return security.csrf()
+                    .csrfTokenRepository(cookieCsrfSignedTokenRepository())
+                    .requireCsrfProtectionMatcher(new CsrfRequestMatcher(environment.getProperty("jwt.cookie-name", "Auth-Graviteeio-AM")))
+                    .and()
+                    .addFilterAfter(new CsrfIncludeFilter(), CsrfFilter.class);
+        }else {
+            return security.csrf().disable();
+        }
+    }
+
 
     @Bean
     public ManagementAuthenticationProvider userAuthenticationProvider() {
@@ -253,13 +274,19 @@ public class SecurityConfiguration {
         final CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.setAllowedOrigins(getPropertiesAsList("http.cors.allow-origin", "*"));
-        config.setAllowedHeaders(getPropertiesAsList("http.cors.allow-headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, x-xsrf-token"));
+        config.setAllowedHeaders(getPropertiesAsList("http.cors.allow-headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, " + DEFAULT_CSRF_HEADER_NAME));
         config.setAllowedMethods(getPropertiesAsList("http.cors.allow-methods", "OPTIONS, GET, POST, PUT, PATCH, DELETE"));
+        config.setExposedHeaders(getPropertiesAsList("http.cors.exposed-headers", "ETag, " + DEFAULT_CSRF_HEADER_NAME));
         config.setMaxAge(environment.getProperty("http.cors.max-age", Long.class, 1728000L));
 
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    @Bean
+    public CookieCsrfSignedTokenRepository cookieCsrfSignedTokenRepository() {
+        return new CookieCsrfSignedTokenRepository();
     }
 
     private List<String> getPropertiesAsList(final String propertyKey, final String defaultValue) {
