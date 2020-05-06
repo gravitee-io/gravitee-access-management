@@ -47,6 +47,8 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
 
     private static final String CLIENT_CONTEXT_KEY = "client";
 
+    private static final String HTTPS_SCHEME  = "https";
+
     // As per https://openid.net/specs/openid-connect-core-1_0.html#AuthRequests
     private static final List<String> OVERRIDABLE_PARAMETERS = Arrays.asList(
             Parameters.CLAIMS,
@@ -80,8 +82,8 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
         }
 
         // if there is no request or request_uri parameters, continue
-        if ((context.request().getParam(Parameters.REQUEST) == null || context.request().getParam(Parameters.REQUEST).isEmpty()
-                && (context.request().getParam(Parameters.REQUEST_URI) == null || context.request().getParam(Parameters.REQUEST_URI).isEmpty()))) {
+        if ((context.request().getParam(Parameters.REQUEST) == null || context.request().getParam(Parameters.REQUEST).isEmpty())
+                && ((context.request().getParam(Parameters.REQUEST_URI) == null || context.request().getParam(Parameters.REQUEST_URI).isEmpty()))) {
             context.next();
             return;
         }
@@ -134,8 +136,8 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
             try {
                 URI uri = URI.create(requestUri);
 
-                // The scheme used in the request_uri value MUST be https
-                if (uri.getScheme() == null || !uri.getScheme().equalsIgnoreCase("https")) {
+                // The scheme used in the request_uri value MUST be https or starts with urn:ros:
+                if (uri.getScheme() == null || (!uri.getScheme().equalsIgnoreCase(HTTPS_SCHEME) && !requestUri.startsWith(RequestObjectService.RESOURCE_OBJECT_URN_PREFIX))) {
                     throw new InvalidRequestUriException("request_uri parameter scheme must be HTTPS");
                 }
             } catch (IllegalArgumentException iae) {

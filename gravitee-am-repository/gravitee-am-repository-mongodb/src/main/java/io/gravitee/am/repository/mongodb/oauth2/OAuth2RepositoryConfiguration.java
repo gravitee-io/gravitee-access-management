@@ -34,7 +34,10 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan("io.gravitee.am.repository.mongodb.oauth2")
+@ComponentScan({
+        "io.gravitee.am.repository.mongodb.oauth2",
+        "io.gravitee.am.repository.mongodb.oidc",
+})
 public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfiguration {
 
     @Autowired

@@ -189,6 +189,7 @@ postman: ## Run postman non regression test (require newman npm module)
 	@newman run postman/collections/graviteeio-am-openid-dcr-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-openid-dcr-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-openid-jarm-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-openid-fapi-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-scim-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-scim-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-scope-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail

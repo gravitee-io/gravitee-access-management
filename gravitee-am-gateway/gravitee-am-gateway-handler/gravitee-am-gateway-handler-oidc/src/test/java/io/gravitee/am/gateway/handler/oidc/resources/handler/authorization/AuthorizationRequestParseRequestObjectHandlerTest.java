@@ -22,6 +22,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.util.IOUtils;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
@@ -99,6 +100,7 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
                 .expirationTime(new Date(new Date().getTime() + 60 * 1000))
                 .build();
 
+        System.out.println(new PlainJWT(claimsSet).serialize());
         SignedJWT signedJWT = new SignedJWT(
                 new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(),
                 claimsSet);
