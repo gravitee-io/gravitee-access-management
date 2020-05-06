@@ -16,6 +16,7 @@
     </noscript>
     <form th:action="${action}" method="post">
         <input th:each="parameter : ${parameters}" type="hidden" th:name="${parameter.key}" th:value="${parameter.value}" />
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
         <noscript>
             <div>
                 <input type="submit" value="Continue"/>

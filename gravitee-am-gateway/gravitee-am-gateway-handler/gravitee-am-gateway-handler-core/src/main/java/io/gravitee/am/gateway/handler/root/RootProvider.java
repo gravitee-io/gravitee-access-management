@@ -304,9 +304,16 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     }
 
     private void csrfHandler(Router router) {
+        router.route("/forgotPassword").handler(csrfHandler);
         router.route("/login").handler(csrfHandler);
-        router.route("/resetPassword").handler(csrfHandler);
+        // /login/callback does not need csrf as it is not submit to our server.
+        router.route("/login/SSO/POST").handler(csrfHandler);
+        router.route("/mfa/challenge").handler(csrfHandler);
+        router.route("/mfa/enroll").handler(csrfHandler);
+        // /consent csrf is managed by handler-oidc (see OAuth2Provider).
+        router.route("/register").handler(csrfHandler);
         router.route("/confirmRegistration").handler(csrfHandler);
+        router.route("/resetPassword").handler(csrfHandler);
     }
 
     private void staticHandler(Router router) {
