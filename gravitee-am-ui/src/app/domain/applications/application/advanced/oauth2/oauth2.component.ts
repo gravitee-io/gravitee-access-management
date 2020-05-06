@@ -82,6 +82,8 @@ export class ApplicationOAuth2Component implements OnInit {
     delete this.applicationOauthSettings.clientSecret;
     delete this.applicationOauthSettings.clientType;
     delete this.applicationOauthSettings.applicationType;
+    // currently jwks are managed via the DCR, remove it from the UI
+    delete this.applicationOauthSettings.jwks;
     this.cleanCustomClaims();
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : this.applicationOauthSettings}}).subscribe(data => {
       this.application = data;
