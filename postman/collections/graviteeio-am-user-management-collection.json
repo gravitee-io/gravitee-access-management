@@ -294,7 +294,7 @@
 													"",
 													"pm.test(\"UM - create role - name field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[name: ne peut pas être nul]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[name: must not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -902,7 +902,7 @@
 													"",
 													"pm.test(\"UM - create user - username field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[username: ne peut pas être nul]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[username: must not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -961,7 +961,7 @@
 													"",
 													"pm.test(\"UM - create user - email field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[email: ne peut pas être nul]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[email: must not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1986,7 +1986,7 @@
 													"",
 													"pm.test(\"UM - create group - name field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[name: ne peut pas être nul]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[name: must not be null]\");",
 													"});"
 												],
 												"type": "text/javascript"

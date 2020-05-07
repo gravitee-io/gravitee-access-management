@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.manager.
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.ReCaptchaService;
 import io.gravitee.common.http.HttpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.savedrequest.SavedRequest;
@@ -52,6 +53,9 @@ public class LoginController {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private ReCaptchaService reCaptchaService;
 
     @RequestMapping(value = "/login")
     public ModelAndView login(HttpServletRequest request) {
@@ -89,6 +93,9 @@ public class LoginController {
             params.put("socialProviders", enhancedSocialProviders);
             params.put("authorizeUrls", authorizeUrls);
         }
+
+        params.put("reCaptchaEnabled", reCaptchaService.isEnabled());
+        params.put("reCaptchaSiteKey", reCaptchaService.getSiteKey());
 
         return new ModelAndView(LOGIN_VIEW, params);
     }

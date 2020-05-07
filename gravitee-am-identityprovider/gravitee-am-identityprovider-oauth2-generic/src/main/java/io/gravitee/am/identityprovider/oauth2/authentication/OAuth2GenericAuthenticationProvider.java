@@ -57,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.Assert;
 
@@ -82,6 +83,7 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
     private static final String USERINFO_ENDPOINT = "userinfo_endpoint";
 
     @Autowired
+    @Qualifier("oauthWebClient")
     private WebClient client;
 
     @Autowired

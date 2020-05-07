@@ -20,6 +20,7 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -39,6 +40,7 @@ public class GithubAuthenticationProviderConfiguration {
     private GithubIdentityProviderConfiguration configuration;
 
     @Bean
+    @Qualifier("gitHubWebClient")
     public WebClient httpClient() {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions

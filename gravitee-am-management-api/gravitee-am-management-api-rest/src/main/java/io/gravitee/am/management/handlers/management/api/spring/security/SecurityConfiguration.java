@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.spring.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.CheckAuthenticationCookieFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.JWTAuthenticationFilter;
+import io.gravitee.am.management.handlers.management.api.authentication.filter.RecaptchaFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.SocialAuthenticationFilter;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CookieClearingLogoutHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationFailureHandler;
@@ -29,6 +31,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.web.*;
 import io.gravitee.am.management.handlers.management.api.authentication.web.LoginUrlAuthenticationEntryPoint;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetailsSource;
+import io.gravitee.am.service.ReCaptchaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -80,6 +83,12 @@ public class SecurityConfiguration {
     private Http401UnauthorizedEntryPoint http401UnauthorizedEntryPoint;
 
     @Autowired
+    private ReCaptchaService reCaptchaService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) {
         auth.authenticationProvider(userAuthenticationProvider());
     }
@@ -117,6 +126,7 @@ public class SecurityConfiguration {
             .cors()
                 .configurationSource(corsConfigurationSource())
                 .and()
+            .addFilterBefore(new RecaptchaFilter(reCaptchaService, objectMapper), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(socialAuthFilter(), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(checkAuthCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class);
         }

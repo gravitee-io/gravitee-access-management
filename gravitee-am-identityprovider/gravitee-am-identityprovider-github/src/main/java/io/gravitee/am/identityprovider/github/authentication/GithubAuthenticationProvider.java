@@ -41,6 +41,7 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
 import java.util.*;
@@ -61,6 +62,7 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
     private static final String CODE = "code";
 
     @Autowired
+    @Qualifier("gitHubWebClient")
     private WebClient client;
 
     @Autowired
