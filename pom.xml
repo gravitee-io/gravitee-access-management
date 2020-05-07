@@ -77,7 +77,7 @@
         <jsoup.version>1.13.1</jsoup.version>
         <snakeyaml.version>1.26</snakeyaml.version>
         <mail.version>1.4.7</mail.version>
-        <mongodb-driver-reactivestreams.version>1.13.0</mongodb-driver-reactivestreams.version>
+        <mongodb-driver-reactivestreams.version>1.13.1</mongodb-driver-reactivestreams.version>
         <embed.mongo.version>2.2.0</embed.mongo.version>
         <json-patch.version>1.9</json-patch.version>
         <guava.version>29.0-jre</guava.version>
