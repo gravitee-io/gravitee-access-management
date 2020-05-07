@@ -53,6 +53,7 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -73,6 +74,7 @@ public class CommonConfiguration {
     private Vertx vertx;
 
     @Bean
+    @Qualifier("oidcWebClient")
     public WebClient webClient() {
         WebClientOptions options = new WebClientOptions()
                 .setConnectTimeout(Integer.valueOf(environment.getProperty("oidc.http.connectionTimeout", "10")) * 1000)

@@ -47,6 +47,7 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -81,6 +82,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private JWTService jwtService;
 
     @Autowired
+    @Qualifier("oidcWebClient")
     public WebClient client;
 
     @Autowired

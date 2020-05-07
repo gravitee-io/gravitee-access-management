@@ -29,6 +29,7 @@ import io.reactivex.Single;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -45,6 +46,7 @@ public class JWKServiceImpl implements JWKService {
     private CertificateManager certificateManager;
 
     @Autowired
+    @Qualifier("oidcWebClient")
     public WebClient client;
 
     @Override

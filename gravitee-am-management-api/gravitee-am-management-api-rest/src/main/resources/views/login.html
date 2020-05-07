@@ -15,6 +15,7 @@
 
     <!-- Favicon and touch icons -->
     <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
+    <script th:if="${reCaptchaEnabled}" th:src="${'https://www.google.com/recaptcha/api.js?render=' + reCaptchaSiteKey}"></script>
 </head>
 
 <body>
@@ -28,7 +29,7 @@
                 <label>Sign in</label>
                 <span>to continue to the Administration Portal</span></span>
             </div>
-            <form role="form" th:action="@{login}" method="post">
+            <form id="form" role="form" th:action="@{login}" method="post">
                 <div class="login-form-content">
                     <div class="input-textfield">
                         <label class="w3-text-blue">Username</label>
@@ -47,7 +48,7 @@
                 </div>
 
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
+                <input type="hidden" id="X-Recaptcha-Token" name="X-Recaptcha-Token" />
                 <div class="login-form-actions">
                     <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Sign in</button>
                 </div>
@@ -75,16 +76,13 @@
 <![endif]-->
 <script th:src="@{assets/material/material.min.js}"></script>
 <script th:src="@{assets/js/jquery-1.11.1.min.js}"></script>
-<script>
-    $(".mdl-textfield__input").focus(function (){
-        if( !this.value ){
-            $(this).prop('required', true);
-            $(this).parent().addClass('is-invalid');
-        }
-    });
-    $(".mdl-button[type='submit']").click(function (event){
-        $(this).siblings(".mdl-textfield").addClass('is-invalid');
-        $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
+<script th:if="${reCaptchaEnabled}" th:inline="javascript">
+    $("#form").submit(function(event) {
+        event.preventDefault();
+        grecaptcha.execute('[(${reCaptchaSiteKey})]', {action: 'login'}).then(function (token) {
+            $("#X-Recaptcha-Token").val(token);
+            $("#form").unbind('submit').submit();
+        });
     });
 </script>
 </body>
