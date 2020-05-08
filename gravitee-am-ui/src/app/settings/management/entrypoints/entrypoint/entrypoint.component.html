@@ -43,7 +43,7 @@
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Sharding tags</mat-label>
             <mat-chip-list #chipListTags>
-              <mat-chip *ngFor="let tag of selectedTags" color="accent"
+              <mat-chip *ngFor="let tag of selectedTags" color="primary"
                         selected="true" (removed)="removeTag(tag)">
                 <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
                 &nbsp;<span>{{tag.id}}</span>&nbsp;|&nbsp;<small>{{tag.name}}</small>

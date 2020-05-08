@@ -30,7 +30,7 @@
         </ng-template>
         <application-creation-step1 [application]="application"></application-creation-step1>
         <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
-          <button mat-raised-button color="accent" matStepperNext type="button"[disabled]="!application.type">Next</button>
+          <button mat-raised-button color="primary" matStepperNext type="button"[disabled]="!application.type">Next</button>
         </div>
       </mat-step>
       <mat-step>
@@ -42,7 +42,7 @@
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>
-          <button mat-raised-button color="accent" (click)="create()" [disabled]="!stepperValid()">Create</button>
+          <button mat-raised-button color="primary" (click)="create()" [disabled]="!stepperValid()">Create</button>
         </div>
       </mat-step>
     </mat-horizontal-stepper>

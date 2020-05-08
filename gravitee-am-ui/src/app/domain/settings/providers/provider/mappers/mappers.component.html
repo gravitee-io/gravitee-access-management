@@ -60,7 +60,7 @@
                     [icon]="'compare_arrows'"></app-emptystate>
 
     <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
-      <button mat-fab color="accent" (click)="add()">
+      <button mat-fab color="primary" (click)="add()">
         <mat-icon>add</mat-icon>
       </button>
     </div>

@@ -29,7 +29,7 @@
         </p>
       </div>
       <div *hasPermission="['application_create']">
-        <a mat-raised-button color="accent" [routerLink]="['/domains', domain.id, 'applications', 'new']">
+        <a mat-raised-button color="primary" [routerLink]="['/domains', domain.id, 'applications', 'new']">
           <mat-icon>add</mat-icon>
           <span style="margin-left: 5px;">Create application</span>
         </a>

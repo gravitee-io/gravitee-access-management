@@ -21,7 +21,7 @@
     <p>Administrators can be used to grant access to specific areas of this resource. Depending of the role permissions, administrators can have full access to this resource.</p>
     <p>Administrator users are managed separately from security domain users; administrator accounts represent users that can access to the administration portal.</p>
     <p>The users/groups listed here can either view and/or edit this resource configuration.</p>
-    <p *ngIf="isEditable()">Administrators and administrative roles can be assigned <a (click)="openDialog()" class="active" style="font-size: 18px; text-decoration: underline; cursor: pointer;">here</a>.</p>
+    <p *ngIf="isEditable()">Administrators and administrative roles can be assigned <a (click)="openDialog()" style="font-size: 18px; text-decoration: underline; cursor: pointer;">here</a>.</p>
 
     <ngx-datatable class="material"
                    [columnMode]="'flex'"

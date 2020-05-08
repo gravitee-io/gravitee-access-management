@@ -36,7 +36,7 @@
             </mat-menu>
             <mat-expansion-panel [expanded]="extensionPoint.expanded">
               <mat-expansion-panel-header>
-                <mat-panel-title><pre matBadge="{{getPolicies(extensionPoint.value)?.length}}" matBadgeOverlap="false" matBadgeColor="accent">{{extensionPoint.stage}}</pre></mat-panel-title>
+                <mat-panel-title><pre matBadge="{{getPolicies(extensionPoint.value)?.length}}" matBadgeOverlap="false" matBadgeColor="primary">{{extensionPoint.stage}}</pre></mat-panel-title>
               </mat-expansion-panel-header>
               <div cdkDropList class="policy-list" (cdkDropListDropped)="drop($event, extensionPoint.value)">
                 <div class="policy-box" [class.active]="policy.id === selectedPolicyId" *ngFor="let policy of getPolicies(extensionPoint.value)" cdkDrag>

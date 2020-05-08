@@ -12,7 +12,7 @@ $graviteeio-am-primary-palette: (
   200: #b0bec5,
   300: #90a4ae,
   400: #78909c,
-  500: #607d8b,
+  500: #28444F,
   600: #546e7a,
   700: #455a64,
   800: #37474f,
@@ -80,13 +80,18 @@ $graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-a
   $primary: map-get($theme, primary);
   $accent: map-get($theme, accent);
   .gv-sidenav {
-    background-color: mat-color($accent, 500);
+    background-color: mat-color($primary, 500);
   }
   .mat-step-header .mat-step-icon-selected, .mat-step-header .mat-step-icon-state-edit, .mat-step-header .mat-step-icon-state-done {
-    background-color: mat-color($accent, 500);
+    background-color: mat-color($primary, 500);
+  }
+  material-add-reference-widget {
+    .mat-raised-button.mat-accent {
+      background-color: mat-color($primary, 500);
+    }
   }
   a {
-    color: mat-color($primary, 600);
+    color: mat-color($primary, 500);
     &.active, &:hover {
       color: mat-color($accent, 500);
     }
@@ -100,10 +105,6 @@ $graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-a
   .gv-accent-color {
     color: mat-color($accent, 500);
   }
-  .mat-chip.mat-default-chip {
-    background-color: mat-color($accent, 500);
-    color: mat-color($primary, 50);
-  }
   .application-creation-step1-container {
     .application-creation-step1-content {
       mat-card {
@@ -114,7 +115,7 @@ $graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-a
     }
   }
   .not-found-content-description {
-    border-top: 8px solid mat-color($accent, 500);;
+    border-top: 8px solid mat-color($primary, 500);;
   }
   .gv-splash-screen {
     background: #fdfdfd

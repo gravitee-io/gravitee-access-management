@@ -20,7 +20,7 @@
     <div fxLayout="row" fxLayoutAlign="center">
       <div fxFlex>This group has <b>{{members.length}}</b> members(s).</div>
       <div style="height: 40px;">
-        <button *ngIf="editMode" color="accent" mat-stroked-button (click)="add()">+ Add members</button>
+        <button *ngIf="editMode" color="primary" mat-stroked-button (click)="add()">+ Add members</button>
       </div>
     </div>
     <mat-divider *ngIf="isEmpty" style="margin-bottom: 20px;"></mat-divider>
