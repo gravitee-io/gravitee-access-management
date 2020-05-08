@@ -75,7 +75,7 @@
         <nimbus.version>7.1</nimbus.version>
         <tink.version>1.2.2</tink.version>
         <freemarker.version>2.3.28</freemarker.version>
-        <jsoup.version>1.10.1</jsoup.version>
+        <jsoup.version>1.13.1</jsoup.version>
         <mail.version>1.4.7</mail.version>
         <mongodb-driver-reactivestreams.version>1.13.0</mongodb-driver-reactivestreams.version>
         <embed.mongo.version>2.2.0</embed.mongo.version>
