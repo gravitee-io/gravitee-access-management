@@ -24,10 +24,12 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
+import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
 import io.reactivex.*;
 import org.springframework.stereotype.Component;
 
@@ -113,6 +115,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setDescription(domainMongo.getDescription());
         domain.setEnabled(domainMongo.isEnabled());
         domain.setOidc(convert(domainMongo.getOidc()));
+        domain.setUma(convert(domainMongo.getUma()));
         domain.setScim(convert(domainMongo.getScim()));
         domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
         domain.setAccountSettings(convert(domainMongo.getAccountSettings()));
@@ -137,6 +140,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setDescription(domain.getDescription());
         domainMongo.setEnabled(domain.isEnabled());
         domainMongo.setOidc(convert(domain.getOidc()));
+        domainMongo.setUma(convert(domain.getUma()));
         domainMongo.setScim(convert(domain.getScim()));
         domainMongo.setLoginSettings(convert(domain.getLoginSettings()));
         domainMongo.setAccountSettings(convert(domain.getAccountSettings()));
@@ -157,6 +161,16 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setClientRegistrationSettings(convert(oidcMongo.getClientRegistrationSettings()));
 
         return oidcSettings;
+    }
+
+    private UMASettings convert(UMASettingsMongo umaMongo) {
+        if (umaMongo == null) {
+            return null;
+        }
+
+        UMASettings umaSettings = new UMASettings();
+        umaSettings.setEnabled(umaMongo.isEnabled());
+        return umaSettings;
     }
 
     private ClientRegistrationSettings convert(ClientRegistrationSettingsMongo dcrMongo) {
@@ -188,6 +202,16 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setClientRegistrationSettings(convert(oidc.getClientRegistrationSettings()));
 
         return oidcSettings;
+    }
+
+    private UMASettingsMongo convert(UMASettings uma) {
+        if (uma == null) {
+            return null;
+        }
+
+        UMASettingsMongo umaMongo = new UMASettingsMongo();
+        umaMongo.setEnabled(uma.isEnabled());
+        return umaMongo;
     }
 
     private ClientRegistrationSettingsMongo convert(ClientRegistrationSettings dcr) {

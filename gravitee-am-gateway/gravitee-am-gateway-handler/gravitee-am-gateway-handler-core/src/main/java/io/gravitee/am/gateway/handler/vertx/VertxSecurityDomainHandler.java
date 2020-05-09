@@ -54,7 +54,7 @@ import java.util.List;
 public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDomainHandler> {
 
     private static final Logger logger = LoggerFactory.getLogger(VertxSecurityDomainHandler.class);
-    private static final List<String> PROTOCOLS = Arrays.asList("openid-connect", "scim", "users");
+    private static final List<String> PROTOCOLS = Arrays.asList("discovery", "openid-connect", "scim", "users");
     private List<ProtocolProvider> protocolProviders = new ArrayList<>();
 
     @Autowired

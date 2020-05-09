@@ -269,6 +269,7 @@ import { IdenticonHashDirective } from './directives/identicon-hash.directive';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { BreadcrumbService } from './services/breadcrumb.service';
 import { NotFoundComponent } from './not-found/not-found.component';
+import { UmaComponent } from './domain/settings/uma/uma.component';
 
 @NgModule({
   declarations: [
@@ -431,7 +432,8 @@ import { NotFoundComponent } from './not-found/not-found.component';
     DomainMembershipsDialog,
     ApplicationMembershipsDialog,
     UserAvatarComponent,
-    NotFoundComponent
+    NotFoundComponent,
+    UmaComponent
   ],
   imports: [
     BrowserModule,

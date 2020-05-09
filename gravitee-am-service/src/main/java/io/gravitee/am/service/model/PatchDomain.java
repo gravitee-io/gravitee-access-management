@@ -22,6 +22,7 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.scim.SCIMSettings;
+import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
@@ -44,6 +45,7 @@ public class PatchDomain {
     private Optional<String> path;
     @JsonProperty("oidc")
     private Optional<PatchOIDCSettings> oidc;
+    private Optional<UMASettings> uma;
     private Optional<SCIMSettings> scim;
     private Optional<LoginSettings> loginSettings;
     private Optional<AccountSettings> accountSettings;
@@ -89,6 +91,14 @@ public class PatchDomain {
         this.oidc = oidc;
     }
 
+    public Optional<UMASettings> getUma() {
+        return uma;
+    }
+
+    public void setUma(Optional<UMASettings> uma) {
+        this.uma = uma;
+    }
+
     public Optional<SCIMSettings> getScim() {
         return scim;
     }
@@ -129,6 +139,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setPath, this.getPath());
+        SetterUtils.safeSet(toPatch::setUma, this.getUma());
         SetterUtils.safeSet(toPatch::setScim, this.getScim());
         SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
@@ -171,6 +182,10 @@ public class PatchDomain {
 
         if (oidc != null && oidc.isPresent()) {
             requiredPermissions.addAll(oidc.get().getRequiredPermissions());
+        }
+
+        if (uma != null && uma.isPresent()) {
+            requiredPermissions.add(Permission.DOMAIN_UMA);
         }
 
         if (scim != null && scim.isPresent()) {

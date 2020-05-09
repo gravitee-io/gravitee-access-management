@@ -239,6 +239,7 @@ public class DomainServiceImpl implements DomainService {
                     domain.setUpdatedAt(new Date());
                     //As it is not managed by UpdateDomain, we keep old value
                     domain.setOidc(oldDomain.getOidc());
+                    domain.setUma(oldDomain.getUma());
                     domain.setScim(updateDomain.getScim());
                     domain.setLoginSettings(updateDomain.getLoginSettings());
                     domain.setAccountSettings(updateDomain.getAccountSettings());

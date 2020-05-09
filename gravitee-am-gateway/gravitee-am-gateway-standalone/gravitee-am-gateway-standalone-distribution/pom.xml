@@ -163,6 +163,14 @@
 
         <dependency>
             <groupId>io.gravitee.am.gateway.handler</groupId>
+            <artifactId>gravitee-am-gateway-handler-discovery</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-oidc</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
@@ -334,6 +342,13 @@
                                 </artifactItem>
 
                                 <!-- Protocols -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.gateway.handler</groupId>
+                                    <artifactId>gravitee-am-gateway-handler-discovery</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
                                 <artifactItem>
                                     <groupId>io.gravitee.am.gateway.handler</groupId>
                                     <artifactId>gravitee-am-gateway-handler-oidc</artifactId>

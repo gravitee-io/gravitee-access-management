@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
@@ -41,6 +42,8 @@ public class DomainMongo extends Auditable {
     private String path;
 
     private OIDCSettingsMongo oidc;
+
+    private UMASettingsMongo uma;
 
     private SCIMSettingsMongo scim;
 
@@ -102,6 +105,14 @@ public class DomainMongo extends Auditable {
 
     public void setOidc(OIDCSettingsMongo oidc) {
         this.oidc = oidc;
+    }
+
+    public UMASettingsMongo getUma() {
+        return uma;
+    }
+
+    public void setUma(UMASettingsMongo uma) {
+        this.uma = uma;
     }
 
     public SCIMSettingsMongo getScim() {

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.oauth2.exception.ResourceNotFoundException;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationResponse;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.model.oidc.Client;
@@ -166,17 +167,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         String clientId = context.request().getParam("client_id");
 
         return this.clientSyncService.findByClientId(clientId)
-                .switchIfEmpty(Maybe.error(new OAuth2Exception() {
-                    @Override
-                    public int getHttpStatusCode() {
-                        return HttpStatusCode.NOT_FOUND_404;
-                    }
-
-                    @Override
-                    public String getMessage() {
-                        return "client not found";
-                    }
-                }))
+                .switchIfEmpty(Maybe.error(new ResourceNotFoundException("client not found")))
                 .map(Client::clone);
     }
 }

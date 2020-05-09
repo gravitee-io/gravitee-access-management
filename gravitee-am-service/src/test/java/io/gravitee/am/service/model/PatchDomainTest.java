@@ -22,6 +22,7 @@ import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.scim.SCIMSettings;
+import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import org.junit.Test;
@@ -158,6 +159,10 @@ public class PatchDomainTest {
         patchDomain = new PatchDomain();
         patchDomain.setScim(Optional.of(new SCIMSettings()));
         assertEquals(new HashSet<>(Arrays.asList( Permission.DOMAIN_SCIM)), patchDomain.getRequiredPermissions());
+
+        patchDomain = new PatchDomain();
+        patchDomain.setUma(Optional.of(new UMASettings()));
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_UMA)), patchDomain.getRequiredPermissions());
 
         // Check multiple permissions.
         patchDomain = new PatchDomain();

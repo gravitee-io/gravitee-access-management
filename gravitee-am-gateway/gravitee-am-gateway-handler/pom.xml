@@ -39,5 +39,6 @@
         <module>gravitee-am-gateway-handler-scim</module>
         <module>gravitee-am-gateway-handler-users</module>
         <module>gravitee-am-gateway-handler-context</module>
+        <module>gravitee-am-gateway-handler-discovery</module>
     </modules>
 </project>

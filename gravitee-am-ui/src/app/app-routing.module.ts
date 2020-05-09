@@ -153,6 +153,7 @@ import {EntrypointCreationComponent} from './settings/management/entrypoints/cre
 import {EntrypointComponent} from './settings/management/entrypoints/entrypoint/entrypoint.component';
 import {EntrypointResolver} from './resolvers/entrypoint.resolver';
 import {EntrypointsResolver} from './resolvers/entrypoints.resolver';
+import {UmaComponent} from './domain/settings/uma/uma.component';
 
 const routes: Routes = [
   {
@@ -1305,6 +1306,22 @@ const routes: Routes = [
               { path: 'allowed-scope', component: ClientRegistrationAllowedScopeComponent, resolve: {domain: DomainResolver, scopes: ScopesResolver}},
               { path: 'templates', component: ClientRegistrationTemplatesComponent, resolve: {domain: DomainResolver, apps: ApplicationsResolver}},
             ]
+          },
+          { path: 'uma',
+            component: UmaComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              domain: DomainResolver
+            },
+            data: {
+              menu: {
+                label: 'UMA',
+                section: 'User-Managed Access'
+              },
+              perms: {
+                only: ['domain_uma_read']
+              }
+            }
           }
         ]
       }
