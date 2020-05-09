@@ -309,6 +309,10 @@ public class DomainResource extends AbstractResource {
             filteredDomain.setOidc(domain.getOidc());
         }
 
+        if (hasAnyPermission(userPermissions, Permission.DOMAIN_UMA, Acl.READ)) {
+            filteredDomain.setUma(domain.getUma());
+        }
+
         if (hasAnyPermission(userPermissions, Permission.DOMAIN_SCIM, Acl.READ)) {
             filteredDomain.setScim(domain.getScim());
         }

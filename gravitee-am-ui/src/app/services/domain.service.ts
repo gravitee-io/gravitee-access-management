@@ -82,6 +82,12 @@ export class DomainService {
     });
   }
 
+  patchUmaSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
+      'uma': domain.uma
+    });
+  }
+
   patchScimSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
       'scim': domain.scim

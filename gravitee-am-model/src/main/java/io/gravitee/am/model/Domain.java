@@ -19,6 +19,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
+import io.gravitee.am.model.uma.UMASettings;
 
 import java.util.Date;
 import java.util.Set;
@@ -66,6 +67,8 @@ public class Domain implements Resource {
 
     private OIDCSettings oidc;
 
+    private UMASettings uma;
+
     private LoginSettings loginSettings;
 
     private SCIMSettings scim;
@@ -101,6 +104,7 @@ public class Domain implements Resource {
         this.updatedAt = other.updatedAt;
         this.path = other.path;
         this.oidc = other.oidc;
+        this.uma = other.uma;
         this.loginSettings = other.loginSettings;
         this.scim = other.scim;
         this.accountSettings = other.accountSettings;
@@ -171,6 +175,14 @@ public class Domain implements Resource {
 
     public void setOidc(OIDCSettings oidc) {
         this.oidc = oidc;
+    }
+
+    public UMASettings getUma() {
+        return uma;
+    }
+
+    public void setUma(UMASettings uma) {
+        this.uma = uma;
     }
 
     public SCIMSettings getScim() {

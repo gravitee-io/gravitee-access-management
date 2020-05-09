@@ -28,7 +28,6 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.Member;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
@@ -40,7 +39,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import io.reactivex.internal.operators.maybe.MaybeError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,12 +72,6 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Autowired
     private RoleService roleService;
-
-    @Autowired
-    private DomainService domainService;
-
-    @Autowired
-    private OrganizationService organizationService;
 
     @Autowired
     private EventService eventService;

@@ -42,6 +42,7 @@ public enum Scope {
     DCR("dcr", "Client_registration", "Access to client information through openid register endpoint.", Collections.emptyList(),false),
     DCR_ADMIN("dcr_admin", "Client_registration_admin", "Access to Dynamic Client Registration endpoint.", Collections.emptyList(),false),
     SCIM("scim", "SCIM", "Access to System for Cross-domain Identity Management endpoint.", Collections.emptyList(),false),
+    UMA("uma_protection", "UMA_2.0","Access and manage user protected resources", Collections.emptyList(), false),
     CONSENT_ADMIN("consent_admin", "Consent_admin", "Access to End-User consents", Collections.emptyList(),false),
     GROUPS("groups", "Groups", "Access to the groups Claim.", Arrays.asList(CustomClaims.GROUPS), true),
     ROLES("roles", "Roles", "Access to the roles Claim.", Arrays.asList(CustomClaims.ROLES), true);

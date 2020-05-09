@@ -230,4 +230,11 @@ public class JWAlgorithmUtils {
     public static boolean isValidAuthorizationResponseEnc(String algorithm) {
         return SUPPORTED_CONTENT_ENCRYPTION_ALG.contains(algorithm);
     }
+
+    /**
+     * @return the supported list of token introspection signing algorithm.
+     */
+    public static List<String> getSupportedIntrospectionEndpointAuthSigningAlg() {
+        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+    }
 }

@@ -8,6 +8,7 @@ define prepare
 	cp docker/$(1)/Dockerfile-dev .working/$(1)/Dockerfile
 	unzip -uj .working/$(1)/gravitee-am-$(1)-standalone-$(2).zip '*/plugins/*' -d .working/$(1)/plugins
 	unzip -uj .working/$(1)/gravitee-am-$(1)-standalone-$(2).zip '*/config/*' -d .working/$(1)/config
+	unzip -uj .working/$(1)/gravitee-am-$(1)-standalone-$(2).zip '*/templates/*' -d .working/$(1)/templates
 	sed -i.bkp 's/<appender-ref ref=\"async-file\" \/>/<appender-ref ref=\"async-console\" \/>/' .working/$(1)/config/logback.xml
 	sed -i.bkp 's/<appender-ref ref=\"FILE\" \/>/<appender-ref ref=\"STDOUT\" \/>/' .working/$(1)/config/logback.xml
 	echo "$(1) working directory preparation is done.\n"
@@ -204,6 +205,8 @@ postman: ## Run postman non regression test (require newman npm module)
 	@newman run postman/collections/graviteeio-am-user-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-user-management-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-api-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-uma2-app-version-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+
 	# Need to find how to protect organization and environment creation routes.
 	#@newman run postman/collections/graviteeio-am-organization-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	#@newman run postman/collections/graviteeio-am-environment-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail

@@ -53,7 +53,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Component
-public class ReporterServiceImpl implements ReporterService {
+public class    ReporterServiceImpl implements ReporterService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
     public static final String ADMIN_DOMAIN = "admin";

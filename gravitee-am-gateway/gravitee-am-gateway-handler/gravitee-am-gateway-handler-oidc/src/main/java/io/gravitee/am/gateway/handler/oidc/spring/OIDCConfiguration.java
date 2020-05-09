@@ -33,6 +33,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.impl.JWSServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.oidc.service.request.impl.RequestObjectServiceImpl;
+import io.gravitee.am.gateway.handler.uma.spring.UMAConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -42,7 +43,7 @@ import org.springframework.context.annotation.Import;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import(OAuth2Configuration.class)
+@Import({OAuth2Configuration.class, UMAConfiguration.class})
 public class OIDCConfiguration implements ProtocolConfiguration {
 
     @Bean
