@@ -179,7 +179,7 @@ user:
 handlers:
   request:
     transaction:
-      header: X-Gravitee-Transaction-Id
+      header: X-Transaction-Id
 
 # Gateway entry point used in emails
 gateway:
