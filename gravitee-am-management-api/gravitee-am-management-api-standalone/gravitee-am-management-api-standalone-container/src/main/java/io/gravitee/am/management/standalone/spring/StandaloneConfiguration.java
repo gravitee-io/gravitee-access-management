@@ -27,6 +27,7 @@ import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
+import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
@@ -78,6 +79,12 @@ public class StandaloneConfiguration {
     @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
+    }
+
+    @Bean
+    public ExpressionLanguageInitializer expressionLanguageInitializer() {
+
+        return new ExpressionLanguageInitializer();
     }
 
     @Bean
