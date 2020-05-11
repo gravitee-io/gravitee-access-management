@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.authentication.crypto.password;
 
-import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -31,7 +30,7 @@ public class RegexPasswordValidator implements PasswordValidator, InitializingBe
     private Pattern pattern;
     private Matcher matcher;
 
-    @Value("${user.password.policy.pattern:^(?=\\s*\\S).*$}")
+    @Value("${user.password.policy.pattern:^(?:(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))(?!.*(.)\\1{2,})[A-Za-z0-9!~<>,;:_\\-=?*+#.\"'&§`£€%°()\\\\\\|\\[\\]\\-\\$\\^\\@\\/]{8,32}$}")
     private String passwordPattern;
 
     public RegexPasswordValidator() { }
