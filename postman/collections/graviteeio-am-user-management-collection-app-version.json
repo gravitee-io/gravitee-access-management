@@ -1103,7 +1103,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barba\",\n\t\"password\": \"password\"\n}"
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barba\",\n\t\"password\": \"#CoMpL3X-P@SsW0Rd\"\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
@@ -1170,7 +1170,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"#CoMpL3X-P@SsW0Rd\"\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
@@ -1229,7 +1229,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"#CoMpL3X-P@SsW0Rd\"\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
@@ -1288,7 +1288,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.BarBara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.BarBara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"#CoMpL3X-P@SsW0Rd\"\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
@@ -3087,8 +3087,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										}
 									]
@@ -3246,8 +3246,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										}
 									]
@@ -3385,8 +3385,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										}
 									]
@@ -3761,8 +3761,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										}
 									]

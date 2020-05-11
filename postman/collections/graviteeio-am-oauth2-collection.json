@@ -216,7 +216,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"#CoMpL3X-P@SsW0Rd\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities/default-idp-{{domain}}",
@@ -271,7 +271,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"},{\\\"firstname\\\":\\\"Jensen\\\",\\\"lastname\\\":\\\"Barbara\\\",\\\"username\\\":\\\"jensen.barbara\\\",\\\"email\\\":\\\"jensen.barbara@mail.com\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"#CoMpL3X-P@SsW0Rd\\\"},{\\\"firstname\\\":\\\"Jensen\\\",\\\"lastname\\\":\\\"Barbara\\\",\\\"username\\\":\\\"jensen.barbara\\\",\\\"email\\\":\\\"jensen.barbara@mail.com\\\",\\\"password\\\":\\\"#CoMpL3X-P@SsW0Rd\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities",
@@ -991,8 +991,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										}
 									]
@@ -1060,8 +1060,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -1128,8 +1128,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -1263,8 +1263,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -1334,8 +1334,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -2254,8 +2254,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -2574,8 +2574,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -3187,8 +3187,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -3883,8 +3883,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -4273,8 +4273,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -4674,8 +4674,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -5073,8 +5073,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -5663,8 +5663,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -6067,8 +6067,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -6471,8 +6471,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -6879,8 +6879,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -7287,8 +7287,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -7698,8 +7698,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -9017,8 +9017,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -9338,8 +9338,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -9665,8 +9665,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -9989,8 +9989,8 @@
 													"type": "text"
 												},
 												{
-													"key": "password",
-													"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 													"type": "text"
 												}
 											]
@@ -11766,8 +11766,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -11910,8 +11910,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -12054,8 +12054,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -12480,8 +12480,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -12612,8 +12612,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -13571,8 +13571,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -13914,8 +13914,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
@@ -14054,8 +14054,8 @@
 											"type": "text"
 										},
 										{
-											"key": "password",
-											"value": "password",
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										},
 										{
