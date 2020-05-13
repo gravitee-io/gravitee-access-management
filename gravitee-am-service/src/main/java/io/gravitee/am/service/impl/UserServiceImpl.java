@@ -24,18 +24,15 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.exception.UserAlreadyExistsException;
-import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -188,7 +185,7 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Find user by {} {}, externalId and source: {} {}", referenceType, referenceId, externalId, source);
         return userRepository.findByExternalIdAndSource(referenceType, referenceId, externalId, source)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a user using its externalId: {} for the {} and source {}", externalId, referenceType, referenceId, source, ex);
+                    LOGGER.error("An error occurs while trying to find a user using its externalId: {} for the {} {} and source {}", externalId, referenceType, referenceId, source, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a user using its externalId: %s for the %s %s and source %s", externalId, referenceType, referenceId, source), ex));
                 });
@@ -232,13 +229,8 @@ public class UserServiceImpl implements UserService {
                         user.setAdditionalInformation(newUser.getAdditionalInformation());
                         user.setCreatedAt(new Date());
                         user.setUpdatedAt(user.getCreatedAt());
-                        return userRepository.create(user);
+                        return create(user);
                     }
-                })
-                .flatMap(user -> {
-                    // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(user));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -252,10 +244,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> create(User user) {
+
         LOGGER.debug("Create a user {}", user);
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
-        return userRepository.create(user)
+
+        return UserValidator.validate(user).andThen(userRepository.create(user)
                 .flatMap(user1 -> {
                     // create event for sync process
                     Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.CREATE));
@@ -267,7 +261,7 @@ public class UserServiceImpl implements UserService {
                     }
                     LOGGER.error("An error occurs while trying to create a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
-                });
+                }));
     }
 
     @Override
@@ -287,12 +281,7 @@ public class UserServiceImpl implements UserService {
                     oldUser.setLoginsCount(updateUser.getLoginsCount());
                     oldUser.setUpdatedAt(new Date());
                     oldUser.setAdditionalInformation(updateUser.getAdditionalInformation());
-                    return userRepository.update(oldUser);
-                })
-                .flatMap(user -> {
-                    // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(user));
+                    return update(oldUser);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -315,7 +304,7 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Update a user {}", user);
         // updated date
         user.setUpdatedAt(new Date());
-        return userRepository.update(user)
+        return UserValidator.validate(user).andThen(userRepository.update(user)
                 .flatMap(user1 -> {
                     // create event for sync process
                     Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.UPDATE));
@@ -327,7 +316,7 @@ public class UserServiceImpl implements UserService {
                     }
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
-                });
+                }));
     }
 
     @Override

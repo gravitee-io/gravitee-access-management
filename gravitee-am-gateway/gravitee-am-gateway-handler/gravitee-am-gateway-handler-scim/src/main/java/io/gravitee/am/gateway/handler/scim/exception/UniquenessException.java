@@ -35,6 +35,11 @@ public class UniquenessException extends SCIMException {
     }
 
     @Override
+    public int getHttpStatusCode() {
+        return 409;
+    }
+
+    @Override
     public ScimType getScimType() {
         return ScimType.UNIQUENESS;
     }

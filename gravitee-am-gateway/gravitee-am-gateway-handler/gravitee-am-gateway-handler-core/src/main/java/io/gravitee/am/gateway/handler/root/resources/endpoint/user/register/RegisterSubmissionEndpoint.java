@@ -24,7 +24,8 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -75,8 +76,10 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
 
             // if failure, return to the register page with an error
             if (h.failed()) {
-                if (h.cause() instanceof UserAlreadyExistsException) {
-                    queryParams.put(WARNING_PARAM, "user_already_exists");
+                if (h.cause() instanceof InvalidUserException) {
+                    queryParams.put(WARNING_PARAM, "invalid_user_information");
+                } else if (h.cause() instanceof EmailFormatInvalidException) {
+                    queryParams.put(WARNING_PARAM, "invalid_email");
                 } else {
                     LOGGER.error("An error occurs while ending user registration", h.cause());
                     queryParams.put(ERROR_PARAM, "registration_failed");

@@ -15,10 +15,16 @@
  */
 package io.gravitee.am.service.model;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.util.Date;
 import java.util.Map;
+
+import static io.gravitee.am.service.validators.EmailValidator.EMAIL_MAX_LENGTH;
+import static io.gravitee.am.service.validators.EmailValidator.EMAIL_PATTERN;
+import static io.gravitee.am.service.validators.UserValidator.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -26,14 +32,18 @@ import java.util.Map;
  */
 public class UpdateUser {
 
-    @NotNull
-    @Pattern(regexp = "^[\\w!#$%&’*+/=?`{|}~^-]+(?:\\.[\\w!#$%&’*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}$", message = "must be a well-formed email address")
+    @NotBlank
+    @Size(max = EMAIL_MAX_LENGTH,  message = "must not be greater than "+ EMAIL_MAX_LENGTH)
+    @Pattern(regexp = EMAIL_PATTERN, message = "must be a well-formed email address")
     private String email;
 
+    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid first name")
     private String firstName;
 
+    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid last name")
     private String lastName;
 
+    @Size(max = DEFAULT_MAX_LENGTH,  message = "must not be greater than "+ DEFAULT_MAX_LENGTH)
     private String externalId;
 
     private boolean accountNonExpired = true;

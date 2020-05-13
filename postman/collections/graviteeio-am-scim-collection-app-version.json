@@ -1501,6 +1501,234 @@
                   "response": []
                 },
                 {
+                  "name": "Invalid request - userName invalid",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create userName field invalid\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Username [#Invalid] is not a valid value\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"userName\": \"#Invalid\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Invalid request - familyName invalid",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create familyName field invalid\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Last name [#Invalid] is not a valid value\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"userName\": \"bjensen@example.com\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"#Invalid\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Invalid request - givenName invalid",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create givenName field invalid\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"First name [#Invalid] is not a valid value\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"userName\": \"bjensen@example.com\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\": \"Jensen\",\n       \"givenName\":\"#Invalid\"\n     }\n   }"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Invalid request - email invalid",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "",
+                          "pm.test(\"SCIM create givenName field invalid\", function () {",
+                          "    var jsonData = pm.response.json();",
+                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.scimType).to.eql(\"invalidValue\");",
+                          "    pm.expect(jsonData.detail).to.eql(\"Value [#Invalid] is not a valid email.\");",
+                          "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "type": "text",
+                        "value": "Bearer {{access_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "name": "Content-Type",
+                        "type": "text",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"userName\": \"bjensen@example.com\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\": \"Jensen\",\n       \"givenName\": \"Barbara\"\n     },\n     \"emails\": [\n\t    {\n\t      \"value\": \"#Invalid\",\n\t      \"type\": \"work\",\n\t      \"primary\": true\n\t    }\n\t  ]\n   }"
+                    },
+                    "url": {
+                      "raw": "{{gateway_url}}/{{domain}}/scim/Users",
+                      "host": [
+                        "{{gateway_url}}"
+                      ],
+                      "path": [
+                        "{{domain}}",
+                        "scim",
+                        "Users"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
                   "name": "Create user",
                   "event": [
                     {
@@ -1564,13 +1792,13 @@
                       "script": {
                         "id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
                         "exec": [
-                          "pm.test(\"Status code is 400\", function () {",
-                          "    pm.response.to.have.status(400);",
+                          "pm.test(\"Status code is 409\", function () {",
+                          "    pm.response.to.have.status(409);",
                           "});",
                           "",
                           "pm.test(\"SCIM create user uniqueness\", function () {",
                           "    var jsonData = pm.response.json();",
-                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.status).to.eql(\"409\");",
                           "    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
                           "    pm.expect(jsonData.detail).to.eql(\"User with username [bjensen@example.com] already exists\");",
                           "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
@@ -2178,13 +2406,13 @@
                       "script": {
                         "id": "ac86c3c9-c0a7-4616-b7cf-6847a7f48801",
                         "exec": [
-                          "pm.test(\"Status code is 400\", function () {",
-                          "    pm.response.to.have.status(400);",
+                          "pm.test(\"Status code is 409\", function () {",
+                          "    pm.response.to.have.status(409);",
                           "});",
                           "",
                           "pm.test(\"SCIM create group uniqueness\", function () {",
                           "    var jsonData = pm.response.json();",
-                          "    pm.expect(jsonData.status).to.eql(\"400\");",
+                          "    pm.expect(jsonData.status).to.eql(\"409\");",
                           "    pm.expect(jsonData.scimType).to.eql(\"uniqueness\");",
                           "    pm.expect(jsonData.detail).to.eql(\"Group with display name [Tour Guides] already exists\");",
                           "    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
