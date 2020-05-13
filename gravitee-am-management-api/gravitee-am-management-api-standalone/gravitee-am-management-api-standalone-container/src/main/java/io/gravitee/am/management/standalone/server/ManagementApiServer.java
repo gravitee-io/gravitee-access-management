@@ -29,6 +29,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.DelegatingFilterProxy;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.springframework.web.servlet.DispatcherServlet;
 
 import javax.servlet.DispatcherType;
@@ -71,6 +72,9 @@ public class ManagementApiServer extends JettyHttpServer {
         context.addEventListener(new ContextLoaderListener(webApplicationContext));
         context.addServlet(servletHolder, "/*");
         context.addServlet(new ServletHolder(new DispatcherServlet(webApplicationContext)), "/auth/*");
+
+        // X-Forwarded-* support
+        context.addFilter(ForwardedHeaderFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 
         // Spring Security filter
         context.addFilter(new FilterHolder(new DelegatingFilterProxy("springSecurityFilterChain")), "/*", EnumSet.allOf(DispatcherType.class));
