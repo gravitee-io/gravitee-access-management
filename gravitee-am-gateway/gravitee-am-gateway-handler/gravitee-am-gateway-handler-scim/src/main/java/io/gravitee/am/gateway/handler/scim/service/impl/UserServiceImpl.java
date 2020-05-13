@@ -31,6 +31,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -98,7 +99,7 @@ public class UserServiceImpl implements UserService {
                 .map(user1 -> convert(user1, baseUrl, false))
                 .flatMap(scimUser -> setGroups(scimUser).toMaybe())
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a user using its ID", userId, ex);
+                    LOGGER.error("An error occurs while trying to find a user using its ID {}", userId, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a user using its ID: %s", userId), ex));
                 });
@@ -116,7 +117,7 @@ public class UserServiceImpl implements UserService {
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
-                        throw new UniquenessException("User with username [" + user.getUserName()+ "] already exists");
+                        throw new UniquenessException("User with username [" + user.getUserName() + "] already exists");
                     }
                     return true;
                 })
@@ -138,7 +139,7 @@ public class UserServiceImpl implements UserService {
                     userModel.setEnabled(userModel.getPassword() != null);
 
                     // store user in its identity provider
-                    return userProvider.create(convert(userModel))
+                    return UserValidator.validate(userModel).andThen(userProvider.create(convert(userModel))
                             .flatMap(idpUser -> {
                                 // AM 'users' collection is not made for authentication (but only management stuff)
                                 // clear password
@@ -149,10 +150,10 @@ public class UserServiceImpl implements UserService {
                             })
                             .onErrorResumeNext(ex -> {
                                 if (ex instanceof UserAlreadyExistsException) {
-                                    return Single.error(new UniquenessException("User with username [" + user.getUserName()+ "] already exists"));
+                                    return Single.error(new UniquenessException("User with username [" + user.getUserName() + "] already exists"));
                                 }
                                 return Single.error(ex);
-                            });
+                            }));
                 })
                 .map(user1 -> convert(user1, baseUrl, true))
                 .onErrorResumeNext(ex -> {
@@ -160,7 +161,7 @@ public class UserServiceImpl implements UserService {
                         return Single.error(new InvalidValueException(ex.getMessage()));
                     }
 
-                    if (ex instanceof SCIMException) {
+                    if (ex instanceof SCIMException || ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
@@ -190,7 +191,7 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setCreatedAt(existingUser.getCreatedAt());
                                 userToUpdate.setUpdatedAt(new Date());
 
-                                return identityProviderManager.getUserProvider(userToUpdate.getSource())
+                                return UserValidator.validate(userToUpdate).andThen(identityProviderManager.getUserProvider(userToUpdate.getSource())
                                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))
                                         .flatMapSingle(userProvider -> {
                                             // no idp user check if we need to create it
@@ -221,7 +222,7 @@ public class UserServiceImpl implements UserService {
                                                 return userRepository.update(userToUpdate);
                                             }
                                             return Single.error(ex);
-                                        });
+                                        }));
                             }));
                 })
                 .map(user1 -> convert(user1, baseUrl, false))
@@ -234,6 +235,10 @@ public class UserServiceImpl implements UserService {
 
                     if (ex instanceof AbstractNotFoundException) {
                         return Single.error(new InvalidValueException(ex.getMessage()));
+                    }
+
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to update a user", ex);
@@ -303,7 +308,7 @@ public class UserServiceImpl implements UserService {
                         throw new RoleNotFoundException(String.join(",", roles));
                     }
                     return roles1;
-                }).toCompletable();
+                }).ignoreElement();
     }
 
     private User convert(io.gravitee.am.model.User user, String baseUrl, boolean listing) {
@@ -362,7 +367,7 @@ public class UserServiceImpl implements UserService {
             meta.setLastModified(user.getUpdatedAt().toInstant().toString());
         }
         meta.setResourceType(User.RESOURCE_TYPE);
-        meta.setLocation(baseUrl + (listing ?  "/" + scimUser.getId() : ""));
+        meta.setLocation(baseUrl + (listing ? "/" + scimUser.getId() : ""));
         scimUser.setMeta(meta);
         return scimUser;
     }

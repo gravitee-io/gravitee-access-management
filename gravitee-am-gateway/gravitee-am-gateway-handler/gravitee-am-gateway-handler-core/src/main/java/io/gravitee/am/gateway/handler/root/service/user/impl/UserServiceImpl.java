@@ -43,11 +43,14 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.am.service.validators.EmailValidator;
+import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
@@ -115,8 +118,8 @@ public class UserServiceImpl implements UserService {
         // set user idp source
         final String source = user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource();
 
-        // check user uniqueness
-        return userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
+        // validate user and then check user uniqueness
+        return UserValidator.validate(user).andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
@@ -171,7 +174,7 @@ public class UserServiceImpl implements UserService {
                             auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal1).type(EventType.USER_REGISTERED));
                         })
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_REGISTERED).throwable(throwable)))
-                );
+                ));
     }
 
     @Override
@@ -286,6 +289,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal) {
+
+        if (!EmailValidator.isValid(email)) {
+            return Completable.error(new EmailFormatInvalidException(email));
+        }
+
         return userService.findByDomainAndEmail(domain.getId(), email, false)
                 .map(users -> users.stream().filter(user -> user.isInternal() && email.toLowerCase().equals(user.getEmail().toLowerCase())).findFirst())
                 .map(optionalUser -> {

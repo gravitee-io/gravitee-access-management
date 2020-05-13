@@ -21,6 +21,9 @@ import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -108,6 +111,81 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertEquals("http://custom_uri", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldFail_UserAlreadyExistsException() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(userService.register(eq(client), any(), any())).thenReturn(Single.error(new UserAlreadyExistsException("test")));
+
+        testRequest(
+                HttpMethod.POST, "/register",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/register?error=registration_failed&client_id=client-id"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldFail_invalidUserException() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(userService.register(eq(client), any(), any())).thenReturn(Single.error(new InvalidUserException("Username invalid")));
+
+        testRequest(
+                HttpMethod.POST, "/register",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/register?warning=invalid_user_information&client_id=client-id"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldFail_emailFormatInvalidException() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(userService.register(eq(client), any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("test")));
+
+        testRequest(
+                HttpMethod.POST, "/register",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/register?warning=invalid_email&client_id=client-id"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

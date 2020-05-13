@@ -24,6 +24,8 @@ import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -133,6 +135,52 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
                         "  \"status\" : \"400\",\n" +
                         "  \"scimType\" : \"invalidValue\",\n" +
                         "  \"detail\" : \"Role [role-1] can not be found.\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+    }
+
+    @Test
+    public void shouldReturn400WhenInvalidUserException() throws Exception {
+        router.route("/Users").handler(userEndpoint::update);
+        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(userService.update(any(), any(), anyString())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
+
+        testRequest(
+                HttpMethod.PUT,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(getUser()));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"Invalid user infos\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+    }
+
+    @Test
+    public void shouldReturn400WhenEmailFormatInvalidException() throws Exception {
+        router.route("/Users").handler(userEndpoint::update);
+        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(userService.update(any(), any(), anyString())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
+
+        testRequest(
+                HttpMethod.PUT,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(getUser()));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"Value [Invalid email] is not a valid email.\",\n" +
                         "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
                         "}");
     }

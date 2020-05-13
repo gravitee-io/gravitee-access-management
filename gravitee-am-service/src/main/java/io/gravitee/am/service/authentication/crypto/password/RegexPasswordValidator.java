@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.authentication.crypto.password;
 
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -41,6 +42,11 @@ public class RegexPasswordValidator implements PasswordValidator, InitializingBe
 
     @Override
     public boolean validate(final String password) {
+
+        if(password.length() > PASSWORD_MAX_LENGTH) {
+            return false;
+        }
+
         matcher = pattern.matcher(password);
         return matcher.matches();
     }

@@ -19,11 +19,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.reactivex.Single;
@@ -159,6 +162,75 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
                         "  \"status\" : \"400\",\n" +
                         "  \"scimType\" : \"invalidValue\",\n" +
                         "  \"detail\" : \"Role [role-1] can not be found.\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+    }
+
+    @Test
+    public void shouldReturn409WhenUsernameAlreadyExists() throws Exception {
+        router.route("/Users").handler(usersEndpoint::create);
+        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(userService.create(any(), any())).thenReturn(Single.error(new UniquenessException("Username already exists")));
+
+        testRequest(
+                HttpMethod.POST,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(getUser()));
+                },
+                409,
+                "Conflict",
+                "{\n" +
+                        "  \"status\" : \"409\",\n" +
+                        "  \"scimType\" : \"uniqueness\",\n" +
+                        "  \"detail\" : \"Username already exists\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+    }
+
+    @Test
+    public void shouldReturn400WhenInvalidUserException() throws Exception {
+        router.route("/Users").handler(usersEndpoint::create);
+        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(userService.create(any(), any())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
+
+        testRequest(
+                HttpMethod.POST,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(getUser()));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"Invalid user infos\",\n" +
+                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+                        "}");
+    }
+
+    @Test
+    public void shouldReturn400WhenEmailFormatInvalidException() throws Exception {
+        router.route("/Users").handler(usersEndpoint::create);
+        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(userService.create(any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
+
+        testRequest(
+                HttpMethod.POST,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(getUser()));
+                },
+                400,
+                "Bad Request",
+                "{\n" +
+                        "  \"status\" : \"400\",\n" +
+                        "  \"scimType\" : \"invalidValue\",\n" +
+                        "  \"detail\" : \"Value [Invalid email] is not a valid email.\",\n" +
                         "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
                         "}");
     }

@@ -107,6 +107,8 @@ public class ErrorHandler implements Handler<RoutingContext> {
         error.setDetail(errorDetail);
         if (scimType != null) {
             error.setScimType(scimType.value());
+        } else if(httpStatusCode == HttpStatusCode.BAD_REQUEST_400) {
+            error.setScimType(ScimType.INVALID_VALUE.value());
         }
         routingContext
                 .response()

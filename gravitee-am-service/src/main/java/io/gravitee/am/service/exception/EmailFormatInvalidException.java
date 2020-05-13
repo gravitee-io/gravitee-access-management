@@ -13,15 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.authentication.crypto.password;
+package io.gravitee.am.service.exception;
+
+import static io.gravitee.common.http.HttpStatusCode.BAD_REQUEST_400;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PasswordValidator {
+public class EmailFormatInvalidException extends AbstractManagementException {
 
-    int PASSWORD_MAX_LENGTH = 72;
+    private final String value;
 
-    boolean validate(final String password);
+    public EmailFormatInvalidException(String value) {
+        this.value = value;
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return BAD_REQUEST_400;
+    }
+
+    @Override
+    public String getMessage() {
+        return "Value [" + value + "] is not a valid email.";
+    }
 }

@@ -21,9 +21,7 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.exception.UserAlreadyExistsException;
-import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -192,6 +190,44 @@ public class UserServiceTest {
     }
 
     @Test
+    public void shouldNotCreate_emailFormatInvalidException() {
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+
+        NewUser newUser = new NewUser();
+        newUser.setEmail("invalid");
+        when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(DOMAIN, newUser).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(EmailFormatInvalidException.class);
+
+        verifyZeroInteractions(eventService);
+    }
+
+    @Test
+    public void shouldNotCreate_invalidUserException() {
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+
+        NewUser newUser = new NewUser();
+        newUser.setUsername("#####");
+        when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(DOMAIN, newUser).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(InvalidUserException.class);
+
+        verifyZeroInteractions(eventService);
+    }
+
+    @Test
     public void shouldCreate_technicalException() {
         NewUser newUser = Mockito.mock(NewUser.class);
         when(newUser.getUsername()).thenReturn("username");
@@ -240,6 +276,44 @@ public class UserServiceTest {
         verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
         verify(userRepository, times(1)).update(any(User.class));
         verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldNotUpdate_emailFormatInvalidException() {
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+
+        UpdateUser updateUser = new UpdateUser();
+        updateUser.setEmail("invalid");
+        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(EmailFormatInvalidException.class);
+
+        verifyZeroInteractions(eventService);
+    }
+
+    @Test
+    public void shouldNotUpdate_invalidUserException() {
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+
+        UpdateUser updateUser = new UpdateUser();
+        updateUser.setFirstName("$$^^^^¨¨¨)");
+        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(InvalidUserException.class);
+
+        verifyZeroInteractions(eventService);
     }
 
     @Test

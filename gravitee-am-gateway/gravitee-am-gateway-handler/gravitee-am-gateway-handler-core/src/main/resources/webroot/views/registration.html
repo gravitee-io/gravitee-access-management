@@ -25,9 +25,14 @@
                 <label>Sign up</label>
                 <span>Please fill in this form to create your account</span>
             </div>
-            <div class="register-error-info" th:if="${warning}">
-                <p style="margin: 0;" th:text="${warning == 'invalid_password_value'} ? 'Invalid password value. It does not comply with the password policy.' : 'An account already exists with this username.'"></p>
+
+            <div class="register-error-info" th:switch="${warning}" th:if="${warning}">
+                <p style="margin: 0;" th:case="invalid_password_value">Invalid password value. It does not comply with the password policy.</p>
+                <p style="margin: 0;" th:case="invalid_user_information">Invalid first name, last name or username.</p>
+                <p style="margin: 0;" th:case="invalid_email">Invalid email address.</p>
+                <p style="margin: 0;" th:case="*">Some information are missing or invalid.</p>
             </div>
+
             <form role="form" th:action="@{register}" method="post">
                 <div class="register-form-content">
                     <div style="display: flex; flex-direction: row">
