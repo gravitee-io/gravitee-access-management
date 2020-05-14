@@ -112,6 +112,7 @@ public class LdapAuthenticationProviderConfiguration {
         connectionConfig.setConnectTimeout(Duration.ofMillis(configuration.getConnectTimeout()));
         connectionConfig.setResponseTimeout(Duration.ofMillis(configuration.getResponseTimeout()));
         connectionConfig.setLdapUrl(configuration.getContextSourceUrl());
+        connectionConfig.setUseStartTLS(configuration.isUseStartTLS());
         BindConnectionInitializer connectionInitializer =
                 new BindConnectionInitializer(configuration.getContextSourceUsername(), new Credential(configuration.getContextSourcePassword()));
         connectionConfig.setConnectionInitializer(connectionInitializer);

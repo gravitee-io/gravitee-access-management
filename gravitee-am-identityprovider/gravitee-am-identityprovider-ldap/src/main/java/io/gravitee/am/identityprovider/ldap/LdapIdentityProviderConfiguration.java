@@ -25,6 +25,8 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     private String contextSourceUrl;
 
+    private boolean useStartTLS;
+
     private String contextSourceBase;
 
     private String contextSourceUsername;
@@ -63,6 +65,14 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setContextSourceUrl(String contextSourceUrl) {
         this.contextSourceUrl = contextSourceUrl;
+    }
+
+    public boolean isUseStartTLS() {
+        return useStartTLS;
+    }
+
+    public void setUseStartTLS(boolean useStartTLS) {
+        this.useStartTLS = useStartTLS;
     }
 
     public String getContextSourceBase() {

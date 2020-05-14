@@ -8,6 +8,10 @@
       "description": "The URL of the LDAP server to use. The URL should be in the format ldap://myserver.example.com:389. For SSL access, use the ldaps protocol and the appropriate port, e.g. ldaps://myserver.example.com:636. If fail-over functionality is desired, more than one URL can be specified, separated using comma (,).",
       "default": "ldap://myserver.example.com:389"
     },
+    "useStartTLS": {
+      "type": "boolean",
+      "title": "Use StartTLS ?"
+    },
     "contextSourceBase" : {
       "type" : "string",
       "title": "Base DN",
