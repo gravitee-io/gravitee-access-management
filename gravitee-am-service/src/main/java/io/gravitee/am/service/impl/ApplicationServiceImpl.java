@@ -592,7 +592,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMapSingle(domain -> {
                     //check redirect_uri
                     if (GrantTypeUtils.isRedirectUriRequired(oAuthSettings.getGrantTypes()) && CollectionUtils.isEmpty(oAuthSettings.getRedirectUris())) {
-                        return Single.error(new InvalidRedirectUriException());
+                        // if client type is null, it means that the application has been created from an old client without redirect_uri control
+                        // skip for now since it will be set in the next update operation
+                        if (oAuthSettings.getClientType() != null) {
+                            return Single.error(new InvalidRedirectUriException());
+                        }
                     }
 
                     //check redirect_uri content

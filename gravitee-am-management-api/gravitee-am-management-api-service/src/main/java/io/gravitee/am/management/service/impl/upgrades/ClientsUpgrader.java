@@ -100,6 +100,6 @@ public class ClientsUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 164;
+        return 9;
     }
 }

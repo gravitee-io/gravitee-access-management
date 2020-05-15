@@ -119,6 +119,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setTags(domainMongo.getTags());
         domain.setReferenceType(domainMongo.getReferenceType());
         domain.setReferenceId(domainMongo.getReferenceId());
+        domain.setIdentities(domainMongo.getIdentities());
         return domain;
     }
 
@@ -142,6 +143,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setTags(domain.getTags());
         domainMongo.setReferenceType(domain.getReferenceType());
         domainMongo.setReferenceId(domain.getReferenceId());
+        domainMongo.setIdentities(domain.getIdentities());
         return domainMongo;
     }
 

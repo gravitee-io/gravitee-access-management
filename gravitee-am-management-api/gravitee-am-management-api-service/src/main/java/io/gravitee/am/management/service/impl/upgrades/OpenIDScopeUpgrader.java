@@ -108,6 +108,6 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 162;
+        return 5;
     }
 }

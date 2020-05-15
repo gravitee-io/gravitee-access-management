@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -462,6 +463,7 @@ public class ApplicationServiceTest {
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setGrantTypes(Arrays.asList("implicit"));
         oAuthSettings.setResponseTypes(Arrays.asList("token"));
+        oAuthSettings.setClientType(ClientType.PUBLIC);
         settings.setOauth(oAuthSettings);
         toCreate.setSettings(settings);
 
@@ -549,7 +551,12 @@ public class ApplicationServiceTest {
     @Test
     public void shouldUpdate_implicit_invalidRedirectUri() {
         Application client = new Application();
+        ApplicationSettings clientSettings = new ApplicationSettings();
+        ApplicationOAuthSettings clientOAuthSettings = new ApplicationOAuthSettings();
+        clientOAuthSettings.setClientType(ClientType.PUBLIC);
+        clientSettings.setOauth(clientOAuthSettings);
         client.setDomain(DOMAIN);
+        client.setSettings(clientSettings);
 
         PatchApplication patchClient = new PatchApplication();
         PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
@@ -630,6 +637,7 @@ public class ApplicationServiceTest {
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setGrantTypes(Arrays.asList("implicit"));
         oAuthSettings.setResponseTypes(Arrays.asList("token"));
+        oAuthSettings.setClientType(ClientType.PUBLIC);
         settings.setOauth(oAuthSettings);
         toPatch.setSettings(settings);
 

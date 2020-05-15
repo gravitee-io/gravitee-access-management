@@ -55,7 +55,9 @@ public class ClientsToApplicationsUpgrader implements Upgrader, Ordered {
                                 .flatMapObservable(clients -> Observable.fromIterable(clients))
                                 .flatMapSingle(client -> {
                                     LOGGER.info("Update client : {} - {}", client.getId(), client.getClientId());
-                                    return clientService.create(client);
+                                    return clientService.create(client)
+                                            .doOnSuccess(client1 -> LOGGER.info("Client : {} - {} successfully updated", client.getId(), client.getClientId()))
+                                            .doOnError(ex -> LOGGER.error("Failed to update client : {} - {}", client.getId(), client.getClientId()));
                                 })
                                 .toList()
                                 .toCompletable()
@@ -75,6 +77,6 @@ public class ClientsToApplicationsUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE;
+        return 10;
     }
 }

@@ -245,6 +245,12 @@ public class GrantTypeUtils {
             updatedGrantType=true;
         }
 
+        //If grant_type contains client_credentials, remove refresh_token flow
+        if(grantType.contains(CLIENT_CREDENTIALS) && grantType.contains(REFRESH_TOKEN)) {
+            grantType.remove(REFRESH_TOKEN);
+            updatedGrantType=true;
+        }
+
         //Finally in case of bad client status (no response/grant type) reset to default values...
         if(responseType.isEmpty() && grantType.isEmpty()) {
             client.setResponseTypes(Client.DEFAULT_RESPONSE_TYPES);

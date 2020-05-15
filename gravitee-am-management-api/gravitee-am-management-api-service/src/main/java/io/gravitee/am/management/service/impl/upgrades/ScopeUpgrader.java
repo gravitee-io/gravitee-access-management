@@ -120,6 +120,6 @@ public class ScopeUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 160;
+        return 4;
     }
 }

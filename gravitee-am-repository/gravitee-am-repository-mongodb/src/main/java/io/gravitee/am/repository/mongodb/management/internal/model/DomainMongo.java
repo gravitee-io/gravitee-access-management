@@ -54,6 +54,8 @@ public class DomainMongo extends Auditable {
 
     private String referenceId;
 
+    private Set<String> identities;
+
     public String getId() {
         return id;
     }
@@ -132,6 +134,14 @@ public class DomainMongo extends Auditable {
 
     public void setTags(Set<String> tags) {
         this.tags = tags;
+    }
+
+    public Set<String> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(Set<String> identities) {
+        this.identities = identities;
     }
 
     @Override
