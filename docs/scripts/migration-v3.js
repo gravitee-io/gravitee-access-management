@@ -61,26 +61,9 @@ db.getCollection("users").updateMany({"domain": "admin"}, {
     "$set": {"referenceId": "DEFAULT", "referenceType": "ORGANIZATION", "roles": []}
 });
 
-// Migrate admin domain to organization.
-var adminDomain = db.getCollection("domains").findOne({"_id": "admin"});
-
-if (adminDomain != null) {
-    var organization = {
-        "_id": "DEFAULT",
-        "createdAt": ISODate(),
-        "description": "Default organization",
-        "domainRestrictions": [],
-        "identities": adminDomain.identities,
-        "name": "Default organization",
-        "updatedAt": ISODate()
-    };
-
-    db.getCollection("organizations").update({"_id": "DEFAULT"}, organization, {"upsert": true});
-}
-
-// Migrate all other domains to default environment and remove useless loginForm field
+// Migrate all other domains to default environment and remove useless fields
 db.getCollection("domains").updateMany({}, {
-    "$unset": {"loginForm": "", "master": "", "identities": ""},
+    "$unset": {"loginForm": "", "master": ""},
     "$set": {"referenceId": "DEFAULT", "referenceType": "ENVIRONMENT"}
 });
 
@@ -170,6 +153,3 @@ for (index = 0; index < collectionNames.length; index++) {
         });
     }
 }
-
-// Delete admin domain replaced by default organization.
-db.getCollection("domains").remove({"_id": "admin"});

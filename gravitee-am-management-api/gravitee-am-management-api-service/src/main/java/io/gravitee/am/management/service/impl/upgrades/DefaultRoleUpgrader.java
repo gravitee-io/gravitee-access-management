@@ -15,16 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
-import io.gravitee.am.model.Organization;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
-import io.gravitee.am.model.User;
-import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.permissions.DefaultRole;
-import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -38,43 +29,21 @@ import org.springframework.stereotype.Component;
 public class DefaultRoleUpgrader implements Upgrader, Ordered {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultRoleUpgrader.class);
-    static final int PAGE_SIZE = 10;
 
     private final RoleService roleService;
-    private final UserService userService;
-    private final MembershipHelper membershipHelper;
 
-    public DefaultRoleUpgrader(RoleService roleService,
-                               UserService userService,
-                               MembershipHelper membershipHelper) {
+    public DefaultRoleUpgrader(RoleService roleService) {
         this.roleService = roleService;
-        this.userService = userService;
-        this.membershipHelper = membershipHelper;
     }
 
     @Override
     public boolean upgrade() {
-
         logger.info("Applying default roles upgrade");
-
         try {
-            Boolean organizationOwnerRoleNotExists = roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION).isEmpty().blockingGet();
+            // create or update system roles
             Throwable throwable = roleService.createOrUpdateSystemRoles().blockingGet();
-
             if (throwable != null) {
                 throw throwable;
-            } else if (organizationOwnerRoleNotExists) {
-                Role organizationOwnerRole = roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION).blockingGet();
-
-                // Must grant owner power to all existing users to be iso-functional with v2 where all users could do everything.
-                Page<User> userPage;
-                int page = 0;
-
-                do {
-                    userPage = userService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT, page, PAGE_SIZE).blockingGet();
-                    userPage.getData().forEach(user -> membershipHelper.setRole(user, organizationOwnerRole));
-                    page++;
-                } while (userPage.getData().size() == PAGE_SIZE);
             }
             logger.info("Default roles upgrade, done.");
         } catch (Throwable e) {
@@ -87,6 +56,6 @@ public class DefaultRoleUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 0;
+        return 1;
     }
 }

@@ -80,6 +80,6 @@ public class DomainUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 163;
+        return 6;
     }
 }

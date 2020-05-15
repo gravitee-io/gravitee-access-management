@@ -84,6 +84,11 @@ public class Domain implements Resource {
      */
     private String referenceId;
 
+    /**
+     * NOTE: only use for the DefaultOrganizationUpgrader
+     */
+    private Set<String> identities;
+
     public Domain() {
     }
 
@@ -241,21 +246,6 @@ public class Domain implements Resource {
         return this.getOidc()!=null && this.getOidc().isRedirectUriStrictMatching();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Domain domain = (Domain) o;
-
-        return id.equals(domain.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
-
     public ReferenceType getReferenceType() {
         return referenceType;
     }
@@ -270,5 +260,28 @@ public class Domain implements Resource {
 
     public void setReferenceId(String referenceId) {
         this.referenceId = referenceId;
+    }
+
+    public Set<String> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(Set<String> identities) {
+        this.identities = identities;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Domain domain = (Domain) o;
+
+        return id.equals(domain.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 }

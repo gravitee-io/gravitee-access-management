@@ -17,12 +17,13 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.OrganizationService;
-import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Before;
@@ -34,6 +35,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -59,12 +63,18 @@ public class DefaultOrganizationUpgraderTest {
     @Mock
     private MembershipHelper membershipHelper;
 
+    @Mock
+    private RoleService roleService;
+
+    @Mock
+    private DomainService domainService;
+
     private DefaultOrganizationUpgrader cut;
 
     @Before
     public void before() {
 
-        cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper);
+        cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper, roleService, domainService);
     }
 
     @Test
@@ -84,6 +94,7 @@ public class DefaultOrganizationUpgraderTest {
                 && user.getSource().equals(idp.getId())
                 && user.getReferenceType() == ReferenceType.ORGANIZATION
                 && user.getReferenceId().equals(Organization.DEFAULT)))).thenReturn(Single.just(adminUser));
+        when(domainService.findById("admin")).thenReturn(Maybe.empty());
         doNothing().when(membershipHelper).setOrganizationPrimaryOwnerRole(argThat(user -> user.getId().equals(adminUser.getId())));
 
         assertTrue(cut.upgrade());
@@ -213,5 +224,47 @@ public class DefaultOrganizationUpgraderTest {
         when(organizationService.createDefault()).thenReturn(Maybe.error(TechnicalException::new));
 
         assertFalse(cut.upgrade());
+    }
+
+    @Test
+    public void shouldCreateSystemRoles_setOwnerRoleToExistingUsers() {
+
+        int totalUsers = 22;
+
+        User user = new User();
+        user.setId("user-1");
+
+        Role adminRole = new Role();
+        adminRole.setId("role-1");
+
+        Organization organization = new Organization();
+        organization.setId("orga-id");
+
+        List<User> users = Stream.iterate(0, i -> i++).limit(10).map(i -> user)
+                .collect(Collectors.toList());
+
+        when(organizationService.createDefault()).thenReturn(Maybe.just(organization));
+        when(organizationService.update(any(), any(), any())).thenReturn(Single.just(organization));
+        when(domainService.findById("admin")).thenReturn(Maybe.just(new Domain()));
+        when(domainService.delete("admin")).thenReturn(Completable.complete());
+
+
+        when(roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION))
+                .thenReturn(Maybe.just(adminRole)); // Role has been created.
+
+        when(userService.findAll(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), eq(0), anyInt()))
+                .thenReturn(Single.just(new Page<>(users, 0, totalUsers)));
+
+        when(userService.findAll(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), eq(1), anyInt()))
+                .thenReturn(Single.just(new Page<>(users, 1, totalUsers)));
+
+        when(userService.findAll(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), eq(2), anyInt()))
+                .thenReturn(Single.just(new Page<>(Arrays.asList(user, user), 2, totalUsers)));
+
+        doNothing().when(membershipHelper).setRole(eq(user), eq(adminRole));
+
+        cut.upgrade();
+
+        verify(membershipHelper, times(totalUsers)).setRole(eq(user), eq(adminRole));
     }
 }

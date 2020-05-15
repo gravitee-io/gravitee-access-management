@@ -17,6 +17,8 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
@@ -25,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,7 +39,8 @@ import java.util.List;
 public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultOrganizationUpgrader.class);
-
+    private static final String ADMIN_DOMAIN = "admin";
+    private static final int PAGE_SIZE = 10;
     public static String ADMIN_USERNAME = "admin";
     public static String DEFAULT_INLINE_IDP_CONFIG = "{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"\",\"username\":\"" + ADMIN_USERNAME + "\",\"password\":\"adminadmin\"}]}";
 
@@ -48,26 +52,66 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     private final MembershipHelper membershipHelper;
 
-    public DefaultOrganizationUpgrader(OrganizationService organizationService, IdentityProviderService identityProviderService, UserService userService, MembershipHelper membershipHelper) {
+    private final RoleService roleService;
+
+    private final DomainService domainService;
+
+    public DefaultOrganizationUpgrader(OrganizationService organizationService,
+                                       IdentityProviderService identityProviderService,
+                                       UserService userService,
+                                       MembershipHelper membershipHelper,
+                                       RoleService roleService,
+                                       DomainService domainService) {
         this.organizationService = organizationService;
         this.identityProviderService = identityProviderService;
         this.userService = userService;
         this.membershipHelper = membershipHelper;
+        this.roleService = roleService;
+        this.domainService = domainService;
     }
 
     @Override
     public boolean upgrade() {
 
         try {
+            // This call create default organization with :
+            // - default roles
+            // - default entry point
             Organization organization = organizationService.createDefault().blockingGet();
 
+            // No existing organization, finish the following set up :
+            // - retrieve information from the old admin domain
+            // - migrate all existing users permissions to default ORGANIZATION_OWNER
             if (organization != null) {
                 logger.info("Default organization successfully created");
 
-                // Need to create an inline provider and an admin user for this newly created default organization.
-                IdentityProvider inlineProvider = createInlineProvider();
-                User adminUser = createAdminUser(inlineProvider);
-                membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
+                // check if old domain admin exists
+                Domain adminDomain = domainService.findById(ADMIN_DOMAIN).blockingGet();
+                if (adminDomain != null) {
+                    // update organization identities
+                    PatchOrganization patchOrganization = new PatchOrganization();
+                    patchOrganization.setIdentities(adminDomain.getIdentities() != null ? new ArrayList<>(adminDomain.getIdentities()) : null);
+                    organizationService.update(organization.getId(), patchOrganization,null).blockingGet();
+
+                    // Must grant owner power to all existing users to be iso-functional with v2 where all users could do everything.
+                    Role organizationOwnerRole = roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION).blockingGet();
+                    Page<User> userPage;
+                    int page = 0;
+                    do {
+                        userPage = userService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT, page, PAGE_SIZE).blockingGet();
+                        // membership helper create membership only if
+                        userPage.getData().forEach(user -> membershipHelper.setRole(user, organizationOwnerRole));
+                        page++;
+                    } while (userPage.getData().size() == PAGE_SIZE);
+
+                    // then delete the domain
+                    domainService.delete(ADMIN_DOMAIN).blockingGet();
+                } else {
+                    // Need to create an inline provider and an admin user for this newly created default organization.
+                    IdentityProvider inlineProvider = createInlineProvider();
+                    User adminUser = createAdminUser(inlineProvider);
+                    membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
+                }
             } else {
                 logger.info("One or more organizations already exist. Check if default organization is up to date");
 
@@ -141,6 +185,6 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 1;
+        return 2;
     }
 }
