@@ -94,9 +94,9 @@ public class ApplicationsResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> {
                             if (query != null) {
-                                return applicationService.search(domain, query, page, Integer.min(size, MAX_APPLICATIONS_SIZE_PER_PAGE));
+                                return applicationService.search(domain, query, 0, Integer.MAX_VALUE);
                             } else {
-                                return applicationService.findByDomain(domain, page, Integer.min(size, MAX_APPLICATIONS_SIZE_PER_PAGE));
+                                return applicationService.findByDomain(domain, 0, Integer.MAX_VALUE);
                             }
                         })
                         .flatMap(pagedApplications -> Maybe.concat(
@@ -107,7 +107,7 @@ public class ApplicationsResource extends AbstractResource {
                                         .collect(Collectors.toList()))
                                 .sorted((a1, a2) -> a2.getUpdatedAt().compareTo(a1.getUpdatedAt()))
                                 .toList()
-                                .map(applications -> new Page<>(applications, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount()))))
+                                .map(applications -> new Page<>(applications.stream().skip(page * size).limit(size).collect(Collectors.toList()), pagedApplications.getCurrentPage(), applications.size()))))
                 .subscribe(response::resume, response::resume);
     }
 

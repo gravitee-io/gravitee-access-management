@@ -64,7 +64,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         final Page<Application> applicationPage = new Page(new HashSet<>(Arrays.asList(mockClient, mockClient2)), 0, 2);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, 50);
+        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, Integer.MAX_VALUE);
 
         final Response response = target("domains").path(domainId).path("applications").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());

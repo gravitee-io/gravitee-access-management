@@ -101,7 +101,7 @@ public class ClientsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.APPLICATION, Acl.LIST)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(domain -> getClients(domainId, query, requestedPage, requestedSize)
+                        .flatMapSingle(domain -> getClients(domainId, query, 0, Integer.MAX_VALUE)
                                 .flatMap(pagedClients ->
                                         Maybe.concat(pagedClients.getData().stream()
                                                 .map(client -> hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, client.getId(), Permission.APPLICATION, Acl.READ)
@@ -116,7 +116,7 @@ public class ClientsResource extends AbstractResource {
                                                     if (page == null || size == null) {
                                                         return sortedClients;
                                                     }
-                                                    return new Page<>(sortedClients, pagedClients.getCurrentPage(), pagedClients.getTotalCount());
+                                                    return new Page<>(sortedClients.stream().skip(page * size).limit(size).collect(Collectors.toList()), pagedClients.getCurrentPage(), sortedClients.size());
                                                 }))))
                 .subscribe(response::resume, response::resume);
     }
