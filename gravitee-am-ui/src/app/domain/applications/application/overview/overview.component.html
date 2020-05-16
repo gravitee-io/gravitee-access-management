@@ -27,7 +27,7 @@
             To communicate with it you will need the following information :
           </p>
           <ul>
-            <li>The application's domain : <b>{{application.domain}}</b></li>
+            <li>The application's domain : <b>{{domain.path}}</b></li>
             <li>The application's client ID (OAuth 2.0) : <b>{{clientId}}</b></li>
           </ul>
           <blockquote>
@@ -54,7 +54,7 @@
             <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorize);">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_authorize>{{entrypoint.url}}/{{application.domain}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{redirectUri}}</pre>
+            <pre #pre_authorize>{{entrypoint.url}}/{{domain.path}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{redirectUri}}</pre>
           </div>
 
           <p>Users will be redirected to the login page and will start the Authentication Flow.</p>
@@ -94,7 +94,7 @@
             </button>
 
             <pre #pre_authorization_code_exchange class="multiline">curl -X POST \
-  {{entrypoint.url}}/{{application.domain}}/oauth/token \
+  {{entrypoint.url}}/{{domain.path}}/oauth/token \
   -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUri}}&client_id={{clientId}}'</pre>
@@ -107,7 +107,7 @@
               <mat-icon>content_copy</mat-icon>
             </button>
             <pre #pre_userinfo class="multiline">curl -X GET \
-  {{entrypoint.url}}/{{application.domain}}/oidc/userinfo \
+  {{entrypoint.url}}/{{domain.path}}/oidc/userinfo \
   -H 'Authorization: Bearer access_token'</pre>
           </div>
           <p>
@@ -132,7 +132,7 @@
             <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_logout);">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_logout>{{entrypoint.url}}/{{application.domain}}/logout</pre>
+            <pre #pre_logout>{{entrypoint.url}}/{{domain.path}}/logout</pre>
           </div>
           <blockquote>
             <p>
@@ -162,7 +162,7 @@
               <mat-icon>visibility</mat-icon>
             </button>
             <pre #pre_auth_basic_token class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{application.domain}}/oauth/token \
+              {{entrypoint.url}}/{{domain.path}}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
   -d 'grant_type=client_credentials'</pre>
@@ -178,7 +178,7 @@
               <mat-icon>visibility</mat-icon>
             </button>
             <pre #pre_post_token class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{application.domain}}/oauth/token \
+              {{entrypoint.url}}/{{domain.path}}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=client_credentials&client_id={{clientId}}&client_secret={{safeClientSecret}}'</pre>
           </div>

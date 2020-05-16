@@ -34,9 +34,10 @@ export class ApplicationEndpointsComponent implements OnInit {
   }
 
   ngOnInit() {
+    const domain = this.route.snapshot.data['domain'];
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.application = this.route.snapshot.parent.data['application'];
-    this.baseURL = this.entrypoint.url + '/' + this.application.domain;
+    this.baseURL = this.entrypoint.url + '/' + domain.path;
   }
 
   valueCopied(message: string) {
