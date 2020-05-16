@@ -27,9 +27,9 @@
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Domain</mat-label>
-            <input matInput type="text" name="domain" [value]="application.domain" disabled>
+            <input matInput type="text" name="domain" [value]="domain.path" disabled>
             <mat-hint>The application's domain</mat-hint>
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="application.domain" (cbOnSuccess)="valueCopied('Domain copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="domain.path" (cbOnSuccess)="valueCopied('Domain copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always" *hasPermission="['application_openid_read']">
             <mat-label>Client ID</mat-label>
