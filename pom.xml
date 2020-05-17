@@ -96,6 +96,12 @@
         <wiremock.version>2.6.0</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
         <sonar.skip>true</sonar.skip>
+
+        <!-- External plugins versions -->
+        <gravitee-policy-callout-http.version>1.8.0</gravitee-policy-callout-http.version>
+        <gravitee-policy-groovy.version>1.9.2</gravitee-policy-groovy.version>
+        <gravitee-policy-ipfiltering.version>1.3.0</gravitee-policy-ipfiltering.version>
+        <gravitee-policy-request-validation.version>1.7.1</gravitee-policy-request-validation.version>
     </properties>
 
     <dependencyManagement>
