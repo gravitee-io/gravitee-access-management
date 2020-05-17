@@ -64,23 +64,22 @@
         <h5>Social/Enterprise Identity Provider</h5>
         <small>1. Configure the redirect URI</small>
         <p class="social-provider-settings-description-contextual-help">The Redirect URI or callback URL or Assertion Consumer Service URL must be known by your Identity Server. Go to your Identity Server app settings page and specify the following URL</p>
-        <div *ngIf="!organizationContext">
-          <pre style="margin-bottom: 0;">{{entrypoint.url}}/{{domain.path}}/login/callback</pre>
-          <pre style="margin-top: 0;">?provider={{provider.id}}</pre>
-        </div>
-        <div *ngIf="organizationContext">
-          <pre style="margin-bottom: 0;">{{entrypoint.url}}/auth/login/callback</pre>
-          <pre style="margin-top: 0;">?provider={{provider.id}}</pre>
-        </div>
+        <mat-form-field appearance="outline" floatLabel="always"s>
+          <input matInput type="text" name="redirectUri" [value]="redirectUri" disabled style="font-family: monospace; color: rgba(0, 0, 0, 0.87);">
+          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="redirectUri" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        </mat-form-field>
         <small>2. (Optional) Custom login page</small>
         <p class="social-provider-settings-description-contextual-help">If you enabled custom login form and want to use the identity provider, update the login form content with the following code</p>
-        <pre style="white-space: normal;">
-          <![CDATA[
-             <a th:href="${authorizeUrls.get('{{provider.id}}')}">
-               SIGN IN WITH OAUTH2 PROVIDER
-             </a>
-          ]]>
-        </pre>
+        <div class="code">
+          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="customCode" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();">
+            <mat-icon>content_copy</mat-icon>
+          </button>
+          <pre style="white-space: normal;">
+            <![CDATA[
+               {{customCode}}
+            ]]>
+          </pre>
+        </div>
       </div>
     </div>
   </div>

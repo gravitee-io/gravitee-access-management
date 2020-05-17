@@ -37,12 +37,14 @@ export class ProviderSettingsComponent implements OnInit {
   organizationContext = false;
   domain: any = {};
   entrypoint: any = {};
-  configurationIsValid: boolean = true;
-  configurationPristine: boolean = true;
+  configurationIsValid = true;
+  configurationPristine = true;
   providerSchema: any;
   provider: any;
   providerConfiguration: any;
   updateProviderConfiguration: any;
+  redirectUri: string;
+  customCode: string;
 
   constructor(private providerService: ProviderService,
               private organizationService: OrganizationService,
@@ -54,19 +56,24 @@ export class ProviderSettingsComponent implements OnInit {
               private dialogService: DialogService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.provider = this.route.snapshot.parent.data['provider'];
     this.certificates = this.route.snapshot.data['certificates'];
+    this.customCode = '<a th:href="${authorizeUrls.get(\'' + this.provider.id + '\')}">SIGN IN WITH OAUTH2 PROVIDER</a>';
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
     if (this.organizationContext) {
       this.organizationService.settings().subscribe(data => this.domain = data);
       this.entrypoint = { url: AppConfig.settings.baseURL};
+      this.redirectUri = this.entrypoint.url + '/auth/login/callback?provider=' + this.provider.id;
     } else {
-      this.domainService.get(this.domainId).subscribe(data => this.domain = data);
-      this.domainService.getEntrypoint(this.domainId).subscribe(data => this.entrypoint = data);
+      this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+      this.domain = this.route.snapshot.parent.parent.data['domain'];
+      this.domainService.getEntrypoint(this.domainId).subscribe(data => {
+        this.entrypoint = data;
+        this.redirectUri = this.entrypoint.url + '/' + this.domain.path + '/login/callback?provider=' + this.provider.id;
+      });
     }
-    this.provider = this.route.snapshot.parent.data['provider'];
     this.providerConfiguration = JSON.parse(this.provider.configuration);
     this.updateProviderConfiguration = this.providerConfiguration;
     this.organizationService.identitySchema(this.provider.type).subscribe(data => {
@@ -126,5 +133,9 @@ export class ProviderSettingsComponent implements OnInit {
       this.configurationIsValid = configurationWrapper.isValid;
       this.updateProviderConfiguration = configurationWrapper.configuration;
     });
+  }
+
+  valueCopied(message: string) {
+    this.snackbarService.open(message);
   }
 }
