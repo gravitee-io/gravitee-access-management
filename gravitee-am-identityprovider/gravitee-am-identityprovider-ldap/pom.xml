@@ -59,11 +59,6 @@
             <artifactId>ldaptive</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.ldaptive</groupId>
-            <artifactId>ldaptive-unboundid</artifactId>
-        </dependency>
-
         <!-- Unit tests -->
         <dependency>
             <groupId>org.springframework</groupId>
