@@ -43,7 +43,7 @@
     "rxjs": "^6.5.2",
     "tslib": "^1.9.3",
     "whatwg-fetch": "^3.0.0",
-    "zone.js": "^0.8.29",
+    "zone.js": "^0.10.3",
     "minimist": "^1.2.5",
     "kind-of": "^6.0.3",
     "serialize-javascript": "^2.1.2",
