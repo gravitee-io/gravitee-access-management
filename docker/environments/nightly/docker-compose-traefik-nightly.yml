@@ -66,7 +66,7 @@ services:
     - gravitee_oauth2_mongodb_uri=mongodb://nightly-am-mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
     labels:
     - "traefik.backend=nightly_graviteeio-am-managementapi"
-    - "traefik.frontend.rule=Host:auth-nightly.gravitee.io;PathPrefix:/management,/admin"
+    - "traefik.frontend.rule=Host:auth-nightly.gravitee.io;PathPrefix:/management"
     - "traefik.port=8093"
 
   nightly_am_webui:

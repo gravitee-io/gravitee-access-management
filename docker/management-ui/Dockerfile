@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-FROM nginx:1.16-alpine
-MAINTAINER Gravitee Team <http://gravitee.io>
+FROM nginx:1.18-alpine
+LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 
@@ -25,7 +25,7 @@ ENV CONFD_URL="https://github.com/kelseyhightower/confd/releases/download"
 # Update to get support for Zip/Unzip, Bash
 RUN apk --update add zip unzip bash wget
 
-ENV WWW_TARGET /var/www/html/
+ENV WWW_TARGET /usr/share/nginx/html
 
 RUN wget --no-check-certificate -O /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
@@ -36,8 +36,8 @@ RUN wget --no-check-certificate -O /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.
     && chmod +x /bin/confd
 
 # support running as arbitrary user which belongs to the root group
-RUN chgrp -R 0 /var/www/ /var/log/nginx /var/cache/nginx/ /etc/nginx/ /var/run/ && \
-    chmod -R g=u /var/www/ /var/log/nginx /var/cache/nginx/ /etc/nginx/ /var/run/
+RUN chgrp -R 0 /usr/share/nginx/ /var/log/nginx /var/cache/nginx/ /etc/nginx/ /var/run/ && \
+    chmod -R g=u /usr/share/nginx/ /var/log/nginx /var/cache/nginx/ /etc/nginx/ /var/run/
 
 ADD config /etc/confd
 
