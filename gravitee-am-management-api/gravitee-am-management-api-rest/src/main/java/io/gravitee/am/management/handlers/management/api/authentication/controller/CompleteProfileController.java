@@ -115,14 +115,14 @@ public class CompleteProfileController {
 
         // update values
         Map<String, Object> additionalInformation = new HashMap<>(endUser.getAdditionalInformation());
-        if (email != null) {
+        if (email != null && !email.isEmpty()) {
             endUser.setEmail(email);
         }
-        if (firstName != null) {
+        if (firstName != null && !firstName.isEmpty()) {
             endUser.setFirstName(firstName);
             additionalInformation.put(StandardClaims.GIVEN_NAME, firstName);
         }
-        if (lastName != null) {
+        if (lastName != null && !lastName.isEmpty()) {
             endUser.setLastName(lastName);
             additionalInformation.put(StandardClaims.FAMILY_NAME, lastName);
         }
