@@ -42,7 +42,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
     private static final String ADMIN_DOMAIN = "admin";
     private static final int PAGE_SIZE = 10;
     public static String ADMIN_USERNAME = "admin";
-    public static String DEFAULT_INLINE_IDP_CONFIG = "{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"\",\"username\":\"" + ADMIN_USERNAME + "\",\"password\":\"adminadmin\"}]}";
+    public static String DEFAULT_INLINE_IDP_CONFIG = "{\"users\":[{\"firstname\":\"Administrator\",\"lastname\":\"Administrator\",\"username\":\"" + ADMIN_USERNAME + "\",\"password\":\"adminadmin\"}]}";
 
     private final OrganizationService organizationService;
 
