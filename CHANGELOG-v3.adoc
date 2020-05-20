@@ -1,0 +1,85 @@
+# Change Log
+
+== https://github.com/gravitee-io/issues/milestone/191?closed=1[AM - 3.0.0 (2020-05-20)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Bad HTTP response https://github.com/gravitee-io/issues/issues/3450[#3450]
+- Mutual TLS configuration not handle properly https://github.com/gravitee-io/issues/issues/3161[#3161]
+- User on application without active IdP should not benefit from SSO of another application https://github.com/gravitee-io/issues/issues/3549[#3549]
+
+*_Management_*
+
+- Organization social providers for the organization are not updated https://github.com/gravitee-io/issues/issues/3303[#3303]
+
+*_Management-ui_*
+
+- Audits] audits search timeout should not block the entire page https://github.com/gravitee-io/issues/issues/2526[#2526]
+
+=== Features
+
+*_AM_*
+
+- Multi-env] Allow access some domain and organization information from domain and application settings https://github.com/gravitee-io/issues/issues/3388[#3388]
+- Multi-env] Assign organization roles the same way we assign domain and application roles https://github.com/gravitee-io/issues/issues/3379[#3379]
+- Multi-env] Manage permissions per entity type (org, env, app, domain, ...) https://github.com/gravitee-io/issues/issues/3319[#3319]
+
+*_Gateway_*
+
+- Add support for OAuth 2.0 Mutual-TLS Client Authentication https://github.com/gravitee-io/issues/issues/3563[#3563]
+- Add support for client_secret_key client authentication method https://github.com/gravitee-io/issues/issues/3536[#3536]
+- Support for JWT Secured Authorization Response Mode for OAuth 2.0 (JARM) https://github.com/gravitee-io/issues/issues/3601[#3601]
+- [management] multi-factor authentication (MFA) https://github.com/gravitee-io/issues/issues/3125[#3125]
+
+*_Management_*
+
+- Add gateway entry points to organizations https://github.com/gravitee-io/issues/issues/3438[#3438]
+- Allow users to subscribe to newsletters https://github.com/gravitee-io/issues/issues/3666[#3666]
+- Application management https://github.com/gravitee-io/issues/issues/1973[#1973]
+- Provide domain analytics https://github.com/gravitee-io/issues/issues/3077[#3077]
+- [acl] - Create default owner for a security domain https://github.com/gravitee-io/issues/issues/3023[#3023]
+- [acl] - Create default owner for an application https://github.com/gravitee-io/issues/issues/3022[#3022]
+- [acl] - Secure REST API with roles and permissions https://github.com/gravitee-io/issues/issues/1893[#1893]
+
+*_Management-ui_*
+
+- Display gateway protocols endpoints https://github.com/gravitee-io/issues/issues/3437[#3437]
+- [acl] - Secure Admin Portal with roles and permissions https://github.com/gravitee-io/issues/issues/3021[#3021]
+
+*_Multi-env_*
+
+- Replace admin domain with default organization https://github.com/gravitee-io/issues/issues/3200[#3200]
+
+*_Oauth2_*
+
+- Support OAuth "Public" clients https://github.com/gravitee-io/issues/issues/2090[#2090]
+
+*_Oidc_*
+
+- Request object endpoint https://github.com/gravitee-io/issues/issues/3707[#3707]
+- Support for s_hash https://github.com/gravitee-io/issues/issues/3702[#3702]
+
+=== Improvements
+
+*_Identity-provider_*
+
+- [ldap] StartTLS not available for LDAP Identity Providers https://github.com/gravitee-io/issues/issues/3782[#3782]
+
+*_Management_*
+
+- Create application with custom client_id / secret https://github.com/gravitee-io/issues/issues/3181[#3181]
+- Gateway] improve input validation https://github.com/gravitee-io/issues/issues/3755[#3755]
+- Generate client secret which supports at least HS256 https://github.com/gravitee-io/issues/issues/3537[#3537]
+- [gateway] default password policy https://github.com/gravitee-io/issues/issues/3696[#3696]
+
+*_Management-ui_*
+
+- Provides links to useful OIDC endpoints https://github.com/gravitee-io/issues/issues/3449[#3449]
+- UI enhancements https://github.com/gravitee-io/issues/issues/3203[#3203]
+- [acl] - Move global dashboard https://github.com/gravitee-io/issues/issues/3024[#3024]
+
+*_Oauth2_*
+
+- Token revocation for Public Client https://github.com/gravitee-io/issues/issues/2189[#2189]
