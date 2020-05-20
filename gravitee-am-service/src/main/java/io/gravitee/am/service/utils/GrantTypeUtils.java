@@ -35,6 +35,7 @@ import static io.gravitee.am.common.oidc.ResponseType.*;
  */
 public class GrantTypeUtils {
 
+    private static final String AM_V2_VERSION = "AM_V2_VERSION";
     private static final String EXTENSION_GRANT_SEPARATOR = "~";
     private static final Set<String> SUPPORTED_GRANT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER//, DEVIDE_CODE, SAML2_BEARER
@@ -245,10 +246,12 @@ public class GrantTypeUtils {
             updatedGrantType=true;
         }
 
-        //If grant_type contains client_credentials, remove refresh_token flow
-        if(grantType.contains(CLIENT_CREDENTIALS) && grantType.contains(REFRESH_TOKEN)) {
-            grantType.remove(REFRESH_TOKEN);
-            updatedGrantType=true;
+        // If grant_type contains client_credentials, remove refresh_token flow, only for old clients created by the upgrader
+        if (AM_V2_VERSION.equals(client.getSoftwareVersion())) {
+            if (grantType.contains(CLIENT_CREDENTIALS) && grantType.contains(REFRESH_TOKEN) && grantType.size() == 2) {
+                grantType.remove(REFRESH_TOKEN);
+                updatedGrantType = true;
+            }
         }
 
         //Finally in case of bad client status (no response/grant type) reset to default values...

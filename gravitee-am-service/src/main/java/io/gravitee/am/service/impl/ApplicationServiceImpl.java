@@ -70,6 +70,7 @@ import java.util.stream.Collectors;
 public class ApplicationServiceImpl implements ApplicationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationServiceImpl.class);
+    private static final String AM_V2_VERSION = "AM_V2_VERSION";
 
     @Lazy
     @Autowired
@@ -592,9 +593,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMapSingle(domain -> {
                     //check redirect_uri
                     if (GrantTypeUtils.isRedirectUriRequired(oAuthSettings.getGrantTypes()) && CollectionUtils.isEmpty(oAuthSettings.getRedirectUris())) {
-                        // if client type is null, it means that the application has been created from an old client without redirect_uri control
+                        // if client type is from V2, it means that the application has been created from an old client without redirect_uri control (via the upgrader)
                         // skip for now since it will be set in the next update operation
-                        if (oAuthSettings.getClientType() != null) {
+                        if (AM_V2_VERSION.equals(oAuthSettings.getSoftwareVersion())) {
+                            oAuthSettings.setSoftwareVersion(null);
+                        } else {
                             return Single.error(new InvalidRedirectUriException());
                         }
                     }
