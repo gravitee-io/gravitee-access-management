@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 public class ClientsToApplicationsUpgrader implements Upgrader, Ordered {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientsToApplicationsUpgrader.class);
+    private static final String AM_V2_VERSION = "AM_V2_VERSION";
 
     // use repository instead of service to fetch the remaining old clients
     @Lazy
@@ -55,6 +56,9 @@ public class ClientsToApplicationsUpgrader implements Upgrader, Ordered {
                                 .flatMapObservable(clients -> Observable.fromIterable(clients))
                                 .flatMapSingle(client -> {
                                     LOGGER.info("Update client : {} - {}", client.getId(), client.getClientId());
+                                    if (client.getSoftwareVersion() == null || client.getSoftwareVersion().isEmpty()) {
+                                        client.setSoftwareVersion(AM_V2_VERSION);
+                                    }
                                     return clientService.create(client)
                                             .doOnSuccess(client1 -> LOGGER.info("Client : {} - {} successfully updated", client.getId(), client.getClientId()))
                                             .doOnError(ex -> LOGGER.error("Failed to update client : {} - {}", client.getId(), client.getClientId()));
