@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/228?closed=1[AM - 3.0.1 (2020-05-20)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Failed to load default admin user https://github.com/gravitee-io/issues/issues/3819[#3819]
+
+
 == https://github.com/gravitee-io/issues/milestone/191?closed=1[AM - 3.0.0 (2020-05-20)]
 
 === Bug fixes
@@ -16,15 +25,15 @@
 
 *_Management-ui_*
 
-- Audits] audits search timeout should not block the entire page https://github.com/gravitee-io/issues/issues/2526[#2526]
+- [Audits] audits search timeout should not block the entire page https://github.com/gravitee-io/issues/issues/2526[#2526]
 
 === Features
 
 *_AM_*
 
-- Multi-env] Allow access some domain and organization information from domain and application settings https://github.com/gravitee-io/issues/issues/3388[#3388]
-- Multi-env] Assign organization roles the same way we assign domain and application roles https://github.com/gravitee-io/issues/issues/3379[#3379]
-- Multi-env] Manage permissions per entity type (org, env, app, domain, ...) https://github.com/gravitee-io/issues/issues/3319[#3319]
+- [Multi-env] Allow access some domain and organization information from domain and application settings https://github.com/gravitee-io/issues/issues/3388[#3388]
+- [Multi-env] Assign organization roles the same way we assign domain and application roles https://github.com/gravitee-io/issues/issues/3379[#3379]
+- [Multi-env] Manage permissions per entity type (org, env, app, domain, ...) https://github.com/gravitee-io/issues/issues/3319[#3319]
 
 *_Gateway_*
 
@@ -70,7 +79,7 @@
 *_Management_*
 
 - Create application with custom client_id / secret https://github.com/gravitee-io/issues/issues/3181[#3181]
-- Gateway] improve input validation https://github.com/gravitee-io/issues/issues/3755[#3755]
+- [Gateway] improve input validation https://github.com/gravitee-io/issues/issues/3755[#3755]
 - Generate client secret which supports at least HS256 https://github.com/gravitee-io/issues/issues/3537[#3537]
 - [gateway] default password policy https://github.com/gravitee-io/issues/issues/3696[#3696]
 
