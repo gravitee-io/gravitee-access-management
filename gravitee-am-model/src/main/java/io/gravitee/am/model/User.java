@@ -68,6 +68,8 @@ public class User {
 
     private Set<Role> rolesPermissions;
 
+    private List<String> groups;
+
     private List<Certificate> x509Certificates;
 
     private boolean accountNonExpired = true;
@@ -448,6 +450,14 @@ public class User {
 
     public void setRolesPermissions(Set<Role> rolesPermissions) {
         this.rolesPermissions = rolesPermissions;
+    }
+
+    public List<String> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(List<String> groups) {
+        this.groups = groups;
     }
 
     public Map<String, Object> getAdditionalInformation() {
