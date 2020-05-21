@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.user.impl;
 
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
@@ -80,11 +81,13 @@ public class UserServiceImpl implements UserService {
         return groupService.findByMember(user.getId())
                 .flatMap(groups -> {
                     Set<String> roles = new HashSet<>();
-                    // get groups roles
-                    if (!groups.isEmpty()) {
+                    if (groups != null && !groups.isEmpty()) {
+                        // set groups
+                        user.setGroups(groups.stream().map(Group::getName).collect(Collectors.toList()));
+                        // set groups roles
                         roles.addAll(groups
                                 .stream()
-                                .filter(group ->  group.getRoles() != null && !group.getRoles().isEmpty())
+                                .filter(group -> group.getRoles() != null && !group.getRoles().isEmpty())
                                 .flatMap(group -> group.getRoles().stream())
                                 .collect(Collectors.toSet()));
                     }
