@@ -37,7 +37,7 @@
     "jdenticon": "^2.2.0",
     "lodash": "^4.17.15",
     "lodash-es": "^4.17.15",
-    "moment": "^2.24.0",
+    "moment": "^2.25.0",
     "ng2-codemirror": "^1.1.1",
     "ngx-clipboard": "12.3.1",
     "rxjs": "^6.5.5",
