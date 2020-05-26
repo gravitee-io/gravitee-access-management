@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/231?closed=1[AM - 3.0.2 (2020-05-26)]
+
+=== Bug fixes
+
+*_Management-ui_*
+
+- Login and logout callback URLs are wrong behind a HTTP proxy https://github.com/gravitee-io/issues/issues/3827[#3827]
+
+
 == https://github.com/gravitee-io/issues/milestone/228?closed=1[AM - 3.0.1 (2020-05-20)]
 
 === Bug fixes
