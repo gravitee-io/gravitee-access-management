@@ -26,7 +26,7 @@ export class LoginComponent implements OnInit {
   constructor() {}
 
   ngOnInit() {
-    this.loginEndpoint = this.loginEndpoint + '?redirect_uri=' + window.location.origin + '/login/callback';
+    this.loginEndpoint = this.loginEndpoint + '?redirect_uri=' + window.location.href + '/callback';
     window.location.href = this.loginEndpoint;
   }
 }
