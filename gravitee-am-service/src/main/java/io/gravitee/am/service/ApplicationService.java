@@ -28,6 +28,7 @@ import io.reactivex.Single;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,6 +50,8 @@ public interface ApplicationService {
     Single<Set<Application>> findByFactor(String factor);
 
     Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant);
+
+    Single<Set<Application>> findByIdIn(List<String> ids);
 
     Maybe<Application> findById(String id);
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.application;
+import { TestBed, inject } from '@angular/core/testing';
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum ApplicationType {
-    WEB, NATIVE, BROWSER, SERVICE, RESOURCE_SERVER
-}
+import { ApplicationResourceResolver } from './application-resource.resolver';
+
+describe('ApplicationResourceResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [ApplicationResourceResolver]
+    });
+  });
+
+  it('should ...', inject([ApplicationResourceResolver], (service: ApplicationResourceResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});

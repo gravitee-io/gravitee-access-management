@@ -270,6 +270,10 @@ import { UserAvatarComponent } from './components/user-avatar/user-avatar.compon
 import { BreadcrumbService } from './services/breadcrumb.service';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { UmaComponent } from './domain/settings/uma/uma.component';
+import { ApplicationResourcesComponent } from './domain/applications/application/advanced/resources/resources.component';
+import { ApplicationResourcesResolver } from './resolvers/application-resources.resolver';
+import { ApplicationResourceComponent } from './domain/applications/application/advanced/resources/resource/resource.component';
+import { ApplicationResourceResolver } from './resolvers/application-resource.resolver';
 
 @NgModule({
   declarations: [
@@ -415,6 +419,8 @@ import { UmaComponent } from './domain/settings/uma/uma.component';
     ApplicationMetadataComponent,
     ApplicationMembershipsComponent,
     ApplicationFactorsComponent,
+    ApplicationResourcesComponent,
+    ApplicationResourceComponent,
     ManagementRolesComponent,
     ManagementRoleComponent,
     MembershipsComponent,
@@ -521,6 +527,8 @@ import { UmaComponent } from './domain/settings/uma/uma.component';
     EnrolledFactorsResolver,
     AuthGuard,
     AnalyticsService,
+    ApplicationResourcesResolver,
+    ApplicationResourceResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

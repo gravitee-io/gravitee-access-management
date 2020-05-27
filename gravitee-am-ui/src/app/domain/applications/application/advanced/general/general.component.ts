@@ -56,6 +56,10 @@ export class ApplicationGeneralComponent implements OnInit {
     {
       name: 'Backend to Backend',
       type: 'SERVICE'
+    },
+    {
+      name: 'Resource Server',
+      type: 'RESOURCE_SERVER',
     }];
 
   constructor(private route: ActivatedRoute,
@@ -75,12 +79,13 @@ export class ApplicationGeneralComponent implements OnInit {
     this.applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
     this.applicationOAuthSettings.redirectUris = this.applicationOAuthSettings.redirectUris || [];
     this.application.factors = this.application.factors || [];
-    this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) {
-      return {value: item};
-    });
+    this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) { return { value: item }; });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
     this.renewSecretMode = this.authService.hasPermissions(['application_openid_update']);
+    if (!this.domain.uma || !this.domain.uma.enabled) {
+      _.remove(this.applicationTypes, { 'type' : 'RESOURCE_SERVER' });
+    }
   }
 
 

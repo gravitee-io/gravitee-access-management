@@ -25,7 +25,6 @@ import * as _ from 'lodash';
 export class ApplicationCreationStep2Component implements OnInit {
   @Input('application') application: any;
   @ViewChild('appForm') form: any;
-  domains: any[];
   domainId: string;
   applicationTypes: any[] = [
     {
@@ -34,22 +33,25 @@ export class ApplicationCreationStep2Component implements OnInit {
     },
     {
       icon: 'web',
-      type: 'BROWSER',
+      type: 'BROWSER'
     },
     {
       icon: 'devices_other',
-      type: 'NATIVE',
+      type: 'NATIVE'
     },
     {
       icon: 'storage',
-      type: 'SERVICE',
+      type: 'SERVICE'
+    },
+    {
+      icon: 'folder_shared',
+      type: 'RESOURCE_SERVER'
     }];
 
   constructor(private route: ActivatedRoute) { }
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.params['domainId'];
-    this.domains = this.route.snapshot.data['domains'];
   }
 
   icon(app) {

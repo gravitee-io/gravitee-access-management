@@ -22,10 +22,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -34,10 +31,13 @@ import java.util.Set;
 public interface ResourceService {
 
     Single<Page<Resource>> findByDomain(String domain, int page, int size);
+    Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size);
     Single<List<Resource>> findByResources(List<String> resourceIds);
     Single<List<Resource>> listByDomainAndClientAndUser(String domain, String client, String userId);
     Single<List<Resource>> findByDomainAndClientAndUserAndResources(String domain, String client, String userId, List<String> resourceIds);
     Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resourceId);
+    Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId);
+    Single<Map<String, Map<String, Object>>> getMetadata(List<Resource> resources);
     Single<Resource> create(NewResource newResource, String domain, String client, String userId);
     Single<Resource> update(NewResource newResource, String domain, String client, String userId, String resourceId);
     Single<Resource> update(Resource resource);

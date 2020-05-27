@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input } from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'application-creation-step1',
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss']
 })
-export class ApplicationCreationStep1Component {
+export class ApplicationCreationStep1Component implements OnInit {
   @Input() application;
+  private domain: any;
   applicationTypes: any[] = [
     {
       name: 'Web',
@@ -50,9 +53,23 @@ export class ApplicationCreationStep1Component {
       type: 'SERVICE',
       description: 'Machine-to-Machine apps',
       subDescription : 'e.g : Shell script, daemon, CLI'
+    },
+    {
+      name: 'Resource Server',
+      icon: 'folder_shared',
+      type: 'RESOURCE_SERVER',
+      description: 'Resource Server apps',
+      subDescription : 'e.g : APIs'
     }];
 
-  constructor() {}
+  constructor(private route: ActivatedRoute) {}
+
+  ngOnInit(): void {
+    this.domain = this.route.snapshot.data['domain'];
+    if (!this.domain.uma || !this.domain.uma.enabled) {
+      _.remove(this.applicationTypes, { 'type' : 'RESOURCE_SERVER' });
+    }
+  }
 
   selectApplicationType(selectedApplicationType) {
     this.application.type = selectedApplicationType;

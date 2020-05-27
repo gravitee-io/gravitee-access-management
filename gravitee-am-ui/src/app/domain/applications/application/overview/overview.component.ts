@@ -70,6 +70,10 @@ export class ApplicationOverviewComponent implements OnInit {
     return this.application.type.toLowerCase() === 'service';
   }
 
+  isUmaApp(): boolean {
+    return this.application.type.toLowerCase() === 'resource_server';
+  }
+
   valueCopied(message: string) {
     this.snackbarService.open(message);
   }

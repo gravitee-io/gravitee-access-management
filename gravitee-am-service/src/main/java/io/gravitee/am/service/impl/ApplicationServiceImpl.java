@@ -182,6 +182,16 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Single<Set<Application>> findByIdIn(List<String> ids) {
+        LOGGER.debug("Find applications by ids : {}", ids);
+        return applicationRepository.findByIdIn(ids)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find applications by ids {}", ids, ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to find applications by ids", ex));
+                });
+    }
+
+    @Override
     public Maybe<Application> findById(String id) {
         LOGGER.debug("Find application by ID: {}", id);
         return applicationRepository.findById(id)

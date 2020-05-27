@@ -20,8 +20,8 @@
     Set up your application that represents the connection between your <b>Software</b> and the <b>Authorization Server</b><br/> for Authentication and Account Management.
   </p>
 
-  <div fxLayout="row" fxLayoutWrap class="application-creation-step1-content">
-    <mat-card *ngFor="let applicationType of applicationTypes" fxFlex="30" (click)="selectApplicationType(applicationType.type)" [ngClass]="applicationType.type === application.type ? 'selected' : ''">
+  <div fxLayout="row wrap" fxLayoutAlign="center center" class="application-creation-step1-content">
+    <mat-card *ngFor="let applicationType of applicationTypes" fxFlex="22" (click)="selectApplicationType(applicationType.type)" [ngClass]="applicationType.type === application.type ? 'selected' : ''">
       <mat-card-content>
         <div>
           <i [ngClass]="applicationType.type === application.type ? 'selected' : ''" class="material-icons">{{applicationType.icon}}</i>

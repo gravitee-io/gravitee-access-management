@@ -144,6 +144,11 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
+    public Single<Set<Application>> findByIdIn(List<String> ids) {
+        return Observable.fromPublisher(applicationsCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
     public Single<Application> create(Application item) {
         ApplicationMongo application = convert(item);
         application.setId(application.getId() == null ? RandomString.generate() : application.getId());

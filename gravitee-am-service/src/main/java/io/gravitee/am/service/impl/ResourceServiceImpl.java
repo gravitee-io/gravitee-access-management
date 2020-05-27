@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.management.api.ResourceRepository;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewResource;
 import io.reactivex.Completable;
@@ -33,8 +37,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,10 +51,16 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Lazy
     @Autowired
-    ResourceRepository repository;
+    private ResourceRepository repository;
 
     @Autowired
     private ScopeService scopeService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private ApplicationService applicationService;
 
     @Override
     public Single<Page<Resource>> findByDomain(String domain, int page, int size) {
@@ -62,6 +71,12 @@ public class ResourceServiceImpl implements ResourceService {
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find resources by domain %s", domain), ex));
                 });
+    }
+
+    @Override
+    public Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size) {
+        LOGGER.debug("Listing resource set for domain {} and client {}", domain, client);
+        return repository.findByDomainAndClient(domain, client, page, size);
     }
 
     @Override
@@ -86,6 +101,39 @@ public class ResourceServiceImpl implements ResourceService {
     public Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resourceId) {
         LOGGER.debug("Getting resource {} for resource owner {} and client {} and resource {}", resourceId, userId, client, resourceId);
         return repository.findByDomainAndClientAndUserAndResource(domain, client, userId, resourceId);
+    }
+
+    @Override
+    public Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId) {
+        LOGGER.debug("Getting resource set {} for domain {} client {} and resource {}", resourceId, domain, client, resourceId);
+        return repository.findById(resourceId)
+                .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resourceId)))
+                .map(resource -> {
+                    if (!domain.equals(resource.getDomain())) {
+                        throw new ResourceNotFoundException(resourceId);
+                    }
+                    if (!client.equals(resource.getClientId())) {
+                        throw new ResourceNotFoundException(resourceId);
+                    }
+                    return resource;
+                });
+    }
+
+    @Override
+    public Single<Map<String, Map<String, Object>>> getMetadata(List<Resource> resources) {
+        if (resources == null || resources.isEmpty()) {
+            return Single.just(Collections.emptyMap());
+        }
+
+        List<String> userIds = resources.stream().filter(resource -> resource.getUserId() != null).map(Resource::getUserId).distinct().collect(Collectors.toList());
+        List<String> appIds = resources.stream().filter(resource -> resource.getClientId() != null).map(Resource::getClientId).distinct().collect(Collectors.toList());
+
+        return Single.zip(userService.findByIdIn(userIds), applicationService.findByIdIn(appIds), (users, apps) -> {
+            Map<String, Map<String, Object>> metadata = new HashMap<>();
+            metadata.put("users", users.stream().collect(Collectors.toMap(User::getId, this::filter)));
+            metadata.put("applications", apps.stream().collect(Collectors.toMap(Application::getId, this::filter)));
+            return metadata;
+        });
     }
 
     @Override
@@ -169,5 +217,19 @@ public class ResourceServiceImpl implements ResourceService {
             }
         }
         return Single.just(toValidate);
+    }
+
+    private User filter(User user) {
+        User resourceOwner = new User();
+        resourceOwner.setId(user.getId());
+        resourceOwner.setDisplayName(user.getDisplayName());
+        return resourceOwner;
+    }
+
+    private Application filter(Application application) {
+        Application client = new Application();
+        client.setId(application.getId());
+        client.setName(application.getName());
+        return client;
     }
 }

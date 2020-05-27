@@ -97,4 +97,26 @@ export class ApplicationService {
         return perms;
       }));
   }
+
+  resources(domainId, id, page, size): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/resources?page=' + page + '&size=' + size)
+      .pipe(map(pagedResponse => {
+        if (pagedResponse.data) {
+          const resources = pagedResponse.data[0].resources;
+          const metadata = pagedResponse.data[0].metadata;
+          const resourceSet = resources.map(r => {
+            r.userName = (metadata['users'][r.userId]) ? metadata['users'][r.userId].displayName : 'Unknown user';
+            r.appName = (metadata['applications'][r.clientId]) ? metadata['applications'][r.clientId].name : 'Unknown app';
+            return r;
+          });
+          return {data: resourceSet, totalCount: pagedResponse.totalCount};
+        } else {
+          return {data: [], totalCount: 0};
+        }
+      }));
+  }
+
+  resource(domainId, id, resourceId): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/resources/' + resourceId);
+  }
 }
