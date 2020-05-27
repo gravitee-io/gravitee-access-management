@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -45,6 +46,8 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
     Single<Set<Application>> findByFactor(String factor);
 
     Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant);
+
+    Single<Set<Application>> findByIdIn(List<String> ids);
 
     Single<Long> count();
 

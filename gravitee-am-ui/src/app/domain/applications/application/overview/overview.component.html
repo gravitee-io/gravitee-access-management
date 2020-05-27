@@ -19,7 +19,7 @@
   <div>
     <div fxFlex="70">
       <div class="application-doc-content">
-        <div *ngIf="!isServiceApp()">
+        <div *ngIf="!isServiceApp() && !isUmaApp()">
           <h1>Integrate authentication to your application</h1>
           <h2>Get your Application Information</h2>
           <p>
@@ -192,6 +192,113 @@
   -H 'Authorization: Bearer access_token'
             </pre>
           </div>
+        </div>
+        <div *ngIf="isUmaApp()">
+          <h1>Control access to your Resources</h1>
+          <p>A UMA 2.0 Resource Server allows for an end user to manage access to their data by defining a set of policies to govern access to that resource.</p>
+          <h2>Manage Resource Sets</h2>
+          <p>
+            UMA 2.0 protocol provides a standard endpoint that enable the resource server to put resources under the protection of an authorization server on behalf of the resource owner and manage them over time.
+          </p>
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(create_resource);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #create_resource class="multiline">curl -X POST \
+              {{entrypoint.url}}/{{domain.path}}/uma/protection/resource_set \
+  -H 'Authorization: Bearer |PAT|' \
+  -H 'Content-Type: application/json' \
+  -d '{{ '{' }}
+              "resource_scopes":[
+             "view",
+             "http://photoz.example.com/dev/scopes/print"
+          ],
+          "description":"Collection of digital photographs",
+          "icon_uri":"http://www.example.com/icons/flower.png",
+          "name":"Photo Album",
+          "type":"http://www.example.com/rsrcs/photoalbum"
+              {{ '}' }}'</pre>
+          </div>
+          <blockquote>
+            <p>
+              The endpoint requires a Protection API Token (PAT), which is an OAuth 2.0 access token with a scope of uma_protection.
+              A resource server must acquire a PAT in order to use the resource set endpoint.
+              To request for a PAT you can use any OAuth 2.0 Grant Type that involves a Resource Owner (Authorization Code, Password, ...).
+            </p>
+          </blockquote>
+          <h2>Manage Access Policies</h2>
+          <p>The Authorization Server must manage the resource owner's access policies, so that registered Resource Sets can be protected.</p>
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(create_resource);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #create_resource class="multiline">curl -X POST \
+              {{entrypoint.url}}/{{domain.path}}/uma/protection/resource_set/:resourceId/policies \
+  -H 'Authorization: Bearer |PAT|' \
+  -H 'Content-Type: application/json' \
+  -d '{{ '{' }}
+              "name": "My policy"
+          "description": "My policy description",
+          "type": "GROOVY",
+          "condition: "GROOVY script"
+              {{ '}' }}'</pre>
+          </div>
+          <blockquote>
+            <p>
+              Use the PAT Bearer Token previously acquired on behalf of the resource owner.
+            </p>
+          </blockquote>
+          <h2>Request for a Permission Ticket</h2>
+          <p>
+            The permission endpoint defines a means for the resource server to request one or more permissions when it receives a request for access to a resource
+            with the authorization server on the client's behalf, and to receive a permission ticket in return.
+          </p>
+          <p>
+            In its response, the authorization server returns a permission ticket for the resource server to give to the client that represents
+            the same permissions that the resource server requested.
+          </p>
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pt_request);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pt_request class="multiline">curl -X POST \
+              {{entrypoint.url}}/{{domain.path}}/uma/protection/permission \
+  -H 'Authorization: Bearer |PAT|' \
+  -H 'Content-Type: application/json' \
+  -d '{{ '{' }}
+              "resource_id":":resourceId",
+          "resource_scopes":[
+              "view",
+              "http://photoz.example.com/dev/scopes/print"
+           ]
+              {{ '}' }}'</pre>
+          </div>
+          <blockquote>
+            <p>
+              Use the PAT Bearer Token previously acquired on behalf of the resource owner.
+            </p>
+          </blockquote>
+          <h2>Obtain a Requesting Party Token (RPT)</h2>
+          <p>To access the resource owner's resource set a request party must obtain an access token (called the RPT).
+            To do so the application of the requesting party must use the User-Managed Access (UMA) 2.0 Grant for OAuth 2.0 Authorization.</p>
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pt_request);">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pt_request class="multiline">curl -X POST \
+              {{entrypoint.url}}/{{domain.path}}/oauth/token \
+  -H 'Authorization: Basic Base64(rqpClientId:rqpClientSecret)' \
+  -H 'Content-Type: application/x-www-form-url-encoded' \
+  -d 'grant_type=urn:ietf:params:oauth:grant-type:uma-ticket' \
+  -d 'ticket=|PT|' \
+  -d 'claim_token=|ID_Token|'
+  -d 'claim_token_format=http://openid.net/specs/openid-connect-core-1_0.html#IDToken'</pre>
+          </div>
+          <blockquote>
+            <p>
+              Use the PT Token previously acquired when calling the resource server the first time and the ID Token acquired during the requesting party authentication flow (OpenID Connect flow).
+            </p>
+          </blockquote>
         </div>
       </div>
     </div>

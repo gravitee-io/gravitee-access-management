@@ -26,6 +26,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -53,6 +54,15 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
     @PostConstruct
     public void init() {
         resourceCollection = mongoOperations.getCollection(COLLECTION_NAME, ResourceMongo.class);
+        super.createIndex(resourceCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1));
+        super.createIndex(resourceCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USER, 1));
+    }
+
+    @Override
+    public Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size) {
+        Single<Long> countOperation = Observable.fromPublisher(resourceCollection.countDocuments(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client)))).first(0l);
+        Single<List<Resource>> resourcesOperation = Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).toList();
+        return Single.zip(countOperation, resourcesOperation, (count, resourceSets) -> new Page<>(resourceSets, page, count));
     }
 
     @Override

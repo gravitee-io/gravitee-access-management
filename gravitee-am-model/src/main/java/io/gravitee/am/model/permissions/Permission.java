@@ -75,7 +75,8 @@ public enum Permission {
     APPLICATION_OPENID(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.APPLICATION),
     APPLICATION_CERTIFICATE(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.APPLICATION),
     APPLICATION_MEMBER(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.APPLICATION),
-    APPLICATION_FACTOR(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.APPLICATION);
+    APPLICATION_FACTOR(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.APPLICATION),
+    APPLICATION_RESOURCE(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.APPLICATION);
 
     List<ReferenceType> relevantTypes;
 

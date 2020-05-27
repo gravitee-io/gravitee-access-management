@@ -30,6 +30,7 @@ import java.util.List;
 public interface ResourceRepository extends CrudRepository<Resource, String> {
 
     Single<Page<Resource>> findByDomain(String domain, int page, int size);
+    Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size);
     Single<List<Resource>> findByResources(List<String> resources);
     Single<List<Resource>> findByDomainAndClientAndUser(String domain, String client, String userId);
     Single<List<Resource>> findByDomainAndClientAndUserAndResources(String domain, String client, String userId, List<String> resource);

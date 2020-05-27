@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.application;
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum ApplicationType {
-    WEB, NATIVE, BROWSER, SERVICE, RESOURCE_SERVER
+@Component({
+  selector: 'app-application-resource',
+  templateUrl: './resource.component.html',
+  styleUrls: ['./resource.component.scss']
+})
+export class ApplicationResourceComponent implements OnInit {
+  resource: any;
+
+  constructor(private route: ActivatedRoute) {
+  }
+
+  ngOnInit(): void {
+    this.resource = this.route.snapshot.data['resource'];
+  }
 }

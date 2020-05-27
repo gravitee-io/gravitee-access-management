@@ -8,6 +8,7 @@
     mat-card {
       margin: 10px;
       box-shadow: none;
+      min-height: 280px;
       &:not(.selected) {
         border: 1px solid rgba(0, 0, 0, 0.12);
       }
@@ -18,14 +19,12 @@
         text-align: center;
         margin-top: 10px;
         i {
-          font-size: 55px;
+          font-size: 42px;
+          padding: 20px;
           &:not(.selected) {
             border: 1px solid #e5e5e5;
           }
           border-radius: 50%;
-          width: 130px;
-          line-height: 130px;
-          height: 130px;
         }
         p {
           color: #999;

@@ -1,0 +1,67 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column">
+  <div class="gv-form-section">
+    <div class="gv-form-section-title">
+      <h5>Resources</h5>
+      <mat-divider></mat-divider>
+    </div>
+    <div>
+      <p>Administrators of this application can list resources registered by resource owners via the UMA 2.0 Resource Set Registration Endpoint.</p>
+      <p><i>This endpoint defined by the UMA 2.0 specification is used by the resource server to register resource sets it wants the authorization server to protect and manage access policies.</i></p>
+    </div>
+  </div>
+
+  <ngx-datatable class="material"
+                 [columnMode]="'flex'"
+                 [headerHeight]="40"
+                 [footerHeight]="40"
+                 [rowHeight]="50"
+                 [rows]='resources'
+                 [externalPaging]="true"
+                 [count]="page.totalElements"
+                 [offset]="page.pageNumber"
+                 [limit]="page.size"
+                 (page)='setPage($event)'>
+    <ngx-datatable-column name="Resource" [flexGrow]="4" [cellClass]="'resource-name-cell'">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <div class="resource-header" fxLayout="row">
+          <div class="resource-icon">
+            <mat-icon>insert_drive_file</mat-icon>
+          </div>
+          <div class="resource-information" fxLayout="column">
+            <h3>{{row.name}}</h3>
+            <small>{{row.description}}</small>
+          </div>
+        </div>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="Owner" [flexGrow]="2">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <span>{{row.userName}}</span>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="" [flexGrow]="1">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <div fxLayout="row" class="gv-table-cell-actions">
+          <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['application_resource_read']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+        </div>
+      </ng-template>
+    </ngx-datatable-column>
+  </ngx-datatable>
+</div>

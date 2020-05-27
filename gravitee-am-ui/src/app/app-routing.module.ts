@@ -154,6 +154,10 @@ import {EntrypointComponent} from './settings/management/entrypoints/entrypoint/
 import {EntrypointResolver} from './resolvers/entrypoint.resolver';
 import {EntrypointsResolver} from './resolvers/entrypoints.resolver';
 import {UmaComponent} from './domain/settings/uma/uma.component';
+import {ApplicationResourcesComponent} from './domain/applications/application/advanced/resources/resources.component';
+import {ApplicationResourcesResolver} from './resolvers/application-resources.resolver';
+import {ApplicationResourceComponent} from './domain/applications/application/advanced/resources/resource/resource.component';
+import {ApplicationResourceResolver} from './resolvers/application-resource.resolver';
 
 const routes: Routes = [
   {
@@ -571,7 +575,7 @@ const routes: Routes = [
         component: ApplicationCreationComponent,
         canActivate: [AuthGuard],
         resolve: {
-          domains: DomainsResolver
+          domain: DomainResolver
         },
         data: {
           perms: {
@@ -734,7 +738,7 @@ const routes: Routes = [
                     only: ['application_factor_list']
                   },
                   types: {
-                    only: ['WEB', 'NATIVE', 'BROWSER']
+                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
                   }
                 }
               },
@@ -750,7 +754,7 @@ const routes: Routes = [
                     only: ['application_settings_read']
                   },
                   types: {
-                    only: ['WEB', 'NATIVE', 'BROWSER']
+                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
                   }
                 }
               },
@@ -767,7 +771,38 @@ const routes: Routes = [
                     only: ['application_certificate_list']
                   }
                 }
-              }
+              },
+              { path: 'resources',
+                component: ApplicationResourcesComponent,
+                canActivate: [AuthGuard],
+                resolve: {
+                  resources: ApplicationResourcesResolver
+                },
+                data: {
+                  menu: {
+                    label: 'Resources',
+                    section: 'Security'
+                  },
+                  perms: {
+                    only: ['application_resource_list']
+                  },
+                  types: {
+                    only: ['RESOURCE_SERVER']
+                  }
+                }
+              },
+              { path: 'resources/:resourceId',
+                component: ApplicationResourceComponent,
+                canActivate: [AuthGuard],
+                resolve: {
+                  resource: ApplicationResourceResolver
+                },
+                data: {
+                  perms: {
+                    only: ['application_resource_read']
+                  }
+                }
+              },
             ]
           }
         ]
