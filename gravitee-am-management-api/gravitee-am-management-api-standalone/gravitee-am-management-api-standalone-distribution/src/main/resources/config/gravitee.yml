@@ -159,7 +159,7 @@ jwt:
   #expire-after: 604800 # the end of validity of the token in seconds (default 604800 = a week)
   #issuer: https://gravitee.am # the principal that issued the JWT (default https://gravitee.am)
   #cookie-path: / # cookie context path (default /)
-  #cookie-domain: .gravitee.io cookie domain (default "")
+  #cookie-domain: .gravitee.io # cookie domain (default "")
   #cookie-secure: true # cookie secure flag (default false)
 
 # SMTP configuration used to send mails
