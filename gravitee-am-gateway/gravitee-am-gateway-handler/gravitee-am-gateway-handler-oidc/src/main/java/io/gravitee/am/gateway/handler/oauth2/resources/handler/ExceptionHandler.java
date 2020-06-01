@@ -16,7 +16,10 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler;
 
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.exception.uma.UmaException;
 import io.gravitee.am.gateway.handler.oauth2.service.response.OAuth2ErrorResponse;
+import io.gravitee.am.gateway.handler.oauth2.service.response.UMAErrorResponse;
+import io.gravitee.am.gateway.handler.oauth2.service.response.UMARequiredClaimsError;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -27,6 +30,9 @@ import io.vertx.ext.web.handler.impl.HttpStatusException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -51,6 +57,20 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
                         .setStatusCode(oAuth2Exception.getHttpStatusCode())
                         .end(Json.encodePrettily(oAuth2ErrorResponse));
+            } else if (throwable instanceof UmaException) {
+                UmaException umaException = (UmaException) throwable;
+                UMAErrorResponse umaErrorResponse = new UMAErrorResponse(umaException.getError())
+                        .setTicket(umaException.getTicket())
+                        .setRedirectUser(umaException.getRedirectUser())
+                        .setInterval(umaException.getInterval())
+                        .setRequiredClaims(this.from(umaException));
+                routingContext
+                        .response()
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .setStatusCode(umaException.getStatus())
+                        .end(Json.encodePrettily(umaErrorResponse));
             } else if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
                 OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(policyChainException.key());
@@ -82,5 +102,12 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                 }
             }
         }
+    }
+
+    private List<UMARequiredClaimsError> from(UmaException umaException) {
+        if(umaException.getRequiredClaims()!=null) {
+            return umaException.getRequiredClaims().stream().map(UMARequiredClaimsError::from).collect(Collectors.toList());
+        }
+        return null;
     }
 }

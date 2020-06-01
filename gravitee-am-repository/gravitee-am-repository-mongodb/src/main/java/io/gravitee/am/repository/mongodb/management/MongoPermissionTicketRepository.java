@@ -47,35 +47,35 @@ public class MongoPermissionTicketRepository extends AbstractManagementMongoRepo
     private static final String FIELD_ID = "_id";
     private static final String FIELD_RESET_TIME = "expireAt";
     public static final String COLLECTION_NAME = "uma_permission_ticket";
-    private MongoCollection<PermissionTicketMongo> resourceSetCollection;
+    private MongoCollection<PermissionTicketMongo> permissionTicketCollection;
 
     @PostConstruct
     public void init() {
-        resourceSetCollection = mongoOperations.getCollection(COLLECTION_NAME, PermissionTicketMongo.class);
-        super.createIndex(resourceSetCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
+        permissionTicketCollection = mongoOperations.getCollection(COLLECTION_NAME, PermissionTicketMongo.class);
+        super.createIndex(permissionTicketCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
     }
 
     @Override
     public Maybe<PermissionTicket> findById(String id) {
-        return Observable.fromPublisher(resourceSetCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(permissionTicketCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<PermissionTicket> create(PermissionTicket ticket) {
         PermissionTicketMongo permissionTicket = convert(ticket);
         permissionTicket.setId(permissionTicket.getId() == null ? RandomString.generate() : permissionTicket.getId());
-        return Single.fromPublisher(resourceSetCollection.insertOne(permissionTicket)).flatMap(success -> findById(permissionTicket.getId()).toSingle());
+        return Single.fromPublisher(permissionTicketCollection.insertOne(permissionTicket)).flatMap(success -> findById(permissionTicket.getId()).toSingle());
     }
 
     @Override
     public Single<PermissionTicket> update(PermissionTicket ticket) {
         PermissionTicketMongo permissionTicket = convert(ticket);
-        return Single.fromPublisher(resourceSetCollection.replaceOne(eq(FIELD_ID, permissionTicket.getId()), permissionTicket)).flatMap(success -> findById(permissionTicket.getId()).toSingle());
+        return Single.fromPublisher(permissionTicketCollection.replaceOne(eq(FIELD_ID, permissionTicket.getId()), permissionTicket)).flatMap(success -> findById(permissionTicket.getId()).toSingle());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(resourceSetCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(permissionTicketCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
     private PermissionTicketMongo convert(PermissionTicket permissionTicket) {

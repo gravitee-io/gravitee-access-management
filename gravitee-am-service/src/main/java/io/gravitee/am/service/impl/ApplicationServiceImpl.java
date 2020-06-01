@@ -726,4 +726,5 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         return Single.just(application);
-    }}
+    }
+}

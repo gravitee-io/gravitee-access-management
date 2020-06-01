@@ -46,7 +46,7 @@ public class UMAProtectionApiAccessHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext context) {
         if(domain.getUma()==null || !domain.getUma().isEnabled()) {
-            LOGGER.debug("UMA 2.0 Resource Set registration is disabled");
+            LOGGER.debug("UMA 2.0 Resource registration is disabled");
             context.fail(new UMAProtectionApiForbiddenException());
             return;
         }

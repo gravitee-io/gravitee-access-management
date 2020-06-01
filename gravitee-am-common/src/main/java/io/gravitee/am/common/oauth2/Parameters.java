@@ -110,11 +110,15 @@ public interface Parameters {
      */
     String CLAIM_TOKEN = "claim_token";
     /**
-     * UMA PCT.
+     * UMA claim token format.
+     */
+    String CLAIM_TOKEN_FORMAT = "claim_token_format";
+    /**
+     * UMA PCT (Persisted Claims Token).
      */
     String PCT = "pct";
     /**
-     * UMA RPT.
+     * UMA RPT (Requesting Party Token).
      */
     String RPT = "rpt";
     /**
@@ -128,5 +132,5 @@ public interface Parameters {
 
     Collection<String> values = Arrays.asList(CLIENT_ID, CLIENT_SECRET, RESPONSE_TYPE, RESPONSE_MODE, REDIRECT_URI, SCOPE, STATE, CODE, GRANT_TYPE, USERNAME, PASSWORD,
                 REFRESH_TOKEN, ASSERTION, CLIENT_ASSERTION, CLIENT_ASSERTION_TYPE, CODE_VERIFIER, CODE_CHALLENGE, CODE_CHALLENGE_METHOD,
-                CLAIM_TOKEN, PCT, RPT, TICKET, VTR);
+                CLAIM_TOKEN, CLAIM_TOKEN_FORMAT, PCT, RPT, TICKET, VTR);
 }

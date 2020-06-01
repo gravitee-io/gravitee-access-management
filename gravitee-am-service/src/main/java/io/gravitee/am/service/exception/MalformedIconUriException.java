@@ -15,20 +15,28 @@
  */
 package io.gravitee.am.service.exception;
 
+import io.gravitee.common.http.HttpStatusCode;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class ResourceSetNotFoundException extends AbstractNotFoundException {
+public class MalformedIconUriException extends AbstractManagementException {
 
-    private final String resource;
 
-    public ResourceSetNotFoundException(String resource) {
-        this.resource = resource;
+    private final String iconUri;
+
+    public MalformedIconUriException(String iconUri) {
+        this.iconUri = iconUri;
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
     }
 
     @Override
     public String getMessage() {
-        return "Resource Set id [" + resource + "] can not be found.";
+        return "Icon uri claim is malformed : " + iconUri;
     }
 }

@@ -20,6 +20,7 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
@@ -119,6 +120,9 @@ public class DomainServiceTest {
     private Factor factor;
 
     @Mock
+    private Resource resource;
+
+    @Mock
     private DomainRepository domainRepository;
 
     @Mock
@@ -168,6 +172,9 @@ public class DomainServiceTest {
 
     @Mock
     private FactorService factorService;
+
+    @Mock
+    private ResourceService resourceService;
 
     @Test
     public void shouldFindById() {
@@ -474,6 +481,8 @@ public class DomainServiceTest {
         when(factor.getId()).thenReturn(FACTOR_ID);
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(factor)));
         when(factorService.delete(DOMAIN_ID, FACTOR_ID)).thenReturn(Completable.complete());
+        when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(new HashSet<>(Collections.singletonList(resource))));
+        when(resourceService.delete(resource)).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -517,6 +526,7 @@ public class DomainServiceTest {
         when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();

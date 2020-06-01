@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.oidc.JWKSet;

@@ -15,7 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint;
 
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.common.exception.uma.UmaException;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
@@ -39,8 +40,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.mockito.Matchers.any;
@@ -58,9 +60,6 @@ public class TokenEndpointTest extends RxWebTestBase {
 
     @Mock
     private TokenGranter tokenGranter;
-
-    @Mock
-    private ClientSyncService clientSyncService;
 
     @Override
     public void setUp() throws Exception {
@@ -221,5 +220,23 @@ public class TokenEndpointTest extends RxWebTestBase {
         testRequest(
                 HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
                 HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+    }
+
+    @Test
+    public void testInvokeTokenEndpoint_umaException() throws Exception{
+        Client client = new Client();
+        client.setClientId("my-client");
+        client.setAuthorizedGrantTypes(Arrays.asList(GrantType.UMA));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.oidc.Client.class))).thenReturn(Single.error(UmaException.requestDeniedBuilder().build()));
+
+        testRequest(
+                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=urn:ietf:params:oauth:grant-type:uma-ticket",
+                HttpStatusCode.FORBIDDEN_403, "Forbidden");
     }
 }

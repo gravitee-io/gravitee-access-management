@@ -36,9 +36,10 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.common.util.MultiValueMap;
@@ -151,6 +152,10 @@ public class TokenServiceImpl implements TokenService {
                     }
                     if (!refreshToken1.getClientId().equals(tokenRequest.getClientId())) {
                         throw new InvalidGrantException("Refresh token was issued to another client");
+                    }
+                    // Propagate UMA 2.0 permissions
+                    if(refreshToken1.getAdditionalInformation().get("permissions")!=null) {
+                        tokenRequest.setPermissions((List<PermissionRequest>)refreshToken1.getAdditionalInformation().get("permissions"));
                     }
 
                     // refresh token is used only once
@@ -304,6 +309,13 @@ public class TokenServiceImpl implements TokenService {
         if (scopes != null && !scopes.isEmpty()) {
             jwt.setScope(String.join(" ", scopes));
         }
+
+        // set permissions (UMA 2.0)
+        List<PermissionRequest> permissions = oAuth2Request.getPermissions();
+        if(permissions!=null && !permissions.isEmpty()) {
+            jwt.put("permissions",permissions);
+        }
+
         return jwt;
     }
 

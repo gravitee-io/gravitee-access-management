@@ -17,17 +17,22 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter;
 
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.client.ClientCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.code.AuthorizationCodeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.refresh.RefreshTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.service.granter.uma.UMATokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.PermissionTicketService;
+import io.gravitee.am.service.ResourceService;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -48,13 +53,25 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     private TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
     @Autowired
+    private Domain domain;
+
+    @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private JWTService jwtService;
 
     @Autowired
     private UserAuthenticationManager userAuthenticationManager;
 
     @Autowired
     private AuthorizationCodeService authorizationCodeService;
+
+    @Autowired
+    private PermissionTicketService permissionTicketService;
+
+    @Autowired
+    private ResourceService resourceService;
 
     public CompositeTokenGranter() { }
 
@@ -89,5 +106,6 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService,userAuthenticationManager));
         addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager));
         addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
+        addTokenGranter(GrantType.UMA, new UMATokenGranter(tokenService, userAuthenticationManager, permissionTicketService, resourceService, jwtService, domain));
     }
 }

@@ -106,7 +106,7 @@ paths:
         description: Grant type used to request for an access token
         required: true
         type: string
-        enum: [client_credentials, password, authorization_code, refresh_token, urn:ietf:params:oauth:grant-type:jwt-bearer]
+        enum: [client_credentials, password, authorization_code, refresh_token, urn:ietf:params:oauth:grant-type:jwt-bearer, urn:ietf:params:oauth:grant-type:uma-ticket]
       - in: formData
         name: scope
         description: The scope of the access request
@@ -136,6 +136,27 @@ paths:
         name: refresh_token
         description: The refresh token issued to the client (Refresh Token Flow)
         required: true
+        type: string
+      - in: formData
+        name: ticket
+        description: The most recent permission ticket received by the client as part of this authorization process. (UMA grant)
+        required: true
+        type: string
+      - in: formData
+        name: claim_token
+        description: If this parameter is used, it **MUST** appear together with the `claim_token_format` parameter. A string containing directly pushed claim information in the indicated format (UMA grant)
+        type: string
+      - in: formData
+        name: claim_token_format
+        description: If this parameter is used, it **MUST** appear together with the `claim_token` parameter. A string specifying the format of the claim token in which the client is directly pushing claims to the authorization server (UMA grant)
+        type: string
+      - in: formData
+        name: pct
+        description: The client MAY include the PCT _(Persisted Claim Token)_ in order to optimize the process of seeking a new RPT _(Requesting Party Token)_. (UMA grant)
+        type: string
+      - in: formData
+        name: rpt
+        description: Supplying an existing RPT gives the authorization server the option of upgrading that RPT. (UMA grant)
         type: string
       responses:
         '400':
@@ -240,6 +261,14 @@ definitions:
       additional_parameters:
         type: object
         description: Additional ininital Token/Authorize query parameters added to the Access Token
+      pct:
+        type: string
+        description: OPTIONAL, A correlation handle representing claims and other information collected during this authorization process,
+        which the client is able to present later in order to optimize future authorization processes on behalf of a requesting party. (UMA grant)
+      upgraded:
+        type: boolean
+        description: OPTIONAL. If the client submits an RPT in the request and the authorization server includes the permissions of the RPT
+        from the request as part of the newly issued RPT, then the value will be set to true. Otherwise it may be ommited.
   IntrospectionResponse:
     type: object
     properties:

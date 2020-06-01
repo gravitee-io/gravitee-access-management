@@ -34,6 +34,8 @@ public class UpdateScope {
 
     private Boolean discovery;
 
+    private String iconUri;
+
     public String getName() {
         return name;
     }
@@ -68,5 +70,13 @@ public class UpdateScope {
 
     public Boolean getDiscovery() {
         return discovery;
+    }
+
+    public String getIconUri() {
+        return iconUri;
+    }
+
+    public void setIconUri(String iconUri) {
+        this.iconUri = iconUri;
     }
 }

@@ -42,9 +42,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -99,7 +99,7 @@ public class ScopeServiceImpl implements ScopeService {
         String scopeKey = newScope.getKey().replaceAll("\\s+", "_");
         return scopeRepository.findByDomainAndKey(domain, scopeKey)
                 .isEmpty()
-                .flatMap(empty -> {
+                .map(empty -> {
                     if (!empty) {
                         throw new ScopeAlreadyExistsException(scopeKey, domain);
                     }
@@ -109,13 +109,16 @@ public class ScopeServiceImpl implements ScopeService {
                     scope.setKey(scopeKey);
                     scope.setName(newScope.getName());
                     scope.setDescription(newScope.getDescription());
+                    scope.setIconUri(newScope.getIconUri());
                     scope.setExpiresIn(newScope.getExpiresIn());
                     scope.setDiscovery(newScope.isDiscovery());
                     scope.setCreatedAt(new Date());
                     scope.setUpdatedAt(new Date());
 
-                    return scopeRepository.create(scope);
+                    return scope;
                 })
+                .flatMap(this::validateIconUri)
+                .flatMap(scopeRepository::create)
                 .flatMap(scope -> {
                     // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.CREATE));
@@ -202,6 +205,7 @@ public class ScopeServiceImpl implements ScopeService {
                     if (!oldScope.isSystem() && updateScope.getDiscovery() != null) {
                         scopeToUpdate.setDiscovery(updateScope.isDiscovery());
                     }
+                    scopeToUpdate.setIconUri(updateScope.getIconUri());
 
                     return update(domain, scopeToUpdate, oldScope, principal);
                 })
@@ -217,7 +221,8 @@ public class ScopeServiceImpl implements ScopeService {
     private Single<Scope> update(String domain, Scope toUpdate, Scope oldValue, User principal) {
 
         toUpdate.setUpdatedAt(new Date());
-        return scopeRepository.update(toUpdate)
+        return this.validateIconUri(toUpdate)
+                .flatMap(scopeRepository::update)
                 .flatMap(scope1 -> {
                     // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope1.getId(), ReferenceType.DOMAIN, scope1.getDomain(), Action.UPDATE));
@@ -350,6 +355,21 @@ public class ScopeServiceImpl implements ScopeService {
                 });
     }
 
+    @Override
+    public Single<List<Scope>> findByDomainAndKeys(String domain, List<String> scopeKeys) {
+        LOGGER.debug("Find scopes by domain: {} and scope keys: {}", domain, scopeKeys);
+        if(scopeKeys==null || scopeKeys.isEmpty()) {
+            return Single.just(Collections.emptyList());
+        }
+        return scopeRepository.findByDomainAndKeys(domain, scopeKeys)
+                .onErrorResumeNext(ex -> {
+                    String keys = scopeKeys!=null?String.join(",",scopeKeys):null;
+                    LOGGER.error("An error occurs while trying to find scopes by domain: {} and scope keys: {}", domain, keys, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find scopes by domain: %s and scope keys: %s", domain, keys), ex));
+                });
+    }
+
     /**
      * Throw InvalidClientMetadataException if null or empty, or contains unknown scope.
      * @param scopes Array of scope to validate.
@@ -376,5 +396,14 @@ public class ScopeServiceImpl implements ScopeService {
         return Single.just(true);
     }
 
-
+    private Single<Scope> validateIconUri(Scope scope) {
+        if(scope.getIconUri()!=null) {
+            try {
+                URI.create(scope.getIconUri()).toURL();
+            } catch (MalformedURLException | IllegalArgumentException e) {
+                return Single.error(new MalformedIconUriException(scope.getIconUri()));
+            }
+        }
+        return Single.just(scope);
+    }
 }

@@ -32,6 +32,8 @@ public class NewScope {
     @NotNull
     private String description;
 
+    private String iconUri;
+
     private Integer expiresIn;
 
     private boolean discovery;
@@ -58,6 +60,14 @@ public class NewScope {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getIconUri() {
+        return iconUri;
+    }
+
+    public void setIconUri(String iconUri) {
+        this.iconUri = iconUri;
     }
 
     public Integer getExpiresIn() {

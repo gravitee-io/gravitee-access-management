@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
@@ -36,12 +37,17 @@ import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -102,6 +108,32 @@ public class TokenServiceTest {
     }
 
     @Test
+    public void shouldCreateWithPermissions() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setPermissions(Arrays.asList(new PermissionRequest().setResourceId("rs_one")));
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        when(jwtService.encode(jwtCaptor.capture(), any(Client.class))).thenReturn(Single.just(""));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doNothing().when(tokenManager).storeAccessToken(any());
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        JWT jwt = jwtCaptor.getValue();
+        assertTrue(jwt!=null && jwt.get("permissions")!=null);
+        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+    }
+
+    @Test
     public void shouldRefresh() {
         String clientId = "client-id";
         TokenRequest tokenRequest = new TokenRequest();
@@ -131,6 +163,46 @@ public class TokenServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
+        verify(refreshTokenRepository, times(1)).findByToken(any());
+        verify(refreshTokenRepository, times(1)).delete(anyString());
+    }
+
+    @Test
+    public void shouldRefreshWithPermissions() {
+        String clientId = "client-id";
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setClientId(clientId);
+
+        Client client = new Client();
+        client.setId(clientId);
+        client.setClientId(clientId);
+
+        String token = "refresh-token";
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setId(token);
+        refreshToken.setToken(token);
+        refreshToken.setSubject("subject");
+        refreshToken.setExpireAt(new Date(System.currentTimeMillis() + 10000));
+
+        JWT jwt = new JWT();
+        jwt.setJti(token);
+        jwt.setAud(clientId);
+        jwt.setExp(refreshToken.getExpireAt().getTime() / 1000l);
+        jwt.put("permissions", Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("A"))));
+
+        when(jwtService.decodeAndVerify(any(), any())).thenReturn(Single.just(jwt));
+        when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
+        when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
+
+        TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        //Check permissions are well available into the refresh_token object.
+        testObserver.assertValue(token1 -> token1.getAdditionalInformation().get("permissions")!=null);
+        //Check TokenRequest permissions field is well filled (will be used to propagate the permission into the final access_token)
+        List<PermissionRequest> permissions = tokenRequest.getPermissions();
+        assertNotNull(permissions);
+        assertTrue("one".equals(permissions.get(0).getResourceId()) && "A".equals(permissions.get(0).getResourceScopes().get(0)));
         verify(refreshTokenRepository, times(1)).findByToken(any());
         verify(refreshTokenRepository, times(1)).delete(anyString());
     }

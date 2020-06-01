@@ -80,7 +80,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                 .flatMap(tokenRequest1 -> authorizationCodeService.remove(code, client)
                         .map(authorizationCode -> {
                             checkRedirectUris(tokenRequest1, authorizationCode);
-                            checkPCE(tokenRequest1, authorizationCode);
+                            checkPKCE(tokenRequest1, authorizationCode);
                             // set resource owner
                             tokenRequest1.setSubject(authorizationCode.getSubject());
                             // set original scopes
@@ -132,7 +132,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
      * @param tokenRequest
      * @param authorizationCode
      */
-    private void checkPCE(TokenRequest tokenRequest, AuthorizationCode authorizationCode) {
+    private void checkPKCE(TokenRequest tokenRequest, AuthorizationCode authorizationCode) {
         String codeVerifier = tokenRequest.parameters().getFirst(Parameters.CODE_VERIFIER);
         MultiValueMap<String, String> parameters = authorizationCode.getRequestParameters();
 

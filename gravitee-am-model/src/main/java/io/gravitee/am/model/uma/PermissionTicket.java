@@ -40,7 +40,7 @@ public class PermissionTicket {
     private List<PermissionRequest> permissionRequest;
 
     /**
-     * Security domain associated to the ResourceSet
+     * Security domain associated to the Resource
      */
     private String domain;
 

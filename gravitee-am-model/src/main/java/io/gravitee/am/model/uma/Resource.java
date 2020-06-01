@@ -20,15 +20,15 @@ import java.util.List;
 
 /**
  *
- * Resource Set as described <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-federated-authz-2.0.html#resource-set-desc">here</a>
+ * Resource as described <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-federated-authz-2.0.html#resource-set-desc">here</a>
  *
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class ResourceSet {
+public class Resource {
 
     /**
-     * Resource Set technical id
+     * Resource technical id
      */
     private String id;
 
@@ -58,7 +58,7 @@ public class ResourceSet {
     private String type;
 
     /**
-     * Security domain associated to the ResourceSet
+     * Security domain associated to the Resource
      */
     private String domain;
 
@@ -86,7 +86,7 @@ public class ResourceSet {
         return resourceScopes;
     }
 
-    public ResourceSet setResourceScopes(List<String> resourceScopes) {
+    public Resource setResourceScopes(List<String> resourceScopes) {
         this.resourceScopes = resourceScopes;
         return this;
     }
@@ -95,7 +95,7 @@ public class ResourceSet {
         return description;
     }
 
-    public ResourceSet setDescription(String description) {
+    public Resource setDescription(String description) {
         this.description = description;
         return this;
     }
@@ -104,7 +104,7 @@ public class ResourceSet {
         return iconUri;
     }
 
-    public ResourceSet setIconUri(String iconUri) {
+    public Resource setIconUri(String iconUri) {
         this.iconUri = iconUri;
         return this;
     }
@@ -113,7 +113,7 @@ public class ResourceSet {
         return name;
     }
 
-    public ResourceSet setName(String name) {
+    public Resource setName(String name) {
         this.name = name;
         return this;
     }
@@ -122,7 +122,7 @@ public class ResourceSet {
         return type;
     }
 
-    public ResourceSet setType(String type) {
+    public Resource setType(String type) {
         this.type = type;
         return this;
     }
@@ -131,7 +131,7 @@ public class ResourceSet {
         return domain;
     }
 
-    public ResourceSet setDomain(String domain) {
+    public Resource setDomain(String domain) {
         this.domain = domain;
         return this;
     }
@@ -140,7 +140,7 @@ public class ResourceSet {
         return userId;
     }
 
-    public ResourceSet setUserId(String userId) {
+    public Resource setUserId(String userId) {
         this.userId = userId;
         return this;
     }
@@ -149,7 +149,7 @@ public class ResourceSet {
         return clientId;
     }
 
-    public ResourceSet setClientId(String clientId) {
+    public Resource setClientId(String clientId) {
         this.clientId = clientId;
         return this;
     }
@@ -158,7 +158,7 @@ public class ResourceSet {
         return createdAt;
     }
 
-    public ResourceSet setCreatedAt(Date createdAt) {
+    public Resource setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
         return this;
     }
@@ -167,7 +167,7 @@ public class ResourceSet {
         return updatedAt;
     }
 
-    public ResourceSet setUpdatedAt(Date updatedAt) {
+    public Resource setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
         return this;
     }
@@ -176,7 +176,7 @@ public class ResourceSet {
         return id;
     }
 
-    public ResourceSet setId(String id) {
+    public Resource setId(String id) {
         this.id = id;
         return this;
     }

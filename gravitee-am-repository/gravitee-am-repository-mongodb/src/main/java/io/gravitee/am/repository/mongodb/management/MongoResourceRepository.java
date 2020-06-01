@@ -1,0 +1,139 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.repository.mongodb.management;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.uma.Resource;
+import io.gravitee.am.repository.management.api.ResourceRepository;
+import io.gravitee.am.repository.mongodb.management.internal.model.uma.ResourceMongo;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.mongodb.client.model.Filters.*;
+
+/**
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author GraviteeSource Team
+ */
+@Component
+public class MongoResourceRepository extends AbstractManagementMongoRepository implements ResourceRepository {
+
+    private static final String FIELD_ID = "_id";
+    private static final String FIELD_DOMAIN = "domain";
+    private static final String FIELD_CLIENT = "clientId";
+    private static final String FIELD_USER = "userId";
+    private static final String FIELD_UPDATED_AT = "updatedAt";
+    public static final String COLLECTION_NAME = "uma_resource_set";
+    private MongoCollection<ResourceMongo> resourceCollection;
+
+    @PostConstruct
+    public void init() {
+        resourceCollection = mongoOperations.getCollection(COLLECTION_NAME, ResourceMongo.class);
+    }
+
+    @Override
+    public Maybe<Resource> findById(String id) {
+        return Observable.fromPublisher(resourceCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+    }
+
+    @Override
+    public Single<Resource> create(Resource item) {
+        ResourceMongo resource = convert(item);
+        resource.setId(resource.getId() == null ? RandomString.generate() : resource.getId());
+        return Single.fromPublisher(resourceCollection.insertOne(resource)).flatMap(success -> findById(resource.getId()).toSingle());
+    }
+
+    @Override
+    public Single<Resource> update(Resource item) {
+        ResourceMongo resourceMongo = convert(item);
+        return Single.fromPublisher(resourceCollection.replaceOne(eq(FIELD_ID, resourceMongo.getId()), resourceMongo)).flatMap(success -> findById(resourceMongo.getId()).toSingle());
+    }
+
+    @Override
+    public Completable delete(String id) {
+        return Completable.fromPublisher(resourceCollection.deleteOne(eq(FIELD_ID, id)));
+    }
+
+    @Override
+    public Single<List<Resource>> findByDomainAndClientAndUser(String domain, String client, String user) {
+        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client), eq(FIELD_USER, user)))).map(this::convert).toList();
+    }
+
+    @Override
+    public Single<Page<Resource>> findByDomain(String domain, int page, int size) {
+        Single<Long> countOperation = Observable.fromPublisher(resourceCollection.countDocuments(eq(FIELD_DOMAIN, domain))).first(0l);
+        Single<Set<Resource>> resourceSetOperation = Observable.fromPublisher(resourceCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        return Single.zip(countOperation, resourceSetOperation, (count, resourceSet) -> new Page<>(resourceSet, page, count));
+    }
+
+    @Override
+    public Single<List<Resource>> findByResources(List<String> resources) {
+        return Observable.fromPublisher(resourceCollection.find(in(FIELD_ID, resources))).map(this::convert).toList();
+    }
+
+    @Override
+    public Single<List<Resource>> findByDomainAndClientAndUserAndResources(String domain, String client, String userId, List<String> resources) {
+        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client), eq(FIELD_USER, userId), in(FIELD_ID, resources)))).map(this::convert).toList();
+    }
+
+    @Override
+    public Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String user, String resource) {
+        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client), eq(FIELD_USER, user), eq(FIELD_ID, resource))).first()).firstElement().map(this::convert);
+    }
+
+    private Resource convert(ResourceMongo resourceMongo) {
+        return new Resource()
+                .setId(resourceMongo.getId())
+                .setResourceScopes(resourceMongo.getResourceScopes())
+                .setDescription(resourceMongo.getDescription())
+                .setIconUri(resourceMongo.getIconUri())
+                .setName(resourceMongo.getName())
+                .setType(resourceMongo.getType())
+                .setDomain(resourceMongo.getDomain())
+                .setUserId(resourceMongo.getUserId())
+                .setClientId(resourceMongo.getClientId())
+                .setUpdatedAt(resourceMongo.getUpdatedAt())
+                .setCreatedAt(resourceMongo.getCreatedAt());
+    }
+
+    private ResourceMongo convert(Resource resource) {
+        ResourceMongo resourceMongo = new ResourceMongo()
+                .setId(resource.getId())
+                .setResourceScopes(resource.getResourceScopes())
+                .setDescription(resource.getDescription())
+                .setIconUri(resource.getIconUri())
+                .setName(resource.getName())
+                .setType(resource.getType())
+                .setDomain(resource.getDomain())
+                .setUserId(resource.getUserId())
+                .setClientId(resource.getClientId());
+        resourceMongo.setUpdatedAt(resource.getUpdatedAt());
+        resourceMongo.setCreatedAt(resource.getCreatedAt());
+
+        return resourceMongo;
+    }
+}

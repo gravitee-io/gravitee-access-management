@@ -17,7 +17,7 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.gravitee.am.model.uma.ResourceSet;
+import io.gravitee.am.model.uma.Resource;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NewResourceSet {
+public class NewResource {
 
     @NotNull
     @JsonProperty("resource_scopes")
@@ -67,7 +67,7 @@ public class NewResourceSet {
      * @param toUpdate
      * @return
      */
-    public ResourceSet update(ResourceSet toUpdate) {
+    public Resource update(Resource toUpdate) {
         return toUpdate.setResourceScopes(this.getResourceScopes())
                 .setDescription(this.getDescription())
                 .setIconUri(this.getIconUri())

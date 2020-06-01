@@ -17,11 +17,9 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.Scope;
+import io.gravitee.am.model.uma.PermissionRequest;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -101,6 +99,11 @@ public class OAuth2Request extends BaseRequest {
      * OAuth 2.0 contextual data
      */
     private Map<String, Object> context = new HashMap<>();
+
+    /**
+     * UMA 2.0 permissions
+     */
+    private List<PermissionRequest> permissions;
 
     public String getClientId() {
         return clientId;
@@ -184,6 +187,14 @@ public class OAuth2Request extends BaseRequest {
 
     public void setAuthorizationCode(Map<String, Object> authorizationCode) {
         this.authorizationCode = authorizationCode;
+    }
+
+    public List<PermissionRequest> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(List<PermissionRequest> permissions) {
+        this.permissions = permissions;
     }
 
     public boolean shouldGenerateIDToken() {

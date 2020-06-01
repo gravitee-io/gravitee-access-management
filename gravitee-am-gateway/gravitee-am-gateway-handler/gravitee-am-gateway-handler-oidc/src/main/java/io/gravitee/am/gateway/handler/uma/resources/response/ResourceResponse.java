@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.uma.resources.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.gravitee.am.model.uma.ResourceSet;
+import io.gravitee.am.model.uma.Resource;
 
 import java.util.Date;
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ResourceSetResponse {
+public class ResourceResponse {
 
     @JsonProperty("_id")
     private String id;
@@ -56,64 +56,64 @@ public class ResourceSetResponse {
     @JsonProperty("user_access_policy_uri")
     private String userAccessPolicyUri;
 
-    //Force to build response from a ResourceSet.
-    private ResourceSetResponse() {
+    //Force to build response from a Resource.
+    private ResourceResponse() {
     }
 
-    public ResourceSetResponse setId(String id) {
+    public ResourceResponse setId(String id) {
         this.id = id;
         return this;
     }
 
-    public ResourceSetResponse setResourceScopes(List<String> resourceScopes) {
+    public ResourceResponse setResourceScopes(List<String> resourceScopes) {
         this.resourceScopes = resourceScopes;
         return this;
     }
 
-    public ResourceSetResponse setDescription(String description) {
+    public ResourceResponse setDescription(String description) {
         this.description = description;
         return this;
     }
 
-    public ResourceSetResponse setIconUri(String iconUri) {
+    public ResourceResponse setIconUri(String iconUri) {
         this.iconUri = iconUri;
         return this;
     }
 
-    public ResourceSetResponse setName(String name) {
+    public ResourceResponse setName(String name) {
         this.name = name;
         return this;
     }
 
-    public ResourceSetResponse setType(String type) {
+    public ResourceResponse setType(String type) {
         this.type = type;
         return this;
     }
 
-    public ResourceSetResponse setCreatedAt(Date createdAt) {
+    public ResourceResponse setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
         return this;
     }
 
-    public ResourceSetResponse setUpdatedAt(Date updatedAt) {
+    public ResourceResponse setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
         return this;
     }
 
-    public ResourceSetResponse setUserAccessPolicyUri(String userAccessPolicyUri) {
+    public ResourceResponse setUserAccessPolicyUri(String userAccessPolicyUri) {
         this.userAccessPolicyUri = userAccessPolicyUri;
         return this;
     }
 
-    public static ResourceSetResponse from(ResourceSet resourceSet) {
-        return new ResourceSetResponse()
-                .setId(resourceSet.getId())
-                .setResourceScopes(resourceSet.getResourceScopes())
-                .setDescription(resourceSet.getDescription())
-                .setIconUri(resourceSet.getIconUri())
-                .setName(resourceSet.getName())
-                .setType(resourceSet.getType())
-                .setCreatedAt(resourceSet.getCreatedAt())
-                .setUpdatedAt(resourceSet.getUpdatedAt());
+    public static ResourceResponse from(Resource resource) {
+        return new ResourceResponse()
+                .setId(resource.getId())
+                .setResourceScopes(resource.getResourceScopes())
+                .setDescription(resource.getDescription())
+                .setIconUri(resource.getIconUri())
+                .setName(resource.getName())
+                .setType(resource.getType())
+                .setCreatedAt(resource.getCreatedAt())
+                .setUpdatedAt(resource.getUpdatedAt());
     }
 }

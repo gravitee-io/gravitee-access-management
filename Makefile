@@ -165,6 +165,16 @@ else
 	@echo "Please use \"make run\" for the first time."
 endif
 
+startUi: ## Run UI (npm run start).
+	@cd gravitee-am-ui; npm run start
+
+startMongo: ## Start gravitee Access Management mongo container only
+ifneq ($(wildcard .working/compose),)
+	@cd .working/compose; docker-compose start mongodb
+else
+	@echo "Please use \"make run\" for the first time."
+endif
+
 stop: ## Stop gravitee Access Management running containers
 ifneq ($(wildcard .working/compose),)
 	@cd .working/compose; docker-compose stop || true
@@ -297,4 +307,4 @@ pluginsManagement: # Copy plugins to Management API
 	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 
 .DEFAULT_GOAL := help
-.PHONY: all test clean build version postman
+.PHONY: all test clean build version postman nvm npm

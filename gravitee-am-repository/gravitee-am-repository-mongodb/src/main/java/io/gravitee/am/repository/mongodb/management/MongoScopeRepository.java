@@ -29,10 +29,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -87,6 +87,11 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         return Observable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_KEY, key))).first()).firstElement().map(this::convert);
     }
 
+    @Override
+    public Single<List<Scope>> findByDomainAndKeys(String domain, List<String> keys) {
+        return Observable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), in(FIELD_KEY, keys)))).map(this::convert).toList();
+    }
+
     private Scope convert(ScopeMongo scopeMongo) {
         if (scopeMongo == null) {
             return null;
@@ -97,6 +102,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scope.setKey(scopeMongo.getKey());
         scope.setName(scopeMongo.getName());
         scope.setDescription(scopeMongo.getDescription());
+        scope.setIconUri(scopeMongo.getIconUri());
         scope.setDomain(scopeMongo.getDomain());
         scope.setSystem(scopeMongo.isSystem());
         scope.setClaims(scopeMongo.getClaims());
@@ -118,6 +124,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scopeMongo.setKey(scope.getKey());
         scopeMongo.setName(scope.getName());
         scopeMongo.setDescription(scope.getDescription());
+        scopeMongo.setIconUri(scope.getIconUri());
         scopeMongo.setDomain(scope.getDomain());
         scopeMongo.setSystem(scope.isSystem());
         scopeMongo.setClaims(scope.getClaims());
