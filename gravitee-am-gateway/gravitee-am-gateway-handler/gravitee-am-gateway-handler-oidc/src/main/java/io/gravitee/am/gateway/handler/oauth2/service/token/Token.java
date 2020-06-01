@@ -40,6 +40,7 @@ public abstract class Token {
     private Map<String, Object> additionalInformation = new HashMap<>();
     private Date createdAt;
     private Date expireAt;
+    private Boolean upgraded;
 
     public static final String BEARER_TYPE = "Bearer";
 
@@ -74,6 +75,10 @@ public abstract class Token {
      */
     public static final String SCOPE = "scope";
 
+    /**
+     * UMA 2.0 is introduced the capability to upgrade a previous (Requesting Party) Token with new permissions
+     */
+    public static final String UPGRADED = "upgraded";
 
     public Token(String value) {
         this.value = value;
@@ -157,5 +162,13 @@ public abstract class Token {
 
     public void setExpireAt(Date expireAt) {
         this.expireAt = expireAt;
+    }
+
+    public Boolean isUpgraded() {
+        return upgraded;
+    }
+
+    public void setUpgraded(Boolean upgraded) {
+        this.upgraded = upgraded;
     }
 }

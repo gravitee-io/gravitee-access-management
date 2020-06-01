@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.password;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -70,8 +71,8 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
     @Test
     public void shouldGenerateAnAccessToken() {
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.set(ResourceOwnerPasswordCredentialsTokenGranter.USERNAME_PARAMETER, "my-username");
-        parameters.set(ResourceOwnerPasswordCredentialsTokenGranter.PASSWORD_PARAMETER, "my-password");
+        parameters.set(Parameters.USERNAME, "my-username");
+        parameters.set(Parameters.PASSWORD, "my-password");
 
         Client client = new Client();
         client.setClientId("my-client-id");

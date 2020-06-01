@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class ResourceSetRegistrationAccessHandlerTest {
+public class ResourceRegistrationAccessHandlerTest {
 
     @Mock
     private Domain domain;

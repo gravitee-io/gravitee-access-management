@@ -22,8 +22,11 @@ import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -40,7 +43,7 @@ public class MongoScopeRepositoryTest extends AbstractManagementRepositoryTest {
     }
 
     @Test
-    public void testFindByDomain() throws TechnicalException {
+    public void testFindByDomain() {
         // create scope
         Scope scope = new Scope();
         scope.setName("testName");
@@ -57,7 +60,62 @@ public class MongoScopeRepositoryTest extends AbstractManagementRepositoryTest {
     }
 
     @Test
-    public void testFindById() throws TechnicalException {
+    public void testFindByDomainAndKey() {
+        // create scope
+        Scope scope = new Scope();
+        scope.setName("firstOne");
+        scope.setKey("one");
+        scope.setDomain("testDomain");
+        scopeRepository.create(scope).blockingGet();
+
+        scope.setName("anotherOne");
+        scope.setDomain("another");
+        scopeRepository.create(scope).blockingGet();
+
+
+        // fetch scopes
+        TestObserver<Scope> testObserver = scopeRepository.findByDomainAndKey("testDomain","one").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(result -> "firstOne".equals(result.getName()));
+    }
+
+    @Test
+    public void testFindByDomainAndKeys() {
+        // create scope
+        Scope scope = new Scope();
+        scope.setName("firstOne");
+        scope.setKey("one");
+        scope.setDomain("testDomain");
+        Scope scopeCreated1 = scopeRepository.create(scope).blockingGet();
+
+        scope.setName("anotherOne");
+        scope.setDomain("another");
+        scopeRepository.create(scope).blockingGet();
+
+        scope.setName("secondOne");
+        scope.setKey("two");
+        scope.setDomain("testDomain");
+        Scope scopeCreated2 = scopeRepository.create(scope).blockingGet();
+
+        // fetch scopes
+        TestObserver<List<Scope>> testObserver = scopeRepository.findByDomainAndKeys("testDomain", Arrays.asList("one","two","three")).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(scopes -> scopes.size()==2 &&
+                scopes.stream()
+                .map(Scope::getId)
+                .collect(Collectors.toList())
+                .containsAll(Arrays.asList(scopeCreated1.getId(), scopeCreated2.getId()))
+        );
+    }
+
+    @Test
+    public void testFindById() {
         // create scope
         Scope scope = new Scope();
         scope.setName("testName");
@@ -78,7 +136,7 @@ public class MongoScopeRepositoryTest extends AbstractManagementRepositoryTest {
     }
 
     @Test
-    public void testCreate() throws TechnicalException {
+    public void testCreate() {
         Scope scope = new Scope();
         scope.setName("testName");
         scope.setSystem(true);
@@ -92,7 +150,7 @@ public class MongoScopeRepositoryTest extends AbstractManagementRepositoryTest {
     }
 
     @Test
-    public void testUpdate() throws TechnicalException {
+    public void testUpdate() {
         // create scope
         Scope scope = new Scope();
         scope.setName("testName");
@@ -112,7 +170,7 @@ public class MongoScopeRepositoryTest extends AbstractManagementRepositoryTest {
     }
 
     @Test
-    public void testDelete() throws TechnicalException {
+    public void testDelete() {
         // create scope
         Scope scope = new Scope();
         scope.setName("testName");

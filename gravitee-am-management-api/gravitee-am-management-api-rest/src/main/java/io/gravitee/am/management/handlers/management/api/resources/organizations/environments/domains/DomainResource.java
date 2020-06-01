@@ -26,14 +26,10 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.functions.Function;
-import io.reactivex.functions.Predicate;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -50,10 +46,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

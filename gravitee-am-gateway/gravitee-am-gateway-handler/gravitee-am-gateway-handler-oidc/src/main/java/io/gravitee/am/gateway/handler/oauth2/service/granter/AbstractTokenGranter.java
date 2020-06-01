@@ -129,7 +129,7 @@ public class AbstractTokenGranter implements TokenGranter {
         return tokenService.create(oAuth2Request, client, endUser);
     }
 
-    private boolean isSupportRefreshToken(Client client) {
+    protected boolean isSupportRefreshToken(Client client) {
         return supportRefreshToken && client.getAuthorizedGrantTypes().contains(GrantType.REFRESH_TOKEN);
     }
 

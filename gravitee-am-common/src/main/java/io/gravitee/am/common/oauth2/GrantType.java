@@ -74,4 +74,10 @@ public interface GrantType {
      * Hybrid
      */
     String HYBRID = "hybrid";
+
+    /**
+     * User Managed Access 2.0 grant.
+     * See <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#uma-grant-type">3.3.1 Client Request to Authorization Server for RPT</a>
+     */
+    String UMA = "urn:ietf:params:oauth:grant-type:uma-ticket";
 }

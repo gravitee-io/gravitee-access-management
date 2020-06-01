@@ -19,13 +19,13 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
-import io.gravitee.am.gateway.handler.uma.resources.response.ResourceSetResponse;
+import io.gravitee.am.gateway.handler.uma.resources.response.ResourceResponse;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.uma.ResourceSet;
-import io.gravitee.am.service.ResourceSetService;
-import io.gravitee.am.service.exception.ResourceSetNotFoundException;
-import io.gravitee.am.service.model.NewResourceSet;
+import io.gravitee.am.model.uma.Resource;
+import io.gravitee.am.service.ResourceService;
+import io.gravitee.am.service.exception.ResourceNotFoundException;
+import io.gravitee.am.service.model.NewResource;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
@@ -50,14 +50,14 @@ import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.*;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class ResourceSetRegistrationEndpoint implements Handler<RoutingContext> {
+public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
 
-    private ResourceSetService resourceSetService;
+    private ResourceService resourceService;
     private Domain domain;
 
-    public ResourceSetRegistrationEndpoint(Domain domain, ResourceSetService resourceSetService) {
+    public ResourceRegistrationEndpoint(Domain domain, ResourceService resourceService) {
         this.domain = domain;
-        this.resourceSetService = resourceSetService;
+        this.resourceService = resourceService;
     }
 
     @Override
@@ -65,9 +65,9 @@ public class ResourceSetRegistrationEndpoint implements Handler<RoutingContext> 
         JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
         Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
 
-        this.resourceSetService.listByDomainAndClientAndUser(domain.getId(), client.getId(), accessToken.getSub())
+        this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), accessToken.getSub())
                 .flatMapPublisher(Flowable::fromIterable)
-                .map(resourceSet -> resourceSet.getId())
+                .map(Resource::getId)
                 .collect(JsonArray::new, JsonArray::add)
                 .subscribe(
                         buffer -> context.response()
@@ -86,15 +86,15 @@ public class ResourceSetRegistrationEndpoint implements Handler<RoutingContext> 
         String basePath = UriBuilderRequest.extractBasePath(context);
 
         this.extractRequest(context)
-                .flatMap(request -> this.resourceSetService.create(request, domain.getId(), client.getId(), accessToken.getSub()))
+                .flatMap(request -> this.resourceService.create(request, domain.getId(), client.getId(), accessToken.getSub()))
                 .subscribe(
-                        resourceSet -> context.response()
+                        resource -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .putHeader(HttpHeaders.LOCATION, resourceSetLocation(basePath, resourceSet))
+                                .putHeader(HttpHeaders.LOCATION, resourceLocation(basePath, resource))
                                 .setStatusCode(HttpStatusCode.CREATED_201)
-                                .end(Json.encodePrettily(ResourceSetResponse.from(resourceSet)))
+                                .end(Json.encodePrettily(ResourceResponse.from(resource)))
                         , error -> context.fail(error)
                 );
     }
@@ -104,15 +104,15 @@ public class ResourceSetRegistrationEndpoint implements Handler<RoutingContext> 
         Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
         String resource_id = context.request().getParam(RESOURCE_ID);
 
-        this.resourceSetService.findByDomainAndClientAndUserAndResource(domain.getId(), client.getId(), accessToken.getSub(), resource_id)
-                .switchIfEmpty(Single.error(new ResourceSetNotFoundException(resource_id)))
+        this.resourceService.findByDomainAndClientAndUserAndResource(domain.getId(), client.getId(), accessToken.getSub(), resource_id)
+                .switchIfEmpty(Single.error(new ResourceNotFoundException(resource_id)))
                 .subscribe(
-                        resourceSet -> context.response()
+                        resource -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .setStatusCode(HttpStatusCode.OK_200)
-                                .end(Json.encodePrettily(ResourceSetResponse.from(resourceSet)))
+                                .end(Json.encodePrettily(ResourceResponse.from(resource)))
                         , error -> context.fail(error)
                 );
     }
@@ -129,14 +129,14 @@ public class ResourceSetRegistrationEndpoint implements Handler<RoutingContext> 
         String resource_id = context.request().getParam(RESOURCE_ID);
 
         this.extractRequest(context)
-                .flatMap(request -> this.resourceSetService.update(request, domain.getId(), client.getId(), accessToken.getSub(), resource_id))
+                .flatMap(request -> this.resourceService.update(request, domain.getId(), client.getId(), accessToken.getSub(), resource_id))
                 .subscribe(
-                        resourceSet -> context.response()
+                        resource -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .setStatusCode(HttpStatusCode.OK_200)
-                                .end(Json.encodePrettily(ResourceSetResponse.from(resourceSet)))
+                                .end(Json.encodePrettily(ResourceResponse.from(resource)))
                         , error -> context.fail(error)
                 );
     }
@@ -146,7 +146,7 @@ public class ResourceSetRegistrationEndpoint implements Handler<RoutingContext> 
         Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
         String resource_id = context.request().getParam(RESOURCE_ID);
 
-        this.resourceSetService.delete(domain.getId(), client.getId(), accessToken.getSub(), resource_id)
+        this.resourceService.delete(domain.getId(), client.getId(), accessToken.getSub(), resource_id)
                 .subscribe(
                         () -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -158,10 +158,10 @@ public class ResourceSetRegistrationEndpoint implements Handler<RoutingContext> 
                 );
     }
 
-    private Single<NewResourceSet> extractRequest(RoutingContext context) {
+    private Single<NewResource> extractRequest(RoutingContext context) {
         return Single.just(context.getBodyAsJson())
                 .flatMap(this::bodyValidation)
-                .map(body -> body.mapTo(NewResourceSet.class));
+                .map(body -> body.mapTo(NewResource.class));
     }
 
     private Single<JsonObject> bodyValidation(JsonObject body) {
@@ -172,14 +172,14 @@ public class ResourceSetRegistrationEndpoint implements Handler<RoutingContext> 
         return Single.just(body);
     }
 
-    private String resourceSetLocation(String basePath, ResourceSet resourceSet) {
+    private String resourceLocation(String basePath, Resource resource) {
         return new StringBuilder()
                 .append(basePath)
                 .append(domain.getPath())
                 .append(UMA_PATH)
                 .append(RESOURCE_REGISTRATION_PATH)
                 .append("/")
-                .append(resourceSet.getId())
+                .append(resource.getId())
                 .toString();
     }
 }

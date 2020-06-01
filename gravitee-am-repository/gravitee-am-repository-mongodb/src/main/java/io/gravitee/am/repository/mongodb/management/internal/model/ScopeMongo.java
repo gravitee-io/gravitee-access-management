@@ -41,6 +41,8 @@ public class ScopeMongo extends Auditable {
 
     private String description;
 
+    private String iconUri;
+
     /**
      * Security domain associated to the scope
      */
@@ -84,6 +86,14 @@ public class ScopeMongo extends Auditable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getIconUri() {
+        return iconUri;
+    }
+
+    public void setIconUri(String iconUri) {
+        this.iconUri = iconUri;
     }
 
     public String getDomain() {

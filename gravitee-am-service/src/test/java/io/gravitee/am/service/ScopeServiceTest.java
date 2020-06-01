@@ -17,12 +17,10 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Role;
-import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
@@ -129,9 +127,52 @@ public class ScopeServiceTest {
     }
 
     @Test
+    public void shouldFindByDomainAndKey_technicalException() {
+        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.error(TechnicalException::new));
+        TestObserver<Scope> testObserver = scopeService.findByDomainAndKey(DOMAIN, "my-scope").test();
+        testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
+    }
+
+    @Test
+    public void shouldFindByDomainAndKey() {
+        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.just(new Scope()));
+        TestObserver<Scope> testObserver = scopeService.findByDomainAndKey(DOMAIN, "my-scope").test();
+        testObserver.assertComplete().assertNoErrors().assertValue(Objects::nonNull);
+    }
+
+    @Test
+    public void shouldFindByDomainAndKeys_nullInput() {
+        TestObserver<List<Scope>> testObserver = scopeService.findByDomainAndKeys(DOMAIN, null).test();
+        testObserver.assertComplete().assertNoErrors().assertValue(List::isEmpty);
+    }
+
+    @Test
+    public void shouldFindByDomainAndKeys_emptyInput() {
+        TestObserver<List<Scope>> testObserver = scopeService.findByDomainAndKeys(DOMAIN, Collections.emptyList()).test();
+        testObserver.assertComplete().assertNoErrors().assertValue(List::isEmpty);
+    }
+
+    @Test
+    public void shouldFindByDomainAndKeys_technicalException() {
+        List<String> searchingScopes = Arrays.asList("a","b");
+        when(scopeRepository.findByDomainAndKeys(DOMAIN, searchingScopes)).thenReturn(Single.error(TechnicalException::new));
+        TestObserver<List<Scope>> testObserver = scopeService.findByDomainAndKeys(DOMAIN, searchingScopes).test();
+        testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
+    }
+
+    @Test
+    public void shouldFindByDomainAndKeys() {
+        List<String> searchingScopes = Arrays.asList("a","b");
+        when(scopeRepository.findByDomainAndKeys(DOMAIN, searchingScopes)).thenReturn(Single.just(Arrays.asList(new Scope())));
+        TestObserver<List<Scope>> testObserver = scopeService.findByDomainAndKeys(DOMAIN, searchingScopes).test();
+        testObserver.assertComplete().assertNoErrors().assertValue(scopes -> scopes.size()==1);
+    }
+
+    @Test
     public void shouldCreate() {
         NewScope newScope = Mockito.mock(NewScope.class);
         when(newScope.getKey()).thenReturn("my-scope");
+        when(newScope.getIconUri()).thenReturn("https://gravitee.io/icon");
         when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.empty());
         when(scopeRepository.create(any(Scope.class))).thenReturn(Single.just(new Scope()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
@@ -193,6 +234,23 @@ public class ScopeServiceTest {
             }
         }));
         verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldNotCreate_malformedIconUri() {
+        NewScope newScope = Mockito.mock(NewScope.class);
+        when(newScope.getKey()).thenReturn("my-scope");
+        when(newScope.getIconUri()).thenReturn("malformedIconUri");
+        when(scopeRepository.findByDomainAndKey(DOMAIN, "my-scope")).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = new TestObserver();
+        scopeService.create(DOMAIN, newScope).subscribe(testObserver);
+
+        testObserver.assertError(MalformedIconUriException.class);
+        testObserver.assertNotComplete();
+
+        verify(scopeRepository, times(1)).findByDomainAndKey(DOMAIN,"my-scope");
+        verify(scopeRepository, never()).create(any(Scope.class));
     }
 
     @Test
@@ -303,6 +361,37 @@ public class ScopeServiceTest {
     }
 
     @Test
+    public void shouldNotPatch_scopeNotFound() {
+        PatchScope patchScope = new PatchScope();
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = new TestObserver();
+        scopeService.patch(DOMAIN, "my-scope",patchScope).subscribe(testObserver);
+
+        testObserver.assertError(ScopeNotFoundException.class);
+        testObserver.assertNotComplete();
+
+        verify(scopeRepository, times(1)).findById("my-scope");
+        verify(scopeRepository, never()).update(any(Scope.class));
+    }
+
+    @Test
+    public void shouldNotPatch_malformedIconUri() {
+        PatchScope patchScope = new PatchScope();
+        patchScope.setIconUri(Optional.of("malformedIconUri"));
+        when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
+
+        TestObserver testObserver = new TestObserver();
+        scopeService.patch(DOMAIN, "my-scope",patchScope).subscribe(testObserver);
+
+        testObserver.assertError(MalformedIconUriException.class);
+        testObserver.assertNotComplete();
+
+        verify(scopeRepository, times(1)).findById("my-scope");
+        verify(scopeRepository, never()).update(any(Scope.class));
+    }
+
+    @Test
     public void shouldUpdate_systemScope_discoveryNotReplaced() {
         UpdateScope updateScope = new UpdateScope();
         updateScope.setDiscovery(true);
@@ -399,15 +488,29 @@ public class ScopeServiceTest {
 
     @Test
     public void shouldNotUpdate() {
-        Scope toUpdate = new Scope();
-        toUpdate.setId("toUpdateId");
-
         when(scopeRepository.findById("toUpdateId")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = scopeService.update(DOMAIN,"toUpdateId", new UpdateScope()).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldNotUpdate_malformedIconUri() {
+        UpdateScope updateScope = new UpdateScope();
+        updateScope.setIconUri("malformedIconUri");
+
+        when(scopeRepository.findById("toUpdateId")).thenReturn(Maybe.just(new Scope()));
+
+        TestObserver testObserver = new TestObserver();
+        scopeService.update(DOMAIN, "toUpdateId",updateScope).subscribe(testObserver);
+
+        testObserver.assertError(MalformedIconUriException.class);
+        testObserver.assertNotComplete();
+
+        verify(scopeRepository, times(1)).findById("toUpdateId");
+        verify(scopeRepository, never()).update(any(Scope.class));
     }
 
     @Test

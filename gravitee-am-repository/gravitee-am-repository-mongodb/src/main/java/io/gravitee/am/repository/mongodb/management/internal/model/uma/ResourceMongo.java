@@ -24,7 +24,7 @@ import java.util.List;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class ResourceSetMongo extends Auditable {
+public class ResourceMongo extends Auditable {
 
     @BsonId
     private String id;
@@ -41,7 +41,7 @@ public class ResourceSetMongo extends Auditable {
         return id;
     }
 
-    public ResourceSetMongo setId(String id) {
+    public ResourceMongo setId(String id) {
         this.id = id;
         return this;
     }
@@ -50,7 +50,7 @@ public class ResourceSetMongo extends Auditable {
         return resourceScopes;
     }
 
-    public ResourceSetMongo setResourceScopes(List<String> resourceScopes) {
+    public ResourceMongo setResourceScopes(List<String> resourceScopes) {
         this.resourceScopes = resourceScopes;
         return this;
     }
@@ -59,7 +59,7 @@ public class ResourceSetMongo extends Auditable {
         return description;
     }
 
-    public ResourceSetMongo setDescription(String description) {
+    public ResourceMongo setDescription(String description) {
         this.description = description;
         return this;
     }
@@ -68,7 +68,7 @@ public class ResourceSetMongo extends Auditable {
         return iconUri;
     }
 
-    public ResourceSetMongo setIconUri(String iconUri) {
+    public ResourceMongo setIconUri(String iconUri) {
         this.iconUri = iconUri;
         return this;
     }
@@ -77,7 +77,7 @@ public class ResourceSetMongo extends Auditable {
         return name;
     }
 
-    public ResourceSetMongo setName(String name) {
+    public ResourceMongo setName(String name) {
         this.name = name;
         return this;
     }
@@ -86,7 +86,7 @@ public class ResourceSetMongo extends Auditable {
         return type;
     }
 
-    public ResourceSetMongo setType(String type) {
+    public ResourceMongo setType(String type) {
         this.type = type;
         return this;
     }
@@ -95,7 +95,7 @@ public class ResourceSetMongo extends Auditable {
         return domain;
     }
 
-    public ResourceSetMongo setDomain(String domain) {
+    public ResourceMongo setDomain(String domain) {
         this.domain = domain;
         return this;
     }
@@ -104,7 +104,7 @@ public class ResourceSetMongo extends Auditable {
         return userId;
     }
 
-    public ResourceSetMongo setUserId(String userId) {
+    public ResourceMongo setUserId(String userId) {
         this.userId = userId;
         return this;
     }
@@ -113,7 +113,7 @@ public class ResourceSetMongo extends Auditable {
         return clientId;
     }
 
-    public ResourceSetMongo setClientId(String clientId) {
+    public ResourceMongo setClientId(String clientId) {
         this.clientId = clientId;
         return this;
     }

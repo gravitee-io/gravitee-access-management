@@ -21,14 +21,14 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHa
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.uma.resources.endpoint.PermissionEndpoint;
 import io.gravitee.am.gateway.handler.uma.resources.endpoint.ProviderConfigurationEndpoint;
-import io.gravitee.am.gateway.handler.uma.resources.endpoint.ResourceSetRegistrationEndpoint;
+import io.gravitee.am.gateway.handler.uma.resources.endpoint.ResourceRegistrationEndpoint;
 import io.gravitee.am.gateway.handler.uma.resources.handler.MethodNotSupportedHandler;
 import io.gravitee.am.gateway.handler.uma.resources.handler.UMAProtectionApiAccessHandler;
 import io.gravitee.am.gateway.handler.uma.resources.handler.UmaExceptionHandler;
 import io.gravitee.am.gateway.handler.uma.service.discovery.UMADiscoveryService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.PermissionTicketService;
-import io.gravitee.am.service.ResourceSetService;
+import io.gravitee.am.service.ResourceService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.service.AbstractService;
@@ -66,7 +66,7 @@ public class UMAProvider extends AbstractService<ProtocolProvider> implements Pr
     private UMADiscoveryService discoveryService;
 
     @Autowired
-    private ResourceSetService resourceSetService;
+    private ResourceService resourceService;
 
     @Autowired
     private PermissionTicketService permissionTicketService;
@@ -110,32 +110,32 @@ public class UMAProvider extends AbstractService<ProtocolProvider> implements Pr
         // UMA global Protection API Access Handler
         UMAProtectionApiAccessHandler umaProtectionApiAccessHandler = new UMAProtectionApiAccessHandler(domain, umaProtectionApiScopedAuthHandler);
 
-        // Resource Set Registration endpoint
-        ResourceSetRegistrationEndpoint resourceSetRegistrationEndpoint = new ResourceSetRegistrationEndpoint(domain, resourceSetService);
+        // Resource Registration endpoint
+        ResourceRegistrationEndpoint resourceRegistrationEndpoint = new ResourceRegistrationEndpoint(domain, resourceService);
         umaRouter.route(RESOURCE_REGISTRATION_PATH).handler(corsHandler);
 
         umaRouter
                 .get(RESOURCE_REGISTRATION_PATH)
                 .handler(umaProtectionApiAccessHandler)
-                .handler(resourceSetRegistrationEndpoint);
+                .handler(resourceRegistrationEndpoint);
         umaRouter
                 .post(RESOURCE_REGISTRATION_PATH)
                 .consumes(MediaType.APPLICATION_JSON)
                 .handler(umaProtectionApiAccessHandler)
-                .handler(resourceSetRegistrationEndpoint::create);
+                .handler(resourceRegistrationEndpoint::create);
         umaRouter
                 .get(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID)
                 .handler(umaProtectionApiAccessHandler)
-                .handler(resourceSetRegistrationEndpoint::get);
+                .handler(resourceRegistrationEndpoint::get);
         umaRouter
                 .put(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID)
                 .consumes(MediaType.APPLICATION_JSON)
                 .handler(umaProtectionApiAccessHandler)
-                .handler(resourceSetRegistrationEndpoint::update);
+                .handler(resourceRegistrationEndpoint::update);
         umaRouter
                 .delete(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID)
                 .handler(umaProtectionApiAccessHandler)
-                .handler(resourceSetRegistrationEndpoint::delete);
+                .handler(resourceRegistrationEndpoint::delete);
 
         // Permission endpoint Access Handler
         PermissionEndpoint permissionEndpoint = new PermissionEndpoint(domain, permissionTicketService);

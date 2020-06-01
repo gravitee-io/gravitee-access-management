@@ -30,6 +30,8 @@ public class PatchScope {
 
     private Optional<String> description;
 
+    private Optional<String> iconUri;
+
     private Optional<Integer> expiresIn;
 
     private Optional<Boolean> discovery;
@@ -48,6 +50,14 @@ public class PatchScope {
 
     public void setDescription(Optional<String> description) {
         this.description = description;
+    }
+
+    public Optional<String> getIconUri() {
+        return iconUri;
+    }
+
+    public void setIconUri(Optional<String> iconUri) {
+        this.iconUri = iconUri;
     }
 
     public Optional<Integer> getExpiresIn() {
@@ -70,6 +80,7 @@ public class PatchScope {
         Scope patched = new Scope(toPatch);
         SetterUtils.safeSet(patched::setName,this.getName());
         SetterUtils.safeSet(patched::setDescription, this.getDescription());
+        SetterUtils.safeSet(patched::setIconUri, this.getIconUri());
         SetterUtils.safeSet(patched::setExpiresIn, this.getExpiresIn());
         if(!toPatch.isSystem()){
             SetterUtils.safeSet(patched::setDiscovery, this.getDiscovery(), boolean.class);

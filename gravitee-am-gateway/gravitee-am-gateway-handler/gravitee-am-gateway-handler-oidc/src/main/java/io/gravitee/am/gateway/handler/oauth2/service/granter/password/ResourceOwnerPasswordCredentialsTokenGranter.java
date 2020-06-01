@@ -31,6 +31,9 @@ import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import static io.gravitee.am.common.oauth2.Parameters.USERNAME;
+import static io.gravitee.am.common.oauth2.Parameters.PASSWORD;
+
 /**
  * Implementation of the Resource Owner Password Credentials Grant Flow
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.3"></a>
@@ -40,9 +43,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenGranter {
-
-    final static String USERNAME_PARAMETER = "username";
-    final static String PASSWORD_PARAMETER = "password";
 
     private UserAuthenticationManager userAuthenticationManager;
 
@@ -60,8 +60,8 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
     @Override
     protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
         MultiValueMap<String, String> parameters = tokenRequest.parameters();
-        String username = parameters.getFirst(USERNAME_PARAMETER);
-        String password = parameters.getFirst(PASSWORD_PARAMETER);
+        String username = parameters.getFirst(USERNAME);
+        String password = parameters.getFirst(PASSWORD);
 
         if (username == null) {
             return Single.error(new InvalidRequestException("Missing parameter: username"));

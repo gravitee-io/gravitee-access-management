@@ -40,6 +40,11 @@ public class Scope {
     private String description;
 
     /**
+     * A URI for a graphic icon representing the scope
+     */
+    private String iconUri;
+
+    /**
      * Security domain associated to the scope
      */
     private String domain;
@@ -77,6 +82,7 @@ public class Scope {
         this.key = other.key;
         this.name = other.name;
         this.description = other.description;
+        this.iconUri = other.iconUri;
         this.domain = other.domain;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
@@ -116,6 +122,14 @@ public class Scope {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getIconUri() {
+        return iconUri;
+    }
+
+    public void setIconUri(String iconUri) {
+        this.iconUri = iconUri;
     }
 
     public String getDomain() {

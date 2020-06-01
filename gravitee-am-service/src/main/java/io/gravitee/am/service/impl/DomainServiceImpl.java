@@ -117,6 +117,9 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private EnvironmentService environmentService;
 
+    @Autowired
+    private ResourceService resourceService;
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -415,6 +418,13 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(factors -> {
                                         List<Completable> deleteFactorsCompletable = factors.stream().map(f -> factorService.delete(domainId, f.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteFactorsCompletable);
+                                    })
+                            )
+                            // delete uma resources
+                            .andThen(resourceService.findByDomain(domainId)
+                                    .flatMapCompletable(resourceSet -> {
+                                        List<Completable> deletedResourceSet = resourceSet.stream().map(resourceService::delete).collect(Collectors.toList());
+                                        return Completable.concat(deletedResourceSet);
                                     })
                             )
                             .andThen(domainRepository.delete(domainId))

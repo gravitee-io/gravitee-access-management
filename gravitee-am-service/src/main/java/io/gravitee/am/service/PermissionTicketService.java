@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -28,4 +29,6 @@ import java.util.List;
 public interface PermissionTicketService {
 
     Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String domain, String client, String userId);
+    Maybe<PermissionTicket> findById(String id);
+    Single<PermissionTicket> remove(String id);
 }

@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -44,9 +43,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,7 +67,7 @@ public class ScopeResource extends AbstractResource {
                     "or DOMAIN_SCOPE[READ] permission on the specified environment " +
                     "or DOMAIN_SCOPE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Client", response = Scope.class),
+            @ApiResponse(code = 200, message = "Scope", response = Scope.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,

@@ -55,6 +55,11 @@ public class AccessTokenSerializer extends StdSerializer<AccessToken> {
                 jsonGenerator.writeObjectField(key, additionalInformation.get(key));
             }
         }
+
+        if (token.isUpgraded()!=null) {
+            jsonGenerator.writeBooleanField(Token.UPGRADED, token.isUpgraded());
+        }
+
         jsonGenerator.writeEndObject();
     }
 }

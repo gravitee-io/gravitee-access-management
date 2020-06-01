@@ -16,10 +16,8 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.model.ClientListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -42,9 +40,6 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -72,7 +67,7 @@ public class ScopesResource extends AbstractResource {
                     "Each returned scope is filtered and contains only basic information such as id, key, name, description, isSystem and isDiscovery.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List scopes for a security domain",
-                    response = ClientListItem.class, responseContainer = "Set"),
+                    response = Scope.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,

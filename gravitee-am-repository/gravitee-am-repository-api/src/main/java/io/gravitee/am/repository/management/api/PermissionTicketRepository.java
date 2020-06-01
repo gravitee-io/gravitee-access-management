@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Maybe;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

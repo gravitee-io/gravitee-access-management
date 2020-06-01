@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 
@@ -41,6 +40,31 @@ public class TokenRequest extends OAuth2Request {
      */
     private String password;
 
+    /**
+     * REQUIRED for <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#uma-grant-type">User Managed Access Grant</a>
+     */
+    private String ticket;
+
+    /**
+     * REQUIRED for <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#uma-grant-type">User Managed Access Grant</a>
+     */
+    private String claimToken;
+
+    /**
+     * REQUIRED for <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#uma-grant-type">User Managed Access Grant</a>
+     */
+    private String claimTokenFormat;
+
+    /**
+     * REQUIRED for <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#uma-grant-type">User Managed Access Grant</a>
+     */
+    private String persistedClaimsToken;
+
+    /**
+     * REQUIRED for <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#uma-grant-type">User Managed Access Grant</a>
+     */
+    private String requestingPartyToken;
+
     public String getUsername() {
         return username;
     }
@@ -55,6 +79,46 @@ public class TokenRequest extends OAuth2Request {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getTicket() {
+        return ticket;
+    }
+
+    public void setTicket(String ticket) {
+        this.ticket = ticket;
+    }
+
+    public String getClaimToken() {
+        return claimToken;
+    }
+
+    public void setClaimToken(String claimToken) {
+        this.claimToken = claimToken;
+    }
+
+    public String getClaimTokenFormat() {
+        return claimTokenFormat;
+    }
+
+    public void setClaimTokenFormat(String claimTokenFormat) {
+        this.claimTokenFormat = claimTokenFormat;
+    }
+
+    public String getPersistedClaimsToken() {
+        return persistedClaimsToken;
+    }
+
+    public void setPersistedClaimsToken(String persistedClaimsToken) {
+        this.persistedClaimsToken = persistedClaimsToken;
+    }
+
+    public String getRequestingPartyToken() {
+        return requestingPartyToken;
+    }
+
+    public void setRequestingPartyToken(String requestingPartyToken) {
+        this.requestingPartyToken = requestingPartyToken;
     }
 
     public OAuth2Request createOAuth2Request() {
@@ -88,6 +152,9 @@ public class TokenRequest extends OAuth2Request {
         oAuth2Request.setAdditionalParameters(getAdditionalParameters());
         oAuth2Request.setRefreshToken(getRefreshToken());
         oAuth2Request.setAuthorizationCode(getAuthorizationCode());
+
+        // set UMA 2.0 permissions
+        oAuth2Request.setPermissions(getPermissions());
 
         return oAuth2Request;
     }

@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
-
-import io.gravitee.am.model.uma.ResourceSet;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-
-import java.util.List;
+package io.gravitee.am.service.exception;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public interface ResourceSetRepository extends CrudRepository<ResourceSet, String> {
+public class ResourceNotFoundException extends AbstractNotFoundException {
 
-    Single<List<ResourceSet>> findByDomainAndClientAndUser(String domain, String client, String userId);
-    Single<List<ResourceSet>> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, List<String> resource);
-    Maybe<ResourceSet> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resource);
+    private final String resource;
+
+    public ResourceNotFoundException(String resource) {
+        this.resource = resource;
+    }
+
+    @Override
+    public String getMessage() {
+        return "Resource id [" + resource + "] can not be found.";
+    }
 }
