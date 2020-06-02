@@ -41,6 +41,11 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private String passwordField = FIELD_PASSWORD;
     private String passwordEncoder = PasswordEncoder.BCRYPT.getValue();
 
+    @Override
+    public boolean userProvider() {
+        return true;
+    }
+
     public String getUri() {
         return this.uri;
     }

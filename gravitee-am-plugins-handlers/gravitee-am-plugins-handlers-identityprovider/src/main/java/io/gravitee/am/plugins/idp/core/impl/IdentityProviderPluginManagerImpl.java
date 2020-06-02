@@ -121,13 +121,13 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
 
         if (identityProvider != null) {
 
-            if (identityProvider.userProvider() == null) {
+            Class<? extends IdentityProviderConfiguration> configurationClass = identityProvider.configuration();
+            IdentityProviderConfiguration identityProviderConfiguration = identityProviderConfigurationFactory.create(configurationClass, configuration);
+
+            if (identityProvider.userProvider() == null || !identityProviderConfiguration.userProvider()) {
                 logger.info("No user provider is registered for type {}", type);
                 return null;
             }
-
-            Class<? extends IdentityProviderConfiguration> configurationClass = identityProvider.configuration();
-            IdentityProviderConfiguration identityProviderConfiguration = identityProviderConfigurationFactory.create(configurationClass, configuration);
 
             return create0(
                     identityProviderPlugins.get(identityProvider),

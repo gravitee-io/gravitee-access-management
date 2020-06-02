@@ -19,14 +19,13 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
-import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
-import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
@@ -38,7 +37,6 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.apache.commons.lang3.EnumUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 
@@ -72,17 +70,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public User onAuthenticationSuccess(Authentication auth) {
         final DefaultUser principal = (DefaultUser) auth.getPrincipal();
 
-        ManagementAuthenticationContext authenticationContext = new ManagementAuthenticationContext();
+        final EndUserAuthentication authentication = new EndUserAuthentication(principal.getUsername(), null, new SimpleAuthenticationContext());
         Map<String, String> details = auth.getDetails() == null ? new HashMap<>() : new HashMap<>((Map) auth.getDetails());
-        details.forEach(authenticationContext::set);
-        String organizationId = "DEFAULT";
-        authenticationContext.set("organization", organizationId);
-
-        final EndUserAuthentication authentication = new EndUserAuthentication(principal.getUsername(), null, authenticationContext);
+        details.forEach(authentication.getContext()::set);
+        authentication.getContext().set(Claims.organization, Organization.DEFAULT);
 
         final String source = details.get(SOURCE);
-        io.gravitee.am.model.User endUser = userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getId(), source)
-                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, organizationId, principal.getUsername(), source)))
+        io.gravitee.am.model.User endUser = userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, principal.getId(), source)
+                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, principal.getUsername(), source)))
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
                 .flatMapSingle(existingUser -> {
                     existingUser.setSource(details.get(SOURCE));
@@ -108,7 +103,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         newUser.setSource(details.get(SOURCE));
                         newUser.setClient(CLIENT_ID);
                         newUser.setReferenceType(ReferenceType.ORGANIZATION);
-                        newUser.setReferenceId(organizationId);
+                        newUser.setReferenceId(Organization.DEFAULT);
                         newUser.setLoggedAt(new Date());
                         newUser.setLoginsCount(1l);
                         newUser.setAdditionalInformation(principal.getAdditionalInformation());
@@ -119,7 +114,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     return Single.error(ex);
                 })
                 .flatMap(userService::enhance)
-                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).referenceType(ReferenceType.ORGANIZATION).referenceId(organizationId).client(CLIENT_ID).user(user)))
+                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).referenceType(ReferenceType.ORGANIZATION).referenceId(Organization.DEFAULT).client(CLIENT_ID).user(user)))
                 .blockingGet();
 
         principal.setId(endUser.getId());

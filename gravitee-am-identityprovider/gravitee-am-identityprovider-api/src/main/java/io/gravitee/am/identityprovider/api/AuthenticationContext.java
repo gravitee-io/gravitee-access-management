@@ -15,17 +15,16 @@
  */
 package io.gravitee.am.identityprovider.api;
 
-import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.ExecutionContext;
 
 import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthenticationContext {
-
-    Request request();
+public interface AuthenticationContext extends ExecutionContext {
 
     /**
      * Stores an attribute in this context.
@@ -33,7 +32,10 @@ public interface AuthenticationContext {
      * @param name a String specifying the name of the attribute
      * @param value the Object to be stored
      */
-    AuthenticationContext set(String name, Object value);
+    default AuthenticationContext set(String name, Object value) {
+        setAttribute(name, value);
+        return this;
+    }
 
     /**
      * Removes an attribute from this context.
@@ -41,7 +43,10 @@ public interface AuthenticationContext {
      *
      * @param name a String specifying the name of the attribute to remove
      */
-    AuthenticationContext remove(String name);
+    default AuthenticationContext remove(String name) {
+        removeAttribute(name);
+        return this;
+    }
 
     /**
      * Returns the value of the named attribute as an Object, or <code>null</code> if no attribute of the given
@@ -50,7 +55,11 @@ public interface AuthenticationContext {
      * @param name a String specifying the name of the attribute
      * @return an Object containing the value of the attribute, or null if the attribute does not exist
      */
-    Object get(String name);
+    default Object get(String name) {
+        return getAttribute(name);
+    }
 
-    Map<String, Object> attributes();
+    default Map<String, Object> attributes() {
+        return getAttributes();
+    }
 }

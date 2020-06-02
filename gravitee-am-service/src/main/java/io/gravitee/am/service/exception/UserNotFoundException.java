@@ -21,9 +21,11 @@ package io.gravitee.am.service.exception;
  */
 public class UserNotFoundException extends AbstractNotFoundException {
 
-    private final String id;
-    private final String domain;
-    private final String username;
+    private String id;
+    private String domain;
+    private String username;
+
+    public UserNotFoundException() { }
 
     public UserNotFoundException(String id) {
         this.id = id;
@@ -41,8 +43,10 @@ public class UserNotFoundException extends AbstractNotFoundException {
     public String getMessage() {
         if (id != null) {
             return "User [" + id + "] can not be found.";
-        } else {
+        } else if (username != null ){
             return "User [" + username + "] can not be found for domain[" + domain + "].";
+        } else {
+            return "No user found";
         }
     }
 }

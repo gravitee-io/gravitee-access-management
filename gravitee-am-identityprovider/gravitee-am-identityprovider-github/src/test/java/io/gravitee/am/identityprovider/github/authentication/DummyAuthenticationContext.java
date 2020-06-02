@@ -16,8 +16,12 @@
 package io.gravitee.am.identityprovider.github.authentication;
 
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
 
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Map;
 
 /**
@@ -34,29 +38,48 @@ public class DummyAuthenticationContext implements AuthenticationContext {
         this.request = request;
     }
 
+    @Override
     public Request request() {
         return request;
     }
 
     @Override
-    public AuthenticationContext set(String name, Object value) {
+    public Response response() {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public <T> T getComponent(Class<T> componentClass) {
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public void setAttribute(String name, Object value) {
         attributes.put(name, value);
-        return this;
     }
 
     @Override
-    public AuthenticationContext remove(String name) {
+    public void removeAttribute(String name) {
         attributes.remove(name);
-        return this;
     }
 
     @Override
-    public Object get(String name) {
+    public Object getAttribute(String name) {
         return attributes.get(name);
     }
 
     @Override
-    public Map<String, Object> attributes() {
-        return this.attributes;
+    public Enumeration<String> getAttributeNames() {
+        return Collections.enumeration(attributes.keySet());
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    @Override
+    public TemplateEngine getTemplateEngine() {
+        throw new IllegalStateException();
     }
 }

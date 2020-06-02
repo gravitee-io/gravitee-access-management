@@ -15,10 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.auth.user.impl;
 
-import io.gravitee.am.common.exception.authentication.AccountLockedException;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
+import io.gravitee.am.common.exception.authentication.*;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
@@ -96,7 +93,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                                 return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
                             } else if (lastException instanceof UsernameNotFoundException) {
                                 return Single.error(new UsernameNotFoundException("Invalid or unknown user"));
-                            } else if (lastException instanceof AccountLockedException) {
+                            } else if (lastException instanceof AccountStatusException) {
                                 return Single.error(lastException);
                             } else {
                                 logger.error("An error occurs during user authentication", lastException);

@@ -115,6 +115,8 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
         if (userProvider != null) {
             logger.info("Initializing user provider : {}", identityProvider.getId());
             userProviders.put(identityProvider.getId(), userProvider);
+        } else {
+            userProviders.remove(identityProvider.getId());
         }
     }
 }
