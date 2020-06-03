@@ -90,6 +90,7 @@ public class AccountSettings {
         this.completeRegistrationWhenResetPassword = other.completeRegistrationWhenResetPassword;
         this.autoLoginAfterRegistration = other.autoLoginAfterRegistration;
         this.redirectUriAfterRegistration = other.redirectUriAfterRegistration;
+        this.dynamicUserRegistration = other.dynamicUserRegistration;
         this.autoLoginAfterResetPassword = other.autoLoginAfterResetPassword;
         this.redirectUriAfterResetPassword = other.redirectUriAfterResetPassword;
     }
