@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.csrf;
 
-import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jwt.JWTClaimsSet;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.jwt.JWTParser;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.DefaultCsrfToken;
@@ -34,15 +33,15 @@ import org.springframework.web.util.WebUtils;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.text.ParseException;
-import java.util.Date;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at gravitesource.com)
  * @author GraviteeSource Team
  */
-public class CookieCsrfSignedTokenRepository implements InitializingBean, CsrfTokenRepository {
+public class CookieCsrfSignedTokenRepository implements CsrfTokenRepository {
 
     private final Logger LOGGER = LoggerFactory.getLogger(CookieCsrfSignedTokenRepository.class);
 
@@ -57,14 +56,13 @@ public class CookieCsrfSignedTokenRepository implements InitializingBean, CsrfTo
     @Autowired
     private JWTGenerator jwtGenerator;
 
-    @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
-    private String secret;
+    @Autowired
+    @Qualifier("managementJwtBuilder")
+    private JWTBuilder jwtBuilder;
 
-    @Value("${jwt.issuer:https://gravitee.am}")
-    private String issuer;
-
-    private JWSSigner signer;
-    private JWSVerifier verifier;
+    @Autowired
+    @Qualifier("managementJwtParser")
+    private JWTParser jwtParser;
 
     @Override
     public CsrfToken generateToken(HttpServletRequest request) {
@@ -96,19 +94,16 @@ public class CookieCsrfSignedTokenRepository implements InitializingBean, CsrfTo
         String tokenValue = token.getToken();
 
         try {
-            JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                    .issuer(issuer)
-                    .issueTime(new Date())
-                    .claim(TOKEN_CLAIM, tokenValue)
-                    .build();
+            JWT jwt = new JWT();
+            jwt.setJti(SecureRandomString.generate());
+            jwt.setIat(Instant.now().getEpochSecond());
+            jwt.put(TOKEN_CLAIM, tokenValue);
+            String encodedToken = jwtBuilder.sign(jwt);
 
-            JWSObject jwsObject = new JWSObject(new JWSHeader((JWSAlgorithm.HS256)), new Payload(claims.toJSONObject()));
-            jwsObject.sign(signer);
-
-            Cookie cookie = jwtGenerator.generateCookie(DEFAULT_CSRF_COOKIE_NAME, jwsObject.serialize(), true);
+            Cookie cookie = jwtGenerator.generateCookie(DEFAULT_CSRF_COOKIE_NAME, encodedToken, true);
             response.addCookie(cookie);
             request.setAttribute(DEFAULT_CSRF_COOKIE_NAME, true);
-        } catch (JOSEException ex) {
+        } catch (Exception ex) {
             LOGGER.error("Unable to generate CSRF token", ex);
         }
     }
@@ -126,31 +121,15 @@ public class CookieCsrfSignedTokenRepository implements InitializingBean, CsrfTo
         }
 
         try {
-            JWSObject jws = JWSObject.parse(cookieValue);
-
-            if (jws.verify(verifier)) {
-                String token = jws.getPayload().toJSONObject().getAsString(TOKEN_CLAIM);
-
-                if (!StringUtils.hasLength(token)) {
-                    return null;
-                }
-
-                return new DefaultCsrfToken(DEFAULT_CSRF_HEADER_NAME, DEFAULT_CSRF_PARAMETER_NAME, token);
+            JWT jwt = jwtParser.parse(cookieValue);
+            String token = jwt.get(TOKEN_CLAIM).toString();
+            if (!StringUtils.hasLength(token)) {
+                return null;
             }
-        } catch (ParseException | JOSEException ex) {
+            return new DefaultCsrfToken(DEFAULT_CSRF_HEADER_NAME, DEFAULT_CSRF_PARAMETER_NAME, token);
+        } catch (Exception ex) {
             LOGGER.error("Unable to verify CSRF token", ex);
         }
-
         return null;
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        // Add padding if necessary
-        // HS256 need, at least, 32 ascii characters
-        secret = org.apache.commons.lang3.StringUtils.leftPad(secret, 32, '0');
-
-        signer = new MACSigner(secret);
-        verifier = new MACVerifier(secret);
     }
 }

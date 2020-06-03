@@ -19,6 +19,8 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -37,11 +39,11 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.jsonwebtoken.JwtBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -76,7 +78,8 @@ public class UserServiceImpl implements UserService {
     private EmailService emailService;
 
     @Autowired
-    private JwtBuilder jwtBuilder;
+    @Qualifier("managementJwtBuilder")
+    private JWTBuilder jwtBuilder;
 
     @Autowired
     private EmailManager emailManager;
@@ -549,7 +552,7 @@ public class UserServiceImpl implements UserService {
         claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
         claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
 
-        return jwtBuilder.setClaims(claims).compact();
+        return jwtBuilder.sign(new JWT(claims));
     }
 
     private String getTemplateName(User user) {

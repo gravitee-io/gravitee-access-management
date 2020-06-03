@@ -151,12 +151,6 @@
             <artifactId>logback-core</artifactId>
         </dependency>
 
-        <!-- Nimbus jose+jwt -->
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-            <version>${nimbus.version}</version>
-        </dependency>
         <!-- Required in addition to nimbus for OKP keys -->
         <dependency>
             <groupId>com.google.crypto.tink</groupId>

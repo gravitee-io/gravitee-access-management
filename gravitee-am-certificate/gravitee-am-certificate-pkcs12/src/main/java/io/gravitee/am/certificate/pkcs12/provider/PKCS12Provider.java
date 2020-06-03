@@ -20,7 +20,7 @@ import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.pkcs12.PKCS12Configuration;
-import io.gravitee.am.certificate.pkcs12.Signature;
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.Flowable;
@@ -52,7 +52,7 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
     private JWKSet jwkSet;
     private String publicKey;
     private Set<JWK> keys;
-    private Signature signature = Signature.SHA256withRSA;
+    private SignatureAlgorithm signature = SignatureAlgorithm.RS256;
     private io.gravitee.am.certificate.api.Key certificateKey;
 
     @Autowired
@@ -80,9 +80,9 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
                 Certificate cert = keystore.getCertificate(configuration.getAlias());
                 // Get Signing Algorithm name
                 if (cert instanceof X509Certificate) {
-                    signature = getSignature(((X509Certificate) cert).getSigAlgOID());
+                    signature = getSignature(((X509Certificate) cert).getSigAlgName());
                 }
-                certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestOID());
+                certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestName());
                 // Get public key
                 PublicKey publicKey = cert.getPublicKey();
                 // create key pair
@@ -190,15 +190,16 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
         return jwk;
     }
 
-    private Signature getSignature(String signingAlgorithmOID) {
-        return Stream.of(Signature.values())
-                .filter(signature -> signature.getAlgorithmId().toString().equals(signingAlgorithmOID))
+    private SignatureAlgorithm getSignature(String signingAlgorithm) {
+        return Stream.of(SignatureAlgorithm.values())
+                .filter(signatureAlgorithm -> signatureAlgorithm.getJcaName() != null)
+                .filter(signatureAlgorithm -> signatureAlgorithm.getJcaName().equals(signingAlgorithm))
                 .findFirst()
-                .orElse(Signature.SHA256withRSA);
+                .orElse(SignatureAlgorithm.RS256);
     }
 
     @Override
     public String signatureAlgorithm() {
-        return signature.getJwsAlgorithm().getName();
+        return signature.getValue();
     }
 }

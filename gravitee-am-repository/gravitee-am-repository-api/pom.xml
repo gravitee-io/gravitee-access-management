@@ -31,10 +31,6 @@
 
     <name>Gravitee IO - Access Management - Repository API</name>
 
-    <properties>
-        <org.reactivestreams.version>1.0.2</org.reactivestreams.version>
-    </properties>
-
     <dependencies>
         <!-- Gravitee dependencies -->
         <dependency>

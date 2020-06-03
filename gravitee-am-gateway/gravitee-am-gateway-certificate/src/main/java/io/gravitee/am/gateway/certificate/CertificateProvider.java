@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.certificate;
 
-import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
-import io.gravitee.am.gateway.certificate.jwt.JWTParser;
+import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.jwt.JWTParser;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

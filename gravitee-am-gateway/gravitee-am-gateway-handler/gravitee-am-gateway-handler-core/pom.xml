@@ -85,12 +85,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Nimbus jose+jwt -->
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-        </dependency>
-
         <!-- Freemarker -->
         <dependency>
             <groupId>org.freemarker</groupId>

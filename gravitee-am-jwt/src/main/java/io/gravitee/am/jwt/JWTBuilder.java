@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.certificate.jwt;
+package io.gravitee.am.jwt;
 
 import io.gravitee.am.common.jwt.JWT;
 
@@ -23,6 +23,11 @@ import io.gravitee.am.common.jwt.JWT;
  */
 public interface JWTBuilder {
 
+    /**
+     * Sign and encode JWT payload
+     * @param payload JWT payload
+     * @return signed and encoded token
+     */
     String sign(JWT payload);
 
 }

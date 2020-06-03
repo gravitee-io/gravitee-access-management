@@ -54,6 +54,7 @@
         <module>gravitee-am-extensiongrant</module>
         <module>gravitee-am-reporter</module>
         <module>gravitee-am-factor</module>
+        <module>gravitee-am-jwt</module>
         <module>gravitee-am-plugins-handlers</module>
         <module>gravitee-am-gateway</module>
         <module>gravitee-am-management-api</module>
@@ -70,7 +71,6 @@
         <gravitee-expression-language.version>1.4.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <spring-security.version>5.3.1.RELEASE</spring-security.version>
-        <jjwt.version>0.11.1</jjwt.version>
         <nimbus.version>8.17</nimbus.version>
         <tink.version>1.3.0</tink.version>
         <freemarker.version>2.3.30</freemarker.version>
@@ -174,30 +174,11 @@
                 <artifactId>tink</artifactId>
                 <version>${tink.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>javax.annotation</groupId>
                 <artifactId>javax.annotation-api</artifactId>
                 <version>${javax.annotation-api.version}</version>
             </dependency>
-
-            <!-- JJWT dependencies -->
-            <dependency>
-                <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt-api</artifactId>
-                <version>${jjwt.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt-impl</artifactId>
-                <version>${jjwt.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt-jackson</artifactId>
-                <version>${jjwt.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>com.google.zxing</groupId>
                 <artifactId>javase</artifactId>
