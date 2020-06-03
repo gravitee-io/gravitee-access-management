@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -266,10 +267,8 @@ public class ClientServiceImpl implements ClientService {
         }
 
         boolean clientIdGenerated = false;
-
-        /* openid response metadata */
-        client.setId(RandomString.generate());
-        //client_id & client_secret may be already informed if created through UI
+        client.setId(client.getId() != null ? client.getId() : RandomString.generate());
+        // client_id & client_secret may be already informed if created through UI
         if(client.getClientId()==null) {
             client.setClientId(SecureRandomString.generate());
             clientIdGenerated = true;
@@ -434,14 +433,20 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setAuthorizationEncryptedResponseAlg(client.getAuthorizationEncryptedResponseAlg());
         oAuthSettings.setAuthorizationEncryptedResponseEnc(client.getAuthorizationEncryptedResponseEnc());
 
+        ApplicationSettings applicationSettings = new ApplicationSettings();
+        // oauth settings
+        applicationSettings.setOauth(oAuthSettings);
+
         // advanced settings
         ApplicationAdvancedSettings advancedSettings = new ApplicationAdvancedSettings();
         advancedSettings.setSkipConsent(client.getAutoApproveScopes() != null && client.getAutoApproveScopes().contains("true"));
-
-        ApplicationSettings applicationSettings = new ApplicationSettings();
-        applicationSettings.setOauth(oAuthSettings);
-        applicationSettings.setAccount(client.getAccountSettings());
         applicationSettings.setAdvanced(advancedSettings);
+
+        // account settings
+        if (client.getAccountSettings() != null) {
+            AccountSettings accountSettings = new AccountSettings(client.getAccountSettings());
+            applicationSettings.setAccount(accountSettings);
+        }
 
         return applicationSettings;
     }

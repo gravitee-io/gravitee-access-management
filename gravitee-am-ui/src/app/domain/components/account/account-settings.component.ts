@@ -135,6 +135,10 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     return this.accountSettings && this.accountSettings.autoLoginAfterResetPassword;
   }
 
+  updateModel() {
+    this.formChanged = true;
+  }
+
   formIsValid() {
     if (this.accountSettings.loginAttemptsDetectionEnabled) {
       if (this.accountSettings.maxLoginAttempts < 1) {
