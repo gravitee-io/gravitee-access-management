@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.spring;
-
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+package io.gravitee.am.common.exception.jwt;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegnet at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Configuration
-@ComponentScan("io.gravitee.am.management.service")
-@Import({EmailConfiguration.class})
-public class ServiceConfiguration {
+public class PrematureJWTException extends JWTException {
+
+    public PrematureJWTException(String message) {
+        super(message);
+    }
+
+    public PrematureJWTException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

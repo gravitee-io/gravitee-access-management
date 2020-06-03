@@ -74,6 +74,12 @@
             <artifactId>gravitee-node-reporter</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.jwt</groupId>
+            <artifactId>gravitee-am-jwt</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Vertx dependencies -->
         <dependency>
             <groupId>io.vertx</groupId>

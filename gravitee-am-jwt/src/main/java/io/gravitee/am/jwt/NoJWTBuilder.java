@@ -13,25 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.certificate.jwt.impl;
+package io.gravitee.am.jwt;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
+import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
+import net.minidev.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.text.ParseException;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JJWTBuilder implements JWTBuilder {
+public class NoJWTBuilder implements JWTBuilder {
 
-    private io.jsonwebtoken.JwtBuilder jwtBuilder;
-
-    public JJWTBuilder(io.jsonwebtoken.JwtBuilder jwtBuilder) {
-        this.jwtBuilder = jwtBuilder;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(NoJWTBuilder.class);
 
     @Override
     public String sign(JWT payload) {
-        return jwtBuilder.setClaims(payload).compact();
+        PlainJWT plainJWT;
+        try {
+            plainJWT = new PlainJWT(JWTClaimsSet.parse(new JSONObject(payload)));
+        } catch (ParseException e) {
+            logger.debug("Signing JWT token: {} has failed", payload);
+            throw new MalformedJWTException("Failed to encode JWT token", e);
+        }
+        return plainJWT.serialize();
     }
 }

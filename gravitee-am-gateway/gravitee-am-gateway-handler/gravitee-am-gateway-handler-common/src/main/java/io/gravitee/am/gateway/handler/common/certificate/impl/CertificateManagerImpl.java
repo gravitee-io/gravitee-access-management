@@ -17,13 +17,14 @@ package io.gravitee.am.gateway.handler.common.certificate.impl;
 
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.DefaultKey;
+import io.gravitee.am.certificate.api.Keys;
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.common.service.AbstractService;
-import io.jsonwebtoken.security.Keys;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -33,6 +34,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,7 +48,6 @@ import java.util.stream.Collectors;
 public class CertificateManagerImpl extends AbstractService implements CertificateManager, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
-    private static final String defaultDigestAlgorithm = "SHA-256";
 
     @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
     private String signingKeySecret;
@@ -121,7 +122,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     }
 
     @Override
-    public void afterPropertiesSet() {
+    public void afterPropertiesSet() throws Exception {
         logger.info("Initializing default certificate provider for domain {}", domain.getName());
         initDefaultCertificateProvider();
 
@@ -129,18 +130,20 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         initNoneAlgorithmCertificateProvider();
     }
 
-    private void initDefaultCertificateProvider() {
+    private void initDefaultCertificateProvider() throws InvalidKeyException {
         // create default signing HMAC key
-        Key key = Keys.hmacShaKeyFor(signingKeySecret.getBytes());
+        byte[] keySecretBytes = signingKeySecret.getBytes();
+        Key key = Keys.hmacShaKeyFor(keySecretBytes);
+        SignatureAlgorithm signatureAlgorithm = Keys.hmacShaSignatureAlgorithmFor(keySecretBytes);
         io.gravitee.am.certificate.api.Key certificateKey = new DefaultKey(signingKeyId, key);
 
         // create default certificate provider
-        setDefaultCertificateProvider(certificateKey);
+        setDefaultCertificateProvider(certificateKey, signatureAlgorithm);
     }
 
-    private void setDefaultCertificateProvider(io.gravitee.am.certificate.api.Key key) {
+    private void setDefaultCertificateProvider(io.gravitee.am.certificate.api.Key key, SignatureAlgorithm signatureAlgorithm) {
         CertificateMetadata certificateMetadata = new CertificateMetadata();
-        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
+        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, signatureAlgorithm.getDigestName()));
 
         io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
 
@@ -161,17 +164,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
             @Override
             public String signatureAlgorithm() {
-                int keySize = key.getValue().toString().getBytes().length*8;
-                if(keySize>=512) {
-                    return "HS512";
-                }
-                else if(keySize>=384) {
-                    return "HS384";
-                }
-                else if(keySize>=256) {
-                    return "HS256";
-                }
-                return null;
+                return signatureAlgorithm.getValue();
             }
 
             @Override
@@ -184,7 +177,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     private void initNoneAlgorithmCertificateProvider() {
         CertificateMetadata certificateMetadata = new CertificateMetadata();
-        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, "none"));
+        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, SignatureAlgorithm.NONE.getValue()));
 
         io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
 
@@ -205,7 +198,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
             @Override
             public String signatureAlgorithm() {
-                return "none";
+                return SignatureAlgorithm.NONE.getValue();
             }
 
             @Override

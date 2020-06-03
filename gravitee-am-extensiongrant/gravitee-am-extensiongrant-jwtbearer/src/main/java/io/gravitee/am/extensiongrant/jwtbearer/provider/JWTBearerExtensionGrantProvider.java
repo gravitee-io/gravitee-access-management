@@ -15,15 +15,20 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
+import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
+import io.gravitee.am.common.exception.jwt.MalformedJWTException;
+import io.gravitee.am.common.exception.jwt.PrematureJWTException;
+import io.gravitee.am.common.exception.jwt.SignatureException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.jwt.DefaultJWTParser;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.SignatureException;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import org.slf4j.Logger;
@@ -51,15 +56,15 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTBearerExtensionGrantProvider.class);
     private static final String ASSERTION_QUERY_PARAM = "assertion";
     private static final Pattern SSH_PUB_KEY = Pattern.compile("ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*)( .*)?");
-    private JwtParser jwtParser;
+    private JWTParser jwtParser;
 
     @Autowired
     private JWTBearerExtensionGrantConfiguration jwtBearerTokenGranterConfiguration;
 
     @Override
-    public void afterPropertiesSet() {
-        jwtParser = Jwts.parser();
-        jwtParser.setSigningKey(parsePublicKey(jwtBearerTokenGranterConfiguration.getPublicKey()));
+    public void afterPropertiesSet() throws Exception {
+        RSAPublicKey publicKey = parsePublicKey(jwtBearerTokenGranterConfiguration.getPublicKey());
+        jwtParser = new DefaultJWTParser(publicKey);
     }
 
     @Override
@@ -69,36 +74,30 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
         if (assertion == null) {
             throw new InvalidGrantException("Assertion value is missing");
         }
-
         return Observable.fromCallable(() -> {
             try {
-                Jws<Claims> jwsClaims = jwtParser.parseClaimsJws(assertion);
-                Claims claims = jwsClaims.getBody();
-                return createUser(claims);
-            } catch (ExpiredJwtException e) {
-                LOGGER.debug(e.getMessage(), e.getCause());
-                throw new InvalidGrantException("JWT token is expired", e);
-            } catch (SignatureException e) {
-                LOGGER.debug(e.getMessage(),e.getCause());
-                throw new InvalidGrantException("JWT token signature validation failed", e);
-            } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
-                LOGGER.debug(e.getMessage(),e.getCause());
-                throw new InvalidGrantException("JWT token is invalid", e);
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage(),e.getCause());
-                throw new InvalidGrantException(e.getMessage(), e);
+                JWT jwt = jwtParser.parse(assertion);
+                return createUser(jwt);
+            } catch (MalformedJWTException | ExpiredJWTException | PrematureJWTException | SignatureException ex) {
+                LOGGER.debug(ex.getMessage(), ex.getCause());
+                throw new InvalidGrantException(ex.getMessage(), ex);
+            } catch (Exception ex) {
+                LOGGER.error(ex.getMessage(), ex.getCause());
+                throw new InvalidGrantException(ex.getMessage(), ex);
             }
         }).firstElement();
     }
 
-    public User createUser(Claims claims) {
-        final String username = claims.containsKey(StandardClaims.PREFERRED_USERNAME) ? claims.get(StandardClaims.PREFERRED_USERNAME, String.class) : claims.getSubject();
+    public User createUser(Map<String, Object> claims) {
+        final String sub = claims.get(StandardClaims.SUB).toString();
+        final String username = claims.containsKey(StandardClaims.PREFERRED_USERNAME) ?
+                claims.get(StandardClaims.PREFERRED_USERNAME).toString() : sub;
         User user = new DefaultUser(username);
-        ((DefaultUser) user).setId(claims.getSubject());
+        ((DefaultUser) user).setId(sub);
         // set claims
         Map<String, Object> additionalInformation = new HashMap<>();
         // add sub required claim
-        additionalInformation.put(io.gravitee.am.common.jwt.Claims.sub, claims.getSubject());
+        additionalInformation.put(io.gravitee.am.common.jwt.Claims.sub, sub);
         List<Map<String, String>> claimsMapper = jwtBearerTokenGranterConfiguration.getClaimsMapper();
         if (claimsMapper != null && !claimsMapper.isEmpty()) {
             claimsMapper.forEach(claimMapper -> {

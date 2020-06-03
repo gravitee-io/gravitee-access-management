@@ -15,18 +15,16 @@
  */
 package io.gravitee.am.gateway.certificate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
 import io.gravitee.am.model.jose.JWK;
-import io.jsonwebtoken.security.Keys;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import org.junit.Before;
 import org.junit.Test;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.util.Collections;
 
@@ -44,11 +42,6 @@ public class CertificateProviderManagerTest {
     private static final String defaultDigestAlgorithm = "SHA-256";
 
     private CertificateProviderManager certificateProviderManager = new CertificateProviderManagerImpl();
-
-    @Before
-    public void setUp() {
-        ((CertificateProviderManagerImpl) certificateProviderManager).setObjectMapper(new ObjectMapper());
-    }
 
     @Test
     public void noneAlgorithmCertificateProvider_nominalCase() {
@@ -121,7 +114,7 @@ public class CertificateProviderManagerTest {
 
     private io.gravitee.am.certificate.api.CertificateProvider defaultProvider() {
         // create default signing HMAC key
-        Key key = Keys.hmacShaKeyFor(signingKeySecret.getBytes());
+        Key key = new SecretKeySpec(signingKeySecret.getBytes(), "HmacSHA256");
         io.gravitee.am.certificate.api.Key certificateKey = new DefaultKey(signingKeyId, key);
 
         CertificateMetadata certificateMetadata = new CertificateMetadata();
@@ -146,17 +139,7 @@ public class CertificateProviderManagerTest {
 
             @Override
             public String signatureAlgorithm() {
-                int keySize = certificateKey.getValue().toString().getBytes().length*8;
-                if(keySize>=512) {
-                    return "HS512";
-                }
-                else if(keySize>=384) {
-                    return "HS384";
-                }
-                else if(keySize>=256) {
-                    return "HS256";
-                }
-                return null;
+                return "HS256";
             }
 
             @Override

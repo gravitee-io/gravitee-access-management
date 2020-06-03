@@ -21,9 +21,9 @@ import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
-import io.gravitee.am.gateway.certificate.jwt.JWTParser;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.email.EmailManager;
@@ -34,11 +34,11 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
@@ -56,6 +56,7 @@ import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
@@ -81,10 +82,12 @@ public class UserServiceImpl implements UserService {
     private io.gravitee.am.gateway.handler.common.user.UserService userService;
 
     @Autowired
-    private JWTParser jwtParser;
+    @Qualifier("managementJwtBuilder")
+    private JWTBuilder jwtBuilder;
 
     @Autowired
-    private JWTBuilder jwtBuilder;
+    @Qualifier("managementJwtParser")
+    private JWTParser jwtParser;
 
     @Autowired
     private Domain domain;

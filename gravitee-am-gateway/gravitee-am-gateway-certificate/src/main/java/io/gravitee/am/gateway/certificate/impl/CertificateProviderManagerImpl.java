@@ -15,21 +15,22 @@
  */
 package io.gravitee.am.gateway.certificate.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
-import io.gravitee.am.gateway.certificate.jwt.impl.JJWTBuilder;
-import io.gravitee.am.gateway.certificate.jwt.impl.JJWTParser;
+import io.gravitee.am.jwt.DefaultJWTBuilder;
+import io.gravitee.am.jwt.DefaultJWTParser;
+import io.gravitee.am.jwt.NoJWTBuilder;
+import io.gravitee.am.jwt.NoJWTParser;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.jackson.io.JacksonDeserializer;
-import io.jsonwebtoken.jackson.io.JacksonSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.Key;
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -40,13 +41,11 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class CertificateProviderManagerImpl implements CertificateProviderManager {
 
+    private static final Logger logger = LoggerFactory.getLogger(CertificateProviderManagerImpl.class);
     private final ConcurrentMap<String, CertificateProvider> certificateProviders = new ConcurrentHashMap<>();
 
     @Autowired
     private CertificatePluginManager certificatePluginManager;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Override
     public void create(Certificate certificate) {
@@ -77,29 +76,28 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
     public CertificateProvider create(io.gravitee.am.certificate.api.CertificateProvider provider) {
         // create certificate provider
         CertificateProvider certificateProvider = new CertificateProvider(provider);
-
-        // create parser and builder (default to jjwt)
-        io.jsonwebtoken.JwtParser jjwtParser;
-        io.jsonwebtoken. JwtBuilder jjwtBuilder;
         try {
             io.gravitee.am.certificate.api.Key providerKey = provider.key().blockingGet();
-            Key signingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPrivate() : (Key) providerKey.getValue();
-            Key verifyingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPublic() : (Key) providerKey.getValue();
-            jjwtParser = Jwts.parserBuilder().deserializeJsonWith(new JacksonDeserializer<>(objectMapper)).setSigningKey(verifyingKey).build();
-            jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer<>(objectMapper)).signWith(signingKey).setHeaderParam(JwsHeader.KEY_ID, providerKey.getKeyId());
+            Object keyValue = providerKey.getValue();
+            if (keyValue instanceof KeyPair) {
+                PrivateKey privateKey = ((KeyPair) keyValue).getPrivate();
+                PublicKey publicKey = ((KeyPair) keyValue).getPublic();
+                certificateProvider.setJwtBuilder(new DefaultJWTBuilder(privateKey, provider.signatureAlgorithm(), providerKey.getKeyId()));
+                certificateProvider.setJwtParser(new DefaultJWTParser(publicKey));
+            } else {
+                Key sharedKey = (Key) keyValue;
+                certificateProvider.setJwtBuilder(new DefaultJWTBuilder(sharedKey, provider.signatureAlgorithm(), providerKey.getKeyId()));
+                certificateProvider.setJwtParser(new DefaultJWTParser(sharedKey));
+            }
         } catch (UnsupportedOperationException ex) {
-            jjwtParser = Jwts.parserBuilder().deserializeJsonWith(new JacksonDeserializer<>(objectMapper)).build();
-            jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer<>(objectMapper));
+            // alg=none provider
+            certificateProvider.setJwtParser(new NoJWTParser());
+            certificateProvider.setJwtBuilder(new NoJWTBuilder());
+        } catch (Exception ex) {
+            logger.error("An error has occurred while creating certificate provider", ex);
+            return null;
         }
-
-        certificateProvider.setJwtParser(new JJWTParser(jjwtParser));
-        certificateProvider.setJwtBuilder(new JJWTBuilder(jjwtBuilder));
-
         return certificateProvider;
-    }
-
-    public void setObjectMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
     }
 
     private void deploy(Certificate certificate) {
@@ -108,8 +106,10 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
         // create certificate provider
         if (provider != null) {
             CertificateProvider certificateProvider = create(provider);
-            certificateProvider.setDomain(certificate.getDomain());
-            certificateProviders.put(certificate.getId(), certificateProvider);
+            if (certificateProvider != null) {
+                certificateProvider.setDomain(certificate.getDomain());
+                certificateProviders.put(certificate.getId(), certificateProvider);
+            }
         } else {
             certificateProviders.remove(certificate.getId());
         }

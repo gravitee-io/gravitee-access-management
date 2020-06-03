@@ -17,14 +17,16 @@ package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.User;
-import io.jsonwebtoken.Claims;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static junit.framework.Assert.assertTrue;
@@ -80,163 +82,11 @@ public class JWTBearerExtensionGrantProviderTest {
         assertionClaims.put("username", "test_username");
         assertionClaims.put("email", "test_email");
 
-        Claims claims = createClaims(assertionClaims);
-
-
-        User user = jwtBearerExtensionGrantProvider.createUser(claims);
+        User user = jwtBearerExtensionGrantProvider.createUser(assertionClaims);
 
         assertEquals(3, user.getAdditionalInformation().values().size());
         assertEquals("test_username", user.getAdditionalInformation().get("username"));
         assertEquals("test_email", user.getAdditionalInformation().get("email"));
 
-    }
-
-    private Claims createClaims(Map<String, Object> claims) {
-        return new Claims() {
-            @Override
-            public int size() {
-                return claims.size();
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return claims.isEmpty();
-            }
-
-            @Override
-            public boolean containsKey(Object key) {
-                return claims.containsKey(key);
-            }
-
-            @Override
-            public boolean containsValue(Object value) {
-                return claims.containsValue(value);
-            }
-
-            @Override
-            public Object get(Object key) {
-                return claims.get(key);
-            }
-
-            @Override
-            public Object put(String key, Object value) {
-                return claims.put(key, value);
-            }
-
-            @Override
-            public Object remove(Object key) {
-                return claims.remove(key);
-            }
-
-            @Override
-            public void putAll(Map<? extends String, ?> m) {
-                claims.putAll(m);
-            }
-
-            @Override
-            public void clear() {
-                claims.clear();
-            }
-
-            @Override
-            public Set<String> keySet() {
-                return claims.keySet();
-            }
-
-            @Override
-            public Collection<Object> values() {
-                return claims.values();
-            }
-
-            @Override
-            public Set<Entry<String, Object>> entrySet() {
-                return claims.entrySet();
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                return claims.equals(o);
-            }
-
-            @Override
-            public int hashCode() {
-                return claims.hashCode();
-            }
-
-            @Override
-            public String getIssuer() {
-                return null;
-            }
-
-            @Override
-            public Claims setIssuer(String iss) {
-                return null;
-            }
-
-            @Override
-            public String getSubject() {
-                return (String) claims.get("sub");
-            }
-
-            @Override
-            public Claims setSubject(String sub) {
-                return null;
-            }
-
-            @Override
-            public String getAudience() {
-                return null;
-            }
-
-            @Override
-            public Claims setAudience(String aud) {
-                return null;
-            }
-
-            @Override
-            public Date getExpiration() {
-                return null;
-            }
-
-            @Override
-            public Claims setExpiration(Date exp) {
-                return null;
-            }
-
-            @Override
-            public Date getNotBefore() {
-                return null;
-            }
-
-            @Override
-            public Claims setNotBefore(Date nbf) {
-                return null;
-            }
-
-            @Override
-            public Date getIssuedAt() {
-                return null;
-            }
-
-            @Override
-            public Claims setIssuedAt(Date iat) {
-                return null;
-            }
-
-            @Override
-            public String getId() {
-                return null;
-            }
-
-            @Override
-            public Claims setId(String jti) {
-                return null;
-            }
-
-            @Override
-            public <T> T get(String claimName, Class<T> requiredType) {
-                return null;
-            }
-        };
     }
 }

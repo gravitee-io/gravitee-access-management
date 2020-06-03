@@ -20,31 +20,28 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>gravitee-am-gateway</artifactId>
-        <groupId>io.gravitee.am.gateway</groupId>
+        <artifactId>gravitee-am-parent</artifactId>
+        <groupId>io.gravitee.am</groupId>
         <version>3.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>gravitee-am-gateway-certificate</artifactId>
-    <name>Gravitee IO - Access Management - Gateway - Certificate</name>
+    <groupId>io.gravitee.am.jwt</groupId>
+    <artifactId>gravitee-am-jwt</artifactId>
+
+    <name>Gravitee IO - Access Management - JWT</name>
 
     <dependencies>
-        <!-- Gravitee.io dependencies -->
         <dependency>
-            <groupId>io.gravitee.am.gateway</groupId>
-            <artifactId>gravitee-am-gateway-core</artifactId>
+            <groupId>io.gravitee.am.common</groupId>
+            <artifactId>gravitee-am-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <!-- Nimbus -->
         <dependency>
-            <groupId>io.gravitee.am.plugins.handlers</groupId>
-            <artifactId>gravitee-am-plugins-handlers-certificate</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.gravitee.am.jwt</groupId>
-            <artifactId>gravitee-am-jwt</artifactId>
-            <version>${project.version}</version>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
         </dependency>
     </dependencies>
 </project>

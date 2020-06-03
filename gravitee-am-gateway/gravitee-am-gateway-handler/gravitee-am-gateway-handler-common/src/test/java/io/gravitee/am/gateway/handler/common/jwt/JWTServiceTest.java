@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.jwt;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
+import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.model.oidc.Client;

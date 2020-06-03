@@ -15,23 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.root.spring;
 
-import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
-import io.gravitee.am.gateway.certificate.jwt.JWTParser;
-import io.gravitee.am.gateway.certificate.jwt.impl.JJWTBuilder;
-import io.gravitee.am.gateway.certificate.jwt.impl.JJWTParser;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.security.Key;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -40,39 +30,9 @@ import java.security.Key;
 @Configuration
 public class RootConfiguration implements ProtocolConfiguration {
 
-    @Value("${jwt.kid:default-gravitee-AM-key}")
-    private String kid;
-
-    @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
-    private String signingKeySecret;
-
-    @Value("${jwt.issuer:https://gravitee.am}")
-    private String issuer;
-
     @Bean("managementUserService")
     public UserService userService() {
         return new UserServiceImpl();
-    }
-
-    @Bean
-    public JWTParser jwtParser() {
-        // jwt parser for token user registration
-        JWTParser jwtParser = new JJWTParser(Jwts.parser().setSigningKey(key()));
-        return jwtParser;
-    }
-
-    @Bean
-    public JWTBuilder jwtBuilder() {
-        // jwt builder for reset password
-        JWTBuilder jwtBuilder = new JJWTBuilder(Jwts.builder().signWith(key()).setHeaderParam(JwsHeader.KEY_ID, kid).setIssuer(issuer));
-        return jwtBuilder;
-    }
-
-    @Bean
-    public Key key() {
-        // HMAC key to sign/verify JWT used for email purpose
-        Key key = Keys.hmacShaKeyFor(signingKeySecret.getBytes());
-        return key;
     }
 
     @Bean

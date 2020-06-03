@@ -15,19 +15,21 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.provider.jwt;
 
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.identityprovider.api.User;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import javax.servlet.http.Cookie;
-import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,13 +46,16 @@ public class JWTGenerator implements InitializingBean {
     private static final String DEFAULT_JWT_COOKIE_PATH = "/";
     private static final String DEFAULT_JWT_COOKIE_DOMAIN = "";
     private static final int DEFAULT_JWT_EXPIRE_AFTER = 604800;
-    private Key key;
 
     @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
     private String signingKeySecret;
 
     @Value("${jwt.cookie-name:Auth-Graviteeio-AM}")
     private String authCookieName;
+
+    @Autowired
+    @Qualifier("managementJwtBuilder")
+    private JWTBuilder jwtBuilder;
 
     @Autowired
     private Environment environment;
@@ -93,16 +98,19 @@ public class JWTGenerator implements InitializingBean {
     }
 
     private String generateToken(final User user, Date expirationDate) {
-        String compactJws = Jwts.builder()
-                .setSubject(user.getId())
-                .setIssuedAt(new Date())
-                .setExpiration(expirationDate)
-                .claim(StandardClaims.PREFERRED_USERNAME, user.getUsername())
-                .addClaims(user.getAdditionalInformation())
-                .signWith(key)
-                .compact();
-
-        return compactJws;
+        try {
+            JWT jwt = new JWT();
+            jwt.setJti(SecureRandomString.generate());
+            jwt.setIat(Instant.now().getEpochSecond());
+            jwt.setSub(user.getId());
+            jwt.setExp(expirationDate.toInstant().getEpochSecond());
+            jwt.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
+            jwt.putAll(user.getAdditionalInformation());
+            return jwtBuilder.sign(jwt);
+        } catch (Exception ex) {
+            LOGGER.error("An error occurs while creating JWT token", ex);
+            return null;
+        }
     }
 
     @Override
@@ -121,8 +129,5 @@ public class JWTGenerator implements InitializingBean {
             LOGGER.warn("##############################################################");
             LOGGER.warn("");
         }
-
-        // init JWT signing key
-        key = Keys.hmacShaKeyFor(signingKeySecret.getBytes());
     }
 }

@@ -16,16 +16,16 @@
 package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
 import io.gravitee.common.http.HttpHeaders;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -46,23 +46,30 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.Key;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFilter implements InitializingBean {
 
-    @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
-    private String jwtSecret;
     @Value("${jwt.cookie-path:/}")
     private String jwtCookiePath;
+
     @Value("${jwt.cookie-name:Auth-Graviteeio-AM}")
     private String authCookieName;
+
     @Value("${jwt.cookie-secure:false}")
     private boolean jwtCookieSecure;
+
     @Value("${jwt.cookie-domain:}")
     private String jwtCookieDomain;
-    private Key key;
+
+    @Autowired
+    @Qualifier("managementJwtParser")
+    private JWTParser jwtParser;
 
     @Autowired
     private Http401UnauthorizedEntryPoint http401UnauthorizedEntryPoint;
@@ -101,8 +108,8 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
         }
 
         try {
-            JwtParser jwtParser = Jwts.parser().setSigningKey(key);
-            Map<String, Object> claims = new HashMap<>(jwtParser.parseClaimsJws(authToken).getBody());
+            JWT payload = jwtParser.parse(authToken);;
+            Map<String, Object> claims = new HashMap<>(payload);
             claims.put(Claims.ip_address, remoteAddress(request));
             claims.put(Claims.user_agent, userAgent(request));
             DefaultUser user = new DefaultUser((String) claims.get(StandardClaims.PREFERRED_USERNAME));
@@ -131,14 +138,6 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
         // As this is a REST authentication, after success we need to continue the request normally
         // and return the response as if the resource was not secured at all
         chain.doFilter(request, response);
-    }
-
-    @Override
-    public void afterPropertiesSet() {
-        super.afterPropertiesSet();
-
-        // init JWT signing key
-        key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
     private void removeJWTAuthenticationCookie(HttpServletResponse response) {

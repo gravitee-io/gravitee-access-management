@@ -15,20 +15,14 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Role;
-import io.gravitee.am.model.User;
-import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
@@ -36,7 +30,6 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
-import io.jsonwebtoken.JwtBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -89,7 +82,7 @@ public class UserServiceTest {
     private RoleService roleService;
 
     @Mock
-    private JwtBuilder jwtBuilder;
+    private JWTBuilder jwtBuilder;
 
     @Before
     public void setUp() {
@@ -418,9 +411,6 @@ public class UserServiceTest {
             accountSettings = new AccountSettings();
         }
 
-        JwtBuilder mockJwtBuilder = mock(JwtBuilder.class);
-        when(mockJwtBuilder.compact()).thenReturn("token");
-
         Domain domain1 = mock(Domain.class);
         when(domain1.getId()).thenReturn(domain);
         if (!clientLevel) {
@@ -443,7 +433,7 @@ public class UserServiceTest {
             when(settings.getAccount()).thenReturn(accountSettings);
             when(client.getSettings()).thenReturn(settings);
         }
-        when(jwtBuilder.setClaims(anyMap())).thenReturn(mockJwtBuilder);
+        when(jwtBuilder.sign(any())).thenReturn("token");
         when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));

@@ -83,6 +83,7 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Test dependencies -->

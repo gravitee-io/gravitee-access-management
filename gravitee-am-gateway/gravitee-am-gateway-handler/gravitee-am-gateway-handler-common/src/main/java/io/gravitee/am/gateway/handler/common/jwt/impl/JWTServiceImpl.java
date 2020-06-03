@@ -113,11 +113,27 @@ public class JWTServiceImpl implements JWTService {
     }
 
     private Single<String> sign(CertificateProvider certificateProvider, JWT jwt) {
-        return Single.just(certificateProvider.getJwtBuilder().sign(jwt));
+        return Single.create(emitter -> {
+            try {
+                String encodedToken = certificateProvider.getJwtBuilder().sign(jwt);
+                emitter.onSuccess(encodedToken);
+            } catch (Exception ex) {
+                logger.debug("Failed to sign JWT", ex);
+                emitter.onError(new InvalidTokenException("The JWT token couldn't be signed", ex));
+            }
+        });
     }
 
     private Single<Map<String, Object>> decode(CertificateProvider certificateProvider, String payload) {
-        return Single.just(certificateProvider.getJwtParser().parse(payload));
+        return Single.create(emitter -> {
+            try {
+                Map<String, Object> decodedPayload = certificateProvider.getJwtParser().parse(payload);
+                emitter.onSuccess(decodedPayload);
+            } catch (Exception ex) {
+                logger.debug("Failed to decode JWT", ex);
+                emitter.onError(new InvalidTokenException("The access token is invalid", ex));
+            }
+        });
     }
 
 }

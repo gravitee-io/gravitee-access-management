@@ -20,7 +20,7 @@ import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.javakeystore.JavaKeyStoreConfiguration;
-import io.gravitee.am.certificate.javakeystore.Signature;
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.Flowable;
@@ -28,17 +28,9 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigInteger;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
@@ -58,7 +50,7 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     private JWKSet jwkSet;
     private String publicKey;
     private Set<JWK> keys;
-    private Signature signature = Signature.SHA256withRSA;
+    private SignatureAlgorithm signature = SignatureAlgorithm.RS256;
     private io.gravitee.am.certificate.api.Key certificateKey;
 
     @Autowired
@@ -86,9 +78,9 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
             Certificate cert = keystore.getCertificate(configuration.getAlias());
             // Get Signing Algorithm name
             if (cert instanceof X509Certificate) {
-                signature = getSignature(((X509Certificate) cert).getSigAlgOID());
+                signature = getSignature(((X509Certificate) cert).getSigAlgName());
             }
-            certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestOID());
+            certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestName());
             // Get public key
             PublicKey publicKey = cert.getPublicKey();
             // create key pair
@@ -195,15 +187,16 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
         return jwk;
     }
 
-    private Signature getSignature(String signingAlgorithmOID) {
-        return Stream.of(Signature.values())
-                .filter(signature -> signature.getAlgorithmId().toString().equals(signingAlgorithmOID))
+    private SignatureAlgorithm getSignature(String signingAlgorithm) {
+        return Stream.of(SignatureAlgorithm.values())
+                .filter(signatureAlgorithm -> signatureAlgorithm.getJcaName() != null)
+                .filter(signatureAlgorithm -> signatureAlgorithm.getJcaName().equals(signingAlgorithm))
                 .findFirst()
-                .orElse(Signature.SHA256withRSA);
+                .orElse(SignatureAlgorithm.RS256);
     }
 
     @Override
     public String signatureAlgorithm() {
-        return signature.getJwsAlgorithm().getName();
+        return signature.getValue();
     }
 }
