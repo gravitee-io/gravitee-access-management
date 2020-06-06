@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c0f86198-e034-434d-a3f1-ee329d72f0ec",
+		"_postman_id": "721037fe-e84d-4321-ba2e-fe4f8f2b8ac0",
 		"name": "Gravitee.io - AM - UMA 2.0 - app version",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -15,7 +15,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "cfdbb2cc-b3a5-4f6b-af5f-afe2b33e0b50",
+								"id": "1ed5e423-7918-4d55-8469-4770bdc5a8a3",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -80,7 +80,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "2cdcd1ac-c5fa-41a2-a658-13905db7845e",
+								"id": "a3552b80-9704-44e1-859c-763c91318276",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -136,7 +136,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "8eded863-ec42-4cd3-ab64-9c2fa454afd8",
+								"id": "f0fbd02e-178c-4477-94de-205c7ccccbf9",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(204);",
@@ -191,7 +191,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "18ab8aac-9aa2-4bdb-91ad-d80b3fb1bc85",
+								"id": "804cf20e-4360-4723-b446-84c0155ee898",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -248,7 +248,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "5f052c5b-98ab-4456-bde7-89e54a1c05aa",
+								"id": "2009540a-f82a-4070-b9e3-618dbc51ce52",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -317,7 +317,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "64d8e544-8c23-442d-97ab-7a077c7607ef",
+								"id": "5d60572a-01d8-4f87-8d2b-6ae400519a91",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -378,7 +378,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "70a231e3-c560-48f9-a358-910a1a3978f6",
+								"id": "6c72f67a-1630-4a93-b293-b3ab75759a4c",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -417,7 +417,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"RS-client\",\n  \"type\": \"WEB\"\n}",
+							"raw": "{\n  \"name\": \"RQP-client\",\n  \"type\": \"WEB\"\n}",
 							"options": {
 								"raw": {}
 							}
@@ -447,7 +447,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "35127d2b-1370-4cbf-9dfb-1a330dcf71aa",
+								"id": "d76c8ad6-55b6-4b07-aacc-6823efa3a067",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -507,10 +507,10 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "abb56ca7-4ec2-4948-adea-95154edf1698",
+								"id": "8d3c0b46-1bc6-431b-a23b-12038111c03c",
 								"exec": [
 									"// wait for sync process",
-									"setTimeout(function(){}, 5000);"
+									"setTimeout(function () { }, 10000);"
 								],
 								"type": "text/javascript"
 							}
@@ -571,7 +571,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3aca9ea8-669f-444b-b4f7-a227a802a5cd",
+												"id": "35cdbd9f-12d5-42fe-ba24-c3410deb6148",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -611,7 +611,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "91f47ca5-0a26-41ed-ab63-5b43bd54d09b",
+												"id": "5372fb1f-54fd-4ed2-9426-2349a468672f",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -646,7 +646,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "70ddef0a-6143-4da1-83ff-1a114227ec05",
+												"id": "2f3b1f1f-4696-4a1f-8f5e-c098df67e283",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -689,7 +689,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3d3f1ef1-1e0f-42ab-a743-8590eeb6a302",
+												"id": "5cb78219-bf3e-4011-b55f-5543dc1bc772",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -763,7 +763,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f3876f74-cba3-490a-9e9d-2a123174c36f",
+										"id": "80afe5ef-0b06-424d-9da7-be805dbcdf50",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -775,7 +775,7 @@
 											"});",
 											"",
 											"// wait for sync process",
-											"setTimeout(function(){}, 5000);"
+											"setTimeout(function () { }, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -827,7 +827,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "a6b6f7e0-2cc5-4757-898c-062f96b28246",
+										"id": "332ce953-5ce9-468a-9c5e-6f53c9904eae",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -870,7 +870,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "6d914b3d-4eda-49c3-8eee-ca1fd56b4814",
+										"id": "0ae6a9fd-12ea-4cb9-81f5-479a9dd1e031",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -942,7 +942,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "591ef3f4-db79-4208-b3c2-ff9ae1649898",
+																"id": "396fcf8c-b88f-4149-bda0-f856ead2464b",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -1015,7 +1015,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "3942871f-2f33-4352-9693-9d069cc44155",
+																"id": "79aba7e5-1b48-4ba4-ac5d-d7b4e839f211",
 																"exec": [
 																	"pm.test(\"Status code is 401\", function () {",
 																	"    pm.response.to.have.status(401);",
@@ -1044,7 +1044,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "73c586cb-410d-4e7a-94ef-24c461f872b1",
+																"id": "d4f146b5-437d-4caa-8c52-bc6f4edbd109",
 																"exec": [
 																	"pm.test(\"Status code is 405\", function () {",
 																	"    pm.response.to.have.status(405);",
@@ -1081,7 +1081,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "a529667a-b7a4-4f8f-b862-c8956793eef6",
+																"id": "e1028c87-f30d-4d6f-bce6-30ff88fc2be1",
 																"exec": [
 																	"pm.test(\"Status code is 403\", function () {",
 																	"    pm.response.to.have.status(403);",
@@ -1131,7 +1131,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "6144be41-f434-40a2-b12b-a3851a766ec8",
+																"id": "96fc8a1a-002c-40cc-8cea-6b00ae8762b5",
 																"exec": [
 																	"pm.test(\"Status code is 401\", function () {",
 																	"    pm.response.to.have.status(401);",
@@ -1166,7 +1166,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "4f06ded3-48d3-4977-ba49-f2f7d323f23f",
+																"id": "61b1f0d9-84e1-44b5-a194-cf7f3e5bbedd",
 																"exec": [
 																	"pm.test(\"Status code is 405\", function () {",
 																	"    pm.response.to.have.status(405);",
@@ -1203,7 +1203,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "507c8419-8fe7-4272-9d8a-fe179a72987b",
+																"id": "95da5a50-c2b3-4363-aef6-5f098e8dc490",
 																"exec": [
 																	"pm.test(\"Status code is 401\", function () {",
 																	"    pm.response.to.have.status(401);",
@@ -1267,7 +1267,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "76976fb3-dd6a-4f8a-9d9a-b613b4ced6de",
+																"id": "22c65180-b986-4510-ad42-618600d27ded",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -1347,7 +1347,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "848928d0-c07d-4761-b8e1-eefdc93792fd",
+																"id": "ad72ee6b-79d1-458e-8043-ef6e311c70f0",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1407,7 +1407,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "5d3604cd-0893-4394-8b0e-00914909273a",
+																"id": "d54e038d-b628-4c12-9a57-eeabc236b04d",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1419,7 +1419,7 @@
 																	"    pm.expect(body).to.have.property('error');",
 																	"    pm.expect(body).to.have.property('error_description');",
 																	"    pm.expect(body.error).to.eql(\"invalid_request\");",
-																	"    pm.expect(body.error_description).to.include(\"Scope [not_foud] can not be found.\");",
+																	"    pm.expect(body.error_description).to.include(\"Scope [not_found] can not be found.\");",
 																	"});"
 																],
 																"type": "text/javascript"
@@ -1445,7 +1445,7 @@
 														],
 														"body": {
 															"mode": "raw",
-															"raw": "{  \n   \"resource_scopes\":[  \n      \"not_foud\"\n   ],\n   \"description\":\"Should fail due to missing scope\",\n   \"name\":\"Should fail\"\n}",
+															"raw": "{  \n   \"resource_scopes\":[  \n      \"not_found\"\n   ],\n   \"description\":\"Should fail due to missing scope\",\n   \"name\":\"Should fail\"\n}",
 															"options": {
 																"raw": {
 																	"language": "json"
@@ -1474,7 +1474,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "432e2f16-28a0-4089-a549-6fefc7494dcd",
+																"id": "21fd4201-562f-4fb7-aba4-7e1bb9297a46",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -1537,7 +1537,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "baa1d554-2248-4d72-ba2e-175ccb0d1a37",
+																"id": "55768af4-9909-4ab0-ba05-058447af6b42",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1589,7 +1589,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "9b13b09b-c1c6-4214-9af7-3bf39f582082",
+																"id": "8cc2f75d-f6be-49b6-9ed8-94ba813a99ca",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1641,7 +1641,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "bd32492d-569f-4b4b-97c3-4c57c82da380",
+																"id": "e72a770a-85aa-4103-b90a-11775b9c4657",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1693,7 +1693,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "4d965971-9bf2-4474-8264-ae8339974297",
+																"id": "1867bb4f-cb32-4ea6-8104-6726f82f573f",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -1758,7 +1758,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "00daa7a3-be41-47ad-99b9-be75120fb814",
+																"id": "d4cd085a-0b6b-48e1-a522-941ee47f0d25",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1810,7 +1810,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "166e8d4a-2aef-49e9-9ec8-baa896485a19",
+																"id": "362b576b-f7dd-43d7-b498-c24f2617b195",
 																"exec": [
 																	"pm.test(\"Status code is 204\", function () {",
 																	"    pm.response.to.have.status(204);",
@@ -1853,7 +1853,7 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "a85fe21d-6d10-4dac-a1b4-ccab9d0e493f",
+																"id": "92cf3775-397f-4adb-9d3e-e96035285080",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1924,7 +1924,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "334434dc-58b6-412e-b1ba-bc66bb342a2c",
+														"id": "7ded48b4-aade-402a-8a79-b552b5d34094",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2004,7 +2004,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "3aecfbe8-61e3-4106-9fb0-a219315f4edb",
+														"id": "2f537e99-cd2e-4c70-871b-c4c7ee0a789d",
 														"exec": [
 															"pm.test(\"Status code is 204\", function () {",
 															"    pm.response.to.have.status(204);",
@@ -2047,7 +2047,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "e1e00bb1-a7fb-47d6-9040-ffdf663f99c1",
+														"id": "07c4c6b7-1661-4520-be21-afe4b61f8f71",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -2112,7 +2112,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "8887f858-ea04-4ba0-b34e-c7d0f7c8171a",
+														"id": "328db8e3-f003-48c2-b234-0fb17d625404",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2160,7 +2160,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "080f28bb-a005-4227-94b1-20cb3b3dbdca",
+														"id": "383fa4d2-610c-46b9-9240-9af7342b97e9",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2221,7 +2221,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "30d1cc85-e590-4c79-8d92-348f4884f4e7",
+														"id": "f4426382-8732-4a60-bba0-896c32f542e8",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2271,7 +2271,479 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "0fd5e544-f1c7-4e60-a110-0efcab9a0660",
+														"id": "834774a9-b611-48db-94df-c07de4b4cf28",
+														"exec": [
+															"pm.test(\"Status code is 204\", function () {",
+															"    pm.response.to.have.status(204);",
+															"});",
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"url": {
+													"raw": "{{resource_location}}",
+													"host": [
+														"{{resource_location}}"
+													]
+												}
+											},
+											"response": []
+										}
+									],
+									"protocolProfileBehavior": {},
+									"_postman_isSubFolder": true
+								},
+								{
+									"name": "Resource Access Policies",
+									"item": [
+										{
+											"name": "Create resource",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "a0a729e9-0f33-427c-a204-57bd36be0f49",
+														"exec": [
+															"pm.test(\"Status code is 201\", function () {",
+															"    var body = pm.response.json();",
+															"    pm.response.to.have.status(201);",
+															"    pm.environment.set('resource_location', pm.response.headers.get('Location'));",
+															"    pm.environment.set('resource_id', body._id);",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "POST",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{  \n   \"resource_scopes\":[  \n      \"phone\"\n   ],\n   \"description\":\"photo1\",\n   \"icon_uri\":\"http://www.example.com/icons/picture.png\",\n   \"name\":\"Photo access\",\n   \"type\":\"http://www.example.com/resource/photo\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{resource_registration_endpoint}}",
+													"host": [
+														"{{resource_registration_endpoint}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "List policies",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "6fc10fa7-f382-4c4e-9bf3-b93b178a9107",
+														"exec": [
+															"pm.test(\"Status code is 200\", function () {",
+															"    pm.response.to.have.status(200);",
+															"});",
+															"",
+															"pm.test(\"Can find default policy\", function () {",
+															"    var body = pm.response.json();",
+															"    pm.expect(body[0]).not.equal(null);",
+															"    pm.environment.set('policy_id', body[0]);",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"host": true,
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer {{protection_api_token}}",
+														"type": "text"
+													}
+												],
+												"url": {
+													"raw": "{{resource_location}}/policies",
+													"host": [
+														"{{resource_location}}"
+													],
+													"path": [
+														"policies"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete default policy",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "0c35dfbb-4349-4b60-8719-d294cd859a9e",
+														"exec": [
+															"pm.test(\"Status code is 204\", function () {",
+															"    pm.response.to.have.status(204);",
+															"});",
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"url": {
+													"raw": "{{resource_location}}/policies/{{policy_id}}",
+													"host": [
+														"{{resource_location}}"
+													],
+													"path": [
+														"policies",
+														"{{policy_id}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Create policy",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "460851f4-cc74-4bb3-8eeb-dcddca9466f9",
+														"exec": [
+															"pm.test(\"Status code is 201\", function () {",
+															"    pm.response.to.have.status(201);",
+															"});",
+															"",
+															"pm.test(\"Has a location\", function () {",
+															"    var body = pm.response.json();",
+															"    //Check headers",
+															"    pm.response.to.have.header(\"Content-Type\");",
+															"    pm.response.to.have.header('Location');",
+															"    //Check body",
+															"    pm.expect(body).to.have.property('id');",
+															"    pm.expect(body).to.have.property('condition');",
+															"",
+															"    //Save values",
+															"    pm.environment.set('policy_location', pm.response.headers.get('Location'));",
+															"    pm.environment.set('policy_id', body.id);",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "POST",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n\t\"name\": \"policy-name\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nresult.state = State.SUCCESS;\"\n\t}\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{resource_location}}/policies",
+													"host": [
+														"{{resource_location}}"
+													],
+													"path": [
+														"policies"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Get policy",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "30082c06-d479-410e-b8ff-bd7b2d827c7d",
+														"exec": [
+															"pm.test(\"Status code is 200\", function () {",
+															"    pm.response.to.have.status(200);",
+															"});",
+															"",
+															"pm.test(\"Is able to fetch policy\", function () {",
+															"    var body = pm.response.json();",
+															"    pm.expect(body).to.have.property('id');",
+															"    pm.expect(body).to.have.property('condition');",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"url": {
+													"raw": "{{policy_location}}",
+													"host": [
+														"{{policy_location}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Update policy",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "f7aa1ead-7159-4b27-89c6-739db7b478e2",
+														"exec": [
+															"pm.test(\"Status code is 200\", function () {",
+															"    pm.response.to.have.status(200);",
+															"});",
+															"",
+															"pm.test(\"Is able to update resource_set\", function () {",
+															"    var body = pm.response.json();",
+															"    pm.expect(body).to.have.property('id');",
+															"    pm.expect(body).to.have.property('name');",
+															"    pm.expect(body).to.have.property('condition');",
+															"    pm.expect(body.name).to.eql('policy-name-updated');",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n\t\"name\": \"policy-name-updated\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nresult.state = State.FAILURE;\"\n\t}\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{policy_location}}",
+													"host": [
+														"{{policy_location}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "List policies",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "d138baf8-934a-4da2-8283-1f7820f00912",
+														"exec": [
+															"pm.test(\"Status code is 200\", function () {",
+															"    pm.response.to.have.status(200);",
+															"});",
+															"",
+															"pm.test(\"Can find policies\", function () {",
+															"    var body = pm.response.json();",
+															"    pm.expect(body[0]).to.eql(pm.environment.get('policy_id'));",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"host": true,
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"url": {
+													"raw": "{{resource_location}}/policies",
+													"host": [
+														"{{resource_location}}"
+													],
+													"path": [
+														"policies"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete policy",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "4d6eeaaa-dc0f-40ca-ab4d-340b6a339c96",
+														"exec": [
+															"pm.test(\"Status code is 204\", function () {",
+															"    pm.response.to.have.status(204);",
+															"});",
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"url": {
+													"raw": "{{policy_location}}",
+													"host": [
+														"{{policy_location}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete resource",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "8e3eb9d1-4119-478b-8377-bd5f81235d81",
 														"exec": [
 															"pm.test(\"Status code is 204\", function () {",
 															"    pm.response.to.have.status(204);",
@@ -2321,7 +2793,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "38c71e33-40ba-4c09-b7d1-27ba37b204a4",
+														"id": "526cb85d-fec9-4293-82a8-20fcbbbc661b",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -2381,12 +2853,111 @@
 											"response": []
 										},
 										{
+											"name": "List policies",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "a1cb0b1b-905c-4e25-a8e2-67165968fac3",
+														"exec": [
+															"pm.test(\"Status code is 200\", function () {",
+															"    pm.response.to.have.status(200);",
+															"});",
+															"",
+															"pm.test(\"Can find default policy\", function () {",
+															"    var body = pm.response.json();",
+															"    pm.expect(body[0]).not.equal(null);",
+															"    pm.environment.set('policy_id', body[0]);",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"host": true,
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer {{protection_api_token}}",
+														"type": "text"
+													}
+												],
+												"url": {
+													"raw": "{{resource_location_one}}/policies",
+													"host": [
+														"{{resource_location_one}}"
+													],
+													"path": [
+														"policies"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete default policy",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "ada6e376-cfae-4a0a-ada9-a8c443204aff",
+														"exec": [
+															"pm.test(\"Status code is 204\", function () {",
+															"    pm.response.to.have.status(204);",
+															"});",
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"url": {
+													"raw": "{{resource_location_one}}/policies/{{policy_id}}",
+													"host": [
+														"{{resource_location_one}}"
+													],
+													"path": [
+														"policies",
+														"{{policy_id}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
 											"name": "Create New Resource Two",
 											"event": [
 												{
 													"listen": "test",
 													"script": {
-														"id": "1d560816-b34b-475f-8357-624cfac55030",
+														"id": "cb17e4a1-3ea1-43d5-b9e2-ad46704d7e1c",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -2446,12 +3017,111 @@
 											"response": []
 										},
 										{
+											"name": "List policies",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "2c4cfdcb-13db-4b79-8697-f254c8cc2e20",
+														"exec": [
+															"pm.test(\"Status code is 200\", function () {",
+															"    pm.response.to.have.status(200);",
+															"});",
+															"",
+															"pm.test(\"Can find default policy\", function () {",
+															"    var body = pm.response.json();",
+															"    pm.expect(body[0]).not.equal(null);",
+															"    pm.environment.set('policy_id', body[0]);",
+															"});"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"host": true,
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "GET",
+												"header": [
+													{
+														"key": "Authorization",
+														"value": "Bearer {{protection_api_token}}",
+														"type": "text"
+													}
+												],
+												"url": {
+													"raw": "{{resource_location_two}}/policies",
+													"host": [
+														"{{resource_location_two}}"
+													],
+													"path": [
+														"policies"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete default policy",
+											"event": [
+												{
+													"listen": "test",
+													"script": {
+														"id": "699d6d2b-d329-4c1f-94a4-d7fb01a4bff4",
+														"exec": [
+															"pm.test(\"Status code is 204\", function () {",
+															"    pm.response.to.have.status(204);",
+															"});",
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {
+													"user-agent": true
+												}
+											},
+											"request": {
+												"auth": {
+													"type": "noauth"
+												},
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Authorization",
+														"type": "text",
+														"value": "Bearer {{protection_api_token}}"
+													}
+												],
+												"url": {
+													"raw": "{{resource_location_two}}/policies/{{policy_id}}",
+													"host": [
+														"{{resource_location_two}}"
+													],
+													"path": [
+														"policies",
+														"{{policy_id}}"
+													]
+												}
+											},
+											"response": []
+										},
+										{
 											"name": "RS Login - PAT bearer",
 											"event": [
 												{
 													"listen": "test",
 													"script": {
-														"id": "1dc8dc05-1d3c-4237-a737-ed3766dc8eee",
+														"id": "6528c793-79aa-4e1c-9cac-73139c10a6ba",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2514,7 +3184,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "751731d8-c24f-4591-8480-57658ab7c8e4",
+														"id": "05a49b0c-a17f-4f44-a36a-6cd100cc3b89",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -2565,7 +3235,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "6e48af3b-99f4-49dc-ac93-c372e2314c8c",
+														"id": "c89ea4f4-1d20-402b-b941-10943002748d",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -2634,7 +3304,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "0ac3b65f-0155-492f-bdc7-ed0656b4a6c1",
+												"id": "8437edab-50a6-4469-8722-a4c6e8ecf58d",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2708,7 +3378,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "9add952a-78e6-4cff-ac11-9e8658166776",
+												"id": "95c08629-3ebf-41e6-af1d-d5f64d72ace3",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2771,7 +3441,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "d70e6ec1-6af1-4b91-aaae-6f679fb4368b",
+												"id": "ad9ee91c-348f-4913-a9c9-b0a984a67db4",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -2829,7 +3499,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2acae5b6-ddaf-4356-bfef-09cec2fd08c0",
+												"id": "2f6fa2bc-b116-4bf5-9bbc-4c8b99c0a13e",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -2883,7 +3553,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "922a631b-c96d-4853-bbbb-35efc436408f",
+												"id": "f61cfd3d-75f9-4cd7-b4c9-e27124ad272c",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -2942,7 +3612,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "78bf20db-251f-40c7-aa86-cd618f952901",
+												"id": "2933546e-a6a5-401f-a252-0aac2a6898b1",
 												"exec": [
 													"pm.test(\"Status code is 403\", function () {",
 													"    pm.response.to.have.status(403);",
@@ -3006,7 +3676,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "81902ff0-09ce-42d0-923f-389216224c6a",
+												"id": "f66137f2-cf6b-4dc7-bf35-93adbe603588",
 												"exec": [
 													"pm.test(\"Status code is 403\", function () {",
 													"    pm.response.to.have.status(403);",
@@ -3070,7 +3740,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "e8f0a8f0-1b2a-4428-b10a-34336bfa1353",
+												"id": "d24d5a4c-6dd9-41a8-9fb2-eb55cf184a61",
 												"exec": [
 													"pm.test(\"Status code is 403\", function () {",
 													"    pm.response.to.have.status(403);",
@@ -3139,7 +3809,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f8b7980b-770d-4133-844f-b4e0f33be8fa",
+												"id": "6475ff1f-dd87-4c52-b9eb-417fb6a9b07c",
 												"exec": [
 													"pm.test(\"Status code is 403\", function () {",
 													"    pm.response.to.have.status(403);",
@@ -3208,7 +3878,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "be695a22-3482-4355-88d7-84d0ab6104e6",
+												"id": "001ad5cb-c07d-43f8-954c-ff54c148f105",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -3285,7 +3955,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2284c8d1-de70-47df-9334-c3ab428dfdaa",
+												"id": "f0396042-9349-4db5-aeab-a47168a603b6",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -3362,7 +4032,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2cefc0f1-e5aa-4a5a-a588-f0f86758fdfa",
+												"id": "4906b7bb-27f8-4fa7-a4c8-182af176f5a9",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -3454,7 +4124,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "8a6ddaf2-8271-4073-8673-8100caa12670",
+														"id": "c1bd8025-3868-4f65-ba20-dd95feafb3df",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -3505,7 +4175,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "ee26b1ac-e837-45b8-a25a-e26266d2d088",
+														"id": "150f4067-500c-42bc-a7d1-de17aa126fdc",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -3602,7 +4272,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "aaa15bdf-f507-4789-a453-58bdd83d9b89",
+														"id": "0730696d-6c0d-4902-90c7-a93f3d90bfb0",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -3665,7 +4335,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "73149393-8831-4c17-a0f2-e278ba42c2db",
+														"id": "035aa117-6c40-4ae1-b2f8-40aa81d8c905",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -3733,7 +4403,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "fee8c3cf-5a4a-4e3f-8f81-ebf3290af3ec",
+														"id": "85242611-987b-447a-8ea8-b1dbb9373f89",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -3784,7 +4454,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "d7c6451e-e3b8-4b4e-8958-d87f931704c5",
+														"id": "dfa041bd-10d8-46a5-b251-6f884a343c49",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -3884,7 +4554,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "1b44b28b-7b2b-4c8e-8573-0d1dc6c031dc",
+														"id": "525f1a4f-516e-45da-bfec-22f5ca885486",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -3935,7 +4605,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "8c59e41c-bcf3-44b0-b2e2-5f844240446d",
+														"id": "2b760fa6-1898-4d28-a996-5252cc8bc4d5",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4050,7 +4720,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "a8d006c2-d393-4cf8-88f0-a80255a49208",
+														"id": "195c2180-a4e4-4b99-a425-c576da42b2e9",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -4117,7 +4787,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "f20e63da-2784-4f58-8501-f14d8276fc4d",
+														"id": "e831ce0e-95f3-4b98-afc2-d6d6d72f87e2",
 														"exec": [
 															"pm.test(\"Status code is 400\", function () {",
 															"    pm.response.to.have.status(400);",
@@ -4204,7 +4874,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "88128705-266b-4849-8af6-b437e736c873",
+														"id": "6b9d8a99-8c01-4326-b417-38da4536787c",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -4255,7 +4925,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "4c785ede-25ad-4566-91a3-c298873bedb6",
+														"id": "64904058-6217-41f6-9dd3-0a30d8a85be0",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4337,7 +5007,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "e37b04aa-13a3-4d3f-900d-f661cfbaa0e3",
+														"id": "f1a7bc26-bf6d-4c26-b7b6-be4e88730c42",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -4400,7 +5070,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "39c6f248-db7f-4ada-a7dc-5f441c9a3fb1",
+														"id": "d5f6d55d-0120-4d0b-954c-79a9ddc44b03",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -4451,7 +5121,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "968e8fe7-afa9-4c43-8492-2e79018223f6",
+														"id": "ed4e2999-24f8-4938-9734-a0db49bbea54",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4541,7 +5211,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "60297c90-9230-4b48-932b-77fe0faeb725",
+														"id": "b393fa9f-4fc8-4332-84d8-46242d57e8f0",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -4592,7 +5262,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "a9f63e99-2134-44be-92b3-fe7622c65fd4",
+														"id": "35384af0-d6df-424c-ac63-b862fe213895",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4697,7 +5367,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "ee62c2c8-915a-4eac-a5f8-7b6605a4afd6",
+														"id": "9f56f466-5794-48b1-b2fe-66ad0628b3d1",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -4764,7 +5434,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "3dbe57fe-fa5f-4a39-878a-9a326c0b374e",
+														"id": "549261f8-8bd7-491c-8dcd-0870960ad5e3",
 														"exec": [
 															"pm.test(\"Status code is 400\", function () {",
 															"    pm.response.to.have.status(400);",
@@ -4841,7 +5511,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "c833168d-8418-4649-9dec-bae0331e2fa2",
+														"id": "33a5ef9d-2028-4254-a41b-fe8007406cb4",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -4892,7 +5562,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "da004178-d78c-417d-9e9c-01aea3c76ca5",
+														"id": "ceffcd37-68c0-4001-8108-e750813c3e12",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4990,7 +5660,7 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "50e78872-1afa-4a8a-9c32-2123e4ab9d3c",
+														"id": "76931933-84a0-41cb-8426-0a3df36f45f3",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -5054,6 +5724,1451 @@
 									],
 									"protocolProfileBehavior": {},
 									"_postman_isSubFolder": true
+								},
+								{
+									"name": "Requesting Party - Access Policies",
+									"item": [
+										{
+											"name": "Case - deny all",
+											"item": [
+												{
+													"name": "Assign denied policy to resource one",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "3ed37092-927f-41b9-8521-64de95e558ee",
+																"exec": [
+																	"pm.test(\"Status code is 201\", function () {",
+																	"    pm.response.to.have.status(201);",
+																	"});",
+																	"",
+																	"pm.test(\"Has a location\", function () {",
+																	"    var body = pm.response.json();",
+																	"    //Save values",
+																	"    pm.environment.set('policy_location', pm.response.headers.get('Location'));",
+																	"    pm.environment.set('policy_id', body.id);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"protocolProfileBehavior": {
+														"disabledSystemHeaders": {
+															"user-agent": true
+														}
+													},
+													"request": {
+														"auth": {
+															"type": "noauth"
+														},
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{protection_api_token}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n\t\"name\": \"policy-name\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nresult.state = State.FAILURE;\"\n\t}\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{resource_location_one}}/policies",
+															"host": [
+																"{{resource_location_one}}"
+															],
+															"path": [
+																"policies"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Simple Request Permission Ticket",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "7144d720-c4ce-4dcc-a00c-2152e21f50f3",
+																"exec": [
+																	"pm.test(\"Status code is 201\", function () {",
+																	"    pm.response.to.have.status(201);",
+																	"});",
+																	"",
+																	"pm.test(\"Ticket successfully created\", function () {",
+																	"    var body = pm.response.json();",
+																	"    //Check body",
+																	"    pm.expect(body).to.have.property('ticket');",
+																	"    //Save values",
+																	"    pm.environment.set('permission_ticket_simple', body.ticket);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{rs_pat}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "[\n\t{  \n\t\t\"resource_id\":\"{{resource_set_one}}\",\n\t\t\"resource_scopes\":[  \n\t\t\t\"profile\"\n\t\t]\n\t}\n]",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{permission_endpoint}}",
+															"host": [
+																"{{permission_endpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "RPT Request - no additional scope",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "1121f93c-457c-4e5a-a676-a2acd0062ef8",
+																"exec": [
+																	"pm.test(\"Status code is 400\", function () {",
+																	"    pm.response.to.have.status(400);",
+																	"});",
+																	"",
+																	"pm.test(\"Has an error\", function () {",
+																	"    var body = pm.response.json();",
+																	"    pm.expect(body).to.have.property('error');",
+																	"    pm.expect(body).to.have.property('error_description');",
+																	"",
+																	"    pm.expect(body.error).to.eql(\"invalid_grant\");",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Basic {{rqp_client_authentication}}"
+															}
+														],
+														"body": {
+															"mode": "urlencoded",
+															"urlencoded": [
+																{
+																	"key": "grant_type",
+																	"value": "urn:ietf:params:oauth:grant-type:uma-ticket",
+																	"type": "text"
+																},
+																{
+																	"key": "ticket",
+																	"value": "{{permission_ticket_simple}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token",
+																	"value": "{{bob_id_token}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token_format",
+																	"value": "urn:ietf:params:oauth:token-type:id_token",
+																	"type": "text"
+																}
+															]
+														},
+														"url": {
+															"raw": "{{tokenEndpoint}}",
+															"host": [
+																"{{tokenEndpoint}}"
+															]
+														}
+													},
+													"response": []
+												}
+											],
+											"protocolProfileBehavior": {},
+											"_postman_isSubFolder": true
+										},
+										{
+											"name": "Case - grant all",
+											"item": [
+												{
+													"name": "Assign approved policy to resource one",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "3759c0d0-8979-49e5-87ea-28d4b3f6bdd2",
+																"exec": [
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"protocolProfileBehavior": {
+														"disabledSystemHeaders": {
+															"user-agent": true
+														}
+													},
+													"request": {
+														"auth": {
+															"type": "noauth"
+														},
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{protection_api_token}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n\t\"name\": \"policy-name\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nresult.state = State.SUCCESS;\"\n\t}\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{policy_location}}",
+															"host": [
+																"{{policy_location}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Simple Request Permission Ticket",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "7ea6f4a4-01d1-48e0-ad3f-497e6ddca28f",
+																"exec": [
+																	"pm.test(\"Status code is 201\", function () {",
+																	"    pm.response.to.have.status(201);",
+																	"});",
+																	"",
+																	"pm.test(\"Ticket successfully created\", function () {",
+																	"    var body = pm.response.json();",
+																	"    //Check body",
+																	"    pm.expect(body).to.have.property('ticket');",
+																	"    //Save values",
+																	"    pm.environment.set('permission_ticket_simple', body.ticket);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{rs_pat}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "[\n\t{  \n\t\t\"resource_id\":\"{{resource_set_one}}\",\n\t\t\"resource_scopes\":[  \n\t\t\t\"profile\"\n\t\t]\n\t}\n]",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{permission_endpoint}}",
+															"host": [
+																"{{permission_endpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "RPT Request - no additional scope",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "02b86adb-e862-4a8c-8f89-ce0f3d15661e",
+																"exec": [
+																	"function parseJwtPayload(token) {",
+																	"    var base64Url = token.split('.')[1];",
+																	"    var base64 = base64Url.replace('-', '+').replace('_', '/');",
+																	"    return JSON.parse(atob(base64));",
+																	"}",
+																	"",
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});",
+																	"",
+																	"pm.test(\"Has an access_token\", function () {",
+																	"    var body = pm.response.json();",
+																	"    pm.expect(body).to.have.property('access_token');",
+																	"    pm.expect(body).to.have.property('token_type');",
+																	"    pm.expect(body.token_type).to.eql('bearer');",
+																	"    pm.expect(body).to.have.property('expires_in');",
+																	"",
+																	"    let payload = parseJwtPayload(body.access_token);",
+																	"    pm.expect(payload).to.have.property('permissions');",
+																	"    const rs_one = payload.permissions.find(p => p.resourceId === pm.environment.get(\"resource_set_one\"));",
+																	"    pm.expect(rs_one.resourceScopes.length).to.eql(1);",
+																	"    pm.expect(rs_one.resourceScopes).to.have.members([\"profile\"]);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Basic {{rqp_client_authentication}}"
+															}
+														],
+														"body": {
+															"mode": "urlencoded",
+															"urlencoded": [
+																{
+																	"key": "grant_type",
+																	"value": "urn:ietf:params:oauth:grant-type:uma-ticket",
+																	"type": "text"
+																},
+																{
+																	"key": "ticket",
+																	"value": "{{permission_ticket_simple}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token",
+																	"value": "{{bob_id_token}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token_format",
+																	"value": "urn:ietf:params:oauth:token-type:id_token",
+																	"type": "text"
+																}
+															]
+														},
+														"url": {
+															"raw": "{{tokenEndpoint}}",
+															"host": [
+																"{{tokenEndpoint}}"
+															]
+														}
+													},
+													"response": []
+												}
+											],
+											"protocolProfileBehavior": {},
+											"_postman_isSubFolder": true
+										},
+										{
+											"name": "Case - grant client",
+											"item": [
+												{
+													"name": "Assign approved policy to resource one - wrong client",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "94e8ed79-882f-4962-85ad-ad880d0eaf53",
+																"exec": [
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"protocolProfileBehavior": {
+														"disabledSystemHeaders": {
+															"user-agent": true
+														}
+													},
+													"request": {
+														"auth": {
+															"type": "noauth"
+														},
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{protection_api_token}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n\t\"name\": \"policy-name\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nclient = context.attributes['client']\\\\nif(client.name == 'unknown') { result.state = State.SUCCESS; } else { result.state = State.FAILURE;}\"\n\t}\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{policy_location}}",
+															"host": [
+																"{{policy_location}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Simple Request Permission Ticket",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "be4c8547-86ce-46d1-9679-8b9adde08204",
+																"exec": [
+																	"pm.test(\"Status code is 201\", function () {",
+																	"    pm.response.to.have.status(201);",
+																	"});",
+																	"",
+																	"pm.test(\"Ticket successfully created\", function () {",
+																	"    var body = pm.response.json();",
+																	"    //Check body",
+																	"    pm.expect(body).to.have.property('ticket');",
+																	"    //Save values",
+																	"    pm.environment.set('permission_ticket_simple', body.ticket);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{rs_pat}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "[\n\t{  \n\t\t\"resource_id\":\"{{resource_set_one}}\",\n\t\t\"resource_scopes\":[  \n\t\t\t\"profile\"\n\t\t]\n\t}\n]",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{permission_endpoint}}",
+															"host": [
+																"{{permission_endpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "RPT Request - no additional scope",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "38a79327-905d-4c55-9912-1ea46625995a",
+																"exec": [
+																	"pm.test(\"Status code is 400\", function () {",
+																	"    pm.response.to.have.status(400);",
+																	"});",
+																	"",
+																	"pm.test(\"Has an error\", function () {",
+																	"    var body = pm.response.json();",
+																	"    pm.expect(body).to.have.property('error');",
+																	"    pm.expect(body).to.have.property('error_description');",
+																	"",
+																	"    pm.expect(body.error).to.eql(\"invalid_grant\");",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Basic {{rqp_client_authentication}}"
+															}
+														],
+														"body": {
+															"mode": "urlencoded",
+															"urlencoded": [
+																{
+																	"key": "grant_type",
+																	"value": "urn:ietf:params:oauth:grant-type:uma-ticket",
+																	"type": "text"
+																},
+																{
+																	"key": "ticket",
+																	"value": "{{permission_ticket_simple}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token",
+																	"value": "{{bob_id_token}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token_format",
+																	"value": "urn:ietf:params:oauth:token-type:id_token",
+																	"type": "text"
+																}
+															]
+														},
+														"url": {
+															"raw": "{{tokenEndpoint}}",
+															"host": [
+																"{{tokenEndpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Assign approved policy to resource one - valid client",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "cf70e667-f609-4c84-aca5-49147d7432e5",
+																"exec": [
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"protocolProfileBehavior": {
+														"disabledSystemHeaders": {
+															"user-agent": true
+														}
+													},
+													"request": {
+														"auth": {
+															"type": "noauth"
+														},
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{protection_api_token}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n\t\"name\": \"policy-name\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nclient = context.attributes['client']\\\\nif(client.name == 'RQP-client') { result.state = State.SUCCESS; } else { result.state = State.FAILURE;}\"\n\t}\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{policy_location}}",
+															"host": [
+																"{{policy_location}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Simple Request Permission Ticket",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "78365597-d13d-42d8-9ff3-0888d5bfd64a",
+																"exec": [
+																	"pm.test(\"Status code is 201\", function () {",
+																	"    pm.response.to.have.status(201);",
+																	"});",
+																	"",
+																	"pm.test(\"Ticket successfully created\", function () {",
+																	"    var body = pm.response.json();",
+																	"    //Check body",
+																	"    pm.expect(body).to.have.property('ticket');",
+																	"    //Save values",
+																	"    pm.environment.set('permission_ticket_simple', body.ticket);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{rs_pat}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "[\n\t{  \n\t\t\"resource_id\":\"{{resource_set_one}}\",\n\t\t\"resource_scopes\":[  \n\t\t\t\"profile\"\n\t\t]\n\t}\n]",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{permission_endpoint}}",
+															"host": [
+																"{{permission_endpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "RPT Request - no additional scope",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "9a6331cd-a664-4290-8650-e20421589b05",
+																"exec": [
+																	"function parseJwtPayload(token) {",
+																	"    var base64Url = token.split('.')[1];",
+																	"    var base64 = base64Url.replace('-', '+').replace('_', '/');",
+																	"    return JSON.parse(atob(base64));",
+																	"}",
+																	"",
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});",
+																	"",
+																	"pm.test(\"Has an access_token\", function () {",
+																	"    var body = pm.response.json();",
+																	"    pm.expect(body).to.have.property('access_token');",
+																	"    pm.expect(body).to.have.property('token_type');",
+																	"    pm.expect(body.token_type).to.eql('bearer');",
+																	"    pm.expect(body).to.have.property('expires_in');",
+																	"",
+																	"    let payload = parseJwtPayload(body.access_token);",
+																	"    pm.expect(payload).to.have.property('permissions');",
+																	"    const rs_one = payload.permissions.find(p => p.resourceId === pm.environment.get(\"resource_set_one\"));",
+																	"    pm.expect(rs_one.resourceScopes.length).to.eql(1);",
+																	"    pm.expect(rs_one.resourceScopes).to.have.members([\"profile\"]);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Basic {{rqp_client_authentication}}"
+															}
+														],
+														"body": {
+															"mode": "urlencoded",
+															"urlencoded": [
+																{
+																	"key": "grant_type",
+																	"value": "urn:ietf:params:oauth:grant-type:uma-ticket",
+																	"type": "text"
+																},
+																{
+																	"key": "ticket",
+																	"value": "{{permission_ticket_simple}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token",
+																	"value": "{{bob_id_token}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token_format",
+																	"value": "urn:ietf:params:oauth:token-type:id_token",
+																	"type": "text"
+																}
+															]
+														},
+														"url": {
+															"raw": "{{tokenEndpoint}}",
+															"host": [
+																"{{tokenEndpoint}}"
+															]
+														}
+													},
+													"response": []
+												}
+											],
+											"protocolProfileBehavior": {},
+											"_postman_isSubFolder": true
+										},
+										{
+											"name": "Case - grant user",
+											"item": [
+												{
+													"name": "Assign approved policy to resource one - wrong user",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "8015e8e2-967e-4e6f-8063-d7f0d0cd7107",
+																"exec": [
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"protocolProfileBehavior": {
+														"disabledSystemHeaders": {
+															"user-agent": true
+														}
+													},
+													"request": {
+														"auth": {
+															"type": "noauth"
+														},
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{protection_api_token}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n\t\"name\": \"policy-name\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nuser = context.attributes['user']\\\\nif(user.username == 'unknown') { result.state = State.SUCCESS; } else { result.state = State.FAILURE;}\"\n\t}\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{policy_location}}",
+															"host": [
+																"{{policy_location}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Simple Request Permission Ticket",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "6566200a-eb70-4b7a-ae03-11340dd85fb0",
+																"exec": [
+																	"pm.test(\"Status code is 201\", function () {",
+																	"    pm.response.to.have.status(201);",
+																	"});",
+																	"",
+																	"pm.test(\"Ticket successfully created\", function () {",
+																	"    var body = pm.response.json();",
+																	"    //Check body",
+																	"    pm.expect(body).to.have.property('ticket');",
+																	"    //Save values",
+																	"    pm.environment.set('permission_ticket_simple', body.ticket);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{rs_pat}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "[\n\t{  \n\t\t\"resource_id\":\"{{resource_set_one}}\",\n\t\t\"resource_scopes\":[  \n\t\t\t\"profile\"\n\t\t]\n\t}\n]",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{permission_endpoint}}",
+															"host": [
+																"{{permission_endpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "RPT Request - no additional scope",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "6ae72874-c855-4359-83e7-5fd24b32471d",
+																"exec": [
+																	"pm.test(\"Status code is 400\", function () {",
+																	"    pm.response.to.have.status(400);",
+																	"});",
+																	"",
+																	"pm.test(\"Has an error\", function () {",
+																	"    var body = pm.response.json();",
+																	"    pm.expect(body).to.have.property('error');",
+																	"    pm.expect(body).to.have.property('error_description');",
+																	"",
+																	"    pm.expect(body.error).to.eql(\"invalid_grant\");",
+																	"});",
+																	""
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Basic {{rqp_client_authentication}}"
+															}
+														],
+														"body": {
+															"mode": "urlencoded",
+															"urlencoded": [
+																{
+																	"key": "grant_type",
+																	"value": "urn:ietf:params:oauth:grant-type:uma-ticket",
+																	"type": "text"
+																},
+																{
+																	"key": "ticket",
+																	"value": "{{permission_ticket_simple}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token",
+																	"value": "{{bob_id_token}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token_format",
+																	"value": "urn:ietf:params:oauth:token-type:id_token",
+																	"type": "text"
+																}
+															]
+														},
+														"url": {
+															"raw": "{{tokenEndpoint}}",
+															"host": [
+																"{{tokenEndpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Assign approved policy to resource one - valid user",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "13fc7264-8d71-4bf1-a035-b28f8c676fbe",
+																"exec": [
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"protocolProfileBehavior": {
+														"disabledSystemHeaders": {
+															"user-agent": true
+														}
+													},
+													"request": {
+														"auth": {
+															"type": "noauth"
+														},
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{protection_api_token}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n\t\"name\": \"policy-name\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nuser = context.attributes['user']\\\\nif(user.username == 'bob') { result.state = State.SUCCESS; } else { result.state = State.FAILURE;}\"\n\t}\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{policy_location}}",
+															"host": [
+																"{{policy_location}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Simple Request Permission Ticket",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "57973d7a-9985-4b46-aa89-8da3cb6ca6c9",
+																"exec": [
+																	"pm.test(\"Status code is 201\", function () {",
+																	"    pm.response.to.have.status(201);",
+																	"});",
+																	"",
+																	"pm.test(\"Ticket successfully created\", function () {",
+																	"    var body = pm.response.json();",
+																	"    //Check body",
+																	"    pm.expect(body).to.have.property('ticket');",
+																	"    //Save values",
+																	"    pm.environment.set('permission_ticket_simple', body.ticket);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{rs_pat}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "[\n\t{  \n\t\t\"resource_id\":\"{{resource_set_one}}\",\n\t\t\"resource_scopes\":[  \n\t\t\t\"profile\"\n\t\t]\n\t}\n]",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{permission_endpoint}}",
+															"host": [
+																"{{permission_endpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "RPT Request - no additional scope",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "5fd70bed-a9d3-4575-9042-89c8124e2a8d",
+																"exec": [
+																	"function parseJwtPayload(token) {",
+																	"    var base64Url = token.split('.')[1];",
+																	"    var base64 = base64Url.replace('-', '+').replace('_', '/');",
+																	"    return JSON.parse(atob(base64));",
+																	"}",
+																	"",
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});",
+																	"",
+																	"pm.test(\"Has an access_token\", function () {",
+																	"    var body = pm.response.json();",
+																	"    pm.expect(body).to.have.property('access_token');",
+																	"    pm.expect(body).to.have.property('token_type');",
+																	"    pm.expect(body.token_type).to.eql('bearer');",
+																	"    pm.expect(body).to.have.property('expires_in');",
+																	"",
+																	"    let payload = parseJwtPayload(body.access_token);",
+																	"    pm.expect(payload).to.have.property('permissions');",
+																	"    const rs_one = payload.permissions.find(p => p.resourceId === pm.environment.get(\"resource_set_one\"));",
+																	"    pm.expect(rs_one.resourceScopes.length).to.eql(1);",
+																	"    pm.expect(rs_one.resourceScopes).to.have.members([\"profile\"]);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Basic {{rqp_client_authentication}}"
+															}
+														],
+														"body": {
+															"mode": "urlencoded",
+															"urlencoded": [
+																{
+																	"key": "grant_type",
+																	"value": "urn:ietf:params:oauth:grant-type:uma-ticket",
+																	"type": "text"
+																},
+																{
+																	"key": "ticket",
+																	"value": "{{permission_ticket_simple}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token",
+																	"value": "{{bob_id_token}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token_format",
+																	"value": "urn:ietf:params:oauth:token-type:id_token",
+																	"type": "text"
+																}
+															]
+														},
+														"url": {
+															"raw": "{{tokenEndpoint}}",
+															"host": [
+																"{{tokenEndpoint}}"
+															]
+														}
+													},
+													"response": []
+												}
+											],
+											"protocolProfileBehavior": {},
+											"_postman_isSubFolder": true
+										},
+										{
+											"name": "Case - grant permission request",
+											"item": [
+												{
+													"name": "Assign approved policy to resource one - read only access",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "1034b813-a5d8-4a20-abd2-638196684f90",
+																"exec": [
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"protocolProfileBehavior": {
+														"disabledSystemHeaders": {
+															"user-agent": true
+														}
+													},
+													"request": {
+														"auth": {
+															"type": "noauth"
+														},
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{protection_api_token}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n\t\"name\": \"policy-name\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nuser = context.attributes['user']\\\\npermissionRequest = context.attributes['permissionRequest']\\\\nif(user.username == 'bob' && permissionRequest.resourceScopes.contains('read')) { result.state = State.SUCCESS; } else { result.state = State.FAILURE;}\"\n\t}\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{policy_location}}",
+															"host": [
+																"{{policy_location}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Simple Request Permission Ticket",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "5edac664-e444-4c03-b9e4-79c35359ec49",
+																"exec": [
+																	"pm.test(\"Status code is 201\", function () {",
+																	"    pm.response.to.have.status(201);",
+																	"});",
+																	"",
+																	"pm.test(\"Ticket successfully created\", function () {",
+																	"    var body = pm.response.json();",
+																	"    //Check body",
+																	"    pm.expect(body).to.have.property('ticket');",
+																	"    //Save values",
+																	"    pm.environment.set('permission_ticket_simple', body.ticket);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{rs_pat}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "[\n\t{  \n\t\t\"resource_id\":\"{{resource_set_one}}\",\n\t\t\"resource_scopes\":[  \n\t\t\t\"profile\"\n\t\t]\n\t}\n]",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{permission_endpoint}}",
+															"host": [
+																"{{permission_endpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "RPT Request - no additional scope",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "e8760969-24b9-432c-ac66-82e2917b5b85",
+																"exec": [
+																	"pm.test(\"Status code is 400\", function () {",
+																	"    pm.response.to.have.status(400);",
+																	"});",
+																	"",
+																	"pm.test(\"Has an error\", function () {",
+																	"    var body = pm.response.json();",
+																	"    pm.expect(body).to.have.property('error');",
+																	"    pm.expect(body).to.have.property('error_description');",
+																	"",
+																	"    pm.expect(body.error).to.eql(\"invalid_grant\");",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Basic {{rqp_client_authentication}}"
+															}
+														],
+														"body": {
+															"mode": "urlencoded",
+															"urlencoded": [
+																{
+																	"key": "grant_type",
+																	"value": "urn:ietf:params:oauth:grant-type:uma-ticket",
+																	"type": "text"
+																},
+																{
+																	"key": "ticket",
+																	"value": "{{permission_ticket_simple}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token",
+																	"value": "{{bob_id_token}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token_format",
+																	"value": "urn:ietf:params:oauth:token-type:id_token",
+																	"type": "text"
+																}
+															]
+														},
+														"url": {
+															"raw": "{{tokenEndpoint}}",
+															"host": [
+																"{{tokenEndpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Assign approved policy to resource one - profile only access",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "44f185bf-30ed-4a08-9624-530851f396f4",
+																"exec": [
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"protocolProfileBehavior": {
+														"disabledSystemHeaders": {
+															"user-agent": true
+														}
+													},
+													"request": {
+														"auth": {
+															"type": "noauth"
+														},
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{protection_api_token}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n\t\"name\": \"policy-name\",\n\t\"enabled\": true,\n\t\"description\": \"policy-description\",\n\t\"type\": \"groovy\",\n\t\"condition\": {\n\t\t\"onRequestScript\": \"import io.gravitee.policy.groovy.PolicyResult.State\\\\nuser = context.attributes['user']\\\\npermissionRequest = context.attributes['permissionRequest']\\\\nif(user.username == 'bob' && permissionRequest.resourceScopes.contains('profile')) { result.state = State.SUCCESS; } else { result.state = State.FAILURE;}\"\n\t}\n}",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{policy_location}}",
+															"host": [
+																"{{policy_location}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "Simple Request Permission Ticket",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "fdd09bf0-b1b3-4e54-8e02-44fae4c05f96",
+																"exec": [
+																	"pm.test(\"Status code is 201\", function () {",
+																	"    pm.response.to.have.status(201);",
+																	"});",
+																	"",
+																	"pm.test(\"Ticket successfully created\", function () {",
+																	"    var body = pm.response.json();",
+																	"    //Check body",
+																	"    pm.expect(body).to.have.property('ticket');",
+																	"    //Save values",
+																	"    pm.environment.set('permission_ticket_simple', body.ticket);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"type": "text",
+																"value": "Bearer {{rs_pat}}"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "[\n\t{  \n\t\t\"resource_id\":\"{{resource_set_one}}\",\n\t\t\"resource_scopes\":[  \n\t\t\t\"profile\"\n\t\t]\n\t}\n]",
+															"options": {
+																"raw": {
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{permission_endpoint}}",
+															"host": [
+																"{{permission_endpoint}}"
+															]
+														}
+													},
+													"response": []
+												},
+												{
+													"name": "RPT Request - no additional scope",
+													"event": [
+														{
+															"listen": "test",
+															"script": {
+																"id": "051b9869-2345-4cf6-987a-7c6ca8d9d77d",
+																"exec": [
+																	"function parseJwtPayload(token) {",
+																	"    var base64Url = token.split('.')[1];",
+																	"    var base64 = base64Url.replace('-', '+').replace('_', '/');",
+																	"    return JSON.parse(atob(base64));",
+																	"}",
+																	"",
+																	"pm.test(\"Status code is 200\", function () {",
+																	"    pm.response.to.have.status(200);",
+																	"});",
+																	"",
+																	"pm.test(\"Has an access_token\", function () {",
+																	"    var body = pm.response.json();",
+																	"    pm.expect(body).to.have.property('access_token');",
+																	"    pm.expect(body).to.have.property('token_type');",
+																	"    pm.expect(body.token_type).to.eql('bearer');",
+																	"    pm.expect(body).to.have.property('expires_in');",
+																	"",
+																	"    let payload = parseJwtPayload(body.access_token);",
+																	"    pm.expect(payload).to.have.property('permissions');",
+																	"    const rs_one = payload.permissions.find(p => p.resourceId === pm.environment.get(\"resource_set_one\"));",
+																	"    pm.expect(rs_one.resourceScopes.length).to.eql(1);",
+																	"    pm.expect(rs_one.resourceScopes).to.have.members([\"profile\"]);",
+																	"});"
+																],
+																"type": "text/javascript"
+															}
+														}
+													],
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Basic {{rqp_client_authentication}}"
+															}
+														],
+														"body": {
+															"mode": "urlencoded",
+															"urlencoded": [
+																{
+																	"key": "grant_type",
+																	"value": "urn:ietf:params:oauth:grant-type:uma-ticket",
+																	"type": "text"
+																},
+																{
+																	"key": "ticket",
+																	"value": "{{permission_ticket_simple}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token",
+																	"value": "{{bob_id_token}}",
+																	"type": "text"
+																},
+																{
+																	"key": "claim_token_format",
+																	"value": "urn:ietf:params:oauth:token-type:id_token",
+																	"type": "text"
+																}
+															]
+														},
+														"url": {
+															"raw": "{{tokenEndpoint}}",
+															"host": [
+																"{{tokenEndpoint}}"
+															]
+														}
+													},
+													"response": []
+												}
+											],
+											"protocolProfileBehavior": {},
+											"_postman_isSubFolder": true
+										}
+									],
+									"protocolProfileBehavior": {},
+									"_postman_isSubFolder": true
 								}
 							],
 							"protocolProfileBehavior": {},
@@ -5072,7 +7187,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "d44db401-9c6f-42ab-b710-07524695b4ba",
+						"id": "8550f2ab-ddbe-409f-8a74-b6079aab53ae",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -5124,7 +7239,7 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "439d3dde-57b0-4b35-848d-107494ee0f56",
+				"id": "e0c3dd6d-a15a-4ca5-b616-b8954b2c0f02",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -5134,7 +7249,7 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "283f5c18-cb3f-43d9-bc4e-4bd47e5341bb",
+				"id": "f4aa9510-daf0-4270-9b49-930ab67dfdd6",
 				"type": "text/javascript",
 				"exec": [
 					""

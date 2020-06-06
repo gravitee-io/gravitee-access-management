@@ -148,6 +148,147 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         403:
           $ref: "#/components/responses/Forbidden"
+  #Protection API - Access Policies
+  "/uma/protection/resource_set/{resource_id}/policies":
+    get:
+      tags:
+        - Protection API - Resource access policies
+      summary: List resource's access policies
+      parameters:
+        - in: path
+          name: resource_id
+          description: resource identifier
+          required: true
+          schema:
+            type: string
+          example: "9ca2a1d0-a310-4011-a0d2-eed7df99e1b6"
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AccessPolicy"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags:
+        - Protection API - Resource access policies
+      summary: Create access policy
+      parameters:
+        - in: path
+          name: resource_id
+          description: resource identifier
+          required: true
+          schema:
+            type: string
+          example: "9ca2a1d0-a310-4011-a0d2-eed7df99e1b6"
+      requestBody:
+        $ref: "#/components/requestBodies/AccessPolicy"
+      responses:
+        201:
+          description: Created
+          content:
+            "application/json":
+              schema:
+                $ref: "#/components/schemas/AccessPolicy"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+  "/uma/protection/resource_set/{resource_id}/policies/{policy_id}":
+    get:
+      tags:
+        - Protection API - Resource access policies
+      summary: Get access policy description
+      parameters:
+        - in: path
+          name: resource_id
+          description: resource identifier
+          required: true
+          schema:
+            type: string
+          example: "9ca2a1d0-a310-4011-a0d2-eed7df99e1b6"
+        - in: path
+          name: policy_id
+          description: access policy identifier
+          required: true
+          schema:
+            type: string
+          example: "8de2b2d0-a580-6017-b0d2-eed7df99e1b6"
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessPolicy"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+    put:
+      tags:
+        - Protection API - Resource access policies
+      summary: Update access policy
+      parameters:
+        - in: path
+          name: resource_id
+          description: resource identifier
+          required: true
+          schema:
+            type: string
+          example: "9ca2a1d0-a310-4011-a0d2-eed7df99e1b6"
+        - in: path
+          name: policy_id
+          description: access policy identifier
+          required: true
+          schema:
+            type: string
+          example: "8de2b2d0-a580-6017-b0d2-eed7df99e1b6"
+      requestBody:
+        $ref: "#/components/requestBodies/AccessPolicy"
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessPolicy"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+    delete:
+      tags:
+        - Protection API - Resource access policies
+      summary: Delete access policy
+      parameters:
+        - in: path
+          name: resource_id
+          description: resource identifier
+          required: true
+          schema:
+            type: string
+          example: "9ca2a1d0-a310-4011-a0d2-eed7df99e1b6"
+        - in: path
+          name: policy_id
+          description: access policy identifier
+          required: true
+          schema:
+            type: string
+          example: "8de2b2d0-a580-6017-b0d2-eed7df99e1b6"
+      responses:
+        204:
+          description: No content
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
   #Protection API - Permissions
   "/uma/protection/permission":
     post:
@@ -193,12 +334,21 @@ components:
     # Request for resource registration
     Resource:
       description: |
-        If the request is successful, the resource is thereby registered and the authorization server will respond with an HTTP 201 status
-        and include a Location header of the asscociated resource, as well as and an _id parameter into the response body.
+        If the request is successful, the resource is thereby registered and the authorization server will respond with an HTTP 2xx status
+        and include a Location header of the associated resource, as well as and an _id parameter into the response body.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Resource_body"
+    # Request for resource access policies
+    AccessPolicy:
+      description: |
+        If the request is successful, the access policy is thereby registered and the authorization server will respond with an HTTP 2xx status
+        and include a Location header of the associated access policy.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AccessPolicy_body"
     Permission:
       description: |
         Request one or more permissions, _(resource identifiers and corresponding scopes)_ with the authorization server on the client's behalf.
@@ -286,6 +436,53 @@ components:
         resource_scopes: ["view","edit","resize","print"]
       required:
         - _id
+    # Schema with body access policy input fields
+    AccessPolicy_body:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: ["groovy"]
+        condition:
+          type: string
+      example:
+        name: "Resource access policy name"
+        description: "Give access to Alice's album content"
+        type: "groovy"
+        condition: "{ \"script\": \"my script\" }"
+    # Schema with body access response fields
+    AccessPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: ["groovy"]
+        condition:
+          type: string
+      allOf:
+        - $ref: "#/components/schemas/AccessPolicy_body"
+      example:
+        id: "9ca2a1d0-a310-4011-a0d2-eed7df99e1b6"
+        name: "Resource access policy name"
+        description: "Give access to Alice's album content"
+        type: "groovy"
+        condition: "{ \"script\": \"my script\" }"
+      required:
+        - id
+        - name
+        - description
+        - type
+        - condition
     # Single resource permission request
     Permission_single_resource:
       type: object

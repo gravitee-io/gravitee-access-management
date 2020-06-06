@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import org.junit.Assert;
@@ -50,13 +51,17 @@ public class AuthorizationRequestFactoryTest {
         MultiMap rxMultiMap = mock(MultiMap.class);
         when(rxMultiMap.getDelegate()).thenReturn(multiMap);
 
-        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        when(httpServerRequest.params()).thenReturn(rxMultiMap);
-        when(httpServerRequest.params().get(Parameters.CLIENT_ID)).thenReturn("client-id");
-        when(httpServerRequest.params().get(Parameters.SCOPE)).thenReturn("scope");
-        when(httpServerRequest.params().entries()).thenReturn(entries);
+        io.vertx.core.http.HttpServerRequest httpServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
-        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(httpServerRequest);
+        HttpServerRequest rxHttpServerRequest = mock(HttpServerRequest.class);
+        when(rxHttpServerRequest.params()).thenReturn(rxMultiMap);
+        when(rxHttpServerRequest.params().get(Parameters.CLIENT_ID)).thenReturn("client-id");
+        when(rxHttpServerRequest.params().get(Parameters.SCOPE)).thenReturn("scope");
+        when(rxHttpServerRequest.params().entries()).thenReturn(entries);
+        when(rxHttpServerRequest.getDelegate()).thenReturn(httpServerRequest);
+
+        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(rxHttpServerRequest);
 
         Assert.assertNotNull(authorizationRequest);
         Assert.assertEquals("client-id", authorizationRequest.getClientId());

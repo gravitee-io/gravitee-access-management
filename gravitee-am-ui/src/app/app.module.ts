@@ -274,6 +274,8 @@ import { ApplicationResourcesComponent } from './domain/applications/application
 import { ApplicationResourcesResolver } from './resolvers/application-resources.resolver';
 import { ApplicationResourceComponent } from './domain/applications/application/advanced/resources/resource/resource.component';
 import { ApplicationResourceResolver } from './resolvers/application-resource.resolver';
+import { ApplicationResourcePolicyComponent } from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
+import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
 
 @NgModule({
   declarations: [
@@ -421,6 +423,7 @@ import { ApplicationResourceResolver } from './resolvers/application-resource.re
     ApplicationFactorsComponent,
     ApplicationResourcesComponent,
     ApplicationResourceComponent,
+    ApplicationResourcePolicyComponent,
     ManagementRolesComponent,
     ManagementRoleComponent,
     MembershipsComponent,
@@ -529,6 +532,7 @@ import { ApplicationResourceResolver } from './resolvers/application-resource.re
     AnalyticsService,
     ApplicationResourcesResolver,
     ApplicationResourceResolver,
+    ApplicationResourcePolicyResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

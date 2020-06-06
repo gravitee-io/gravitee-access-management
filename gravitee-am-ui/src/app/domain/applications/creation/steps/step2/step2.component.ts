@@ -25,7 +25,7 @@ import * as _ from 'lodash';
 export class ApplicationCreationStep2Component implements OnInit {
   @Input('application') application: any;
   @ViewChild('appForm') form: any;
-  domainId: string;
+  domain: any;
   applicationTypes: any[] = [
     {
       icon: 'language',
@@ -51,7 +51,7 @@ export class ApplicationCreationStep2Component implements OnInit {
   constructor(private route: ActivatedRoute) { }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domain = this.route.snapshot.data['domain'];
   }
 
   icon(app) {

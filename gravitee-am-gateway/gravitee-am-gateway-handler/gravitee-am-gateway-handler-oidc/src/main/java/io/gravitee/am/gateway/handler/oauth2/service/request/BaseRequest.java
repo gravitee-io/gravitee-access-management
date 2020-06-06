@@ -21,6 +21,7 @@ import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.stream.ReadStream;
@@ -52,6 +53,7 @@ public abstract class BaseRequest implements Request {
     private String localAddress;
     private HttpVersion version;
     private SSLSession sslSession;
+    private Response httpResponse;
 
     @Override
     public String id() {
@@ -292,6 +294,14 @@ public abstract class BaseRequest implements Request {
 
     public SSLSession getSslSession() {
         return sslSession;
+    }
+
+    public Response getHttpResponse() {
+        return httpResponse;
+    }
+
+    public void setHttpResponse(Response httpResponse) {
+        this.httpResponse = httpResponse;
     }
 
     /**

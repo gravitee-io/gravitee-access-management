@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import org.junit.Assert;
@@ -51,14 +52,18 @@ public class TokenRequestFactoryTest {
         MultiMap rxMultiMap = mock(MultiMap.class);
         when(rxMultiMap.getDelegate()).thenReturn(multiMap);
 
-        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        when(httpServerRequest.params()).thenReturn(rxMultiMap);
-        when(httpServerRequest.params().get(Parameters.CLIENT_ID)).thenReturn("client-id");
-        when(httpServerRequest.params().get(Parameters.SCOPE)).thenReturn("scope");
-        when(httpServerRequest.params().get(Parameters.GRANT_TYPE)).thenReturn("grant_type");
-        when(httpServerRequest.params().entries()).thenReturn(entries);
+        io.vertx.core.http.HttpServerRequest httpServerRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
-        TokenRequest tokenRequest = tokenRequestFactory.create(httpServerRequest);
+        HttpServerRequest rxHttpServerRequest = mock(HttpServerRequest.class);
+        when(rxHttpServerRequest.params()).thenReturn(rxMultiMap);
+        when(rxHttpServerRequest.params().get(Parameters.CLIENT_ID)).thenReturn("client-id");
+        when(rxHttpServerRequest.params().get(Parameters.SCOPE)).thenReturn("scope");
+        when(rxHttpServerRequest.params().get(Parameters.GRANT_TYPE)).thenReturn("grant_type");
+        when(rxHttpServerRequest.params().entries()).thenReturn(entries);
+        when(rxHttpServerRequest.getDelegate()).thenReturn(httpServerRequest);
+
+        TokenRequest tokenRequest = tokenRequestFactory.create(rxHttpServerRequest);
 
         Assert.assertNotNull(tokenRequest);
         Assert.assertEquals("client-id", tokenRequest.getClientId());

@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.uma.spring;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.uma.UMAProvider;
+import io.gravitee.am.gateway.handler.uma.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.uma.policy.DefaultRulesEngine;
 import io.gravitee.am.gateway.handler.uma.service.discovery.UMADiscoveryService;
 import io.gravitee.am.gateway.handler.uma.service.discovery.impl.UMADiscoveryServiceImpl;
 import org.springframework.context.annotation.Bean;
@@ -38,5 +40,10 @@ public class UMAConfiguration implements ProtocolConfiguration {
     @Bean
     public ProtocolProvider umaProvider() {
         return new UMAProvider();
+    }
+
+    @Bean
+    public RulesEngine rulesEngine() {
+        return new DefaultRulesEngine();
     }
 }

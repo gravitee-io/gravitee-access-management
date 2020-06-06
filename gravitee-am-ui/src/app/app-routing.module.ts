@@ -158,6 +158,8 @@ import {ApplicationResourcesComponent} from './domain/applications/application/a
 import {ApplicationResourcesResolver} from './resolvers/application-resources.resolver';
 import {ApplicationResourceComponent} from './domain/applications/application/advanced/resources/resource/resource.component';
 import {ApplicationResourceResolver} from './resolvers/application-resource.resolver';
+import {ApplicationResourcePolicyComponent} from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
+import {ApplicationResourcePolicyResolver} from './resolvers/application-resource-policy.resolver';
 
 const routes: Routes = [
   {
@@ -596,7 +598,8 @@ const routes: Routes = [
               domain: DomainResolver,
               entrypoint: DomainEntrypointResolver
             }
-          },{ path: 'endpoints', component: ApplicationEndpointsComponent,
+          },
+          { path: 'endpoints', component: ApplicationEndpointsComponent,
             resolve: {
               domain: DomainResolver,
               entrypoint: DomainEntrypointResolver
@@ -791,7 +794,8 @@ const routes: Routes = [
                   }
                 }
               },
-              { path: 'resources/:resourceId',
+              {
+                path: 'resources/:resourceId',
                 component: ApplicationResourceComponent,
                 canActivate: [AuthGuard],
                 resolve: {
@@ -801,8 +805,21 @@ const routes: Routes = [
                   perms: {
                     only: ['application_resource_read']
                   }
-                }
+                },
               },
+              {
+                path: 'resources/:resourceId/policies/:policyId',
+                component: ApplicationResourcePolicyComponent,
+                canActivate: [AuthGuard],
+                resolve: {
+                  policy: ApplicationResourcePolicyResolver
+                },
+                data: {
+                  perms: {
+                    only: ['application_resource_read']
+                  }
+                }
+              }
             ]
           }
         ]

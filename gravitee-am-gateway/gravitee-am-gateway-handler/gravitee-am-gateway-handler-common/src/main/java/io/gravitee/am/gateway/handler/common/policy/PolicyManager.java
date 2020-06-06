@@ -29,4 +29,6 @@ import java.util.List;
 public interface PolicyManager extends Service {
 
     Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint);
+
+    Policy create(String type, String configuration);
 }

@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.oauth2.resources.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.common.http.HttpHeaders;
@@ -64,6 +66,7 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setVersion(request.version() != null ? HttpVersion.valueOf(request.version().name()) : null);
         authorizationRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         authorizationRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
+        authorizationRequest.setHttpResponse(new VertxHttpServerResponse(request.getDelegate(), new VertxHttpServerRequest(request.getDelegate()).metrics()));
 
         // set OAuth 2.0 information
         authorizationRequest.setClientId(request.params().get(Parameters.CLIENT_ID));

@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
+import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.service.model.NewResource;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -26,6 +27,7 @@ import java.util.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface ResourceService {
@@ -43,6 +45,14 @@ public interface ResourceService {
     Single<Resource> update(Resource resource);
     Completable delete(String domain, String client, String userId, String resourceId);
     Completable delete(Resource resource);
+    Single<List<AccessPolicy>> findAccessPolicies(String domain, String client, String user, String resource);
+    Single<List<AccessPolicy>> findAccessPoliciesByResources(List<String> resourceIds);
+    Single<Long> countAccessPolicyByResource(String resourceId);
+    Maybe<AccessPolicy> findAccessPolicy(String domain, String client, String user, String resource, String accessPolicy);
+    Maybe<AccessPolicy> findAccessPolicy(String accessPolicy);
+    Single<AccessPolicy> createAccessPolicy(AccessPolicy accessPolicy, String domain, String client, String user, String resource);
+    Single<AccessPolicy> updateAccessPolicy(AccessPolicy accessPolicy, String domain, String client, String user, String resource, String accessPolicyId);
+    Completable deleteAccessPolicy(String domain, String client, String user, String resource, String accessPolicy);
 
     default Single<Set<Resource>> findByDomain(String domain) {
         return findByDomain(domain, 0, Integer.MAX_VALUE)

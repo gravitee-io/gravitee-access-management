@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
-import { Observable } from "rxjs";
-import {AuthService} from "./auth.service";
-import {map} from "rxjs/operators";
+import {HttpClient} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {AuthService} from './auth.service';
+import {AppConfig} from '../../config/app.config';
+import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
 
 @Injectable()
 export class ApplicationService {
@@ -27,41 +27,41 @@ export class ApplicationService {
   constructor(private http: HttpClient, private authService: AuthService) { }
 
   findByDomain(domainId, page, size): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + "/applications?page=" + page + "&size=" + size);
+    return this.http.get<any>(this.appsURL + domainId + '/applications?page=' + page + '&size=' + size);
   }
 
   search(domainId, searchTerm): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + "/applications?q=" + searchTerm);
+    return this.http.get<any>(this.appsURL + domainId + '/applications?q=' + searchTerm);
   }
 
   get(domainId, id): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + "/applications/" + id);
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + id);
   }
 
   create(domainId, application): Observable<any> {
-    return this.http.post<any>(this.appsURL + domainId + "/applications", application);
+    return this.http.post<any>(this.appsURL + domainId + '/applications', application);
   }
 
   patch(domainId, appId, patchApplication): Observable<any> {
-    return this.http.patch<any>(this.appsURL + domainId + "/applications/" + appId, patchApplication);
+    return this.http.patch<any>(this.appsURL + domainId + '/applications/' + appId, patchApplication);
   }
 
   delete(domainId, id): Observable<any> {
-    return this.http.delete<any>(this.appsURL + domainId + "/applications/" + id);
+    return this.http.delete<any>(this.appsURL + domainId + '/applications/' + id);
   }
 
   renewClientSecret(domainId, id): Observable<any> {
-    return this.http.post<any>(this.appsURL + domainId + "/applications/" + id + "/secret/_renew", {});
+    return this.http.post<any>(this.appsURL + domainId + '/applications/' + id + '/secret/_renew', {});
   }
 
   updateType(domainId, id, type): Observable<any> {
-    return this.http.put<any>(this.appsURL + domainId + "/applications/" + id + "/type", {
+    return this.http.put<any>(this.appsURL + domainId + '/applications/' + id + '/type', {
       'type': type
     });
   }
 
   members(domainId, id): Observable<any> {
-    return this.http.get<any>(this.appsURL + domainId + "/applications/" + id + "/members")
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/members')
       .pipe(map(response => {
         const memberships = response.memberships;
         const metadata = response.metadata;
@@ -79,7 +79,7 @@ export class ApplicationService {
   }
 
   addMember(domainId, id, memberId, memberType, role) {
-    return this.http.post<any>(this.appsURL + domainId + "/applications/" + id + "/members", {
+    return this.http.post<any>(this.appsURL + domainId + '/applications/' + id + '/members', {
       'memberId': memberId,
       'memberType': memberType,
       'role': role
@@ -87,7 +87,7 @@ export class ApplicationService {
   }
 
   removeMember(domainId, id, membershipId) {
-    return this.http.delete<any>(this.appsURL + domainId + "/applications/" + id + "/members/" + membershipId);
+    return this.http.delete<any>(this.appsURL + domainId + '/applications/' + id + '/members/' + membershipId);
   }
 
   permissions(domainId, id): Observable<any> {
@@ -118,5 +118,13 @@ export class ApplicationService {
 
   resource(domainId, id, resourceId): Observable<any> {
     return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/resources/' + resourceId);
+  }
+
+  resourcePolicies(domainId, id, resourceId): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/resources/' + resourceId + '/policies');
+  }
+
+  resourcePolicy(domainId, id, resourceId, policyId): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/resources/' + resourceId + '/policies/' + policyId);
   }
 }

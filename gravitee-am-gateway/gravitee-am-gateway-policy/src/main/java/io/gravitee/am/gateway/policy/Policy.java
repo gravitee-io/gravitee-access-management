@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.policy;
 
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -22,6 +24,10 @@ package io.gravitee.am.gateway.policy;
 public interface Policy {
 
     String id();
+
+    Map<String, Object> metadata();
+
+    default void setMetadata(Map<String, Object> metadata) {};
 
     default void execute(Object ... args) throws PolicyException {}
 

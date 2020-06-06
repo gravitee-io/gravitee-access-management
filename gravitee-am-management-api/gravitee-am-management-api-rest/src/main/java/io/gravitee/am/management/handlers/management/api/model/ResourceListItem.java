@@ -26,21 +26,21 @@ import java.util.Map;
  */
 public class ResourceListItem {
 
-    private List<Resource> resources;
+    private List<ResourceEntity> resources;
     private Map<String, Map<String, Object>> metadata;
 
     public ResourceListItem() { }
 
-    public ResourceListItem(List<Resource> resources, Map<String, Map<String, Object>> metadata) {
+    public ResourceListItem(List<ResourceEntity> resources, Map<String, Map<String, Object>> metadata) {
         this.resources = resources;
         this.metadata = metadata;
     }
 
-    public List<Resource> getResources() {
+    public List<ResourceEntity> getResources() {
         return resources;
     }
 
-    public void setResources(List<Resource> resources) {
+    public void setResources(List<ResourceEntity> resources) {
         this.resources = resources;
     }
 

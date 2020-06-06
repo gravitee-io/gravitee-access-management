@@ -22,6 +22,7 @@
       <div class="gv-form-section">
         <div class="gv-form-section-title">
           <h5>Resource</h5>
+          <mat-divider></mat-divider>
         </div>
         <div>
           <mat-form-field *ngIf="resource.name" appearance="outline" floatLabel="always">
@@ -29,9 +30,9 @@
             <input matInput placeholder="Name" disabled [value]="resource.name">
             <mat-hint>Resource's name</mat-hint>
           </mat-form-field>
-          <mat-form-field *ngIf="resource.userId" appearance="outline" floatLabel="always">
+          <mat-form-field *ngIf="resource.userDisplayName" appearance="outline" floatLabel="always">
             <mat-label>Owner</mat-label>
-            <input matInput placeholder="Owner" disabled [value]="resource.userId">
+            <input matInput placeholder="Owner" disabled [value]="resource.userDisplayName">
             <mat-hint>Resource's owner</mat-hint>
           </mat-form-field>
           <mat-form-field *ngIf="resource.type" appearance="outline" floatLabel="always">
@@ -58,6 +59,42 @@
             </mat-chip-list>
             <mat-hint>Resource's scopes</mat-hint>
           </mat-form-field>
+        </div>
+      </div>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Policies</h5>
+          <small>Authorization grant rules, which the authorization server executes in the process of issuing access tokens.</small>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <ngx-datatable class="material"
+                         [columnMode]="'flex'"
+                         [headerHeight]="40"
+                         [footerHeight]="40"
+                         [rowHeight]="50"
+                         [rows]='policies'>
+            <ngx-datatable-column name="Policy" [flexGrow]="4" [cellClass]="'policy-name-cell'">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div class="policy-header" fxLayout="row">
+                  <div class="policy-icon">
+                    <mat-icon>policy</mat-icon>
+                  </div>
+                  <div class="policy-information" fxLayout="column">
+                    <h3>{{row.name}}</h3>
+                    <small>{{row.description}}</small>
+                  </div>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="1">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row" class="gv-table-cell-actions">
+                  <a mat-icon-button [routerLink]="['policies', row.id]" *hasPermission="['application_resource_read']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
         </div>
       </div>
     </form>
