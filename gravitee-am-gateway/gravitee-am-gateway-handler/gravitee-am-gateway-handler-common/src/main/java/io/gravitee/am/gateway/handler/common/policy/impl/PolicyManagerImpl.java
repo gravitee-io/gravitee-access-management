@@ -112,6 +112,11 @@ public class PolicyManagerImpl extends AbstractService implements PolicyManager,
     }
 
     @Override
+    public Policy create(String type, String configuration) {
+        return policyPluginManager.create(type, configuration);
+    }
+
+    @Override
     public void afterPropertiesSet() {
         logger.info("Initializing policies for domain {}", domain.getName());
         updatePolicies();

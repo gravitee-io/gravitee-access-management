@@ -83,7 +83,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
 
     @Override
     public Policy create(String type, String configuration) {
-        logger.debug("Looking for an reporter provider for [{}]", type);
+        logger.debug("Creating a policy for [{}]", type);
         PolicyPlugin policyPlugin = pluginManager.get(type);
 
         if (policyPlugin != null) {
@@ -102,6 +102,8 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                 builder
                         .setId(policyPlugin.id())
                         .setPolicy(policyClass)
+                        .setConfiguration(configurationClass)
+                        .setClassLoader(pluginClassLoader)
                         .setMethods(new PolicyMethodResolver().resolve(policyClass));
                 PolicyMetadata policyMetadata = builder.build();
 

@@ -15,9 +15,13 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.uma.Resource;
+import io.gravitee.am.model.uma.policy.AccessPolicy;
+import io.gravitee.am.repository.management.api.AccessPolicyRepository;
 import io.gravitee.am.repository.management.api.ResourceRepository;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ResourceServiceImpl;
@@ -43,6 +47,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -52,7 +57,16 @@ public class ResourceServiceTest {
     private ResourceRepository repository;
 
     @Mock
+    private AccessPolicyRepository accessPolicyRepository;
+
+    @Mock
     private ScopeService scopeService;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private ApplicationService applicationService;
 
     @InjectMocks
     private ResourceService service = new ResourceServiceImpl();
@@ -61,6 +75,7 @@ public class ResourceServiceTest {
     private static final String CLIENT_ID = "clientId";
     private static final String USER_ID = "userId";
     private static final String RESOURCE_ID = "resourceId";
+    private static final String POLICY_ID = "policyId";
 
     @Before
     public void setUp() {
@@ -136,10 +151,12 @@ public class ResourceServiceTest {
     public void create_success() {
         NewResource newResource = new JsonObject("{\"resource_scopes\":[\"scope\"]}").mapTo(NewResource.class);
         when(repository.create(any())).thenReturn(Single.just(new Resource()));
+        when(accessPolicyRepository.create(any())).thenReturn(Single.just(new AccessPolicy()));
         TestObserver<Resource> testObserver = service.create(newResource, DOMAIN_ID, CLIENT_ID, USER_ID).test();
         testObserver.assertComplete().assertNoErrors();
         ArgumentCaptor<Resource> rsCaptor = ArgumentCaptor.forClass(Resource.class);
         verify(repository, times(1)).create(rsCaptor.capture());
+        verify(accessPolicyRepository, times(1)).create(any());
         Assert.assertTrue(this.assertResourceValues(rsCaptor.getValue()));
     }
 
@@ -186,11 +203,35 @@ public class ResourceServiceTest {
     }
 
     @Test
+    public void findByDomainAndClient() {
+        when(repository.findByDomainAndClient(DOMAIN_ID, CLIENT_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptyList(), 0, 0)));
+        TestObserver testObserver = service.findByDomainAndClient(DOMAIN_ID, CLIENT_ID, 0, Integer.MAX_VALUE).test();
+        testObserver.assertComplete().assertNoErrors();
+        verify(repository, times(1)).findByDomainAndClient(DOMAIN_ID, CLIENT_ID, 0, Integer.MAX_VALUE);
+    }
+
+    @Test
+    public void findByDomainAndClient_technicalFailure() {
+        when(repository.findByDomainAndClient(DOMAIN_ID, CLIENT_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.error(RuntimeException::new));
+        TestObserver testObserver = service.findByDomainAndClient(DOMAIN_ID, CLIENT_ID, 0, Integer.MAX_VALUE).test();
+        testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
+        verify(repository, times(1)).findByDomainAndClient(DOMAIN_ID, CLIENT_ID, 0, Integer.MAX_VALUE);
+    }
+
+    @Test
     public void findByDomainAndClientAndResources() {
         when(repository.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList())).thenReturn(Single.just(Collections.emptyList()));
         TestObserver testObserver = service.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList()).test();
         testObserver.assertComplete().assertNoErrors();
         verify(repository, times(1)).findByDomainAndClientAndResources(anyString(), anyString(), anyList());
+    }
+
+    @Test
+    public void findByDomainAndClientResource() {
+        when(repository.findByDomainAndClientAndResources(eq(DOMAIN_ID), eq(CLIENT_ID), anyList())).thenReturn(Single.just(Collections.emptyList()));
+        TestObserver testObserver = service.findByDomainAndClientResource(DOMAIN_ID, CLIENT_ID, RESOURCE_ID).test();
+        testObserver.assertComplete().assertNoErrors();
+        verify(repository, times(1)).findByDomainAndClientAndResources(eq(DOMAIN_ID), eq(CLIENT_ID), anyList());
     }
 
     @Test
@@ -207,10 +248,253 @@ public class ResourceServiceTest {
 
     @Test
     public void delete() {
-        Resource toDelete = new Resource().setId(RESOURCE_ID);
+        Resource toDelete = new Resource().setId(RESOURCE_ID).setDomain(DOMAIN_ID);
+        when(accessPolicyRepository.findByDomainAndResource(toDelete.getDomain(), toDelete.getId())).thenReturn(Single.just(Collections.emptyList()));
         when(repository.delete(RESOURCE_ID)).thenReturn(Completable.complete());
         TestObserver testObserver = service.delete(toDelete).test();
         testObserver.assertComplete().assertNoErrors();
         verify(repository, times(1)).delete(RESOURCE_ID);
+    }
+
+    @Test
+    public void findAccessPolicies() {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setId("policy-id");
+        accessPolicy.setResource(RESOURCE_ID);
+        accessPolicy.setDomain(DOMAIN_ID);
+        when(accessPolicyRepository.findByDomainAndResource(DOMAIN_ID, RESOURCE_ID)).thenReturn(Single.just(Collections.singletonList(accessPolicy)));
+        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPolicies(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(accessPolicies -> accessPolicies.size() == 1);
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, times(1)).findByDomainAndResource(DOMAIN_ID, RESOURCE_ID);
+    }
+
+    @Test
+    public void findAccessPolicies_resourceNotFound() {
+        when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
+        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPolicies(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
+        testObserver.assertNotComplete().assertError(ResourceNotFoundException.class);
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, never()).findByDomainAndResource(DOMAIN_ID, RESOURCE_ID);
+    }
+
+    @Test
+    public void findAccessPolicies_technicalFailure() {
+        when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.error(RuntimeException::new));
+        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPolicies(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
+        testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, never()).findByDomainAndResource(DOMAIN_ID, RESOURCE_ID);
+    }
+
+    @Test
+    public void findAccessPoliciesByResources() {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setId(POLICY_ID);
+        accessPolicy.setResource(RESOURCE_ID);
+        accessPolicy.setDomain(DOMAIN_ID);
+        List<String> resourceIds = Collections.singletonList(RESOURCE_ID);
+        when(accessPolicyRepository.findByResources(resourceIds)).thenReturn(Single.just(Collections.singletonList(accessPolicy)));
+        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPoliciesByResources(resourceIds).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(accessPolicies -> accessPolicies.size() == 1);
+        verify(accessPolicyRepository, times(1)).findByResources(resourceIds);
+    }
+
+    @Test
+    public void findAccessPoliciesByResources_technicalFailure() {
+        List<String> resourceIds = Collections.singletonList(RESOURCE_ID);
+        when(accessPolicyRepository.findByResources(resourceIds)).thenReturn(Single.error(RuntimeException::new));
+        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPoliciesByResources(resourceIds).test();
+        testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
+        verify(accessPolicyRepository, times(1)).findByResources(resourceIds);
+    }
+
+    @Test
+    public void countAccessPolicyByResource() {
+        when(accessPolicyRepository.countByResource(RESOURCE_ID)).thenReturn(Single.just(1l));
+        TestObserver<Long> testObserver = service.countAccessPolicyByResource(RESOURCE_ID).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(accessPolicies -> accessPolicies == 1l);
+        verify(accessPolicyRepository, times(1)).countByResource(RESOURCE_ID);
+    }
+
+    @Test
+    public void countAccessPolicyByResource_technicalFailure() {
+        when(accessPolicyRepository.countByResource(RESOURCE_ID)).thenReturn(Single.error(RuntimeException::new));
+        TestObserver<Long> testObserver = service.countAccessPolicyByResource(RESOURCE_ID).test();
+        testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
+        verify(accessPolicyRepository, times(1)).countByResource(RESOURCE_ID);
+    }
+
+    @Test
+    public void findAccessPolicy() {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setId(POLICY_ID);
+        accessPolicy.setResource(RESOURCE_ID);
+        accessPolicy.setDomain(DOMAIN_ID);
+        when(accessPolicyRepository.findById(POLICY_ID)).thenReturn(Maybe.just(accessPolicy));
+        TestObserver<AccessPolicy> testObserver = service.findAccessPolicy(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID, POLICY_ID).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(accessPolicy1 -> accessPolicy1.getId().equals(POLICY_ID));
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, times(1)).findById(POLICY_ID);
+    }
+
+    @Test
+    public void findAccessPolicy_resourceNotFound() {
+        when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
+        TestObserver<AccessPolicy> testObserver = service.findAccessPolicy(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID, POLICY_ID).test();
+        testObserver.assertNotComplete().assertError(ResourceNotFoundException.class);
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, never()).findById(POLICY_ID);
+    }
+
+    @Test
+    public void findAccessPolicy_technicalFailure() {
+        when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.error(RuntimeException::new));
+        TestObserver<AccessPolicy> testObserver = service.findAccessPolicy(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID, POLICY_ID).test();
+        testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, never()).findById(POLICY_ID);
+    }
+
+    @Test
+    public void findAccessPolicy_byId() {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setId(POLICY_ID);
+        accessPolicy.setResource(RESOURCE_ID);
+        accessPolicy.setDomain(DOMAIN_ID);
+        when(accessPolicyRepository.findById(POLICY_ID)).thenReturn(Maybe.just(accessPolicy));
+        TestObserver<AccessPolicy> testObserver = service.findAccessPolicy(POLICY_ID).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(accessPolicy1 -> accessPolicy1.getId().equals(POLICY_ID));
+        verify(accessPolicyRepository, times(1)).findById(POLICY_ID);
+    }
+
+    @Test
+    public void findAccessPolicy_byId_technicalFailure() {
+        when(accessPolicyRepository.findById(POLICY_ID)).thenReturn(Maybe.error(RuntimeException::new));
+        TestObserver<AccessPolicy> testObserver = service.findAccessPolicy(POLICY_ID).test();
+        testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
+        verify(accessPolicyRepository, times(1)).findById(POLICY_ID);
+    }
+
+    @Test
+    public void createAccessPolicy() {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setId(POLICY_ID);
+        accessPolicy.setResource(RESOURCE_ID);
+        accessPolicy.setDomain(DOMAIN_ID);
+        when(accessPolicyRepository.create(accessPolicy)).thenReturn(Single.just(accessPolicy));
+        TestObserver<AccessPolicy> testObserver = service.createAccessPolicy(accessPolicy, DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(accessPolicy1 -> accessPolicy1.getId().equals(POLICY_ID));
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, times(1)).create(accessPolicy);
+    }
+
+    @Test
+    public void createAccessPolicy_resourceNotFound() {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setId(POLICY_ID);
+        accessPolicy.setResource(RESOURCE_ID);
+        accessPolicy.setDomain(DOMAIN_ID);
+        when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
+        TestObserver<AccessPolicy> testObserver = service.createAccessPolicy(accessPolicy, DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
+        testObserver.assertNotComplete().assertError(ResourceNotFoundException.class);
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, never()).create(accessPolicy);
+    }
+
+    @Test
+    public void updateAccessPolicy() {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setId(POLICY_ID);
+        accessPolicy.setResource(RESOURCE_ID);
+        accessPolicy.setDomain(DOMAIN_ID);
+        when(accessPolicyRepository.findById(POLICY_ID)).thenReturn(Maybe.just(accessPolicy));
+        when(accessPolicyRepository.update(any())).thenReturn(Single.just(accessPolicy));
+        TestObserver<AccessPolicy> testObserver = service.updateAccessPolicy(accessPolicy, DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID, POLICY_ID).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(accessPolicy1 -> accessPolicy1.getId().equals(POLICY_ID));
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, times(1)).findById(POLICY_ID);
+        verify(accessPolicyRepository, times(1)).update(any());
+    }
+
+    @Test
+    public void updateAccessPolicy_resourceNotFound() {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setId(POLICY_ID);
+        accessPolicy.setResource(RESOURCE_ID);
+        accessPolicy.setDomain(DOMAIN_ID);
+        when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
+        TestObserver<AccessPolicy> testObserver = service.updateAccessPolicy(accessPolicy, DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID, POLICY_ID).test();
+        testObserver.assertNotComplete().assertError(ResourceNotFoundException.class);
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, never()).findById(POLICY_ID);
+        verify(accessPolicyRepository, never()).update(any());
+    }
+
+    @Test
+    public void updateAccessPolicy_policyNotFound() {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setId(POLICY_ID);
+        accessPolicy.setResource(RESOURCE_ID);
+        accessPolicy.setDomain(DOMAIN_ID);
+        when(accessPolicyRepository.findById(POLICY_ID)).thenReturn(Maybe.empty());
+        TestObserver<AccessPolicy> testObserver = service.updateAccessPolicy(accessPolicy, DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID, POLICY_ID).test();
+        testObserver.assertNotComplete().assertError(AccessPolicyNotFoundException.class);
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, times(1)).findById(POLICY_ID);
+        verify(accessPolicyRepository, never()).update(any());
+    }
+
+    @Test
+    public void deleteAccessPolicy() {
+        when(accessPolicyRepository.delete(POLICY_ID)).thenReturn(Completable.complete());
+        TestObserver testObserver = service.deleteAccessPolicy(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID, POLICY_ID).test();
+        testObserver.assertComplete().assertNoErrors();
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, times(1)).delete(POLICY_ID);
+    }
+
+    @Test
+    public void deleteAccessPolicy_resourceNotFound() {
+        when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
+        TestObserver testObserver = service.deleteAccessPolicy(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID, POLICY_ID).test();
+        testObserver.assertNotComplete().assertError(ResourceNotFoundException.class);
+        verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
+        verify(accessPolicyRepository, never()).delete(POLICY_ID);
+    }
+
+    @Test
+    public void getMetadata_noResources_null() {
+        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(null).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(map -> map.isEmpty());
+    }
+
+    @Test
+    public void getMetadata_noResources_empty() {
+        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(Collections.emptyList()).test();
+        testObserver.assertComplete().assertNoErrors();
+        testObserver.assertValue(map -> map.isEmpty());
+    }
+
+    @Test
+    public void getMetadata_resources() {
+        Resource resource = new Resource();
+        resource.setDomain(DOMAIN_ID);
+        resource.setClientId(CLIENT_ID);
+        resource.setUserId(USER_ID);
+        List<Resource> resources = Collections.singletonList(resource);
+
+        when(userService.findByIdIn(anyList())).thenReturn(Single.just(Collections.singletonList(new User())));
+        when(applicationService.findByIdIn(anyList())).thenReturn(Single.just(Collections.singleton(new Application())));
+        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(resources).test();
+        testObserver.assertComplete().assertNoErrors();
     }
 }

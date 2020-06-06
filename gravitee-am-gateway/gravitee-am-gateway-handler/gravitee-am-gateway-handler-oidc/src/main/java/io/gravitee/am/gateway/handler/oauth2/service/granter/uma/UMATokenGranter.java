@@ -23,6 +23,9 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
+import io.gravitee.am.gateway.handler.context.provider.UserProperties;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
@@ -30,6 +33,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.gateway.handler.uma.policy.DefaultRule;
+import io.gravitee.am.gateway.handler.uma.policy.Rule;
+import io.gravitee.am.gateway.handler.uma.policy.RulesEngine;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -41,6 +47,8 @@ import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.common.util.MultiValueMap;
+import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
@@ -58,25 +66,32 @@ import static io.gravitee.am.common.oauth2.Parameters.*;
  * See <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#uma-grant-type">3.3.1 Client Request to Authorization Server for RPT</a>
  *
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class UMATokenGranter extends AbstractTokenGranter {
 
     private static final List<String> CLAIM_TOKEN_FORMAT_SUPPORTED = Arrays.asList(TokenType.ID_TOKEN);
-
     private UserAuthenticationManager userAuthenticationManager;
     private PermissionTicketService permissionTicketService;
     private ResourceService resourceService;
     private JWTService jwtService;
     private Domain domain;
+    private RulesEngine rulesEngine;
+    private ExecutionContextFactory executionContextFactory;
 
     public UMATokenGranter() {
         super(GrantType.UMA);
     }
 
-    public UMATokenGranter(TokenService tokenService, UserAuthenticationManager userAuthenticationManager,
-                           PermissionTicketService permissionTicketService, ResourceService resourceService,
-                           JWTService jwtService, Domain domain) {
+    public UMATokenGranter(TokenService tokenService,
+                           UserAuthenticationManager userAuthenticationManager,
+                           PermissionTicketService permissionTicketService,
+                           ResourceService resourceService,
+                           JWTService jwtService,
+                           Domain domain,
+                           RulesEngine rulesEngine,
+                           ExecutionContextFactory executionContextFactory) {
         this();
         setTokenService(tokenService);
         this.userAuthenticationManager = userAuthenticationManager;
@@ -84,6 +99,8 @@ public class UMATokenGranter extends AbstractTokenGranter {
         this.resourceService = resourceService;
         this.jwtService = jwtService;
         this.domain = domain;
+        this.rulesEngine = rulesEngine;
+        this.executionContextFactory = executionContextFactory;
     }
 
     @Override
@@ -168,6 +185,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
         return resolveRequestedScopes(tokenRequest, client)
                 .flatMap(tokenRequest1 -> this.resolvePermissions(tokenRequest1, client, endUser))
                 .flatMap(tokenRequest1 -> this.createOAuth2Request(tokenRequest1, client, endUser))
+                .flatMap(oAuth2Request -> this.executePolicies(oAuth2Request, client, endUser))
                 .flatMap(oAuth2Request -> getTokenService().create(oAuth2Request, client, endUser))
                 .map(token -> this.handleUpgradedToken(tokenRequest, token));
     }
@@ -332,5 +350,55 @@ public class UMATokenGranter extends AbstractTokenGranter {
      */
     protected Single<TokenRequest> resolveRequest(TokenRequest tokenRequest, Client client, User endUser) {
         return Single.error(new TechnicalException("Should not be used"));
+    }
+
+    /**
+     * The resource owner works with the authorization server to configure policy conditions (authorization grant rules), which the authorization server executes in the process of issuing access tokens.
+     * The authorization process makes use of claims gathered from the requesting party and client in order to satisfy all operative operative policy conditions.
+     * @param oAuth2Request OAuth 2.0 Token Request
+     * @param client client
+     * @param endUser requesting party
+     * @return
+     */
+    private Single<OAuth2Request> executePolicies(OAuth2Request oAuth2Request, Client client, User endUser) {
+        List<PermissionRequest> permissionRequests = oAuth2Request.getPermissions();
+        if (permissionRequests == null || permissionRequests.isEmpty()) {
+            return Single.just(oAuth2Request);
+        }
+        List<String> resourceIds = permissionRequests.stream().map(PermissionRequest::getResourceId).collect(Collectors.toList());
+        // find access policies for the given resources
+        return resourceService.findAccessPoliciesByResources(resourceIds)
+                // map to rules
+                .map(accessPolicies -> accessPolicies
+                        .stream()
+                        .map(accessPolicy -> {
+                            Rule rule = new DefaultRule(accessPolicy);
+                            Optional<PermissionRequest> permission = permissionRequests
+                                    .stream()
+                                    .filter(permissionRequest -> permissionRequest.getResourceId().equals(accessPolicy.getResource()))
+                                    .findFirst();
+                            if (permission.isPresent()) {
+                                ((DefaultRule) rule).setMetadata(Collections.singletonMap("permissionRequest", permission.get()));
+                            }
+                            return rule;
+                        })
+                        .collect(Collectors.toList()))
+                .flatMap(rules -> {
+                    // no policy registered, continue
+                    if (rules.isEmpty()) {
+                        return Single.just(oAuth2Request);
+                    }
+                    // prepare the execution context
+                    ExecutionContext simpleExecutionContext = new SimpleExecutionContext(oAuth2Request, oAuth2Request.getHttpResponse());
+                    ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
+                    executionContext.setAttribute("client", new ClientProperties(client));
+                    if (endUser != null) {
+                        executionContext.setAttribute("user", new UserProperties(endUser));
+                    }
+                    // execute the policies
+                    return rulesEngine.fire(rules, executionContext)
+                            .toSingleDefault(oAuth2Request)
+                            .onErrorResumeNext(ex -> Single.error(new InvalidGrantException("Policy conditions are not met for actual request parameters")));
+                });
     }
 }

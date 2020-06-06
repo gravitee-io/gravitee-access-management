@@ -22,6 +22,7 @@ import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.api.annotations.OnResponse;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,6 +32,7 @@ public class PolicyImpl implements Policy {
 
     private final Object policyInst;
     private PolicyMetadata policyMetadata;
+    private Map<String, Object> metadata;
 
     private PolicyImpl(Object policyInst) {
         this.policyInst = policyInst;
@@ -39,6 +41,16 @@ public class PolicyImpl implements Policy {
     @Override
     public String id() {
         return policyMetadata.id();
+    }
+
+    @Override
+    public Map<String, Object> metadata() {
+        return metadata;
+    }
+
+    @Override
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 
     @Override

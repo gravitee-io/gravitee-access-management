@@ -106,6 +106,10 @@ public class ResourceResponse {
     }
 
     public static ResourceResponse from(Resource resource) {
+        return from(resource, null);
+    }
+
+    public static ResourceResponse from(Resource resource, String resourceLocation) {
         return new ResourceResponse()
                 .setId(resource.getId())
                 .setResourceScopes(resource.getResourceScopes())
@@ -113,6 +117,7 @@ public class ResourceResponse {
                 .setIconUri(resource.getIconUri())
                 .setName(resource.getName())
                 .setType(resource.getType())
+                .setUserAccessPolicyUri(resourceLocation != null ? resourceLocation + "/policies" : null)
                 .setCreatedAt(resource.getCreatedAt())
                 .setUpdatedAt(resource.getUpdatedAt());
     }

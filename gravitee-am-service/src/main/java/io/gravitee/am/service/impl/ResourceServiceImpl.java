@@ -15,10 +15,14 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
+import io.gravitee.am.model.uma.policy.AccessPolicy;
+import io.gravitee.am.model.uma.policy.AccessPolicyType;
+import io.gravitee.am.repository.management.api.AccessPolicyRepository;
 import io.gravitee.am.repository.management.api.ResourceRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ResourceService;
@@ -42,6 +46,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -52,6 +57,10 @@ public class ResourceServiceImpl implements ResourceService {
     @Lazy
     @Autowired
     private ResourceRepository repository;
+
+    @Lazy
+    @Autowired
+    private AccessPolicyRepository accessPolicyRepository;
 
     @Autowired
     private ScopeService scopeService;
@@ -76,12 +85,17 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size) {
         LOGGER.debug("Listing resource set for domain {} and client {}", domain, client);
-        return repository.findByDomainAndClient(domain, client, page, size);
+        return repository.findByDomainAndClient(domain, client, page, size)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find resources by domain {} and client {}", domain, client, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find resources by domain %s and client %s", domain, client), ex));
+                });
     }
 
     @Override
     public Single<List<Resource>> findByResources(List<String> resourceIds) {
-        LOGGER.debug("Listing resource for resources {}", resourceIds);
+        LOGGER.debug("Listing resources by ids {}", resourceIds);
         return repository.findByResources(resourceIds);
     }
 
@@ -99,24 +113,15 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resourceId) {
-        LOGGER.debug("Getting resource {} for resource owner {} and client {} and resource {}", resourceId, userId, client, resourceId);
+        LOGGER.debug("Getting resource by resource owner {} and client {} and resource {}", userId, client, resourceId);
         return repository.findByDomainAndClientAndUserAndResource(domain, client, userId, resourceId);
     }
 
     @Override
     public Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId) {
-        LOGGER.debug("Getting resource set {} for domain {} client {} and resource {}", resourceId, domain, client, resourceId);
-        return repository.findById(resourceId)
-                .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resourceId)))
-                .map(resource -> {
-                    if (!domain.equals(resource.getDomain())) {
-                        throw new ResourceNotFoundException(resourceId);
-                    }
-                    if (!client.equals(resource.getClientId())) {
-                        throw new ResourceNotFoundException(resourceId);
-                    }
-                    return resource;
-                });
+        LOGGER.debug("Getting resource by domain {} client {} and resource {}", domain, client, resourceId);
+        return this.findByDomainAndClientAndResources(domain, client, Arrays.asList(resourceId))
+                .flatMapMaybe(resources -> resources.isEmpty() ? Maybe.empty() : Maybe.just(resources.get(0)));
     }
 
     @Override
@@ -153,7 +158,19 @@ public class ResourceServiceImpl implements ResourceService {
 
         return this.validateScopes(toCreate)
                 .flatMap(this::validateIconUri)
-                .flatMap(repository::create);
+                .flatMap(repository::create)
+                // create default policy
+                .flatMap(r -> {
+                    AccessPolicy accessPolicy = new AccessPolicy();
+                    accessPolicy.setName("Deny all");
+                    accessPolicy.setDescription("Default deny access policy. Created by Gravitee.io.");
+                    accessPolicy.setType(AccessPolicyType.GROOVY);
+                    accessPolicy.setCondition("{\"onRequestScript\":\"import io.gravitee.policy.groovy.PolicyResult.State\\nresult.state = State.FAILURE;\"}");
+                    accessPolicy.setEnabled(true);
+                    accessPolicy.setDomain(domain);
+                    accessPolicy.setResource(r.getId());
+                    return accessPolicyRepository.create(accessPolicy).map(__ -> r);
+                });
     }
 
     @Override
@@ -187,7 +204,140 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public Completable delete(Resource resource) {
         LOGGER.debug("Deleting resource id {} on domain {}", resource.getId(), resource.getDomain());
-        return repository.delete(resource.getId());
+        // delete policies and then the resource
+        return accessPolicyRepository.findByDomainAndResource(resource.getDomain(), resource.getId())
+                .flatMapCompletable(accessPolicies -> {
+                    List<Completable> deleteAccessPoliciesCompletable = accessPolicies.stream().map(a -> accessPolicyRepository.delete(a.getId())).collect(Collectors.toList());
+                    return Completable.concat(deleteAccessPoliciesCompletable);
+                })
+                .andThen(repository.delete(resource.getId()));
+    }
+
+    @Override
+    public Single<List<AccessPolicy>> findAccessPolicies(String domain, String client, String user, String resource) {
+        LOGGER.debug("Find access policies by domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource);
+        return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
+                .switchIfEmpty(Single.error(new ResourceNotFoundException(resource)))
+                .flatMap(r -> accessPolicyRepository.findByDomainAndResource(domain, r.getId()))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error has occurred while trying to find access policies by domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by domain %s, client %s, resource owner %s and resource id %s", domain, client, user, resource), ex));
+                });
+    }
+
+    @Override
+    public Single<List<AccessPolicy>> findAccessPoliciesByResources(List<String> resourceIds) {
+        LOGGER.debug("Find access policies by resources {}", resourceIds);
+        return accessPolicyRepository.findByResources(resourceIds)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error has occurred while trying to find access policies by resource ids {}", resourceIds, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by resource ids %s", resourceIds), ex));
+                });
+    }
+
+    @Override
+    public Single<Long> countAccessPolicyByResource(String resourceId) {
+        LOGGER.debug("Count access policies by resource {}", resourceId);
+        return accessPolicyRepository.countByResource(resourceId)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error has occurred while trying to count access policies by resource id {}", resourceId, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to count access policies by resource id %s", resourceId), ex));
+                });
+    }
+
+    @Override
+    public Maybe<AccessPolicy> findAccessPolicy(String domain, String client, String user, String resource, String accessPolicy) {
+        LOGGER.debug("Find access policy by domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicy);
+        return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
+                .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resource)))
+                .flatMap(r -> accessPolicyRepository.findById(accessPolicy))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Maybe.error(ex);
+                    }
+                    LOGGER.error("An error has occurred while trying to find access policies by domain {}, client {}, resource owner {} and resource id {} and policy id {}", domain, client, user, resource, accessPolicy, ex);
+                    return Maybe.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by domain %s, client %s, resource owner %s resource id %s and policy id %s", domain, client, user, resource, accessPolicy), ex));
+                });
+    }
+
+    @Override
+    public Maybe<AccessPolicy> findAccessPolicy(String accessPolicy) {
+        LOGGER.debug("Find access policy by id {}", accessPolicy);
+        return accessPolicyRepository.findById(accessPolicy)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error has occurred while trying to find access policy by id {}", accessPolicy, ex);
+                    return Maybe.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policy by id %s", accessPolicy), ex));
+                });
+    }
+
+    @Override
+    public Single<AccessPolicy> createAccessPolicy(AccessPolicy accessPolicy, String domain, String client, String user, String resource) {
+        LOGGER.debug("Creating access policy for domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource);
+        return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
+                .switchIfEmpty(Single.error(new ResourceNotFoundException(resource)))
+                .flatMap(r -> {
+                    accessPolicy.setDomain(domain);
+                    accessPolicy.setResource(r.getId());
+                    accessPolicy.setCreatedAt(new Date());
+                    accessPolicy.setUpdatedAt(accessPolicy.getCreatedAt());
+                    return accessPolicyRepository.create(accessPolicy);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error has occurred while trying to create an access policy for domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to create an access policy for domain %s, client %s, resource owner %s and resource id %s", domain, client, user, resource), ex));
+                });
+    }
+
+    @Override
+    public Single<AccessPolicy> updateAccessPolicy(AccessPolicy accessPolicy, String domain, String client, String user, String resource, String accessPolicyId) {
+        LOGGER.debug("Updating access policy for domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicyId);
+        return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
+                .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resource)))
+                .flatMap(r -> accessPolicyRepository.findById(accessPolicyId))
+                .switchIfEmpty(Single.error(new AccessPolicyNotFoundException(resource)))
+                .flatMap(oldPolicy -> {
+                    AccessPolicy policyToUpdate = new AccessPolicy();
+                    policyToUpdate.setId(oldPolicy.getId());
+                    policyToUpdate.setEnabled(accessPolicy.isEnabled());
+                    policyToUpdate.setName(accessPolicy.getName());
+                    policyToUpdate.setDescription(accessPolicy.getDescription());
+                    policyToUpdate.setType(accessPolicy.getType());
+                    policyToUpdate.setOrder(accessPolicy.getOrder());
+                    policyToUpdate.setCondition(accessPolicy.getCondition());
+                    policyToUpdate.setDomain(oldPolicy.getDomain());
+                    policyToUpdate.setResource(oldPolicy.getResource());
+                    policyToUpdate.setCreatedAt(oldPolicy.getCreatedAt());
+                    policyToUpdate.setUpdatedAt(new Date());
+                    return accessPolicyRepository.update(policyToUpdate);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error has occurred while trying to update access policy for domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicyId, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to update access policy for domain %s, client %s, resource owner %s, resource id %s and policy id %s", domain, client, user, resource, accessPolicyId), ex));
+                });
+    }
+
+    @Override
+    public Completable deleteAccessPolicy(String domain, String client, String user, String resource, String accessPolicy) {
+        LOGGER.debug("Deleting access policy for domain {}, client {}, resource owner {}, resource id and policy id {}", domain, client, user, resource, accessPolicy);
+        return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
+                .switchIfEmpty(Maybe.error(new ResourceNotFoundException(resource)))
+                .flatMapCompletable(__ -> accessPolicyRepository.delete(accessPolicy))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Completable.error(ex);
+                    }
+                    LOGGER.error("An error has occurred while trying to delete access policy for domain {}, client {}, resource owner {}, resource id {} and policy id {}", domain, client, user, resource, accessPolicy, ex);
+                    return Completable.error(new TechnicalManagementException(String.format("An error has occurred while trying to delete access policy for domain %s, client %s, resource owner %s, resource id %s and policy id %s", domain, client, user, resource, accessPolicy), ex));
+                });
     }
 
     private Single<Resource> validateScopes(Resource toValidate) {

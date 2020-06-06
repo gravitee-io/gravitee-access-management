@@ -30,9 +30,7 @@
           <div fxLayout="column" fxFlex="70">
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Domain</mat-label>
-              <mat-select placeholder="Domain" [(ngModel)]="application.domain" name="domain" required [disabled]="domainId">
-                <mat-option *ngFor="let domain of domains" [value]="domain.id">{{ domain.name }}</mat-option>
-              </mat-select>
+              <input matInput type="text" placeholder="Domain" name="domain" [value]="domain.name" disabled>
               <mat-hint>Application's security domain.</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline" floatLabel="always">

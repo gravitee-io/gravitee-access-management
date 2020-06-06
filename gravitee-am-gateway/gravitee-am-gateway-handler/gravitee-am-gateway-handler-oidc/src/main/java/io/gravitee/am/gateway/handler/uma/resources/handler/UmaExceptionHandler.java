@@ -27,6 +27,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class UmaExceptionHandler extends ExceptionHandler {
@@ -35,8 +36,17 @@ public class UmaExceptionHandler extends ExceptionHandler {
     public void handle(RoutingContext routingContext) {
         if(routingContext.failed()) {
             Throwable throwable = routingContext.failure();
-
-            if (throwable instanceof ResourceNotFoundException) {
+            if (isInvalidRequest(throwable)) {
+                OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse("invalid_request");
+                oAuth2ErrorResponse.setDescription(throwable.getMessage());
+                routingContext
+                        .response()
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .setStatusCode(HttpStatusCode.BAD_REQUEST_400)
+                        .end(Json.encodePrettily(oAuth2ErrorResponse));
+            } else if (throwable instanceof AbstractNotFoundException) {
                 OAuth2Exception oAuth2Exception = new io.gravitee.am.gateway.handler.oauth2.exception.ResourceNotFoundException(throwable.getMessage());
                 OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(oAuth2Exception.getOAuth2ErrorCode());
                 oAuth2ErrorResponse.setDescription(oAuth2Exception.getMessage());
@@ -46,16 +56,6 @@ public class UmaExceptionHandler extends ExceptionHandler {
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
                         .setStatusCode(oAuth2Exception.getHttpStatusCode())
-                        .end(Json.encodePrettily(oAuth2ErrorResponse));
-            } else if(isInvalidRequest(throwable)) {
-                OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse("invalid_request");
-                oAuth2ErrorResponse.setDescription(throwable.getMessage());
-                routingContext
-                        .response()
-                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                        .setStatusCode(HttpStatusCode.BAD_REQUEST_400)
                         .end(Json.encodePrettily(oAuth2ErrorResponse));
             } else {
                 super.handle(routingContext);

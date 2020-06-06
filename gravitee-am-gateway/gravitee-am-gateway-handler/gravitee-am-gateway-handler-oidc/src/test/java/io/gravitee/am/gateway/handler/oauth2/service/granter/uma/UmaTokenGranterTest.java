@@ -22,6 +22,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenType;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
@@ -29,6 +30,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
+import io.gravitee.am.gateway.handler.uma.policy.RulesEngine;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -36,12 +39,16 @@ import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.uma.UMASettings;
+import io.gravitee.am.model.uma.policy.AccessPolicy;
+import io.gravitee.am.model.uma.policy.AccessPolicyType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.InvalidPermissionTicketException;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
+import io.gravitee.gateway.api.ExecutionContext;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -58,12 +65,13 @@ import java.util.function.Predicate;
 
 import static io.gravitee.am.common.oauth2.Parameters.*;
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
@@ -91,6 +99,12 @@ public class UmaTokenGranterTest {
     private ResourceService resourceService;
 
     @Mock
+    private RulesEngine rulesEngine;
+
+    @Mock
+    private ExecutionContextFactory executionContextFactory;
+
+    @Mock
     private JWTService jwtService;
 
     @Mock
@@ -103,7 +117,7 @@ public class UmaTokenGranterTest {
     private UMATokenGranter umaTokenGranter = new UMATokenGranter(
             tokenService, userAuthenticationManager,
             permissionTicketService, resourceService,
-            jwtService, domain
+            jwtService, domain, rulesEngine, executionContextFactory
     );
 
     private TokenRequest tokenRequest;
@@ -152,6 +166,7 @@ public class UmaTokenGranterTest {
                 new Resource().setId(RS_TWO).setResourceScopes(Arrays.asList("scopeA", "scopeB", "scopeD"))
         )));
         when(tokenService.create(oauth2RequestCaptor.capture(), eq(client), any())).thenReturn(Single.just(new AccessToken("success")));
+        when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Single.just(Collections.emptyList()));
     }
 
     @Test
@@ -277,7 +292,6 @@ public class UmaTokenGranterTest {
     @Test
     public void grant_user_additionalScopeCase() {
         tokenRequest.setScopes(new HashSet<>(Arrays.asList("scopeB", "scopeC")));
-
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()));
         OAuth2Request result = oauth2RequestCaptor.getValue();
@@ -290,7 +304,6 @@ public class UmaTokenGranterTest {
     public void grant_user_RptWithoutPermissionCase() {
         parameters.add(RPT, RPT_OLD_TOKEN);
         when(rpt.get("permissions")).thenReturn(null);
-
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()));
         OAuth2Request result = oauth2RequestCaptor.getValue();
@@ -303,7 +316,6 @@ public class UmaTokenGranterTest {
     public void grant_user_extendRptCase() {
         parameters.add(RPT, RPT_OLD_TOKEN);
         tokenRequest.setScopes(new HashSet<>(Arrays.asList("scopeD")));
-
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()) && token.isUpgraded());
         OAuth2Request result = oauth2RequestCaptor.getValue();
@@ -316,7 +328,6 @@ public class UmaTokenGranterTest {
     public void grant_client_nominalCase() {
         parameters.remove(CLAIM_TOKEN);
         parameters.remove(CLAIM_TOKEN_FORMAT);
-
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()));
         OAuth2Request result = oauth2RequestCaptor.getValue();
@@ -330,7 +341,6 @@ public class UmaTokenGranterTest {
         parameters.remove(CLAIM_TOKEN);
         parameters.remove(CLAIM_TOKEN_FORMAT);
         tokenRequest.setScopes(new HashSet<>(Arrays.asList("scopeB", "scopeC")));
-
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()));
         OAuth2Request result = oauth2RequestCaptor.getValue();
@@ -346,7 +356,6 @@ public class UmaTokenGranterTest {
         parameters.add(RPT, RPT_OLD_TOKEN);
         tokenRequest.setScopes(new HashSet<>(Arrays.asList("scopeD")));
         when(rpt.getSub()).thenReturn(CLIENT_ID);//Set RPT as Client bearer.
-
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()) && token.isUpgraded());
         OAuth2Request result = oauth2RequestCaptor.getValue();
@@ -354,6 +363,35 @@ public class UmaTokenGranterTest {
         assertTrue(assertExtendedRptPermissions(result.getPermissions()));
         assertFalse(result.isSupportRefreshToken());
     }
+
+    @Test
+    public void grant_nominalCase_accessPolicy_deny() {
+        AccessPolicy policy = mock(AccessPolicy.class);
+        when(policy.getType()).thenReturn(AccessPolicyType.GROOVY);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Single.just(Collections.singletonList(policy)));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        when(rulesEngine.fire(any(), any())).thenReturn(Completable.error(new PolicyChainException("Policy requirements have failed")));
+        TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
+        testObserver.assertNotComplete().assertError(InvalidGrantException.class);
+    }
+
+    @Test
+    public void grant_user_nominalCase_accessPolicy_grant() {
+        AccessPolicy policy = mock(AccessPolicy.class);
+        when(policy.getType()).thenReturn(AccessPolicyType.GROOVY);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Single.just(Collections.singletonList(policy)));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        when(rulesEngine.fire(any(), any())).thenReturn(Completable.complete());
+        TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
+        testObserver.assertComplete().assertNoErrors().assertValue(token -> "success".equals(token.getValue()));
+        OAuth2Request result = oauth2RequestCaptor.getValue();
+        assertTrue(USER_ID.equals(result.getSubject()));
+        assertTrue(assertNominalPermissions(result.getPermissions()));
+        assertTrue(result.isSupportRefreshToken());
+    }
+
 
     @Test
     public void checkMethodWillNotBeUsed() {

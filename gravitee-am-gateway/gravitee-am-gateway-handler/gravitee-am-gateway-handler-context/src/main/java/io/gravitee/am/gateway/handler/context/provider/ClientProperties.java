@@ -30,6 +30,7 @@ public class ClientProperties {
     private String domain;
     private String clientId;
     private String clientName;
+    private String name;
     private Map<String, Object> metadata;
 
     public ClientProperties() {
@@ -40,6 +41,7 @@ public class ClientProperties {
         this.domain = client.getDomain();
         this.clientId = client.getClientId();
         this.clientName = client.getClientName();
+        this.name = client.getClientName();
         this.metadata = client.getMetadata() == null ? new HashMap<>() : new HashMap<>(client.getMetadata());
     }
 
@@ -73,6 +75,14 @@ public class ClientProperties {
 
     public void setClientName(String clientName) {
         this.clientName = clientName;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Map<String, Object> getMetadata() {

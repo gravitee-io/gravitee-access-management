@@ -28,5 +28,7 @@ public interface UMAConstants {
     // UMA Federated Protection API
     String PERMISSION_PATH = "/protection/permission";
     String RESOURCE_REGISTRATION_PATH = "/protection/resource_set";
+    String RESOURCE_ACCESS_POLICIES_PATH = "/policies";
     String RESOURCE_ID="resource_id";
+    String POLICY_ID="policy_id";
 }

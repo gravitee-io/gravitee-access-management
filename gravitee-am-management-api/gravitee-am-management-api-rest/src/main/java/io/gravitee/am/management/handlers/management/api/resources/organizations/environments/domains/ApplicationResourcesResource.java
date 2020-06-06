@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import io.gravitee.am.management.handlers.management.api.model.ResourceEntity;
 import io.gravitee.am.management.handlers.management.api.model.ResourceListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
@@ -28,6 +29,8 @@ import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -36,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import java.util.Collections;
@@ -64,13 +68,13 @@ public class ApplicationResourcesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List resource set for an application",
+    @ApiOperation(value = "List resources for an application",
             notes = "User must have APPLICATION_RESOURCE[LIST] permission on the specified application " +
                     "or APPLICATION_RESOURCE[LIST] permission on the specified domain " +
                     "or APPLICATION_RESOURCE[LIST] permission on the specified environment " +
                     "or APPLICATION_RESOURCE[LIST] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List resource set for an application", response = ResourceListItem.class),
+            @ApiResponse(code = 200, message = "List resources for an application", response = ResourceListItem.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -87,9 +91,19 @@ public class ApplicationResourcesResource extends AbstractResource {
                         .flatMap(__ -> applicationService.findById(application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                         .flatMapSingle(application1 -> resourceService.findByDomainAndClient(domain, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
-                        .flatMap(pagedResources -> resourceService.getMetadata((List<Resource>) pagedResources.getData())
-                                .map(metadata -> new Page(Collections.singletonList(new ResourceListItem((List<Resource>) pagedResources.getData(), metadata)), page, pagedResources.getTotalCount()))
-                        )
+                        .flatMap(pagedResources -> {
+                            return Observable.fromIterable(pagedResources.getData())
+                                    .flatMapSingle(r -> resourceService.countAccessPolicyByResource(r.getId())
+                                            .map(policies -> {
+                                                ResourceEntity resourceEntity = new ResourceEntity(r);
+                                                resourceEntity.setPolicies(policies);
+                                                return resourceEntity;
+                                            }))
+                                    .toList()
+                                    .zipWith(resourceService.getMetadata((List<Resource>) pagedResources.getData()), (v1, v2) -> {
+                                        return new Page(Collections.singletonList(new ResourceListItem(v1, v2)), page, pagedResources.getTotalCount());
+                                    });
+                        })
                 )
                 .subscribe(response::resume, response::resume);
     }

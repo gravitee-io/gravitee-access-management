@@ -15,6 +15,8 @@
  */
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
+import {ApplicationService} from '../../../../../../services/application.service';
+import {BreadcrumbService} from '../../../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-application-resource',
@@ -23,11 +25,17 @@ import {ActivatedRoute} from '@angular/router';
 })
 export class ApplicationResourceComponent implements OnInit {
   resource: any;
+  policies: any[];
 
-  constructor(private route: ActivatedRoute) {
+  constructor(private route: ActivatedRoute,
+              private applicationService: ApplicationService,
+              private breadcrumbService: BreadcrumbService) {
   }
 
   ngOnInit(): void {
     this.resource = this.route.snapshot.data['resource'];
+    this.breadcrumbService.addFriendlyNameForRouteRegex(window.location.pathname + '$', this.resource.name);
+    this.applicationService.resourcePolicies(this.resource.domain, this.resource.clientId, this.resource.id)
+        .subscribe(response => this.policies = response);
   }
 }

@@ -25,6 +25,8 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.policy.api.PolicyResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
@@ -36,7 +38,8 @@ import java.util.Objects;
  */
 public class PolicyChain extends AbstractProcessor<ExecutionContext> implements io.gravitee.policy.api.PolicyChain {
 
-    static final String GATEWAY_POLICY_INTERNAL_ERROR_KEY = "GATEWAY_POLICY_INTERNAL_ERROR";
+    private static final Logger LOGGER = LoggerFactory.getLogger(PolicyChain.class);
+    private static final String GATEWAY_POLICY_INTERNAL_ERROR_KEY = "GATEWAY_POLICY_INTERNAL_ERROR";
     private final List<Policy> policies;
     private final Iterator<Policy> policyIterator;
     private final ExecutionContext executionContext;
@@ -56,6 +59,10 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
             Policy policy = policyIterator.next();
             try {
                 if (policy.isRunnable()) {
+                    // enhance execution context with policy metadata
+                    if (policy.metadata() != null) {
+                        policy.metadata().forEach(executionContext::setAttribute);
+                    }
                     execute(
                             policy,
                             this,
@@ -66,7 +73,9 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
                     doNext(executionContext.request(), executionContext.response());
                 }
             } catch (Exception ex) {
-                request.metrics().setMessage("An error occurs in policy[" + policy.id()+"] error["+ Throwables.getStackTraceAsString(ex)+"]");
+                final String message = "An error occurs in policy[" + policy.id()+"] error["+ Throwables.getStackTraceAsString(ex)+"]";
+                LOGGER.error(message);
+                request.metrics().setMessage(message);
                 if (errorHandler != null) {
                     errorHandler.handle(new PolicyChainProcessorFailure(PolicyResult.failure(
                             GATEWAY_POLICY_INTERNAL_ERROR_KEY, ex.getMessage())));

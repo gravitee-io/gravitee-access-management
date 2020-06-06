@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHa
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.uma.resources.endpoint.PermissionEndpoint;
 import io.gravitee.am.gateway.handler.uma.resources.endpoint.ProviderConfigurationEndpoint;
+import io.gravitee.am.gateway.handler.uma.resources.endpoint.ResourceAccessPoliciesEndpoint;
 import io.gravitee.am.gateway.handler.uma.resources.endpoint.ResourceRegistrationEndpoint;
 import io.gravitee.am.gateway.handler.uma.resources.handler.MethodNotSupportedHandler;
 import io.gravitee.am.gateway.handler.uma.resources.handler.UMAProtectionApiAccessHandler;
@@ -145,6 +146,31 @@ public class UMAProvider extends AbstractService<ProtocolProvider> implements Pr
                 .delete(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID)
                 .handler(umaProtectionApiResourcesAccessHandler)
                 .handler(resourceRegistrationEndpoint::delete);
+
+        // Resource Access Policies endpoint
+        ResourceAccessPoliciesEndpoint resourceAccessPoliciesEndpoint = new ResourceAccessPoliciesEndpoint(domain, resourceService);
+        umaRouter
+                .get(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID+RESOURCE_ACCESS_POLICIES_PATH)
+                .handler(umaProtectionApiResourcesAccessHandler)
+                .handler(resourceAccessPoliciesEndpoint::list);
+        umaRouter
+                .post(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID+RESOURCE_ACCESS_POLICIES_PATH)
+                .consumes(MediaType.APPLICATION_JSON)
+                .handler(umaProtectionApiResourcesAccessHandler)
+                .handler(resourceAccessPoliciesEndpoint::create);
+        umaRouter
+                .get(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID+RESOURCE_ACCESS_POLICIES_PATH+"/:"+POLICY_ID)
+                .handler(umaProtectionApiResourcesAccessHandler)
+                .handler(resourceAccessPoliciesEndpoint::get);
+        umaRouter
+                .put(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID+RESOURCE_ACCESS_POLICIES_PATH+"/:"+POLICY_ID)
+                .consumes(MediaType.APPLICATION_JSON)
+                .handler(umaProtectionApiResourcesAccessHandler)
+                .handler(resourceAccessPoliciesEndpoint::update);
+        umaRouter
+                .delete(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID+RESOURCE_ACCESS_POLICIES_PATH+"/:"+POLICY_ID)
+                .handler(umaProtectionApiResourcesAccessHandler)
+                .handler(resourceAccessPoliciesEndpoint::delete);
 
         // Permission endpoint Access Handler
         PermissionEndpoint permissionEndpoint = new PermissionEndpoint(domain, permissionTicketService);
