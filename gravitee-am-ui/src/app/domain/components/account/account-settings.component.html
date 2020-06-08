@@ -84,6 +84,16 @@
     <h5>Management</h5>
     <mat-divider></mat-divider>
     <div class="account-settings-zone">
+      <mat-form-field>
+        <mat-select placeholder="Identity provider" name="defaultIdentityProviderForRegistration" [(ngModel)]="accountSettings.defaultIdentityProviderForRegistration" (ngModelChange)="formChanged = true;">
+          <mat-option>None</mat-option>
+          <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{userProvider.name}}</mat-option>
+        </mat-select>
+        <mat-hint>Default identity provider for user registration. The user will be stored in the selected identity provider instead of the default one.</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div class="account-settings-zone">
       <div fxLayout="column">
         <mat-slide-toggle
           (change)="enableDynamicUserRegistration($event)"

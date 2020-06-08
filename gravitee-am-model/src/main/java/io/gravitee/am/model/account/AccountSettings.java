@@ -64,6 +64,11 @@ public class AccountSettings {
     private boolean dynamicUserRegistration;
 
     /**
+     * Default identity provider used for user registration
+     */
+    private String defaultIdentityProviderForRegistration;
+
+    /**
      * Auto login user after reset password process
      */
     private boolean autoLoginAfterResetPassword;
@@ -143,6 +148,14 @@ public class AccountSettings {
 
     public void setDynamicUserRegistration(boolean dynamicUserRegistration) {
         this.dynamicUserRegistration = dynamicUserRegistration;
+    }
+
+    public String getDefaultIdentityProviderForRegistration() {
+        return defaultIdentityProviderForRegistration;
+    }
+
+    public void setDefaultIdentityProviderForRegistration(String defaultIdentityProviderForRegistration) {
+        this.defaultIdentityProviderForRegistration = defaultIdentityProviderForRegistration;
     }
 
     public boolean isAutoLoginAfterResetPassword() {
