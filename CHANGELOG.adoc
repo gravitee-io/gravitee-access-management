@@ -1,5 +1,20 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/230?closed=1[AM - 2.10.14 (2020-05-25)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- User groups are missing during custom claims processing https://github.com/gravitee-io/issues/issues/3828[#3828]
+
+=== Features
+
+*_Identity-provider_*
+
+- Add generic HTTP identity provider https://github.com/gravitee-io/issues/issues/3289[#3289]
+
+
 == https://github.com/gravitee-io/issues/milestone/225?closed=1[AM - 2.10.13 (2020-05-07)]
 
 === Bug fixes
