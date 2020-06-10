@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/255?closed=1[AM - 2.10.15 (2020-06-10)]
+
+=== Improvements
+
+*_Management_*
+
+- Set default IDP for user registration https://github.com/gravitee-io/issues/issues/3910[#3910]
+
+
 == https://github.com/gravitee-io/issues/milestone/230?closed=1[AM - 2.10.14 (2020-05-25)]
 
 === Bug fixes
