@@ -32,6 +32,7 @@ public class AccountSettingsMongo {
     private boolean autoLoginAfterRegistration;
     private String redirectUriAfterRegistration;
     private boolean dynamicUserRegistration;
+    private String defaultIdentityProviderForRegistration;
     private boolean autoLoginAfterResetPassword;
     private String redirectUriAfterResetPassword;
 
@@ -107,6 +108,14 @@ public class AccountSettingsMongo {
         this.dynamicUserRegistration = dynamicUserRegistration;
     }
 
+    public String getDefaultIdentityProviderForRegistration() {
+        return defaultIdentityProviderForRegistration;
+    }
+
+    public void setDefaultIdentityProviderForRegistration(String defaultIdentityProviderForRegistration) {
+        this.defaultIdentityProviderForRegistration = defaultIdentityProviderForRegistration;
+    }
+
     public boolean isAutoLoginAfterResetPassword() {
         return autoLoginAfterResetPassword;
     }
@@ -134,6 +143,7 @@ public class AccountSettingsMongo {
         accountSettings.setAutoLoginAfterRegistration(isAutoLoginAfterRegistration());
         accountSettings.setRedirectUriAfterRegistration(getRedirectUriAfterRegistration());
         accountSettings.setDynamicUserRegistration(isDynamicUserRegistration());
+        accountSettings.setDefaultIdentityProviderForRegistration(getDefaultIdentityProviderForRegistration());
         accountSettings.setAutoLoginAfterResetPassword(isAutoLoginAfterResetPassword());
         accountSettings.setRedirectUriAfterResetPassword(getRedirectUriAfterResetPassword());
         return accountSettings;
@@ -153,6 +163,7 @@ public class AccountSettingsMongo {
         accountSettingsMongo.setAutoLoginAfterRegistration(accountSettings.isAutoLoginAfterRegistration());
         accountSettingsMongo.setRedirectUriAfterRegistration(accountSettings.getRedirectUriAfterRegistration());
         accountSettingsMongo.setDynamicUserRegistration(accountSettings.isDynamicUserRegistration());
+        accountSettingsMongo.setDefaultIdentityProviderForRegistration(accountSettings.getDefaultIdentityProviderForRegistration());
         accountSettingsMongo.setAutoLoginAfterResetPassword(accountSettings.isAutoLoginAfterResetPassword());
         accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
         return accountSettingsMongo;

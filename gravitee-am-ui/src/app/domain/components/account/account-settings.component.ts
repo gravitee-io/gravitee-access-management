@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
-import * as moment from "moment";
+import {ActivatedRoute} from '@angular/router';
+import {ProviderService} from '../../../services/provider.service';
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-account-settings',
@@ -28,13 +30,33 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   @Input() readonly = false;
   @ViewChild('accountForm') form: any;
   formChanged = false;
+  userProviders: any[];
+  private domainId: string;
   private defaultMaxAttempts = 10;
   private defaultLoginAttemptsResetTime = 12;
   private defaultLoginAttemptsResetTimeUnit = 'hours';
   private defaultAccountBlockedDuration = 2;
   private defaultAccountBlockedDurationUnit = 'hours';
 
-  constructor() {}
+  constructor(private route: ActivatedRoute,
+              private providerService: ProviderService) {}
+
+  ngOnInit(): void {
+    this.domainId = this.route.snapshot.parent.parent.params['domainId']
+        ? this.route.snapshot.parent.parent.params['domainId']
+        : this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.initDateValues();
+    this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
+      this.userProviders = response;
+    });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.accountSettings.previousValue && changes.accountSettings.currentValue) {
+      this.accountSettings = changes.accountSettings.currentValue;
+      this.initDateValues();
+    }
+  }
 
   save() {
     let accountSettings = Object.assign({}, this.accountSettings);
@@ -50,17 +72,6 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
     this.onSavedAccountSettings.emit(accountSettings);
     this.formChanged = false;
-  }
-
-  ngOnInit(): void {
-    this.initDateValues();
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.accountSettings.previousValue && changes.accountSettings.currentValue) {
-      this.accountSettings = changes.accountSettings.currentValue;
-      this.initDateValues();
-    }
   }
 
   enableInheritMode(event) {
@@ -145,22 +156,22 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   private initDateValues() {
     if (this.accountSettings.loginAttemptsResetTime > 0) {
-      let loginAttemptsResetTime = this.getHumanizeDuration(this.accountSettings.loginAttemptsResetTime);
+      const loginAttemptsResetTime = this.getHumanizeDuration(this.accountSettings.loginAttemptsResetTime);
       this.accountSettings.loginAttemptsResetTime = loginAttemptsResetTime[0];
       this.accountSettings.loginAttemptsResetTimeUnitTime = loginAttemptsResetTime[1];
     }
 
     if (this.accountSettings.accountBlockedDuration > 0) {
-      let accountBlockedDuration = this.getHumanizeDuration(this.accountSettings.accountBlockedDuration);
+      const accountBlockedDuration = this.getHumanizeDuration(this.accountSettings.accountBlockedDuration);
       this.accountSettings.accountBlockedDuration = accountBlockedDuration[0];
       this.accountSettings.accountBlockedDurationUnitTime = accountBlockedDuration[1];
     }
   }
 
   private getHumanizeDuration(value) {
-    let humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
-    let humanizeDateValue = (humanizeDate[0] === 'a' || humanizeDate[0] === 'an') ? 1 : humanizeDate[0];
-    let humanizeDateUnit = humanizeDate[1].endsWith('s') ? humanizeDate[1] : humanizeDate[1] + 's';
+    const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
+    const humanizeDateValue = (humanizeDate[0] === 'a' || humanizeDate[0] === 'an') ? 1 : humanizeDate[0];
+    const humanizeDateUnit = humanizeDate[1].endsWith('s') ? humanizeDate[1] : humanizeDate[1] + 's';
     return new Array(humanizeDateValue, humanizeDateUnit);
   }
 

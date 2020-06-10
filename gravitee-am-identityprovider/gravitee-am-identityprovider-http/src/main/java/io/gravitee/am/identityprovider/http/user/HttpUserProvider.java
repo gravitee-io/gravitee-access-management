@@ -42,6 +42,7 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
 import java.lang.reflect.Constructor;
@@ -59,6 +60,7 @@ public class HttpUserProvider implements UserProvider {
     private static final String USER_API_RESPONSE_CONTEXT_KEY = "usersResponse";
 
     @Autowired
+    @Qualifier("idpHttpUsersWebClient")
     private WebClient client;
 
     @Autowired
