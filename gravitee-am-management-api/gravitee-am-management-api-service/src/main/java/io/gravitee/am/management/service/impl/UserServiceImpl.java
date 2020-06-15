@@ -200,7 +200,7 @@ public class UserServiceImpl implements UserService {
                                                                         auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user));
                                                                         // in pre registration mode an email will be sent to the user to complete his account
                                                                         AccountSettings accountSettings = getAccountSettings(domain1, client);
-                                                                        if (newUser.isPreRegistration() && accountSettings != null && !accountSettings.isDynamicUserRegistration()) {
+                                                                        if (newUser.isPreRegistration() && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
                                                                             new Thread(() -> completeUserRegistration(user)).start();
                                                                         }
                                                                     })
