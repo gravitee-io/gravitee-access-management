@@ -302,18 +302,26 @@ public class UserServiceImpl implements UserService {
     public Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
         return userService.findById(referenceType, referenceId, userId)
                 .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
-                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                        .flatMapCompletable(userProvider -> userProvider.findByUsername(user.getUsername())
-                                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                                .flatMapCompletable(idpUser -> userProvider.delete(idpUser.getId())))
-                        .andThen(userService.delete(userId))
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof UserNotFoundException) {
-                                // idp user does not exist, only remove AM user
-                                return userService.delete(userId);
+                        .map(Optional::ofNullable)
+                        .flatMapCompletable(optUserProvider -> {
+                            // no user provider found, continue
+                            if (!optUserProvider.isPresent()) {
+                                return Completable.complete();
                             }
-                            return Completable.error(ex);
+                            // user has never been created in the identity provider, continue
+                            if (user.getExternalId() == null || user.getExternalId().isEmpty()) {
+                                return Completable.complete();
+                            }
+                            return optUserProvider.get().delete(user.getExternalId())
+                                    .onErrorResumeNext(ex -> {
+                                        if (ex instanceof UserNotFoundException) {
+                                            // idp user does not exist, continue
+                                            return Completable.complete();
+                                        }
+                                        return Completable.error(ex);
+                                    });
                         })
+                        .andThen(userService.delete(userId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
                 );
@@ -577,12 +585,15 @@ public class UserServiceImpl implements UserService {
 
         Map<String, Object> additionalInformation = new HashMap<>();
         if (newUser.getFirstName() != null) {
+            user.setFirstName(newUser.getFirstName());
             additionalInformation.put(StandardClaims.GIVEN_NAME, newUser.getFirstName());
         }
         if (newUser.getLastName() != null) {
+            user.setLastName(newUser.getLastName());
             additionalInformation.put(StandardClaims.FAMILY_NAME, newUser.getLastName());
         }
         if (newUser.getEmail() != null) {
+            user.setEmail(newUser.getEmail());
             additionalInformation.put(StandardClaims.EMAIL, newUser.getEmail());
         }
         if (newUser.getAdditionalInformation() != null) {
@@ -619,12 +630,15 @@ public class UserServiceImpl implements UserService {
         DefaultUser user = new DefaultUser(username);
         Map<String, Object> additionalInformation = new HashMap<>();
         if (updateUser.getFirstName() != null) {
+            user.setFirstName(updateUser.getFirstName());
             additionalInformation.put(StandardClaims.GIVEN_NAME, updateUser.getFirstName());
         }
         if (updateUser.getLastName() != null) {
+            user.setLastName(updateUser.getLastName());
             additionalInformation.put(StandardClaims.FAMILY_NAME, updateUser.getLastName());
         }
         if (updateUser.getEmail() != null) {
+            user.setEmail(updateUser.getEmail());
             additionalInformation.put(StandardClaims.EMAIL, updateUser.getEmail());
         }
         if (updateUser.getAdditionalInformation() != null) {
@@ -640,12 +654,15 @@ public class UserServiceImpl implements UserService {
 
         Map<String, Object> additionalInformation = new HashMap<>();
         if (user.getFirstName() != null) {
+            idpUser.setFirstName(user.getFirstName());
             additionalInformation.put(StandardClaims.GIVEN_NAME, user.getFirstName());
         }
         if (user.getLastName() != null) {
+            idpUser.setLastName(user.getLastName());
             additionalInformation.put(StandardClaims.FAMILY_NAME, user.getLastName());
         }
         if (user.getEmail() != null) {
+            idpUser.setEmail(user.getEmail());
             additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
         }
         if (user.getAdditionalInformation() != null) {

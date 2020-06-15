@@ -1,0 +1,525 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpIdentityProviderConfiguration",
+  "properties" : {
+    "authenticationResource": {
+      "type" : "object",
+      "id" : "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpResourceConfiguration",
+      "htmlClass": "resource",
+      "title": "Authentication Resource",
+      "properties": {
+        "baseURL" : {
+          "type" : "string",
+          "title": "Base URL",
+          "description": "Resource Base URL to authenticate your users (support EL)"
+        },
+        "httpMethod" : {
+          "type" : "string",
+          "default": "POST",
+          "enum" : ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE", "OTHER"],
+          "title": "HTTP Method",
+          "description": "HTTP method used to call the resource"
+        },
+        "httpHeaders" : {
+          "type" : "array",
+          "title": "HTTP Headers",
+          "items" : {
+            "type" : "object",
+            "id" : "urn:jsonschema:io:gravitee:common:http:HttpHeader",
+            "title": "HTTP Header",
+            "properties" : {
+              "name" : {
+                "title": "Name",
+                "description": "HTTP Header name",
+                "type" : "string"
+              },
+              "value" : {
+                "title": "Value",
+                "description": "HTTP Header value (support EL)",
+                "type" : "string"
+              }
+            },
+            "required": [
+              "name",
+              "value"
+            ]
+          }
+        },
+        "httpBody" : {
+          "type" : "string",
+          "title": "Body Request",
+          "widget": "textarea",
+          "description": "HTTP body request used to call the resource (support EL)",
+          "default": "{\"username\":\"{#principal}\",\"password\":\"{#credentials}\"}"
+        },
+        "httpResponseErrorConditions" : {
+          "type" : "array",
+          "title": "Response Error Conditions (one of)",
+          "items" : {
+            "type" : "object",
+            "id" : "urn:jsonschema:io:gravitee:am:identityprovider:http:configuration:HttpResponseError",
+            "title": "Error Condition",
+            "properties" : {
+              "value" : {
+                "title": "Value",
+                "description": "The condition which will be verified after the authentication (support EL)",
+                "default": "{#authenticationResponse.status == 401}",
+                "type" : "string"
+              },
+              "exception" : {
+                "title": "Exception",
+                "description": "Exception send to the consumer if the condition is true",
+                "type" : "string",
+                "default": "io.gravitee.am.common.exception.authentication.BadCredentialsException",
+                "enum" : [
+                  "io.gravitee.am.common.exception.authentication.AccountDisabledException",
+                  "io.gravitee.am.common.exception.authentication.AccountInactiveException",
+                  "io.gravitee.am.common.exception.authentication.AccountLockedException",
+                  "io.gravitee.am.common.exception.authentication.BadCredentialsException",
+                  "io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException",
+                  "io.gravitee.am.common.exception.authentication.UsernameNotFoundException"
+                ],
+                "x-schema-form": {
+                  "type": "select",
+                  "titleMap": {
+                    "io.gravitee.am.common.exception.authentication.AccountDisabledException" : "AccountDisabledException",
+                    "io.gravitee.am.common.exception.authentication.AccountInactiveException" : "AccountInactiveException",
+                    "io.gravitee.am.common.exception.authentication.AccountLockedException" : "AccountLockedException",
+                    "io.gravitee.am.common.exception.authentication.BadCredentialsException" : "BadCredentialsException",
+                    "io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException" : "InternalAuthenticationServiceException",
+                    "io.gravitee.am.common.exception.authentication.UsernameNotFoundException" : "UsernameNotFoundException"
+                  }
+                }
+              },
+              "message" : {
+                "title": "Message",
+                "description": "The message of the error if the condition is true (support EL)",
+                "type" : "string"
+              }
+            },
+            "required": [
+              "value",
+              "exception"
+            ]
+          }
+        }
+      },
+      "required": [
+        "baseURL",
+        "httpMethod"
+      ]
+    },
+    "usersResource": {
+      "type": "object",
+      "id": "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpUsersResourceConfiguration",
+      "htmlClass": "resource",
+      "title": "Users Resource",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enable Users Resource"
+        },
+        "baseURL": {
+          "type": "string",
+          "title": "Users Resource Base URL",
+          "description": "Resource Base URL to manage your users (support EL)"
+        },
+        "identifierAttribute": {
+          "type": "string",
+          "title": "User identifier attribute",
+          "default": "id",
+          "description": "Identifier field of your users"
+        },
+        "paths": {
+          "type": "object",
+          "id": "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpUsersResourcePathsConfiguration",
+          "title": "Paths",
+          "properties": {
+            "createResource": {
+              "type": "object",
+              "id": "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpResourceConfiguration",
+              "htmlClass": "path",
+              "title": "Create User",
+              "properties": {
+                "baseURL" : {
+                  "type" : "string",
+                  "title": "Path",
+                  "default": "/users",
+                  "description": "Resource path (will be append to the base URL, must start with a '/', support EL)"
+                },
+                "httpMethod" : {
+                  "type" : "string",
+                  "default": "POST",
+                  "enum" : ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE", "OTHER"],
+                  "title": "HTTP Method",
+                  "description": "HTTP method used to call the resource"
+                },
+                "httpHeaders" : {
+                  "type" : "array",
+                  "title": "HTTP Headers",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:common:http:HttpHeader",
+                    "title": "HTTP Header",
+                    "properties" : {
+                      "name" : {
+                        "title": "Name",
+                        "description": "HTTP Header name",
+                        "type" : "string"
+                      },
+                      "value" : {
+                        "title": "Value",
+                        "description": "HTTP Header value (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ]
+                  }
+                },
+                "httpBody" : {
+                  "type" : "string",
+                  "title": "Body Request",
+                  "widget": "textarea",
+                  "description": "HTTP body request used to call the resource (support EL)"
+                },
+                "httpResponseErrorConditions" : {
+                  "type" : "array",
+                  "title": "Response Error Conditions (one of)",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:am:identityprovider:http:configuration:HttpResponseError",
+                    "title": "Error Condition",
+                    "properties" : {
+                      "value" : {
+                        "title": "Value",
+                        "description": "The condition which will be verified after the remote call (support EL)",
+                        "default": "{#usersResponse.status == 400}",
+                        "type" : "string"
+                      },
+                      "exception" : {
+                        "title": "Exception",
+                        "description": "Exception send to the consumer if the condition is true",
+                        "type" : "string",
+                        "default": "io.gravitee.am.service.exception.UserAlreadyExistsException",
+                        "enum" : ["io.gravitee.am.service.exception.UserAlreadyExistsException"],
+                        "x-schema-form": {
+                          "type": "select",
+                          "titleMap": {
+                            "io.gravitee.am.service.exception.UserAlreadyExistsException" : "UserAlreadyExistsException"
+                          }
+                        }
+                      },
+                      "message" : {
+                        "title": "Message",
+                        "description": "The message of the error if the condition is true (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "exception"
+                    ]
+                  }
+                }
+              }
+            },
+            "readResource": {
+              "type": "object",
+              "id": "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpResourceConfiguration",
+              "htmlClass": "path",
+              "title": "Read User (by username)",
+              "properties": {
+                "baseURL" : {
+                  "type" : "string",
+                  "title": "Path",
+                  "default": "/users?username={#user.username}",
+                  "description": "Resource path (will be append to the base URL, must start with a '/', support EL)"
+                },
+                "httpMethod" : {
+                  "type" : "string",
+                  "default": "GET",
+                  "enum" : ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE", "OTHER"],
+                  "title": "HTTP Method",
+                  "description": "HTTP method used to call the resource"
+                },
+                "httpHeaders" : {
+                  "type" : "array",
+                  "title": "HTTP Headers",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:common:http:HttpHeader",
+                    "title": "HTTP Header",
+                    "properties" : {
+                      "name" : {
+                        "title": "Name",
+                        "description": "HTTP Header name",
+                        "type" : "string"
+                      },
+                      "value" : {
+                        "title": "Value",
+                        "description": "HTTP Header value (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ]
+                  }
+                },
+                "httpBody" : {
+                  "type" : "string",
+                  "title": "Body Request",
+                  "widget": "textarea",
+                  "description": "HTTP body request used to call the resource (support EL)"
+                },
+                "httpResponseErrorConditions" : {
+                  "type" : "array",
+                  "title": "Response Error Conditions (one of)",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:am:identityprovider:http:configuration:HttpResponseError",
+                    "title": "Error Condition",
+                    "properties" : {
+                      "value" : {
+                        "title": "Value",
+                        "description": "The condition which will be verified after the remote call (support EL)",
+                        "default": "{#usersResponse.status == 404}",
+                        "type" : "string"
+                      },
+                      "exception" : {
+                        "title": "Exception",
+                        "description": "Exception send to the consumer if the condition is true",
+                        "type" : "string",
+                        "default": "io.gravitee.am.service.exception.UserNotFoundException",
+                        "enum" : ["io.gravitee.am.service.exception.UserNotFoundException"],
+                        "x-schema-form": {
+                          "type": "select",
+                          "titleMap": {
+                            "io.gravitee.am.service.exception.UserNotFoundException" : "UserNotFoundException"
+                          }
+                        }
+                      },
+                      "message" : {
+                        "title": "Message",
+                        "description": "The message of the error if the condition is true (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "exception"
+                    ]
+                  }
+                }
+              }
+            },
+            "updateResource": {
+              "type": "object",
+              "id": "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpResourceConfiguration",
+              "htmlClass": "path",
+              "title": "Update User",
+              "properties": {
+                "baseURL" : {
+                  "type" : "string",
+                  "title": "Path",
+                  "default": "/users/{#user.id}",
+                  "description": "Resource path (will be append to the base URL, must start with a '/', support EL)"
+                },
+                "httpMethod" : {
+                  "type" : "string",
+                  "default": "PUT",
+                  "enum" : ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE", "OTHER"],
+                  "title": "HTTP Method",
+                  "description": "HTTP method used to call the resource"
+                },
+                "httpHeaders" : {
+                  "type" : "array",
+                  "title": "HTTP Headers",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:common:http:HttpHeader",
+                    "title": "HTTP Header",
+                    "properties" : {
+                      "name" : {
+                        "title": "Name",
+                        "description": "HTTP Header name",
+                        "type" : "string"
+                      },
+                      "value" : {
+                        "title": "Value",
+                        "description": "HTTP Header value (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ]
+                  }
+                },
+                "httpBody" : {
+                  "type" : "string",
+                  "title": "Body Request",
+                  "widget": "textarea",
+                  "description": "HTTP body request used to call the resource (support EL)"
+                },
+                "httpResponseErrorConditions" : {
+                  "type" : "array",
+                  "title": "Response Error Conditions (one of)",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:am:identityprovider:http:configuration:HttpResponseError",
+                    "title": "Error Condition",
+                    "properties" : {
+                      "value" : {
+                        "title": "Value",
+                        "description": "The condition which will be verified after the remote call (support EL)",
+                        "default": "{#usersResponse.status == 404}",
+                        "type" : "string"
+                      },
+                      "exception" : {
+                        "title": "Exception",
+                        "description": "Exception send to the consumer if the condition is true",
+                        "type" : "string",
+                        "default": "io.gravitee.am.service.exception.UserNotFoundException",
+                        "enum" : [
+                          "io.gravitee.am.service.exception.UserAlreadyExistsException",
+                          "io.gravitee.am.service.exception.UserNotFoundException"
+                        ],
+                        "x-schema-form": {
+                          "type": "select",
+                          "titleMap": {
+                            "io.gravitee.am.service.exception.UserAlreadyExistsException" : "UserAlreadyExistsException",
+                            "io.gravitee.am.service.exception.UserNotFoundException" : "UserNotFoundException"
+                          }
+                        }
+                      },
+                      "message" : {
+                        "title": "Message",
+                        "description": "The message of the error if the condition is true (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "exception"
+                    ]
+                  }
+                }
+              }
+            },
+            "deleteResource": {
+              "type": "object",
+              "id": "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpResourceConfiguration",
+              "htmlClass": "path",
+              "title": "Delete User",
+              "properties": {
+                "baseURL" : {
+                  "type" : "string",
+                  "title": "Path",
+                  "default": "/users/{#user.id}",
+                  "description": "Resource path (will be append to the base URL, must start with a '/', support EL)"
+                },
+                "httpMethod" : {
+                  "type" : "string",
+                  "default": "DELETE",
+                  "enum" : ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE", "OTHER"],
+                  "title": "HTTP Method",
+                  "description": "HTTP method used to call the resource"
+                },
+                "httpHeaders" : {
+                  "type" : "array",
+                  "title": "HTTP Headers",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:common:http:HttpHeader",
+                    "title": "HTTP Header",
+                    "properties" : {
+                      "name" : {
+                        "title": "Name",
+                        "description": "HTTP Header name",
+                        "type" : "string"
+                      },
+                      "value" : {
+                        "title": "Value",
+                        "description": "HTTP Header value (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ]
+                  }
+                },
+                "httpBody" : {
+                  "type" : "string",
+                  "title": "Body Request",
+                  "widget": "textarea",
+                  "description": "HTTP body request used to call the resource (support EL)"
+                },
+                "httpResponseErrorConditions" : {
+                  "type" : "array",
+                  "title": "Response Error Conditions (one of)",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:am:identityprovider:http:configuration:HttpResponseError",
+                    "title": "Error Condition",
+                    "properties" : {
+                      "value" : {
+                        "title": "Value",
+                        "description": "The condition which will be verified after the remote call (support EL)",
+                        "default": "{#usersResponse.status == 404}",
+                        "type" : "string"
+                      },
+                      "exception" : {
+                        "title": "Exception",
+                        "description": "Exception send to the consumer if the condition is true",
+                        "type" : "string",
+                        "default": "io.gravitee.am.service.exception.UserNotFoundException",
+                        "enum" : ["io.gravitee.am.service.exception.UserNotFoundException"],
+                        "x-schema-form": {
+                          "type": "select",
+                          "titleMap": {
+                            "io.gravitee.am.service.exception.UserNotFoundException" : "UserNotFoundException"
+                          }
+                        }
+                      },
+                      "message" : {
+                        "title": "Message",
+                        "description": "The message of the error if the condition is true (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "exception"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "connectTimeout" : {
+      "type" : "integer",
+      "default": 10000,
+      "minimum": 1,
+      "title": "HTTP Client connect timeout",
+      "description": "Duration of time in milliseconds that connects will block. (default 10000 ms)"
+    },
+    "maxPoolSize" : {
+      "type" : "integer",
+      "default": 200,
+      "minimum": 1,
+      "title": "HTTP Client max pool size",
+      "description": "Maximum pool of connections can grow to. (default 200)"
+    }
+  }
+}

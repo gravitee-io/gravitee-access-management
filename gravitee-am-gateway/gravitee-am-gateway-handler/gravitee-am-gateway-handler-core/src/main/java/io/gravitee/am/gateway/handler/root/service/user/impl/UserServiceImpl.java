@@ -116,7 +116,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
         // set user idp source
-        final String source = user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource();
+        AccountSettings accountSettings = getAccountSettings(domain, client);
+        final String source = accountSettings.getDefaultIdentityProviderForRegistration() != null
+                ? accountSettings.getDefaultIdentityProviderForRegistration()
+                : (user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource());
 
         // validate user and then check user uniqueness
         return UserValidator.validate(user).andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
@@ -149,7 +152,6 @@ public class UserServiceImpl implements UserService {
                             // set date information
                             user.setCreatedAt(new Date());
                             user.setUpdatedAt(user.getCreatedAt());
-                            AccountSettings accountSettings = getAccountSettings(domain, client);
                             if (accountSettings != null && accountSettings.isAutoLoginAfterRegistration()) {
                                 user.setLoggedAt(new Date());
                                 user.setLoginsCount(1l);
@@ -157,10 +159,7 @@ public class UserServiceImpl implements UserService {
                             return userService.create(user);
                         })
                         .flatMap(userService::enhance)
-                        .map(user1 -> {
-                            AccountSettings accountSettings = getAccountSettings(domain, client);
-                            return new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false);
-                        })
+                        .map(user1 -> new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false))
                         .doOnSuccess(registrationResponse -> {
                             // reload principal
                             final User user1 = registrationResponse.getUser();
@@ -434,12 +433,15 @@ public class UserServiceImpl implements UserService {
 
         Map<String, Object> additionalInformation = new HashMap<>();
         if (user.getFirstName() != null) {
+            idpUser.setFirstName(user.getFirstName());
             additionalInformation.put(StandardClaims.GIVEN_NAME, user.getFirstName());
         }
         if (user.getLastName() != null) {
+            idpUser.setLastName(user.getLastName());
             additionalInformation.put(StandardClaims.FAMILY_NAME, user.getLastName());
         }
         if (user.getEmail() != null) {
+            idpUser.setEmail(user.getEmail());
             additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
         }
         if (user.getAdditionalInformation() != null) {
@@ -457,7 +459,11 @@ public class UserServiceImpl implements UserService {
             }
             extraInformation.put(StandardClaims.SUB, user.getId());
             extraInformation.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
-            user.setAdditionalInformation(extraInformation);
+            if (user.getAdditionalInformation() != null) {
+                user.getAdditionalInformation().putAll(extraInformation);
+            } else {
+                user.setAdditionalInformation(extraInformation);
+            }
         }
     }
 

@@ -377,6 +377,12 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         accountSettings.setLoginAttemptsResetTime(accountSettingsMongo.getLoginAttemptsResetTime());
         accountSettings.setAccountBlockedDuration(accountSettingsMongo.getAccountBlockedDuration());
         accountSettings.setCompleteRegistrationWhenResetPassword(accountSettingsMongo.isCompleteRegistrationWhenResetPassword());
+        accountSettings.setDefaultIdentityProviderForRegistration(accountSettingsMongo.getDefaultIdentityProviderForRegistration());
+        accountSettings.setAutoLoginAfterRegistration(accountSettingsMongo.isAutoLoginAfterRegistration());
+        accountSettings.setRedirectUriAfterRegistration(accountSettingsMongo.getRedirectUriAfterRegistration());
+        accountSettings.setDynamicUserRegistration(accountSettingsMongo.isDynamicUserRegistration());
+        accountSettings.setAutoLoginAfterResetPassword(accountSettingsMongo.isAutoLoginAfterResetPassword());
+        accountSettings.setRedirectUriAfterResetPassword(accountSettingsMongo.getRedirectUriAfterResetPassword());
         return accountSettings;
     }
 
@@ -392,6 +398,12 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         accountSettingsMongo.setLoginAttemptsResetTime(accountSettings.getLoginAttemptsResetTime());
         accountSettingsMongo.setAccountBlockedDuration(accountSettings.getAccountBlockedDuration());
         accountSettingsMongo.setCompleteRegistrationWhenResetPassword(accountSettings.isCompleteRegistrationWhenResetPassword());
+        accountSettingsMongo.setDefaultIdentityProviderForRegistration(accountSettings.getDefaultIdentityProviderForRegistration());
+        accountSettingsMongo.setAutoLoginAfterRegistration(accountSettings.isAutoLoginAfterRegistration());
+        accountSettingsMongo.setRedirectUriAfterRegistration(accountSettings.getRedirectUriAfterRegistration());
+        accountSettingsMongo.setDynamicUserRegistration(accountSettings.isDynamicUserRegistration());
+        accountSettingsMongo.setAutoLoginAfterResetPassword(accountSettings.isAutoLoginAfterResetPassword());
+        accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
         return accountSettingsMongo;
     }
 

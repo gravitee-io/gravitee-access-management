@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
@@ -327,8 +328,10 @@ public class UserServiceImpl implements UserService {
         return groupService.findByMember(user.getId())
                 .flatMap(groups -> {
                     Set<String> roles = new HashSet<>();
-                    // get groups roles
-                    if (!groups.isEmpty()) {
+                    if (groups != null && !groups.isEmpty()) {
+                        // set groups
+                        user.setGroups(groups.stream().map(Group::getName).collect(Collectors.toList()));
+                        // set groups roles
                         roles.addAll(groups
                                 .stream()
                                 .filter(group -> group.getRoles() != null && !group.getRoles().isEmpty())
@@ -342,11 +345,11 @@ public class UserServiceImpl implements UserService {
                     // fetch roles information and enhance user data
                     if (!roles.isEmpty()) {
                         return roleService.findByIdIn(new ArrayList<>(roles))
-                                // update role permission for role with scope
                                 .map(roles1 -> {
                                     user.setRolesPermissions(roles1);
                                     return user;
                                 });
+
                     }
                     return Single.just(user);
                 })

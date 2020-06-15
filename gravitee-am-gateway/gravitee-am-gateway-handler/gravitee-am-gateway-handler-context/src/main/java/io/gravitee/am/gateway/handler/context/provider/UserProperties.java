@@ -21,6 +21,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,6 +40,7 @@ public class UserProperties {
     private String lastName;
     private String email;
     private Set<String> roles;
+    private List<String> groups;
     private Map<String, Object> claims;
 
     public UserProperties() {
@@ -56,12 +58,12 @@ public class UserProperties {
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.email = user.getEmail();
-
+        // set groups
+        this.groups = user.getGroups();
         // set roles
         if (user.getRolesPermissions() != null) {
             roles = user.getRolesPermissions().stream().map(Role::getName).collect(Collectors.toSet());
         }
-
         // set claims
         claims = new HashMap<>(user.getAdditionalInformation());
         if (user.getLoggedAt() != null) {
@@ -131,6 +133,14 @@ public class UserProperties {
 
     public void setRoles(Set<String> roles) {
         this.roles = roles;
+    }
+
+    public List<String> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(List<String> groups) {
+        this.groups = groups;
     }
 
     public Map<String, Object> getClaims() {

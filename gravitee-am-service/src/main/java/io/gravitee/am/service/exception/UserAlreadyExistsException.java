@@ -23,7 +23,9 @@ import io.gravitee.common.http.HttpStatusCode;
  */
 public class UserAlreadyExistsException extends AbstractManagementException {
 
-    private final String username;
+    private String username;
+
+    public UserAlreadyExistsException() { }
 
     public UserAlreadyExistsException(String username) {
         this.username = username;
@@ -36,6 +38,10 @@ public class UserAlreadyExistsException extends AbstractManagementException {
 
     @Override
     public String getMessage() {
+        if (username == null) {
+            return "A user already exists";
+        }
+
         return "A user [" + username + "] already exists.";
     }
 }

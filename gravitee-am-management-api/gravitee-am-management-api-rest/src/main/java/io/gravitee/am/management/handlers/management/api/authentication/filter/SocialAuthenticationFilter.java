@@ -15,14 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
-import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.http.JettyHttpServerRequest;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
-import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +91,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
             throw new ProviderNotFoundException("Social Provider " + providerId + " not found");
         }
 
-        AuthenticationContext authenticationContext = new ManagementAuthenticationContext(new JettyHttpServerRequest(request));
+        SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new JettyHttpServerRequest(request));
         authenticationContext.set(REDIRECT_URI, buildRedirectUri(request));
         EndUserAuthentication provAuthentication = new EndUserAuthentication("__social__", "__social__", authenticationContext);
 
