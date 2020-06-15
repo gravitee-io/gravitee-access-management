@@ -1,5 +1,28 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/233?closed=1[AM - 3.0.3 (2020-06-15)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge release 2.10.14 https://github.com/gravitee-io/issues/issues/3893[#3893]
+- Merge release 2.10.15 https://github.com/gravitee-io/issues/issues/3939[#3939]
+
+*_Management_*
+
+- Application account settings are not saved https://github.com/gravitee-io/issues/issues/3873[#3873]
+- [migration v3] missing client account settings  https://github.com/gravitee-io/issues/issues/3871[#3871]
+
+*_Management-ui_*
+
+- Brute force options do not active SAVE button https://github.com/gravitee-io/issues/issues/3872[#3872]
+
+*_Oidc_*
+
+- Unable to save an application when created through DCR https://github.com/gravitee-io/issues/issues/3932[#3932]
+
+
 == https://github.com/gravitee-io/issues/milestone/231?closed=1[AM - 3.0.2 (2020-05-26)]
 
 === Bug fixes
