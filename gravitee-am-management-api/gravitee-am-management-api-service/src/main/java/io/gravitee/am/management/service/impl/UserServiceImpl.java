@@ -194,17 +194,19 @@ public class UserServiceImpl implements UserService {
                                                                             user.setRegistrationUserUri(getUserRegistrationUri(domain1.getPath(), "/confirmRegistration"));
                                                                             user.setRegistrationAccessToken(getUserRegistrationToken(user));
                                                                         }
-                                                                        return userService.create(user);
+                                                                        return userService.create(user)
+                                                                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                                                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
                                                                     })
-                                                                    .doOnSuccess(user -> {
-                                                                        auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user));
-                                                                        // in pre registration mode an email will be sent to the user to complete his account
+                                                                    .flatMap(user -> {
+                                                                        // end pre-registration user if required
                                                                         AccountSettings accountSettings = getAccountSettings(domain1, client);
                                                                         if (newUser.isPreRegistration() && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
-                                                                            new Thread(() -> completeUserRegistration(user)).start();
+                                                                            return sendRegistrationConfirmation(user.getId(), principal).toSingleDefault(user);
+                                                                        } else {
+                                                                            return Single.just(user);
                                                                         }
-                                                                    })
-                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
+                                                                    });
                                                         });
                                             });
                                 }
