@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
@@ -205,7 +206,27 @@ public class User {
     }
 
     public String getDisplayName() {
-        return displayName;
+        if (displayName != null) {
+            return displayName;
+        }
+
+        // fall back to combination of first name and last name
+        if (getFirstName() != null) {
+            return getFirstName() + ((getLastName() != null) ? " " + getLastName() : "");
+        }
+
+        // fall back to standard claims
+        if (getAdditionalInformation() != null) {
+            if (getAdditionalInformation().get(StandardClaims.NAME) != null) {
+                return (String) getAdditionalInformation().get(StandardClaims.NAME);
+            }
+            if (getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
+                return getAdditionalInformation().get(StandardClaims.GIVEN_NAME) + ((getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) ? " " + getAdditionalInformation().get(StandardClaims.FAMILY_NAME) : "");
+            }
+        }
+
+        // default display the username
+        return username;
     }
 
     public void setDisplayName(String displayName) {
@@ -213,6 +234,12 @@ public class User {
     }
 
     public String getFirstName() {
+        if (firstName == null) {
+            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
+                // fall back to OIDC standard claims
+                firstName = (String) getAdditionalInformation().get(StandardClaims.GIVEN_NAME);
+            }
+        }
         return firstName;
     }
 
@@ -221,6 +248,12 @@ public class User {
     }
 
     public String getLastName() {
+        if (lastName == null) {
+            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) {
+                // fall back to OIDC standard claims
+                lastName = (String) getAdditionalInformation().get(StandardClaims.FAMILY_NAME);
+            }
+        }
         return lastName;
     }
 
