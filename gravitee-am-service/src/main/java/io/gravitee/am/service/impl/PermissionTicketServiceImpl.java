@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,7 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
     @Override
     public Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String domain, String client, String userId) {
         //Get list of requested resources (same Id may appear twice with difference scopes)
-        List<String> requestedResourcesIds = requestedPermission.stream().map(PermissionRequest::getResourceId).collect(Collectors.toList());
+        List<String> requestedResourcesIds = requestedPermission.stream().map(PermissionRequest::getResourceId).distinct().collect(Collectors.toList());
         //Compare with current registered resource set and return permission ticket if everything's correct.
         return resourceService.findByDomainAndClientAndUserAndResources(domain, client, userId, requestedResourcesIds)
                 .flatMap(fetchedResourceSet -> this.validatePermissionRequest(requestedPermission, fetchedResourceSet, requestedResourcesIds))
@@ -107,7 +108,28 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
             }
         }
 
+        //If there is some duplicated resource ids request, merge them.
+        if(resourceSetMap.entrySet().size() < requestedPermissions.size()) {
+            requestedPermissions = mergeSameResourceRequest(requestedPermissions);
+        }
+
         //Everything is matching.
         return Single.just(requestedPermissions);
+    }
+
+    /**
+     * Merge duplicated requested resource ids.
+     * @param requestedPermissions List<PermissionRequest>
+     * @return List<PermissionRequest>
+     */
+    private List<PermissionRequest> mergeSameResourceRequest(List<PermissionRequest> requestedPermissions) {
+
+        Map<String, PermissionRequest> mergeRequest =  requestedPermissions.stream()
+                .collect(Collectors.toMap(PermissionRequest::getResourceId, permissionRequest -> permissionRequest, (pr1, pr2) -> {
+                    pr1.getResourceScopes().addAll(pr2.getResourceScopes());
+                    return pr1;
+                }));
+
+        return new ArrayList<>(mergeRequest.values());
     }
 }
