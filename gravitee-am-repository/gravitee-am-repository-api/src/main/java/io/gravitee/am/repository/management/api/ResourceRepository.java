@@ -33,6 +33,6 @@ public interface ResourceRepository extends CrudRepository<Resource, String> {
     Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size);
     Single<List<Resource>> findByResources(List<String> resources);
     Single<List<Resource>> findByDomainAndClientAndUser(String domain, String client, String userId);
-    Single<List<Resource>> findByDomainAndClientAndUserAndResources(String domain, String client, String userId, List<String> resource);
+    Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resource);
     Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resource);
 }

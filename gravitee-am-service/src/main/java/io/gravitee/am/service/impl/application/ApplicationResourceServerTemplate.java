@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.service.impl.application;
 
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationType;
 
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A server that hosts resources on a resource owner's behalf and is capable of accepting and responding to requests for protected resources.
@@ -56,6 +59,14 @@ public class ApplicationResourceServerTemplate extends ApplicationWebTemplate {
             oAuthSettings.setScopes(Collections.singletonList(Scope.UMA.getKey()));
         } else if (!oAuthSettings.getScopes().contains(Scope.UMA.getKey())) {
             oAuthSettings.getScopes().add(Scope.UMA.getKey());
+        }
+        // UMA resource server should at least has the client_credentials grant to request permissions
+        if(oAuthSettings.getGrantTypes() == null) {
+            oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
+        } else if (!oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)) {
+            List<String> grants = new LinkedList<>(oAuthSettings.getGrantTypes());
+            grants.add(GrantType.CLIENT_CREDENTIALS);
+            oAuthSettings.setGrantTypes(grants);
         }
     }
 }

@@ -92,9 +92,9 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public Single<List<Resource>> findByDomainAndClientAndUserAndResources(String domain, String client, String userId, List<String> resourceIds) {
-        LOGGER.debug("Getting resource {} for resource owner {} and client {} and resources {}", resourceIds, userId, client, resourceIds);
-        return repository.findByDomainAndClientAndUserAndResources(domain, client, userId, resourceIds);
+    public Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds) {
+        LOGGER.debug("Getting resource {} for  client {} and resources {}", resourceIds, client, resourceIds);
+        return repository.findByDomainAndClientAndResources(domain, client, resourceIds);
     }
 
     @Override

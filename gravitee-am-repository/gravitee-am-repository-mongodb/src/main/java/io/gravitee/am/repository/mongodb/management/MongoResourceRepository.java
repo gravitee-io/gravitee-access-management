@@ -106,8 +106,8 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
     }
 
     @Override
-    public Single<List<Resource>> findByDomainAndClientAndUserAndResources(String domain, String client, String userId, List<String> resources) {
-        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client), eq(FIELD_USER, userId), in(FIELD_ID, resources)))).map(this::convert).toList();
+    public Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resources) {
+        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client), in(FIELD_ID, resources)))).map(this::convert).toList();
     }
 
     @Override

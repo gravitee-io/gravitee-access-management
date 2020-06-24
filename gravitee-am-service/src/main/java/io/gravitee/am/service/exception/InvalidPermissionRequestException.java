@@ -47,6 +47,10 @@ public class InvalidPermissionRequestException extends OAuth2Exception {
         return errorCode;
     }
 
+    public static final InvalidPermissionRequestException INVALID_RESOURCE_OWNER = new InvalidPermissionRequestException(
+            "invalid_resource_id", "Requested resources permissions must all belong to a same resource owner"
+    );
+
     public static final InvalidPermissionRequestException INVALID_RESOURCE_ID = new InvalidPermissionRequestException(
             "invalid_resource_id", "At least one of the provided resource identifiers was not found"
     );

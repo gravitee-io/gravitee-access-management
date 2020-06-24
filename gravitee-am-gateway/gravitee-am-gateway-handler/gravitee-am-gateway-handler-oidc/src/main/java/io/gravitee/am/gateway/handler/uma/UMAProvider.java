@@ -101,14 +101,23 @@ public class UMAProvider extends AbstractService<ProtocolProvider> implements Pr
                 .get(WELL_KNOWN_PATH)
                 .handler(umaProviderConfigurationEndpoint);
 
-        // User-Managed Access (UMA) 2.0 Auth handler
-        OAuth2AuthHandler umaProtectionApiScopedAuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, Scope.UMA.getKey());
-        umaProtectionApiScopedAuthHandler.extractToken(true);
-        umaProtectionApiScopedAuthHandler.extractClient(true);
-        umaProtectionApiScopedAuthHandler.forceEndUserToken(true);//It must be a resource owner
+        // User-Managed Access (UMA) 2.0 resources Auth handler
+        OAuth2AuthHandler umaProtectionApiResourcesAuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, Scope.UMA.getKey());
+        umaProtectionApiResourcesAuthHandler.extractToken(true);
+        umaProtectionApiResourcesAuthHandler.extractClient(true);
+        umaProtectionApiResourcesAuthHandler.forceEndUserToken(true);//It must be a resource owner
 
-        // UMA global Protection API Access Handler
-        UMAProtectionApiAccessHandler umaProtectionApiAccessHandler = new UMAProtectionApiAccessHandler(domain, umaProtectionApiScopedAuthHandler);
+        // User-Managed Access (UMA) 2.0 permissions Auth handler
+        OAuth2AuthHandler umaProtectionApiPermissionsAuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, Scope.UMA.getKey());
+        umaProtectionApiPermissionsAuthHandler.extractToken(true);
+        umaProtectionApiPermissionsAuthHandler.extractClient(true);
+        umaProtectionApiPermissionsAuthHandler.forceClientToken(true);//It must be a client (client_credentials)
+
+        // UMA resources Protection API Access Handler
+        UMAProtectionApiAccessHandler umaProtectionApiResourcesAccessHandler = new UMAProtectionApiAccessHandler(domain, umaProtectionApiResourcesAuthHandler);
+
+        // UMA permissions Protection API Access Handler
+        UMAProtectionApiAccessHandler umaProtectionApiPermissionsAccessHandler = new UMAProtectionApiAccessHandler(domain, umaProtectionApiPermissionsAuthHandler);
 
         // Resource Registration endpoint
         ResourceRegistrationEndpoint resourceRegistrationEndpoint = new ResourceRegistrationEndpoint(domain, resourceService);
@@ -116,25 +125,25 @@ public class UMAProvider extends AbstractService<ProtocolProvider> implements Pr
 
         umaRouter
                 .get(RESOURCE_REGISTRATION_PATH)
-                .handler(umaProtectionApiAccessHandler)
+                .handler(umaProtectionApiResourcesAccessHandler)
                 .handler(resourceRegistrationEndpoint);
         umaRouter
                 .post(RESOURCE_REGISTRATION_PATH)
                 .consumes(MediaType.APPLICATION_JSON)
-                .handler(umaProtectionApiAccessHandler)
+                .handler(umaProtectionApiResourcesAccessHandler)
                 .handler(resourceRegistrationEndpoint::create);
         umaRouter
                 .get(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID)
-                .handler(umaProtectionApiAccessHandler)
+                .handler(umaProtectionApiResourcesAccessHandler)
                 .handler(resourceRegistrationEndpoint::get);
         umaRouter
                 .put(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID)
                 .consumes(MediaType.APPLICATION_JSON)
-                .handler(umaProtectionApiAccessHandler)
+                .handler(umaProtectionApiResourcesAccessHandler)
                 .handler(resourceRegistrationEndpoint::update);
         umaRouter
                 .delete(RESOURCE_REGISTRATION_PATH+"/:"+RESOURCE_ID)
-                .handler(umaProtectionApiAccessHandler)
+                .handler(umaProtectionApiResourcesAccessHandler)
                 .handler(resourceRegistrationEndpoint::delete);
 
         // Permission endpoint Access Handler
@@ -142,7 +151,7 @@ public class UMAProvider extends AbstractService<ProtocolProvider> implements Pr
         umaRouter
                 .post(PERMISSION_PATH)
                 .consumes(MediaType.APPLICATION_JSON)
-                .handler(umaProtectionApiAccessHandler)
+                .handler(umaProtectionApiPermissionsAccessHandler)
                 .handler(permissionEndpoint);
 
         umaRouter

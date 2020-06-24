@@ -182,13 +182,13 @@ public class MongoResourceRepositoryTest extends AbstractManagementRepositoryTes
         Resource rsCreated5 = repository.create(resource5).blockingGet();
 
         // fetch applications
-        TestObserver<List<Resource>> testObserver = repository.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID, Arrays.asList(
+        TestObserver<List<Resource>> testObserver = repository.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList(
                 rsCreated1.getId(),rsCreated2.getId(),rsCreated3.getId(),rsCreated4.getId(),rsCreated5.getId(),"unknown"
         )).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(resources -> resources.size() == 2);
+        testObserver.assertValue(resources -> resources.size() == 3);
     }
 }

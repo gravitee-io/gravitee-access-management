@@ -69,7 +69,6 @@ public class PermissionEndpointTest {
     private PermissionEndpoint endpoint = new PermissionEndpoint(domain, permissionTicketService);
 
     private static final String DOMAIN_ID = "123";
-    private static final String USER_ID = "456";
     private static final String CLIENT_ID = "api";
 
     ArgumentCaptor<Throwable> errCaptor = ArgumentCaptor.forClass(Throwable.class);
@@ -82,7 +81,6 @@ public class PermissionEndpointTest {
         when(context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(domain.getId()).thenReturn(DOMAIN_ID);
         when(client.getId()).thenReturn(CLIENT_ID);
-        when(jwt.getSub()).thenReturn(USER_ID);
     }
 
     @Test
@@ -118,7 +116,7 @@ public class PermissionEndpointTest {
         when(context.response()).thenReturn(response);
         when(response.putHeader(anyString(),anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);
-        when(permissionTicketService.create(anyList(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.just(success));
+        when(permissionTicketService.create(anyList(), eq(DOMAIN_ID), eq(CLIENT_ID))).thenReturn(Single.just(success));
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(context.response(), times(1)).setStatusCode(intCaptor.capture());
@@ -136,7 +134,7 @@ public class PermissionEndpointTest {
         when(context.response()).thenReturn(response);
         when(response.putHeader(anyString(),anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);
-        when(permissionTicketService.create(anyList(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.just(success));
+        when(permissionTicketService.create(anyList(), eq(DOMAIN_ID), eq(CLIENT_ID))).thenReturn(Single.just(success));
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(context.response(), times(1)).setStatusCode(intCaptor.capture());

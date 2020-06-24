@@ -186,11 +186,11 @@ public class ResourceServiceTest {
     }
 
     @Test
-    public void findByDomainAndClientAndUserAndResources() {
-        when(repository.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID, Collections.emptyList())).thenReturn(Single.just(Collections.emptyList()));
-        TestObserver testObserver = service.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID, Collections.emptyList()).test();
+    public void findByDomainAndClientAndResources() {
+        when(repository.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList())).thenReturn(Single.just(Collections.emptyList()));
+        TestObserver testObserver = service.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList()).test();
         testObserver.assertComplete().assertNoErrors();
-        verify(repository, times(1)).findByDomainAndClientAndUserAndResources(anyString(), anyString(), anyString(), anyList());
+        verify(repository, times(1)).findByDomainAndClientAndResources(anyString(), anyString(), anyList());
     }
 
     @Test
