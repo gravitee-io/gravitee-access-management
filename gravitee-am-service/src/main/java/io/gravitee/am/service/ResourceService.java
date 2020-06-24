@@ -34,7 +34,7 @@ public interface ResourceService {
     Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size);
     Single<List<Resource>> findByResources(List<String> resourceIds);
     Single<List<Resource>> listByDomainAndClientAndUser(String domain, String client, String userId);
-    Single<List<Resource>> findByDomainAndClientAndUserAndResources(String domain, String client, String userId, List<String> resourceIds);
+    Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds);
     Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resourceId);
     Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId);
     Single<Map<String, Map<String, Object>>> getMetadata(List<Resource> resources);

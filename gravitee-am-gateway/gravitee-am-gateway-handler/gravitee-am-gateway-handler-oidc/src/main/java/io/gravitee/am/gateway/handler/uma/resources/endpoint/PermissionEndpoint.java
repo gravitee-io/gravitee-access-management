@@ -69,7 +69,7 @@ public class PermissionEndpoint implements Handler<RoutingContext> {
         this.extractRequest(context)
                 .flatMap(this::bodyValidation)
                 .map(this::toPermissionRequest)
-                .flatMap(permissionRequests -> permissionTicketService.create(permissionRequests, domain.getId(), client.getId(), accessToken.getSub()))
+                .flatMap(permissionRequests -> permissionTicketService.create(permissionRequests, domain.getId(), client.getId()))
                 .map(PermissionTicketResponse::from)
                 .subscribe(
                         permission -> context.response()

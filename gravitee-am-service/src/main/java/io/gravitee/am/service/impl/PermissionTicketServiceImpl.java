@@ -54,21 +54,23 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
     private ResourceService resourceService;
 
     @Override
-    public Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String domain, String client, String userId) {
+    public Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String domain, String client) {
         //Get list of requested resources (same Id may appear twice with difference scopes)
         List<String> requestedResourcesIds = requestedPermission.stream().map(PermissionRequest::getResourceId).distinct().collect(Collectors.toList());
         //Compare with current registered resource set and return permission ticket if everything's correct.
-        return resourceService.findByDomainAndClientAndUserAndResources(domain, client, userId, requestedResourcesIds)
-                .flatMap(fetchedResourceSet -> this.validatePermissionRequest(requestedPermission, fetchedResourceSet, requestedResourcesIds))
-                .map(permissionRequests -> {
-                    PermissionTicket toCreate = new PermissionTicket();
-                    return toCreate.setPermissionRequest(permissionRequests)
-                            .setDomain(domain)
-                            .setClientId(client)
-                            .setUserId(userId)
-                            .setCreatedAt(new Date())
-                            .setExpireAt(new Date(System.currentTimeMillis()+umaPermissionValidity));
-                    }
+        return resourceService.findByDomainAndClientAndResources(domain, client, requestedResourcesIds)
+                .flatMap(fetchedResourceSet ->
+                    this.validatePermissionRequest(requestedPermission, fetchedResourceSet, requestedResourcesIds)
+                            .map(permissionRequests -> {
+                                String userId = fetchedResourceSet.get(0).getUserId();
+                                PermissionTicket toCreate = new PermissionTicket();
+                                return toCreate.setPermissionRequest(permissionRequests)
+                                        .setDomain(domain)
+                                        .setClientId(client)
+                                        .setUserId(userId)
+                                        .setCreatedAt(new Date())
+                                        .setExpireAt(new Date(System.currentTimeMillis()+umaPermissionValidity));
+                            })
                 ).flatMap(repository::create);
     }
 
@@ -86,12 +88,23 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
 
     /**
      * Validate if all requested resources are known and contains the requested scopes.
+     * Resources must belong to the same resource owner.
      * @param requestedPermissions Requested resources and associated scopes.
      * @param registeredResources Current registered resource sets.
      * @param requestedResourcesIds List of current requested resource set ids.
      * @return Permission requests input parameter if ok, else an error.
      */
     private Single<List<PermissionRequest>> validatePermissionRequest(List<PermissionRequest> requestedPermissions, List<Resource> registeredResources, List<String> requestedResourcesIds) {
+        //Check fetched resources is not empty
+        if(registeredResources==null || registeredResources.isEmpty()) {
+            return Single.error(InvalidPermissionRequestException.INVALID_RESOURCE_ID);
+        }
+
+        //Resources must belong to the same resource owner
+        if (registeredResources.size() > 1 && registeredResources.stream().map(Resource::getUserId).distinct().count() > 1) {
+            return Single.error(InvalidPermissionRequestException.INVALID_RESOURCE_OWNER);
+        }
+
         //Build map with resource ID as key.
         Map<String, Resource> resourceSetMap = registeredResources.stream().collect(Collectors.toMap(Resource::getId, resource -> resource));
 

@@ -28,7 +28,7 @@ import java.util.List;
  */
 public interface PermissionTicketService {
 
-    Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String domain, String client, String userId);
+    Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String domain, String client);
     Maybe<PermissionTicket> findById(String id);
     Single<PermissionTicket> remove(String id);
 }

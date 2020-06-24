@@ -65,8 +65,8 @@ public class PermissionTicketServiceTest {
         //Prepare request & resource
         List<PermissionRequest> request = Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")));
 
-        when(resourceService.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID,Arrays.asList("one"))).thenReturn(Single.just(Collections.emptyList()));
-        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID, USER_ID).test();
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one"))).thenReturn(Single.just(Collections.emptyList()));
+        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
         testObserver.assertError(err -> ((InvalidPermissionRequestException)err).getOAuth2ErrorCode().equals("invalid_resource_id"));
@@ -79,8 +79,8 @@ public class PermissionTicketServiceTest {
         List<PermissionRequest> request = Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")));
         List<Resource> found = Arrays.asList(new Resource().setId("one").setResourceScopes(Arrays.asList("not","same")));
 
-        when(resourceService.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID,Arrays.asList("one"))).thenReturn(Single.just(found));
-        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID, USER_ID).test();
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one"))).thenReturn(Single.just(found));
+        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
         testObserver.assertError(err -> ((InvalidPermissionRequestException)err).getOAuth2ErrorCode().equals("invalid_scope"));
@@ -93,10 +93,10 @@ public class PermissionTicketServiceTest {
         List<PermissionRequest> request = Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")));
         List<Resource> found = Arrays.asList(new Resource().setId("one").setResourceScopes(Arrays.asList("a","b")));
 
-        when(resourceService.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID,Arrays.asList("one"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one"))).thenReturn(Single.just(found));
         when(repository.create(any())).thenReturn(Single.just(new PermissionTicket().setId("success")));
 
-        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID, USER_ID).test();
+        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNoErrors().assertComplete().assertValue(permissionTicket -> "success".equals(permissionTicket.getId()));
         verify(repository, times(1)).create(any());
@@ -113,8 +113,29 @@ public class PermissionTicketServiceTest {
         // Prepare Resource
         List<Resource> found = Arrays.asList(new Resource().setId("one").setResourceScopes(Arrays.asList("not","same")));
 
-        when(resourceService.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID,Arrays.asList("one","two"))).thenReturn(Single.just(found));
-        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID, USER_ID).test();
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(err -> ((InvalidPermissionRequestException)err).getOAuth2ErrorCode().equals("invalid_resource_id"));
+        verify(repository, times(0)).create(any());
+    }
+
+    @Test
+    public void create_errorMultipleResource_moreThanOneResourceOwner() {
+        //Prepare request
+        List<PermissionRequest> request = Arrays.asList(
+                new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")),
+                new PermissionRequest().setResourceId("two").setResourceScopes(Arrays.asList("c","d"))
+        );
+
+        // Prepare Resource
+        List<Resource> found = request.stream()
+                .map(s -> new Resource().setId(s.getResourceId()).setResourceScopes(s.getResourceScopes()).setUserId("user_"+s.getResourceId()))
+                .collect(Collectors.toList());
+
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
         testObserver.assertError(err -> ((InvalidPermissionRequestException)err).getOAuth2ErrorCode().equals("invalid_resource_id"));
@@ -135,8 +156,8 @@ public class PermissionTicketServiceTest {
                 new Resource().setId("two").setResourceScopes(Arrays.asList("not","same"))
         );
 
-        when(resourceService.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID,Arrays.asList("one","two"))).thenReturn(Single.just(found));
-        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID, USER_ID).test();
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID,Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
         testObserver.assertError(err -> ((InvalidPermissionRequestException)err).getOAuth2ErrorCode().equals("invalid_scope"));
@@ -156,10 +177,10 @@ public class PermissionTicketServiceTest {
                 .map(s -> new Resource().setId(s.getResourceId()).setResourceScopes(s.getResourceScopes()))
                 .collect(Collectors.toList());
 
-        when(resourceService.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID,Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(Single.just(found));
         when(repository.create(any())).thenReturn(Single.just(new PermissionTicket().setId("success")));
 
-        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID, USER_ID).test();
+        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNoErrors().assertComplete().assertValue(permissionTicket -> "success".equals(permissionTicket.getId()));
         verify(repository, times(1)).create(any());
@@ -182,10 +203,10 @@ public class PermissionTicketServiceTest {
 
         ArgumentCaptor<PermissionTicket> permissionTicketArgumentCaptor = ArgumentCaptor.forClass(PermissionTicket.class);
 
-        when(resourceService.findByDomainAndClientAndUserAndResources(DOMAIN_ID, CLIENT_ID, USER_ID,Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(Single.just(found));
         when(repository.create(permissionTicketArgumentCaptor.capture())).thenReturn(Single.just(new PermissionTicket().setId("success")));
 
-        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID, USER_ID).test();
+        TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNoErrors().assertComplete().assertValue(permissionTicket -> "success".equals(permissionTicket.getId()));
         verify(repository, times(1)).create(any());
