@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,6 +45,7 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(ErrorEndpoint.class);
     private static final String ERROR_PARAM = "error";
     private static final String ERROR_DESCRIPTION_PARAM = "error_description";
+    private static final String PARAM_CONTEXT_KEY = "param";
     private String domain;
     private ThymeleafTemplateEngine engine;
     private ClientSyncService clientSyncService;
@@ -91,6 +94,13 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
         }
         routingContext.put(ERROR_PARAM, error);
         routingContext.put(ERROR_DESCRIPTION_PARAM, errorDescription);
+
+        // put parameters in context (backward compatibility)
+        Map<String, String> params = new HashMap<>();
+        params.put(ERROR_PARAM, error);
+        params.put(ERROR_DESCRIPTION_PARAM, errorDescription);
+        routingContext.put(PARAM_CONTEXT_KEY, params);
+
         engine.render(routingContext.data(), getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);

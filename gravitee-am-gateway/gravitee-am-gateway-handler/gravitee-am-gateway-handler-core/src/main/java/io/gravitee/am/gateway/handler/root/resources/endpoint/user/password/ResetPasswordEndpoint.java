@@ -27,6 +27,9 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -35,9 +38,11 @@ public class ResetPasswordEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(ResetPasswordEndpoint.class);
     private static final String ERROR_PARAM = "error";
+    private static final String ERROR_DESCRIPTION_PARAM = "error_description";
     private static final String SUCCESS_PARAM = "success";
     private static final String TOKEN_PARAM = "token";
-    public static final String WARNING_PARAM = "warning";
+    private static final String WARNING_PARAM = "warning";
+    private static final String PARAM_CONTEXT_KEY = "param";
     private ThymeleafTemplateEngine engine;
 
     public ResetPasswordEndpoint(ThymeleafTemplateEngine engine) {
@@ -48,14 +53,22 @@ public class ResetPasswordEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         final HttpServerRequest request = routingContext.request();
         final String error = request.getParam(ERROR_PARAM);
+        final String errorDescription = request.getParam(ERROR_DESCRIPTION_PARAM);
         final String success = request.getParam(SUCCESS_PARAM);
         final String warning = request.getParam(WARNING_PARAM);
         final String token = request.getParam(TOKEN_PARAM);
         // add query params to context
         routingContext.put(ERROR_PARAM, error);
+        routingContext.put(ERROR_DESCRIPTION_PARAM, errorDescription);
         routingContext.put(SUCCESS_PARAM, success);
         routingContext.put(WARNING_PARAM, warning);
         routingContext.put(TOKEN_PARAM, token);
+
+        // put parameters in context (backward compatibility)
+        Map<String, String> params = new HashMap<>();
+        params.computeIfAbsent(ERROR_PARAM, val -> error);
+        params.computeIfAbsent(ERROR_DESCRIPTION_PARAM, val -> errorDescription);
+        routingContext.put(PARAM_CONTEXT_KEY, params);
 
         // retrieve user who want to reset password
         User user = routingContext.get("user");
