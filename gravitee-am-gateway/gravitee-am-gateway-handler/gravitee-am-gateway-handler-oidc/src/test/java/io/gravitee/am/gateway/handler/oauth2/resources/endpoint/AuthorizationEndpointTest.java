@@ -125,7 +125,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         router.route(HttpMethod.GET, "/oauth/authorize")
                 .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
-                .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new AuthorizationRequestParseParametersHandler(domain, openIDDiscoveryService))
                 .handler(new AuthorizationRequestValidateParametersHandler(domain))
                 .handler(new AuthorizationRequestResolveHandler())
                 .handler(authorizationEndpointHandler);
@@ -898,6 +898,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         client.setClientId("client-id");
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -906,7 +907,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
+                    assertTrue(location.contains("error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
                     },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -918,6 +919,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         client.setClientId("client-id");
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.GET,
@@ -926,7 +928,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
+                    assertTrue(location.contains("error=invalid_request&error_description=Missing+parameter%253A+nonce+is+required+for+Implicit+and+Hybrid+Flow"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

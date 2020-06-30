@@ -18,21 +18,32 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseModeException;
 import io.gravitee.am.gateway.handler.oauth2.service.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oidc.exception.ClaimsRequestSyntaxException;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequestResolver;
 import io.gravitee.am.model.Domain;
+import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
+import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
+import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
+
 /**
- * The authorization server validates the request to ensure that all required parameters are present and valid.
+ * The authorization server validates the request to ensure that all parameters are valid.
  * If the request is valid, the authorization server authenticates the resource owner and obtains
  * an authorization decision (by asking the resource owner or by establishing approval via other means).
  *
@@ -41,13 +52,16 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationRequestParseParametersHandler extends AbstractAuthorizationRequestParametersHandler
-        implements Handler<RoutingContext> {
+public class AuthorizationRequestParseParametersHandler implements Handler<RoutingContext> {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseParametersHandler.class);
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
+    private final String loginPageUrl;
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public AuthorizationRequestParseParametersHandler(Domain domain) {
-        super(domain);
+    public AuthorizationRequestParseParametersHandler(Domain domain, OpenIDDiscoveryService openIDDiscoveryService) {
+        this.loginPageUrl = '/' + domain.getPath() + "/login";
+        this.openIDDiscoveryService = openIDDiscoveryService;
     }
 
     @Override
@@ -64,10 +78,16 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         // proceed claims parameter
         parseClaimsParameter(context);
 
+        // proceed response mode parameter
+        parseResponseModeParameter(context);
+
+        // proceed nonce parameter
+        parseNonceParameter(context);
+
         context.next();
     }
 
-    void parsePromptParameter(RoutingContext context) {
+    private void parsePromptParameter(RoutingContext context) {
         String prompt = context.request().getParam(Parameters.PROMPT);
 
         if (prompt != null) {
@@ -123,6 +143,43 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         }
     }
 
+    protected void parseMaxAgeParameter(RoutingContext context) {
+        // if user is already authenticated and if the last login date is greater than the max age parameter,
+        // the OP MUST attempt to actively re-authenticate the End-User.
+        User authenticatedUser = context.user();
+        if (authenticatedUser == null || !(authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User)) {
+            // user not authenticated, continue
+            return;
+        }
+
+        String maxAge = context.request().getParam(Parameters.MAX_AGE);
+        if (maxAge == null || !maxAge.matches("-?\\d+")) {
+            // none or invalid max age, continue
+            return;
+        }
+
+        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
+        Date loggedAt = endUser.getLoggedAt();
+        if (loggedAt == null) {
+            // user has no last login date, continue
+            return;
+        }
+
+        // check the elapsed user session duration
+        long elapsedLoginTime = (System.currentTimeMillis() - loggedAt.getTime()) / 1000L;
+        Long maxAgeValue = Long.valueOf(maxAge);
+        if (maxAgeValue < elapsedLoginTime) {
+            // check if the user doesn't come from the login page
+            if (!returnFromLoginPage(context)) {
+                // should we logout the user or just force it to go to the login page ?
+                context.clearUser();
+
+                // check prompt parameter in case the user set 'none' option
+                parsePromptParameter(context);
+            }
+        }
+    }
+
     private void parseClaimsParameter(RoutingContext context) {
         String claims = context.request().getParam(Parameters.CLAIMS);
         if (claims != null) {
@@ -133,6 +190,39 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
             } catch (ClaimsRequestSyntaxException e) {
                 throw new InvalidRequestException("Invalid parameter: claims");
             }
+        }
+    }
+
+    private void parseResponseModeParameter(RoutingContext context) {
+        String responseMode = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE);
+
+        if (responseMode == null) {
+            return;
+        }
+
+        // get supported response modes
+        List<String> responseModesSupported = openIDDiscoveryService.getConfiguration("/").getResponseModesSupported();
+        if (!responseModesSupported.contains(responseMode)) {
+            throw new UnsupportedResponseModeException("Unsupported response mode: " + responseMode);
+        }
+    }
+
+    private void parseNonceParameter(RoutingContext context) {
+        String nonce = context.request().getParam(io.gravitee.am.common.oidc.Parameters.NONCE);
+        String responseType = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE);
+        // nonce parameter is required for the Hybrid flow
+        if (nonce == null && requireNonce(responseType)) {
+            throw new InvalidRequestException("Missing parameter: nonce is required for Implicit and Hybrid Flow");
+        }
+    }
+
+    private boolean returnFromLoginPage(RoutingContext context) {
+        String referer = context.request().headers().get(HttpHeaders.REFERER);
+        try {
+            return referer != null && UriBuilder.fromURIString(referer).build().getPath().contains(loginPageUrl);
+        } catch (URISyntaxException e) {
+            logger.debug("Unable to calculate referer url : {}", referer, e);
+            return false;
         }
     }
 }

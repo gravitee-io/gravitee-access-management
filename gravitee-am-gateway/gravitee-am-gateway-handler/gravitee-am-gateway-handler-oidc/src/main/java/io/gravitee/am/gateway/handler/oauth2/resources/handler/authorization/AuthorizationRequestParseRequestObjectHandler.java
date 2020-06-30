@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oidc.resources.handler.authorization;
+package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import com.nimbusds.jwt.JWT;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The request Authorization Request parameter enables OpenID Connect requests to be passed in a single,
@@ -49,19 +51,19 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
 
     private static final String HTTPS_SCHEME  = "https";
 
-    // As per https://openid.net/specs/openid-connect-core-1_0.html#AuthRequests
-    private static final List<String> OVERRIDABLE_PARAMETERS = Arrays.asList(
-            Parameters.CLAIMS,
-            Parameters.MAX_AGE,
-            io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI,
-            io.gravitee.am.common.oauth2.Parameters.SCOPE,
-            io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE,
-            Parameters.DISPLAY,
-            Parameters.PROMPT,
-            Parameters.UI_LOCALES,
-            Parameters.ID_TOKEN_HINT,
-            Parameters.LOGIN_HINT,
-            Parameters.ACR_VALUES);
+    // When the request parameter is used, the OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax.
+    // However, parameters MAY also be passed using the OAuth 2.0 request syntax even when a Request Object is used;
+    // this would typically be done to enable a cached, pre-signed (and possibly pre-encrypted) Request Object value to be used containing the fixed request parameters,
+    // while parameters that can vary with each request, such as state and nonce, are passed as OAuth 2.0 parameters.
+    // See https://openid.net/specs/openid-connect-core-1_0.html#RequestObject
+    private static final List<String> OVERRIDABLE_PARAMETERS =
+            Stream.of(Parameters.values,
+                    Arrays.asList(
+                            io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI,
+                            io.gravitee.am.common.oauth2.Parameters.SCOPE,
+                            io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE,
+                            io.gravitee.am.common.oauth2.Parameters.STATE
+                            )).flatMap(p -> p.stream()).collect(Collectors.toList());
 
     private RequestObjectService requestObjectService;
 
