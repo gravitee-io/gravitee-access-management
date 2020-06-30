@@ -15,9 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseModeException;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.vertx.core.Handler;
@@ -27,19 +26,16 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import java.util.List;
 import java.util.Set;
 
-import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
-
 /**
  * The authorization server validates the request to ensure that all required parameters are present and valid.
- * If the request is valid, the authorization server authenticates the resource owner and obtains
- * an authorization decision (by asking the resource owner or by establishing approval via other means).
+ *
+ * response_type and client_id parameters MUST be included using the OAuth 2.0 request syntax, since they are REQUIRED by OAuth 2.0.
  *
  * OIDC Certification seems to make a difference between required and optional parameters.
  * Missing required parameters should result in the OpenID Provider displaying an error message in your user agent.
  * You must submit a screen shot of the error shown as part of your certification application.
  *
  * We don't how oauth2 clients use error messages, we must use our default error page to handle missing required parameters (i.e call this handler before client handler).
- *
  *
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.1">4.1.1. Authorization Request</a>
  *
@@ -62,14 +58,8 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
         // proceed response type parameter
         parseResponseTypeParameter(context);
 
-        // proceed response mode parameter
-        parseResponseModeParameter(context);
-
         // proceed client_id parameter
         parseClientIdParameter(context);
-
-        // proceed nonce parameter
-        parseNonceParameter(context);
 
         context.next();
     }
@@ -101,34 +91,11 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
         }
     }
 
-    private void parseResponseModeParameter(RoutingContext context) {
-        String responseMode = context.request().getParam(Parameters.RESPONSE_MODE);
-
-        if (responseMode == null) {
-            return;
-        }
-
-        // get supported response modes
-        List<String> responseModesSupported = openIDDiscoveryService.getConfiguration("/").getResponseModesSupported();
-        if (!responseModesSupported.contains(responseMode)) {
-            throw new UnsupportedResponseModeException("Unsupported response mode: " + responseMode);
-        }
-    }
-
     private void parseClientIdParameter(RoutingContext context) {
         String clientId = context.request().getParam(Parameters.CLIENT_ID);
 
         if (clientId == null) {
             throw new InvalidRequestException("Missing parameter: client_id");
-        }
-    }
-
-    private void parseNonceParameter(RoutingContext context) {
-        String nonce = context.request().getParam(io.gravitee.am.common.oidc.Parameters.NONCE);
-        String responseType = context.request().getParam(Parameters.RESPONSE_TYPE);
-        // nonce parameter is required for the Hybrid flow
-        if (nonce == null && requireNonce(responseType)) {
-            throw new InvalidRequestException("Missing parameter: nonce is required for Implicit and Hybrid Flow");
         }
     }
 }

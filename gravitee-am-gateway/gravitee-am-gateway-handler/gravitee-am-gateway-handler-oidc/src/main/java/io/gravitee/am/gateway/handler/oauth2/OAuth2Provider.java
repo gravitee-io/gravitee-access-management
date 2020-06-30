@@ -42,7 +42,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
-import io.gravitee.am.gateway.handler.oidc.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
@@ -182,7 +182,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService))
-                .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new AuthorizationRequestParseParametersHandler(domain, openIDDiscoveryService))
                 .handler(new AuthorizationRequestValidateParametersHandler(domain))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler())
