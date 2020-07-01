@@ -433,6 +433,9 @@ public class UserServiceTest {
         when(newUser.getClient()).thenReturn("client");
         when(newUser.isPreRegistration()).thenReturn(true);
 
+        User user = mock(User.class);
+        when(user.isPreRegistration()).thenReturn(true);
+
         UserProvider userProvider = mock(UserProvider.class);
         doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
 
@@ -449,6 +452,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
         when(commonUserService.create(any())).thenReturn(Single.just(new User()));
+        when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
         testObserver.assertComplete();

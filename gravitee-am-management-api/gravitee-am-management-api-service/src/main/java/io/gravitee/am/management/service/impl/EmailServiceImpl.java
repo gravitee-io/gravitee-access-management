@@ -105,10 +105,10 @@ public class EmailServiceImpl implements EmailService {
 
                 LOGGER.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
                 mailSender.send(mailMessage.getMimeMessage());
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(ADMIN_DOMAIN).client(ADMIN_CLIENT).email(email).user(user));
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(user.getReferenceId() == null ? ADMIN_DOMAIN : user.getReferenceId()).client(ADMIN_CLIENT).email(email).user(user));
             } catch (final Exception ex) {
                 LOGGER.error("Error while sending email", ex);
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(ADMIN_DOMAIN).client(ADMIN_CLIENT).email(email).user(user).throwable(ex));
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(user.getReferenceId() == null ? ADMIN_DOMAIN : user.getReferenceId()).client(ADMIN_CLIENT).email(email).user(user).throwable(ex));
                 throw new TechnicalManagementException("Error while sending email", ex);
             }
         }

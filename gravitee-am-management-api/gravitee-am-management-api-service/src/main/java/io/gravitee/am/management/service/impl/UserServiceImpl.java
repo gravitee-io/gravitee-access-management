@@ -211,17 +211,19 @@ public class UserServiceImpl implements UserService {
                                                                             user.setRegistrationUserUri(getUserRegistrationUri(domain1.getPath(), "/confirmRegistration"));
                                                                             user.setRegistrationAccessToken(getUserRegistrationToken(user));
                                                                         }
-                                                                        return userService.create(user);
+                                                                        return userService.create(user)
+                                                                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                                                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
                                                                     })
-                                                                    .doOnSuccess(user -> {
-                                                                        auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user));
-                                                                        // in pre registration mode an email will be sent to the user to complete his account
+                                                                    .flatMap(user -> {
+                                                                        // end pre-registration user if required
                                                                         AccountSettings accountSettings = getAccountSettings(domain1, client);
-                                                                        if (newUser.isPreRegistration() && accountSettings != null && !accountSettings.isDynamicUserRegistration()) {
-                                                                            new Thread(() -> completeUserRegistration(user)).start();
+                                                                        if (newUser.isPreRegistration() && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
+                                                                            return sendRegistrationConfirmation(user.getReferenceType(), user.getReferenceId(), user.getId(), principal).toSingleDefault(user);
+                                                                        } else {
+                                                                            return Single.just(user);
                                                                         }
-                                                                    })
-                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
+                                                                    });
                                                         });
                                             });
                                 }
@@ -383,19 +385,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public Completable sendRegistrationConfirmation(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
         return findById(referenceType, referenceId, userId)
-                .map(user -> {
+                .flatMapCompletable(user -> {
                     if (!user.isPreRegistration()) {
-                        throw new UserInvalidException("Pre-registration is disabled for the user " + userId);
+                        return Completable.error(new UserInvalidException("Pre-registration is disabled for the user " + userId));
                     }
                     if (user.isPreRegistration() && user.isRegistrationCompleted()) {
-                        throw new UserInvalidException("Registration is completed for the user " + userId);
+                        return Completable.error(new UserInvalidException("Registration is completed for the user " + userId));
                     }
-                    return user;
-                })
-                .doOnSuccess(user -> new Thread(() -> completeUserRegistration(user)).start())
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
-                .toCompletable();
+                    // fetch the client
+                    return checkClient(user.getReferenceId(), user.getClient())
+                            .map(Optional::of)
+                            .defaultIfEmpty(Optional.empty())
+                            .doOnSuccess(optClient -> new Thread(() -> completeUserRegistration(user, optClient.orElse(null))).start())
+                            .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
+                            .ignoreElement();
+                });
     }
 
     @Override
@@ -494,15 +499,15 @@ public class UserServiceImpl implements UserService {
                 }).toCompletable();
     }
 
-    private void completeUserRegistration(User user) {
+    private void completeUserRegistration(User user, Application client) {
         final String templateName = getTemplateName(user);
         io.gravitee.am.model.Email email = emailManager.getEmail(templateName, registrationSubject, expireAfter);
-        Email email1 = buildEmail(user, email, "/confirmRegistration", "registrationUrl");
+        Email email1 = buildEmail(user, client, email, "/confirmRegistration", "registrationUrl");
         emailService.send(email1, user);
     }
 
-    private Email buildEmail(User user, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
-        Map<String, Object> params = prepareEmail(user, email.getExpiresAfter(), redirectUri, redirectUriName);
+    private Email buildEmail(User user, Application client, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
+        Map<String, Object> params = prepareEmail(user, client, email.getExpiresAfter(), redirectUri, redirectUriName);
         Email email1 = new EmailBuilder()
                 .to(user.getEmail())
                 .from(email.getFrom())
@@ -514,10 +519,20 @@ public class UserServiceImpl implements UserService {
         return email1;
     }
 
-    private Map<String, Object> prepareEmail(User user, int expiresAfter, String redirectUri, String redirectUriName) {
+    private Map<String, Object> prepareEmail(User user, Application client, int expiresAfter, String redirectUri, String redirectUriName) {
         final String token = getUserRegistrationToken(user);
-        final String redirectUrl = getUserRegistrationUri(user.getReferenceId(), redirectUri) + "?token=" + token;
-
+        // building the redirectUrl
+        StringBuilder sb = new StringBuilder();
+        sb
+                .append(getUserRegistrationUri(user.getReferenceId(), redirectUri))
+                .append("?token=")
+                .append(token);
+        if (client != null) {
+            sb
+                    .append("&client_id=")
+                    .append(client.getSettings().getOauth().getClientId());
+        }
+        String redirectUrl = sb.toString();
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);
         params.put(redirectUriName, redirectUrl);

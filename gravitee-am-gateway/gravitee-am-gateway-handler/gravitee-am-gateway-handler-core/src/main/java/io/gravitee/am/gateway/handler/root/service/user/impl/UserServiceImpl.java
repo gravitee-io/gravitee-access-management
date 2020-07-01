@@ -379,8 +379,21 @@ public class UserServiceImpl implements UserService {
             entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
         }
 
-        String redirectUrl = entryPoint + "/" + user.getReferenceId() + redirectUri + "?token=" + token;
-
+        // building the redirectUrl
+        StringBuilder sb = new StringBuilder();
+        sb
+                .append(entryPoint)
+                .append("/")
+                .append(user.getReferenceId())
+                .append(redirectUri)
+                .append("?token=")
+                .append(token);
+        if (client != null) {
+            sb
+                    .append("&client_id=")
+                    .append(client.getClientId());
+        }
+        String redirectUrl = sb.toString();
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);
         params.put(redirectUriName, redirectUrl);

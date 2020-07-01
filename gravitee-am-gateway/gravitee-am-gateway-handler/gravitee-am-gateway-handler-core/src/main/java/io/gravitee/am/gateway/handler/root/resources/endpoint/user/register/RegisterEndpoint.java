@@ -38,8 +38,9 @@ public class RegisterEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(RegisterEndpoint.class);
     private static final String ERROR_PARAM = "error";
+    private static final String ERROR_DESCRIPTION_PARAM = "error_description";
     private static final String SUCCESS_PARAM = "success";
-    public static final String WARNING_PARAM = "warning";
+    private static final String WARNING_PARAM = "warning";
     private static final String TOKEN_PARAM = "token";
     private static final String PARAM_CONTEXT_KEY = "param";
     private ThymeleafTemplateEngine engine;
@@ -52,19 +53,24 @@ public class RegisterEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         final HttpServerRequest request = routingContext.request();
         final String error = request.getParam(ERROR_PARAM);
+        final String errorDescription = request.getParam(ERROR_DESCRIPTION_PARAM);
         final String success = request.getParam(SUCCESS_PARAM);
         final String warning = request.getParam(WARNING_PARAM);
         final String token = request.getParam(TOKEN_PARAM);
         final Client client = routingContext.get("client");
+        final String clientId = request.getParam(Parameters.CLIENT_ID);
         // add query params to context
         routingContext.put(ERROR_PARAM, error);
+        routingContext.put(ERROR_DESCRIPTION_PARAM, errorDescription);
         routingContext.put(SUCCESS_PARAM, success);
         routingContext.put(WARNING_PARAM, warning);
         routingContext.put(TOKEN_PARAM, token);
 
-        // set client_id
+        // put parameters in context (backward compatibility)
         Map<String, String> params = new HashMap<>();
-        params.put(Parameters.CLIENT_ID, request.getParam(Parameters.CLIENT_ID));
+        params.computeIfAbsent(Parameters.CLIENT_ID, val -> clientId);
+        params.computeIfAbsent(ERROR_PARAM, val -> error);
+        params.computeIfAbsent(ERROR_DESCRIPTION_PARAM, val -> errorDescription);
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
         // render the registration confirmation page
