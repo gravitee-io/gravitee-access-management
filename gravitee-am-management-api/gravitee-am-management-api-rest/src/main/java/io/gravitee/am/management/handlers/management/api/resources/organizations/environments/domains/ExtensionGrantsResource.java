@@ -131,6 +131,7 @@ public class ExtensionGrantsResource extends AbstractResource {
         filteredExtensionGrant.setId(extensionGrant.getId());
         filteredExtensionGrant.setName(extensionGrant.getName());
         filteredExtensionGrant.setType(extensionGrant.getType());
+        filteredExtensionGrant.setGrantType(extensionGrant.getGrantType());
 
         return filteredExtensionGrant;
     }
