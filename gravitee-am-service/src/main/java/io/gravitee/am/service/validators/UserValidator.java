@@ -36,7 +36,7 @@ public class UserValidator {
     public static final int DEFAULT_MAX_LENGTH = 100;
     public static final String NAME_STRICT_PATTERN = "^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\\\/<>?:;|=.,]{0," + DEFAULT_MAX_LENGTH + "}$";
     public static final String NAME_LAX_PATTERN = "^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\\\/<>?|=]{0," + DEFAULT_MAX_LENGTH + "}$";
-    public static final String USERNAME_PATTERN = "^[^±!£$%^&*+§¡€#¢¶•ªº«»\\\\/<>?:;|=,]{1," + DEFAULT_MAX_LENGTH + "}$";
+    public static final String USERNAME_PATTERN = "^[^±!£$%^&*§¡€¢¶•ªº«»\\\\/<>?:;|=,]{1," + DEFAULT_MAX_LENGTH + "}$";
 
     private static final Pattern NAME_STRICT_PATTERN_COMPILED = Pattern.compile(NAME_STRICT_PATTERN);
     private static final Pattern NAME_LAX_PATTERN_COMPILED = Pattern.compile(NAME_LAX_PATTERN);
