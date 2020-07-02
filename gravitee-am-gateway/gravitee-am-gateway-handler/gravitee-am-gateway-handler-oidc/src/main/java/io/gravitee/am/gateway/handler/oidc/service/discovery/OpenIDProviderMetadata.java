@@ -139,7 +139,7 @@ public class OpenIDProviderMetadata {
     private Boolean claimsParameterSupported = Boolean.FALSE;
 
     @JsonProperty("request_parameter_supported")
-    private Boolean requestParameterSupported = Boolean.FALSE;
+    private Boolean requestParameterSupported = Boolean.TRUE;
 
     @JsonProperty("request_uri_parameter_supported")
     private Boolean requestUriParameterSupported = Boolean.TRUE;
