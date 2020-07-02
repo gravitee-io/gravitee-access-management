@@ -123,9 +123,10 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         router.route("/oauth/authorize")
                 .handler(sessionHandler);
         router.route(HttpMethod.GET, "/oauth/authorize")
-                .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
+                .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
+                .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
-                .handler(new AuthorizationRequestParseParametersHandler(domain, openIDDiscoveryService))
+                .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(new AuthorizationRequestValidateParametersHandler(domain))
                 .handler(new AuthorizationRequestResolveHandler())
                 .handler(authorizationEndpointHandler);

@@ -17,8 +17,9 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
-import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -44,11 +45,7 @@ import java.util.Set;
  */
 public class AuthorizationRequestParseRequiredParametersHandler implements Handler<RoutingContext> {
 
-    private OpenIDDiscoveryService openIDDiscoveryService;
-
-    public AuthorizationRequestParseRequiredParametersHandler(OpenIDDiscoveryService openIDDiscoveryService) {
-        this.openIDDiscoveryService = openIDDiscoveryService;
-    }
+    private static final String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
 
     @Override
     public void handle(RoutingContext context) {
@@ -79,13 +76,14 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
 
     private void parseResponseTypeParameter(RoutingContext context) {
         String responseType = context.request().getParam(Parameters.RESPONSE_TYPE);
+        OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
 
         if (responseType == null) {
             throw new InvalidRequestException("Missing parameter: response_type");
         }
 
         // get supported response types
-        List<String> responseTypesSupported = openIDDiscoveryService.getConfiguration("/").getResponseTypesSupported();
+        List<String> responseTypesSupported = openIDProviderMetadata.getResponseTypesSupported();
         if (!responseTypesSupported.contains(responseType)) {
             throw new UnsupportedResponseTypeException("Unsupported response type: " + responseType);
         }

@@ -22,7 +22,6 @@ import java.util.Map;
 
 /**
  * See <a href="https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter">5.5. Requesting Claims using the "claims" Request Parameter</a>
- * and <a href="https://openid.net/specs/openid-connect-core-1_0.html#IndividualClaimsRequests">5.5.1. Individual Claims Requests</a>
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -44,61 +43,29 @@ public class ClaimsRequest {
      */
     public static final String ID_TOKEN = "id_token";
     /**
-     * OPTIONAL. Indicates whether the Claim being requested is an Essential Claim.
-     * If the value is true, this indicates that the Claim is an Essential Claim.
-     */
-    public static final String ESSENTIAL = "essential";
-    /**
-     * OPTIONAL. Requests that the Claim be returned with a particular value
-     */
-    public static final String VALUE = "value";
-    /**
-     * OPTIONAL. Requests that the Claim be returned with one of a set of values, with the values appearing in order of preference.œ
-     */
-    public static final String VALUES = "values";
-    /**
      * Individual Claims to be returned from the UserInfo Endpoint.
      */
     @JsonProperty("userinfo")
-    private Map<String, Object> userInfoClaims;
+    private Map<String, ClaimRequest> userInfoClaims;
     /**
      * Individual Claims to be returned in the ID Token.
      */
     @JsonProperty("id_token")
-    private Map<String, Object> idTokenClaims;
+    private Map<String, ClaimRequest> idTokenClaims;
 
-    public Map<String, Object> getUserInfoClaims() {
+    public Map<String, ClaimRequest> getUserInfoClaims() {
         return userInfoClaims;
     }
 
-    public void setUserInfoClaims(Map<String, Object> userInfoClaims) {
+    public void setUserInfoClaims(Map<String, ClaimRequest> userInfoClaims) {
         this.userInfoClaims = userInfoClaims;
     }
 
-    public Map<String, Object> getIdTokenClaims() {
+    public Map<String, ClaimRequest> getIdTokenClaims() {
         return idTokenClaims;
     }
 
-    public void setIdTokenClaims(Map<String, Object> idTokenClaims) {
+    public void setIdTokenClaims(Map<String, ClaimRequest> idTokenClaims) {
         this.idTokenClaims = idTokenClaims;
-    }
-
-    public static class Essential {
-        private boolean essential;
-
-        public Essential() {
-        }
-
-        public Essential(boolean essential) {
-            this.essential = essential;
-        }
-
-        public boolean isEssential() {
-            return essential;
-        }
-
-        public void setEssential(boolean essential) {
-            this.essential = essential;
-        }
     }
 }

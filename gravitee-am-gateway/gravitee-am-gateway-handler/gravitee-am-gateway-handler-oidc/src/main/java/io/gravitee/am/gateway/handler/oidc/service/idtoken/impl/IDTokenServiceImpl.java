@@ -23,7 +23,6 @@ import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.idtoken.IDToken;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
@@ -32,10 +31,11 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenUtils;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.Single;
@@ -221,9 +221,15 @@ public class IDTokenServiceImpl implements IDTokenService {
         try {
             ClaimsRequest claimsRequest = objectMapper.readValue(claimsValue, ClaimsRequest.class);
             if (claimsRequest != null && claimsRequest.getIdTokenClaims() != null) {
-                claimsRequest.getIdTokenClaims().forEach((key, value) -> {
+                claimsRequest.getIdTokenClaims().forEach((key, claimRequest) -> {
                     if (userClaims.containsKey(key)) {
                         idToken.addAdditionalClaim(key, userClaims.get(key));
+                    } else {
+                        if (claimRequest.getValues() != null) {
+                            idToken.addAdditionalClaim(key, claimRequest.getValues());
+                        } else if (claimRequest.getValue() != null) {
+                            idToken.addAdditionalClaim(key, claimRequest.getValue());
+                        }
                     }
                 });
                 return true;
