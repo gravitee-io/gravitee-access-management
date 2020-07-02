@@ -64,7 +64,7 @@
         <h5>Social/Enterprise Identity Provider</h5>
         <small>1. Configure the redirect URI</small>
         <p class="social-provider-settings-description-contextual-help">The Redirect URI or callback URL or Assertion Consumer Service URL must be known by your Identity Server. Go to your Identity Server app settings page and specify the following URL</p>
-        <mat-form-field appearance="outline" floatLabel="always"s>
+        <mat-form-field appearance="outline" floatLabel="always">
           <input matInput type="text" name="redirectUri" [value]="redirectUri" disabled style="font-family: monospace; color: rgba(0, 0, 0, 0.87);">
           <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="redirectUri" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
         </mat-form-field>

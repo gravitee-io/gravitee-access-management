@@ -16,12 +16,14 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -40,6 +42,10 @@ public class DomainMongo extends Auditable {
     private boolean enabled;
 
     private String path;
+
+    private boolean vhostMode;
+
+    private List<VirtualHost> vhosts;
 
     private OIDCSettingsMongo oidc;
 
@@ -184,5 +190,21 @@ public class DomainMongo extends Auditable {
 
     public void setReferenceId(String referenceId) {
         this.referenceId = referenceId;
+    }
+
+    public boolean isVhostMode() {
+        return vhostMode;
+    }
+
+    public void setVhostMode(boolean vhostMode) {
+        this.vhostMode = vhostMode;
+    }
+
+    public List<VirtualHost> getVhosts() {
+        return vhosts;
+    }
+
+    public void setVhosts(List<VirtualHost> vhosts) {
+        this.vhosts = vhosts;
     }
 }

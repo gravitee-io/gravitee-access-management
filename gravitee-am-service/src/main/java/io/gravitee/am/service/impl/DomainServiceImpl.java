@@ -18,11 +18,9 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
@@ -37,10 +35,14 @@ import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
+import io.gravitee.am.service.validators.DomainValidator;
+import io.gravitee.am.service.validators.VirtualHostValidator;
+import io.gravitee.common.utils.IdGenerator;
 import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -49,6 +51,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -61,6 +64,11 @@ import java.util.stream.Collectors;
 public class DomainServiceImpl implements DomainService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
+
+    private static final Pattern SCHEME_PATTERN = Pattern.compile("^(https?://).*$");
+
+    @Value("${gateway.url:http://localhost:8092}")
+    private String gatewayUrl;
 
     @Lazy
     @Autowired
@@ -164,7 +172,8 @@ public class DomainServiceImpl implements DomainService {
     @Override
     public Single<Domain> create(String organizationId, String environmentId, NewDomain newDomain, User principal) {
         LOGGER.debug("Create a new domain: {}", newDomain);
-        String id = generateContextPath(newDomain.getName());
+        String id = IdGenerator.generate(newDomain.getName());
+        String path = generateContextPath(newDomain.getName());
 
         return domainRepository.findById(id)
                 .isEmpty()
@@ -174,7 +183,7 @@ public class DomainServiceImpl implements DomainService {
                     } else {
                         Domain domain = new Domain();
                         domain.setId(id);
-                        domain.setPath(id);
+                        domain.setPath(path);
                         domain.setName(newDomain.getName());
                         domain.setDescription(newDomain.getDescription());
                         domain.setEnabled(false);
@@ -183,7 +192,9 @@ public class DomainServiceImpl implements DomainService {
                         domain.setReferenceId(environmentId);
                         domain.setCreatedAt(new Date());
                         domain.setUpdatedAt(domain.getCreatedAt());
-                        return domainRepository.create(domain);
+
+                        return validateDomain(domain)
+                                .andThen(domainRepository.create(domain));
                     }
                 })
                 // create default system scopes
@@ -235,6 +246,8 @@ public class DomainServiceImpl implements DomainService {
                     Domain domain = new Domain();
                     domain.setId(domainId);
                     domain.setPath(updateDomain.getPath());
+                    domain.setVhostMode(updateDomain.isVhostMode());
+                    domain.setVhosts(updateDomain.getVhosts());
                     domain.setName(updateDomain.getName());
                     domain.setDescription(updateDomain.getDescription());
                     domain.setEnabled(updateDomain.isEnabled());
@@ -247,7 +260,8 @@ public class DomainServiceImpl implements DomainService {
                     domain.setLoginSettings(updateDomain.getLoginSettings());
                     domain.setAccountSettings(updateDomain.getAccountSettings());
 
-                    return domainRepository.update(domain)
+                    return validateDomain(domain)
+                            .andThen(domainRepository.update(domain))
                             // create event for sync process
                             .flatMap(domain1 -> {
                                 Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
@@ -273,7 +287,8 @@ public class DomainServiceImpl implements DomainService {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapSingle(__ -> {
                     domain.setUpdatedAt(new Date());
-                    return domainRepository.update(domain);
+                    return validateDomain(domain)
+                            .andThen(domainRepository.update(domain));
                 })
                 // create event for sync process
                 .flatMap(domain1 -> {
@@ -296,8 +311,10 @@ public class DomainServiceImpl implements DomainService {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapSingle(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
+
                     toPatch.setUpdatedAt(new Date());
-                    return domainRepository.update(toPatch)
+                    return validateDomain(toPatch)
+                            .andThen(domainRepository.update(toPatch))
                             // create event for sync process
                             .flatMap(domain1 -> {
                                 Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
@@ -458,6 +475,39 @@ public class DomainServiceImpl implements DomainService {
                 .map(scope -> domain);
     }
 
+    @Override
+    public String buildUrl(Domain domain, String path) {
+        String entryPoint = gatewayUrl;
+
+        if (entryPoint != null && entryPoint.endsWith("/")) {
+            entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
+        }
+
+        String uri = null;
+
+        if (domain.isVhostMode()) {
+            // Try generate uri using defined virtual hosts.
+            Matcher matcher = SCHEME_PATTERN.matcher(entryPoint);
+            String scheme = "http";
+            if(matcher.matches()) {
+                scheme = matcher.group(1);
+            }
+
+            for (VirtualHost vhost : domain.getVhosts()) {
+                if (vhost.isOverrideEntrypoint()) {
+                    uri = scheme + vhost.getHost() + vhost.getPath() + path;
+                    break;
+                }
+            }
+        }
+
+        if(uri == null) {
+            uri = entryPoint + PathUtils.sanitize(domain.getPath() + path);
+        }
+
+        return uri;
+    }
+
     private Single<Domain> createDefaultCertificate(Domain domain) {
         return certificateService
                 .create(domain.getId())
@@ -465,9 +515,15 @@ public class DomainServiceImpl implements DomainService {
     }
 
     private String generateContextPath(String domainName) {
-        String nfdNormalizedString = Normalizer.normalize(domainName, Normalizer.Form.NFD);
-        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-        domainName = pattern.matcher(nfdNormalizedString).replaceAll("");
-        return domainName.toLowerCase().trim().replaceAll("\\s{1,}", "-");
+
+        return "/" + IdGenerator.generate(domainName);
+    }
+
+    private Completable validateDomain(Domain domain) {
+
+        // Validate all data are correctly defined.
+       return DomainValidator.validate(domain)
+                .andThen(findAll()
+                        .flatMapCompletable(domains -> VirtualHostValidator.validateDomainVhosts(domain, domains)));
     }
 }

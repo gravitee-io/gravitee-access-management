@@ -1,0 +1,111 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1 class="entrypoints-title">Entrypoints</h1>
+  <a (click)="switchMode()" class="switch-mode">Switch to {{ switchModeLabel }} mode</a>
+  <div class="gv-page-content">
+    <div fxLayout="column" fxFlex="70">
+      <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
+        <div class="gv-form-section" *ngIf="!domain.vhostMode">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Domain entrypoint url</mat-label>
+            <input matInput type="text" name="url" [value]="entrypoint.url" disabled>
+            <mat-hint>The current base url to access the Gateway (globally defined).</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Domain context-path</mat-label>
+            <input matInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required [readonly]="readonly">
+            <mat-hint>Path where your security domain is exposed, must start with a '/' and must contain any letter, capitalize letter, number, dash or underscore.</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="gv-form-section" *ngIf="domain.vhostMode">
+          <div class="entrypoints-actions">
+            <span>Virtual hosts</span>
+            <button (click)="addVhost(); $event.preventDefault()" mat-icon-button *hasPermission="['domain_settings_update']">
+              <mat-icon>add_circle_outline</mat-icon>
+            </button>
+          </div>
+          <ng-container *ngFor="let vhost of domain.vhosts; let i = index">
+            <div fxLayout="row" style="padding-bottom: 40px">
+              <button (click)="remove(vhost); $event.preventDefault()" mat-icon-button *hasPermission="['domain_settings_update']">
+                <mat-icon>remove_circle_outline</mat-icon>
+              </button>
+              <mat-form-field appearance="outline" floatLabel="always" class="form-field">
+                <mat-label>Host</mat-label>
+                <input matInput type="text" placeholder="Listening Host" [name]="'host'+i" [(ngModel)]="vhost.host" required [readonly]="readonly">
+                <mat-hint>Host which must be set into the HTTP request to access this security domain.</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" class="form-field">
+                <mat-label>Path</mat-label>
+                <input matInput type="text" placeholder="Listening path" [name]="'path'+i" [(ngModel)]="vhost.path" required [readonly]="readonly">
+                <mat-hint>Path where security domain is exposed, must start with a '/' and must contain any letter, capitalize letter, number, dash or underscore.</mat-hint>
+              </mat-form-field>
+              <div class="form-field">
+                <mat-radio-button name="overrideEntrypoint" [value]="vhost" [checked]="vhost.overrideEntrypoint" (change)="overrideEntrypointChange(vhost)" style="padding-top: 15px;padding-bottom: 20px;display: block;font-size: 12px; color: rgba(0, 0, 0, 0.6);" [disabled]="readonly">Override entrypoint</mat-radio-button>
+                <mat-hint class="hint">Useful to override entrypoint with the virtual host on the application overview page.</mat-hint>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+        <div *hasPermission="['domain_settings_update']">
+          <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>Domain entrypoints</h3>
+      <div class="gv-page-description-content" *ngIf="!domain.vhostMode">
+        <p>
+          Configure your security domain's path.
+        </p>
+        <p>
+          In context-path mode, your security domain will be accessible through the Gateway using the entrypoint url defined in global settings and the context path of you choice.
+        </p>
+        <p>
+          The current access url is :
+        </p>
+        <pre>{{ entrypoint.url}}{{domain.path}}</pre>
+        <p>
+          Notice that, in context-path mode, you can't use <code>'/'</code> path. However, it is possible to use <code>'/'</code> if you <a (click)="switchMode()">Switch to {{ switchModeLabel }} mode</a>
+        </p>
+        <p>
+          <small><strong>Warning</strong>: changing the security domain's path involve to change endpoint URLs in your current applications.</small>
+        </p>
+      </div>
+      <div class="gv-page-description-content" *ngIf="domain.vhostMode">
+        <p>
+          Configure your security domain's vhosts and paths.
+        </p>
+        <p>
+          In virtual host mode, your security domain will be accessible through the Gateway using the host and path of your choice.
+        </p>
+        <p>
+          You can define several virtual hosts depending on your needs but remember that you can't define a path which could overlap another security domain path.
+        </p>
+        <p>
+          Notice that you can't specify protocol, only the host (and optional port) can be defined. Protocol (http, https) is automatically determined from the entrypoint url defined in global settings.
+        </p>
+        <p>
+          <small><strong>Warning</strong>: changing the security domain's virtual host involve to change endpoint URLs in your current applications.</small>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

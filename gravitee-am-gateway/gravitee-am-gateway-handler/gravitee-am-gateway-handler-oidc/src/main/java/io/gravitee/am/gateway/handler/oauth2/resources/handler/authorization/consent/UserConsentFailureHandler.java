@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -82,7 +84,7 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
             }
 
             // go back to login page
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), "/" + domain.getPath() + "/login", params);
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", params);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);

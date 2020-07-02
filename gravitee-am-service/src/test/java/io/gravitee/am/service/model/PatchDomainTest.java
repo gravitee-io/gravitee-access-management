@@ -54,7 +54,7 @@ public class PatchDomainTest {
         Domain toPatch = new Domain();
         toPatch.setDescription("oldDescription");
         toPatch.setName("oldName");
-        toPatch.setPath("expectedPath");
+        toPatch.setPath("/expectedPath");
 
         //apply patch
         Domain result = patch.patch(toPatch);
@@ -63,7 +63,7 @@ public class PatchDomainTest {
         assertNotNull("was expecting a domain", result);
         assertEquals("description should have been updated", "expectedDescription", result.getDescription());
         assertNull("name should have been set to null", result.getName());
-        assertEquals("path should not be updated", "expectedPath", result.getPath());
+        assertEquals("path should not be updated", "/expectedPath", result.getPath());
     }
 
     @Test

@@ -38,6 +38,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -93,7 +95,7 @@ public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
 
     private void parseSSOSignInURL(RoutingContext routingContext, String identityProvider, SocialAuthenticationProvider authenticationProvider, Handler<AsyncResult<Request>> resultHandler) {
         try {
-            Request request = authenticationProvider.signInUrl(buildRedirectUri(routingContext.request(), identityProvider));
+            Request request = authenticationProvider.signInUrl(buildRedirectUri(routingContext, identityProvider));
             if (HttpMethod.GET.equals(request.getMethod())) {
                 throw new InvalidRequestException("SSO Sign In URL HTTP Method must be POST");
             }
@@ -104,8 +106,8 @@ public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
         }
     }
 
-    private String buildRedirectUri(HttpServerRequest request, String identityProvider) throws URISyntaxException {
-        return UriBuilderRequest.resolveProxyRequest(request, "/" + domain.getPath() + "/login/callback", Collections.singletonMap("provider", identityProvider));
+    private String buildRedirectUri(RoutingContext context, String identityProvider) throws URISyntaxException {
+        return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/callback", Collections.singletonMap("provider", identityProvider));
     }
 
     private boolean canHandle(AuthenticationProvider authenticationProvider) {

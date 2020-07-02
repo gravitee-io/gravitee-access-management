@@ -29,6 +29,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
@@ -40,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * Once the End-User is authenticated, the Authorization Server MUST obtain an authorization decision before releasing information to the Relying Party.
@@ -61,7 +64,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
 
     public AuthorizationRequestEndUserConsentHandler(UserConsentService userConsentService, Domain domain) {
         this.userConsentService = userConsentService;
-        this.redirectURL = "/" + domain.getPath() + "/oauth/consent";
+        this.redirectURL = "/oauth/consent";
     }
 
     @Override
@@ -98,7 +101,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         if (request.params().contains(Parameters.PROMPT)
                 && request.params().get(Parameters.PROMPT).contains("consent")) {
             session.put(REQUESTED_CONSENT_CONTEXT_KEY, requestedConsent);
-            redirectToConsentPage(request);
+            redirectToConsentPage(routingContext);
             return;
         }
         // check if application has enabled skip consent option
@@ -123,7 +126,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
             // else go to the user consent page
             Set<String> requiredConsent = requestedConsent.stream().filter(requestedScope -> !approvedConsent.contains(requestedScope)).collect(Collectors.toSet());
             session.put(REQUESTED_CONSENT_CONTEXT_KEY, requiredConsent);
-            redirectToConsentPage(request);
+            redirectToConsentPage(routingContext);
         });
     }
 
@@ -152,10 +155,14 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         return false;
     }
 
-    public void redirectToConsentPage(HttpServerRequest request) {
+    public void redirectToConsentPage(RoutingContext context) {
+
+        HttpServerRequest request = context.request();
+        String consentPageURL = context.get(CONTEXT_PATH) + this.redirectURL;
+
         try {
             final Map<String, String> requestParameters = request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(request, redirectURL, requestParameters, true);
+            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(request, consentPageURL, requestParameters, true);
             request.response()
                     .putHeader(HttpHeaders.LOCATION, proxiedRedirectURI)
                     .setStatusCode(302)
@@ -163,7 +170,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         } catch (Exception e) {
             LOGGER.warn("Failed to decode consent redirect url", e);
             request.response()
-                    .putHeader(HttpHeaders.LOCATION, redirectURL)
+                    .putHeader(HttpHeaders.LOCATION, consentPageURL)
                     .setStatusCode(302)
                     .end();
         }

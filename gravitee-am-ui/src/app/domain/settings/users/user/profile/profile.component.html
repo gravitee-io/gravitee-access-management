@@ -77,7 +77,7 @@
           </div>
         </div>
 
-        <div class="gv-form-section" *ngIf="canEdit">
+        <div class="gv-form-section" *ngIf="canEdit && user.referenceType === 'domain'">
           <div class="gv-form-section-title">
             <h5>Actions</h5>
             <mat-divider></mat-divider>
@@ -167,7 +167,7 @@
             <h4 matLine>Created at</h4>
             <p matLine>{{user.createdAt | humanDate}}</p>
           </mat-list-item>
-          <mat-list-item>
+          <mat-list-item *ngIf="user.referenceType === 'domain'">
             <mat-icon mat-list-icon>dock</mat-icon>
             <h4 matLine>Last application</h4>
             <p matLine>{{displayClientName()}}</p>

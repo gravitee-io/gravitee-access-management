@@ -17,6 +17,7 @@ import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {AuthService} from '../../../../services/auth.service';
 import {SnackbarService} from '../../../../services/snackbar.service';
+import {EntrypointService} from "../../../../services/entrypoint.service";
 
 @Component({
   selector: 'application-overview',
@@ -35,12 +36,14 @@ export class ApplicationOverviewComponent implements OnInit {
   safeAuthorizationHeader: string;
   authorizationHeader: string;
   entrypoint: any;
+  baseUrl: string;
   tokenEndpointAuthMethod: string;
-  @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
+  @ViewChild('copyText', {read: ElementRef}) copyText: ElementRef;
 
   constructor(private route: ActivatedRoute,
               private authService: AuthService,
-              private snackbarService: SnackbarService) {
+              private snackbarService: SnackbarService,
+              private entrypointService: EntrypointService) {
   }
 
   ngOnInit() {
@@ -55,7 +58,7 @@ export class ApplicationOverviewComponent implements OnInit {
       this.grantTypes = applicationOAuthSettings.grantTypes;
       this.clientId = applicationOAuthSettings.clientId;
       this.clientSecret = applicationOAuthSettings.clientSecret;
-      this.redirectUri = applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined ? applicationOAuthSettings.redirectUris[0] : 'Not defined' ;
+      this.redirectUri = applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined ? applicationOAuthSettings.redirectUris[0] : 'Not defined';
       this.authorizationHeader = btoa(this.clientId + ':' + this.clientSecret);
       this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
     } else {
@@ -64,6 +67,8 @@ export class ApplicationOverviewComponent implements OnInit {
       this.redirectUri = 'Insufficient permission';
       this.authorizationHeader = 'Insufficient permission';
     }
+
+    this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain);
   }
 
   isServiceApp(): boolean {
@@ -99,5 +104,5 @@ export class ApplicationOverviewComponent implements OnInit {
 
   displayAuthBasicExample(): boolean {
     return !this.tokenEndpointAuthMethod || this.tokenEndpointAuthMethod === 'client_secret_basic';
-  };
+  }
 }

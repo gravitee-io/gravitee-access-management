@@ -28,6 +28,7 @@ import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,14 +50,15 @@ public final class TokenRequestFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenRequestFactory.class);
 
-    public TokenRequest create(HttpServerRequest request) {
+    public TokenRequest create(RoutingContext context) {
+        HttpServerRequest request = context.request();
         TokenRequest tokenRequest = new TokenRequest();
         // set technical information
         tokenRequest.setTimestamp(System.currentTimeMillis());
         tokenRequest.setId(RandomString.generate());
         tokenRequest.setTransactionId(RandomString.generate());
         tokenRequest.setUri(request.uri());
-        tokenRequest.setOrigin(extractOrigin(request));
+        tokenRequest.setOrigin(extractOrigin(context));
         tokenRequest.setContextPath(request.path() != null ? request.path().split("/")[0] : null);
         tokenRequest.setPath(request.path());
         tokenRequest.setHeaders(extractHeaders(request));
@@ -104,10 +108,10 @@ public final class TokenRequestFactory {
         return null;
     }
 
-    private String extractOrigin(HttpServerRequest request) {
+    private String extractOrigin(RoutingContext context) {
         String basePath = "/";
         try {
-            basePath = UriBuilderRequest.resolveProxyRequest(request, "/", null);
+            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH), null);
         } catch (Exception e) {
             logger.error("Unable to resolve OAuth 2.0 Token Request origin uri", e);
         }

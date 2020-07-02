@@ -48,4 +48,26 @@ export class EntrypointService {
   delete(id): Observable<any> {
     return this.http.delete<any>(this.entrypointsURL + id);
   }
+
+  resolveBaseUrl(entrypoint: any, domain: any): string {
+
+    let baseUrl = entrypoint.url;
+      let path = domain.path;
+
+      if (domain.vhostMode) {
+        let vhost = domain.vhosts.find(vhost => vhost.overrideEntrypoint);
+
+        if (vhost != null) {
+          let scheme = entrypoint.url.match("^(https?://).*$")[1]
+          baseUrl = scheme + vhost.host
+          path = vhost.path;
+        }
+      }
+
+      if(path !== '/') {
+        baseUrl = baseUrl + path;
+      }
+
+      return baseUrl
+  }
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
@@ -49,10 +51,10 @@ public class ClientNoneAuthProviderTest {
     public void shouldAuthenticateClient() throws Exception {
         Client client = mock(Client.class);
 
-        HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
+        RoutingContext context = mock(RoutingContext.class);
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
+        authProvider.handle(client, context, clientAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
             Assert.assertNotNull(clientAsyncResult.result());

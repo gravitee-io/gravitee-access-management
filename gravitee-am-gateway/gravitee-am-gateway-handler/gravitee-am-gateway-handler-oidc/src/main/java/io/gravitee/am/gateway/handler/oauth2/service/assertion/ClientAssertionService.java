@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.assertion;
 
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * Client assertion as described for <a href="https://tools.ietf.org/html/rfc7521#section-4.2">oauth2 assertion framework</a>

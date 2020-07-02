@@ -56,7 +56,7 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             throw new InvalidClientException();
         }
 
-        TokenRequest tokenRequest = tokenRequestFactory.create(context.request());
+        TokenRequest tokenRequest = tokenRequestFactory.create(context);
         // Check that authenticated user is matching the client_id
         // client_id is not required in the token request since the client can be authenticated via a Basic Authentication
         if (tokenRequest.getClientId() != null) {

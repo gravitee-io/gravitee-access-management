@@ -41,12 +41,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -255,6 +254,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
+        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         Domain domain = new Domain();
         domain.setId("domain-id");
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
@@ -298,6 +298,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
+        when((domainRepository.findAll())).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -327,8 +328,15 @@ public class DomainServiceTest {
     @Test
     public void shouldUpdate() {
         UpdateDomain updateDomain = Mockito.mock(UpdateDomain.class);
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
+        Domain domain = new Domain();
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        when(updateDomain.getName()).thenReturn(domain.getName());
+        when(updateDomain.getPath()).thenReturn(domain.getPath());
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.update("my-domain", updateDomain).test();
@@ -358,7 +366,13 @@ public class DomainServiceTest {
     @Test
     public void shouldUpdate2_technicalException() {
         UpdateDomain updateDomain = Mockito.mock(UpdateDomain.class);
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
+        Domain domain = new Domain();
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        when(updateDomain.getName()).thenReturn(domain.getName());
+        when(updateDomain.getPath()).thenReturn(domain.getPath());
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = domainService.update("my-domain", updateDomain).test();
@@ -397,9 +411,13 @@ public class DomainServiceTest {
     @Test
     public void shouldPatch() {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
-        when(patchDomain.patch(any())).thenReturn(new Domain());
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(new Domain()));
+        Domain domain = new Domain();
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
@@ -579,5 +597,69 @@ public class DomainServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldBuildUrl_contextPathMode() {
+
+        ReflectionTestUtils.setField(domainService, "gatewayUrl", "http://localhost:8092");
+
+        Domain domain = new Domain();
+        domain.setPath("/testPath");
+        domain.setVhostMode(false);
+
+        String url = domainService.buildUrl(domain, "/mySubPath?myParam=param1");
+
+        assertEquals("http://localhost:8092/testPath/mySubPath?myParam=param1", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_vhostMode() {
+
+        ReflectionTestUtils.setField(domainService, "gatewayUrl", "http://localhost:8092");
+
+        Domain domain = new Domain();
+        domain.setPath("/testPath");
+        domain.setVhostMode(true);
+        ArrayList<VirtualHost> vhosts = new ArrayList<>();
+        VirtualHost firstVhost = new VirtualHost();
+        firstVhost.setHost("test1.gravitee.io");
+        firstVhost.setPath("/test1");
+        vhosts.add(firstVhost);
+        VirtualHost secondVhost = new VirtualHost();
+        secondVhost.setHost("test2.gravitee.io");
+        secondVhost.setPath("/test2");
+        secondVhost.setOverrideEntrypoint(true);
+        vhosts.add(secondVhost);
+        domain.setVhosts(vhosts);
+
+        String url = domainService.buildUrl(domain, "/mySubPath?myParam=param1");
+
+        assertEquals("http://test2.gravitee.io/test2/mySubPath?myParam=param1", url);
+    }
+
+    @Test
+    public void shouldBuildUrl_vhostModeAndHttps() {
+
+        ReflectionTestUtils.setField(domainService, "gatewayUrl", "https://localhost:8092");
+
+        Domain domain = new Domain();
+        domain.setPath("/testPath");
+        domain.setVhostMode(true);
+        ArrayList<VirtualHost> vhosts = new ArrayList<>();
+        VirtualHost firstVhost = new VirtualHost();
+        firstVhost.setHost("test1.gravitee.io");
+        firstVhost.setPath("/test1");
+        vhosts.add(firstVhost);
+        VirtualHost secondVhost = new VirtualHost();
+        secondVhost.setHost("test2.gravitee.io");
+        secondVhost.setPath("/test2");
+        secondVhost.setOverrideEntrypoint(true);
+        vhosts.add(secondVhost);
+        domain.setVhosts(vhosts);
+
+        String url = domainService.buildUrl(domain, "/mySubPath?myParam=param1");
+
+        assertEquals("https://test2.gravitee.io/test2/mySubPath?myParam=param1", url);
     }
 }

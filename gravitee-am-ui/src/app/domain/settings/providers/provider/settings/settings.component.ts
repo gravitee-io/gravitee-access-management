@@ -24,6 +24,7 @@ import { DomainService } from '../../../../../services/domain.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import * as _ from 'lodash';
 import {AppConfig} from "../../../../../../config/app.config";
+import {EntrypointService} from "../../../../../services/entrypoint.service";
 
 @Component({
   selector: 'provider-settings',
@@ -53,7 +54,8 @@ export class ProviderSettingsComponent implements OnInit {
               private router: Router,
               private breadcrumbService: BreadcrumbService,
               private domainService: DomainService,
-              private dialogService: DialogService) { }
+              private dialogService: DialogService,
+              private entrypointService: EntrypointService) { }
 
   ngOnInit() {
     this.provider = this.route.snapshot.parent.data['provider'];
@@ -71,7 +73,7 @@ export class ProviderSettingsComponent implements OnInit {
       this.domain = this.route.snapshot.parent.parent.data['domain'];
       this.domainService.getEntrypoint(this.domainId).subscribe(data => {
         this.entrypoint = data;
-        this.redirectUri = this.entrypoint.url + '/' + this.domain.path + '/login/callback?provider=' + this.provider.id;
+        this.redirectUri = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain) + '/login/callback?provider=' + this.provider.id;
       });
     }
     this.providerConfiguration = JSON.parse(this.provider.configuration);

@@ -57,7 +57,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
             }
             // authenticate client
             Client client = handler.result();
-            authenticateClient(client, request, authHandler -> {
+            authenticateClient(client, routingContext, authHandler -> {
                 if (authHandler.failed()) {
                     Throwable throwable = authHandler.cause();
                     if (throwable instanceof InvalidClientException) {
@@ -81,14 +81,14 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
 
     }
 
-    private void authenticateClient(Client client, HttpServerRequest request, Handler<AsyncResult<Client>> handler) {
+    private void authenticateClient(Client client, RoutingContext context, Handler<AsyncResult<Client>> handler) {
         try {
             clientAuthProviders
                     .stream()
-                    .filter(clientAuthProvider -> clientAuthProvider.canHandle(client, request))
+                    .filter(clientAuthProvider -> clientAuthProvider.canHandle(client, context))
                     .findFirst()
                     .orElseThrow(() -> new InvalidClientException("Invalid client: missing or unsupported authentication method"))
-                    .handle(client, request, handler);
+                    .handle(client, context, handler);
         } catch (Exception ex) {
             handler.handle(Future.failedFuture(ex));
         }

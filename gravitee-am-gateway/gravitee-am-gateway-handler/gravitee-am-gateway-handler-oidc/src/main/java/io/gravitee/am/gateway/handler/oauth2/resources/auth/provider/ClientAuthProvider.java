@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * Client Authentication methods that are used by Clients to authenticate to the Authorization Server when using the Token Endpoint.
@@ -30,7 +30,7 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
  */
 public interface ClientAuthProvider {
 
-    boolean canHandle(Client client, HttpServerRequest request);
+    boolean canHandle(Client client, RoutingContext context);
 
-    void handle(Client client, HttpServerRequest request, Handler<AsyncResult<Client>> handler);
+    void handle(Client client, RoutingContext context, Handler<AsyncResult<Client>> handler);
 }

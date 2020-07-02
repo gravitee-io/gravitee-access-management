@@ -45,6 +45,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -79,7 +80,7 @@ public class ResourceRegistrationEndpointTest {
     @InjectMocks
     private ResourceRegistrationEndpoint endpoint = new ResourceRegistrationEndpoint(domain, service);
 
-    private static final String DOMAIN_PATH = "domain";
+    private static final String DOMAIN_PATH = "/domain";
     private static final String DOMAIN_ID = "123";
     private static final String USER_ID = "456";
     private static final String CLIENT_ID = "api";
@@ -91,7 +92,6 @@ public class ResourceRegistrationEndpointTest {
     @Before
     public void setUp() {
         when(domain.getId()).thenReturn(DOMAIN_ID);
-        when(domain.getPath()).thenReturn(DOMAIN_PATH);
         when(jwt.getSub()).thenReturn(USER_ID);
         when(client.getId()).thenReturn(CLIENT_ID);
         when(context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY)).thenReturn(jwt);
@@ -150,6 +150,7 @@ public class ResourceRegistrationEndpointTest {
     @Test
     public void create_withResource() {
         ArgumentCaptor<String> strCaptor = ArgumentCaptor.forClass(String.class);
+        when(context.get(CONTEXT_PATH)).thenReturn(DOMAIN_PATH);
         when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
         when(service.create(any() , eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.just(new Resource().setId(RESOURCE_ID)));
         when(request.host()).thenReturn("host");
@@ -159,7 +160,7 @@ public class ResourceRegistrationEndpointTest {
         verify(response, times(1)).putHeader(eq(HttpHeaders.LOCATION),strCaptor.capture());
         verify(response, times(1)).setStatusCode(intCaptor.capture());
         Assert.assertEquals("Should be created",201, intCaptor.getValue().intValue());
-        Assert.assertEquals("Location", "http://host/"+DOMAIN_PATH+"/uma/protection/resource_set/"+RESOURCE_ID, strCaptor.getValue());
+        Assert.assertEquals("Location", "http://host"+DOMAIN_PATH+"/uma/protection/resource_set/"+RESOURCE_ID, strCaptor.getValue());
     }
 
     @Test

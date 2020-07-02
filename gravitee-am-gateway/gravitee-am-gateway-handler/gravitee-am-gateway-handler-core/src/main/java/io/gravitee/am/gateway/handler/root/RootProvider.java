@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.root;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
@@ -150,8 +150,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // common handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
-        Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
-        ((ClientRequestParseHandler) clientRequestParseHandler).setRequired(true);
+        ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
+        clientRequestParseHandler.setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
         Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator);
 
@@ -327,7 +327,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     }
 
     private void errorHandler(Router router) {
-        Handler<RoutingContext> errorHandler = new ErrorHandler("/" + domain.getPath() + "/error");
+        Handler<RoutingContext> errorHandler = new ErrorHandler( "/error");
         router.route("/login").failureHandler(errorHandler);
         router.route("/forgotPassword").failureHandler(errorHandler);
     }

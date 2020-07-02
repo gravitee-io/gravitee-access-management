@@ -20,6 +20,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.EmailService;
@@ -44,7 +45,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +59,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
+    private static final Pattern SCHEME_PATTERN = Pattern.compile("^(https?://).*$");
 
     @Value("${user.registration.token.expire-after:86400}")
     private Integer expireAfter;
@@ -201,7 +206,7 @@ public class UserServiceImpl implements UserService {
                                                                         User user = transform(newUser1);
                                                                         AccountSettings accountSettings = getAccountSettings(domain1, client);
                                                                         if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
-                                                                            user.setRegistrationUserUri(getUserRegistrationUri(domain1.getPath(), "/confirmRegistration"));
+                                                                            user.setRegistrationUserUri(domainService.buildUrl(domain1, "/confirmRegistration"));
                                                                             user.setRegistrationAccessToken(getUserRegistrationToken(user));
                                                                         }
                                                                         return userService.create(user);
@@ -211,7 +216,7 @@ public class UserServiceImpl implements UserService {
                                                                         // in pre registration mode an email will be sent to the user to complete his account
                                                                         AccountSettings accountSettings = getAccountSettings(domain1, client);
                                                                         if (newUser.isPreRegistration() && accountSettings != null && !accountSettings.isDynamicUserRegistration()) {
-                                                                            new Thread(() -> emailService.send(Template.REGISTRATION_CONFIRMATION, user)).start();
+                                                                            new Thread(() -> emailService.send(domain1, Template.REGISTRATION_CONFIRMATION, user)).start();
                                                                         }
                                                                     })
                                                                     .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
@@ -374,21 +379,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Completable sendRegistrationConfirmation(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
-        return findById(referenceType, referenceId, userId)
-                .map(user -> {
-                    if (!user.isPreRegistration()) {
-                        throw new UserInvalidException("Pre-registration is disabled for the user " + userId);
-                    }
-                    if (user.isPreRegistration() && user.isRegistrationCompleted()) {
-                        throw new UserInvalidException("Registration is completed for the user " + userId);
-                    }
-                    return user;
-                })
-                .doOnSuccess(user -> new Thread(() -> emailService.send(Template.REGISTRATION_CONFIRMATION, user)).start())
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
-                .toCompletable();
+    public Completable sendRegistrationConfirmation(String domainId, String userId, io.gravitee.am.identityprovider.api.User principal) {
+        return domainService.findById(domainId)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                .flatMapCompletable(domain -> findById(ReferenceType.DOMAIN, domainId, userId)
+                        .map(user -> {
+                            if (!user.isPreRegistration()) {
+                                throw new UserInvalidException("Pre-registration is disabled for the user " + userId);
+                            }
+                            if (user.isPreRegistration() && user.isRegistrationCompleted()) {
+                                throw new UserInvalidException("Registration is completed for the user " + userId);
+                            }
+                            return user;
+                        })
+                        .doOnSuccess(user -> new Thread(() -> emailService.send(domain, Template.REGISTRATION_CONFIRMATION, user)).start())
+                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user1)))
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
+                        .ignoreElement());
     }
 
     @Override
@@ -485,15 +492,6 @@ public class UserServiceImpl implements UserService {
                     }
                     return roles1;
                 }).toCompletable();
-    }
-
-    private String getUserRegistrationUri(String domain, String redirectUri) {
-        String entryPoint = gatewayUrl;
-        if (entryPoint != null && entryPoint.endsWith("/")) {
-            entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
-        }
-
-        return entryPoint + "/" + domain + redirectUri;
     }
 
     private String getUserRegistrationToken(User user) {

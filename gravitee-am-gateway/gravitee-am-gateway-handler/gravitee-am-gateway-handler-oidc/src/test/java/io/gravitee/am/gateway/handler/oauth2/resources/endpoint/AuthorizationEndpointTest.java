@@ -59,6 +59,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
@@ -115,9 +116,6 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
 
         when(openIDDiscoveryService.getConfiguration(anyString())).thenReturn(openIDProviderMetadata);
 
-        // set domain
-        when(domain.getPath()).thenReturn("test");
-
         // set Authorization endpoint routes
         SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
         router.route("/oauth/authorize")
@@ -126,12 +124,17 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
-                .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new AuthorizationRequestParseParametersHandler())
                 .handler(new AuthorizationRequestValidateParametersHandler(domain))
                 .handler(new AuthorizationRequestResolveHandler())
                 .handler(authorizationEndpointHandler);
         router.route()
                 .failureHandler(new AuthorizationRequestFailureHandler(domain,openIDDiscoveryService, jwtService, jweService));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(CONTEXT_PATH, "/test");
+            routingContext.next();
+        });
     }
 
     @Test

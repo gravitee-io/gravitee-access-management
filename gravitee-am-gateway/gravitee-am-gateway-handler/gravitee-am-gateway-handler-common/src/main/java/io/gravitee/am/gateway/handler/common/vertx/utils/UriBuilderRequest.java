@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.utils;
 
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -33,20 +34,19 @@ import java.util.Map;
  */
 public class UriBuilderRequest {
 
+    public static final String CONTEXT_PATH = "contextPath";
+
     private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
     private static final Logger LOGGER = LoggerFactory.getLogger(UriBuilderRequest.class);
 
     public static String extractBasePath(final RoutingContext context) {
-        return extractBasePath(context.request());
-    }
 
-    public static String extractBasePath(final HttpServerRequest request) {
         try {
-            return UriBuilderRequest.resolveProxyRequest(request, "/", null);
+            return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH), null);
         } catch (URISyntaxException e) {
-            LOGGER.error("Unable to resolve OpenID Connect provider configuration endpoint", e);
+            LOGGER.error("Unable to extract base path", e);
         }
-        return "/";
+        return context.get(CONTEXT_PATH);
     }
 
     /**

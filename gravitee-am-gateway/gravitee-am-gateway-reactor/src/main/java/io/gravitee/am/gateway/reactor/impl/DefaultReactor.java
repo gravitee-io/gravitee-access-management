@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.reactor.impl;
 
 import io.gravitee.am.common.event.DomainEvent;
+import io.gravitee.am.gateway.reactor.impl.router.VHostRouter;
+import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionProcessorFactory;
@@ -95,19 +97,34 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     }
 
     @Override
-    public Router mountSubRouter(String contextPath, Router child) {
-        router.mountSubRouter(contextPath, child);
+    public void mountDomain(VertxSecurityDomainHandler domainHandler) {
 
-        return router;
+        Domain domain = domainHandler.getDomain();
+
+        if (domain.isVhostMode()) {
+            // Mount the same router for each virtual host / path.
+            domain.getVhosts().forEach(virtualHost -> this.router.mountSubRouter(sanitizePath(virtualHost.getPath()), VHostRouter.router(domain, virtualHost, domainHandler.router())));
+        } else {
+            this.router.mountSubRouter(sanitizePath(domain.getPath()), VHostRouter.router(domain, domainHandler.router()));
+        }
+    }
+
+    private String sanitizePath(String path) {
+
+        if(path.endsWith("/")) {
+            return path;
+        }
+
+        return path + "/";
     }
 
     @Override
-    public Router unMountSubRouter(String contextPath) {
-        router.getRoutes().stream()
-                .filter(route -> route.getPath() != null && route.getPath().startsWith(contextPath))
-                .forEach(Route::remove);
+    public void unMountDomain(VertxSecurityDomainHandler domainHandler) {
 
-        return router;
+
+        domainHandler.router()
+                .getRoutes()
+                .forEach(Route::remove);
     }
 
     @Override

@@ -216,6 +216,7 @@ postman: ## Run postman non regression test (require newman npm module)
 	@newman run postman/collections/graviteeio-am-user-management-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-api-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-uma2-app-version-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-vhost-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 
 	# Need to find how to protect organization and environment creation routes.
 	#@newman run postman/collections/graviteeio-am-organization-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
@@ -280,6 +281,7 @@ pluginsGateway: # Copy plugins to Gateway
 	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-oidc/target/gravitee-am-gateway-handler-oidc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-scim/target/gravitee-am-gateway-handler-scim-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-users/target/gravitee-am-gateway-handler-users-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-discovery/target/gravitee-am-gateway-handler-discovery-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-github/target/gravitee-am-identityprovider-github-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-inline/target/gravitee-am-identityprovider-inline-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-ldap/target/gravitee-am-identityprovider-ldap-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)

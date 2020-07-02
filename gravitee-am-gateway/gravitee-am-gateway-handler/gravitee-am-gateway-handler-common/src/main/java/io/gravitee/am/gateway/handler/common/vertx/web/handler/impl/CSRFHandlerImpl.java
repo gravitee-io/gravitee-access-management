@@ -33,6 +33,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * Override default Vert.x CSRFHandler to enhance routing context with CSRF values to fill in the right value for the form fields.
  *
@@ -164,7 +166,8 @@ public class CSRFHandlerImpl implements CSRFHandler {
                 final String token = generateToken();
                 // put the token in the context for users who prefer to render the token directly on the HTML
                 ctx.put(headerName, token);
-                ctx.addCookie(Cookie.cookie(cookieName, token).setPath(cookiePath));
+                String cookiePath = ctx.get(CONTEXT_PATH) != null ? ctx.get(CONTEXT_PATH) : this.cookiePath;
+                ctx.addCookie(io.vertx.core.http.Cookie.cookie(cookieName, token).setPath(cookiePath));
                 enhanceContext(ctx);
                 ctx.next();
                 break;

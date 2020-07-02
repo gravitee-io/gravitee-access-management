@@ -79,6 +79,7 @@ import {DomainEntrypointResolver} from "./resolvers/domain-entrypoint.resolver";
 import { DomainDashboardComponent } from './domain/dashboard/dashboard.component';
 import { DomainSettingsComponent } from './domain/settings/settings.component';
 import { DomainSettingsGeneralComponent } from './domain/settings/general/general.component';
+import { DomainSettingsEntrypointsComponent } from "./domain/settings/entrypoints/entrypoints.component";
 import { DomainSettingsOpenidClientRegistrationComponent } from './domain/settings/openid/client-registration/client-registration.component';
 import { ClientRegistrationSettingsComponent } from './domain/settings/openid/client-registration/settings/settings.component';
 import { ClientRegistrationDefaultScopeComponent } from './domain/settings/openid/client-registration/default-scope/default-scope.component';
@@ -290,6 +291,7 @@ import { ApplicationResourcePolicyResolver } from './resolvers/application-resou
     DomainDashboardComponent,
     DomainSettingsComponent,
     DomainSettingsGeneralComponent,
+    DomainSettingsEntrypointsComponent,
     DomainSettingsOpenidClientRegistrationComponent,
     ClientRegistrationSettingsComponent,
     ClientRegistrationDefaultScopeComponent,

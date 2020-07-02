@@ -160,6 +160,7 @@ import {ApplicationResourceComponent} from './domain/applications/application/ad
 import {ApplicationResourceResolver} from './resolvers/application-resource.resolver';
 import {ApplicationResourcePolicyComponent} from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
 import {ApplicationResourcePolicyResolver} from './resolvers/application-resource-policy.resolver';
+import {DomainSettingsEntrypointsComponent} from "./domain/settings/entrypoints/entrypoints.component";
 
 const routes: Routes = [
   {
@@ -850,6 +851,22 @@ const routes: Routes = [
             data: {
               menu: {
                 label: 'General',
+                section: 'Settings'
+              },
+              perms: {
+                only: ['domain_settings_read']
+              }
+            }
+          },
+          { path: 'entrypoints',
+            component: DomainSettingsEntrypointsComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              entrypoint: DomainEntrypointResolver
+            },
+            data: {
+              menu: {
+                label: 'Entrypoints',
                 section: 'Settings'
               },
               perms: {

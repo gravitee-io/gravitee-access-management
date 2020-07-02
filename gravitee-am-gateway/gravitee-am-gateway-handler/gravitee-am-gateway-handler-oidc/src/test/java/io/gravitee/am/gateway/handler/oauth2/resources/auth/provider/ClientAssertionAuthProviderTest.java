@@ -16,12 +16,12 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +33,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -65,11 +66,14 @@ public class ClientAssertionAuthProviderTest {
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION)).thenReturn("dummy");
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+        when(context.get(CONTEXT_PATH)).thenReturn("/");
 
         when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.just(client));
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
+        authProvider.handle(client, context, clientAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
             Assert.assertNotNull(clientAsyncResult.result());
@@ -84,11 +88,14 @@ public class ClientAssertionAuthProviderTest {
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION)).thenReturn("dummy");
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+        when(context.get(CONTEXT_PATH)).thenReturn("/");
 
         when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.error(new InvalidClientException("Unknown or unsupported assertion_type")));
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
+        authProvider.handle(client, context, clientAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
             Assert.assertTrue(clientAsyncResult.failed());
@@ -108,10 +115,12 @@ public class ClientAssertionAuthProviderTest {
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION)).thenReturn("dummy");
         when(httpServerRequest.getParam(Parameters.CLIENT_ID)).thenReturn("notMatching");
-
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+        when(context.get(CONTEXT_PATH)).thenReturn("/");
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
+        authProvider.handle(client, context, clientAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
             Assert.assertTrue(clientAsyncResult.failed());

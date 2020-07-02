@@ -45,11 +45,8 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
     public void setUp() throws Exception {
         super.setUp();
 
-        // set domain
-        when(domain.getPath()).thenReturn("test");
-
         router.route(HttpMethod.GET, "/oauth/authorize")
-                .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new AuthorizationRequestParseParametersHandler())
                 .handler(rc -> rc.response().end())
                 .failureHandler(rc -> rc.response().setStatusCode(400).end());
     }

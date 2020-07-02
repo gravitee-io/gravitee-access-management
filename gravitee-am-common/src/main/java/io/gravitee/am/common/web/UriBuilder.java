@@ -201,6 +201,13 @@ public class UriBuilder {
         return this;
     }
 
+    public UriBuilder parameters(Iterable<Map.Entry<String, String>> parameters) {
+        if (parameters != null) {
+            parameters.forEach(e -> addParameter(e.getKey(), e.getValue()));
+        }
+        return this;
+    }
+
     public UriBuilder addParameter(String parameter, String value) {
         if (query == null) {
             query = "";

@@ -63,7 +63,7 @@ public interface UserService {
 
     Completable resetPassword(String domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable sendRegistrationConfirmation(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
+    Completable sendRegistrationConfirmation(String domain, String userId, io.gravitee.am.identityprovider.api.User principal);
 
     Completable unlock(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
@@ -91,10 +91,6 @@ public interface UserService {
 
     default Completable resetPassword(String domain, String userId, String password) {
         return resetPassword(domain, userId, password, null);
-    }
-
-    default Completable sendRegistrationConfirmation(ReferenceType referenceType, String referenceId, String userId) {
-        return sendRegistrationConfirmation(referenceType, referenceId, userId, null);
     }
 
     default Completable unlock(ReferenceType referenceType, String referenceId, String userId) {

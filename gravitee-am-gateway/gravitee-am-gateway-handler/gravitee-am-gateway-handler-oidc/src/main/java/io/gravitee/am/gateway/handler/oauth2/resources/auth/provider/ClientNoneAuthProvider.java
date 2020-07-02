@@ -22,7 +22,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * Client Authentication method : none
@@ -36,15 +36,15 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 public class ClientNoneAuthProvider implements ClientAuthProvider {
 
     @Override
-    public boolean canHandle(Client client, HttpServerRequest request) {
-        if (GrantType.CLIENT_CREDENTIALS.equals(request.getParam(Parameters.GRANT_TYPE))) {
+    public boolean canHandle(Client client, RoutingContext context) {
+        if (GrantType.CLIENT_CREDENTIALS.equals(context.request().getParam(Parameters.GRANT_TYPE))) {
             return false;
         }
         return client != null && ClientAuthenticationMethod.NONE.equals(client.getTokenEndpointAuthMethod());
     }
 
     @Override
-    public void handle(Client client, HttpServerRequest request, Handler<AsyncResult<Client>> handler) {
+    public void handle(Client client, RoutingContext context, Handler<AsyncResult<Client>> handler) {
         handler.handle(Future.succeededFuture(client));
     }
 }

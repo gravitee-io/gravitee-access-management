@@ -38,6 +38,8 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * Fetch social providers information if client using one of them
  *
@@ -82,7 +84,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
 
             // client enable social connect
             // get social identity providers information to correctly build the login page
-            enhanceSocialIdentityProviders(socialIdentityProviders, routingContext.request(), resultHandler -> {
+            enhanceSocialIdentityProviders(socialIdentityProviders, routingContext, resultHandler -> {
                 if (resultHandler.failed()) {
                     logger.error("Unable to enhance client social identity providers", resultHandler.cause());
                     routingContext.fail(new InvalidRequestException("Unable to enhance client social identity providers"));
@@ -121,7 +123,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         }
     }
 
-    private void enhanceSocialIdentityProviders(List<IdentityProvider> identityProviders, HttpServerRequest request, Handler<AsyncResult<List<SocialProviderData>>> resultHandler) {
+    private void enhanceSocialIdentityProviders(List<IdentityProvider> identityProviders, RoutingContext context, Handler<AsyncResult<List<SocialProviderData>>> resultHandler) {
         Observable.fromIterable(identityProviders)
                 .flatMapMaybe(identityProvider -> {
                     // get social identity provider type (currently use for display purpose (logo, description, ...)
@@ -131,7 +133,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                         identityProvider.setType(identityProviderSocialType.get());
                     }
                     // get social sign in url
-                    return getAuthorizeUrl(identityProvider.getId(), request)
+                    return getAuthorizeUrl(identityProvider.getId(), context)
                             .map(authorizeUrl -> new SocialProviderData(identityProvider, authorizeUrl))
                             .defaultIfEmpty(new SocialProviderData(identityProvider,null));
                 })
@@ -140,16 +142,16 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                         error -> resultHandler.handle(Future.failedFuture(error)));
     }
 
-    private Maybe<String> getAuthorizeUrl(String identityProviderId, HttpServerRequest request) {
+    private Maybe<String> getAuthorizeUrl(String identityProviderId, RoutingContext context) {
         return identityProviderManager.get(identityProviderId)
                 .flatMap(authenticationProvider -> {
                     Map<String, String> parameters = Collections.singletonMap("provider", identityProviderId);
-                    String redirectUri = buildUri(request, "/" + domain.getPath() + "/login/callback", parameters);
+                    String redirectUri = buildUri(context.request(), context.get(CONTEXT_PATH) + "/login/callback", parameters);
                     Request signInURL = ((SocialAuthenticationProvider) authenticationProvider).signInUrl(redirectUri);
                     if (signInURL == null) {
                         return Maybe.empty();
                     }
-                    return Maybe.just(HttpMethod.GET.equals(signInURL.getMethod()) ? signInURL.getUri() : buildUri(request, "/" + domain.getPath() + "/login/SSO/POST", parameters));
+                    return Maybe.just(HttpMethod.GET.equals(signInURL.getMethod()) ? signInURL.getUri() : buildUri(context.request(), context.get(CONTEXT_PATH) + "/login/SSO/POST", parameters));
                 });
     }
 

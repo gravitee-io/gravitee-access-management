@@ -48,6 +48,6 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     }
 
     private String getEndpointAbsoluteURL(String basePath, String endpointPath) {
-        return basePath + domain.getPath() + endpointPath;
+        return (basePath + endpointPath);
     }
 }

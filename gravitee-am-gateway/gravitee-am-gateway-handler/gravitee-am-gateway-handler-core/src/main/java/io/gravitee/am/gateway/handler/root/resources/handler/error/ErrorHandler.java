@@ -84,6 +84,9 @@ public class ErrorHandler implements Handler<RoutingContext> {
     }
 
     private void handleException(RoutingContext routingContext, String errorCode, String errorDetail) {
+
+        String errorPageURL = UriBuilderRequest.extractBasePath(routingContext) + errorPage;
+
         try {
             final HttpServerRequest request = routingContext.request();
             // prepare query parameters
@@ -101,11 +104,11 @@ public class ErrorHandler implements Handler<RoutingContext> {
                 parameters.put("error_description", errorDetail);
             }
             // redirect
-            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request,  errorPage, parameters, true);
+            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request,  errorPageURL, parameters, true);
             doRedirect(routingContext.response(), proxiedErrorPage);
         } catch (Exception e) {
             logger.error("Unable to handle root error response", e);
-            doRedirect(routingContext.response(),  errorPage);
+            doRedirect(routingContext.response(),  errorPageURL);
         }
     }
 

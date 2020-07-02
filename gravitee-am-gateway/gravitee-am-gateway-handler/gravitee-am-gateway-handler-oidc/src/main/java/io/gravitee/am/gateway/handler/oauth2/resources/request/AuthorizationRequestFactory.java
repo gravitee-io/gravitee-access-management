@@ -28,6 +28,7 @@ import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,14 +50,15 @@ public final class AuthorizationRequestFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestFactory.class);
 
-    public AuthorizationRequest create(HttpServerRequest request) {
+    public AuthorizationRequest create(RoutingContext context) {
+        HttpServerRequest request = context.request();
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         // set technical information
         authorizationRequest.setTimestamp(System.currentTimeMillis());
         authorizationRequest.setId(RandomString.generate());
         authorizationRequest.setTransactionId(RandomString.generate());
         authorizationRequest.setUri(request.uri());
-        authorizationRequest.setOrigin(extractOrigin(request));
+        authorizationRequest.setOrigin(extractOrigin(context));
         authorizationRequest.setContextPath(request.path() != null ? request.path().split("/")[0] : null);
         authorizationRequest.setPath(request.path());
         authorizationRequest.setHeaders(extractHeaders(request));
@@ -112,10 +116,10 @@ public final class AuthorizationRequestFactory {
         return null;
     }
 
-    private String extractOrigin(HttpServerRequest request) {
+    private String extractOrigin(RoutingContext context) {
         String basePath = "/";
         try {
-            basePath = UriBuilderRequest.resolveProxyRequest(request, "/", null);
+            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH), null);
         } catch (Exception e) {
             logger.error("Unable to resolve OAuth 2.0 Authorization Request origin uri", e);
         }

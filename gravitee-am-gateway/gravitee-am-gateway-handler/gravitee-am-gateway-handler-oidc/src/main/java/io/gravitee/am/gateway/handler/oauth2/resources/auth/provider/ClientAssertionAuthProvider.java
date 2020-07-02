@@ -27,6 +27,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +68,7 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
     }
 
     @Override
-    public boolean canHandle(Client client, HttpServerRequest request) {
+    public boolean canHandle(Client client, RoutingContext context) {
         if (client != null && (
                 ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(client.getTokenEndpointAuthMethod()) ||
                         ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(client.getTokenEndpointAuthMethod()))) {
@@ -75,18 +76,19 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
         }
 
         if ((client == null || client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty())
-                && getClientAssertion(request) != null && getClientAssertionType(request) != null) {
+                && getClientAssertion(context.request()) != null && getClientAssertionType(context.request()) != null) {
             return true;
         }
         return false;
     }
 
     @Override
-    public void handle(Client client, HttpServerRequest request, Handler<AsyncResult<Client>> handler) {
+    public void handle(Client client, RoutingContext context, Handler<AsyncResult<Client>> handler) {
+        HttpServerRequest request = context.request();
         String clientAssertionType = getClientAssertionType(request);
         String clientAssertion = getClientAssertion(request);
         String clientId = request.getParam(Parameters.CLIENT_ID);
-        String basePath = UriBuilderRequest.extractBasePath(request);
+        String basePath = UriBuilderRequest.extractBasePath(context);
 
         clientAssertionService.assertClient(clientAssertionType, clientAssertion, basePath)
                 .flatMap(client1 -> {

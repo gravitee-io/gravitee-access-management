@@ -17,6 +17,7 @@ import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {AuthService} from "../../../../services/auth.service";
 import {SnackbarService} from "../../../../services/snackbar.service";
+import {EntrypointService} from "../../../../services/entrypoint.service";
 
 @Component({
   selector: 'application-overview',
@@ -26,18 +27,19 @@ import {SnackbarService} from "../../../../services/snackbar.service";
 export class ApplicationEndpointsComponent implements OnInit {
   application: any;
   entrypoint: any;
-  private baseURL: string;
+  private baseUrl: string;
   @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
 
   constructor(private route: ActivatedRoute,
-              private snackbarService: SnackbarService) {
+              private snackbarService: SnackbarService,
+              private entrypointService: EntrypointService) {
   }
 
   ngOnInit() {
     const domain = this.route.snapshot.data['domain'];
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.application = this.route.snapshot.parent.data['application'];
-    this.baseURL = this.entrypoint.url + '/' + domain.path;
+    this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, domain);
   }
 
   valueCopied(message: string) {
@@ -45,7 +47,7 @@ export class ApplicationEndpointsComponent implements OnInit {
   }
 
   endpoint(path) {
-    return this.baseURL + path;
+    return this.baseUrl + path;
   }
 
 }

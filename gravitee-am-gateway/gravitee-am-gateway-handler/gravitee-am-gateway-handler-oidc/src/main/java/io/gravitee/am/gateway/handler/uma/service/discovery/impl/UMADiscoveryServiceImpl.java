@@ -76,16 +76,16 @@ public class UMADiscoveryServiceImpl implements UMADiscoveryService {
         //Set UMA2 metadata values
         umaMetadata
                 //UMA2 GRANT section
-                .setClaimsInteractionEndpoint(getEndpointAbsoluteURL(basePath,CLAIMS_INTERACTION_PATH))
+                .setClaimsInteractionEndpoint(getEndpointAbsoluteURL(basePath, CLAIMS_INTERACTION_PATH))
                 .setUmaProfilesSupported(Collections.emptyList())
                 //UMA2 Protection API section
-                .setPermissionEndpoint(getEndpointAbsoluteURL(basePath,PERMISSION_PATH))
-                .setResourceRegistrationEndpoint(getEndpointAbsoluteURL(basePath,RESOURCE_REGISTRATION_PATH));
+                .setPermissionEndpoint(getEndpointAbsoluteURL(basePath, PERMISSION_PATH))
+                .setResourceRegistrationEndpoint(getEndpointAbsoluteURL(basePath, RESOURCE_REGISTRATION_PATH));
 
         return umaMetadata;
     }
 
     private String getEndpointAbsoluteURL(String basePath, String endpointPath) {
-        return basePath + domain.getPath() + UMA_PATH + endpointPath;
+        return basePath + UMA_PATH + endpointPath;
     }
 }

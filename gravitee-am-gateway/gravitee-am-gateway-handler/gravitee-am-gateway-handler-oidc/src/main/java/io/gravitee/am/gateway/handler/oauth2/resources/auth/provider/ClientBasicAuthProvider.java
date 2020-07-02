@@ -24,6 +24,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.Base64;
 
@@ -41,20 +42,20 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
     private static final String TYPE = "Basic";
 
     @Override
-    public boolean canHandle(Client client, HttpServerRequest request) {
+    public boolean canHandle(Client client, RoutingContext context) {
         if (client != null && ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(client.getTokenEndpointAuthMethod())) {
             return true;
         }
         if ((client != null && (client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty()))
-                && getBasicAuthorization(request) != null) {
+                && getBasicAuthorization(context.request()) != null) {
             return true;
         }
         return false;
     }
 
     @Override
-    public void handle(Client client, HttpServerRequest request, Handler<AsyncResult<Client>> handler) {
-        final String authorization = getBasicAuthorization(request);
+    public void handle(Client client, RoutingContext context, Handler<AsyncResult<Client>> handler) {
+        final String authorization = getBasicAuthorization(context.request());
         if (authorization == null) {
             handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method", authenticationHeader())));
             return;

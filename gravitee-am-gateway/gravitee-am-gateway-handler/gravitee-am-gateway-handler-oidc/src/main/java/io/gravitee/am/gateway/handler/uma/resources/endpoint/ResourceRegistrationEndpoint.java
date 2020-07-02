@@ -178,7 +178,6 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
     private String resourceLocation(String basePath, Resource resource) {
         return new StringBuilder()
                 .append(basePath)
-                .append(domain.getPath())
                 .append(UMA_PATH)
                 .append(RESOURCE_REGISTRATION_PATH)
                 .append("/")

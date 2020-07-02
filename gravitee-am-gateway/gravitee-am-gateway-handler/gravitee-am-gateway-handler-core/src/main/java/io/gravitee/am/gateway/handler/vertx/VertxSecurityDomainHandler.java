@@ -101,8 +101,8 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         return router;
     }
 
-    public String contextPath() {
-        return '/' + domain.getPath() + '/';
+    public Domain getDomain() {
+        return domain;
     }
 
     private void startRootProtocol() {

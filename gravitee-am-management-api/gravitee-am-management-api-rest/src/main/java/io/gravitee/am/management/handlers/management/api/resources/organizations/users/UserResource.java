@@ -88,8 +88,7 @@ public class UserResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.READ)
                 .andThen(userService.findById(ReferenceType.ORGANIZATION, organizationId, user)
                         .map(UserEntity::new)
-                        .flatMap(this::enhanceIdentityProvider)
-                        .flatMap(this::enhanceClient))
+                        .flatMap(this::enhanceIdentityProvider))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -151,86 +150,11 @@ public class UserResource extends AbstractResource {
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
-    @POST
-    @Path("resetPassword")
-    @ApiOperation(value = "Reset password",
-            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Password reset"),
-            @ApiResponse(code = 500, message = "Internal server error")})
-    public void resetPassword(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("user") String user,
-            @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
-            @Suspended final AsyncResponse response) {
-        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
-
-        // check password policy
-        if (!passwordValidator.validate(password.getPassword())) {
-            response.resume(new UserInvalidException(("Field [password] is invalid")));
-            return;
-        }
-
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
-                .andThen(userService.resetPassword(ReferenceType.ORGANIZATION, organizationId, user, password.getPassword(), authenticatedUser))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
-    }
-
-    @POST
-    @Path("sendRegistrationConfirmation")
-    @ApiOperation(value = "Send registration confirmation email",
-            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Email sent"),
-            @ApiResponse(code = 500, message = "Internal server error")})
-    public void sendRegistrationConfirmation(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("user") String user,
-            @Suspended final AsyncResponse response) {
-        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
-
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
-                .andThen(userService.sendRegistrationConfirmation(ReferenceType.ORGANIZATION, organizationId, user, authenticatedUser))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
-    }
-
-    @POST
-    @Path("unlock")
-    @ApiOperation(value = "Unlock a user",
-            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "User unlocked"),
-            @ApiResponse(code = 500, message = "Internal server error")})
-    public void unlockUser(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("user") String user,
-            @Suspended final AsyncResponse response) {
-        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
-
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
-                .andThen(userService.unlock(ReferenceType.ORGANIZATION, organizationId, user, authenticatedUser))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
-    }
-
     private Single<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
         if (userEntity.getSource() != null) {
             return identityProviderService.findById(userEntity.getSource())
                     .map(idP -> {
                         userEntity.setSource(idP.getName());
-                        return userEntity;
-                    })
-                    .defaultIfEmpty(userEntity)
-                    .toSingle();
-        }
-        return Single.just(userEntity);
-    }
-
-    private Single<UserEntity> enhanceClient(UserEntity userEntity) {
-        if (userEntity.getClient() != null) {
-            return applicationService.findById(userEntity.getClient())
-                    .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(userEntity.getReferenceId(), userEntity.getClient())))
-                    .map(application -> {
-                        userEntity.setApplicationEntity(new ApplicationEntity(application));
                         return userEntity;
                     })
                     .defaultIfEmpty(userEntity)

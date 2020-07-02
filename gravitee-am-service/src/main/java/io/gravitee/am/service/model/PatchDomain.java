@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -27,6 +28,7 @@ import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -43,6 +45,8 @@ public class PatchDomain {
     private Optional<String> description;
     private Optional<Boolean> enabled;
     private Optional<String> path;
+    private Optional<Boolean> vhostMode;
+    private Optional<List<VirtualHost>> vhosts;
     @JsonProperty("oidc")
     private Optional<PatchOIDCSettings> oidc;
     private Optional<UMASettings> uma;
@@ -139,6 +143,8 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setPath, this.getPath());
+        SetterUtils.safeSet(toPatch::setVhostMode, this.getVhostMode());
+        SetterUtils.safeSet(toPatch::setVhosts, this.getVhosts());
         SetterUtils.safeSet(toPatch::setUma, this.getUma());
         SetterUtils.safeSet(toPatch::setScim, this.getScim());
         SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
@@ -173,6 +179,8 @@ public class PatchDomain {
                 || description != null && description.isPresent()
                 || enabled != null && enabled.isPresent()
                 || path != null && path.isPresent()
+                || vhostMode != null && vhostMode.isPresent()
+                || vhosts != null && vhosts.isPresent()
                 || loginSettings != null && loginSettings.isPresent()
                 || accountSettings != null && accountSettings.isPresent()
                 || tags != null && tags.isPresent()) {
@@ -193,5 +201,21 @@ public class PatchDomain {
         }
 
         return requiredPermissions;
+    }
+
+    public Optional<Boolean> getVhostMode() {
+        return vhostMode;
+    }
+
+    public void setVhostMode(Optional<Boolean> vhostMode) {
+        this.vhostMode = vhostMode;
+    }
+
+    public Optional<List<VirtualHost>> getVhosts() {
+        return vhosts;
+    }
+
+    public void setVhosts(Optional<List<VirtualHost>> vhosts) {
+        this.vhosts = vhosts;
     }
 }

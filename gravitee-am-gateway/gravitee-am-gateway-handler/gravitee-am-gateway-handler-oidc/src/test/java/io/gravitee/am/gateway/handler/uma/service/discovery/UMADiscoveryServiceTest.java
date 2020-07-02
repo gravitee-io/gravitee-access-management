@@ -47,12 +47,10 @@ public class UMADiscoveryServiceTest {
     @Mock
     private Domain domain;
 
-    private static final String DOMAIN_PATH = "unit-test";
     private static final String BASE_PATH = "http://basepath";
 
     @Before
     public void setUp() {
-        when(domain.getPath()).thenReturn(DOMAIN_PATH);
         when(oidcDiscoveryService.getConfiguration(BASE_PATH)).thenReturn(defaultMetadata());
     }
 

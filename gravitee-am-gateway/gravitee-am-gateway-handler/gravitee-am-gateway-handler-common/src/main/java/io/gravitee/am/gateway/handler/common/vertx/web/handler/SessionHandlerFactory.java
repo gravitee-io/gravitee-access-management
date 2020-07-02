@@ -52,10 +52,9 @@ public class SessionHandlerFactory implements FactoryBean<SessionHandler> {
     @Override
     public io.vertx.reactivex.ext.web.handler.SessionHandler getObject() {
         SessionStore sessionStore = LocalSessionStore.create(vertx).getDelegate();
-        return io.vertx.reactivex.ext.web.handler.SessionHandler.newInstance(new SessionHandlerImpl(DEFAULT_SESSION_COOKIE_NAME, DEFAULT_SESSION_COOKIE_PATH, DEFAULT_SESSION_TIMEOUT, DEFAULT_NAG_HTTPS, DEFAULT_COOKIE_SECURE_FLAG, DEFAULT_COOKIE_HTTP_ONLY_FLAG, DEFAULT_SESSIONID_MIN_LENGTH, sessionStore)
+        return io.vertx.reactivex.ext.web.handler.SessionHandler.newInstance(new SessionHandlerImpl(DEFAULT_SESSION_COOKIE_NAME, DEFAULT_SESSION_TIMEOUT, DEFAULT_NAG_HTTPS, DEFAULT_COOKIE_SECURE_FLAG, DEFAULT_COOKIE_HTTP_ONLY_FLAG, DEFAULT_SESSIONID_MIN_LENGTH, sessionStore)
                 .setCookieHttpOnlyFlag(true)
                 .setSessionCookieName(environment.getProperty("http.cookie.session.name", String.class, DEFAULT_SESSION_COOKIE_NAME))
-                .setSessionCookiePath("/" + domain.getPath())
                 .setSessionTimeout(environment.getProperty("http.cookie.session.timeout", Long.class, DEFAULT_SESSION_TIMEOUT))
                 .setCookieSecureFlag(environment.getProperty("http.cookie.secure", Boolean.class, false))
                 .setAuthProvider(userAuthProvider));
