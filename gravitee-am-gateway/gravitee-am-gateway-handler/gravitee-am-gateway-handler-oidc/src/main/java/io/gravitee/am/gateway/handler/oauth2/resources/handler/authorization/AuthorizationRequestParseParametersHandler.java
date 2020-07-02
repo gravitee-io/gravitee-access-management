@@ -18,12 +18,14 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseModeException;
 import io.gravitee.am.gateway.handler.oauth2.service.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oidc.exception.ClaimsRequestSyntaxException;
-import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
+import io.gravitee.am.gateway.handler.oidc.service.request.ClaimRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequestResolver;
 import io.gravitee.am.model.Domain;
@@ -38,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Collections;
 import java.util.List;
 
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
@@ -55,13 +58,12 @@ import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 public class AuthorizationRequestParseParametersHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseParametersHandler.class);
+    private static final String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
     private final String loginPageUrl;
-    private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public AuthorizationRequestParseParametersHandler(Domain domain, OpenIDDiscoveryService openIDDiscoveryService) {
+    public AuthorizationRequestParseParametersHandler(Domain domain) {
         this.loginPageUrl = '/' + domain.getPath() + "/login";
-        this.openIDDiscoveryService = openIDDiscoveryService;
     }
 
     @Override
@@ -182,9 +184,22 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
 
     private void parseClaimsParameter(RoutingContext context) {
         String claims = context.request().getParam(Parameters.CLAIMS);
+        OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
         if (claims != null) {
             try {
                 ClaimsRequest claimsRequest = claimsRequestResolver.resolve(claims);
+                // check acr_values supported
+                List<String> acrValuesSupported = openIDProviderMetadata.getAcrValuesSupported();
+                if (claimsRequest.getIdTokenClaims() != null
+                        && claimsRequest.getIdTokenClaims().get(Claims.acr) != null) {
+                    ClaimRequest claimRequest = claimsRequest.getIdTokenClaims().get(Claims.acr);
+                    List<String> acrValuesRequested = claimRequest.getValue() != null
+                            ? Collections.singletonList(claimRequest.getValue())
+                            : claimRequest.getValues() != null ? claimRequest.getValues() : Collections.emptyList();
+                    if (!acrValuesSupported.containsAll(acrValuesRequested)) {
+                        throw new InvalidRequestException("Invalid parameter: claims, acr_values requested not supported");
+                    }
+                }
                 // save claims request as json string value (will be use for id_token and/or UserInfo endpoint)
                 context.request().params().set(Parameters.CLAIMS, Json.encode(claimsRequest));
             } catch (ClaimsRequestSyntaxException e) {
@@ -195,13 +210,13 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
 
     private void parseResponseModeParameter(RoutingContext context) {
         String responseMode = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE);
-
+        OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
         if (responseMode == null) {
             return;
         }
 
         // get supported response modes
-        List<String> responseModesSupported = openIDDiscoveryService.getConfiguration("/").getResponseModesSupported();
+        List<String> responseModesSupported = openIDProviderMetadata.getResponseModesSupported();
         if (!responseModesSupported.contains(responseMode)) {
             throw new UnsupportedResponseModeException("Unsupported response mode: " + responseMode);
         }

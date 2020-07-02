@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.discovery;
 
+import io.gravitee.am.common.oidc.AcrValues;
+import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscoveryServiceImpl;
 import io.gravitee.am.model.Domain;
@@ -47,6 +49,17 @@ public class OpenIDDiscoveryServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertTrue(openIDProviderMetadata.getRequestParameterSupported());
     }
+    public void shouldContain_acr_claim_supported() {
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+        assertTrue(openIDProviderMetadata.getClaimsSupported().contains(Claims.acr));
+    }
+
+    @Test
+    public void shouldContain_acr_values_supported() {
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+        assertTrue(openIDProviderMetadata.getAcrValuesSupported().containsAll(AcrValues.values()));
+    }
+
 }
 
 

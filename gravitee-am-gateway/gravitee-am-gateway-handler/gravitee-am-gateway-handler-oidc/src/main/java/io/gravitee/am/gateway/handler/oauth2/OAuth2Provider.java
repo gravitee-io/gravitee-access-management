@@ -179,10 +179,11 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
         // Authorization endpoint
         oauth2Router.route(HttpMethod.GET,"/authorize")
-                .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
+                .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
+                .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService))
-                .handler(new AuthorizationRequestParseParametersHandler(domain, openIDDiscoveryService))
+                .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(new AuthorizationRequestValidateParametersHandler(domain))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler())
