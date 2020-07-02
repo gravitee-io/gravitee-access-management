@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.Collections;
 import java.util.List;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 
 /**
@@ -59,12 +60,8 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseParametersHandler.class);
     private static final String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
+    private final static String LOGIN_ENDPOINT = "/login";
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
-    private final String loginPageUrl;
-
-    public AuthorizationRequestParseParametersHandler(Domain domain) {
-        this.loginPageUrl = '/' + domain.getPath() + "/login";
-    }
 
     @Override
     public void handle(RoutingContext context) {
@@ -234,7 +231,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     private boolean returnFromLoginPage(RoutingContext context) {
         String referer = context.request().headers().get(HttpHeaders.REFERER);
         try {
-            return referer != null && UriBuilder.fromURIString(referer).build().getPath().contains(loginPageUrl);
+            return referer != null && UriBuilder.fromURIString(referer).build().getPath().contains(context.get(CONTEXT_PATH) + LOGIN_ENDPOINT);
         } catch (URISyntaxException e) {
             logger.debug("Unable to calculate referer url : {}", referer, e);
             return false;

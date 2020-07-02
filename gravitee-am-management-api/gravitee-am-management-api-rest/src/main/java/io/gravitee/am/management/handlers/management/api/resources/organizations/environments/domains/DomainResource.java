@@ -295,6 +295,8 @@ public class DomainResource extends AbstractResource {
             filteredDomain.setCreatedAt(domain.getCreatedAt());
             filteredDomain.setUpdatedAt(domain.getUpdatedAt());
             filteredDomain.setPath(domain.getPath());
+            filteredDomain.setVhostMode(domain.isVhostMode());
+            filteredDomain.setVhosts(domain.getVhosts());
             filteredDomain.setReferenceType(domain.getReferenceType());
             filteredDomain.setReferenceId(domain.getReferenceId());
         }

@@ -75,6 +75,6 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
             return authorizationRequest;
         }
         // if none, we have the required request parameters to re-create the authorize request
-        return authorizationRequestFactory.create(routingContext.request());
+        return authorizationRequestFactory.create(routingContext);
     }
 }

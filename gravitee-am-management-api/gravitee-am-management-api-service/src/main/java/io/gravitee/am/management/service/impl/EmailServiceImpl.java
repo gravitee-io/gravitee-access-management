@@ -22,11 +22,14 @@ import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,13 +81,16 @@ public class EmailServiceImpl implements EmailService {
     @Qualifier("managementJwtBuilder")
     private JWTBuilder jwtBuilder;
 
+    @Autowired
+    private DomainService domainService;
+
     @Override
-    public void send(io.gravitee.am.model.Template template, User user) {
+    public void send(Domain domain, io.gravitee.am.model.Template template, User user) {
         if (enabled) {
             // get raw email template
             io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, user);
             // prepare email
-            Email email = prepareEmail(template, emailTemplate, user);
+            Email email = prepareEmail(domain, template, emailTemplate, user);
             // send email
             sendEmail(email, user);
         }
@@ -110,8 +116,8 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    private Email prepareEmail(io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user) {
-        Map<String, Object> params = prepareEmailParams(user, emailTemplate.getExpiresAfter(), template.redirectUri());
+    private Email prepareEmail(Domain domain, io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user) {
+        Map<String, Object> params = prepareEmailParams(domain, user, emailTemplate.getExpiresAfter(), template.redirectUri());
         Email email = new EmailBuilder()
                 .to(user.getEmail())
                 .from(emailTemplate.getFrom())
@@ -123,7 +129,7 @@ public class EmailServiceImpl implements EmailService {
         return email;
     }
 
-    private Map<String, Object> prepareEmailParams(User user, Integer expiresAfter, String redirectUri) {
+    private Map<String, Object> prepareEmailParams(Domain domain, User user, Integer expiresAfter, String redirectUri) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
         claims.put(Claims.iat, new Date().getTime() / 1000);
@@ -137,13 +143,7 @@ public class EmailServiceImpl implements EmailService {
         claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
 
         String token = jwtBuilder.sign(new JWT(claims));
-
-        String entryPoint = gatewayUrl;
-        if (entryPoint != null && entryPoint.endsWith("/")) {
-            entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
-        }
-
-        String redirectUrl = entryPoint + "/" + user.getReferenceId() + redirectUri + "?token=" + token;
+        String redirectUrl =  domainService.buildUrl(domain, redirectUri + "?token=" + token);
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);

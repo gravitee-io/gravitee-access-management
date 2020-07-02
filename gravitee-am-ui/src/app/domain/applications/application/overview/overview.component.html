@@ -54,7 +54,7 @@
             <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorize);">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_authorize>{{entrypoint.url}}/{{domain.path}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{redirectUri}}</pre>
+            <pre #pre_authorize>{{baseUrl}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{redirectUri}}</pre>
           </div>
 
           <p>Users will be redirected to the login page and will start the Authentication Flow.</p>
@@ -94,7 +94,7 @@
             </button>
 
             <pre #pre_authorization_code_exchange class="multiline">curl -X POST \
-  {{entrypoint.url}}/{{domain.path}}/oauth/token \
+  {{baseUrl}}/oauth/token \
   -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUri}}&client_id={{clientId}}'</pre>
@@ -107,7 +107,7 @@
               <mat-icon>content_copy</mat-icon>
             </button>
             <pre #pre_userinfo class="multiline">curl -X GET \
-  {{entrypoint.url}}/{{domain.path}}/oidc/userinfo \
+  {{baseUrl}}/oidc/userinfo \
   -H 'Authorization: Bearer access_token'</pre>
           </div>
           <p>
@@ -132,7 +132,7 @@
             <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_logout);">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_logout>{{entrypoint.url}}/{{domain.path}}/logout</pre>
+            <pre #pre_logout>{{baseUrl}}/logout</pre>
           </div>
           <blockquote>
             <p>
@@ -162,7 +162,7 @@
               <mat-icon>visibility</mat-icon>
             </button>
             <pre #pre_auth_basic_token class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{domain.path}}/oauth/token \
+              {{baseUrl}}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
   -d 'grant_type=client_credentials'</pre>
@@ -178,7 +178,7 @@
               <mat-icon>visibility</mat-icon>
             </button>
             <pre #pre_post_token class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{domain.path}}/oauth/token \
+              {{baseUrl}}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=client_credentials&client_id={{clientId}}&client_secret={{safeClientSecret}}'</pre>
           </div>
@@ -205,7 +205,7 @@
               <mat-icon>content_copy</mat-icon>
             </button>
             <pre #create_resource class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{domain.path}}/uma/protection/resource_set \
+              {{baseUrl}}/uma/protection/resource_set \
   -H 'Authorization: Bearer |PAT|' \
   -H 'Content-Type: application/json' \
   -d '{{ '{' }}
@@ -233,7 +233,7 @@
               <mat-icon>content_copy</mat-icon>
             </button>
             <pre #create_resource class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{domain.path}}/uma/protection/resource_set/:resourceId/policies \
+              {{baseUrl}}/uma/protection/resource_set/:resourceId/policies \
   -H 'Authorization: Bearer |PAT|' \
   -H 'Content-Type: application/json' \
   -d '{{ '{' }}
@@ -262,7 +262,7 @@
               <mat-icon>content_copy</mat-icon>
             </button>
             <pre #pt_request class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{domain.path}}/uma/protection/permission \
+              {{baseUrl}}/uma/protection/permission \
   -H 'Authorization: Bearer |PAT|' \
   -H 'Content-Type: application/json' \
   -d '{{ '{' }}
@@ -286,7 +286,7 @@
               <mat-icon>content_copy</mat-icon>
             </button>
             <pre #pt_request class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{domain.path}}/oauth/token \
+              {{baseUrl}}/oauth/token \
   -H 'Authorization: Basic Base64(rqpClientId:rqpClientSecret)' \
   -H 'Content-Type: application/x-www-form-url-encoded' \
   -d 'grant_type=urn:ietf:params:oauth:grant-type:uma-ticket' \

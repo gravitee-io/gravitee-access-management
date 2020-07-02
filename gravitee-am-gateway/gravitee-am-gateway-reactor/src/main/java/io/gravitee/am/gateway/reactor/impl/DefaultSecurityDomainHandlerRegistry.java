@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -36,7 +37,6 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultSecurityDomainHandlerRegistry.class);
     private final ConcurrentMap<String, VertxSecurityDomainHandler> handlers = new ConcurrentHashMap<>();
-    private final ConcurrentMap<Object, String> contextPaths = new ConcurrentHashMap<>();
 
     @Autowired
     private SecurityDomainRouterFactory securityDomainRouterFactory;
@@ -46,15 +46,19 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
 
     @Override
     public void create(Domain domain) {
-        logger.info("Register a new domain for {} on path {}", domain.getId(), domain.getPath());
+
+        if(domain.isVhostMode()) {
+            logger.info("Register a new domain [{}] on vhosts [{}]", domain.getId(), domain.getVhosts());
+        } else {
+            logger.info("Register a new domain [{}] on path [{}]", domain.getId(), domain.getPath());
+        }
 
         VertxSecurityDomainHandler handler = create0(domain);
         if (handler != null) {
             try {
                 handler.start();
-                handlers.putIfAbsent(handler.contextPath(), handler);
-                contextPaths.putIfAbsent(domain, handler.contextPath());
-                reactor.mountSubRouter(handler.contextPath(), handler.router());
+                handlers.putIfAbsent(domain.getId(), handler);
+                reactor.mountDomain(handler);
             } catch (Exception ex) {
                 logger.error("Unable to register handler", ex);
             }
@@ -63,13 +67,11 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
 
     @Override
     public void update(Domain domain) {
-        String contextPath = contextPaths.get(domain);
-        if (contextPath != null) {
-            VertxSecurityDomainHandler handler = handlers.get(contextPath);
-            if (handler != null) {
-                remove(domain);
-                create(domain);
-            }
+
+        VertxSecurityDomainHandler handler = handlers.get(domain.getId());
+        if (handler != null) {
+            remove(domain);
+            create(domain);
         } else {
             create(domain);
         }
@@ -77,19 +79,16 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
 
     @Override
     public void remove(Domain domain) {
-        String contextPath = contextPaths.remove(domain);
-        if (contextPath != null) {
-            VertxSecurityDomainHandler handler = handlers.remove(contextPath);
 
-            if (handler != null) {
-                try {
-                    handler.stop();
-                    handlers.remove(handler.contextPath());
-                    reactor.unMountSubRouter(handler.contextPath());
-                    logger.info("Security Domain has been unregistered");
-                } catch (Exception e) {
-                    logger.error("Unable to un-register handler", e);
-                }
+        VertxSecurityDomainHandler handler = handlers.remove(domain.getId());
+        if (handler != null) {
+            try {
+                handler.stop();
+                handlers.remove(domain.getId());
+                reactor.unMountDomain(handler);
+                logger.info("Security Domain has been unregistered");
+            } catch (Exception e) {
+                logger.error("Unable to un-register handler", e);
             }
         }
     }
@@ -99,12 +98,11 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
         handlers.forEach((s, handler) -> {
             try {
                 handler.stop();
-                handlers.remove(handler.contextPath());
+                handlers.remove(handler.getDomain().getId());
             } catch (Exception e) {
                 logger.error("Unable to un-register handler", e);
             }
         });
-        contextPaths.clear();
     }
 
     @Override

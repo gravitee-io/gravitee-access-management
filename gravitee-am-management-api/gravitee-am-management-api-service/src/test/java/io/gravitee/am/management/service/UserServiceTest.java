@@ -38,10 +38,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
@@ -83,6 +82,12 @@ public class UserServiceTest {
 
     @Mock
     private JWTBuilder jwtBuilder;
+
+    @Mock
+    private EmailService emailService;
+
+    @Mock
+    private EmailManager emailManager;
 
     @Before
     public void setUp() {
@@ -185,18 +190,145 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldPreRegisterUser() {
-        shouldPreRegisterUser(false, false);
+    public void shouldPreRegisterUser() throws InterruptedException {
+
+        final String domain = "domain";
+
+        AccountSettings accountSettings;
+        accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isDynamicUserRegistration()).thenReturn(false);
+
+        Domain domain1 = mock(Domain.class);
+        when(domain1.getId()).thenReturn(domain);
+        when(domain1.getAccountSettings()).thenReturn(accountSettings);
+
+        NewUser newUser = mock(NewUser.class);
+        when(newUser.getUsername()).thenReturn("username");
+        when(newUser.getSource()).thenReturn("idp");
+        when(newUser.getClient()).thenReturn("client");
+        when(newUser.isPreRegistration()).thenReturn(true);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
+
+        Application client = mock(Application.class);
+        when(client.getDomain()).thenReturn("domain");
+        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
+        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
+
+        TestObserver<User> testObserver = userService.create(domain, newUser).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(commonUserService, times(1)).create(any());
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        verify(commonUserService).create(argument.capture());
+
+        // Wait few ms to let time to background thread to be executed.
+        Thread.sleep(500);
+        verify(emailService).send(any(Domain.class), eq(Template.REGISTRATION_CONFIRMATION), any(User.class));
+
+        Assert.assertNull(argument.getValue().getRegistrationUserUri());
+        Assert.assertNull(argument.getValue().getRegistrationAccessToken());
     }
 
     @Test
     public void shouldPreRegisterUser_dynamicUserRegistration_domainLevel() {
-        shouldPreRegisterUser(true, false);
+
+        final String domain = "domain";
+
+        AccountSettings accountSettings;
+        accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isDynamicUserRegistration()).thenReturn(true);
+
+        Domain domain1 = mock(Domain.class);
+        when(domain1.getId()).thenReturn(domain);
+        when(domain1.getAccountSettings()).thenReturn(accountSettings);
+
+        NewUser newUser = mock(NewUser.class);
+        when(newUser.getUsername()).thenReturn("username");
+        when(newUser.getSource()).thenReturn("idp");
+        when(newUser.getClient()).thenReturn("client");
+        when(newUser.isPreRegistration()).thenReturn(true);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
+
+        Application client = mock(Application.class);
+        when(client.getDomain()).thenReturn("domain");
+
+        when(jwtBuilder.sign(any())).thenReturn("token");
+        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
+        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
+        when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
+
+        TestObserver<User> testObserver = userService.create(domain, newUser).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(commonUserService, times(1)).create(any());
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        verify(commonUserService).create(argument.capture());
+
+        Assert.assertNotNull(argument.getValue().getRegistrationUserUri());
+        Assert.assertEquals("http://localhost:8092/test/confirmRegistration", argument.getValue().getRegistrationUserUri());
+
+        Assert.assertNotNull(argument.getValue().getRegistrationAccessToken());
+        Assert.assertEquals("token", argument.getValue().getRegistrationAccessToken());
     }
 
     @Test
     public void shouldPreRegisterUser_dynamicUserRegistration_clientLevel() {
-        shouldPreRegisterUser(true, true);
+
+        final String domain = "domain";
+
+        AccountSettings accountSettings;
+        accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isDynamicUserRegistration()).thenReturn(true);
+
+        Domain domain1 = mock(Domain.class);
+        when(domain1.getId()).thenReturn(domain);
+
+        NewUser newUser = mock(NewUser.class);
+        when(newUser.getUsername()).thenReturn("username");
+        when(newUser.getSource()).thenReturn("idp");
+        when(newUser.getClient()).thenReturn("client");
+        when(newUser.isPreRegistration()).thenReturn(true);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
+
+        Application client = mock(Application.class);
+        when(client.getDomain()).thenReturn("domain");
+
+        ApplicationSettings settings = mock(ApplicationSettings.class);
+        when(settings.getAccount()).thenReturn(accountSettings);
+        when(client.getSettings()).thenReturn(settings);
+
+        when(jwtBuilder.sign(any())).thenReturn("token");
+        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
+        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
+        when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
+
+        TestObserver<User> testObserver = userService.create(domain, newUser).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(commonUserService, times(1)).create(any());
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        verify(commonUserService).create(argument.capture());
+
+        Assert.assertNotNull(argument.getValue().getRegistrationUserUri());
+        Assert.assertEquals("http://localhost:8092/test/confirmRegistration", argument.getValue().getRegistrationUserUri());
+
+        Assert.assertNotNull(argument.getValue().getRegistrationAccessToken());
+        Assert.assertEquals("token", argument.getValue().getRegistrationAccessToken());
     }
 
     @Test
@@ -399,62 +531,4 @@ public class UserServiceTest {
         testObserver.assertError(RoleNotFoundException.class);
         verify(commonUserService, never()).update(any());
     }
-
-    private void shouldPreRegisterUser(boolean dynamicUserRegistration, boolean clientLevel) {
-        final String domain = "domain";
-
-        AccountSettings accountSettings;
-        if (dynamicUserRegistration) {
-            accountSettings = mock(AccountSettings.class);
-            when(accountSettings.isDynamicUserRegistration()).thenReturn(true);
-        } else {
-            accountSettings = new AccountSettings();
-        }
-
-        Domain domain1 = mock(Domain.class);
-        when(domain1.getId()).thenReturn(domain);
-        if (!clientLevel) {
-            when(domain1.getAccountSettings()).thenReturn(accountSettings);
-        }
-
-        NewUser newUser = mock(NewUser.class);
-        when(newUser.getUsername()).thenReturn("username");
-        when(newUser.getSource()).thenReturn("idp");
-        when(newUser.getClient()).thenReturn("client");
-        when(newUser.isPreRegistration()).thenReturn(true);
-
-        UserProvider userProvider = mock(UserProvider.class);
-        doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
-
-        Application client = mock(Application.class);
-        when(client.getDomain()).thenReturn("domain");
-        if (clientLevel) {
-            ApplicationSettings settings = mock(ApplicationSettings.class);
-            when(settings.getAccount()).thenReturn(accountSettings);
-            when(client.getSettings()).thenReturn(settings);
-        }
-        when(jwtBuilder.sign(any())).thenReturn("token");
-        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
-        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
-
-        TestObserver<User> testObserver = userService.create(domain, newUser).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        verify(commonUserService, times(1)).create(any());
-        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-        verify(commonUserService).create(argument.capture());
-
-        if (dynamicUserRegistration) {
-            Assert.assertNotNull(argument.getValue().getRegistrationUserUri());
-            Assert.assertNotNull(argument.getValue().getRegistrationAccessToken());
-            Assert.assertEquals("token", argument.getValue().getRegistrationAccessToken());
-        } else {
-            Assert.assertNull(argument.getValue().getRegistrationUserUri());
-            Assert.assertNull(argument.getValue().getRegistrationAccessToken());
-        }
-    }
-
 }

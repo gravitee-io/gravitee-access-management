@@ -129,6 +129,6 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
     }
 
     private String getEndpointAbsoluteURL(String basePath, String endpointPath) {
-        return basePath + domain.getPath() + endpointPath;
+        return basePath + endpointPath;
     }
 }

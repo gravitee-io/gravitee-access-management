@@ -36,7 +36,7 @@ public class DomainTemplateVariableProvider implements TemplateVariableProvider,
         domainProperties = new DomainProperties();
         domainProperties.setId(domain.getId());
         domainProperties.setName(domain.getName());
-        domainProperties.setPath("/" + domain.getPath());
+        domainProperties.setPath(domain.getPath());
     }
 
     @Override

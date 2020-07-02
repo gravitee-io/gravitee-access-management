@@ -19,6 +19,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,8 +59,11 @@ public class ClientPostAuthProviderTest {
         when(httpServerRequest.getParam(Parameters.CLIENT_ID)).thenReturn("my-client-id");
         when(httpServerRequest.getParam(Parameters.CLIENT_SECRET)).thenReturn("my-client-secret");
 
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
+        authProvider.handle(client, context, clientAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
             Assert.assertNotNull(clientAsyncResult.result());
@@ -78,8 +82,11 @@ public class ClientPostAuthProviderTest {
         when(httpServerRequest.getParam(Parameters.CLIENT_ID)).thenReturn("my-client-id");
         when(httpServerRequest.getParam(Parameters.CLIENT_SECRET)).thenReturn("my-other-client-secret");
 
+        RoutingContext context = mock(RoutingContext.class);
+        when(context.request()).thenReturn(httpServerRequest);
+
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, userAsyncResult -> {
+        authProvider.handle(client, context, userAsyncResult -> {
             latch.countDown();
             Assert.assertNotNull(userAsyncResult);
             Assert.assertTrue(userAsyncResult.failed());

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -22,6 +23,7 @@ import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -65,6 +67,16 @@ public class Domain implements Resource {
      */
     private String path;
 
+    /**
+     * Indicates if domain is in vhost mode or not. If true, then security domain will be exposed under specified virtual hosts.
+     */
+    private boolean vhostMode = false;
+
+    /**
+     * The list of vhosts to expose the domain on.
+     */
+    private List<VirtualHost> vhosts;
+
     private OIDCSettings oidc;
 
     private UMASettings uma;
@@ -103,6 +115,8 @@ public class Domain implements Resource {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.path = other.path;
+        this.vhostMode = other.vhostMode;
+        this.vhosts = other.vhosts;
         this.oidc = other.oidc;
         this.uma = other.uma;
         this.loginSettings = other.loginSettings;
@@ -162,11 +176,27 @@ public class Domain implements Resource {
     }
 
     public String getPath() {
-        return path;
+        return PathUtils.sanitize(path);
     }
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public boolean isVhostMode() {
+        return vhostMode;
+    }
+
+    public void setVhostMode(boolean vhostMode) {
+        this.vhostMode = vhostMode;
+    }
+
+    public List<VirtualHost> getVhosts() {
+        return vhosts;
+    }
+
+    public void setVhosts(List<VirtualHost> vhosts) {
+        this.vhosts = vhosts;
     }
 
     public OIDCSettings getOidc() {

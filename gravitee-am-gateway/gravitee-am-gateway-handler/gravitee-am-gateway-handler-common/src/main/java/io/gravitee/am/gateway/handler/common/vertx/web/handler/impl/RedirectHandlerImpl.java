@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -41,10 +43,13 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
+
+        String mfaRedirectUrl = routingContext.get(CONTEXT_PATH) + redirectURL;
+
         try {
             final HttpServerRequest request = routingContext.request();
             final Map<String, String> requestParameters = request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(routingContext.request(), redirectURL, requestParameters, true);
+            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(routingContext.request(), mfaRedirectUrl, requestParameters, true);
             routingContext.response()
                     .putHeader(HttpHeaders.LOCATION, proxiedRedirectURI)
                     .setStatusCode(302)
@@ -52,7 +57,7 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
         } catch (Exception e) {
             logger.warn("Failed to decode login redirect url", e);
             routingContext.response()
-                    .putHeader(HttpHeaders.LOCATION, redirectURL)
+                    .putHeader(HttpHeaders.LOCATION, mfaRedirectUrl)
                     .setStatusCode(302)
                     .end();
         }

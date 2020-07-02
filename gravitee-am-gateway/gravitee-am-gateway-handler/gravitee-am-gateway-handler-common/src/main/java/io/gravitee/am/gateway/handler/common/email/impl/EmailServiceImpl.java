@@ -29,6 +29,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +85,9 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     @Qualifier("managementJwtBuilder")
     private JWTBuilder jwtBuilder;
+
+    @Autowired
+    private DomainService domainService;
 
     @Override
     public void send(io.gravitee.am.model.Template template, User user, Client client) {
@@ -141,13 +145,7 @@ public class EmailServiceImpl implements EmailService {
         claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
 
         String token = jwtBuilder.sign(new JWT(claims));
-
-        String entryPoint = gatewayUrl;
-        if (entryPoint != null && entryPoint.endsWith("/")) {
-            entryPoint = entryPoint.substring(0, entryPoint.length() - 1);
-        }
-
-        String redirectUrl = entryPoint + "/" + user.getReferenceId() + redirectUri + "?token=" + token;
+        String redirectUrl =  domainService.buildUrl(domain, redirectUri + "?token=" + token);
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", user);

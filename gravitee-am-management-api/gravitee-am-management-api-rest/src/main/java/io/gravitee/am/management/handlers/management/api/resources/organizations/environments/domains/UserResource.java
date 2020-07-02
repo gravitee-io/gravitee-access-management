@@ -236,11 +236,8 @@ public class UserResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(irrelevant -> userService.sendRegistrationConfirmation(ReferenceType.DOMAIN, domain, user, authenticatedUser)))
+                .andThen(userService.sendRegistrationConfirmation(domain, user, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
-
     }
 
     @POST

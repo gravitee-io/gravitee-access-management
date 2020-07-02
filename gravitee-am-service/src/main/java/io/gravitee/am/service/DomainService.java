@@ -68,4 +68,6 @@ public interface DomainService {
     default Completable delete(String domain) {
         return delete(domain, null);
     }
+
+    String buildUrl(Domain domain, String path);
 }

@@ -194,7 +194,6 @@ public class ResourceAccessPoliciesEndpoint {
     private String resourceLocation(String basePath, AccessPolicy accessPolicy) {
         return new StringBuilder()
                 .append(basePath)
-                .append(domain.getPath())
                 .append(UMA_PATH)
                 .append(RESOURCE_REGISTRATION_PATH)
                 .append("/")

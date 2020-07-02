@@ -76,6 +76,14 @@ export class DomainService {
     });
   }
 
+  patchEntrypoints(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
+      'path': domain.path,
+      'vhostMode': domain.vhostMode,
+      'vhosts': domain.vhosts
+    });
+  }
+
   patchOpenidDCRSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
        'oidc': domain.oidc

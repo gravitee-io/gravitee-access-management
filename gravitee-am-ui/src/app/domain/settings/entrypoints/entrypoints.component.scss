@@ -1,0 +1,41 @@
+.entrypoints-title {
+  display: inline-block
+}
+
+.entrypoints-actions {
+  span {
+    padding-right: 10px;
+    color: grey;
+  }
+  height: 30px;
+  padding-bottom: 30px;
+}
+
+.mat-icon-button {
+  width: 25px;
+  height: 25px;
+}
+
+.form-field {
+  padding-left: 12px;
+}
+
+.hint {
+  display: block;
+  font-size: 75%;
+  font-family: Roboto, Helvetica Neue Light, sans-serif
+}
+
+mat-icon {
+  color: grey;
+}
+
+a {
+  cursor: pointer;
+}
+
+.switch-mode {
+  padding-left: 12px;
+  text-decoration: none;
+  font-size: 12px
+}

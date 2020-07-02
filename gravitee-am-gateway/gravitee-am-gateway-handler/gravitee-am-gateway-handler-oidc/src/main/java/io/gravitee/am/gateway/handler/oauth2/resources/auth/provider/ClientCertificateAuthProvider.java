@@ -21,7 +21,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.GeneralName;
 
@@ -51,18 +51,18 @@ import java.util.List;
 public class ClientCertificateAuthProvider implements ClientAuthProvider {
 
     @Override
-    public boolean canHandle(Client client, HttpServerRequest request) {
+    public boolean canHandle(Client client, RoutingContext context) {
         // client_id is a required parameter for tls_client_auth so we are sure to have a client here
         return client != null
-                && request.sslSession() != null
+                && context.request().sslSession() != null
                 && ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(client.getTokenEndpointAuthMethod());
     }
 
     @Override
-    public void handle(Client client, HttpServerRequest request, Handler<AsyncResult<Client>> handler) {
+    public void handle(Client client, RoutingContext context, Handler<AsyncResult<Client>> handler) {
         // We ensure that the authentication is done over TLS thanks to the canHandle method which checks for an SSL
         // session
-        SSLSession sslSession = request.sslSession();
+        SSLSession sslSession = context.request().sslSession();
 
         try {
             Certificate[] peerCertificates = sslSession.getPeerCertificates();

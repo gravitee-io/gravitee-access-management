@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * Extends default {@link io.vertx.ext.web.handler.RedirectAuthHandler} with X-Forwarded Strategy
  *
@@ -51,6 +53,9 @@ public class RedirectAuthHandlerImpl extends io.vertx.ext.web.handler.impl.Redir
 
     @Override
     public void parseCredentials(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
+
+        String redirectUrl = context.get(CONTEXT_PATH) + loginRedirectURL;
+
         Session session = context.session();
         if (session != null) {
             try {
@@ -61,12 +66,12 @@ public class RedirectAuthHandlerImpl extends io.vertx.ext.web.handler.impl.Redir
                 session.put(returnURLParam, UriBuilderRequest.resolveProxyRequest(request, request.path(), requestParameters));
 
                 // Now redirect to the login url
-                String uri = UriBuilderRequest.resolveProxyRequest(request, loginRedirectURL, requestParameters, true);
+                String uri = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, requestParameters, true);
 
                 handler.handle(Future.failedFuture(new HttpStatusException(302, uri)));
             } catch (Exception e) {
                 logger.warn("Failed to decode login redirect url", e);
-                handler.handle(Future.failedFuture(new HttpStatusException(302, loginRedirectURL)));
+                handler.handle(Future.failedFuture(new HttpStatusException(302, redirectUrl)));
             }
         } else {
             handler.handle(Future.failedFuture("No session - did you forget to include a SessionHandler?"));

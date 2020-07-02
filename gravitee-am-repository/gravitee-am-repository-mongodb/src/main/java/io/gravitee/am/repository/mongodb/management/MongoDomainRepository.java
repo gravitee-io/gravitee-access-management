@@ -109,6 +109,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         Domain domain = new Domain();
         domain.setId(domainMongo.getId());
         domain.setPath(domainMongo.getPath());
+        domain.setVhostMode(domainMongo.isVhostMode());
+        domain.setVhosts(domainMongo.getVhosts());
         domain.setCreatedAt(domainMongo.getCreatedAt());
         domain.setUpdatedAt(domainMongo.getUpdatedAt());
         domain.setName(domainMongo.getName());
@@ -134,6 +136,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         DomainMongo domainMongo = new DomainMongo();
         domainMongo.setId(domain.getId());
         domainMongo.setPath(domain.getPath());
+        domainMongo.setVhostMode(domain.isVhostMode());
+        domainMongo.setVhosts(domain.getVhosts());
         domainMongo.setCreatedAt(domain.getCreatedAt());
         domainMongo.setUpdatedAt(domain.getUpdatedAt());
         domainMongo.setName(domain.getName());

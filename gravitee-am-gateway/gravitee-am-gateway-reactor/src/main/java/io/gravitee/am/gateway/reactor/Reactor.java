@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.reactor;
 
+import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
+import io.gravitee.am.model.Domain;
 import io.gravitee.common.service.Service;
 import io.vertx.reactivex.ext.web.Router;
 
@@ -26,7 +28,7 @@ public interface Reactor extends Service {
 
     Router route();
 
-    Router mountSubRouter(String contextPath, Router child);
+    void mountDomain(VertxSecurityDomainHandler domainHandler);
 
-    Router unMountSubRouter(String contextPath);
+    void unMountDomain(VertxSecurityDomainHandler domainHandler);
 }

@@ -24,6 +24,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * Client Authentication method : client_secret_post
@@ -37,21 +38,21 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 public class ClientPostAuthProvider implements ClientAuthProvider {
 
     @Override
-    public boolean canHandle(Client client, HttpServerRequest request) {
+    public boolean canHandle(Client client, RoutingContext context) {
         if (client != null && ClientAuthenticationMethod.CLIENT_SECRET_POST.equals(client.getTokenEndpointAuthMethod())) {
             return true;
         }
         if ((client != null && (client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty()))
-                && getClientId(request) != null && getClientSecret(request) != null) {
+                && getClientId(context.request()) != null && getClientSecret(context.request()) != null) {
             return true;
         }
         return false;
     }
 
     @Override
-    public void handle(Client client, HttpServerRequest request, Handler<AsyncResult<Client>> handler) {
-        final String clientId = getClientId(request);
-        final String clientSecret = getClientSecret(request);
+    public void handle(Client client, RoutingContext context, Handler<AsyncResult<Client>> handler) {
+        final String clientId = getClientId(context.request());
+        final String clientSecret = getClientSecret(context.request());
 
         if (!client.getClientId().equals(clientId) || !client.getClientSecret().equals(clientSecret)) {
             handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)));

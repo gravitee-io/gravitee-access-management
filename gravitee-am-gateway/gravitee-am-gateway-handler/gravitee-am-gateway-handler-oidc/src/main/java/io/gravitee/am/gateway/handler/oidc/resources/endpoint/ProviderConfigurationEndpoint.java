@@ -25,6 +25,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -38,7 +40,7 @@ public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext context) {
         String basePath = "/";
         try {
-            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), "/", null);
+            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH), null);
         } catch (Exception e) {
             logger.error("Unable to resolve OpenID Connect provider configuration endpoint", e);
         }

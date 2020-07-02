@@ -35,11 +35,6 @@
             <mat-hint>Your domain's name.</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Path</mat-label>
-            <input matInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required [readonly]="readonly">
-            <mat-hint>Your domain's path. Context path for Authentication and Authorization API operations.</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
             <textarea matInput placeholder="Description" name="description" [(ngModel)]="domain.description" [readonly]="readonly"></textarea>
             <mat-hint>Your domain's description.</mat-hint>

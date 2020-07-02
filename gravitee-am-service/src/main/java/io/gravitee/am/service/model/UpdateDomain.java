@@ -15,11 +15,13 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,6 +51,10 @@ public class UpdateDomain {
      * Domain HTTP path.
      */
     private String path;
+
+    private boolean vhostMode = false;
+
+    private List<VirtualHost> vhosts;
 
     private SCIMSettings scim;
 
@@ -110,5 +116,21 @@ public class UpdateDomain {
 
     public void setAccountSettings(AccountSettings accountSettings) {
         this.accountSettings = accountSettings;
+    }
+
+    public boolean isVhostMode() {
+        return vhostMode;
+    }
+
+    public void setVhostMode(boolean vhostMode) {
+        this.vhostMode = vhostMode;
+    }
+
+    public List<VirtualHost> getVhosts() {
+        return vhosts;
+    }
+
+    public void setVhosts(List<VirtualHost> vhosts) {
+        this.vhosts = vhosts;
     }
 }

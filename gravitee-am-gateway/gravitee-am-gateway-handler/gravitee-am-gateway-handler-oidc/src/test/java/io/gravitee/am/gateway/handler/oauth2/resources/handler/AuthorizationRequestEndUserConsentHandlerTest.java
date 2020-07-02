@@ -35,6 +35,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -54,9 +55,6 @@ public class AuthorizationRequestEndUserConsentHandlerTest  extends RxWebTestBas
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        // set domain
-        when(domain.getPath()).thenReturn("test");
 
         router.route(HttpMethod.GET, "/oauth/authorize")
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService, domain))
@@ -112,6 +110,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest  extends RxWebTestBas
         router.route().order(-1).handler(routingContext -> {
             routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
             routingContext.put("client", client);
+            routingContext.put(CONTEXT_PATH, "/test");
             routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
             routingContext.next();
         });
@@ -180,6 +179,7 @@ public class AuthorizationRequestEndUserConsentHandlerTest  extends RxWebTestBas
         router.route().order(-1).handler(routingContext -> {
             routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
             routingContext.put("client", client);
+            routingContext.put(CONTEXT_PATH, "/test");
             routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
             routingContext.next();
         });

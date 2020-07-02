@@ -30,6 +30,8 @@ import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.handler.impl.UserHolder;
 import io.vertx.ext.web.sstore.SessionStore;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * Override default Vert.x Session Handler for OAuth 2.0 failures
  *
@@ -44,7 +46,6 @@ public class SessionHandlerImpl implements SessionHandler {
 
     private final SessionStore sessionStore;
     private String sessionCookieName;
-    private String sessionCookiePath;
     private long sessionTimeout;
     private boolean nagHttps;
     private boolean sessionCookieSecure;
@@ -52,10 +53,9 @@ public class SessionHandlerImpl implements SessionHandler {
     private int minLength;
     private AuthProvider authProvider;
 
-    public SessionHandlerImpl(String sessionCookieName, String sessionCookiePath, long sessionTimeout, boolean nagHttps,
+    public SessionHandlerImpl(String sessionCookieName, long sessionTimeout, boolean nagHttps,
                               boolean sessionCookieSecure, boolean sessionCookieHttpOnly, int minLength, SessionStore sessionStore) {
         this.sessionCookieName = sessionCookieName;
-        this.sessionCookiePath = sessionCookiePath;
         this.sessionTimeout = sessionTimeout;
         this.nagHttps = nagHttps;
         this.sessionStore = sessionStore;
@@ -96,7 +96,7 @@ public class SessionHandlerImpl implements SessionHandler {
 
     @Override
     public SessionHandler setSessionCookiePath(String sessionCookiePath) {
-        this.sessionCookiePath = sessionCookiePath;
+        // Cookie path is dynamically resolved. Defining it has no effect.
         return this;
     }
 
@@ -237,7 +237,7 @@ public class SessionHandlerImpl implements SessionHandler {
                         // restore defaults
                         cookie
                                 .setValue(session.value())
-                                .setPath(sessionCookiePath)
+                                .setPath(context.get(CONTEXT_PATH))
                                 .setSecure(sessionCookieSecure)
                                 .setHttpOnly(sessionCookieHttpOnly);
 
@@ -283,7 +283,7 @@ public class SessionHandlerImpl implements SessionHandler {
         Session session = sessionStore.createSession(sessionTimeout, minLength);
         context.setSession(session);
         Cookie cookie = Cookie.cookie(sessionCookieName, session.value());
-        cookie.setPath(sessionCookiePath);
+        cookie.setPath(context.get(CONTEXT_PATH));
         cookie.setSecure(sessionCookieSecure);
         cookie.setHttpOnly(sessionCookieHttpOnly);
         // Don't set max age - it's a session cookie

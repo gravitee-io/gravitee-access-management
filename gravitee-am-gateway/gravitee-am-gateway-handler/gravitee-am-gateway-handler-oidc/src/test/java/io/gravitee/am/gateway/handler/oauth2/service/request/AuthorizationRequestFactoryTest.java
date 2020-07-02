@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequ
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -61,7 +63,11 @@ public class AuthorizationRequestFactoryTest {
         when(rxHttpServerRequest.params().entries()).thenReturn(entries);
         when(rxHttpServerRequest.getDelegate()).thenReturn(httpServerRequest);
 
-        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(rxHttpServerRequest);
+        RoutingContext routingContext = mock(RoutingContext.class);
+        when(routingContext.request()).thenReturn(rxHttpServerRequest);
+        when(routingContext.get(CONTEXT_PATH)).thenReturn("/test");
+
+        AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(routingContext);
 
         Assert.assertNotNull(authorizationRequest);
         Assert.assertEquals("client-id", authorizationRequest.getClientId());

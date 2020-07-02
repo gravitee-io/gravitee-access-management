@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -36,7 +37,8 @@ public class AuthorizationRequestParseProviderConfigurationHandler implements Ha
 
     @Override
     public void handle(RoutingContext context) {
-        context.put(PROVIDER_METADATA_CONTEXT_KEY ,openIDDiscoveryService.getConfiguration("/"));
+        String basePath = UriBuilderRequest.extractBasePath(context);
+        context.put(PROVIDER_METADATA_CONTEXT_KEY ,openIDDiscoveryService.getConfiguration(basePath));
         context.next();
     }
 }
