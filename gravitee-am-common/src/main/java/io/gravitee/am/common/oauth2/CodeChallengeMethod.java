@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.oauth2;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * See <a href="https://tools.ietf.org/html/rfc7636#section-4.2>4.2. Client Creates the Code Challenge</a>
  *
@@ -32,4 +35,8 @@ public interface CodeChallengeMethod {
      * code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier)))
      */
     String S256 = "S256";
+
+    static List<String> supportedValues() {
+        return Arrays.asList(PLAIN, S256);
+    }
 }

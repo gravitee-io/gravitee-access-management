@@ -16,9 +16,12 @@
 package io.gravitee.am.jwt;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
+import com.nimbusds.jose.jca.JCASupport;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
@@ -50,6 +53,11 @@ public class DefaultJWTParser implements JWTParser {
     public DefaultJWTParser(final Key key) throws InvalidKeyException {
         if (key instanceof RSAPublicKey) {
             this.verifier = new RSASSAVerifier((RSAPublicKey) key);
+            // if JCA doesn't support at least the PS256 algorithm (jdk <= 8)
+            // add BouncyCastle JCA provider
+            if (!JCASupport.isSupported(JWSAlgorithm.PS256)) {
+                verifier.getJCAContext().setProvider(BouncyCastleProviderSingleton.getInstance());
+            }
         } else if (key instanceof SecretKey) {
             try {
                 this.verifier = new MACVerifier((SecretKey) key);

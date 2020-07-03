@@ -18,6 +18,8 @@ package io.gravitee.am.jwt;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
+import com.nimbusds.jose.jca.JCASupport;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
@@ -50,6 +52,11 @@ public class DefaultJWTBuilder implements JWTBuilder {
                              final String keyId) throws InvalidKeyException {
         if (key instanceof PrivateKey) {
             signer = new RSASSASigner((PrivateKey) key, true);
+            // if JCA doesn't support at least the PS256 algorithm (jdk <= 8)
+            // add BouncyCastle JCA provider
+            if (!JCASupport.isSupported(JWSAlgorithm.PS256)) {
+                signer.getJCAContext().setProvider(BouncyCastleProviderSingleton.getInstance());
+            }
         } else if (key instanceof SecretKey) {
             try {
                 signer = new MACSigner((SecretKey) key);

@@ -27,6 +27,7 @@ public class PKCS12Configuration implements CertificateConfiguration {
     private String storepass;
     private String alias;
     private String keypass;
+    private String algorithm;
 
     public String getContent() {
         return content;
@@ -58,5 +59,13 @@ public class PKCS12Configuration implements CertificateConfiguration {
 
     public void setKeypass(String keypass) {
         this.keypass = keypass;
+    }
+
+    public String getAlgorithm() {
+        return algorithm;
+    }
+
+    public void setAlgorithm(String algorithm) {
+        this.algorithm = algorithm;
     }
 }
