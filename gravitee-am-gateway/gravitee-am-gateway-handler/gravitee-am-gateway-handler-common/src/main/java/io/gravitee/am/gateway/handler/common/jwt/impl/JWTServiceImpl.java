@@ -118,7 +118,7 @@ public class JWTServiceImpl implements JWTService {
                 String encodedToken = certificateProvider.getJwtBuilder().sign(jwt);
                 emitter.onSuccess(encodedToken);
             } catch (Exception ex) {
-                logger.debug("Failed to sign JWT", ex);
+                logger.error("Failed to sign JWT", ex);
                 emitter.onError(new InvalidTokenException("The JWT token couldn't be signed", ex));
             }
         });
@@ -130,7 +130,7 @@ public class JWTServiceImpl implements JWTService {
                 Map<String, Object> decodedPayload = certificateProvider.getJwtParser().parse(payload);
                 emitter.onSuccess(decodedPayload);
             } catch (Exception ex) {
-                logger.debug("Failed to decode JWT", ex);
+                logger.error("Failed to decode JWT", ex);
                 emitter.onError(new InvalidTokenException("The access token is invalid", ex));
             }
         });

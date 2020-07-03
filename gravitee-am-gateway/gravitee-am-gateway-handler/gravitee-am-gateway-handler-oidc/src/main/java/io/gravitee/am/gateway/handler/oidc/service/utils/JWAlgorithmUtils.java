@@ -39,6 +39,7 @@ public class JWAlgorithmUtils {
      * Unless we want specific values for id_token, userinfo, authorization and so on, we will share same settings.
      */
     private static final Set<String> SUPPORTED_SIGNING_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            JWSAlgorithm.PS256.getName(), JWSAlgorithm.PS384.getName(), JWSAlgorithm.PS512.getName(),
             JWSAlgorithm.RS256.getName(), JWSAlgorithm.RS384.getName(), JWSAlgorithm.RS512.getName(),
             JWSAlgorithm.HS256.getName(), JWSAlgorithm.HS384.getName(), JWSAlgorithm.HS512.getName()
     )));
@@ -235,6 +236,20 @@ public class JWAlgorithmUtils {
      * @return the supported list of token introspection signing algorithm.
      */
     public static List<String> getSupportedIntrospectionEndpointAuthSigningAlg() {
+        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    /**
+     * @return the supported list of request object signing algorithm.
+     */
+    public static List<String> getSupportedRequestObjectSigningAlg() {
+        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    /**
+     * @return the supported list of token endpoint auth signing algorithm.
+     */
+    public static List<String> getSupportedTokenEndpointAuthSigningAlg() {
         return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
     }
 }

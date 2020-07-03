@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.oidc;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * OpenID Connect Claim Types
  *
@@ -39,4 +42,8 @@ public interface ClaimType {
      * Claims that are asserted by a Claims Provider other than the OpenID Provider but are returned as references by the OpenID Provider.
      */
     String DISTRIBUTED = "distributed";
+
+    static List<String> supportedValues() {
+        return Arrays.asList(NORMAL);
+    }
 }

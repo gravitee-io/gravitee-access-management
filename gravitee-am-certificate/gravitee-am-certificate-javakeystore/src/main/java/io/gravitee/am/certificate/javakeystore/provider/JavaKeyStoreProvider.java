@@ -197,6 +197,9 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
 
     @Override
     public String signatureAlgorithm() {
+        if (configuration.getAlgorithm() != null) {
+            return configuration.getAlgorithm();
+        }
         return signature.getValue();
     }
 }

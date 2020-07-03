@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.oidc;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * OpenID Connect Client Authentication methods
  *
@@ -64,4 +67,14 @@ public interface ClientAuthenticationMethod {
      * Utilizing a self-signed client certificate used in a TLS connection.
      */
     String SELF_SIGNED_TLS_CLIENT_AUTH = "self_signed_tls_client_auth";
+
+    static List<String> supportedValues() {
+        return Arrays.asList(
+                CLIENT_SECRET_BASIC,
+                CLIENT_SECRET_POST,
+                PRIVATE_KEY_JWT,
+                CLIENT_SECRET_JWT,
+                TLS_CLIENT_AUTH,
+                SELF_SIGNED_TLS_CLIENT_AUTH);
+    }
 }

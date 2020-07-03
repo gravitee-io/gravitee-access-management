@@ -16,11 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.service.discovery.impl;
 
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
-import io.gravitee.am.common.oauth2.ResponseMode;
-import io.gravitee.am.common.oidc.AcrValues;
-import io.gravitee.am.common.oidc.ClaimType;
-import io.gravitee.am.common.oidc.CustomClaims;
-import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.oidc.*;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -33,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -78,19 +75,23 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setIntrospectionEndpoint(getEndpointAbsoluteURL(basePath, INTROSPECTION_ENDPOINT));
         openIDProviderMetadata.setEndSessionEndpoint(getEndpointAbsoluteURL(basePath, ENDSESSION_ENDPOINT));
         openIDProviderMetadata.setRegistrationEndpoint(getEndpointAbsoluteURL(basePath, REGISTRATION_ENDPOINT));
+        openIDProviderMetadata.setRequestObjectEndpoint(getEndpointAbsoluteURL(basePath, REQUEST_OBJECT_ENDPOINT));
         openIDProviderMetadata.setRegistrationRenewSecretEndpoint(openIDProviderMetadata.getRegistrationEndpoint()+"/:client_id/renew_secret");
         if(domain.isDynamicClientRegistrationTemplateEnabled()) {
             openIDProviderMetadata.setRegistrationTemplatesEndpoint(openIDProviderMetadata.getRegistrationEndpoint()+"_templates");
         }
-        openIDProviderMetadata.setRequestObjectEndpoint(getEndpointAbsoluteURL(basePath, REQUEST_OBJECT_ENDPOINT));
 
         // supported parameters
         openIDProviderMetadata.setScopesSupported(scopeService.getDiscoveryScope());
         openIDProviderMetadata.setResponseTypesSupported(ResponseTypeUtils.getSupportedResponseTypes());
-        openIDProviderMetadata.setResponseModesSupported(Arrays.asList(ResponseMode.QUERY, ResponseMode.FRAGMENT,
-                io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT,
-                io.gravitee.am.common.oidc.ResponseMode.JWT));
+        openIDProviderMetadata.setResponseModesSupported(ResponseMode.supportedValues());
         openIDProviderMetadata.setGrantTypesSupported(GrantTypeUtils.getSupportedGrantTypes());
+        openIDProviderMetadata.setClaimTypesSupported(ClaimType.supportedValues());
+        openIDProviderMetadata.setClaimsSupported(Stream.of(Scope.values()).map(Scope::getClaims).flatMap(Collection::stream).distinct().collect(Collectors.toList()));
+        openIDProviderMetadata.setCodeChallengeMethodsSupported(CodeChallengeMethod.supportedValues());
+        openIDProviderMetadata.setClaimsParameterSupported(true);
+
+        // id_token
         openIDProviderMetadata.setIdTokenSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenSigningAlg());
         openIDProviderMetadata.setIdTokenEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenResponseAlg());
         openIDProviderMetadata.setIdTokenEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedIdTokenResponseEnc());
@@ -99,13 +100,26 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setClaimsSupported(Stream.of(StandardClaims.claims(), CustomClaims.claims(), Collections.singletonList(Claims.acr)).flatMap(c -> c.stream()).collect(Collectors.toList()));
         openIDProviderMetadata.setCodeChallengeMethodsSupported(Arrays.asList(CodeChallengeMethod.PLAIN, CodeChallengeMethod.S256));
         openIDProviderMetadata.setClaimsParameterSupported(true);
+
+        // user_info
         openIDProviderMetadata.setUserinfoSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedUserinfoSigningAlg());
         openIDProviderMetadata.setUserinfoEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedUserinfoResponseAlg());
         openIDProviderMetadata.setUserinfoEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedUserinfoResponseEnc());
+
+        // authorization_response
         openIDProviderMetadata.setAuthorizationSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedAuthorizationSigningAlg());
         openIDProviderMetadata.setAuthorizationEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedAuthorizationResponseAlg());
         openIDProviderMetadata.setAuthorizationEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedAuthorizationResponseEnc());
+
+        // request_object
+        openIDProviderMetadata.setRequestObjectSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedRequestObjectSigningAlg());
+
+        // token_endpoint_auth
+        openIDProviderMetadata.setTokenEndpointAuthMethodsSupported(ClientAuthenticationMethod.supportedValues());
+        openIDProviderMetadata.setTokenEndpointAuthSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedTokenEndpointAuthSigningAlg());
+
         openIDProviderMetadata.setAcrValuesSupported(AcrValues.values());
+
         return openIDProviderMetadata;
     }
 

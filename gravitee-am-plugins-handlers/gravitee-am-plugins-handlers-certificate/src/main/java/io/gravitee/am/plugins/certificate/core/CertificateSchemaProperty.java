@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.plugins.certificate.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CertificateSchemaProperty {
 
     private String title;

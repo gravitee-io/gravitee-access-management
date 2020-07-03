@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.audit.EventType;
@@ -51,7 +52,6 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
@@ -65,7 +65,10 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
@@ -434,9 +437,6 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     private X509Certificate generateCertificate(String dn, KeyPair keyPair, int validity, String sigAlgName) throws GeneralSecurityException, IOException, OperatorCreationException {
-        Provider bcProvider = new BouncyCastleProvider();
-        Security.addProvider(bcProvider);
-
         // Use appropriate signature algorithm based on your keyPair algorithm.
         String signatureAlgorithm = sigAlgName;
 
@@ -446,7 +446,6 @@ public class CertificateServiceImpl implements CertificateService {
 
         // Using the current timestamp as the certificate serial number
         BigInteger certSerialNumber = new BigInteger(Long.toString(from.getTime()));
-
 
         ContentSigner contentSigner = new JcaContentSignerBuilder(signatureAlgorithm).build(keyPair.getPrivate());
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
@@ -458,7 +457,7 @@ public class CertificateServiceImpl implements CertificateService {
         // Basic Constraints is usually marked as critical.
         certBuilder.addExtension(new ASN1ObjectIdentifier("2.5.29.19"), true, basicConstraints);
 
-        return new JcaX509CertificateConverter().setProvider(bcProvider).getCertificate(certBuilder.build(contentSigner));
+        return new JcaX509CertificateConverter().setProvider(BouncyCastleProviderSingleton.getInstance()).getCertificate(certBuilder.build(contentSigner));
     }
 
     @Override

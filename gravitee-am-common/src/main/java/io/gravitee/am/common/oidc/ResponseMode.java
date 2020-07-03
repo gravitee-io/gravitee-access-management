@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.common.oidc;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * OIDC JARM Response Modes
  *
@@ -55,4 +59,13 @@ public interface ResponseMode {
      * the response types defined in [OIDM], except "none", is "fragment.jwt".
      */
     String JWT = "jwt";
+
+    static List<String> supportedValues() {
+        return Arrays.asList(
+                io.gravitee.am.common.oauth2.ResponseMode.QUERY,
+                io.gravitee.am.common.oauth2.ResponseMode.FRAGMENT,
+                QUERY_JWT,
+                FRAGMENT_JWT,
+                JWT);
+    }
 }
