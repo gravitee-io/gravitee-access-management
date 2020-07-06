@@ -21,6 +21,7 @@ import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -80,5 +81,55 @@ public class MongoRefreshTokenRepositoryTest extends AbstractOAuth2RepositoryTes
                 .andThen(refreshTokenRepository.delete("my-token"))
                 .andThen(refreshTokenRepository.findByToken("my-token"))
                 .test().assertEmpty();
+    }
+
+    @Test
+    public void shouldDeleteByDomainIdClientIdAndUserId() {
+        RefreshToken token1 = new RefreshToken();
+        token1.setId("my-token");
+        token1.setToken("my-token");
+        token1.setClient("client-id");
+        token1.setDomain("domain-id");
+        token1.setSubject("user-id");
+
+        RefreshToken token2 = new RefreshToken();
+        token2.setId("my-token2");
+        token2.setToken("my-token2");
+        token2.setClient("client-id2");
+        token2.setDomain("domain-id2");
+        token2.setSubject("user-id2");
+
+        assertEquals(0, refreshTokenRepository
+                .bulkWrite(Arrays.asList(token1, token2))
+                .andThen(refreshTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", "user-id"))
+                .andThen(refreshTokenRepository.findByToken("my-token"))
+                .test().valueCount());
+
+        assertNotNull(refreshTokenRepository.findByToken("my-token2").blockingGet());
+    }
+
+    @Test
+    public void shouldDeleteByDomainIdAndUserId() {
+        RefreshToken token1 = new RefreshToken();
+        token1.setId("my-token");
+        token1.setToken("my-token");
+        token1.setClient("client-id");
+        token1.setDomain("domain-id");
+        token1.setSubject("user-id");
+
+        RefreshToken token2 = new RefreshToken();
+        token2.setId("my-token2");
+        token2.setToken("my-token2");
+        token2.setClient("client-id2");
+        token2.setDomain("domain-id2");
+        token2.setSubject("user-id2");
+
+        assertEquals(0, refreshTokenRepository
+                .bulkWrite(Arrays.asList(token1, token2))
+                .andThen(refreshTokenRepository.deleteByDomainIdAndUserId("domain-id", "user-id"))
+                .andThen(refreshTokenRepository.findByToken("my-token"))
+                .test().valueCount());
+
+        assertNotNull(refreshTokenRepository.findByToken("my-token2").blockingGet());
     }
 }

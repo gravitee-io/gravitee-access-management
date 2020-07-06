@@ -93,4 +93,11 @@ public interface AccessTokenRepository {
      * @return acknowledge of the operation
      */
     Completable deleteByUserId(String userId);
+
+    /**
+     * Delete access token by domainId, clientId and userId.
+     */
+    Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId);
+
+    Completable deleteByDomainIdAndUserId(String domainId, String userId);
 }

@@ -22,7 +22,7 @@ import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.UUID;
+import java.util.Arrays;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -123,5 +123,55 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
         observer.assertComplete();
         observer.assertNoErrors();
         observer.assertValue(new Long(1));
+    }
+
+    @Test
+    public void shouldDeleteByDomainIdClientIdAndUserId() {
+        AccessToken token1 = new AccessToken();
+        token1.setId("my-token");
+        token1.setToken("my-token");
+        token1.setClient("client-id");
+        token1.setDomain("domain-id");
+        token1.setSubject("user-id");
+
+        AccessToken token2 = new AccessToken();
+        token2.setId("my-token2");
+        token2.setToken("my-token2");
+        token2.setClient("client-id2");
+        token2.setDomain("domain-id2");
+        token2.setSubject("user-id2");
+
+        assertEquals(0, accessTokenRepository
+                .bulkWrite(Arrays.asList(token1, token2))
+                .andThen(accessTokenRepository.deleteByDomainIdClientIdAndUserId("domain-id", "client-id", "user-id"))
+                .andThen(accessTokenRepository.findByToken("my-token"))
+                .test().valueCount());
+
+        assertNotNull(accessTokenRepository.findByToken("my-token2").blockingGet());
+    }
+
+    @Test
+    public void shouldDeleteByDomainIdAndUserId() {
+        AccessToken token1 = new AccessToken();
+        token1.setId("my-token");
+        token1.setToken("my-token");
+        token1.setClient("client-id");
+        token1.setDomain("domain-id");
+        token1.setSubject("user-id");
+
+        AccessToken token2 = new AccessToken();
+        token2.setId("my-token2");
+        token2.setToken("my-token2");
+        token2.setClient("client-id2");
+        token2.setDomain("domain-id2");
+        token2.setSubject("user-id2");
+
+        assertEquals(0, accessTokenRepository
+                .bulkWrite(Arrays.asList(token1, token2))
+                .andThen(accessTokenRepository.deleteByDomainIdAndUserId("domain-id", "user-id"))
+                .andThen(accessTokenRepository.findByToken("my-token"))
+                .test().valueCount());
+
+        assertNotNull(accessTokenRepository.findByToken("my-token2").blockingGet());
     }
 }

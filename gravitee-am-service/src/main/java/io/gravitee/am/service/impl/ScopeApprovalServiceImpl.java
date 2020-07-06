@@ -19,6 +19,8 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ScopeApprovalService;
@@ -55,6 +57,14 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     @Lazy
     @Autowired
     private ScopeApprovalRepository scopeApprovalRepository;
+
+    @Lazy
+    @Autowired
+    private AccessTokenRepository accessTokenRepository;
+
+    @Lazy
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     private UserService userService;
@@ -120,8 +130,9 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                         .switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consentId)))
                         .flatMapCompletable(scopeApproval -> scopeApprovalRepository.delete(consentId)
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).approvals(Collections.singleton(scopeApproval))))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).throwable(throwable))))
-                )
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user).throwable(throwable)))
+                                .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdClientIdAndUserId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId()),
+                                            refreshTokenRepository.deleteByDomainIdClientIdAndUserId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId())))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
@@ -142,7 +153,8 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                         .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUser(domain, user)
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).approvals(scopeApprovals)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).throwable(throwable))))
-                )
+                        .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdAndUserId(domain, user),
+                                refreshTokenRepository.deleteByDomainIdAndUserId(domain, user))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
@@ -163,7 +175,8 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                         .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUserAndClient(domain, user, clientId)
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).approvals(scopeApprovals)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).throwable(throwable))))
-                )
+                        .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdClientIdAndUserId(domain, clientId, user),
+                                refreshTokenRepository.deleteByDomainIdClientIdAndUserId(domain, clientId, user))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

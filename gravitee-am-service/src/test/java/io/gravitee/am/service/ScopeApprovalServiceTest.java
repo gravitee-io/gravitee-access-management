@@ -15,12 +15,17 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.ScopeApprovalServiceImpl;
+import io.gravitee.am.service.reporter.builder.UserConsentAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -31,7 +36,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.mockito.Matchers.anyString;
@@ -52,6 +59,12 @@ public class ScopeApprovalServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private AccessTokenRepository accessTokenRepository;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
     private UserService userService;
@@ -143,9 +156,17 @@ public class ScopeApprovalServiceTest {
 
     @Test
     public void shouldDelete() {
-        when(scopeApprovalRepository.delete("my-consent")).thenReturn(Completable.complete());
-        when(scopeApprovalRepository.findById("my-consent")).thenReturn(Maybe.just(new ScopeApproval()));
         when(userService.findById(anyString())).thenReturn(Maybe.just(new User()));
+        when(accessTokenRepository.deleteByDomainIdClientIdAndUserId("my-domain", "client-id", "user-id")).thenReturn(Completable.complete());
+        when(refreshTokenRepository.deleteByDomainIdClientIdAndUserId("my-domain", "client-id", "user-id")).thenReturn(Completable.complete());
+
+        ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setClientId("client-id");
+        scopeApproval.setDomain("my-domain");
+        scopeApproval.setUserId("user-id");
+        when(scopeApprovalRepository.delete("my-consent")).thenReturn(Completable.complete());
+        when(scopeApprovalRepository.findById("my-consent")).thenReturn(Maybe.just(scopeApproval));
+
 
         TestObserver testObserver = scopeApprovalService.revokeByConsent("my-domain","user-id", "my-consent").test();
         testObserver.awaitTerminalEvent();
@@ -154,5 +175,70 @@ public class ScopeApprovalServiceTest {
         testObserver.assertNoErrors();
 
         verify(scopeApprovalRepository, times(1)).delete("my-consent");
+        verify(auditService, times(1)).report(any(UserConsentAuditBuilder.class));
+    }
+
+    @Test
+    public void shouldRevokeByUser() {
+        ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setScope("test");
+        scopeApproval.setClientId("client-id");
+        scopeApproval.setDomain("my-domain");
+        scopeApproval.setUserId("user-id");
+
+        when(userService.findById("user-id")).thenReturn(Maybe.just(new User()));
+        when(scopeApprovalRepository.findByDomainAndUser("my-domain", "user-id")).thenReturn(Single.just(new HashSet<>(Arrays.asList(scopeApproval))));
+        when(scopeApprovalRepository.deleteByDomainAndUser("my-domain", "user-id")).thenReturn(Completable.complete());
+        when(accessTokenRepository.deleteByDomainIdAndUserId("my-domain", "user-id")).thenReturn(Completable.complete());
+        when(refreshTokenRepository.deleteByDomainIdAndUserId("my-domain", "user-id")).thenReturn(Completable.complete());
+
+        TestObserver<Void> testObserver = scopeApprovalService.revokeByUser("my-domain", "user-id", new DefaultUser("user-id")).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(auditService, times(1)).report(any(UserConsentAuditBuilder.class));
+    }
+
+    @Test
+    public void shouldRevokeByUser_UserNotFoundException() {
+
+        when(userService.findById("user-id")).thenReturn(Maybe.empty());
+
+        TestObserver<Void> testObserver = scopeApprovalService.revokeByUser("my-domain", "user-id", new DefaultUser("user-id")).test();
+        testObserver.assertError(UserNotFoundException.class);
+    }
+
+    @Test
+    public void shouldRevokeByUserAndClient() {
+        ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setScope("test");
+        scopeApproval.setClientId("client-id");
+        scopeApproval.setDomain("my-domain");
+        scopeApproval.setUserId("user-id");
+
+        when(userService.findById("user-id")).thenReturn(Maybe.just(new User()));
+        when(scopeApprovalRepository.findByDomainAndUserAndClient("my-domain", "user-id", "client-id")).thenReturn(Single.just(new HashSet<>(Arrays.asList(scopeApproval))));
+        when(scopeApprovalRepository.deleteByDomainAndUserAndClient("my-domain", "user-id", "client-id")).thenReturn(Completable.complete());
+        when(accessTokenRepository.deleteByDomainIdClientIdAndUserId("my-domain", "client-id", "user-id")).thenReturn(Completable.complete());
+        when(refreshTokenRepository.deleteByDomainIdClientIdAndUserId("my-domain", "client-id", "user-id")).thenReturn(Completable.complete());
+
+        TestObserver<Void> testObserver = scopeApprovalService.revokeByUserAndClient("my-domain", "user-id", "client-id", new DefaultUser("user-id")).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(auditService, times(1)).report(any(UserConsentAuditBuilder.class));
+    }
+
+    @Test
+    public void shouldRevokeByUserAndClient_UserNotFoundException() {
+
+        when(userService.findById("user-id")).thenReturn(Maybe.empty());
+
+        TestObserver<Void> testObserver = scopeApprovalService.revokeByUserAndClient("my-domain", "user-id", "client-id", new DefaultUser("user-id")).test();
+        testObserver.assertError(UserNotFoundException.class);
     }
 }
