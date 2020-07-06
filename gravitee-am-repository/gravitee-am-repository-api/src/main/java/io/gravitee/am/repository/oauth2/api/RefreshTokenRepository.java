@@ -37,4 +37,8 @@ public interface RefreshTokenRepository {
     Completable delete(String token);
 
     Completable deleteByUserId(String userId);
+
+    Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId);
+
+    Completable deleteByDomainIdAndUserId(String domainId, String userId);
 }

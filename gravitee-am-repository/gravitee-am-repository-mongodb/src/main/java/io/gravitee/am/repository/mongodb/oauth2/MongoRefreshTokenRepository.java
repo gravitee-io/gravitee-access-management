@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 /**
@@ -49,6 +50,8 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     private static final String FIELD_RESET_TIME = "expire_at";
     private static final String FIELD_TOKEN = "token";
     private static final String FIELD_SUBJECT = "subject";
+    private static final String FIELD_DOMAIN_ID = "domain";
+    private static final String FIELD_CLIENT_ID = "client";
 
     @PostConstruct
     public void init() {
@@ -56,6 +59,9 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
         super.createIndex(refreshTokenCollection, new Document(FIELD_TOKEN, 1));
         super.createIndex(refreshTokenCollection, new Document(FIELD_SUBJECT, 1));
         super.createIndex(refreshTokenCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+
+        // three fields index
+        super.createIndex(refreshTokenCollection, new Document(FIELD_DOMAIN_ID, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1));
     }
 
     private Maybe<RefreshToken> findById(String id) {
@@ -64,7 +70,6 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
                 .firstElement()
                 .map(this::convert);
     }
-
 
     @Override
     public Maybe<RefreshToken> findByToken(String token) {
@@ -98,6 +103,16 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     @Override
     public Completable deleteByUserId(String userId) {
         return Completable.fromPublisher(refreshTokenCollection.deleteMany(eq(FIELD_SUBJECT, userId)));
+    }
+
+    @Override
+    public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId) {
+        return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN_ID, domainId), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_SUBJECT, userId))));
+    }
+
+    @Override
+    public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
+        return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN_ID, domainId), eq(FIELD_SUBJECT, userId))));
     }
 
     private List<WriteModel<RefreshTokenMongo>> convert(List<RefreshToken> refreshTokens) {
