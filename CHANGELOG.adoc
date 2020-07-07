@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/262?closed=1[AM - 2.10.17 (2020-07-07)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Attach base64 image to email templates https://github.com/gravitee-io/issues/issues/3984[#3984]
+
+
 == https://github.com/gravitee-io/issues/milestone/257?closed=1[AM - 2.10.16 (2020-07-01)]
 
 === Bug fixes
