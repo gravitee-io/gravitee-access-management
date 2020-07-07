@@ -306,20 +306,14 @@ public class UMATokenGranter extends AbstractTokenGranter {
         return requested;
     }
 
-    private Map<String, PermissionRequest> convert(List<LinkedHashMap> permissions) {
+    private Map<String, PermissionRequest> convert(List<HashMap> permissions) {
         Map<String,PermissionRequest> result = new LinkedHashMap<>(permissions.size());
-        for(LinkedHashMap permission:permissions) {
+        for(HashMap permission : permissions) {
             JsonObject json = new JsonObject(permission);
             PermissionRequest permissionRequest = json.mapTo(PermissionRequest.class);
             result.put(permissionRequest.getResourceId(), permissionRequest);
         }
         return result;
-        /* Compilation bug with Java 8...
-        return permissions.stream()
-                .map(o -> new JsonObject(o))
-                .map(o -> o.mapTo(PermissionRequest.class))
-                .collect(Collectors.toMap(PermissionRequest::getResourceId,pr->pr));
-         */
     }
 
     private Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client, User endUser) {

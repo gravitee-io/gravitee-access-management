@@ -143,7 +143,7 @@ public class UmaTokenGranterTest {
                 new PermissionRequest().setResourceId(RS_ONE).setResourceScopes(new ArrayList<>(Arrays.asList("scopeA"))),
                 new PermissionRequest().setResourceId(RS_TWO).setResourceScopes(new ArrayList<>(Arrays.asList("scopeA")))
         );
-        LinkedHashMap permission = new LinkedHashMap();
+        Map permission = new HashMap();
         permission.put("resourceId",RS_ONE);
         permission.put("resourceScopes",Arrays.asList("scopeB"));
 
