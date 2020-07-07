@@ -1,5 +1,20 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/258?closed=1[AM - 3.0.4 (2020-07-07)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge release 2.10.16 https://github.com/gravitee-io/issues/issues/4041[#4041]
+- Merge release 2.10.17 https://github.com/gravitee-io/issues/issues/4071[#4071]
+
+*_Management_*
+
+- Can't add OAuth 2.0 extension grant to an application https://github.com/gravitee-io/issues/issues/3969[#3969]
+- Username should accept '+' character https://github.com/gravitee-io/issues/issues/4032[#4032]
+
+
 == https://github.com/gravitee-io/issues/milestone/233?closed=1[AM - 3.0.3 (2020-06-15)]
 
 === Bug fixes
