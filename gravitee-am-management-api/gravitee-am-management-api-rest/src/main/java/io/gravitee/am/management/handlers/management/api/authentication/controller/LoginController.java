@@ -17,11 +17,14 @@ package io.gravitee.am.management.handlers.management.api.authentication.control
 
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.ReCaptchaService;
 import io.gravitee.common.http.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Controller;
@@ -31,10 +34,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator.DEFAULT_REDIRECT_COOKIE_NAME;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -44,9 +48,9 @@ import java.util.stream.Collectors;
 @Controller
 public class LoginController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
     private static final String LOGIN_VIEW = "login";
     private static final List<String> socialProviderTypes = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket");
-    private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
 
     @Autowired
     private OrganizationService organizationService;
@@ -63,11 +67,16 @@ public class LoginController {
         Map<String, Object> params = new HashMap<>();
 
         // fetch domain social identity providers
-        List<IdentityProvider> socialProviders = organizationService.findById(organizationId).map(Organization::getIdentities).blockingGet()
-                .stream()
-                .map(identity -> identityProviderManager.getIdentityProvider(identity))
-                .filter(IdentityProvider::isExternal)
-                .collect(Collectors.toList());
+        List<IdentityProvider> socialProviders = null;
+        try {
+            socialProviders = organizationService.findById(organizationId).map(Organization::getIdentities).blockingGet()
+                    .stream()
+                    .map(identity -> identityProviderManager.getIdentityProvider(identity))
+                    .filter(IdentityProvider::isExternal)
+                    .collect(Collectors.toList());
+        } catch (Exception ex) {
+            LOGGER.error("An error has occurred while loading the organization social providers. It probably means that a social provider is not well started", ex);
+        }
 
         // enhance social providers data
         if (socialProviders != null && !socialProviders.isEmpty()) {
@@ -101,13 +110,10 @@ public class LoginController {
     }
 
     @RequestMapping(value = "/login/callback")
-    public void loginCallback(HttpServletResponse response, HttpSession session) throws IOException {
-        if (session != null && session.getAttribute(SAVED_REQUEST) != null) {
-            final SavedRequest savedRequest = (SavedRequest) session.getAttribute(SAVED_REQUEST);
-            response.sendRedirect(savedRequest.getRedirectUrl());
-        } else {
-            response.sendRedirect("/auth/login");
-        }
+    public void loginCallback(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+        // Redirect to the original request.
+        response.sendRedirect((String) request.getAttribute(DEFAULT_REDIRECT_COOKIE_NAME));
     }
 
     private String buildRedirectUri(HttpServletRequest request, String identity) {

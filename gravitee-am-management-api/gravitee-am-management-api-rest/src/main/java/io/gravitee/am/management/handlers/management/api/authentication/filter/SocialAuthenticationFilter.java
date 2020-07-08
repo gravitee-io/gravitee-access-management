@@ -20,7 +20,7 @@ import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.http.JettyHttpServerRequest;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
-import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import org.slf4j.Logger;
@@ -33,9 +33,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
-import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
-import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.FilterChain;
@@ -60,7 +59,6 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
      */
     private static final String SOURCE = "source";
     private static final String PROVIDER_PARAMETER = "provider";
-    private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
     private static final String errorPage = "/auth/access/error";
     private static final String REDIRECT_URI = "redirect_uri";
 
@@ -73,7 +71,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
     private JWTGenerator jwtGenerator;
 
     @Autowired
-    private AuthenticationService authenticationService;
+    private AuthenticationSuccessHandler successHandler;
 
     public SocialAuthenticationFilter(String defaultFilterProcessesUrl) {
         super(defaultFilterProcessesUrl);
@@ -126,21 +124,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
 
         SecurityContextHolder.getContext().setAuthentication(authResult);
 
-        // finish authentication
-        User principal = authenticationService.onAuthenticationSuccess(authResult);
-
-        // store jwt authentication cookie to secure management restricted operations
-        Cookie jwtAuthenticationCookie = jwtGenerator.generateCookie(principal);
-        response.addCookie(jwtAuthenticationCookie);
-
-        // Store the saved HTTP request itself. Used by LoginController (login/callback method)
-        // for redirection after successful authentication
-        SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
-        if (savedRequest != null && request.getSession(false) != null) {
-            request.getSession(false).setAttribute(SAVED_REQUEST, savedRequest);
-        }
-
-        chain.doFilter(request, response);
+        successHandler.onAuthenticationSuccess(request, response, authResult);
     }
 
     @Override

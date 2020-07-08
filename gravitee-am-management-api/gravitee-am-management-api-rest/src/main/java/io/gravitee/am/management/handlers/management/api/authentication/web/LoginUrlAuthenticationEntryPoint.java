@@ -15,9 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.web;
 
-import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.security.web.util.UrlUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,7 +29,8 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class LoginUrlAuthenticationEntryPoint extends org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint {
 
-    private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
+    @Autowired
+    private RedirectCookieGenerator redirectCookieGenerator;
 
     public LoginUrlAuthenticationEntryPoint(String loginFormUrl) {
         super(loginFormUrl);
@@ -36,36 +38,9 @@ public class LoginUrlAuthenticationEntryPoint extends org.springframework.securi
 
     @Override
     protected String buildRedirectUrlToLoginPage(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) {
-        String url = super.buildRedirectUrlToLoginPage(request, response, authException);
+        // Use a cookie to save the original redirect uri.
+        response.addCookie(redirectCookieGenerator.generateCookie(UrlUtils.buildFullRequestUrl(request.getScheme(), request.getServerName(), request.getServerPort(), request.getRequestURI(), request.getQueryString())));
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-
-        String scheme = request.getHeader(HttpHeaders.X_FORWARDED_PROTO);
-        if (scheme != null && !scheme.isEmpty()) {
-            builder.scheme(scheme);
-        }
-
-        String host = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
-        if (host != null && !host.isEmpty()) {
-            if (host.contains(":")) {
-                // Forwarded host contains both host and port
-                String [] parts = host.split(":");
-                builder.host(parts[0]);
-                builder.port(parts[1]);
-            } else {
-                builder.host(host);
-            }
-        }
-
-        // handle forwarded path
-        String forwardedPath = request.getHeader(X_FORWARDED_PREFIX);
-        if (forwardedPath != null && !forwardedPath.isEmpty()) {
-            String path = builder.build().getPath();
-            // remove trailing slash
-            forwardedPath = forwardedPath.substring(0, forwardedPath.length() - (forwardedPath.endsWith("/") ? 1 : 0));
-            builder.replacePath(forwardedPath + path);
-        }
-
-        return builder.toUriString();
+        return super.buildRedirectUrlToLoginPage(request, response, authException);
     }
 }

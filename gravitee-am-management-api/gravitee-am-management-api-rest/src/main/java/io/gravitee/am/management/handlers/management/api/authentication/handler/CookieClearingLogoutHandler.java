@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.handler;
 
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -30,21 +30,16 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class CookieClearingLogoutHandler implements LogoutHandler {
 
-    private static final boolean DEFAULT_JWT_COOKIE_SECURE = false;
-    private static final String DEFAULT_JWT_COOKIE_NAME = "Auth-Graviteeio-AM";
-    private static final String DEFAULT_JWT_COOKIE_PATH = "/";
-    private static final String DEFAULT_JWT_COOKIE_DOMAIN = "";
+    @Autowired
+    private JWTGenerator jwtGenerator;
 
     @Autowired
-    private Environment environment;
+    private RedirectCookieGenerator redirectCookieGenerator;
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-        Cookie cookie = new Cookie(environment.getProperty("jwt.cookie-name", DEFAULT_JWT_COOKIE_NAME), null);
-        cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
-        cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
-        cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+
+        response.addCookie(jwtGenerator.getClearCookie());
+        response.addCookie(redirectCookieGenerator.getClearCookie());
     }
 }

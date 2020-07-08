@@ -24,7 +24,8 @@ import io.gravitee.am.management.handlers.management.api.authentication.handler.
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationSuccessHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomLogoutSuccessHandler;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
-import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationProvider;
 import io.gravitee.am.management.handlers.management.api.authentication.web.*;
 import io.gravitee.am.service.ReCaptchaService;
@@ -118,15 +119,19 @@ public class SecurityConfiguration {
             .logout()
                 .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout"))
                 .logoutSuccessHandler(new CustomLogoutSuccessHandler())
-                .invalidateHttpSession(true)
                 .addLogoutHandler(cookieClearingLogoutHandler())
                 .and()
             .exceptionHandling()
-                .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/auth/login"))
+                .authenticationEntryPoint(loginUrlAuthenticationEntryPoint())
                 .and()
             .cors()
-                .and()
+            .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
             .addFilterBefore(new RecaptchaFilter(reCaptchaService, objectMapper), AbstractPreAuthenticatedProcessingFilter.class)
+            .addFilterBefore(new CheckRedirectionCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class)
+            .addFilterBefore(builtInAuthFilter(), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(socialAuthFilter(), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(checkAuthCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class);
 
@@ -204,7 +209,6 @@ public class SecurityConfiguration {
         }
     }
 
-
     @Bean
     public ManagementAuthenticationProvider userAuthenticationProvider() {
         ManagementAuthenticationProvider authenticationProvider = new ManagementAuthenticationProvider();
@@ -214,8 +218,23 @@ public class SecurityConfiguration {
     }
 
     @Bean
+    public LoginUrlAuthenticationEntryPoint loginUrlAuthenticationEntryPoint() {
+        return new LoginUrlAuthenticationEntryPoint("/auth/login");
+    }
+
+    @Bean
     public JWTGenerator jwtCookieGenerator() {
         return new JWTGenerator();
+    }
+
+    @Bean
+    public RedirectCookieGenerator redirectCookieGenerator() {
+        return new RedirectCookieGenerator();
+    }
+
+    @Bean
+    public Filter builtInAuthFilter() {
+        return new BuiltInAuthenticationFilter(new AntPathRequestMatcher("/auth/authorize"));
     }
 
     @Bean

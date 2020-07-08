@@ -27,19 +27,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.RedirectStrategy;
-import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import static io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator.DEFAULT_REDIRECT_COOKIE_NAME;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,7 +48,6 @@ import java.util.Map;
 public class CompleteProfileController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CompleteProfileController.class);
-    private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
 
     @Autowired
     private UserService userService;
@@ -76,7 +74,7 @@ public class CompleteProfileController {
     }
 
     @RequestMapping(value = "/completeProfile", method = RequestMethod.POST)
-    public void submit(HttpServletRequest request, HttpServletResponse response, HttpSession session, Authentication authentication) throws IOException {
+    public void submit(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         try {
             // get current principal
             DefaultUser principal = (DefaultUser) authentication.getPrincipal();
@@ -91,14 +89,8 @@ public class CompleteProfileController {
                 subscribeNewsletter(updatedUser);
             }
 
-            // redirect to the original request
-            if (session != null && session.getAttribute(SAVED_REQUEST) != null) {
-                final SavedRequest savedRequest = (SavedRequest) session.getAttribute(SAVED_REQUEST);
-                redirectStrategy.sendRedirect(request, response, savedRequest.getRedirectUrl());
-            } else {
-                // else no session go to login page
-                redirectStrategy.sendRedirect(request, response, "/auth/login");
-            }
+            // Redirect to the original request.
+            redirectStrategy.sendRedirect(request, response, (String) request.getAttribute(DEFAULT_REDIRECT_COOKIE_NAME));
         } catch (Exception ex) {
             LOGGER.error("An error occurs while completing user profile", ex);
             redirectStrategy.sendRedirect(request, response, "/auth/completeProfile?error");

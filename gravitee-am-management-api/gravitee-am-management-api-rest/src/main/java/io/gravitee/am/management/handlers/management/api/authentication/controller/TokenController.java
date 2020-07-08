@@ -17,7 +17,7 @@ package io.gravitee.am.management.handlers.management.api.authentication.control
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.common.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
