@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.authentication.web;
 import io.gravitee.common.http.HttpHeaders;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.io.Serializable;
 
 /**
@@ -28,7 +27,6 @@ import java.io.Serializable;
 public class WebAuthenticationDetails implements Serializable {
 
     private final String remoteAddress;
-    private final String sessionId;
     private final String userAgent;
 
     /**
@@ -39,10 +37,6 @@ public class WebAuthenticationDetails implements Serializable {
      */
     public WebAuthenticationDetails(HttpServletRequest request) {
         this.remoteAddress = remoteAddress(request);
-
-        HttpSession session = request.getSession(false);
-        this.sessionId = (session != null) ? session.getId() : null;
-
         userAgent = request.getHeader(HttpHeaders.USER_AGENT);
     }
 
@@ -53,16 +47,12 @@ public class WebAuthenticationDetails implements Serializable {
     public String getRemoteAddress() {
         return remoteAddress;
     }
-    public String getSessionId() {
-        return sessionId;
-    }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(super.toString()).append(": ");
         sb.append("RemoteIpAddress: ").append(this.getRemoteAddress()).append("; ");
-        sb.append("SessionId: ").append(this.getSessionId());
         sb.append("UserAgent: ").append(this.getUserAgent());
 
         return sb.toString();

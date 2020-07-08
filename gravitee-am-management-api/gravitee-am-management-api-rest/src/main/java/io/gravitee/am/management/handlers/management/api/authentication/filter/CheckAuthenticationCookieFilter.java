@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 /**
- * Check if authentication cookie is present, if not and the user session is still active, clear the session
+ * Check if authentication cookie is present, if not, clear the security context
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -73,9 +73,8 @@ public class CheckAuthenticationCookieFilter extends GenericFilterBean {
             return;
         }
 
-        // cookie is gone, clear session
+        // cookie is gone, clear security context
         SecurityContextHolder.clearContext();
-        request.getSession().invalidate();
         chain.doFilter(req, resp);
     }
 

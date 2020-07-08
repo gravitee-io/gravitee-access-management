@@ -50,6 +50,7 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
     public CustomAuthenticationFailureHandler(String defaultFailureUrl) {
         super(defaultFailureUrl);
+        super.setAllowSessionCreation(false);
     }
 
     @Override

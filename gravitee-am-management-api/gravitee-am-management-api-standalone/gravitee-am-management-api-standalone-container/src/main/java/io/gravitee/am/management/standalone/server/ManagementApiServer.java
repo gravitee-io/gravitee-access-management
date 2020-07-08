@@ -54,7 +54,7 @@ public class ManagementApiServer extends JettyHttpServer {
     public void attachHandlers() {
 
         // Create the servlet context
-        final ServletContextHandler context = new ServletContextHandler(this.server, entrypoint, ServletContextHandler.SESSIONS);
+        final ServletContextHandler context = new ServletContextHandler(this.server, entrypoint, ServletContextHandler.NO_SESSIONS);
 
         // REST configuration
         final ServletHolder servletHolder = new ServletHolder(ServletContainer.class);

@@ -19,7 +19,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.common.utils.SecureRandomString;
-import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
+import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

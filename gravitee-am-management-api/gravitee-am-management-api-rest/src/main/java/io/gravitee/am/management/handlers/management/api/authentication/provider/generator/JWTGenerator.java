@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.authentication.provider.jwt;
+package io.gravitee.am.management.handlers.management.api.authentication.provider.generator;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.jwt.JWTBuilder;
@@ -42,6 +42,7 @@ public class JWTGenerator implements InitializingBean {
 
     private final Logger LOGGER = LoggerFactory.getLogger(JWTGenerator.class);
 
+    private static final String DEFAULT_JWT_COOKIE_NAME = "Auth-Graviteeio-AM";
     private static final boolean DEFAULT_JWT_COOKIE_SECURE = false;
     private static final String DEFAULT_JWT_COOKIE_PATH = "/";
     private static final String DEFAULT_JWT_COOKIE_DOMAIN = "";
@@ -111,6 +112,17 @@ public class JWTGenerator implements InitializingBean {
             LOGGER.error("An error occurs while creating JWT token", ex);
             return null;
         }
+    }
+
+    public Cookie getClearCookie() {
+
+        Cookie cookie = new Cookie(environment.getProperty("jwt.cookie-name", DEFAULT_JWT_COOKIE_NAME), null);
+        cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
+        cookie.setPath(environment.getProperty("jwt.cookie-path", DEFAULT_JWT_COOKIE_PATH));
+        cookie.setDomain(environment.getProperty("jwt.cookie-domain", DEFAULT_JWT_COOKIE_DOMAIN));
+        cookie.setMaxAge(0);
+
+        return cookie;
     }
 
     @Override
