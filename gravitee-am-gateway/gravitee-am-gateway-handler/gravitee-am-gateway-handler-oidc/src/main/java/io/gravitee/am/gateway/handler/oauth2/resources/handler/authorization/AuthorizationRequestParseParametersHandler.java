@@ -28,7 +28,6 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetad
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequestResolver;
-import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
@@ -39,8 +38,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -61,6 +60,8 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseParametersHandler.class);
     private static final String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
     private final static String LOGIN_ENDPOINT = "/login";
+    private final static String MFA_ENDPOINT = "/mfa/challenge";
+    private final static String USER_CONSENT_ENDPOINT = "/oauth/consent";
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
 
     @Override
@@ -231,7 +232,14 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     private boolean returnFromLoginPage(RoutingContext context) {
         String referer = context.request().headers().get(HttpHeaders.REFERER);
         try {
-            return referer != null && UriBuilder.fromURIString(referer).build().getPath().contains(context.get(CONTEXT_PATH) + LOGIN_ENDPOINT);
+            if (referer == null) {
+                return false;
+            }
+
+            final String refererPath = UriBuilder.fromURIString(referer).build().getPath();
+            return refererPath.contains(context.get(CONTEXT_PATH) + LOGIN_ENDPOINT)
+                    || refererPath.contains(context.get(CONTEXT_PATH) + MFA_ENDPOINT)
+                    || refererPath.contains(context.get(CONTEXT_PATH) + USER_CONSENT_ENDPOINT);
         } catch (URISyntaxException e) {
             logger.debug("Unable to calculate referer url : {}", referer, e);
             return false;
