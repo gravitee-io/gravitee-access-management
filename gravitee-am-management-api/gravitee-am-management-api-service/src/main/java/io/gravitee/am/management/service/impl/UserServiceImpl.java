@@ -18,11 +18,10 @@ package io.gravitee.am.management.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
@@ -45,10 +44,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.net.URL;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -59,7 +55,6 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
-    private static final Pattern SCHEME_PATTERN = Pattern.compile("^(https?://).*$");
 
     @Value("${user.registration.token.expire-after:86400}")
     private Integer expireAfter;
@@ -209,17 +204,19 @@ public class UserServiceImpl implements UserService {
                                                                             user.setRegistrationUserUri(domainService.buildUrl(domain1, "/confirmRegistration"));
                                                                             user.setRegistrationAccessToken(getUserRegistrationToken(user));
                                                                         }
-                                                                        return userService.create(user);
+                                                                        return userService.create(user)
+                                                                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                                                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
                                                                     })
-                                                                    .doOnSuccess(user -> {
-                                                                        auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user));
-                                                                        // in pre registration mode an email will be sent to the user to complete his account
+                                                                    .flatMap(user -> {
+                                                                        // end pre-registration user if required
                                                                         AccountSettings accountSettings = getAccountSettings(domain1, client);
-                                                                        if (newUser.isPreRegistration() && accountSettings != null && !accountSettings.isDynamicUserRegistration()) {
-                                                                            new Thread(() -> emailService.send(domain1, Template.REGISTRATION_CONFIRMATION, user)).start();
+                                                                        if (newUser.isPreRegistration() && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
+                                                                            return sendRegistrationConfirmation(user.getReferenceId(), user.getId(), principal).toSingleDefault(user);
+                                                                        } else {
+                                                                            return Single.just(user);
                                                                         }
-                                                                    })
-                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
+                                                                    });
                                                         });
                                             });
                                 }
@@ -382,20 +379,23 @@ public class UserServiceImpl implements UserService {
     public Completable sendRegistrationConfirmation(String domainId, String userId, io.gravitee.am.identityprovider.api.User principal) {
         return domainService.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapCompletable(domain -> findById(ReferenceType.DOMAIN, domainId, userId)
-                        .map(user -> {
+                .flatMapCompletable(domain1 -> findById(ReferenceType.DOMAIN, domainId, userId)
+                        .flatMapCompletable(user -> {
                             if (!user.isPreRegistration()) {
-                                throw new UserInvalidException("Pre-registration is disabled for the user " + userId);
+                                return Completable.error(new UserInvalidException("Pre-registration is disabled for the user " + userId));
                             }
                             if (user.isPreRegistration() && user.isRegistrationCompleted()) {
-                                throw new UserInvalidException("Registration is completed for the user " + userId);
+                                return Completable.error(new UserInvalidException("Registration is completed for the user " + userId));
                             }
-                            return user;
-                        })
-                        .doOnSuccess(user -> new Thread(() -> emailService.send(domain, Template.REGISTRATION_CONFIRMATION, user)).start())
-                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user1)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
-                        .ignoreElement());
+                            // fetch the client
+                            return checkClient(user.getReferenceId(), user.getClient())
+                                    .map(Optional::of)
+                                    .defaultIfEmpty(Optional.empty())
+                                    .doOnSuccess(optClient -> new Thread(() -> emailService.send(domain1, optClient.orElse(null), Template.REGISTRATION_CONFIRMATION, user)).start())
+                                    .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user)))
+                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
+                                    .ignoreElement();
+                        }));
     }
 
     @Override
@@ -416,7 +416,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).throwable(throwable)))
-                .toCompletable();
+                .ignoreElement();
     }
 
     @Override

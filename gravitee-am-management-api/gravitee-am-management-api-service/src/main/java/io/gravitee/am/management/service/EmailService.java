@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -25,5 +26,10 @@ import io.gravitee.am.model.User;
  */
 public interface EmailService {
 
-    void send(Domain domain, Template template, User user);
+    void send(Domain domain, Application client, Template template, User user);
+
+    default void send(Domain domain, Template template, User user) {
+        send(domain, null, template, user);
+    }
+
 }

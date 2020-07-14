@@ -43,6 +43,7 @@ public class LoginEndpoint implements Handler<RoutingContext> {
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String PARAM_CONTEXT_KEY = "param";
     private static final String ERROR_PARAM_KEY = "error";
+    private static final String ERROR_DESCRIPTION_PARAM_KEY = "error_description";
     private static final String ALLOW_FORGOT_PASSWORD_CONTEXT_KEY = "allowForgotPassword";
     private static final String ALLOW_REGISTER_CONTEXT_KEY = "allowRegister";
     private static final String REQUEST_CONTEXT_KEY = "request";
@@ -78,11 +79,17 @@ public class LoginEndpoint implements Handler<RoutingContext> {
         EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate(), true));
         routingContext.put(REQUEST_CONTEXT_KEY, evaluableRequest);
 
-        // put request parameters (backward compatibility)
+        // put error in context
         final String error = routingContext.request().getParam(ERROR_PARAM_KEY);
+        final String errorDescription = routingContext.request().getParam(ERROR_DESCRIPTION_PARAM_KEY);
+        routingContext.put(ERROR_PARAM_KEY, error);
+        routingContext.put(ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+
+        // put parameters in context (backward compatibility)
         Map<String, String> params = new HashMap<>();
-        params.computeIfAbsent(ERROR_PARAM_KEY, val -> error);
         params.putAll(evaluableRequest.getParams().toSingleValueMap());
+        params.put(ERROR_PARAM_KEY, error);
+        params.put(ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
         routingContext.put(PARAM_CONTEXT_KEY, params);
     }
 

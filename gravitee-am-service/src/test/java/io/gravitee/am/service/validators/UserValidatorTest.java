@@ -39,6 +39,28 @@ public class UserValidatorTest {
     }
 
     @Test
+    public void validate_usernameEmail() {
+
+        User user = getValidUser();
+        user.setUsername("user.valid+1-test@gravitee.io");
+
+        Throwable throwable = UserValidator.validate(user).blockingGet();
+
+        assertNull(throwable);
+    }
+
+    @Test
+    public void validate_usernameHashtag() {
+
+        User user = getValidUser();
+        user.setUsername("user#gravitee.io");
+
+        Throwable throwable = UserValidator.validate(user).blockingGet();
+
+        assertNull(throwable);
+    }
+
+    @Test
     public void validate_invalidEmail() {
 
         User user = getValidUser();

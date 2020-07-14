@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.vertx.core.AsyncResult;
@@ -23,7 +24,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,6 +50,7 @@ public class UserTokenRequestParseHandler extends UserRequestHandler {
         String error = context.request().getParam(ERROR_PARAM);
         String success = context.request().getParam(SUCCESS_PARAM);
         String warning = context.request().getParam(WARNING_PARAM);
+        String clientId = context.request().getParam(Parameters.CLIENT_ID);
 
         // user action completed, continue
         if (success != null) {
@@ -70,13 +73,19 @@ public class UserTokenRequestParseHandler extends UserRequestHandler {
         // missing required token param
         // redirect user error message
         if (token == null) {
-            redirectToPage(context, Collections.singletonMap("error","token_missing"));
+            Map<String, String> params = new HashMap<>();
+            params.put("error", "token_missing");
+            params.computeIfAbsent(Parameters.CLIENT_ID, val -> clientId);
+            redirectToPage(context, params);
             return;
         }
 
         parseToken(token, handler -> {
             if (handler.failed()) {
-                redirectToPage(context, Collections.singletonMap("error","invalid_token"));
+                Map<String, String> params = new HashMap<>();
+                params.put("error", "invalid_token");
+                params.computeIfAbsent(Parameters.CLIENT_ID, val -> clientId);
+                redirectToPage(context, params);
                 return;
             }
 

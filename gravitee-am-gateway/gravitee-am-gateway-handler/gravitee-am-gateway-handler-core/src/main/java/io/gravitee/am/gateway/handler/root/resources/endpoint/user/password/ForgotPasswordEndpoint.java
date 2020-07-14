@@ -27,7 +27,8 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,6 +38,7 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(ForgotPasswordEndpoint.class);
     private static final String ERROR_PARAM = "error";
+    private static final String ERROR_DESCRIPTION_PARAM = "error_description";
     private static final String SUCCESS_PARAM = "success";
     private static final String WARNING_PARAM = "warning";
     private static final String PARAM_CONTEXT_KEY = "param";
@@ -50,14 +52,23 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         final HttpServerRequest request = routingContext.request();
         final String error = request.getParam(ERROR_PARAM);
+        final String errorDescription = request.getParam(ERROR_DESCRIPTION_PARAM);
         final String success = request.getParam(SUCCESS_PARAM);
         final String warning = request.getParam(WARNING_PARAM);
         final Client client = routingContext.get("client");
+        final String clientId = request.getParam(Parameters.CLIENT_ID);
         // add query params to context
         routingContext.put(ERROR_PARAM, error);
+        routingContext.put(ERROR_DESCRIPTION_PARAM, errorDescription);
         routingContext.put(SUCCESS_PARAM, success);
         routingContext.put(WARNING_PARAM, warning);
-        routingContext.put(PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, request.getParam(Parameters.CLIENT_ID)));
+
+        // put parameters in context (backward compatibility)
+        Map<String, String> params = new HashMap<>();
+        params.computeIfAbsent(Parameters.CLIENT_ID, val -> clientId);
+        params.computeIfAbsent(ERROR_PARAM, val -> error);
+        params.computeIfAbsent(ERROR_DESCRIPTION_PARAM, val -> errorDescription);
+        routingContext.put(PARAM_CONTEXT_KEY, params);
 
         // render the forgot password page
         engine.render(routingContext.data(), getTemplateFileName(client), res -> {

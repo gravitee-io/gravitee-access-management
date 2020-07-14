@@ -208,6 +208,11 @@ public class UserServiceTest {
         when(newUser.getClient()).thenReturn("client");
         when(newUser.isPreRegistration()).thenReturn(true);
 
+        User preRegisteredUser = mock(User.class);
+        when(preRegisteredUser.getId()).thenReturn("userId");
+        when(preRegisteredUser.getReferenceId()).thenReturn("domain");
+        when(preRegisteredUser.isPreRegistration()).thenReturn(true);
+
         UserProvider userProvider = mock(UserProvider.class);
         doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
 
@@ -217,7 +222,8 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
-        when(commonUserService.create(any())).thenReturn(Single.just(new User()));
+        when(commonUserService.create(any())).thenReturn(Single.just(preRegisteredUser));
+        when(commonUserService.findById(any(), anyString(), anyString())).thenReturn(Single.just(preRegisteredUser));
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
         testObserver.assertComplete();
@@ -228,7 +234,7 @@ public class UserServiceTest {
 
         // Wait few ms to let time to background thread to be executed.
         Thread.sleep(500);
-        verify(emailService).send(any(Domain.class), eq(Template.REGISTRATION_CONFIRMATION), any(User.class));
+        verify(emailService).send(any(Domain.class), eq(null), eq(Template.REGISTRATION_CONFIRMATION), any(User.class));
 
         Assert.assertNull(argument.getValue().getRegistrationUserUri());
         Assert.assertNull(argument.getValue().getRegistrationAccessToken());
