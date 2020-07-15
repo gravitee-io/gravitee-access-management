@@ -1367,9 +1367,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -1427,9 +1424,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -1718,9 +1712,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -1822,9 +1813,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -2015,10 +2003,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"host": true,
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2072,9 +2056,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2129,9 +2110,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2181,9 +2159,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2239,10 +2214,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"host": true,
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2283,9 +2254,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2335,9 +2303,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2392,10 +2357,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"host": true,
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2439,9 +2400,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2499,9 +2457,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2559,9 +2514,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2609,9 +2561,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2665,10 +2614,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"host": true,
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2712,9 +2657,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2755,9 +2697,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2818,9 +2757,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2875,10 +2811,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"host": true,
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2922,9 +2854,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -2982,9 +2911,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -3039,10 +2965,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"host": true,
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -3086,9 +3008,6 @@
 												}
 											],
 											"protocolProfileBehavior": {
-												"disabledSystemHeaders": {
-													"user-agent": true
-												}
 											},
 											"request": {
 												"auth": {
@@ -5755,9 +5674,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -5933,9 +5849,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -6120,9 +6033,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -6288,9 +6198,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -6475,9 +6382,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -6644,9 +6548,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -6831,9 +6732,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
@@ -6999,9 +6897,6 @@
 														}
 													],
 													"protocolProfileBehavior": {
-														"disabledSystemHeaders": {
-															"user-agent": true
-														}
 													},
 													"request": {
 														"auth": {
