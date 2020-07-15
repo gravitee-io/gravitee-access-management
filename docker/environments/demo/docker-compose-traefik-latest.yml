@@ -84,3 +84,4 @@ services:
     labels:
     - "traefik.backend=graviteeio-am-managementui"
     - "traefik.frontend.rule=Host:auth.gravitee.io"
+    - "traefik.port=8080"
