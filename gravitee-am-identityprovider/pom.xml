@@ -41,6 +41,7 @@
         <module>gravitee-am-identityprovider-oauth2-generic</module>
         <module>gravitee-am-identityprovider-http</module>
         <module>gravitee-am-identityprovider-azure-ad</module>
+        <module>gravitee-am-identityprovider-facebook</module>
     </modules>
 
     <dependencies>

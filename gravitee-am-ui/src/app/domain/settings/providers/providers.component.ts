@@ -35,7 +35,8 @@ export class DomainSettingsProvidersComponent implements OnInit {
     'inline-am-idp': 'Inline',
     'oauth2-generic-am-idp': 'OpenID Connect',
     'github-am-idp': 'GitHub',
-    'azure-ad-am-idp': 'Azure AD'
+    'azure-ad-am-idp': 'Azure AD',
+    'facebook-am-idp': 'Facebook'
   };
   private identityProviderIcons: any = {
     'ldap-am-idp' : 'device_hub',
@@ -43,7 +44,8 @@ export class DomainSettingsProvidersComponent implements OnInit {
     'inline-am-idp': 'insert_drive_file',
     'oauth2-generic-am-idp': 'cloud_queue',
     'github-am-idp': 'cloud_queue',
-    'azure-ad-am-idp': 'cloud_queue'
+    'azure-ad-am-idp': 'cloud_queue',
+    'facebook-am-idp': 'cloud_queue'
   };
   domainId: string;
 

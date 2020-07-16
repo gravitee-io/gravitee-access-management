@@ -76,7 +76,10 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
     public SocialAuthenticationFilter(String defaultFilterProcessesUrl) {
         super(defaultFilterProcessesUrl);
         setAuthenticationManager(new NoopAuthenticationManager());
-        setAuthenticationFailureHandler(new SimpleUrlAuthenticationFailureHandler(errorPage));
+        SimpleUrlAuthenticationFailureHandler failureHandler = new SimpleUrlAuthenticationFailureHandler(errorPage);
+        failureHandler.setAllowSessionCreation(false);
+        setAuthenticationFailureHandler(failureHandler);
+        setAllowSessionCreation(false);
     }
 
     @Override

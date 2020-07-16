@@ -1,0 +1,86 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:facebook:FacebookIdentityProviderConfiguration",
+  "description": "Facebook identity provider, let you register and set up permissions and authorization options for OAuth 2.0 protocol.\n\nhttps://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow/ ",
+  "properties" : {
+    "clientId" : {
+      "type" : "string",
+      "title": "Client ID",
+      "description": "Required. The client ID you received from Facebook when you registered."
+    },
+    "clientSecret" : {
+      "type" : "string",
+      "title": "Client Secret",
+      "description": "Required. The client secret you received from Facebook for your Facebook App."
+    },
+    "scopes":{
+      "type": "array",
+      "title": "Scopes",
+      "description": "Scopes let you specify exactly what type of access you need. Scopes limit access for OAuth tokens.",
+      "items":
+        {
+          "type": "string",
+          "enum": [
+            "ads_management",
+            "ads_read",
+            "attribution_read",
+            "catalog_management",
+            "business_management",
+            "email",
+            "groups_access_member_info",
+            "instagram_basic",
+            "instagram_manage_comments",
+            "instagram_manage_insights",
+            "leads_retrieval",
+            "manage_pages",
+            "pages_manage_ads",
+            "pages_manage_cta",
+            "pages_manage_engagement",
+            "pages_manage_instant_articles",
+            "pages_manage_metadata",
+            "pages_manage_posts",
+            "pages_messaging",
+            "pages_read_engagement",
+            "pages_read_user_content",
+            "pages_show_list",
+            "pages_user_gender",
+            "pages_user_locale",
+            "pages_user_timezone",
+            "publish_pages",
+            "publish_to_groups",
+            "publish_video",
+            "read_insights",
+            "user_age_range",
+            "user_birthday",
+            "user_friends",
+            "user_gender",
+            "user_hometown",
+            "user_likes",
+            "user_link",
+            "user_location",
+            "user_photos",
+            "user_posts",
+            "user_videos",
+            "whatsapp_business_management" ]
+        }
+    },
+    "connectTimeout" : {
+      "type" : "integer",
+      "default": 10000,
+      "minimum": 1,
+      "title": "HTTP Client connect timeout",
+      "description": "Duration of time in milliseconds that connects will block. (default 10000 ms)"
+    },
+    "maxPoolSize" : {
+      "type" : "integer",
+      "default": 200,
+      "minimum": 1,
+      "title": "HTTP Client max pool size",
+      "description": "Maximum pool of connections can grow to. (default 200)"
+    }
+  },
+  "required": [
+    "clientId",
+    "clientSecret"
+  ]
+}
