@@ -95,6 +95,7 @@ a, a:hover, a:focus {
 .mdl-social-button {
     display: flex;
     justify-content: center;
+    flex-direction: column;
 }
 
 .mdl-button {

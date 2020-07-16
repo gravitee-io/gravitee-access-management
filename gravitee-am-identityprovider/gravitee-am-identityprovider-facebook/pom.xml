@@ -19,22 +19,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <artifactId>gravitee-am-identityprovider</artifactId>
         <groupId>io.gravitee.am.identityprovider</groupId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
+    <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>gravitee-am-identityprovider-azure-ad</artifactId>
-    <name>Gravitee IO - Access Management - Identity Provider - Azure AD</name>
-
-    <properties>
-        <json-schema-generator-maven-plugin.version>1.3.0</json-schema-generator-maven-plugin.version>
-        <json-schema-generator-maven-plugin.outputDirectory>${project.build.directory}/schemas</json-schema-generator-maven-plugin.outputDirectory>
-    </properties>
+    <artifactId>gravitee-am-identityprovider-facebook</artifactId>
+    <name>Gravitee IO - Access Management - Identity Provider - Facebook</name>
 
     <dependencies>
         <!-- Gravitee.io -->
@@ -56,7 +49,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>${spring.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -79,14 +71,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Nimbus -->
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -100,7 +84,6 @@
         </dependency>
     </dependencies>
 
-
     <build>
         <resources>
             <resource>
@@ -109,26 +92,6 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>io.gravitee.maven.plugins</groupId>
-                <artifactId>json-schema-generator-maven-plugin</artifactId>
-                <version>${json-schema-generator-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>generate-json-schemas</goal>
-                        </goals>
-                        <configuration>
-                            <includes>
-                                <include>io/gravitee/am/identityprovider/azure/AzureADIdentityProviderConfiguration.class</include>
-                            </includes>
-                            <outputDirectory>${json-schema-generator-maven-plugin.outputDirectory}</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.3</version>

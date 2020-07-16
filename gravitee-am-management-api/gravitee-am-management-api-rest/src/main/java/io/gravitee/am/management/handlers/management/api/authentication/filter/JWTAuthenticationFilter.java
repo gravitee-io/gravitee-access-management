@@ -79,6 +79,7 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
         setAuthenticationManager(new NoopAuthenticationManager());
         setAuthenticationSuccessHandler(new JWTAuthenticationSuccessHandler());
         setAuthenticationFailureHandler(new JWTAuthenticationFailureHandler());
+        super.setAllowSessionCreation(false);
     }
 
     @Override
@@ -169,6 +170,12 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     }
 
     private class JWTAuthenticationFailureHandler implements AuthenticationFailureHandler {
+
+
+        public JWTAuthenticationFailureHandler() {
+            super();
+            setAllowSessionCreation(false);
+        }
 
         @Override
         public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {

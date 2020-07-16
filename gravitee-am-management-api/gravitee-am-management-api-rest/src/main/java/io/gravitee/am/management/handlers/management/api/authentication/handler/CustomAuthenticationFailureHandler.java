@@ -44,10 +44,6 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
     @Autowired
     private AuditService auditService;
 
-    public CustomAuthenticationFailureHandler() {
-        super();
-    }
-
     public CustomAuthenticationFailureHandler(String defaultFailureUrl) {
         super(defaultFailureUrl);
         super.setAllowSessionCreation(false);

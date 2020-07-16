@@ -29,6 +29,7 @@ export class ProviderCreationStep1Component implements OnInit {
     'oauth2-generic-am-idp': 'OpenID Connect',
     'azure-ad-am-idp': 'Azure AD',
     'github-am-idp': 'GitHub',
+    'facebook-am-idp': 'Facebook',
     'http-am-idp': 'HTTP'
   };
   @Input() provider;
