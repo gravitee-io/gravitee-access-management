@@ -34,14 +34,16 @@ export class DomainSettingsProvidersComponent implements OnInit {
     'mongo-am-idp' : 'MongoDB',
     'inline-am-idp': 'Inline',
     'oauth2-generic-am-idp': 'OpenID Connect',
-    'github-am-idp': 'GitHub'
+    'github-am-idp': 'GitHub',
+    'azure-ad-am-idp': 'Azure AD'
   };
   private identityProviderIcons: any = {
     'ldap-am-idp' : 'device_hub',
     'mongo-am-idp' : 'storage',
     'inline-am-idp': 'insert_drive_file',
     'oauth2-generic-am-idp': 'cloud_queue',
-    'github-am-idp': 'cloud_queue'
+    'github-am-idp': 'cloud_queue',
+    'azure-ad-am-idp': 'cloud_queue'
   };
   domainId: string;
 

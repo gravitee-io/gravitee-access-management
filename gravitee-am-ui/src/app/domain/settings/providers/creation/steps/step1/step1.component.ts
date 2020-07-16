@@ -27,6 +27,7 @@ export class ProviderCreationStep1Component implements OnInit {
     'mongo-am-idp' : 'MongoDB',
     'inline-am-idp': 'Inline',
     'oauth2-generic-am-idp': 'OpenID Connect',
+    'azure-ad-am-idp': 'Azure AD',
     'github-am-idp': 'GitHub',
     'http-am-idp': 'HTTP'
   };
