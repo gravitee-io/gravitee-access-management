@@ -17,12 +17,15 @@ package io.gravitee.am.identityprovider.api.oidc;
 
 import io.gravitee.am.common.oidc.AuthenticationFlow;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
+import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface OpenIDConnectAuthenticationProvider extends SocialAuthenticationProvider {
+public interface OpenIDConnectAuthenticationProvider<T extends OpenIDConnectIdentityProviderConfiguration> extends SocialAuthenticationProvider {
+
+    T getConfiguration();
 
     AuthenticationFlow authenticationFlow();
 }

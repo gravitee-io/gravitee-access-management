@@ -17,13 +17,9 @@ package io.gravitee.am.identityprovider.facebook.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.AuthenticationContext;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderMapper;
-import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.facebook.model.FacebookUser;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
@@ -70,10 +66,10 @@ public class FacebookAuthenticationProviderTest {
     private FacebookIdentityProviderConfiguration configuration;
 
     @Mock
-    private FacebookIdentityProviderMapper mapper;
+    private DefaultIdentityProviderMapper mapper;
 
     @Mock
-    private FacebookIdentityProviderRoleMapper roleMapper;
+    private DefaultIdentityProviderRoleMapper roleMapper;
 
     @InjectMocks
     private FacebookAuthenticationProvider cut;

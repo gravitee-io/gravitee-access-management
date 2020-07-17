@@ -31,21 +31,15 @@
         {{displayName(provider)}}
       </mat-card-content>
     </mat-card>
-  </div>
-
-  <div *ngIf="socialProviders">
-    <h4>Social</h4>
-    <div fxLayout="row" fxLayoutWrap fxLayoutGap="10px">
-      <mat-card *ngFor="let provider of socialProviders" fxFlex="30">
-        <mat-card-header fxLayoutAlign="end end" fxLayout="row">
-          <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType(true)">
-            <mat-radio-button [value]="provider.id"></mat-radio-button>
-          </mat-radio-group>
-        </mat-card-header>
-        <mat-card-content>
-          {{displayName(provider)}}
-        </mat-card-content>
-      </mat-card>
-    </div>
+    <mat-card *ngFor="let provider of socialProviders" fxFlex="30">
+      <mat-card-header fxLayoutAlign="end end" fxLayout="row">
+        <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType(true)">
+          <mat-radio-button [value]="provider.id"></mat-radio-button>
+        </mat-radio-group>
+      </mat-card-header>
+      <mat-card-content>
+        {{displayName(provider)}}
+      </mat-card-content>
+    </mat-card>
   </div>
 </div>

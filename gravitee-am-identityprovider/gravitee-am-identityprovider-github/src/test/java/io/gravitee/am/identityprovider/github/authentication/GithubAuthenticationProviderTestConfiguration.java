@@ -16,9 +16,9 @@
 package io.gravitee.am.identityprovider.github.authentication;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.github.GithubIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.github.GithubIdentityProviderMapper;
-import io.gravitee.am.identityprovider.github.GithubIdentityProviderRoleMapper;
 import io.vertx.reactivex.core.Vertx;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -61,12 +61,12 @@ public class GithubAuthenticationProviderTestConfiguration {
     }
 
     @Bean
-    public GithubIdentityProviderRoleMapper roleMapper() {
-        return new GithubIdentityProviderRoleMapper();
+    public DefaultIdentityProviderRoleMapper roleMapper() {
+        return new DefaultIdentityProviderRoleMapper();
     }
 
     @Bean
-    public GithubIdentityProviderMapper mapper() {
-        return new GithubIdentityProviderMapper();
+    public DefaultIdentityProviderMapper mapper() {
+        return new DefaultIdentityProviderMapper();
     }
 }

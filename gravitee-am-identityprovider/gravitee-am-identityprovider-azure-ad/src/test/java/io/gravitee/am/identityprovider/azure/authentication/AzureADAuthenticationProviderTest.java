@@ -17,15 +17,11 @@ package io.gravitee.am.identityprovider.azure.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.AuthenticationContext;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.azure.AzureADIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.azure.AzureADIdentityProviderMapper;
-import io.gravitee.am.identityprovider.azure.AzureADIdentityProviderRoleMapper;
-import io.gravitee.am.identityprovider.azure.jwt.jwks.hmac.MACJWKSourceResolver;
-import io.gravitee.am.identityprovider.azure.jwt.processor.HMACKeyProcessor;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.hmac.MACJWKSourceResolver;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.HMACKeyProcessor;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -47,7 +43,6 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
@@ -71,14 +66,14 @@ public class AzureADAuthenticationProviderTest {
     @Mock
     protected HttpResponse httpResponse;
 
-    @Mock
-    private AzureADIdentityProviderConfiguration configuration;
+    @Spy
+    private AzureADIdentityProviderConfiguration configuration = new AzureADIdentityProviderConfiguration();
 
     @Mock
-    private AzureADIdentityProviderMapper mapper;
+    private DefaultIdentityProviderMapper mapper;
 
     @Mock
-    private AzureADIdentityProviderRoleMapper roleMapper;
+    private DefaultIdentityProviderRoleMapper roleMapper;
 
     @InjectMocks
     private AzureADAuthenticationProvider provider;
@@ -112,47 +107,50 @@ public class AzureADAuthenticationProviderTest {
             event.next();
         });
 
-        HMACKeyProcessor keyProcessor = new HMACKeyProcessor();
-        keyProcessor.setJwkSourceResolver(new MACJWKSourceResolver(secretKey));
-        provider.setJwtProcessor(keyProcessor.create(SignatureAlgorithm.HS256));
+        when(configuration.getClientSecret()).thenReturn("a_secret");
     }
 
     @Test
-    public void shouldGenerateSignInUrl() {
+    public void shouldGenerateSignInUrl() throws Exception {
+        forceProviderInfoForTest();
+
         // openid scope will be added by default
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getTenantId()).thenReturn(TEST_TENANT_ID);
-        when(configuration.getScopes()).thenReturn(new HashSet<>());
+       // when(configuration.getScopes()).thenReturn(new HashSet<>());
 
         Request request = provider.signInUrl("https://gravitee.io");
 
         Assert.assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=openid&redirect_uri=https://gravitee.io", request.getUri());
+        assertEquals("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=openid profile email&redirect_uri=https://gravitee.io", request.getUri());
         assertNull(request.getHeaders());
     }
 
     @Test
-    public void shouldGenerateSignInUrl_withScope() {
+    public void shouldGenerateSignInUrl_withScope() throws Exception {
 
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getTenantId()).thenReturn(TEST_TENANT_ID);
         LinkedHashSet<String> scopes = new LinkedHashSet<>(); // LinkedHashSet to preserve order of scopes into the URI
-        scopes.add("profile");
-        scopes.add("email");
+        scopes.add("other_scope");
+        scopes.add("other_scope2");
         // openid scope will be added by default
         when(configuration.getScopes()).thenReturn(scopes);
+
+        forceProviderInfoForTest();
 
         Request request = provider.signInUrl("https://gravitee.io");
 
         Assert.assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=profile email openid&redirect_uri=https://gravitee.io", request.getUri());
+        assertEquals("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=other_scope other_scope2 openid profile email&redirect_uri=https://gravitee.io", request.getUri());
         assertNull(request.getHeaders());
     }
 
     @Test
-    public void shouldAuthenticate() {
+    public void shouldAuthenticate() throws Exception {
+        forceProviderInfoForTest();
 
         Authentication authentication = mock(Authentication.class);
         AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
@@ -170,6 +168,8 @@ public class AzureADAuthenticationProviderTest {
         when(configuration.getTenantId()).thenReturn(TEST_TENANT_ID);
 
         when(authentication.getContext().get("redirect_uri")).thenReturn("https://gravitee.io");
+        when(authenticationContext.get("id_token")).thenReturn(jwt);
+
         when(httpResponse.statusCode())
                 .thenReturn(HttpStatusCode.OK_200);
         //:"eyJ0eXAiOiJKV1QiLCJub25jZSI6IkVKRG5GakxSd3FvYVBMdmJwV2FqWkdWNGZSTkh6eXpoMkU4YzdueHJLWVEiLCJhbGciOiJSUzI1NiIsIng1dCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9iNzM4OTY2NS01OGRmLTRmNGMtYTNhMy1lZDVhZGYwYWFmZDgvIiwiaWF0IjoxNTk0OTEyMjUzLCJuYmYiOjE1OTQ5MTIyNTMsImV4cCI6MTU5NDkxNjE1MywiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFTUUEyLzhRQUFBQTMxUE85ODNVUkpZVTQwS0ZWWjJYVWhSa0RWdkdUTGZLcTczV21oeVpZdlE9IiwiYW1yIjpbInB3ZCJdLCJhcHBfZGlzcGxheW5hbWUiOiJUZXN0LUVMRS1JRFAtQVpVUkUiLCJhcHBpZCI6ImU0YmQwNmJkLTBhOGItNGFlOS05ZjYzLWNmNWZiODgwMDdhMSIsImFwcGlkYWNyIjoiMSIsImZhbWlseV9uYW1lIjoiTGVsZXUiLCJnaXZlbl9uYW1lIjoiRXJpYyIsImlwYWRkciI6IjgyLjIzOC4yNTUuMTQzIiwibmFtZSI6IkVyaWMgTGVsZXUiLCJvaWQiOiI0YWUwMjM1My0yOWJlLTQyZDMtODQ5OS1kOGMzNTUyYTVjOTIiLCJwbGF0ZiI6IjE0IiwicHVpZCI6IjEwMDMyMDAwQ0Y0MDg0MDUiLCJzY3AiOiJEaXJlY3RvcnkuUmVhZC5BbGwgZW1haWwgb3BlbmlkIHByb2ZpbGUgVXNlci5SZWFkIiwic3ViIjoidmNzdmFfb1Q5M1Z0TnloZngtQXFtT1RwUG9EdzZ0ZFFkVzV1M1N5N1EtZyIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJFVSIsInRpZCI6ImI3Mzg5NjY1LTU4ZGYtNGY0Yy1hM2EzLWVkNWFkZjBhYWZkOCIsInVuaXF1ZV9uYW1lIjoiZXJpYy5sZWxldUBncmF2aXRlZXNvdXJjZS5jb20iLCJ1cG4iOiJlcmljLmxlbGV1QGdyYXZpdGVlc291cmNlLmNvbSIsInV0aSI6Inl5bUdwZF9ZU0VHMklOTEVBaGZzQVEiLCJ2ZXIiOiIxLjAiLCJ4bXNfc3QiOnsic3ViIjoiQmowM3BnWUx1V3MxOXVXVUJpOXhxU21IN1JvS1A3bWpRUURtZHVWUEdoWSJ9LCJ4bXNfdGNkdCI6MTU0MDU1Njc0NH0.BsDjR_rYQAc0NjdgQLtCNc3cAsflhlOZnNdrnbEeIBrDO-VWsasrcIYACzyES611NQmPG3NTj1LR1bs5OYe8IYpgoRoVdLLirE788lpLMGudlMVi7CNuUntPZn6ca5iqlRs2PSpxrdp56BpdQcnYvTru3KEC-IKN5BLgykwo_pmMxSnsgQRyQL_38Z20ClA3IZwLW-TFQ93hLSCZxcZmpZIKhTKsseDobuif2Eq2U-uEPqYINbF38QUcW6QsCDzs3PUN6aeWV-Gr6KhxLjghTKi30EOmsY7QGU-342QFu-iq45_WC3_zU-sceFGT0ZL-97jpoXaqERWIbJVRbTeuXQ","id_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJhdWQiOiJlNGJkMDZiZC0wYThiLTRhZTktOWY2My1jZjVmYjg4MDA3YTEiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vYjczODk2NjUtNThkZi00ZjRjLWEzYTMtZWQ1YWRmMGFhZmQ4L3YyLjAiLCJpYXQiOjE1OTQ5MTIyNTMsIm5iZiI6MTU5NDkxMjI1MywiZXhwIjoxNTk0OTE2MTUzLCJmYW1pbHlfbmFtZSI6IkxlbGV1IiwiZ2l2ZW5fbmFtZSI6IkVyaWMiLCJuYW1lIjoiRXJpYyBMZWxldSIsIm9pZCI6IjRhZTAyMzUzLTI5YmUtNDJkMy04NDk5LWQ4YzM1NTJhNWM5MiIsInByZWZlcnJlZF91c2VybmFtZSI6ImVyaWMubGVsZXVAZ3Jhdml0ZWVzb3VyY2UuY29tIiwic3ViIjoiQmowM3BnWUx1V3MxOXVXVUJpOXhxU21IN1JvS1A3bWpRUURtZHVWUEdoWSIsInRpZCI6ImI3Mzg5NjY1LTU4ZGYtNGY0Yy1hM2EzLWVkNWFkZjBhYWZkOCIsInV0aSI6Inl5bUdwZF9ZU0VHMklOTEVBaGZzQVEiLCJ2ZXIiOiIyLjAifQ.c3u2k8L9fE4eQ8uM5UON1BRkqsTCEIF8jULtNC4mjN7eqncOKxtodFMsPZQeHm8P5aBYWL_LxHJfndQt9XOIReQmD57KHpdzJP4ZKacdDml5uJh30_sOx09Vm5uaEc7zos52Y8xfpyRXWLIDo-oQBwBEVnQQhFN6zgI1uvMP6Gl3y0hu-iGEwZYFkRShoaljA-k18mHbLBmllyxHvf4K2oNvftK0z9sWAwpw4beHcM2k9v2fBrQv9Ygwga1w0PsrD9U62cQnQ43f9EOIugChRRdReyTI2zoJvOeyKjo9nvxDbsz47WgpzTR7YzLhE931lF2aj6gih_4IRqBBsukpjQ"}
@@ -194,10 +194,12 @@ public class AzureADAuthenticationProviderTest {
             return true;
         });
 
+        verify(authenticationContext, times(1)).set("id_token", jwt);
         verify(client, times(1)).postAbs("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/token");
     }
     @Test
-    public void shouldAuthenticate_RoleMapping() {
+    public void shouldAuthenticate_RoleMapping() throws Exception {
+        forceProviderInfoForTest();
         Map<String, String[]> roles = new HashMap<>();
         roles.put("admin", new String[] { "preferred_username=john.doe@graviteesource.com"});
         when(roleMapper.getRoles()).thenReturn(roles);
@@ -205,6 +207,7 @@ public class AzureADAuthenticationProviderTest {
         Authentication authentication = mock(Authentication.class);
         AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
         when(authentication.getContext()).thenReturn(authenticationContext);
+        when(authenticationContext.get("id_token")).thenReturn(jwt);
 
         io.gravitee.gateway.api.Request request = mock(io.gravitee.gateway.api.Request.class);
         when(authenticationContext.request()).thenReturn(request);
@@ -241,17 +244,20 @@ public class AzureADAuthenticationProviderTest {
             assertTrue(user.getRoles().contains("admin"));
             return true;
         });
-
+        verify(authenticationContext, times(1)).set("id_token", jwt);
         verify(client, times(1)).postAbs("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/token");
     }
 
     @Test
-    public void shouldAuthenticate_invalidJwt() {
+    public void shouldAuthenticate_invalidJwt() throws Exception {
+        forceProviderInfoForTest();
+
         final String badJwt = "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWJqb2huZG9lIiwiYXVkIjoiYXVkc3Viam9obmRvZSIsImF1dGhfdGltZSI6MTU5NDkxMjU1MywiaXNzIjoiaHR0cDovL2dyYXZpdGVlLmlvL2RvbWFpbi10ZXN0L29pZGMiLCJuYW1lIjoiSm9obiBEb2UiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJqb2huLmRvZUBncmF2aXRlZXNvdXJjZS5jb20iLCJleHAiOjE1OTQ5MjY5ODEsImdpdmVuX25hbWUiOiJKb2huIiwiaWF0IjoxNTk0OTEyNTgxLCJmYW1pbHlfbmFtZSI6IkRvZSJ9.Kgr8PkN9GRtfeASpBF1uvUlK14SEQRIk-XtvwloGzdo";
 
         Authentication authentication = mock(Authentication.class);
         AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
         when(authentication.getContext()).thenReturn(authenticationContext);
+        when(authenticationContext.get("id_token")).thenReturn(badJwt);
 
         io.gravitee.gateway.api.Request request = mock(io.gravitee.gateway.api.Request.class);
         when(authenticationContext.request()).thenReturn(request);
@@ -280,6 +286,16 @@ public class AzureADAuthenticationProviderTest {
         obs.awaitTerminalEvent();
         obs.assertError(BadCredentialsException.class);
 
+        verify(authenticationContext, times(1)).set("id_token", badJwt);
         verify(client, times(1)).postAbs("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/token");
+    }
+
+    // this method is call inside each test method to avoid override of init value by mock/spy
+    private void forceProviderInfoForTest() throws Exception {
+        provider.afterPropertiesSet();
+        // override the KeyProcessor for test purpose
+        HMACKeyProcessor keyProcessor = new HMACKeyProcessor<>();
+        keyProcessor.setJwkSourceResolver(new MACJWKSourceResolver(secretKey));
+        provider.setJwtProcessor(keyProcessor.create(SignatureAlgorithm.HS256));
     }
 }

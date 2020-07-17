@@ -37,14 +37,4 @@ public class GithubIdentityProvider implements SocialIdentityProvider {
     public Class<? extends AuthenticationProvider> authenticationProvider() {
         return GithubAuthenticationProvider.class;
     }
-
-    @Override
-    public Class<? extends IdentityProviderMapper> mapper() {
-        return GithubIdentityProviderMapper.class;
-    }
-
-    @Override
-    public Class<? extends IdentityProviderRoleMapper> roleMapper() {
-        return GithubIdentityProviderRoleMapper.class;
-    }
 }

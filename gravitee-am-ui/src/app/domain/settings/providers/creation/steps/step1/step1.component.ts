@@ -30,7 +30,8 @@ export class ProviderCreationStep1Component implements OnInit {
     'azure-ad-am-idp': 'Azure AD',
     'github-am-idp': 'GitHub',
     'facebook-am-idp': 'Facebook',
-    'http-am-idp': 'HTTP'
+    'http-am-idp': 'HTTP',
+    'saml2-generic-am-idp': 'SAML 2.0'
   };
   @Input() provider;
   providers: any[];

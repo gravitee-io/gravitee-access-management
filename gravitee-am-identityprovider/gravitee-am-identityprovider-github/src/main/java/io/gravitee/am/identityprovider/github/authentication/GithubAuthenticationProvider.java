@@ -16,24 +16,17 @@
 package io.gravitee.am.identityprovider.github.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.api.common.Request;
-import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
+import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractSocialAuthenticationProvider;
+import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.gravitee.am.identityprovider.github.GithubIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.github.GithubIdentityProviderMapper;
-import io.gravitee.am.identityprovider.github.GithubIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.github.model.GithubUser;
-import io.gravitee.am.identityprovider.github.utils.URLEncodedUtils;
 import io.gravitee.am.model.http.BasicNameValuePair;
 import io.gravitee.am.model.http.NameValuePair;
 import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.vertx.reactivex.core.buffer.Buffer;
@@ -44,16 +37,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
-import java.util.*;
-
-import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(GithubAuthenticationProviderConfiguration.class)
-public class GithubAuthenticationProvider implements SocialAuthenticationProvider {
+public class GithubAuthenticationProvider extends AbstractSocialAuthenticationProvider<GithubIdentityProviderConfiguration> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GithubAuthenticationProvider.class);
     private static final String CLIENT_ID = "client_id";
@@ -69,44 +63,33 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
     private GithubIdentityProviderConfiguration configuration;
 
     @Autowired
-    private GithubIdentityProviderMapper mapper;
+    private DefaultIdentityProviderMapper mapper;
 
     @Autowired
-    private GithubIdentityProviderRoleMapper roleMapper;
+    private DefaultIdentityProviderRoleMapper roleMapper;
 
     @Override
-    public Request signInUrl(String redirectUri) {
-        try {
-            UriBuilder builder = UriBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
-            builder.addParameter(Parameters.CLIENT_ID, configuration.getClientId());
-            builder.addParameter(Parameters.REDIRECT_URI, redirectUri);
-            builder.addParameter(Parameters.RESPONSE_TYPE, configuration.getResponseType());
-            if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
-                builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, configuration.getScopes()));
-            }
-
-            Request request = new Request();
-            request.setMethod(HttpMethod.GET);
-            request.setUri(builder.build().toString());
-            return request;
-        } catch (Exception e) {
-            LOGGER.error("An error occurs while building GitHub Sign In URL", e);
-            return null;
-        }
+    protected GithubIdentityProviderConfiguration getConfiguration() {
+        return this.configuration;
     }
 
     @Override
-    public Maybe<User> loadUserByUsername(Authentication authentication) {
-        return authenticate(authentication)
-                .flatMap(accessToken -> profile(accessToken));
+    protected IdentityProviderMapper getIdentityProviderMapper() {
+        return this.mapper;
     }
 
     @Override
-    public Maybe<User> loadUserByUsername(String username) {
-        return Maybe.empty();
+    protected IdentityProviderRoleMapper getIdentityProviderRoleMapper() {
+        return this.roleMapper;
     }
 
-    private Maybe<String> authenticate(Authentication authentication) {
+    @Override
+    protected WebClient getClient() {
+        return this.client;
+    }
+
+    @Override
+    protected Maybe<Token> authenticate(Authentication authentication) {
         // prepare body request parameters
         final String authorizationCode = authentication.getContext().request().parameters().getFirst(configuration.getCodeParameter());
         if (authorizationCode == null || authorizationCode.isEmpty()) {
@@ -131,13 +114,14 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
                     }
 
                     Map<String, String> bodyResponse = URLEncodedUtils.format(httpResponse.bodyAsString());
-                    return bodyResponse.get("access_token");
+                    return new Token(bodyResponse.get("access_token"), TokenTypeHint.ACCESS_TOKEN);
                 });
     }
 
-    private Maybe<User> profile(String accessToken) {
+    @Override
+    protected Maybe<User> profile(Token accessToken, Authentication authentication) {
         return client.getAbs(configuration.getUserProfileUri())
-                .putHeader(HttpHeaders.AUTHORIZATION, "token " + accessToken)
+                .putHeader(HttpHeaders.AUTHORIZATION, "token " + accessToken.getValue())
                 .rxSend()
                 .toMaybe()
                 .map(httpClientResponse -> {
@@ -170,48 +154,7 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
         return user;
     }
 
-    private Map<String, Object> applyUserMapping(Map<String, Object> attributes) {
-        if (!mappingEnabled()) {
-            return defaultClaims(attributes);
-        }
-
-        Map<String, Object> claims = new HashMap<>();
-        this.mapper.getMappers().forEach((k, v) -> {
-            if (attributes.containsKey(v)) {
-                claims.put(k, attributes.get(v));
-            }
-        });
-        return claims;
-    }
-
-    private List<String> applyRoleMapping(Map<String, Object> attributes) {
-        if (!roleMappingEnabled()) {
-            return Collections.emptyList();
-        }
-
-        Set<String> roles = new HashSet<>();
-        roleMapper.getRoles().forEach((role, users) -> {
-            Arrays.asList(users).forEach(u -> {
-                // role mapping have the following syntax userAttribute=userValue
-                String[] roleMapping = u.split("=",2);
-                String userAttribute = roleMapping[0];
-                String userValue = roleMapping[1];
-                if (attributes.containsKey(userAttribute)) {
-                    Object attribute = attributes.get(userAttribute);
-                    // attribute is a list
-                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
-                        roles.add(role);
-                    } else if (userValue.equals(attributes.get(userAttribute))) {
-                        roles.add(role);
-                    }
-                }
-            });
-        });
-
-        return new ArrayList<>(roles);
-    }
-
-    private Map<String, Object> defaultClaims(Map<String, Object> attributes) {
+    protected Map<String, Object> defaultClaims(Map<String, Object> attributes) {
         Map<String, Object> claims = new HashMap<>();
         try {
             String[] fullName = String.valueOf(attributes.get(GithubUser.NAME)).split("\\s+");
@@ -259,13 +202,5 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
         claims.put(GithubUser.CREATED_AT, attributes.get(GithubUser.CREATED_AT));
 
         return claims;
-    }
-
-    private boolean mappingEnabled() {
-        return this.mapper != null && this.mapper.getMappers() != null && !this.mapper.getMappers().isEmpty();
-    }
-
-    private boolean roleMappingEnabled() {
-        return this.roleMapper != null && this.roleMapper.getRoles() != null && !this.roleMapper.getRoles().isEmpty();
     }
 }

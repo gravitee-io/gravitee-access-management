@@ -38,13 +38,4 @@ public class AzureADIdentityProvider implements SocialIdentityProvider {
         return AzureADAuthenticationProvider.class;
     }
 
-    @Override
-    public Class<? extends IdentityProviderMapper> mapper() {
-        return AzureADIdentityProviderMapper.class;
-    }
-
-    @Override
-    public Class<? extends IdentityProviderRoleMapper> roleMapper() {
-        return AzureADIdentityProviderRoleMapper.class;
-    }
 }

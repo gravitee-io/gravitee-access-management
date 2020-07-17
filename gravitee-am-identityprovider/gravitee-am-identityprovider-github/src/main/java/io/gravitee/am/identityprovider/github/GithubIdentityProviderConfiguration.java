@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.github;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
 import java.util.Set;
 
@@ -23,7 +24,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GithubIdentityProviderConfiguration implements IdentityProviderConfiguration {
+public class GithubIdentityProviderConfiguration implements SocialIdentityProviderConfiguration {
 
     private String USER_AUTHORIZATION_URI = "https://github.com/login/oauth/authorize";
     private String ACCESS_TOKEN_URI = "https://github.com/login/oauth/access_token";

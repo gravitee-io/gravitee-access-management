@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication.spring;
 
+import io.gravitee.am.identityprovider.common.oauth2.utils.WebClientBuilder;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
-import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +31,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OAuth2GenericAuthenticationProviderConfiguration {
 
-    private static final String DEFAULT_USER_AGENT = "Gravitee.io-AM/3";
-
     @Autowired
     private Vertx vertx;
 
@@ -42,12 +40,6 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
     @Bean
     @Qualifier("oauthWebClient")
     public WebClient httpClient() {
-        WebClientOptions httpClientOptions = new WebClientOptions();
-        httpClientOptions
-                .setUserAgent(DEFAULT_USER_AGENT)
-                .setConnectTimeout(configuration.getConnectTimeout())
-                .setMaxPoolSize(configuration.getMaxPoolSize());
-
-        return WebClient.create(vertx, httpClientOptions);
+        return WebClientBuilder.build(vertx, configuration);
     }
 }

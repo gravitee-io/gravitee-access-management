@@ -15,17 +15,24 @@
  */
 package io.gravitee.am.identityprovider.azure;
 
-import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AzureADIdentityProviderConfiguration implements IdentityProviderConfiguration {
+public class AzureADIdentityProviderConfiguration implements OpenIDConnectIdentityProviderConfiguration {
+
+    private static final String DEFAULT_RESPONSE_TYPE = "code";
+
+    public static final String HOST_MICROSOFT_LOGIN = "https://login.microsoftonline.com/";
+    public static final String AUTHORIZATION_PATH = "/oauth2/v2.0/authorize";
+    public static final String TOKEN_PATH = "/oauth2/v2.0/token";
+    public static final String JWKS_PATH = "/discovery/v2.0/keys";
 
     public static final String CODE_PARAMETER = "code";
     private String tenantId;
@@ -95,5 +102,50 @@ public class AzureADIdentityProviderConfiguration implements IdentityProviderCon
 
     public void setMaxPoolSize(Integer maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
+    }
+
+    @Override
+    public String getWellKnownUri() {
+        return null;
+    }
+
+    @Override
+    public boolean isUseIdTokenForUserInfo() {
+        return true;
+    }
+
+    @Override
+    public KeyResolver getPublicKeyResolver() {
+        return KeyResolver.JWKS_URL;
+    }
+
+    @Override
+    public SignatureAlgorithm getSignatureAlgorithm() {
+        return SignatureAlgorithm.RS256;
+    }
+
+    @Override
+    public String getResolverParameter() {
+        return HOST_MICROSOFT_LOGIN + getTenantId() + JWKS_PATH;
+    }
+
+    @Override
+    public String getUserAuthorizationUri() {
+        return HOST_MICROSOFT_LOGIN + getTenantId() + AUTHORIZATION_PATH;
+    }
+
+    @Override
+    public String getAccessTokenUri() {
+        return HOST_MICROSOFT_LOGIN + getTenantId() + TOKEN_PATH;
+    }
+
+    @Override
+    public String getUserProfileUri() {
+        return null;
+    }
+
+    @Override
+    public String getResponseType() {
+        return DEFAULT_RESPONSE_TYPE;
     }
 }

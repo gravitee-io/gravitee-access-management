@@ -15,27 +15,27 @@
  */
 package io.gravitee.am.identityprovider.oauth2.jwt.algo;
 
-import com.nimbusds.jose.JWSAlgorithm;
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public enum Signature {
-    RSA_RS256(JWSAlgorithm.RS256),
-    RSA_RS384(JWSAlgorithm.RS384),
-    RSA_RS512(JWSAlgorithm.RS512),
-    HMAC_HS256(JWSAlgorithm.HS256),
-    HMAC_HS384(JWSAlgorithm.HS384),
-    HMAC_HS512(JWSAlgorithm.HS512);
+    RSA_RS256(SignatureAlgorithm.RS256),
+    RSA_RS384(SignatureAlgorithm.RS384),
+    RSA_RS512(SignatureAlgorithm.RS512),
+    HMAC_HS256(SignatureAlgorithm.HS256),
+    HMAC_HS384(SignatureAlgorithm.HS384),
+    HMAC_HS512(SignatureAlgorithm.HS512);
 
-    private JWSAlgorithm alg;
+    private SignatureAlgorithm alg;
 
-    Signature(JWSAlgorithm alg) {
+    Signature(SignatureAlgorithm alg) {
         this.alg = alg;
     }
 
-    public JWSAlgorithm getAlg() {
+    public SignatureAlgorithm getAlg() {
         return alg;
     }
 }

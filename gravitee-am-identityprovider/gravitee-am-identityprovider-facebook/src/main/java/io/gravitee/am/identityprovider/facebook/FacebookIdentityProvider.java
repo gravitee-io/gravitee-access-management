@@ -38,13 +38,4 @@ public class FacebookIdentityProvider implements SocialIdentityProvider {
         return FacebookAuthenticationProvider.class;
     }
 
-    @Override
-    public Class<? extends IdentityProviderMapper> mapper() {
-        return FacebookIdentityProviderMapper.class;
-    }
-
-    @Override
-    public Class<? extends IdentityProviderRoleMapper> roleMapper() {
-        return FacebookIdentityProviderRoleMapper.class;
-    }
 }

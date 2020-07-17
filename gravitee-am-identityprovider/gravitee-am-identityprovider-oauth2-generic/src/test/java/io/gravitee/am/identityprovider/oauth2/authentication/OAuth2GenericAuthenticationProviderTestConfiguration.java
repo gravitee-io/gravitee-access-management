@@ -16,9 +16,9 @@
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderMapper;
-import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderRoleMapper;
 import io.vertx.reactivex.core.Vertx;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,13 +51,13 @@ public class OAuth2GenericAuthenticationProviderTestConfiguration {
     }
 
     @Bean
-    public OAuth2GenericIdentityProviderMapper mapper() {
-        return new OAuth2GenericIdentityProviderMapper();
+    public DefaultIdentityProviderMapper mapper() {
+        return new DefaultIdentityProviderMapper();
     }
 
     @Bean
-    public OAuth2GenericIdentityProviderRoleMapper roleMapper() {
-        return new OAuth2GenericIdentityProviderRoleMapper();
+    public DefaultIdentityProviderRoleMapper roleMapper() {
+        return new DefaultIdentityProviderRoleMapper();
     }
 
     @Bean("graviteeProperties")

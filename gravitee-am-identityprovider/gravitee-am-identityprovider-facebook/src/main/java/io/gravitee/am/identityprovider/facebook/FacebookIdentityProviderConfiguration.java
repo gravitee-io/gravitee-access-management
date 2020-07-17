@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.facebook;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
 import java.util.Set;
 
@@ -23,7 +24,7 @@ import java.util.Set;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FacebookIdentityProviderConfiguration implements IdentityProviderConfiguration {
+public class FacebookIdentityProviderConfiguration implements SocialIdentityProviderConfiguration {
 
     private static final String USER_AUTHORIZATION_URI = "https://www.facebook.com/v8.0/dialog/oauth";
     private static final String ACCESS_TOKEN_URI = "https://graph.facebook.com/v8.0/oauth/access_token";
