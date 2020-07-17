@@ -1,7 +1,7 @@
 {
   "type" : "object",
   "id" : "urn:jsonschema:io:gravitee:am:identityprovider:azure:AzureADIdentityProvider",
-  "description": "Azure AD identity provider, let you register and set up permissions and authorization options for OpenID Connect protocol.\n\nhttps://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app",
+  "description": "Azure AD identity provider, let you register and set up permissions and authorization options for OpenID Connect protocol.\n\nhttps://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app \n\n (openid, email and profile scopes are added by default)",
   "properties" : {
     "tenantId" : {
       "type" : "string",
@@ -25,7 +25,7 @@
     "scopes": {
       "type": "array",
       "title": "Scopes",
-      "description": "Scopes let you specify exactly what type of access you need. Scopes limit access for OAuth tokens.",
+      "description": "Scopes let you specify exactly what type of access you need. Scopes limit access for OAuth tokens. (openid, email and profile scopes are added by default)",
       "items":
       {
         "type": "string"

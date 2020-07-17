@@ -35,7 +35,7 @@
         <!-- Gravitee.io -->
         <dependency>
             <groupId>io.gravitee.am.identityprovider</groupId>
-            <artifactId>gravitee-am-identityprovider-api</artifactId>
+            <artifactId>gravitee-am-identityprovider-common</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>

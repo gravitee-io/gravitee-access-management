@@ -17,13 +17,9 @@ package io.gravitee.am.identityprovider.oauth2.authentication;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.AuthenticationContext;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
-import io.gravitee.am.identityprovider.oauth2.utils.URLEncodedUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.observers.TestObserver;
 import org.junit.Rule;
@@ -54,7 +50,7 @@ public class OAuth2GenericAuthenticationProviderTest {
     private AuthenticationProvider authenticationProvider;
 
     @Autowired
-    private OAuth2GenericIdentityProviderRoleMapper roleMapper;
+    private DefaultIdentityProviderRoleMapper roleMapper;
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19999));

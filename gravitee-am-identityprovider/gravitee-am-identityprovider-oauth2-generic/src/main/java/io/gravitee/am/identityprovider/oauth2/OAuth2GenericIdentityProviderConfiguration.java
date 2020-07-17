@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.identityprovider.oauth2;
 
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
+import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
-import io.gravitee.am.identityprovider.oauth2.resolver.KeyResolver;
 
 import java.util.Set;
 
@@ -25,7 +28,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OAuth2GenericIdentityProviderConfiguration implements IdentityProviderConfiguration {
+public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnectIdentityProviderConfiguration {
 
     private static final String CODE_PARAMETER = "code";
     private String clientId;
@@ -166,5 +169,10 @@ public class OAuth2GenericIdentityProviderConfiguration implements IdentityProvi
 
     public void setMaxPoolSize(Integer maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
+    }
+
+    @Override
+    public SignatureAlgorithm getSignatureAlgorithm() {
+        return this.signature == null ? null : this.signature.getAlg();
     }
 }

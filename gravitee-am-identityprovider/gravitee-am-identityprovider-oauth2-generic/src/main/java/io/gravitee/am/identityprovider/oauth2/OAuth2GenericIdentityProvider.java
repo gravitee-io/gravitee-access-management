@@ -37,14 +37,4 @@ public class OAuth2GenericIdentityProvider implements SocialIdentityProvider {
     public Class<? extends AuthenticationProvider> authenticationProvider() {
         return OAuth2GenericAuthenticationProvider.class;
     }
-
-    @Override
-    public Class<? extends IdentityProviderMapper> mapper() {
-        return OAuth2GenericIdentityProviderMapper.class;
-    }
-
-    @Override
-    public Class<? extends IdentityProviderRoleMapper> roleMapper() {
-        return OAuth2GenericIdentityProviderRoleMapper.class;
-    }
 }

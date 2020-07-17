@@ -43,6 +43,12 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.identityprovider</groupId>
+            <artifactId>gravitee-am-identityprovider-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.certificate</groupId>
             <artifactId>gravitee-am-certificate-api</artifactId>
             <version>${project.version}</version>

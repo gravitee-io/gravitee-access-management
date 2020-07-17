@@ -22,7 +22,7 @@ import io.gravitee.am.identityprovider.api.common.Request;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SocialAuthenticationProvider extends AuthenticationProvider {
+public interface SocialAuthenticationProvider <T extends SocialIdentityProviderConfiguration> extends AuthenticationProvider {
 
     Request signInUrl(String redirectUri);
 }

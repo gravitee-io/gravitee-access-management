@@ -16,20 +16,13 @@
 package io.gravitee.am.identityprovider.facebook.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.api.common.Request;
-import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
+import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractSocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderMapper;
-import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.facebook.authentication.spring.FacebookAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.facebook.model.FacebookUser;
-import io.gravitee.common.http.HttpMethod;
 import io.reactivex.Maybe;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -41,9 +34,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.*;
 
 /**
@@ -51,7 +44,7 @@ import static io.gravitee.am.identityprovider.facebook.model.FacebookUser.*;
  * @author GraviteeSource Team
  */
 @Import(FacebookAuthenticationProviderConfiguration.class)
-public class FacebookAuthenticationProvider implements SocialAuthenticationProvider {
+public class FacebookAuthenticationProvider extends AbstractSocialAuthenticationProvider<FacebookIdentityProviderConfiguration> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FacebookAuthenticationProvider.class);
     private static final String CLIENT_ID = "client_id";
@@ -69,44 +62,38 @@ public class FacebookAuthenticationProvider implements SocialAuthenticationProvi
     private FacebookIdentityProviderConfiguration configuration;
 
     @Autowired
-    private FacebookIdentityProviderMapper mapper;
+    private DefaultIdentityProviderMapper mapper;
 
     @Autowired
-    private FacebookIdentityProviderRoleMapper roleMapper;
+    private DefaultIdentityProviderRoleMapper roleMapper;
 
     @Override
-    public Request signInUrl(String redirectUri) {
-        try {
-            UriBuilder builder = UriBuilder.fromHttpUrl(configuration.getUserAuthorizationUri());
-            builder.addParameter(Parameters.CLIENT_ID, configuration.getClientId());
-            builder.addParameter(Parameters.REDIRECT_URI, redirectUri);
-            builder.addParameter(Parameters.RESPONSE_TYPE, configuration.getResponseType());
-            if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
-                builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, configuration.getScopes()));
-            }
+    protected FacebookIdentityProviderConfiguration getConfiguration() {
+        return this.configuration;
+    }
 
-            Request request = new Request();
-            request.setMethod(HttpMethod.GET);
-            request.setUri(builder.build().toString());
-            return request;
-        } catch (Exception e) {
-            LOGGER.error("An error occurs while building Facebook Sign In URL", e);
-            return null;
-        }
+    @Override
+    protected IdentityProviderMapper getIdentityProviderMapper() {
+        return this.mapper;
+    }
+
+    @Override
+    protected IdentityProviderRoleMapper getIdentityProviderRoleMapper() {
+        return this.roleMapper;
+    }
+
+    @Override
+    protected WebClient getClient() {
+        return this.client;
     }
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
         return authenticate(authentication)
-                .flatMap(this::profile);
+                .flatMap(token -> this.profile(token, authentication));
     }
 
-    @Override
-    public Maybe<User> loadUserByUsername(String username) {
-        return Maybe.empty();
-    }
-
-    private Maybe<String> authenticate(Authentication authentication) {
+    protected Maybe<Token> authenticate(Authentication authentication) {
 
         // Prepare body request parameters.
         final String authorizationCode = authentication.getContext().request().parameters().getFirst(configuration.getCodeParameter());
@@ -130,15 +117,15 @@ public class FacebookAuthenticationProvider implements SocialAuthenticationProvi
                         return Maybe.error(new BadCredentialsException(httpResponse.bodyAsString()));
                     }
 
-                    return Maybe.just(httpResponse.bodyAsJsonObject().getString(ACCESS_TOKEN));
+                    return Maybe.just(new Token(httpResponse.bodyAsJsonObject().getString(ACCESS_TOKEN), TokenTypeHint.ACCESS_TOKEN));
                 });
     }
 
-    private Maybe<User> profile(String accessToken) {
+    protected Maybe<User> profile(Token accessToken, Authentication auth) {
 
         return client.postAbs(configuration.getUserProfileUri())
                 .rxSendForm(MultiMap.caseInsensitiveMultiMap()
-                        .set(ACCESS_TOKEN, accessToken)
+                        .set(ACCESS_TOKEN, accessToken.getValue())
                         .set(FIELDS, ALL_FIELDS_PARAM))
                 .toMaybe()
                 .flatMap(httpResponse -> {
@@ -166,7 +153,7 @@ public class FacebookAuthenticationProvider implements SocialAuthenticationProvi
         convertClaim(FacebookUser.ID, facebookUser, StandardClaims.PREFERRED_USERNAME, additionalInformation);
 
         // Apply user mapping.
-        additionalInformation.putAll(applyUserMapping(facebookUser));
+        additionalInformation.putAll(applyUserMapping(facebookUser.getMap()));
 
         // Update username if user mapping has changed.
         if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
@@ -176,59 +163,13 @@ public class FacebookAuthenticationProvider implements SocialAuthenticationProvi
         user.setAdditionalInformation(additionalInformation);
 
         // Set user roles.
-        user.setRoles(applyRoleMapping(facebookUser));
+        user.setRoles(applyRoleMapping(facebookUser.getMap()));
 
         return user;
     }
 
-    /**
-     * TODO: Should be mutualized across idps.
-     */
-    private Map<String, Object> applyUserMapping(JsonObject attributes) {
-        if (!mappingEnabled()) {
-            return defaultClaims(attributes);
-        }
-
-        Map<String, Object> claims = new HashMap<>();
-        this.mapper.getMappers().forEach((k, v) -> {
-            if (attributes.containsKey(v)) {
-                claims.put(k, attributes.getValue(v));
-            }
-        });
-        return claims;
-    }
-
-    /**
-     * TODO: Should be mutualized across idps.
-     */
-    private List<String> applyRoleMapping(JsonObject attributes) {
-        if (!roleMappingEnabled()) {
-            return Collections.emptyList();
-        }
-
-        Set<String> roles = new HashSet<>();
-        roleMapper.getRoles().forEach((role, users) -> {
-            Arrays.asList(users).forEach(u -> {
-                // role mapping have the following syntax userAttribute=userValue
-                String[] roleMapping = u.split("=", 2);
-                String userAttribute = roleMapping[0];
-                String userValue = roleMapping[1];
-                if (attributes.containsKey(userAttribute)) {
-                    Object attribute = attributes.getValue(userAttribute);
-                    // attribute is a list
-                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
-                        roles.add(role);
-                    } else if (userValue.equals(attributes.getValue(userAttribute))) {
-                        roles.add(role);
-                    }
-                }
-            });
-        });
-
-        return new ArrayList<>(roles);
-    }
-
-    private Map<String, Object> defaultClaims(JsonObject attributes) {
+    protected Map<String, Object> defaultClaims(Map<String, Object> _attributes) {
+        JsonObject attributes = JsonObject.mapFrom(_attributes);
         Map<String, Object> claims = new HashMap<>();
 
         convertClaim(FacebookUser.ID, attributes, StandardClaims.SUB, claims);
@@ -258,20 +199,6 @@ public class FacebookAuthenticationProvider implements SocialAuthenticationProvi
         }
 
         return claims;
-    }
-
-    /**
-     * TODO: Should be mutualized across idps.
-     */
-    private boolean mappingEnabled() {
-        return this.mapper != null && this.mapper.getMappers() != null && !this.mapper.getMappers().isEmpty();
-    }
-
-    /**
-     * TODO: Should be mutualized across idps.
-     */
-    private boolean roleMappingEnabled() {
-        return this.roleMapper != null && this.roleMapper.getRoles() != null && !this.roleMapper.getRoles().isEmpty();
     }
 
     private void convertClaim(String sourceName, JsonObject source, String destName, Map<String, Object> dest) {
