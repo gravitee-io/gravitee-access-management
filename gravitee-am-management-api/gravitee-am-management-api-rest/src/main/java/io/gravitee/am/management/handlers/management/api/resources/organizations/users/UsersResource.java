@@ -155,7 +155,7 @@ public class UsersResource extends AbstractResource {
 
         if (hasPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.READ)) {
             filteredUser.setLoggedAt(user.getLoggedAt());
-
+            filteredUser.setAdditionalInformation(user.getAdditionalInformation());
             if (user.getSource() != null) {
                 return identityProviderService.findById(user.getSource())
                         .map(idP -> {
