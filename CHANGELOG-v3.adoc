@@ -1,5 +1,54 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/223?closed=1[AM - 3.1.0 (2020-07-17)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge release 3.0.4 https://github.com/gravitee-io/issues/issues/4085[#4085]
+
+*_Oidc_*
+
+- Prompt login not well handle after consent or mfa steps https://github.com/gravitee-io/issues/issues/4046[#4046]
+
+=== Features
+
+*_Fapi_*
+
+- Support ACR claim https://github.com/gravitee-io/issues/issues/4031[#4031]
+- Support PS256 for the signing algorithm https://github.com/gravitee-io/issues/issues/4029[#4029]
+
+*_Gateway_*
+
+- Allow empty value for domain path https://github.com/gravitee-io/issues/issues/2921[#2921]
+- Send en email when the account is blocked https://github.com/gravitee-io/issues/issues/2613[#2613]
+- Virtual host support https://github.com/gravitee-io/issues/issues/3199[#3199]
+
+*_Oauth2_*
+
+- Refresh tokens must not be used after user consents revocation https://github.com/gravitee-io/issues/issues/4039[#4039]
+
+*_Uma2_*
+
+- Access policies https://github.com/gravitee-io/issues/issues/3861[#3861]
+- Authorization grant https://github.com/gravitee-io/issues/issues/3717[#3717]
+- Create new type of application https://github.com/gravitee-io/issues/issues/3850[#3850]
+- Discovery endpoint https://github.com/gravitee-io/issues/issues/3716[#3716]
+
+=== Improvements
+
+*_Fapi_*
+
+- Add request_parameter_supported to the OIDC wellknown endpoint https://github.com/gravitee-io/issues/issues/4030[#4030]
+- Override missing parameters from the request object parameter https://github.com/gravitee-io/issues/issues/4033[#4033]
+
+*_Management_*
+
+- Add user additionalInformation to the UsersResource https://github.com/gravitee-io/issues/issues/4114[#4114]
+- Allow users from social provider to subscribe to newsletter https://github.com/gravitee-io/issues/issues/4081[#4081]
+
+
 == https://github.com/gravitee-io/issues/milestone/258?closed=1[AM - 3.0.4 (2020-07-07)]
 
 === Bug fixes
