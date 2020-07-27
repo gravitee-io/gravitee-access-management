@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.User;
 import org.junit.Test;
@@ -78,11 +79,10 @@ public class JWTBearerExtensionGrantProviderTest {
         when(jwtBearerTokenGranterConfiguration.getClaimsMapper()).thenReturn(claimsMapper);
 
         Map<String, Object> assertionClaims = new HashMap<>();
-        assertionClaims.put("sub", "test");
         assertionClaims.put("username", "test_username");
         assertionClaims.put("email", "test_email");
 
-        User user = jwtBearerExtensionGrantProvider.createUser(assertionClaims);
+        User user = jwtBearerExtensionGrantProvider.createUser(new JWT(assertionClaims));
 
         assertEquals(3, user.getAdditionalInformation().values().size());
         assertEquals("test_username", user.getAdditionalInformation().get("username"));
