@@ -88,10 +88,10 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
         }).firstElement();
     }
 
-    public User createUser(Map<String, Object> claims) {
-        final String sub = claims.get(StandardClaims.SUB).toString();
-        final String username = claims.containsKey(StandardClaims.PREFERRED_USERNAME) ?
-                claims.get(StandardClaims.PREFERRED_USERNAME).toString() : sub;
+    public User createUser(JWT jwt) {
+        final String sub = jwt.getSub();
+        final String username = jwt.containsKey(StandardClaims.PREFERRED_USERNAME) ?
+                jwt.get(StandardClaims.PREFERRED_USERNAME).toString() : sub;
         User user = new DefaultUser(username);
         ((DefaultUser) user).setId(sub);
         // set claims
@@ -103,8 +103,8 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
             claimsMapper.forEach(claimMapper -> {
                 String assertionClaim = claimMapper.get("assertion_claim");
                 String tokenClaim = claimMapper.get("token_claim");
-                if (claims.containsKey(assertionClaim)) {
-                    additionalInformation.put(tokenClaim, claims.get(assertionClaim));
+                if (jwt.containsKey(assertionClaim)) {
+                    additionalInformation.put(tokenClaim, jwt.get(assertionClaim));
                 }
             });
         }
