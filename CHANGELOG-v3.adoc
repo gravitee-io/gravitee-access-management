@@ -1,5 +1,18 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/269?closed=1[AM - 3.1.1 (2020-07-30)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [jwt-bearer] sub claim is not mandatory https://github.com/gravitee-io/issues/issues/4135[#4135]
+
+*_Management_*
+
+- Bad permissions https://github.com/gravitee-io/issues/issues/4133[#4133]
+
+
 == https://github.com/gravitee-io/issues/milestone/223?closed=1[AM - 3.1.0 (2020-07-17)]
 
 === Bug fixes
