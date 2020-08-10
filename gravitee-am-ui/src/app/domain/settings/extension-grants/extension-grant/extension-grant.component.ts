@@ -55,7 +55,7 @@ export class ExtensionGrantComponent implements OnInit {
     this.identityProviders = this.route.snapshot.data['identityProviders'];
     this.extensionGrantConfiguration = JSON.parse(this.extensionGrant.configuration);
     this.updateTokenGranterConfiguration = this.extensionGrantConfiguration;
-    this.editMode = this.authService.hasPermissions(['domain_extension_grant_edit']);
+    this.editMode = this.authService.hasPermissions(['domain_extension_grant_update']);
     this.organizationService.extensionGrantSchema(this.extensionGrant.type).subscribe(data => {
       this.extensionGrantSchema = data;
       // set the grant_type value
