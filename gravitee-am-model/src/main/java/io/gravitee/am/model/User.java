@@ -190,6 +190,14 @@ public class User {
     }
 
     public String getEmail() {
+        if (email == null) {
+            // fall back to standard claims
+            if (getAdditionalInformation() != null) {
+                if (getAdditionalInformation().get(StandardClaims.EMAIL) != null) {
+                    return (String) getAdditionalInformation().get(StandardClaims.EMAIL);
+                }
+            }
+        }
         return email;
     }
 

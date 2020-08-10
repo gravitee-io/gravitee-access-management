@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -181,7 +183,7 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(users -> users.getData().size() == 2);
     }
-    
+
     @Test
     public void testSearch_paged() {
         final String domain = "domain";
@@ -195,7 +197,7 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         user2.setDomain(domain);
         user2.setUsername("testUsername2");
         userRepository.create(user2).blockingGet();
-        
+
         User user3 = new User();
         user3.setDomain(domain);
         user3.setUsername("testUsername3");
@@ -204,7 +206,7 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         // fetch user (page 0)
         TestObserver<Page<User>> testObserverP0 = userRepository.search(domain, "testUsername*", 0, 2).test();
         testObserverP0.awaitTerminalEvent();
-        
+
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
         testObserverP0.assertValue(users -> users.getData().size() == 2);
@@ -212,15 +214,60 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         	Iterator<User> it = users.getData().iterator();
         	return it.next().getUsername().equals(user1.getUsername()) && it.next().getUsername().equals(user2.getUsername());
         });
-        
+
         // fetch user (page 1)
         TestObserver<Page<User>> testObserverP1 = userRepository.search(domain, "testUsername*", 1, 2).test();
         testObserverP1.awaitTerminalEvent();
-        
+
         testObserverP1.assertComplete();
         testObserverP1.assertNoErrors();
         testObserverP1.assertValue(users -> users.getData().size() == 1);
         testObserverP1.assertValue(users -> users.getData().iterator().next().getUsername().equals(user3.getUsername()));
+    }
+
+    @Test
+    public void testFindByDomainAndEmail() throws TechnicalException {
+        final String domain = "domain";
+        // create user
+        User user = new User();
+        user.setDomain(domain);
+        user.setEmail("test@test.com");
+        userRepository.create(user).blockingGet();
+
+        User user2 = new User();
+        user2.setDomain(domain);
+        userRepository.create(user2).blockingGet();
+
+        // fetch user
+        TestObserver<List<User>> testObserver = userRepository.findByDomainAndEmail(domain, "test@test.com", false).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.size() == 1);
+    }
+
+    @Test
+    public void testFindByDomainAndEmailWithStandardClaim() throws TechnicalException {
+        final String domain = "domain";
+        // create user
+        User user = new User();
+        user.setDomain(domain);
+        user.setEmail("test@test.com");
+        userRepository.create(user).blockingGet();
+
+        User user2 = new User();
+        user2.setDomain(domain);
+        user2.setAdditionalInformation(Collections.singletonMap(StandardClaims.EMAIL, "test@test.com"));
+        userRepository.create(user2).blockingGet();
+
+        // fetch user
+        TestObserver<List<User>> testObserver = userRepository.findByDomainAndEmail(domain, "test@test.com", false).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.size() == 2);
     }
 
 }

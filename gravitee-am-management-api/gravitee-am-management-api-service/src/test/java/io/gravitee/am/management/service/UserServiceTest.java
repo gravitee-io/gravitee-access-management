@@ -307,8 +307,9 @@ public class UserServiceTest {
     public void shouldAssignRoles() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -318,7 +319,8 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(commonUserService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
@@ -332,8 +334,9 @@ public class UserServiceTest {
     public void shouldAssignRoles_roleNotFound() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -343,7 +346,8 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(commonUserService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
         TestObserver testObserver = userService.assignRoles(user.getId(), rolesIds).test();
@@ -356,8 +360,9 @@ public class UserServiceTest {
     public void shouldRevokeRole() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -367,7 +372,8 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(commonUserService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
@@ -381,8 +387,9 @@ public class UserServiceTest {
     public void shouldRevokeRoles_roleNotFound() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -392,7 +399,8 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(commonUserService.findById(user.getId())).thenReturn(Maybe.just(user));
+        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
         TestObserver testObserver = userService.revokeRoles(user.getId(), rolesIds).test();

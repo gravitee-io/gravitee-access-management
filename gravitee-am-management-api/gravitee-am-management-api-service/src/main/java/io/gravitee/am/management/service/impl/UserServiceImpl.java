@@ -103,20 +103,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<Page<User>> findByDomain(String domain, int page, int size) {
-        return userService.findByDomain(domain, page, size);
+        return userService.findByDomain(domain, page, size)
+                .doOnSuccess(userPage -> userPage.getData().forEach(this::setInternalStatus));
     }
 
     @Override
     public Maybe<User> findById(String id) {
-        return userService.findById(id);
+        return userService.findById(id)
+                .map(this::setInternalStatus);
     }
 
     @Override
     public Single<User> create(String domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
+
         // set user idp source
         if (newUser.getSource() == null) {
             newUser.setSource(DEFAULT_IDP_PREFIX + domain);
         }
+
         // check domain
         return domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
@@ -207,7 +211,8 @@ public class UserServiceImpl implements UserService {
                                                                         } else {
                                                                             return Single.just(user);
                                                                         }
-                                                                    });
+                                                                    })
+                                                                    .map(this::setInternalStatus);
                                                         });
                                             });
                                 }
@@ -240,12 +245,14 @@ public class UserServiceImpl implements UserService {
                         .flatMap(idpUser ->  {
                             // set external id
                             updateUser.setExternalId(idpUser.getId());
-                            return userService.update(domain, id, updateUser);
+                            return userService.update(domain, id, updateUser)
+                                    .map(this::setInternalStatus);
                         })
                         .onErrorResumeNext(ex -> {
                             if (ex instanceof UserNotFoundException) {
                                 // idp user does not exist, only update AM user
-                                return userService.update(domain, id, updateUser);
+                                return userService.update(domain, id, updateUser)
+                                        .map(this::setInternalStatus);
                             }
                             return Single.error(ex);
                         })
@@ -641,5 +648,12 @@ public class UserServiceImpl implements UserService {
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
+    }
+
+
+    private User setInternalStatus(User user) {
+
+        user.setInternal(identityProviderManager.userProviderExists(user.getSource()));
+        return user;
     }
 }

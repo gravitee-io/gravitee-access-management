@@ -42,6 +42,7 @@ import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -287,20 +288,28 @@ public class UserServiceImpl implements UserService {
     @Override
     public Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal) {
         return userService.findByDomainAndEmail(domain.getId(), email, false)
-                .map(users -> users.stream().filter(user -> user.isInternal() && email.toLowerCase().equals(user.getEmail().toLowerCase())).findFirst())
-                .map(optionalUser -> {
-                        if (!optionalUser.isPresent()) {
-                            throw new UserNotFoundException(email);
-                        }
-                        return optionalUser.get();
+                .flatMap(users -> {
+                    Optional<User> optionalUser = users
+                            .stream()
+                            .filter(user -> user.getEmail() != null && email.toLowerCase().equals(user.getEmail().toLowerCase()))
+                            .findFirst();
+                    // if user has no email or email is unknown throw user not found exception
+                    if (!optionalUser.isPresent()) {
+                        return Single.error(new UserNotFoundException(email));
                     }
-                )
-                .map(user -> {
-                    // if user registration is not completed and force registration option is disabled throw invalid account exception
-                    if (user.isInactive() && !forceUserRegistration(domain, client)) {
-                        throw new AccountInactiveException("User needs to complete the activation process");
-                    }
-                    return user;
+
+                    User user = optionalUser.get();
+                    // check if user can update its password according to its identity provider type
+                    return identityProviderManager.getUserProvider(user.getSource())
+                            .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
+                            .map(__ -> {
+                                // if user registration is not completed and force registration option is disabled throw invalid account exception
+                                if (user.isInactive() && !forceUserRegistration(domain, client)) {
+                                    throw new AccountInactiveException("User [ " + user.getUsername() + " ]needs to complete the activation process");
+                                }
+                                return user;
+                            });
+
                 })
                 .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user, client)).start())
                 .doOnSuccess(user1 -> {
