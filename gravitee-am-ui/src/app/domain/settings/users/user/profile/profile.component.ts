@@ -21,7 +21,6 @@ import { DialogService } from "../../../../../services/dialog.service";
 import { UserService } from "../../../../../services/user.service";
 import { AppConfig } from "../../../../../../config/app.config";
 import { UserClaimComponent } from "../../creation/user-claim.component";
-import * as _ from 'lodash';
 
 @Component({
   selector: 'app-user-profile',
@@ -31,12 +30,10 @@ import * as _ from 'lodash';
 export class UserProfileComponent implements OnInit {
   private domainId: string;
   private adminContext: boolean;
-  @ViewChild('userForm') form: any;
   @ViewChild('passwordForm') passwordForm: any;
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
   user: any;
   userClaims: any = {};
-  userAdditionalInformation: any = {};
   password: any;
   formChanged: boolean = false;
 
@@ -55,7 +52,6 @@ export class UserProfileComponent implements OnInit {
       this.adminContext = true;
     }
     this.user = this.route.snapshot.parent.data['user'];
-    this.userAdditionalInformation = Object.assign({}, this.user.additionalInformation);
   }
 
   initBreadcrumb() {
@@ -63,22 +59,14 @@ export class UserProfileComponent implements OnInit {
   }
 
   update() {
-    // set additional information
-    if (this.userClaims && Object.keys(this.userClaims).length > 0) {
-      let additionalInformation = this.userAdditionalInformation;
-      _.each(this.userClaims, function(item) {
-        additionalInformation[item.claimName] = item.claimValue;
-      });
-      this.user.additionalInformation = additionalInformation;
-    }
+
+    Object.keys(this.userClaims).forEach(key => this.user.additionalInformation[key] = this.userClaims[key]);
 
     this.userService.update(this.domainId, this.user.id, this.user).subscribe(data => {
       this.user = data;
-      this.userAdditionalInformation = Object.assign({}, this.user.additionalInformation);
       this.userClaims = {};
       this.viewContainerRef.clear();
       this.initBreadcrumb();
-      this.form.reset(this.user);
       this.formChanged = false;
       this.snackbarService.open("User updated");
     });
@@ -179,25 +167,30 @@ export class UserProfileComponent implements OnInit {
     let that = this;
     component.instance.addClaimChange.subscribe(claim => {
       if (claim.name && claim.value) {
-        that.userClaims[claim.id] = {'claimName': claim.name, 'claimValue': claim.value};
+        that.userClaims[claim.name] = claim.value;
         this.formChanged = true;
       }
     });
 
     component.instance.removeClaimChange.subscribe(claim => {
-      delete that.userClaims[claim.id];
       that.viewContainerRef.remove(that.viewContainerRef.indexOf(component.hostView));
       if (claim.name && claim.value) {
-        that.snackbarService.open('Claim ' + claim.name + ' deleted');
         this.formChanged = true;
       }
     });
   }
 
-  removeExistingClaim(claim, event) {
+  removeExistingClaim(claimKey, event) {
     event.preventDefault();
-    delete this.user.additionalInformation[claim];
-    this.userAdditionalInformation = Object.assign({}, this.user.additionalInformation);
+
+    let that = this;
+    this.user.additionalInformation = Object.keys(this.user.additionalInformation).reduce(function (obj, key) {
+      if (key !== claimKey) {
+        obj[key] = that.user.additionalInformation[key];
+      }
+      return obj;
+    }, {});
+
     this.formChanged = true;
   }
 

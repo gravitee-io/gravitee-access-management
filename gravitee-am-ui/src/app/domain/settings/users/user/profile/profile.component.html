@@ -25,18 +25,18 @@
           </mat-form-field>
         </div>
         <div fxLayout="row">
-          <mat-form-field *ngIf="user.firstName" style="margin-right: 20px;">
+          <mat-form-field *ngIf="user.firstName || user.internal" style="margin-right: 20px;">
             <input matInput type="text" placeholder="First name" [disabled]="!editMode()" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
             <mat-hint *ngIf="editMode()">The first name of the User.</mat-hint>
             <mat-error *ngIf="firstName.errors?.required">Enter first name</mat-error>
           </mat-form-field>
-          <mat-form-field *ngIf="user.lastName">
+          <mat-form-field *ngIf="user.lastName || user.internal">
             <input matInput type="text" placeholder="Last name" [disabled]="!editMode()" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
             <mat-hint *ngIf="editMode()">The last name of the User.</mat-hint>
             <mat-error *ngIf="lastName.errors?.required">Enter last name</mat-error>
           </mat-form-field>
         </div>
-        <div fxLayout="row" *ngIf="user.email">
+        <div fxLayout="row" *ngIf="user.email || user.internal">
           <mat-form-field>
             <input matInput placeholder="Email" [disabled]="!editMode()" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" required>
             <mat-hint *ngIf="editMode()">Email address for the User.</mat-hint>
@@ -52,13 +52,13 @@
           <span>Custom information about the user. These details are available in the user's profile.</span>
           <a (click)="addDynamicComponent()" *ngIf="editMode()">(+) add user attribute</a>
           <template #dynamic></template>
-          <div *ngFor="let keyValuePair of userAdditionalInformation | mapToIterable">
+          <div *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
             <div *ngIf="keyValuePair.value" fxLayout="row">
               <mat-form-field style="margin-right: 20px;" fxFlex="40">
                 <input matInput type="text" name="claimName" [value]="keyValuePair.key" disabled>
               </mat-form-field>
               <mat-form-field>
-                <input matInput type="text" name="claimValue" [value]="keyValuePair.value" (change)="formChanged = true;" [disabled]="!editMode()">
+                <input matInput type="text" [name]="'claimValue'+keyValuePair.key" [(ngModel)]="user.additionalInformation[keyValuePair.key]" (change)="formChanged = true;" [disabled]="!editMode()">
               </mat-form-field>
               <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)"><mat-icon>clear</mat-icon></button>
             </div>

@@ -25,6 +25,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -195,14 +196,35 @@ public class UserServiceTest {
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
-        when(user.isInternal()).thenReturn(true);
         when(user.isInactive()).thenReturn(true);
+        when(user.getSource()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
 
         when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(AccountInactiveException.class);
+    }
+
+    @Test
+    public void shouldNotForgotPassword_wrongIdp() {
+        when(domain.getId()).thenReturn("domain-id");
+
+        Client client = mock(Client.class);
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+        when(user.getSource()).thenReturn("idp-id");
+
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.empty());
+
+        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(UserInvalidException.class);
     }
 
     @Test
@@ -211,8 +233,10 @@ public class UserServiceTest {
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
-        when(user.isInternal()).thenReturn(true);
         when(user.isInactive()).thenReturn(true);
+        when(user.getSource()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
 
         AccountSettings accountSettings = mock(AccountSettings.class);
         when(accountSettings.isCompleteRegistrationWhenResetPassword()).thenReturn(true);
@@ -221,6 +245,7 @@ public class UserServiceTest {
         when(domain.getAccountSettings()).thenReturn(accountSettings);
 
         when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
@@ -233,12 +258,15 @@ public class UserServiceTest {
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
-        when(user.isInternal()).thenReturn(true);
         when(user.isInactive()).thenReturn(false);
+        when(user.getSource()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
 
         when(domain.getId()).thenReturn("domain-id");
 
         when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
