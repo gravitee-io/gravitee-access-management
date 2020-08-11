@@ -163,13 +163,8 @@ public class ReporterServiceImpl implements ReporterService {
                     return reporterRepository.update(reporterToUpdate)
                             .flatMap(reporter1 -> {
                                 // create event for sync process
-                                // except for admin domain
-                                if (!ADMIN_DOMAIN.equals(domain)) {
-                                    Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), reporter1.getDomain(), Action.UPDATE));
-                                    return eventService.create(event).flatMap(__ -> Single.just(reporter1));
-                                } else {
-                                    return Single.just(reporter1);
-                                }
+                                Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), reporter1.getDomain(), Action.UPDATE));
+                                return eventService.create(event).flatMap(__ -> Single.just(reporter1));
                             })
                             .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).oldValue(oldReporter).reporter(reporter1)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).throwable(throwable)));

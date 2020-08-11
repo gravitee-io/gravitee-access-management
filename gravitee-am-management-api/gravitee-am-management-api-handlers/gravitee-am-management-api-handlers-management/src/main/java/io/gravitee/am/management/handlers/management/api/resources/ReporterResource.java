@@ -16,14 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.service.AuditReporterManager;
-import io.gravitee.am.model.Client;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
-import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
@@ -48,9 +45,6 @@ public class ReporterResource extends AbstractResource {
 
     @Autowired
     private ReporterService reporterService;
-
-    @Autowired
-    private AuditReporterManager auditReporterManager;
 
     @Autowired
     private DomainService domainService;
@@ -97,7 +91,6 @@ public class ReporterResource extends AbstractResource {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(irrelevant -> reporterService.update(domain, reporter, updateReporter, authenticatedUser))
-                .doOnSuccess(reporter1 -> auditReporterManager.reloadReporter(reporter1))
                 .map(reporter1 -> Response.ok(reporter1).build())
                 .subscribe(
                         result -> response.resume(result),
