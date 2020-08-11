@@ -46,7 +46,7 @@
     "zone.js": "^0.10.3",
     "minimist": "^1.2.5",
     "kind-of": "^6.0.3",
-    "serialize-javascript": "^2.1.2",
+    "serialize-javascript": "^3.1.0",
     "set-value": "^2.0.1"
   },
   "devDependencies": {
