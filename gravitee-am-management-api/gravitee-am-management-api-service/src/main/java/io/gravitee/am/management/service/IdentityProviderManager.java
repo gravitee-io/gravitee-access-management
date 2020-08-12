@@ -17,6 +17,7 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.common.service.Service;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -24,9 +25,7 @@ import io.reactivex.Single;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProviderManager {
-
-    Single<IdentityProvider> reloadUserProvider(IdentityProvider identityProvider);
+public interface IdentityProviderManager extends Service<IdentityProviderManager> {
 
     Maybe<UserProvider> getUserProvider(String userProvider);
 
