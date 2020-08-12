@@ -15,12 +15,18 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.NewIdentityProvider;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.EventListener;
+import io.gravitee.common.event.EventManager;
+import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -29,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -37,7 +44,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author GraviteeSource Team
  */
 @Component
-public class IdentityProviderManagerImpl implements IdentityProviderManager {
+public class IdentityProviderManagerImpl extends AbstractService<IdentityProviderManager>  implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
@@ -63,6 +70,37 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
     @Autowired
     private IdentityProviderService identityProviderService;
 
+    @Autowired
+    private EventManager eventManager;
+
+    @Override
+    protected void doStart() throws Exception {
+        super.doStart();
+
+        logger.info("Register event listener for identity provider events for the management API");
+        eventManager.subscribeForEvents(this, IdentityProviderEvent.class);
+
+        logger.info("Initializing user providers");
+        List<IdentityProvider> identities = identityProviderService.findAll().blockingGet();
+        identities.forEach(identityProvider -> {
+            logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+            loadUserProvider(identityProvider);
+        });
+    }
+
+    @Override
+    public void onEvent(Event<IdentityProviderEvent, Payload> event) {
+        switch (event.type()) {
+            case DEPLOY:
+            case UPDATE:
+                deployUserProvider(event.content().getId());
+                break;
+            case UNDEPLOY:
+                removeUserProvider(event.content().getId());
+                break;
+        }
+    }
+
     @Override
     public Maybe<UserProvider> getUserProvider(String userProvider) {
         if (userProvider == null) {
@@ -73,19 +111,6 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
     }
 
     @Override
-    public Single<IdentityProvider> reloadUserProvider(IdentityProvider identityProvider) {
-        return Single.create(emitter -> {
-            try {
-                this.loadUserProvider(identityProvider);
-                emitter.onSuccess(identityProvider);
-            } catch (Exception ex) {
-                logger.error("An error occurs while reloading user provider", ex);
-                emitter.onError(ex);
-            }
-        });
-    }
-
-    @Override
     public Single<IdentityProvider> create(String domain) {
         NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
         newIdentityProvider.setId(DEFAULT_IDP_PREFIX + domain);
@@ -93,8 +118,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
         newIdentityProvider.setType(DEFAULT_IDP_TYPE);
         newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\""+ mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + domain + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
 
-        return identityProviderService.create(domain, newIdentityProvider)
-                .flatMap(identityProvider -> reloadUserProvider(identityProvider));
+        return identityProviderService.create(domain, newIdentityProvider);
     }
 
     @Override
@@ -102,12 +126,31 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager {
         return userProviders.containsKey(identityProviderId);
     }
 
+    private void deployUserProvider(String identityProviderId) {
+        logger.info("Management API has received a deploy identity provider event for {}", identityProviderId);
+        identityProviderService.findById(identityProviderId)
+                .subscribe(
+                        identityProvider -> loadUserProvider(identityProvider),
+                        error -> logger.error("Unable to deploy user provider  {}", identityProviderId, error),
+                        () -> logger.error("No identity provider found with id {}", identityProviderId));
+    }
+
+    private void removeUserProvider(String identityProviderId) {
+        logger.info("Management API has received a undeploy identity provider event for {}", identityProviderId);
+        userProviders.remove(identityProviderId);
+    }
+
     private void loadUserProvider(IdentityProvider identityProvider) {
-        UserProvider userProvider = identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
-        if (userProvider != null) {
-            logger.info("Initializing user provider : {}", identityProvider.getId());
-            userProviders.put(identityProvider.getId(), userProvider);
-        } else {
+        try {
+            UserProvider userProvider = identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
+            if (userProvider != null) {
+                logger.info("Initializing user provider : {}", identityProvider.getId());
+                userProviders.put(identityProvider.getId(), userProvider);
+            } else {
+                userProviders.remove(identityProvider.getId());
+            }
+        } catch (Exception ex) {
+            logger.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
             userProviders.remove(identityProvider.getId());
         }
     }

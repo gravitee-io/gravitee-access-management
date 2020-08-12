@@ -107,8 +107,7 @@ public class IdentityProvidersResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))
-                .flatMap(identityProvider -> identityProviderManager.reloadUserProvider(identityProvider))
+                .flatMapSingle(__ -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))
                 .map(identityProvider -> Response
                         .created(URI.create("/domains/" + domain + "/identities/" + identityProvider.getId()))
                         .entity(identityProvider)
