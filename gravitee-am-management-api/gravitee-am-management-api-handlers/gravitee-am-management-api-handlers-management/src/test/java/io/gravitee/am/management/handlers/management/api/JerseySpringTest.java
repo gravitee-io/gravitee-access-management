@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
-import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
 import io.gravitee.am.management.service.*;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.AuditService;

@@ -16,9 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
-import io.gravitee.am.service.CertificatePluginService;
-import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
+import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Client;
 import io.gravitee.am.service.CertificateService;
@@ -56,13 +54,10 @@ public class CertificateResource extends AbstractResource {
     private CertificateService certificateService;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
-    private CertificatePluginService certificatePluginService;
-
-    @Autowired
     private CertificateManager certificateManager;
+
+    @Autowired
+    private DomainService domainService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -98,7 +93,7 @@ public class CertificateResource extends AbstractResource {
     public void getPublicKey(@PathParam("domain") String domain,
                              @PathParam("certificate") String certificate,
                              @Suspended final AsyncResponse response) {
-        certificateService.getCertificateProvider(certificate)
+        certificateManager.getCertificateProvider(certificate)
                 .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
                 .flatMapSingle(certificateProvider -> certificateProvider.publicKey())
                 .map(publicKey -> Response.ok(publicKey).build())
@@ -124,11 +119,7 @@ public class CertificateResource extends AbstractResource {
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, authenticatedUser))
-                .map(certificate1 -> {
-                    // TODO remove after refactoring JWKS endpoint
-                    certificateManager.reloadCertificateProviders(certificate1);
-                    return Response.ok(certificate1).build();
-                })
+                .map(certificate1 -> Response.ok(certificate1).build())
                 .subscribe(
                         result -> response.resume(result),
                         error -> response.resume(error));

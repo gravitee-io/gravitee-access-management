@@ -21,13 +21,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.common.event.Type;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.management.api.CertificateRepository;
@@ -456,34 +456,5 @@ public class CertificateServiceImpl implements CertificateService {
         certBuilder.addExtension(new ASN1ObjectIdentifier("2.5.29.19"), true, basicConstraints);
 
         return new JcaX509CertificateConverter().setProvider(bcProvider).getCertificate(certBuilder.build(contentSigner));
-    }
-
-    @Override
-    // TODO : refactor (after JWKS information)
-    public void setCertificateProviders(Map<String, CertificateProvider> certificateProviders) {
-        this.certificateProviders = certificateProviders;
-    }
-
-    @Override
-    // TODO : refactor (after JWKS information)
-    public void setCertificateProvider(String certificateId, CertificateProvider certificateProvider) {
-        this.certificateProviders.put(certificateId, certificateProvider);
-    }
-
-    @Override
-    // TODO : refactor (after JWKS information)
-    public Maybe<CertificateProvider> getCertificateProvider(String certificateId) {
-        return Maybe.create(emitter -> {
-            try {
-                CertificateProvider certificateProvider = this.certificateProviders.get(certificateId);
-                if (certificateProvider != null) {
-                    emitter.onSuccess(certificateProvider);
-                } else {
-                    emitter.onComplete();
-                }
-            } catch (Exception e) {
-                emitter.onError(e);
-            }
-        });
     }
 }

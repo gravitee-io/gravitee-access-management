@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.spring;
 
-import io.gravitee.am.management.handlers.management.api.certificate.CertificateManager;
 import io.gravitee.am.management.handlers.management.api.email.EmailManager;
 import io.gravitee.am.management.handlers.management.api.email.impl.EmailManagerImpl;
 import io.gravitee.am.management.handlers.management.api.idp.IdentityProviderManager;
@@ -34,11 +33,6 @@ import org.springframework.context.annotation.Import;
 @ComponentScan("io.gravitee.am.management.handlers.management.api.resources.enhancer")
 @Import(SecurityConfiguration.class)
 public class ManagementConfiguration {
-
-    @Bean
-    public CertificateManager certificateManager() {
-        return new CertificateManager();
-    }
 
     @Bean
     public IdentityProviderManager identityProviderManager() {

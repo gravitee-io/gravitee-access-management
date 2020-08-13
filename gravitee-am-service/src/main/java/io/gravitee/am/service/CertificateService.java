@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.service.model.NewCertificate;
@@ -25,7 +24,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -52,12 +50,6 @@ public interface CertificateService {
     Single<Certificate> update(Certificate certificate);
 
     Completable delete(String certificateId, User principal);
-
-    void setCertificateProviders(Map<String, CertificateProvider> certificateProviders);
-
-    void setCertificateProvider(String certificateId, CertificateProvider certificateProvider);
-
-    Maybe<CertificateProvider> getCertificateProvider(String certificateId);
 
     default Single<Certificate> create(String domain, NewCertificate newCertificate) {
         return create(domain, newCertificate, null);
