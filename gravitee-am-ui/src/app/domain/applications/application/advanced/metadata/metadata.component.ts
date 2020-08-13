@@ -46,8 +46,8 @@ export class ApplicationMetadataComponent implements OnInit {
 
   initMetadata() {
     if (this.application.metadata) {
-      _.forEach(this.application.metadata, (k, v) => {
-        let metadata = {};
+      _.forEach(this.application.metadata, (v, k) => {
+        const metadata = {};
         metadata['id'] = Math.random().toString(36).substring(7);
         metadata['name'] = k;
         metadata['value'] = v;
