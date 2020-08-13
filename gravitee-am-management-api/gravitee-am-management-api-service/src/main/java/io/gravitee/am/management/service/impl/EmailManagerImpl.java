@@ -18,14 +18,24 @@ package io.gravitee.am.management.service.impl;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
+import io.gravitee.am.common.event.EmailEvent;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.EventListener;
+import io.gravitee.common.event.EventManager;
+import io.gravitee.common.service.AbstractService;
 import io.reactivex.Completable;
 import io.reactivex.Single;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,8 +48,9 @@ import static java.lang.String.format;
  * @author GraviteeSource Team
  */
 @Component
-public class EmailManagerImpl implements EmailManager {
+public class EmailManagerImpl extends AbstractService<EmailManager> implements EmailManager, EventListener<EmailEvent, Payload> {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmailManagerImpl.class);
     private static final String TEMPLATE_SUFFIX = ".html";
     private ConcurrentMap<String, Email> emailTemplates = new ConcurrentHashMap<>();
 
@@ -55,29 +66,35 @@ public class EmailManagerImpl implements EmailManager {
     @Autowired
     private Configuration configuration;
 
+    @Autowired
+    private EmailTemplateService emailTemplateService;
+
+    @Autowired
+    private EventManager eventManager;
+
     @Override
-    public Single<Email> reloadEmail(Email email) {
-        final String templateName = getTemplateName(email);
-        if (email.isEnabled()) {
-            reloadTemplate(templateName + TEMPLATE_SUFFIX, email.getContent());
-            emailTemplates.put(templateName, email);
-        } else {
-            // remove email who has been disabled
-            emailTemplates.remove(templateName);
-            ((StringTemplateLoader) templateLoader).removeTemplate(templateName + TEMPLATE_SUFFIX);
-        }
-        return Single.just(email);
+    protected void doStart() throws Exception {
+        super.doStart();
+
+        logger.info("Register event listener for email events for the management API");
+        eventManager.subscribeForEvents(this, EmailEvent.class);
+
+        logger.info("Initializing emails");
+        List<Email> emails = emailTemplateService.findAll().blockingGet();
+        emails.stream().filter(Email::isEnabled).forEach(this::loadEmail);
     }
 
     @Override
-    public Completable deleteEmail(String email) {
-        Optional<Email> emailOptional = emailTemplates.values().stream().filter(email1 -> email.equals(email1.getId())).findFirst();
-        if (emailOptional.isPresent()) {
-            Email emailToRemove = emailOptional.get();
-            emailTemplates.remove(getTemplateName(emailToRemove));
-            ((StringTemplateLoader) templateLoader).removeTemplate(getTemplateName(emailToRemove) + TEMPLATE_SUFFIX);
+    public void onEvent(Event<EmailEvent, Payload> event) {
+        switch (event.type()) {
+            case DEPLOY:
+            case UPDATE:
+                deployEmail(event.content().getId());
+                break;
+            case UNDEPLOY:
+                removeEmail(event.content().getId());
+                break;
         }
-        return Completable.complete();
     }
 
     @Override
@@ -98,6 +115,37 @@ public class EmailManagerImpl implements EmailManager {
             // template not found, return default template
             template = templateParts[0];
             return create(template, defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter);
+        }
+    }
+
+    private void deployEmail(String emailId) {
+        logger.info("Management API has received a deploy email event for {}", emailId);
+        emailTemplateService.findById(emailId)
+                .subscribe(
+                        email -> loadEmail(email),
+                        error -> logger.error("Unable to deploy email {}", emailId, error),
+                        () -> logger.error("No email found with id {}", emailId));
+    }
+
+    public void loadEmail(Email email) {
+        final String templateName = getTemplateName(email);
+        if (email.isEnabled()) {
+            reloadTemplate(templateName + TEMPLATE_SUFFIX, email.getContent());
+            emailTemplates.put(templateName, email);
+        } else {
+            // remove email who has been disabled
+            emailTemplates.remove(templateName);
+            ((StringTemplateLoader) templateLoader).removeTemplate(templateName + TEMPLATE_SUFFIX);
+        }
+    }
+
+    private void removeEmail(String email) {
+        logger.info("Management API has received a undeploy email event for {}", email);
+        Optional<Email> emailOptional = emailTemplates.values().stream().filter(email1 -> email.equals(email1.getId())).findFirst();
+        if (emailOptional.isPresent()) {
+            Email emailToRemove = emailOptional.get();
+            emailTemplates.remove(getTemplateName(emailToRemove));
+            ((StringTemplateLoader) templateLoader).removeTemplate(getTemplateName(emailToRemove) + TEMPLATE_SUFFIX);
         }
     }
 

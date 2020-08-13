@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
@@ -55,9 +54,6 @@ public class ClientEmailsResource extends AbstractResource {
 
     @Autowired
     private ClientService clientService;
-
-    @Autowired
-    private EmailManager emailManager;
 
     @Context
     private ResourceContext resourceContext;
@@ -100,8 +96,7 @@ public class ClientEmailsResource extends AbstractResource {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMap(irrelevant -> clientService.findById(client))
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
-                .flatMapSingle(irrelevant -> emailTemplateService.create(domain, client, newEmail, authenticatedUser))
-                .flatMap(email -> emailManager.reloadEmail(email))
+                .flatMapSingle(__ -> emailTemplateService.create(domain, client, newEmail, authenticatedUser))
                 .map(email -> Response
                         .created(URI.create("/domains/" + domain + "/clients/" + client + "/emails/" + email.getId()))
                         .entity(email)
