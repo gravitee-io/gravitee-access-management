@@ -154,5 +154,10 @@
             <version>${jjwt.version}</version>
         </dependency>
 
+        <!-- Nimbus jose+jwt -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
     </dependencies>
 </project>
