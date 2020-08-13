@@ -88,7 +88,6 @@ public class EmailsResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(new Email())).when(emailTemplateService).create(eq(domainId), any(), any(User.class));
-        doReturn(Single.just(new Email())).when(emailManager).reloadEmail(any());
 
         final Response response = target("domains")
                 .path(domainId)

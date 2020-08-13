@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.service.ClientService;
 import io.gravitee.am.service.DomainService;
@@ -51,9 +50,6 @@ public class ClientEmailResource extends AbstractResource {
     @Autowired
     private ClientService clientService;
 
-    @Autowired
-    private EmailManager emailManager;
-
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -71,8 +67,7 @@ public class ClientEmailResource extends AbstractResource {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                 .flatMap(irrelevant -> clientService.findById(client))
                 .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
-                .flatMapSingle(irrelevant -> emailTemplateService.update(domain, client, email, updateEmail))
-                .flatMap(email1 -> emailManager.reloadEmail(email1))
+                .flatMapSingle(__ -> emailTemplateService.update(domain, client, email, updateEmail))
                 .map(email1 -> Response.ok(email1).build())
                 .subscribe(
                         result -> response.resume(result),
@@ -88,7 +83,6 @@ public class ClientEmailResource extends AbstractResource {
                        @PathParam("email") String email,
                        @Suspended final AsyncResponse response) {
         emailTemplateService.delete(email)
-                .andThen(emailManager.deleteEmail(email))
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
                         error -> response.resume(error));

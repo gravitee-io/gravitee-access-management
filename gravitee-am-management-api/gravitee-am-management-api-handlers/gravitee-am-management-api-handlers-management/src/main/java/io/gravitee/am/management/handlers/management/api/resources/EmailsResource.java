@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -54,9 +53,6 @@ public class EmailsResource extends AbstractResource {
     @Autowired
     private DomainService domainService;
 
-    @Autowired
-    private EmailManager emailManager;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Find a email")
@@ -91,8 +87,7 @@ public class EmailsResource extends AbstractResource {
 
         domainService.findById(domain)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapSingle(irrelevant -> emailTemplateService.create(domain, newEmail, authenticatedUser))
-                .flatMap(email -> emailManager.reloadEmail(email))
+                .flatMapSingle(__ -> emailTemplateService.create(domain, newEmail, authenticatedUser))
                 .map(email -> Response
                         .created(URI.create("/domains/" + domain + "/emails/" + email.getId()))
                         .entity(email)
