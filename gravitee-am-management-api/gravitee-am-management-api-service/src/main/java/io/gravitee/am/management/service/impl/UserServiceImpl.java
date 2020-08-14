@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -473,7 +474,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private Map<String, Object> prepareEmail(User user, Client client, int expiresAfter, String redirectUri, String redirectUriName) {
-        final String token = getUserRegistrationToken(user);
+        final String token = getUserRegistrationToken(user, expiresAfter);
         // building the redirectUrl
         StringBuilder sb = new StringBuilder();
         sb
@@ -505,10 +506,15 @@ public class UserServiceImpl implements UserService {
     }
 
     private String getUserRegistrationToken(User user) {
+        return getUserRegistrationToken(user, null);
+    }
+
+    private String getUserRegistrationToken(User user, Integer expiresAfter) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
-        claims.put(Claims.iat, new Date().getTime() / 1000);
-        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expireAfter * 1000)).getTime() / 1000);
+        Instant now = Instant.now();
+        claims.put(Claims.iat, now.getEpochSecond());
+        claims.put(Claims.exp, now.plusSeconds((expiresAfter != null ? expiresAfter : expireAfter)).getEpochSecond());
         claims.put(Claims.sub, user.getId());
         if (user.getClient() != null) {
             claims.put(Claims.aud, user.getClient());
