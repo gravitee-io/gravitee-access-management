@@ -35,7 +35,7 @@
     "highcharts": "8.0.4",
     "highcharts-angular": "^2.4.0",
     "jdenticon": "^2.2.0",
-    "lodash": "^4.17.16",
+    "lodash": "^4.17.20",
     "lodash-es": "^4.17.15",
     "moment": "^2.27.0",
     "ng2-codemirror": "^1.1.1",
