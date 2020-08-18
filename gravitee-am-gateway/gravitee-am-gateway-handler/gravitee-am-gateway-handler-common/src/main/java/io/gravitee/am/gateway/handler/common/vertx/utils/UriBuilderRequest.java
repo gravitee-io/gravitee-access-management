@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.vertx.utils;
 
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
-import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -37,16 +36,10 @@ public class UriBuilderRequest {
     public static final String CONTEXT_PATH = "contextPath";
 
     private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
-    private static final Logger LOGGER = LoggerFactory.getLogger(UriBuilderRequest.class);
 
-    public static String extractBasePath(final RoutingContext context) {
+    public static String resolveProxyRequest(final RoutingContext context) {
 
-        try {
-            return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH), null);
-        } catch (URISyntaxException e) {
-            LOGGER.error("Unable to extract base path", e);
-        }
-        return context.get(CONTEXT_PATH);
+        return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH), null);
     }
 
     /**
@@ -55,9 +48,8 @@ public class UriBuilderRequest {
      * @param path request path
      * @param parameters request query params
      * @return request uri representation
-     * @throws URISyntaxException
      */
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters) throws URISyntaxException {
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters) {
         return resolve(request, path, parameters, false);
     }
 
@@ -70,11 +62,11 @@ public class UriBuilderRequest {
      * @return request uri representation
      * @throws URISyntaxException
      */
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) throws URISyntaxException {
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded){
         return resolve(request, path, parameters, encoded);
     }
 
-    private static String resolve(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) throws URISyntaxException {
+    private static String resolve(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) {
         UriBuilder builder = UriBuilder.newInstance();
 
         // scheme

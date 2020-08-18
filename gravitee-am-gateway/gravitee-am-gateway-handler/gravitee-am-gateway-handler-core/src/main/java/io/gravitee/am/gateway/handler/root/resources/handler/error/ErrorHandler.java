@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -85,7 +87,7 @@ public class ErrorHandler implements Handler<RoutingContext> {
 
     private void handleException(RoutingContext routingContext, String errorCode, String errorDetail) {
 
-        String errorPageURL = UriBuilderRequest.extractBasePath(routingContext) + errorPage;
+        String errorPageURL = routingContext.get(CONTEXT_PATH) + errorPage;
 
         try {
             final HttpServerRequest request = routingContext.request();

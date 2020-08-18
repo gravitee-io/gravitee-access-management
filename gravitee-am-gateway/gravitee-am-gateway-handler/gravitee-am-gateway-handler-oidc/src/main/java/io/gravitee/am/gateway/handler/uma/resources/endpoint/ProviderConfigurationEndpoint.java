@@ -38,7 +38,7 @@ public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        String basePath = UriBuilderRequest.extractBasePath(context);
+        String basePath = UriBuilderRequest.resolveProxyRequest(context);
 
         context.response()
                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

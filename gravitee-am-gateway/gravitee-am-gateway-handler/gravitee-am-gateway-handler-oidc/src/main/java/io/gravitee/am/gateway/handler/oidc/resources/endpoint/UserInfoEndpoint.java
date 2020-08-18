@@ -105,7 +105,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                             context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
 
                             JWT jwt = new JWT(claims);
-                            jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.extractBasePath(context)));
+                            jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.resolveProxyRequest(context)));
                             jwt.setSub(accessToken.getSub());
                             jwt.setAud(accessToken.getAud());
                             jwt.setIat(new Date().getTime() / 1000l);

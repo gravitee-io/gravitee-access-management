@@ -140,17 +140,13 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
         final HttpServerResponse resp = context.response();
         final String returnUrl = context.session().get(returnURLParam);
 
-        try {
-            // build login url with error message
-            QueryStringDecoder queryStringDecoder = new QueryStringDecoder(returnUrl);
-            Map<String, String> parameters = new LinkedHashMap<>();
-            parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
-            parameters.put("error", "login_failed");
-            String uri = UriBuilderRequest.resolveProxyRequest(req, req.uri(), parameters, true);
-            doRedirect(resp, uri);
-        } catch (URISyntaxException e) {
-            context.fail(503);
-        }
+        // build login url with error message
+        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(returnUrl);
+        Map<String, String> parameters = new LinkedHashMap<>();
+        parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
+        parameters.put("error", "login_failed");
+        String uri = UriBuilderRequest.resolveProxyRequest(req, req.uri(), parameters, true);
+        doRedirect(resp, uri);
     }
 
 

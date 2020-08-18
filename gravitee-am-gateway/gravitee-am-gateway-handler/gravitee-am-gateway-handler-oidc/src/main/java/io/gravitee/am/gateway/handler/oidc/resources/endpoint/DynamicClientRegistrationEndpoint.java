@@ -65,7 +65,7 @@ public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext
         LOGGER.debug("Dynamic client registration CREATE endpoint");
 
         this.extractRequest(context)
-                .flatMap(request -> dcrService.create(request, UriBuilderRequest.extractBasePath(context)))
+                .flatMap(request -> dcrService.create(request, UriBuilderRequest.resolveProxyRequest(context)))
                 .map(clientSyncService::addDynamicClientRegistred)
                 .subscribe(
                         client -> context.response()

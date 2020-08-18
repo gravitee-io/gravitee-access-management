@@ -65,11 +65,6 @@ public class AbstractUserEndpoint {
     }
 
     protected String location(HttpServerRequest request) {
-        try {
-            return UriBuilderRequest.resolveProxyRequest(request, request.path(), null);
-        } catch (URISyntaxException e) {
-            logger.error("An error occurs while decoding SCIM Users location URI", e);
-            return "";
-        }
+        return UriBuilderRequest.resolveProxyRequest(request, request.path(), null);
     }
 }
