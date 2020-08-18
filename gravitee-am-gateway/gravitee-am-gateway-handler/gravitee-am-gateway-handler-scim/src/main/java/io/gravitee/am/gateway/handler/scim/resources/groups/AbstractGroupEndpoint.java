@@ -46,12 +46,7 @@ public class AbstractGroupEndpoint {
     }
 
     protected String location(HttpServerRequest request) {
-        try {
-            return UriBuilderRequest.resolveProxyRequest(request, request.path(), null);
-        } catch (URISyntaxException e) {
-            logger.error("An error occurs while decoding SCIM Groups location URI", e);
-            return "";
-        }
+        return UriBuilderRequest.resolveProxyRequest(request, request.path(), null);
     }
 
     protected void checkSchemas(List<String> schemas) throws Exception {

@@ -83,7 +83,7 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
     public void create(RoutingContext context) {
         JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
         Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
-        String basePath = UriBuilderRequest.extractBasePath(context);
+        String basePath = UriBuilderRequest.resolveProxyRequest(context);
 
         this.extractRequest(context)
                 .flatMap(request -> this.resourceService.create(request, domain.getId(), client.getId(), accessToken.getSub()))

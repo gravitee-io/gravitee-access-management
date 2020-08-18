@@ -54,7 +54,6 @@ public class CookieHandlerImpl implements CookieHandler {
             for (io.vertx.ext.web.Cookie cookie: cookies) {
                 if (cookie.isChanged()) {
                     proxy(context, cookie);
-                    context.response().headers().add(SET_COOKIE, cookie.encode());
                 }
             }
         });

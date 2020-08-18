@@ -37,7 +37,7 @@ public class AuthorizationRequestParseProviderConfigurationHandler implements Ha
 
     @Override
     public void handle(RoutingContext context) {
-        String basePath = UriBuilderRequest.extractBasePath(context);
+        String basePath = UriBuilderRequest.resolveProxyRequest(context);
         context.put(PROVIDER_METADATA_CONTEXT_KEY ,openIDDiscoveryService.getConfiguration(basePath));
         context.next();
     }
