@@ -17,12 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainService;
@@ -46,9 +44,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -62,10 +57,10 @@ public class CertificateResource extends AbstractResource {
     private CertificateService certificateService;
 
     @Autowired
-    private DomainService domainService;
+    private CertificateManager certificateManager;
 
     @Autowired
-    private CertificateManager certificateManager;
+    private DomainService domainService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,7 +110,7 @@ public class CertificateResource extends AbstractResource {
 
         // FIXME: should we create a DOMAIN_CERTIFICATE_KEY permission instead ?
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
-                .andThen(certificateService.getCertificateProvider(certificate)
+                .andThen(certificateManager.getCertificateProvider(certificate)
                         .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
                         .flatMapSingle(CertificateProvider::publicKey))
                 .subscribe(response::resume, response::resume);
@@ -145,11 +140,7 @@ public class CertificateResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, authenticatedUser))
-                        .map(certificate1 -> {
-                            // TODO remove after refactoring JWKS endpoint
-                            certificateManager.reloadCertificateProviders(certificate1);
-                            return Response.ok(certificate1).build();
-                        }))
+                        .map(certificate1 -> Response.ok(certificate1).build()))
                 .subscribe(response::resume, response::resume);
     }
 

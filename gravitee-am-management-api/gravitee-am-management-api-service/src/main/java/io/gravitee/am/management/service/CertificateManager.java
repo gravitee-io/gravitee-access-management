@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.manager.email;
+package io.gravitee.am.management.service;
+
+import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.common.service.Service;
+import io.reactivex.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailManager {
+public interface CertificateManager extends Service<CertificateManager> {
+
+    Maybe<CertificateProvider> getCertificateProvider(String certificateId);
 }

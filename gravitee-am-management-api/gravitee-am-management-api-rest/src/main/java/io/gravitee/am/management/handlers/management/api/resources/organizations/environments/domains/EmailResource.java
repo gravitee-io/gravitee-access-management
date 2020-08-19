@@ -17,10 +17,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Email;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -41,9 +39,6 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -55,9 +50,6 @@ public class EmailResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
-
-    @Autowired
-    private EmailManager emailManager;
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -82,8 +74,7 @@ public class EmailResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EMAIL_TEMPLATE, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> emailTemplateService.update(domain, email, updateEmail, authenticatedUser))
-                        .flatMap(email1 -> emailManager.reloadEmail(email1)))
+                        .flatMapSingle(__ -> emailTemplateService.update(domain, email, updateEmail, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -105,8 +96,7 @@ public class EmailResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EMAIL_TEMPLATE, Acl.DELETE)
-                .andThen(emailTemplateService.delete(email, authenticatedUser)
-                        .andThen(emailManager.deleteEmail(email)))
+                .andThen(emailTemplateService.delete(email, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

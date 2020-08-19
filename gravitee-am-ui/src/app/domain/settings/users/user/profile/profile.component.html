@@ -28,20 +28,20 @@
             </mat-form-field>
           </div>
           <div fxLayout="row">
-            <mat-form-field *ngIf="user.firstName" appearance="outline" floatLabel="always" style="margin-right: 20px;">
+            <mat-form-field *ngIf="user.firstName || user.internal" appearance="outline" floatLabel="always" style="margin-right: 20px;">
               <mat-label>First name</mat-label>
               <input matInput type="text" placeholder="First name" [disabled]="!editMode() && !canEdit" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
               <mat-hint *ngIf="editMode()">The first name of the User.</mat-hint>
               <mat-error *ngIf="firstName.errors?.required">Enter first name</mat-error>
             </mat-form-field>
-            <mat-form-field *ngIf="user.lastName" appearance="outline" floatLabel="always">
+            <mat-form-field *ngIf="user.lastName || user.internal" appearance="outline" floatLabel="always">
               <mat-label>Last name</mat-label>
               <input matInput type="text" placeholder="Last name" [disabled]="!editMode() && !canEdit" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
               <mat-hint *ngIf="editMode()">The last name of the User.</mat-hint>
               <mat-error *ngIf="lastName.errors?.required">Enter last name</mat-error>
             </mat-form-field>
           </div>
-          <div fxLayout="row" *ngIf="user.email">
+          <div fxLayout="row" *ngIf="user.email || user.internal">
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Email</mat-label>
               <input matInput placeholder="Email" [disabled]="!editMode() && !canEdit" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" required>
@@ -63,13 +63,13 @@
           <div>
             <a (click)="addDynamicComponent()" class="gv-accent-link" *ngIf="editMode() && canEdit">(+) add user attribute</a>
             <template #dynamic></template>
-            <div *ngFor="let keyValuePair of userAdditionalInformation | mapToIterable">
+            <div *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
               <div *ngIf="keyValuePair.value" fxLayout="row">
                 <mat-form-field style="margin-right: 20px;" fxFlex="40">
                   <input matInput type="text" name="claimName" [value]="keyValuePair.key" disabled>
                 </mat-form-field>
                 <mat-form-field>
-                  <input matInput type="text" name="claimValue" [value]="keyValuePair.value" (change)="formChanged = true;" [disabled]="!editMode()">
+                  <input matInput type="text" [name]="'claimValue'+keyValuePair.key" [(ngModel)]="user.additionalInformation[keyValuePair.key]" (change)="formChanged = true;" [disabled]="!editMode()">
                 </mat-form-field>
                 <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)"><mat-icon>clear</mat-icon></button>
               </div>
@@ -136,7 +136,7 @@
           <button mat-raised-button [disabled]="(!userForm.valid || userForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
-      <div class="gv-page-delete-zone" fxLayout="column" *ngIf="editMode() && canDelete">
+      <div class="gv-page-delete-zone" fxLayout="column" *ngIf="canDelete">
         <p>This operation cannot be undone.</p>
         User will be deleted and will no longer be able to sign in to applications.
         <div class="gv-page-delete-delete-button" fxLayout="row">

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
@@ -44,9 +43,6 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
     @Autowired
     private ReporterService reporterService;
 
-    @Autowired
-    private AuditReporterManager auditReporterManager;
-
     @Override
     public boolean upgrade() {
         logger.info("Applying domain reporter upgrade");
@@ -63,8 +59,7 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
                     if (reporters == null || reporters.isEmpty()) {
                         logger.info("No default reporter found for domain {}, update domain", domain.getName());
                         return reporterService.createDefault(domain.getId())
-                                .doOnSuccess(reporter -> auditReporterManager.loadReporter(reporter))
-                                .toCompletable();
+                                .ignoreElement();
                     }
                     return Completable.complete();
                 });

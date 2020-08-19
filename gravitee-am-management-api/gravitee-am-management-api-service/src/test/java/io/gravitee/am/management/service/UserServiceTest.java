@@ -259,10 +259,9 @@ public class UserServiceTest {
         final String domain = "domain";
         final String password = "password";
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
-        when(user.getUsername()).thenReturn("username");
-        when(user.getSource()).thenReturn("default-idp");
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn("idp-id");
@@ -286,10 +285,9 @@ public class UserServiceTest {
         final String domain = "domain";
         final String password = "password";
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
-        when(user.getUsername()).thenReturn("username");
-        when(user.getSource()).thenReturn("default-idp");
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn("idp-id");
@@ -324,7 +322,7 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
@@ -338,8 +336,9 @@ public class UserServiceTest {
     public void shouldAssignRoles_roleNotFound() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -349,7 +348,8 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
         TestObserver testObserver = userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();
@@ -362,8 +362,9 @@ public class UserServiceTest {
     public void shouldRevokeRole() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -373,7 +374,8 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
@@ -387,8 +389,9 @@ public class UserServiceTest {
     public void shouldRevokeRoles_roleNotFound() {
         List<String> rolesIds = Arrays.asList("role-1", "role-2");
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn("user-id");
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -398,7 +401,8 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(userService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
         TestObserver testObserver = userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();

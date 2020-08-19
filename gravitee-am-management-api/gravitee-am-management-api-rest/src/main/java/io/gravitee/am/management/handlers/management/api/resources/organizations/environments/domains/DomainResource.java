@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Entrypoint;
@@ -26,14 +25,10 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.functions.Function;
-import io.reactivex.functions.Predicate;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -50,10 +45,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -67,9 +60,6 @@ public class DomainResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
-
-    @Autowired
-    private AuditReporterManager auditReporterManager;
 
     @Autowired
     private EntrypointService entrypointService;
@@ -155,8 +145,7 @@ public class DomainResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.DELETE)
-                .andThen(domainService.delete(domain, authenticatedUser)
-                        .doOnComplete(() -> auditReporterManager.removeReporter(domain)))
+                .andThen(domainService.delete(domain, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

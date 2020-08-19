@@ -15,14 +15,19 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.ReporterNotFoundForDomainException;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.EventListener;
+import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
 import io.vertx.reactivex.core.RxHelper;
@@ -34,7 +39,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -46,9 +50,10 @@ import java.util.concurrent.ConcurrentMap;
  * @author GraviteeSource Team
  */
 @Component
-public class AuditReporterManagerImpl extends AbstractService<AuditReporterManager> implements AuditReporterManager {
+public class AuditReporterManagerImpl extends AbstractService<AuditReporterManager> implements AuditReporterManager, EventListener<ReporterEvent, Payload> {
 
-    public static final Logger logger = LoggerFactory.getLogger(AuditReporterManagerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuditReporterManagerImpl.class);
+    private static final long retryTimeout = 10000;
     private String deploymentId;
 
     @Autowired
@@ -66,6 +71,9 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private EventManager eventManager;
+
     private ConcurrentMap<io.gravitee.am.model.Reporter, Reporter> auditReporters = new ConcurrentHashMap<>();
 
     private Reporter internalReporter;
@@ -74,30 +82,35 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     protected void doStart() throws Exception {
         super.doStart();
 
+        logger.info("Register event listener for reporter events for the management API");
+        eventManager.subscribeForEvents(this, ReporterEvent.class);
+
+        logger.info("Initializing internal audit reporter");
         String mongoHost = environment.getProperty("management.mongodb.host", "localhost");
         String mongoPort = environment.getProperty("management.mongodb.port", "27017");
         String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
         String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://" + mongoHost + ":" + mongoPort + "/" + mongoDBName);
-
         String configuration = "{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + "\",\"bulkActions\":1000,\"flushInterval\":5}";
-
         internalReporter = reporterPluginManager.create("mongodb", configuration);
+        logger.info("Internal audit reporter initialized");
 
-        reporterService.findAll()
-                .subscribe(reporters -> {
-                    reporters.forEach(reporter -> {
-                        Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
-                        if (auditReporter != null) {
-                            logger.info("Initializing audit reporter provider : {} for domain {}", reporter.getName(), reporter.getDomain());
-                            auditReporters.put(reporter, new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter));
-                        }
-                    });
-
-                    List<Reporter> allReporters = new ArrayList<>(auditReporters.values());
-                    allReporters.add(new EventBusReporterWrapper(vertx, internalReporter));
-
-                    deployReporterVerticle(allReporters);
-                });
+        logger.info("Initializing audit reporters");
+        List<io.gravitee.am.model.Reporter> reporters = reporterService.findAll().blockingGet();
+        reporters.forEach(reporter -> {
+            logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
+            try {
+                Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
+                if (auditReporter != null) {
+                    logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
+                    auditReporters.put(reporter, new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter));
+                }
+            } catch (Exception ex) {
+                logger.error("An error has occurred while loading audit reporter: {} [{}]", reporter.getName(), reporter.getType(), ex);
+                removeReporter(reporter.getId());
+            }
+        });
+        // deploy verticle
+        deployReporterVerticle(auditReporters.values());
     }
 
     @Override
@@ -119,6 +132,21 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     }
 
     @Override
+    public void onEvent(Event<ReporterEvent, Payload> event) {
+        switch (event.type()) {
+            case DEPLOY:
+                deployReporter(event.content().getId());
+                break;
+            case UPDATE:
+                reloadReporter(event.content().getId());
+                break;
+            case UNDEPLOY:
+                removeReporter(event.content().getId());
+                break;
+        }
+    }
+
+    @Override
     protected String name() {
         return "AM Management API Reporter service";
     }
@@ -127,7 +155,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     public Reporter getReporter(ReferenceType referenceType, String referenceId) {
 
         if (referenceType == ReferenceType.DOMAIN) {
-            return getReporter(referenceId);
+            return doGetReporter(referenceId, System.currentTimeMillis());
         } else {
             // Internal reporter must be use for all other resources.
             return internalReporter;
@@ -136,49 +164,101 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     @Override
     public Reporter getReporter(String domain) {
+        return doGetReporter(domain, System.currentTimeMillis());
+    }
+
+    private Reporter doGetReporter(String domain, long startTime) {
+        Optional<Reporter> optionalReporter = auditReporters
+                .entrySet()
+                .stream()
+                .filter(entry -> domain.equals(entry.getKey().getDomain()))
+                .map(entry -> entry.getValue())
+                .findFirst();
+
+        if (optionalReporter.isPresent()) {
+            return optionalReporter.get();
+        }
+
+        // reporter can be missing as it can take sometime for the reporter events
+        // to propagate across the cluster so if the next call comes
+        // in quickly at a different node there is a possibility it isn't available yet.
+        try {
+            List<io.gravitee.am.model.Reporter> reporters = reporterService.findByDomain(domain).blockingGet();
+            if (reporters.isEmpty()) {
+                throw new ReporterNotFoundForDomainException(domain);
+            }
+            // retry
+            while (!optionalReporter.isPresent() && System.currentTimeMillis() - startTime < retryTimeout) {
+                optionalReporter = doGetReporter0(domain);
+            }
+            if (optionalReporter.isPresent()) {
+                return optionalReporter.get();
+            } else {
+                throw new ReporterNotFoundForDomainException(domain);
+            }
+        } catch (Exception ex) {
+            logger.error("An error has occurred while fetching reporter for domain {}", domain, ex);
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    private Optional<Reporter> doGetReporter0(String domain) {
         return auditReporters
                 .entrySet()
                 .stream()
                 .filter(entry -> domain.equals(entry.getKey().getDomain()))
                 .map(entry -> entry.getValue())
-                .findFirst()
-                .orElseThrow(() -> new ReporterNotFoundForDomainException(domain));
-    }
-
-    @Override
-    public void reloadReporter(io.gravitee.am.model.Reporter reporter) {
-        logger.debug("Reload reporter: {} after configuration update", reporter.getName());
-        Optional<Reporter> optionalAuditReporter = auditReporters
-                .entrySet()
-                .stream()
-                .filter(entry -> reporter.getId().equals(entry.getKey().getId()))
-                .map(entry -> entry.getValue())
                 .findFirst();
-
-        if (optionalAuditReporter.isPresent()) {
-            try {
-                Reporter auditReporter = optionalAuditReporter.get();
-                // reload the provider if it's enabled
-                if (reporter.isEnabled()) {
-                    auditReporter.stop();
-                    auditReporters.entrySet().removeIf(entry -> entry.getKey().getId().equals(reporter.getId()));
-                    loadReporter(reporter);
-                } else {
-                    logger.info("Reporter: {} has been disabled", reporter.getName());
-                    // unregister event bus consumer
-                    // we do not stop the underlying reporter because it can be used to fetch reportable
-                    ((EventBusReporterWrapper) auditReporter).unregister();
-                }
-            } catch (Exception e) {
-                logger.error("An error occurs while reloading reporter: {}", reporter.getName(), e);
-            }
-        } else {
-            logger.info("There is no reporter to reload");
-        }
     }
 
-    @Override
-    public void loadReporter(io.gravitee.am.model.Reporter reporter) {
+    private void deployReporter(String reporterId) {
+        logger.info("Management API has received a deploy reporter event for {}", reporterId);
+        reporterService.findById(reporterId)
+                .subscribe(
+                        reporter -> loadReporter(reporter),
+                        error -> logger.error("Unable to deploy reporter {}", reporterId, error),
+                        () -> logger.error("No reporter found with id {}", reporterId));
+    }
+
+    private void reloadReporter(String reporterId) {
+        logger.info("Management API has received an update reporter event for {}", reporterId);
+        reporterService.findById(reporterId)
+                .subscribe(
+                        reporter -> {
+                            logger.debug("Reload reporter: {} after configuration update", reporter.getName());
+                            Optional<Reporter> optionalAuditReporter = auditReporters
+                                    .entrySet()
+                                    .stream()
+                                    .filter(entry -> reporter.getId().equals(entry.getKey().getId()))
+                                    .map(entry -> entry.getValue())
+                                    .findFirst();
+
+                            if (optionalAuditReporter.isPresent()) {
+                                try {
+                                    Reporter auditReporter = optionalAuditReporter.get();
+                                    // reload the provider if it's enabled
+                                    if (reporter.isEnabled()) {
+                                        auditReporter.stop();
+                                        auditReporters.entrySet().removeIf(entry -> entry.getKey().getId().equals(reporter.getId()));
+                                        loadReporter(reporter);
+                                    } else {
+                                        logger.info("Reporter: {} has been disabled", reporter.getName());
+                                        // unregister event bus consumer
+                                        // we do not stop the underlying reporter because it can be used to fetch reportable
+                                        ((EventBusReporterWrapper) auditReporter).unregister();
+                                    }
+                                } catch (Exception e) {
+                                    logger.error("An error occurs while reloading reporter: {}", reporter.getName(), e);
+                                }
+                            } else {
+                                logger.info("There is no reporter to reload");
+                            }
+                        },
+                        error -> logger.error("Unable to reload reporter {}", reporterId, error),
+                        () -> logger.error("No reporter found with id {}", reporterId));
+    }
+
+    private void loadReporter(io.gravitee.am.model.Reporter reporter) {
         Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
         if (auditReporter != null) {
             Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
@@ -191,12 +271,19 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         }
     }
 
-    @Override
-    public void removeReporter(String domain) {
+    private void removeReporter(String reporterId) {
         try {
-            Reporter reporter = getReporter(domain);
-            reporter.stop();
-            auditReporters.entrySet().removeIf(entry -> entry.getKey().getDomain().equals(((EventBusReporterWrapper) reporter).getReferenceId()) && ((EventBusReporterWrapper) reporter).getReferenceType() == ReferenceType.DOMAIN);
+            Optional<Reporter> optionalReporter = auditReporters
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> reporterId.equals(entry.getKey().getId()))
+                    .map(entry -> entry.getValue())
+                    .findFirst();
+
+            if (optionalReporter.isPresent()) {
+                optionalReporter.get().stop();
+                auditReporters.entrySet().removeIf(entry -> reporterId.equals(entry.getKey().getId()));
+            }
         } catch (Exception e) {
             logger.error("Unexpected error while removing reporter", e);
         }

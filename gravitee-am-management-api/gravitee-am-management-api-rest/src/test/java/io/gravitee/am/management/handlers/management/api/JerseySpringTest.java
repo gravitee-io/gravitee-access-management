@@ -15,12 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
-import io.gravitee.am.management.handlers.management.api.manager.group.GroupManager;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.service.*;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
@@ -147,9 +144,6 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected ApplicationService applicationService;
-
-    @Autowired
-    protected GroupManager groupManager;
 
     @Autowired
     protected FactorService factorService;
@@ -313,11 +307,6 @@ public abstract class JerseySpringTest {
         @Bean
         public ApplicationService applicationService() {
             return mock(ApplicationService.class);
-        }
-
-        @Bean
-        public GroupManager groupManager() {
-            return mock(GroupManager.class);
         }
 
         @Bean

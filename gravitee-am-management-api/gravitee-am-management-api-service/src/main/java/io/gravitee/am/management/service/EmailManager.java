@@ -16,20 +16,15 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Email;
-import io.reactivex.Completable;
-import io.reactivex.Single;
+import io.gravitee.common.service.Service;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailManager {
+public interface EmailManager extends Service<EmailManager> {
 
     String TEMPLATE_NAME_SEPARATOR = "|";
-
-    Single<Email> reloadEmail(Email email);
-
-    Completable deleteEmail(String email);
 
     Email getEmail(String template, String defaultSubject, int defaultExpiresAfter);
 }

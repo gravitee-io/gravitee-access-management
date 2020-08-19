@@ -16,11 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainService;
@@ -43,9 +41,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -61,9 +56,6 @@ public class CertificatesResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
-
-    @Autowired
-    private CertificateManager certificateManager;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -119,9 +111,6 @@ public class CertificatesResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(schema -> certificateService.create(domain, newCertificate, authenticatedUser))
                         .map(certificate -> {
-                            // TODO remove after refactoring JWKS endpoint
-                            certificateManager.reloadCertificateProviders(certificate);
-
                             return Response
                                     .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/certificates/" + certificate.getId()))
                                     .entity(certificate)

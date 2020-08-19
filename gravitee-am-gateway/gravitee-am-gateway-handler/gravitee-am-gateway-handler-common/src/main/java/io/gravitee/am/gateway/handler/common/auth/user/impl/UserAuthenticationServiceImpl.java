@@ -154,6 +154,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         // set external id
         newUser.setExternalId(principal.getId());
         newUser.setUsername(principal.getUsername());
+        newUser.setEmail(principal.getEmail());
+        newUser.setFirstName(principal.getFirstName());
+        newUser.setLastName(principal.getLastName());
         newUser.setReferenceType(ReferenceType.DOMAIN);
         newUser.setReferenceId(domain.getId());
         if (afterAuthentication) {

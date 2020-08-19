@@ -16,10 +16,8 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Email;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
@@ -39,9 +37,6 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -57,9 +52,6 @@ public class ApplicationEmailResource extends AbstractResource {
 
     @Autowired
     private ApplicationService applicationService;
-
-    @Autowired
-    private EmailManager emailManager;
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -86,8 +78,7 @@ public class ApplicationEmailResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> applicationService.findById(application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(irrelevant -> emailTemplateService.update(domain, application, email, updateEmail))
-                        .flatMap(email1 -> emailManager.reloadEmail(email1)))
+                        .flatMapSingle(__ -> emailTemplateService.update(domain, application, email, updateEmail)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -109,8 +100,7 @@ public class ApplicationEmailResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.DELETE)
-                .andThen(emailTemplateService.delete(email)
-                        .andThen(emailManager.deleteEmail(email)))
+                .andThen(emailTemplateService.delete(email))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

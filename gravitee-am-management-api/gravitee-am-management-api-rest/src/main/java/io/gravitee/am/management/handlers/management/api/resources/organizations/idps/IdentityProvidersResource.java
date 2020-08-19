@@ -100,7 +100,6 @@ public class IdentityProvidersResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.CREATE)
                 .andThen(identityProviderService.create(ReferenceType.ORGANIZATION, organizationId, newIdentityProvider, authenticatedUser)
-                        .flatMap(identityProviderManager::reloadUserProvider)
                         .map(identityProvider -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/identities/" + identityProvider.getId()))
                                 .entity(identityProvider)
