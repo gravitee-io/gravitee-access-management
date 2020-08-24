@@ -1,5 +1,23 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/275?closed=1[AM - 2.10.18 (2020-08-18)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Users cannot be updated after first authentication https://github.com/gravitee-io/issues/issues/4176[#4176]
+
+*_Management_*
+
+- Certificates are not initialized in cluster environment https://github.com/gravitee-io/issues/issues/4183[#4183]
+- Email templates are not initialized in cluster environment https://github.com/gravitee-io/issues/issues/4182[#4182]
+- Nimbus dependency is missing https://github.com/gravitee-io/issues/issues/4184[#4184]
+- Registration confirmation email template expires after field is not working  https://github.com/gravitee-io/issues/issues/4186[#4186]
+- Reporters are not initialized in cluster environment https://github.com/gravitee-io/issues/issues/4177[#4177]
+- User providers are not initialized in cluster environment https://github.com/gravitee-io/issues/issues/4180[#4180]
+
+
 == https://github.com/gravitee-io/issues/milestone/262?closed=1[AM - 2.10.17 (2020-07-07)]
 
 === Bug fixes
