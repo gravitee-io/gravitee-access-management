@@ -1079,7 +1079,7 @@
 													"",
 													"pm.test(\"UM - create user - username invalid\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[#Invalid: invalid username]\");",
+													"    pm.expect(jsonData.message).to.eql(\"[£Invalid: invalid username]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1103,7 +1103,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"#Invalid\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"#CoMpL3X-P@SsW0Rd\"\n}"
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"£Invalid\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"#CoMpL3X-P@SsW0Rd\"\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",

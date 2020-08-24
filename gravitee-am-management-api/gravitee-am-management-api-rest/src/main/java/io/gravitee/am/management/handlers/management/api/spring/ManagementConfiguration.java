@@ -19,13 +19,6 @@ import io.gravitee.am.management.handlers.management.api.authentication.manager.
 import io.gravitee.am.management.handlers.management.api.authentication.manager.form.impl.FormManagerImpl;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.am.management.handlers.management.api.authentication.service.impl.AuthenticationServiceImpl;
-import io.gravitee.am.management.handlers.management.api.manager.certificate.CertificateManager;
-import io.gravitee.am.management.handlers.management.api.manager.email.EmailManager;
-import io.gravitee.am.management.handlers.management.api.manager.email.impl.EmailManagerImpl;
-import io.gravitee.am.management.handlers.management.api.manager.group.GroupManager;
-import io.gravitee.am.management.handlers.management.api.manager.group.impl.GroupManagerImpl;
-import io.gravitee.am.management.handlers.management.api.manager.idp.UserProviderManager;
-import io.gravitee.am.management.handlers.management.api.manager.idp.impl.UserProviderManagerImpl;
 import io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration;
 import io.gravitee.am.management.handlers.management.api.spring.security.WebMvcConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -39,26 +32,6 @@ import org.springframework.context.annotation.Import;
 @ComponentScan({"io.gravitee.am.management.handlers.management.api.resources.enhancer"})
 @Import({WebMvcConfiguration.class, SecurityConfiguration.class})
 public class ManagementConfiguration {
-
-    @Bean
-    public CertificateManager certificateManager() {
-        return new CertificateManager();
-    }
-
-    @Bean
-    public UserProviderManager identityProviderManager() {
-        return new UserProviderManagerImpl();
-    }
-
-    @Bean
-    public EmailManager emailManager() {
-        return new EmailManagerImpl();
-    }
-
-    @Bean
-    public GroupManager groupManager() {
-        return new GroupManagerImpl();
-    }
 
     @Bean
     public AuthenticationService authenticationService() {

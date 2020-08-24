@@ -49,6 +49,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
@@ -65,7 +66,7 @@ import static com.mongodb.client.model.Filters.*;
  * @author GraviteeSource Team
  */
 @Import({io.gravitee.am.reporter.mongodb.spring.MongoReporterConfiguration.class})
-public class MongoAuditReporter extends AbstractService implements AuditReporter {
+public class MongoAuditReporter extends AbstractService implements AuditReporter, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
     private static final String FIELD_ID = "_id";
@@ -128,9 +129,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     }
 
     @Override
-    protected void doStart() throws Exception {
-        super.doStart();
-
+    public void afterPropertiesSet() throws Exception {
         // init reportable collection
         reportableCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
 
@@ -142,6 +141,11 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
                 .flatMap(this::bulk)
                 .doOnError(throwable -> logger.error("An error occurs while indexing data into MongoDB", throwable))
                 .subscribe();
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+        super.doStart();
     }
 
     @Override

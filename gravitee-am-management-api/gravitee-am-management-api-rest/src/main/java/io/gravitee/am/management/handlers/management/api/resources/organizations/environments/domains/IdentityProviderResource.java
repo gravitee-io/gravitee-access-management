@@ -17,11 +17,9 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -45,9 +43,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,9 +58,6 @@ public class IdentityProviderResource extends AbstractResource {
 
     @Autowired
     private DomainService domainService;
-
-    @Autowired
-    private IdentityProviderManager identityProviderManager;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -121,8 +113,7 @@ public class IdentityProviderResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser))
-                        .flatMap(identityProvider -> identityProviderManager.reloadUserProvider(identityProvider)))
+                        .flatMapSingle(__ -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

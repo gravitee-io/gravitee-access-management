@@ -47,7 +47,7 @@ public class CookieCsrfSignedTokenRepository implements CsrfTokenRepository {
 
     public static final String TOKEN_CLAIM = "token";
 
-    private static final String DEFAULT_CSRF_COOKIE_NAME = "XSRF-TOKEN";
+    private static final String DEFAULT_CSRF_COOKIE_NAME = "XSRF-Graviteeio-AM-API-TOKEN";
 
     private static final String DEFAULT_CSRF_PARAMETER_NAME = "_csrf";
 

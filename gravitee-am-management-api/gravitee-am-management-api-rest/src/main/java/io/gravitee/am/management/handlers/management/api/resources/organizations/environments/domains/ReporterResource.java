@@ -17,9 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
@@ -42,9 +40,6 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -53,9 +48,6 @@ public class ReporterResource extends AbstractResource {
 
     @Autowired
     private ReporterService reporterService;
-
-    @Autowired
-    private AuditReporterManager auditReporterManager;
 
     @Autowired
     private DomainService domainService;
@@ -112,8 +104,7 @@ public class ReporterResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> reporterService.update(domain, reporter, updateReporter, authenticatedUser))
-                        .doOnSuccess(reporter1 -> auditReporterManager.reloadReporter(reporter1)))
+                        .flatMapSingle(__ -> reporterService.update(domain, reporter, updateReporter, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 }

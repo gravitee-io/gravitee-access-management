@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.ResourceNotFoundException;
@@ -87,7 +86,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         this.getClient(context)
                 .flatMapSingle(Single::just)
                 .flatMap(client -> this.extractRequest(context)
-                        .flatMap(request -> dcrService.patch(client, request, UriBuilderRequest.extractBasePath(context)))
+                        .flatMap(request -> dcrService.patch(client, request, UriBuilderRequest.resolveProxyRequest(context)))
                         .map(clientSyncService::addDynamicClientRegistred)
                 )
                 .subscribe(
@@ -111,7 +110,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         this.getClient(context)
                 .flatMapSingle(Single::just)
                 .flatMap(client -> this.extractRequest(context)
-                        .flatMap(request -> dcrService.update(client, request, UriBuilderRequest.extractBasePath(context)))
+                        .flatMap(request -> dcrService.update(client, request, UriBuilderRequest.resolveProxyRequest(context)))
                         .map(clientSyncService::addDynamicClientRegistred)
                 )
                 .subscribe(
@@ -150,7 +149,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
 
         this.getClient(context)
                 .flatMapSingle(Single::just)
-                .flatMap(toRenew -> dcrService.renewSecret(toRenew, UriBuilderRequest.extractBasePath(context)))
+                .flatMap(toRenew -> dcrService.renewSecret(toRenew, UriBuilderRequest.resolveProxyRequest(context)))
                 .map(clientSyncService::addDynamicClientRegistred)
                 .subscribe(
                         client -> context.response()

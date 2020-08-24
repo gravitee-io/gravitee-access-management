@@ -253,12 +253,10 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         // OAuth 2.0 Authorization endpoint
         router
                 .route("/authorize")
-                .handler(cookieHandler)
                 .handler(sessionHandler)
                 .handler(ssoSessionHandler);
         router
                 .route("/consent")
-                .handler(cookieHandler)
                 .handler(sessionHandler)
                 .handler(ssoSessionHandler);
     }

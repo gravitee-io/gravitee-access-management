@@ -72,7 +72,7 @@ public class EmailManagerTest {
         domainEmail.setReferenceId("domain1");
         domainEmail.setSubject("Domain subject");
 
-        emailManager.reloadEmail(domainEmail);
+        ((EmailManagerImpl) emailManager).loadEmail(domainEmail);
 
         String templateKey = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + "domain1";
         Email email = emailManager.getEmail(templateKey, "subject", 1000);
@@ -103,8 +103,8 @@ public class EmailManagerTest {
         clientEmail.setClient("client1");
         clientEmail.setSubject("Client subject");
 
-        emailManager.reloadEmail(domainEmail);
-        emailManager.reloadEmail(clientEmail);
+        ((EmailManagerImpl) emailManager).loadEmail(domainEmail);
+        ((EmailManagerImpl) emailManager).loadEmail(clientEmail);
 
         String templateKey = Template.RESET_PASSWORD.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + "domain1";
         String templateClientKey = templateKey + EmailManager.TEMPLATE_NAME_SEPARATOR + "client1";

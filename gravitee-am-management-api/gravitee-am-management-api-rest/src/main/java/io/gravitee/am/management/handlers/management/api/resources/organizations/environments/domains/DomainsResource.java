@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
@@ -27,7 +26,6 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Completable;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -57,9 +55,6 @@ public class DomainsResource extends AbstractResource {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
-
-    @Autowired
-    private AuditReporterManager auditReporterManager;
 
     @Autowired
     private ReporterService reporterService;
@@ -121,11 +116,9 @@ public class DomainsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
                 .andThen(domainService.create(organizationId, environmentId, newDomain, authenticatedUser)
                         // create default idp
-                        .flatMap(domain -> identityProviderManager.create(domain.getId()).map(identityProvider -> domain))
+                        .flatMap(domain -> identityProviderManager.create(domain.getId()).map(__ -> domain))
                         // create default reporter
-                        .flatMap(domain -> reporterService.createDefault(domain.getId())
-                                .flatMapCompletable(reporter -> Completable.fromRunnable(() -> auditReporterManager.loadReporter(reporter)))
-                                .toSingleDefault(domain)))
+                        .flatMap(domain -> reporterService.createDefault(domain.getId()).map(__ -> domain)))
                 .subscribe(domain -> response.resume(Response.created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain.getId()))
                         .entity(domain).build()), response::resume);
     }

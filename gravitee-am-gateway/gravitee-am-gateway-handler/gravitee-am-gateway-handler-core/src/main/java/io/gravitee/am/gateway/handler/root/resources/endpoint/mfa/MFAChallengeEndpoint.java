@@ -212,16 +212,12 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
         final HttpServerRequest req = context.request();
         final HttpServerResponse resp = context.response();
 
-        try {
-            // redirect to mfa challenge page with error message
-            QueryStringDecoder queryStringDecoder = new QueryStringDecoder(req.uri());
-            Map<String, String> parameters = new LinkedHashMap<>();
-            parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
-            parameters.put("error", "mfa_challenge_failed");
-            String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters);
-            doRedirect(resp, uri);
-        } catch (URISyntaxException e) {
-            context.fail(503);
-        }
+        // redirect to mfa challenge page with error message
+        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(req.uri());
+        Map<String, String> parameters = new LinkedHashMap<>();
+        parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
+        parameters.put("error", "mfa_challenge_failed");
+        String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters);
+        doRedirect(resp, uri);
     }
 }

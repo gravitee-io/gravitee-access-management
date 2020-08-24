@@ -88,7 +88,7 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
         String clientAssertionType = getClientAssertionType(request);
         String clientAssertion = getClientAssertion(request);
         String clientId = request.getParam(Parameters.CLIENT_ID);
-        String basePath = UriBuilderRequest.extractBasePath(context);
+        String basePath = UriBuilderRequest.resolveProxyRequest(context);
 
         clientAssertionService.assertClient(clientAssertionType, clientAssertion, basePath)
                 .flatMap(client1 -> {

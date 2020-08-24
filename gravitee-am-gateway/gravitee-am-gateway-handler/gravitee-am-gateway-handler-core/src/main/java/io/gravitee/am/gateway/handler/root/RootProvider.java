@@ -260,47 +260,42 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     }
 
     private void sessionAndCookieHandler(Router router) {
+
+        // Define cookieHandler once and globally.
+        router.route().handler(cookieHandler);
+
         // Login endpoint
         router.route("/login")
-                .handler(cookieHandler)
                 .handler(sessionHandler);
         router
                 .route("/login/callback")
-                .handler(cookieHandler)
                 .handler(sessionHandler);
         router
                 .route("/login/SSO/POST")
-                .handler(cookieHandler)
                 .handler(sessionHandler);
 
         // MFA endpoint
         router.route("/mfa/enroll")
-                .handler(cookieHandler)
                 .handler(sessionHandler);
         router.route("/mfa/challenge")
-                .handler(cookieHandler)
                 .handler(sessionHandler);
 
         // Logout endpoint
         router
                 .route("/logout")
-                .handler(cookieHandler)
                 .handler(sessionHandler);
 
         // Registration confirmation endpoint
         router
                 .post("/register")
-                .handler(cookieHandler)
                 .handler(sessionHandler);
         router
                 .route("/confirmRegistration")
-                .handler(cookieHandler)
                 .handler(sessionHandler);
 
         // Reset password endpoint
         router
                 .route("/resetPassword")
-                .handler(cookieHandler)
                 .handler(sessionHandler);
     }
 

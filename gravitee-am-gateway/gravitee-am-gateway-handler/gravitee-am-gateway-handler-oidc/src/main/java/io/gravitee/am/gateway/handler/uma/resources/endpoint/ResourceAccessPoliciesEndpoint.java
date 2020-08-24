@@ -21,7 +21,6 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.model.uma.policy.AccessPolicyCondition;
 import io.gravitee.am.model.uma.policy.AccessPolicyType;
@@ -85,7 +84,7 @@ public class ResourceAccessPoliciesEndpoint {
         final JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
         final Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
         final String resource = context.request().getParam(RESOURCE_ID);
-        final String basePath = UriBuilderRequest.extractBasePath(context);
+        final String basePath = UriBuilderRequest.resolveProxyRequest(context);
 
         // extract access policy payload
         AccessPolicy accessPolicy = extractRequest(context);

@@ -204,9 +204,11 @@ public class User {
 
     public String getEmail() {
         if (email == null) {
-            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.EMAIL) != null) {
-                // fall back to OIDC standard claims
-                email = (String) getAdditionalInformation().get(StandardClaims.EMAIL);
+            // fall back to standard claims
+            if (getAdditionalInformation() != null) {
+                if (getAdditionalInformation().get(StandardClaims.EMAIL) != null) {
+                    return (String) getAdditionalInformation().get(StandardClaims.EMAIL);
+                }
             }
         }
         return email;

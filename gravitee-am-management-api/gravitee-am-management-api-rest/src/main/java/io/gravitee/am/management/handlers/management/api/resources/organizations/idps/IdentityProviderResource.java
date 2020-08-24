@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
@@ -52,9 +51,6 @@ public class IdentityProviderResource extends AbstractResource {
     @Autowired
     private IdentityProviderService identityProviderService;
 
-    @Autowired
-    private IdentityProviderManager identityProviderManager;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get an identity provider",
@@ -88,8 +84,7 @@ public class IdentityProviderResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.UPDATE)
-                .andThen(identityProviderService.update(ReferenceType.ORGANIZATION, organizationId, identity, updateIdentityProvider, authenticatedUser)
-                        .flatMap(identityProvider -> identityProviderManager.reloadUserProvider(identityProvider)))
+                .andThen(identityProviderService.update(ReferenceType.ORGANIZATION, organizationId, identity, updateIdentityProvider, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 
