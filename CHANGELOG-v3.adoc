@@ -13,6 +13,20 @@
 - Merge 3.0.5 https://github.com/gravitee-io/issues/issues/4206[#4206]
 
 
+== https://github.com/gravitee-io/issues/milestone/273?closed=1[AM - 3.0.5 (2020-08-24)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 2.10.18 https://github.com/gravitee-io/issues/issues/4193[#4193]
+
+*_Management_*
+
+- Delete "external" users https://github.com/gravitee-io/issues/issues/4106[#4106]
+- Error updating client with metadata https://github.com/gravitee-io/issues/issues/4166[#4166]
+
+
 == https://github.com/gravitee-io/issues/milestone/269?closed=1[AM - 3.1.1 (2020-07-30)]
 
 === Bug fixes
