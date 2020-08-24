@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -107,17 +108,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<Page<User>> findByDomain(String domain, int page, int size) {
-        return findAll(ReferenceType.DOMAIN, domain, page, size);
+        return findAll(ReferenceType.DOMAIN, domain, page, size)
+                .doOnSuccess(userPage -> userPage.getData().forEach(this::setInternalStatus));
     }
 
     @Override
     public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
-        return userService.findById(referenceType, referenceId, id);
+        return userService.findById(referenceType, referenceId, id)
+                .map(this::setInternalStatus);
     }
 
     @Override
     public Maybe<User> findById(String id) {
-        return userService.findById(id);
+        return userService.findById(id)
+                .map(this::setInternalStatus);
     }
 
     @Override
@@ -216,7 +220,8 @@ public class UserServiceImpl implements UserService {
                                                                         } else {
                                                                             return Single.just(user);
                                                                         }
-                                                                    });
+                                                                    })
+                                                                    .map(this::setInternalStatus);
                                                         });
                                             });
                                 }
@@ -255,12 +260,14 @@ public class UserServiceImpl implements UserService {
                         .flatMap(idpUser -> {
                             // set external id
                             updateUser.setExternalId(idpUser.getId());
-                            return userService.update(referenceType, referenceId, id, updateUser);
+                            return userService.update(referenceType, referenceId, id, updateUser)
+                                    .map(this::setInternalStatus);
                         })
                         .onErrorResumeNext(ex -> {
                             if (ex instanceof UserNotFoundException) {
                                 // idp user does not exist, only update AM user
-                                return userService.update(referenceType, referenceId, id, updateUser);
+                                return userService.update(referenceType, referenceId, id, updateUser)
+                                        .map(this::setInternalStatus);
                             }
                             return Single.error(ex);
                         })
@@ -495,10 +502,15 @@ public class UserServiceImpl implements UserService {
     }
 
     private String getUserRegistrationToken(User user) {
+        return getUserRegistrationToken(user, null);
+    }
+
+    private String getUserRegistrationToken(User user, Integer expiresAfter) {
         // generate a JWT to store user's information and for security purpose
         final Map<String, Object> claims = new HashMap<>();
-        claims.put(Claims.iat, new Date().getTime() / 1000);
-        claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expireAfter * 1000)).getTime() / 1000);
+        Instant now = Instant.now();
+        claims.put(Claims.iat, now.getEpochSecond());
+        claims.put(Claims.exp, now.plusSeconds((expiresAfter != null ? expiresAfter : expireAfter)).getEpochSecond());
         claims.put(Claims.sub, user.getId());
         if (user.getClient() != null) {
             claims.put(Claims.aud, user.getClient());
@@ -621,5 +633,10 @@ public class UserServiceImpl implements UserService {
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
+    }
+
+    private User setInternalStatus(User user) {
+        user.setInternal(identityProviderManager.userProviderExists(user.getSource()));
+        return user;
     }
 }

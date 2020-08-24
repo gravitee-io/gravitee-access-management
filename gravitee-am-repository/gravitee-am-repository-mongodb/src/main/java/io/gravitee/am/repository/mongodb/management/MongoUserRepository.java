@@ -62,6 +62,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_SOURCE = "source";
     private static final String FIELD_EMAIL = "email";
+    private static final String FIELD_EMAIL_CLAIM = "additionalInformation.email";
     private static final String FIELD_EXTERNAL_ID = "externalId";
     private static final String FIELD_PRE_REGISTRATION = "preRegistration";
 
@@ -126,10 +127,11 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @Override
     public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
         BasicDBObject emailQuery = new BasicDBObject(FIELD_EMAIL, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
+        BasicDBObject emailClaimQuery = new BasicDBObject(FIELD_EMAIL_CLAIM, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
         Bson mongoQuery = and(
                 eq(FIELD_REFERENCE_TYPE, DOMAIN.name()),
                 eq(FIELD_REFERENCE_ID, domain),
-                emailQuery);
+                or(emailQuery, emailClaimQuery));
 
         return Observable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert).collect(ArrayList::new, List::add);
     }

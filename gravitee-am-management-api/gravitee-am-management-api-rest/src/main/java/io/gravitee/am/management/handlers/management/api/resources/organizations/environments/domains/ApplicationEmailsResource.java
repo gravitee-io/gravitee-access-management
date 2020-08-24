@@ -17,10 +17,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Email;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
@@ -29,7 +27,6 @@ import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewEmail;
-import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
@@ -44,9 +41,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,9 +57,6 @@ public class ApplicationEmailsResource extends AbstractResource {
 
     @Autowired
     private ApplicationService applicationService;
-
-    @Autowired
-    private EmailManager emailManager;
 
     @Context
     private ResourceContext resourceContext;
@@ -122,8 +113,7 @@ public class ApplicationEmailsResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> applicationService.findById(application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(irrelevant -> emailTemplateService.create(domain, application, newEmail, authenticatedUser))
-                        .flatMap(email -> emailManager.reloadEmail(email))
+                        .flatMapSingle(__ -> emailTemplateService.create(domain, application, newEmail, authenticatedUser))
                         .map(email -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application + "/emails/" + email.getId()))
                                 .entity(email)

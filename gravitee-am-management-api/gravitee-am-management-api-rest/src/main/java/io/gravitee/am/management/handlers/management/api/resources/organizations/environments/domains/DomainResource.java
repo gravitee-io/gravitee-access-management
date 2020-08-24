@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Entrypoint;
@@ -61,9 +60,6 @@ public class DomainResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
-
-    @Autowired
-    private AuditReporterManager auditReporterManager;
 
     @Autowired
     private EntrypointService entrypointService;
@@ -149,8 +145,7 @@ public class DomainResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.DELETE)
-                .andThen(domainService.delete(domain, authenticatedUser)
-                        .doOnComplete(() -> auditReporterManager.removeReporter(domain)))
+                .andThen(domainService.delete(domain, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

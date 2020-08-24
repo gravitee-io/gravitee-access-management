@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
 import io.gravitee.am.certificate.api.CertificateMetadata;
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
@@ -30,7 +29,6 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.plugins.certificate.core.CertificateSchema;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.*;
@@ -104,12 +102,7 @@ public class CertificateServiceImpl implements CertificateService {
     private CertificatePluginService certificatePluginService;
 
     @Autowired
-    private CertificatePluginManager certificatePluginManager;
-
-    @Autowired
     private Environment environment;
-
-    private Map<String, CertificateProvider> certificateProviders = new HashMap<>();
 
     public static final String DEFAULT_CERTIFICATE_PLUGIN = "pkcs12-am-certificate";
 
@@ -214,9 +207,6 @@ public class CertificateServiceImpl implements CertificateService {
                     throw new TechnicalManagementException("An error occurs while trying to create a certificate", ex);
                 })
                 .doOnSuccess(certificate -> {
-                    // load certificate provider
-                    CertificateProvider provider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
-                    certificateProviders.put(certificate.getId(), provider);
                     // send notification
                     auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).certificate(certificate));
                 })
@@ -458,34 +448,5 @@ public class CertificateServiceImpl implements CertificateService {
         certBuilder.addExtension(new ASN1ObjectIdentifier("2.5.29.19"), true, basicConstraints);
 
         return new JcaX509CertificateConverter().setProvider(BouncyCastleProviderSingleton.getInstance()).getCertificate(certBuilder.build(contentSigner));
-    }
-
-    @Override
-    // TODO : refactor (after JWKS information)
-    public void setCertificateProviders(Map<String, CertificateProvider> certificateProviders) {
-        this.certificateProviders = certificateProviders;
-    }
-
-    @Override
-    // TODO : refactor (after JWKS information)
-    public void setCertificateProvider(String certificateId, CertificateProvider certificateProvider) {
-        this.certificateProviders.put(certificateId, certificateProvider);
-    }
-
-    @Override
-    // TODO : refactor (after JWKS information)
-    public Maybe<CertificateProvider> getCertificateProvider(String certificateId) {
-        return Maybe.create(emitter -> {
-            try {
-                CertificateProvider certificateProvider = this.certificateProviders.get(certificateId);
-                if (certificateProvider != null) {
-                    emitter.onSuccess(certificateProvider);
-                } else {
-                    emitter.onComplete();
-                }
-            } catch (Exception e) {
-                emitter.onError(e);
-            }
-        });
     }
 }

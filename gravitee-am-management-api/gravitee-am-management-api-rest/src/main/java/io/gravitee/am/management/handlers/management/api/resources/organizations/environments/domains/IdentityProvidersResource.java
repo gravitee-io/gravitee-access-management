@@ -125,8 +125,7 @@ public class IdentityProvidersResource extends AbstractResource {
                 of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))
-                        .flatMap(identityProvider -> identityProviderManager.reloadUserProvider(identityProvider))
+                        .flatMapSingle(__ -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))
                         .map(identityProvider -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/identities/" + identityProvider.getId()))
                                 .entity(identityProvider)

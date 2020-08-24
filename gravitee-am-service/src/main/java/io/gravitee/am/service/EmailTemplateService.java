@@ -33,7 +33,6 @@ import java.util.List;
  */
 public interface EmailTemplateService {
 
-
     Single<List<Email>> findAll();
 
     Single<List<Email>> findAll(ReferenceType referenceType, String referenceId);
@@ -47,6 +46,8 @@ public interface EmailTemplateService {
     Maybe<Email> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template);
 
     Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template);
+
+    Maybe<Email> findById(String id);
 
     Single<List<Email>> copyFromClient(String domain, String clientSource, String clientTarget);
 

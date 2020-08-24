@@ -135,6 +135,17 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     }
 
     @Override
+    public Maybe<Email> findById(String id) {
+        LOGGER.debug("Find email by id {}", id);
+        return emailRepository.findById(id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find a email using its id {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a email using its id %s", id), ex));
+                });
+    }
+
+    @Override
     public Single<List<Email>> copyFromClient(String domain, String clientSource, String clientTarget) {
         return findByClient(ReferenceType.DOMAIN, domain, clientSource)
                 .flatMapPublisher(Flowable::fromIterable)

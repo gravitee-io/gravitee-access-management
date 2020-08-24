@@ -17,9 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ClientService;
@@ -44,9 +42,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -63,9 +58,6 @@ public class ClientEmailsResource extends AbstractResource {
 
     @Autowired
     private ClientService clientService;
-
-    @Autowired
-    private EmailManager emailManager;
 
     @Context
     private ResourceContext resourceContext;
@@ -121,8 +113,7 @@ public class ClientEmailsResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> clientService.findById(client))
                         .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
-                        .flatMapSingle(irrelevant -> emailTemplateService.create(domain, client, newEmail, authenticatedUser))
-                        .flatMap(email -> emailManager.reloadEmail(email))
+                        .flatMapSingle(__ -> emailTemplateService.create(domain, client, newEmail, authenticatedUser))
                         .map(email -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/clients/" + client + "/emails/" + email.getId()))
                                 .entity(email)
