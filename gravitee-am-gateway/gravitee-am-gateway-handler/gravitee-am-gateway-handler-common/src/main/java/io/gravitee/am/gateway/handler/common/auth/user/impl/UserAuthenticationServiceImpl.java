@@ -104,6 +104,13 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     }
 
     @Override
+    public Maybe<User> loadPreAuthenticatedUser(io.gravitee.am.identityprovider.api.User principal) {
+        String source = (String) principal.getAdditionalInformation().get(SOURCE_FIELD);
+        return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
+                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)));
+    }
+
+    @Override
     public Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client) {
         return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider())
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(criteria.username())))

@@ -19,8 +19,9 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -46,6 +47,7 @@ public class LoginEndpoint implements Handler<RoutingContext> {
     private static final String ERROR_DESCRIPTION_PARAM_KEY = "error_description";
     private static final String ALLOW_FORGOT_PASSWORD_CONTEXT_KEY = "allowForgotPassword";
     private static final String ALLOW_REGISTER_CONTEXT_KEY = "allowRegister";
+    private static final String ALLOW_PASSWORDLESS_CONTEXT_KEY = "allowPasswordless";
     private static final String REQUEST_CONTEXT_KEY = "request";
     private ThymeleafTemplateEngine engine;
     private Domain domain;
@@ -71,9 +73,11 @@ public class LoginEndpoint implements Handler<RoutingContext> {
         routingContext.put(CLIENT_CONTEXT_KEY, new ClientProperties(client));
         // put domain in context data
         routingContext.put(DOMAIN_CONTEXT_KEY, domain);
-        // put domain login settings in context data
-        routingContext.put(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, domain.getLoginSettings() == null ? false : domain.getLoginSettings().isForgotPasswordEnabled());
-        routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, domain.getLoginSettings() == null ? false : domain.getLoginSettings().isRegisterEnabled());
+        // put login settings in context data
+        LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
+        routingContext.put(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, loginSettings != null && loginSettings.isForgotPasswordEnabled());
+        routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, loginSettings != null && loginSettings.isRegisterEnabled());
+        routingContext.put(ALLOW_PASSWORDLESS_CONTEXT_KEY, loginSettings != null && loginSettings.isPasswordlessEnabled());
 
         // put request in context
         EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate(), true));

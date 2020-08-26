@@ -48,13 +48,15 @@
                     <div class="login-form-actions">
                         <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Sign in</button>
                     </div>
-                    <div th:style="${allowForgotPassword and allowRegister} ? 'display:flex; flex-direction: row; margin-top: 10px; text-align: center;' : 'display:block; margin-top: 10px; text-align: center;'">
+                    <div class="login-form-additional-actions">
                         <div th:if="${allowForgotPassword}">
                             <a th:href="@{forgotPassword(client_id=${param.client_id})}">Forgot Password ?</a>
                         </div>
-                        <span th:if="${allowForgotPassword and allowRegister}" style="display: flex; flex: 1;"></span>
                         <div th:if="${allowRegister}">
-                            <a th:href="@{register(client_id=${param.client_id})}">Register</a>
+                            <a th:href="@{register(client_id=${param.client_id})}">No account ? Register</a>
+                        </div>
+                        <div  th:if="${allowPasswordless}">
+                            <a th:href="@{webauthn/login(client_id=${param.client_id})}">Sign in with fingerprint, device or security key</a>
                         </div>
                     </div>
                 </form>

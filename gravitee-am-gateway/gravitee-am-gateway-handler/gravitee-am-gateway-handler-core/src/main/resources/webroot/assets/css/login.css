@@ -45,6 +45,16 @@
     justify-content: flex-end;
 }
 
+.login-form-additional-actions {
+    display:flex;
+    flex-direction: column;
+    margin-top: 10px;
+}
+
+.login-form-additional-actions > div {
+    margin: 5px;
+}
+
 .login-form-content .input-textfield {
     display: flex;
     flex-direction: column;

@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
 
@@ -30,13 +31,9 @@ import java.util.Set;
  */
 public class PatchApplicationSettings {
 
-    // SETTINGS
     private Optional<AccountSettings> account;
-
-    //OPENID
+    private Optional<LoginSettings> login;
     private Optional<PatchApplicationOAuthSettings> oauth;
-
-    //SETTING
     private Optional<PatchApplicationAdvancedSettings> advanced;
 
     public Optional<AccountSettings> getAccount() {
@@ -45,6 +42,14 @@ public class PatchApplicationSettings {
 
     public void setAccount(Optional<AccountSettings> account) {
         this.account = account;
+    }
+
+    public Optional<LoginSettings> getLogin() {
+        return login;
+    }
+
+    public void setLogin(Optional<LoginSettings> login) {
+        this.login = login;
     }
 
     public Optional<PatchApplicationOAuthSettings> getOauth() {
@@ -69,6 +74,7 @@ public class PatchApplicationSettings {
 
         // set values
         SetterUtils.safeSet(toPatch::setAccount, this.getAccount());
+        SetterUtils.safeSet(toPatch::setLogin, this.getLogin());
         if (this.getOauth() != null && this.getOauth().isPresent()) {
             toPatch.setOauth(this.getOauth().get().patch(toPatch.getOauth()));
         }
@@ -83,6 +89,7 @@ public class PatchApplicationSettings {
         Set<Permission> requiredPermissions = new HashSet<>();
 
         if (account != null && account.isPresent()
+                || login != null && login.isPresent()
                 || advanced != null && advanced.isPresent()) {
             requiredPermissions.add(Permission.APPLICATION_SETTINGS);
         }

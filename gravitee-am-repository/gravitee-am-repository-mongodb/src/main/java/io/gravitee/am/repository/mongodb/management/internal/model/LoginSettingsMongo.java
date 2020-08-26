@@ -15,15 +15,27 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.model.login.LoginSettings;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class LoginSettingsMongo {
 
+    private boolean inherited;
     private boolean forgotPasswordEnabled;
     private boolean registerEnabled;
     private boolean rememberMeEnabled;
+    private boolean passwordlessEnabled;
+
+    public boolean isInherited() {
+        return inherited;
+    }
+
+    public void setInherited(boolean inherited) {
+        this.inherited = inherited;
+    }
 
     public boolean isForgotPasswordEnabled() {
         return forgotPasswordEnabled;
@@ -47,5 +59,37 @@ public class LoginSettingsMongo {
 
     public void setRememberMeEnabled(boolean rememberMeEnabled) {
         this.rememberMeEnabled = rememberMeEnabled;
+    }
+
+    public boolean isPasswordlessEnabled() {
+        return passwordlessEnabled;
+    }
+
+    public void setPasswordlessEnabled(boolean passwordlessEnabled) {
+        this.passwordlessEnabled = passwordlessEnabled;
+    }
+
+    public LoginSettings convert() {
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setInherited(isInherited());
+        loginSettings.setForgotPasswordEnabled(isForgotPasswordEnabled());
+        loginSettings.setRegisterEnabled(isRegisterEnabled());
+        loginSettings.setRememberMeEnabled(isRememberMeEnabled());
+        loginSettings.setPasswordlessEnabled(isPasswordlessEnabled());
+        return loginSettings;
+    }
+
+    public static LoginSettingsMongo convert(LoginSettings loginSettings) {
+        if (loginSettings == null) {
+            return null;
+        }
+
+        LoginSettingsMongo loginSettingsMongo = new LoginSettingsMongo();
+        loginSettingsMongo.setInherited(loginSettings.isInherited());
+        loginSettingsMongo.setForgotPasswordEnabled(loginSettings.isForgotPasswordEnabled());
+        loginSettingsMongo.setRegisterEnabled(loginSettings.isRegisterEnabled());
+        loginSettingsMongo.setRememberMeEnabled(loginSettings.isRememberMeEnabled());
+        loginSettingsMongo.setPasswordlessEnabled(loginSettings.isPasswordlessEnabled());
+        return loginSettingsMongo;
     }
 }

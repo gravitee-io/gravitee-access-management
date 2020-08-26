@@ -160,6 +160,9 @@ public abstract class JerseySpringTest {
     @Autowired
     protected EntrypointService entrypointService;
 
+    @Autowired
+    protected CredentialService credentialService;
+
     @Before
     public void init() {
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
@@ -327,6 +330,11 @@ public abstract class JerseySpringTest {
         @Bean
         public EntrypointService entrypointService() {
             return mock(EntrypointService.class);
+        }
+
+        @Bean
+        public CredentialService credentialService() {
+            return mock(CredentialService.class);
         }
     }
 

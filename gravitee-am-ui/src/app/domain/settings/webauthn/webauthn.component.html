@@ -1,0 +1,93 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>WebAuthn</h1>
+  <div class="gv-page-content">
+    <div fxFlex="70">
+      <form (ngSubmit)="save()" #webAuthnForm="ngForm" fxLayout="column">
+        <div class="gv-form-section">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Origin</mat-label>
+            <input matInput type="text" name="origin" placeholder="Origin" [(ngModel)]="domain.webAuthnSettings.origin" required [readonly]="readonly">
+            <mat-hint>This value needs to match `window.location.origin` evaluated by the User Agent during registration and authentication ceremonies.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Relying Party name</mat-label>
+            <input matInput type="text" name="relyingPartyName" placeholder="Relying Party name" [(ngModel)]="domain.webAuthnSettings.relyingPartyName" [readonly]="readonly">
+            <mat-hint>Optional. Relying Party name for display purposes.</mat-hint>
+          </mat-form-field>
+
+          <div style="display: flex; flex-direction: column; padding: 10px 5px;">
+            <mat-checkbox name="requireResidentKey" [(ngModel)]="domain.webAuthnSettings.requireResidentKey">Require resident key</mat-checkbox>
+            <mat-hint style="font-size: 75%;">Optional. This member describes the Relying Party's requirements regarding resident credentials. If the parameter is set to true, the authenticator MUST create a client-side-resident public key credential source when creating a public key credential.</mat-hint>
+          </div>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>User Verification</mat-label>
+            <mat-select name="userVerification" [(ngModel)]="domain.webAuthnSettings.userVerification">
+              <mat-option></mat-option>
+              <mat-option *ngFor="let userVerification of userVerifications" [value]="userVerification">
+                {{userVerification}}
+              </mat-option>
+            </mat-select>
+            <mat-hint>
+              Optional. This member describes the Relying Party's requirements regarding user verification.
+            </mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Authenticator Attachment</mat-label>
+            <mat-select name="authenticatorAttachment" [(ngModel)]="domain.webAuthnSettings.authenticatorAttachment">
+              <mat-option>unspecified</mat-option>
+              <mat-option *ngFor="let authenticatorAttachment of authenticatorAttachments" [value]="authenticatorAttachment">
+                {{authenticatorAttachment}}
+              </mat-option>
+            </mat-select>
+            <mat-hint>
+              Optional. Mechanism use by clients to communicate with authenticators;
+              "unspecified" value means that the web browser will display all possibilities (both Device and Security key), "platform" value only Device and "cross-platform" only the Security Key.
+            </mat-hint>
+          </mat-form-field>
+        </div>
+        <div fxLayout="row" *hasPermission="['domain_settings_update']">
+          <button mat-raised-button [disabled]="(!webAuthnForm.valid || webAuthnForm.pristine)" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>WebAuthn settings</h3>
+      <div class="gv-page-description-content">
+        <p>WebAuthn configuration for the passwordless feature.</p>
+        <h4>User verification</h4>
+        <p>
+          User verification serves to ensure that the persons authenticating to a service is in fact who they say they are for the purposes of that service.
+          These are following options for "userVerification" when initiating registration or authentication:
+        </p>
+        <small>
+          <b><i>DISCOURAGED</i></b> This value indicates that the RP does not want user verification employed during the operation (for example, to minimize disruption to the user interaction flow).<br>
+          <b><i>PREFERRED</i></b> This value indicates that the RP prefers user verification for the operation if possible, but will not fail the operation if the response does not have the "AuthenticatorDataFlags.UV" flag set.<br>
+          <b><i>REQUIRED</i></b> Indicates that the RP requires user verification for the operation and will fail the operation if the response does not have the "AuthenticatorDataFlags.UV flag" set.<br>
+        </small>
+        <p>
+          User verification is appropriate for passwordless scenarios and multi-factor authentication (MFA) because the user enters a shared secret with the authenticator (PIN) that is not sent over the network.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -18,6 +18,7 @@ package io.gravitee.am.model;
 import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
@@ -83,6 +84,8 @@ public class Domain implements Resource {
 
     private LoginSettings loginSettings;
 
+    private WebAuthnSettings webAuthnSettings;
+
     private SCIMSettings scim;
 
     private AccountSettings accountSettings;
@@ -120,6 +123,7 @@ public class Domain implements Resource {
         this.oidc = other.oidc;
         this.uma = other.uma;
         this.loginSettings = other.loginSettings;
+        this.webAuthnSettings = other.webAuthnSettings;
         this.scim = other.scim;
         this.accountSettings = other.accountSettings;
         this.tags = other.tags;
@@ -229,6 +233,14 @@ public class Domain implements Resource {
 
     public void setLoginSettings(LoginSettings loginSettings) {
         this.loginSettings = loginSettings;
+    }
+
+    public WebAuthnSettings getWebAuthnSettings() {
+        return webAuthnSettings;
+    }
+
+    public void setWebAuthnSettings(WebAuthnSettings webAuthnSettings) {
+        this.webAuthnSettings = webAuthnSettings;
     }
 
     public AccountSettings getAccountSettings() {

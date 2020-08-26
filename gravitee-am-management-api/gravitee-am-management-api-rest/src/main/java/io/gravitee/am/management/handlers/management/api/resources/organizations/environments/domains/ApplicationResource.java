@@ -297,6 +297,7 @@ public class ApplicationResource extends AbstractResource {
                 filteredApplication.setMetadata(application.getMetadata());
                 filteredApplicationSettings.setAdvanced(application.getSettings().getAdvanced());
                 filteredApplicationSettings.setAccount(application.getSettings().getAccount());
+                filteredApplicationSettings.setLogin(application.getSettings().getLogin());
             }
 
             if (hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {

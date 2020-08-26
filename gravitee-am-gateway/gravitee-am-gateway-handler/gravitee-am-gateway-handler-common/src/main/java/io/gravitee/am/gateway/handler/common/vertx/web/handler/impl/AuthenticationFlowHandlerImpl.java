@@ -44,6 +44,7 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
         steps.add(new FormLoginStep(RedirectAuthHandler.create(authProvider, "/login")));
+        steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register")));
         steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll")));
         steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge")));
         return new AuthenticationFlowChainHandler(steps);

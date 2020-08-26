@@ -37,8 +37,49 @@
             </p>
             <button type="submit">login</button>
             <a th:if="${allowForgotPassword}" th:href="@{forgotPassword(client_id=${param.client_id})}">Forgot Password ?</a>
-             <a th:if="${allowRegister}" th:href="@{register(client_id=${param.client_id})}">Register</a>
+            <a th:if="${allowRegister}" th:href="@{register(client_id=${param.client_id})}">Register</a>
+            <a th:if="${allowPasswordless}" th:href="@{webauthn/login(client_id=${param.client_id})}">Sign in with fingerprint, device or security key</a>
           </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
+    <pre *ngIf="data.rawTemplate === 'WEBAUTHN_LOGIN'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>WebAuthn login custom</title>
+        </head>
+        <body>
+          <form id="login" th:action="${action}" method="post">
+            <input type="text" name="username" required/>
+            <p id="webauthn-error">
+              <span>Invalid user</span>
+            </p>
+            <button type="submit">login</button>
+          </form>
+          <script th:src="@{../assets/js/webauthn.auth.js}"></script>
+        </body>
+        </html>
+      ]]>
+    </pre>
+    <pre *ngIf="data.rawTemplate === 'WEBAUTHN_REGISTER'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>WebAuthn register custom</title>
+        </head>
+        <body>
+          <form id="register" th:action="${action}" method="post">
+            <input type="hidden" name="username" th:value="${user.username}" required/>
+            <div>
+              <a th:href="@{register(client_id=${param.client_id}, prompt='none')}">Skip for now</a>
+              <button>Register</button>
+            </div>
+          </form>
+          <script th:src="@{../assets/js/webauthn.auth.js}"></script>
         </body>
         </html>
       ]]>

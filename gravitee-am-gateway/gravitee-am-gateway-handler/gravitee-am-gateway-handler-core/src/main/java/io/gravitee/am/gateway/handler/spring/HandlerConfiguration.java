@@ -21,9 +21,12 @@ import io.gravitee.am.gateway.handler.factor.impl.FactorManagerImpl;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.form.impl.FormManagerImpl;
 import io.gravitee.am.gateway.handler.root.spring.RootConfiguration;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
 import io.gravitee.am.gateway.handler.vertx.spring.SecurityDomainRouterConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
+import io.vertx.ext.auth.webauthn.CredentialStore;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +62,16 @@ public class HandlerConfiguration {
     @Bean
     public FactorManager factorManager() {
         return new FactorManagerImpl();
+    }
+
+    @Bean
+    public CredentialStore credentialStore() {
+        return new RepositoryCredentialStore();
+    }
+
+    @Bean
+    public WebAuthnFactory webAuthn() {
+        return new WebAuthnFactory();
     }
 
     @Bean

@@ -47,6 +47,20 @@ export class DomainSettingsFormsComponent implements OnInit {
         'enabled': true
       },
       {
+        'name': 'WebAuthn Login',
+        'description': 'Passwordless page to authenticate users',
+        'template': 'WEBAUTHN_LOGIN',
+        'icon': 'fingerprint',
+        'enabled': true
+      },
+      {
+        'name': 'WebAuthn Register',
+        'description': 'Passwordless page to register authenticators (devices)',
+        'template': 'WEBAUTHN_REGISTER',
+        'icon': 'fingerprint',
+        'enabled': true
+      },
+      {
         'name': 'Registration',
         'description': 'Registration page to create an account',
         'template': 'REGISTRATION',

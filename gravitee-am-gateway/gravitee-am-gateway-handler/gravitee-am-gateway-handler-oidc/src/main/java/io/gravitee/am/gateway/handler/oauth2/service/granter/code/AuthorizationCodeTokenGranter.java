@@ -100,7 +100,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
 
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
-        return userAuthenticationManager.loadUserByUsername(tokenRequest.getSubject())
+        return userAuthenticationManager.loadPreAuthenticatedUser(tokenRequest.getSubject())
                 .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
     }
 

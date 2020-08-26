@@ -48,6 +48,15 @@ public interface UserAuthenticationService {
     Maybe<User> loadPreAuthenticatedUser(String subject);
 
     /**
+     * Use to find a pre-authenticated user (from a previous authentication step)
+     *
+     * The user should be present in gravitee repository and should be retrieved from the user last identity provider
+     * @param principal user end-user
+     * @return Pre-authenticated user
+     */
+    Maybe<User> loadPreAuthenticatedUser(io.gravitee.am.identityprovider.api.User principal);
+
+    /**
      * Lock user account if login max attempts has been reached
      *
      * @param criteria login attempt criteria

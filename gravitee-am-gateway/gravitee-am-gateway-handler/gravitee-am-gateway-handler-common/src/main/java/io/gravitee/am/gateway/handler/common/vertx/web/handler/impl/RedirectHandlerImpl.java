@@ -35,29 +35,29 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 public class RedirectHandlerImpl implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(RedirectHandlerImpl.class);
-    private final String redirectURL;
+    private final String path;
 
-    public RedirectHandlerImpl(String redirectURL) {
-        this.redirectURL = redirectURL;
+    public RedirectHandlerImpl(String path) {
+        this.path = path;
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
 
-        String mfaRedirectUrl = routingContext.get(CONTEXT_PATH) + redirectURL;
+        String contextPath = routingContext.get(CONTEXT_PATH) + path;
 
         try {
             final HttpServerRequest request = routingContext.request();
             final Map<String, String> requestParameters = request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(routingContext.request(), mfaRedirectUrl, requestParameters, true);
+            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(routingContext.request(), contextPath, requestParameters, true);
             routingContext.response()
                     .putHeader(HttpHeaders.LOCATION, proxiedRedirectURI)
                     .setStatusCode(302)
                     .end();
         } catch (Exception e) {
-            logger.warn("Failed to decode login redirect url", e);
+            logger.warn("Failed to decode redirect url", e);
             routingContext.response()
-                    .putHeader(HttpHeaders.LOCATION, mfaRedirectUrl)
+                    .putHeader(HttpHeaders.LOCATION, contextPath)
                     .setStatusCode(302)
                     .end();
         }

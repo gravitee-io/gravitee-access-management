@@ -117,4 +117,12 @@ export class UserService {
   removeFactor(domainId, userId, factorId): Observable<any> {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/factors/' + factorId);
   }
+
+  credentials(domainId, userId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/credentials');
+  }
+
+  removeCredential(domainId, userId, credentialId): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/credentials/' + credentialId);
+  }
 }

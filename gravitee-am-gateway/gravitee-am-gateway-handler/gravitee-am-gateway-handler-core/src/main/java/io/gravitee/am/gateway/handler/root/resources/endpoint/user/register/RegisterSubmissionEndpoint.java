@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -120,8 +121,8 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
         // override principal user
         io.gravitee.am.identityprovider.api.User principal = new DefaultUser(routingContext.request().getParam("username"));
         Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put(Claims.ip_address, remoteAddress(routingContext.request()));
-        additionalInformation.put(Claims.user_agent, userAgent(routingContext.request()));
+        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
         additionalInformation.put(Claims.domain, domain.getId());
         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
         return principal;

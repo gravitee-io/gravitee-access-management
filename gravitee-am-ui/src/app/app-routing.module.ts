@@ -80,6 +80,8 @@ import {UserApplicationComponent} from './domain/settings/users/user/application
 import {UserRolesComponent} from './domain/settings/users/user/roles/roles.component';
 import {UserRolesResolver} from './resolvers/user-roles.resolver';
 import {UserFactorsComponent} from './domain/settings/users/user/factors/factors.component';
+import {UserCredentialsResolver} from './resolvers/user-credentials.resolver';
+import {UserCredentialsComponent} from'./domain/settings/users/user/credentials/credentials.component';
 import {ExtensionGrantCreationComponent} from './domain/settings/extension-grants/creation/extension-grant-creation.component';
 import {ExtensionGrantComponent} from './domain/settings/extension-grants/extension-grant/extension-grant.component';
 import {ExtensionGrantsResolver} from './resolvers/extension-grants.resolver';
@@ -160,7 +162,9 @@ import {ApplicationResourceComponent} from './domain/applications/application/ad
 import {ApplicationResourceResolver} from './resolvers/application-resource.resolver';
 import {ApplicationResourcePolicyComponent} from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
 import {ApplicationResourcePolicyResolver} from './resolvers/application-resource-policy.resolver';
-import {DomainSettingsEntrypointsComponent} from "./domain/settings/entrypoints/entrypoints.component";
+import {DomainSettingsEntrypointsComponent} from './domain/settings/entrypoints/entrypoints.component';
+import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
+import {ApplicationLoginSettingsComponent} from "./domain/applications/application/advanced/login/login.component";
 
 const routes: Routes = [
   {
@@ -714,6 +718,22 @@ const routes: Routes = [
                   }
                 }
               },
+              { path: 'login',
+                component: ApplicationLoginSettingsComponent,
+                canActivate: [AuthGuard],
+                data: {
+                  menu: {
+                    label: 'Login',
+                    section: 'Settings'
+                  },
+                  perms: {
+                    only: ['application_settings_read']
+                  },
+                  types: {
+                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER']
+                  }
+                }
+              },
               { path: 'members',
                 component: ApplicationMembershipsComponent,
                 canActivate: [AuthGuard],
@@ -996,6 +1016,22 @@ const routes: Routes = [
               { path: 'roles', component: ProviderRolesComponent, resolve: { roles: RolesResolver } }
             ]
           },
+          { path: 'webauthn',
+            component: DomainSettingsWebAuthnComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              domain: DomainResolver
+            },
+            data: {
+              menu: {
+                label: 'WebAuthn',
+                section: 'Security'
+              },
+              perms: {
+                only: ['domain_settings_read']
+              }
+            }
+          },
           { path: 'factors',
             component: DomainSettingsFactorsComponent,
             canActivate: [AuthGuard],
@@ -1172,6 +1208,7 @@ const routes: Routes = [
               { path: 'applications', component: UserApplicationsComponent, resolve: {consents: ConsentsResolver}},
               { path: 'applications/:appId', component: UserApplicationComponent, resolve: {application: ApplicationResolver, consents: ConsentsResolver}},
               { path: 'factors', component: UserFactorsComponent, resolve: {factors: EnrolledFactorsResolver}},
+              { path: 'credentials', component: UserCredentialsComponent, resolve: { credentials : UserCredentialsResolver}},
               { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
             ]
           },

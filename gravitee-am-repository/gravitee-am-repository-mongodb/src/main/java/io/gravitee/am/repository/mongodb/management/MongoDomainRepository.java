@@ -17,10 +17,13 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
+import io.gravitee.am.common.webauthn.UserVerification;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
@@ -120,6 +123,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setUma(convert(domainMongo.getUma()));
         domain.setScim(convert(domainMongo.getScim()));
         domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
+        domain.setWebAuthnSettings(convert(domainMongo.getWebAuthnSettings()));
         domain.setAccountSettings(convert(domainMongo.getAccountSettings()));
         domain.setTags(domainMongo.getTags());
         domain.setReferenceType(domainMongo.getReferenceType());
@@ -147,6 +151,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setUma(convert(domain.getUma()));
         domainMongo.setScim(convert(domain.getScim()));
         domainMongo.setLoginSettings(convert(domain.getLoginSettings()));
+        domainMongo.setWebAuthnSettings(convert(domain.getWebAuthnSettings()));
         domainMongo.setAccountSettings(convert(domain.getAccountSettings()));
         domainMongo.setTags(domain.getTags());
         domainMongo.setReferenceType(domain.getReferenceType());
@@ -258,27 +263,43 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     private LoginSettings convert(LoginSettingsMongo loginSettingsMongo) {
-        if (loginSettingsMongo == null) {
-            return null;
-        }
-
-        LoginSettings loginSettings = new LoginSettings();
-        loginSettings.setForgotPasswordEnabled(loginSettingsMongo.isForgotPasswordEnabled());
-        loginSettings.setRegisterEnabled(loginSettingsMongo.isRegisterEnabled());
-        loginSettings.setRememberMeEnabled(loginSettingsMongo.isRememberMeEnabled());
-        return loginSettings;
+        return loginSettingsMongo != null ? loginSettingsMongo.convert() : null;
     }
 
     private LoginSettingsMongo convert(LoginSettings loginSettings) {
-        if (loginSettings == null) {
+        return LoginSettingsMongo.convert(loginSettings);
+    }
+
+    private WebAuthnSettings convert(WebAuthnSettingsMongo webAuthnSettingsMongo) {
+        if (webAuthnSettingsMongo == null) {
             return null;
         }
 
-        LoginSettingsMongo loginSettingsMongo = new LoginSettingsMongo();
-        loginSettingsMongo.setForgotPasswordEnabled(loginSettings.isForgotPasswordEnabled());
-        loginSettingsMongo.setRegisterEnabled(loginSettings.isRegisterEnabled());
-        loginSettingsMongo.setRememberMeEnabled(loginSettings.isRememberMeEnabled());
-        return loginSettingsMongo;
+        WebAuthnSettings webAuthnSettings = new WebAuthnSettings();
+        webAuthnSettings.setOrigin(webAuthnSettingsMongo.getOrigin());
+        webAuthnSettings.setRelyingPartyId(webAuthnSettingsMongo.getRelyingPartyId());
+        webAuthnSettings.setRelyingPartyName(webAuthnSettingsMongo.getRelyingPartyName());
+        webAuthnSettings.setRequireResidentKey(webAuthnSettingsMongo.isRequireResidentKey());
+        webAuthnSettings.setUserVerification(webAuthnSettingsMongo.getUserVerification() != null ?
+                UserVerification.fromString(webAuthnSettingsMongo.getUserVerification()) : null);
+        webAuthnSettings.setAuthenticatorAttachment(webAuthnSettingsMongo.getAuthenticatorAttachment() != null ?
+                AuthenticatorAttachment.fromString(webAuthnSettingsMongo.getAuthenticatorAttachment()) : null);
+        return webAuthnSettings;
+    }
+
+    private WebAuthnSettingsMongo convert(WebAuthnSettings webAuthnSettings) {
+        if (webAuthnSettings == null) {
+            return null;
+        }
+
+        WebAuthnSettingsMongo webAuthnSettingsMongo = new WebAuthnSettingsMongo();
+        webAuthnSettingsMongo.setOrigin(webAuthnSettings.getOrigin());
+        webAuthnSettingsMongo.setRelyingPartyId(webAuthnSettings.getRelyingPartyId());
+        webAuthnSettingsMongo.setRelyingPartyName(webAuthnSettings.getRelyingPartyName());
+        webAuthnSettingsMongo.setRequireResidentKey(webAuthnSettings.isRequireResidentKey());
+        webAuthnSettingsMongo.setUserVerification(webAuthnSettings.getUserVerification() != null ? webAuthnSettings.getUserVerification().getValue() : null);
+        webAuthnSettingsMongo.setAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment() != null ? webAuthnSettings.getAuthenticatorAttachment().getValue() : null);
+        return webAuthnSettingsMongo;
     }
 
     private AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebAuthn Login</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{../assets/material/material.blue_grey-blue.min.css}">
+    <link rel="stylesheet" th:href="@{../assets/material/material.icons.css}">
+    <link rel="stylesheet" th:href="@{../assets/font-awesome/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{../assets/css/webauthn_login.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="@{../assets/ico/favicon.ico}">
+</head>
+<body>
+    <div class="mdl-layout mdl-js-layout">
+        <div class="webauthn-login-container">
+            <div class="webauthn-login-form">
+                <div class="webauthn-login-form-title">
+                    <label>Sign in with fingerprint, device or security key</label>
+                    <span>to continue to <span th:text="${domain.name}"></span></span>
+                    <small>Enter your username and press sign in. A security window will pop up. Follow the instructions to sign in.</small>
+                </div>
+                <div id="webauthn-browser-error" class="webauthn-error-info" style="display: none;">
+                    <span>
+                        <span class="error">technical_error</span>
+                        <small id="webauthn-browser-error-description" class="error_description"></small>
+                    </span>
+                </div>
+                <form role="form" id="login" method="post" th:action="${action}">
+                    <div class="webauthn-login-form-content">
+                        <div class="input-textfield">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" autofocus="autofocus" required />
+                        </div>
+                        <div id="webauthn-error" class="webauthn-login-error-info" style="display: none;">
+                                <span>
+                                    <span class="error">login_failed</span>
+                                     <small class="error_description">Invalid user</small>
+                                </span>
+                        </div>
+                    </div>
+                    <div class="webauthn-login-form-actions">
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Sign in</button>
+                    </div>
+                    <div class="webauthn-login-form-additional-actions">
+                        <div>
+                            <span>Cannot login ? </span><a th:href="@{../login(client_id=${param.client_id})}">switch to default sign in process</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<script th:src="@{../assets/js/webauthn.auth.js}"></script>
+</body>
+</html>

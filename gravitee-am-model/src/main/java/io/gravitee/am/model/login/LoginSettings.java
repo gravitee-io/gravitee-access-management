@@ -15,15 +15,54 @@
  */
 package io.gravitee.am.model.login;
 
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class LoginSettings {
 
+    /**
+     * Login settings configuration inherited ?
+     */
+    private boolean inherited = true;
+    /**
+     * Enable/Disable forgot password feature
+     */
     private boolean forgotPasswordEnabled;
+    /**
+     * Enable/Disable user registration feature
+     */
     private boolean registerEnabled;
+    /**
+     * Enable/Disable remember me feature (not activate)
+     */
     private boolean rememberMeEnabled;
+    /**
+     * Enable/Disable passwordless (WebAuthn) feature
+     */
+    private boolean passwordlessEnabled;
+
+    public LoginSettings() {
+    }
+
+    public LoginSettings(LoginSettings other) {
+        this.inherited = other.inherited;
+        this.forgotPasswordEnabled = other.forgotPasswordEnabled;
+        this.registerEnabled = other.registerEnabled;
+        this.rememberMeEnabled = other.rememberMeEnabled;
+        this.passwordlessEnabled = other.passwordlessEnabled;
+    }
+
+    public boolean isInherited() {
+        return inherited;
+    }
+
+    public void setInherited(boolean inherited) {
+        this.inherited = inherited;
+    }
 
     public boolean isForgotPasswordEnabled() {
         return forgotPasswordEnabled;
@@ -47,5 +86,28 @@ public class LoginSettings {
 
     public void setRememberMeEnabled(boolean rememberMeEnabled) {
         this.rememberMeEnabled = rememberMeEnabled;
+    }
+
+    public boolean isPasswordlessEnabled() {
+        return passwordlessEnabled;
+    }
+
+    public void setPasswordlessEnabled(boolean passwordlessEnabled) {
+        this.passwordlessEnabled = passwordlessEnabled;
+    }
+
+    public static LoginSettings getInstance(Domain domain, Client client) {
+        // if client has no login config return domain config
+        if (client == null || client.getLoginSettings() == null) {
+            return domain.getLoginSettings();
+        }
+
+        // if client configuration is not inherited return the client config
+        if (!client.getLoginSettings().isInherited()) {
+            return client.getLoginSettings();
+        }
+
+        // return domain config
+        return domain.getLoginSettings();
     }
 }

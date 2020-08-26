@@ -22,6 +22,7 @@ import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.model.Resource;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.login.LoginSettings;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -180,6 +181,8 @@ public class Client implements Cloneable, Resource {
 
     private AccountSettings accountSettings;
 
+    private LoginSettings loginSettings;
+
     private List<TokenClaim> tokenCustomClaims;
 
     private boolean template;
@@ -244,6 +247,7 @@ public class Client implements Cloneable, Resource {
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
         this.accountSettings = other.accountSettings;
+        this.loginSettings = other.loginSettings;
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
         this.template = other.template;
         this.metadata = other.metadata != null ? new HashMap<>(other.metadata) : null;
@@ -693,6 +697,14 @@ public class Client implements Cloneable, Resource {
 
     public void setAccountSettings(AccountSettings accountSettings) {
         this.accountSettings = accountSettings;
+    }
+
+    public LoginSettings getLoginSettings() {
+        return loginSettings;
+    }
+
+    public void setLoginSettings(LoginSettings loginSettings) {
+        this.loginSettings = loginSettings;
     }
 
     public List<TokenClaim> getTokenCustomClaims() {

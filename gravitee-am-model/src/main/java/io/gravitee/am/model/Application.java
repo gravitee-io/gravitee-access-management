@@ -234,6 +234,7 @@ public class Application implements Resource {
         if (application.getSettings() != null) {
             ApplicationSettings applicationSettings = application.getSettings();
             client.setAccountSettings(applicationSettings.getAccount());
+            client.setLoginSettings(applicationSettings.getLogin());
 
             if (applicationSettings.getOauth() != null) {
                 ApplicationOAuthSettings oAuthSettings = applicationSettings.getOauth();

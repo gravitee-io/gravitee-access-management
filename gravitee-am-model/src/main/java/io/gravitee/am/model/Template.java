@@ -35,6 +35,8 @@ public enum Template {
     MFA_CHALLENGE("mfa_challenge", "/mfa/challenge"),
     BLOCKED_ACCOUNT("blocked_account", "/resetPassword"),
     COMPLETE_PROFILE("complete_profile", "/completeProfile"),
+    WEBAUTHN_REGISTER("webauthn_register", "/webauthn/register"),
+    WEBAUTHN_LOGIN("webauthn_login", "/webauthn/login"),
     ERROR("error", "/error");
 
     private final String template;

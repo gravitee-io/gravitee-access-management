@@ -50,9 +50,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -278,6 +275,11 @@ public class UserResource extends AbstractResource {
     @Path("factors")
     public UserFactorsResource getUserFactorsResource() {
         return resourceContext.getResource(UserFactorsResource.class);
+    }
+
+    @Path("credentials")
+    public UserCredentialsResource getUserCredentialsResource() {
+        return resourceContext.getResource(UserCredentialsResource.class);
     }
 
     private Maybe<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {

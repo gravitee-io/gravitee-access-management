@@ -26,6 +26,7 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -82,12 +83,16 @@ public class UserFactorResource extends AbstractResource {
                         .flatMap(__ -> userService.findById(user))
                         .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
                         .flatMapSingle(user1 -> {
-                            List<EnrolledFactor> enrolledFactorList = user1.getFactors()
-                                    .stream()
-                                    .filter(enrolledFactor -> !factor.equals(enrolledFactor.getFactorId()))
-                                    .collect(Collectors.toList());
-                            user1.setFactors(enrolledFactorList);
-                            return userService.enrollFactors(user, enrolledFactorList, authenticatedUser);
+                            List<EnrolledFactor> enrolledFactorList = user1.getFactors();
+                            if (enrolledFactorList != null) {
+                                enrolledFactorList
+                                        .stream()
+                                        .filter(enrolledFactor -> !factor.equals(enrolledFactor.getFactorId()))
+                                        .collect(Collectors.toList());
+                                user1.setFactors(enrolledFactorList);
+                                return userService.enrollFactors(user, enrolledFactorList, authenticatedUser);
+                            }
+                            return Single.just(user1);
                         }))
                 .subscribe(__ -> response.resume(Response.noContent().build()), response::resume);
     }

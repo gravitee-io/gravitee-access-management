@@ -39,6 +39,7 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { CodemirrorModule } from 'ng2-codemirror';
 import { MaterialDesignFrameworkModule } from 'angular7-json-schema-form';
 import { HighchartsChartModule } from 'highcharts-angular';
+import { ClipboardModule } from 'ngx-clipboard';
 import 'hammerjs';
 import 'codemirror';
 import 'codemirror/mode/htmlmixed/htmlmixed';
@@ -75,11 +76,11 @@ import { LogoutComponent } from './logout/logout.component';
 import { LogoutCallbackComponent } from './logout/callback/callback.component';
 import { DomainsResolver } from './resolvers/domains.resolver';
 import { DomainResolver } from './resolvers/domain.resolver';
-import {DomainEntrypointResolver} from "./resolvers/domain-entrypoint.resolver";
+import { DomainEntrypointResolver } from './resolvers/domain-entrypoint.resolver';
 import { DomainDashboardComponent } from './domain/dashboard/dashboard.component';
 import { DomainSettingsComponent } from './domain/settings/settings.component';
 import { DomainSettingsGeneralComponent } from './domain/settings/general/general.component';
-import { DomainSettingsEntrypointsComponent } from "./domain/settings/entrypoints/entrypoints.component";
+import { DomainSettingsEntrypointsComponent } from './domain/settings/entrypoints/entrypoints.component';
 import { DomainSettingsOpenidClientRegistrationComponent } from './domain/settings/openid/client-registration/client-registration.component';
 import { ClientRegistrationSettingsComponent } from './domain/settings/openid/client-registration/settings/settings.component';
 import { ClientRegistrationDefaultScopeComponent } from './domain/settings/openid/client-registration/default-scope/default-scope.component';
@@ -102,6 +103,7 @@ import {
   DomainSettingsMembershipsComponent
 } from './domain/settings/memberships/memberships.component';
 import { DomainSettingsFactorsComponent } from './domain/settings/factors/factors.component';
+import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
 import { ProvidersResolver } from './resolvers/providers.resolver';
 import { ProviderResolver } from './resolvers/provider.resolver';
 import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
@@ -109,16 +111,15 @@ import { CreateMapperComponent, ProviderMappersComponent } from './domain/settin
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
 import { CertificateCreationComponent } from './domain/settings/certificates/creation/certificate-creation.component';
 import { CertificateComponent } from './domain/settings/certificates/certificate/certificate.component';
-import { CertificatesResolver } from "./resolvers/certificates.resolver";
-import { CertificateService } from "./services/certificate.service";
-import { CertificateCreationStep1Component } from "./domain/settings/certificates/creation/steps/step1/step1.component";
-import { CertificateCreationStep2Component } from "app/domain/settings/certificates/creation/steps/step2/step2.component";
-import { CertificateFormComponent } from "./domain/settings/certificates/certificate/form/form.component";
-import { CertificateResolver } from "./resolvers/certificate.resolver";
-import { ClipboardModule } from "ngx-clipboard";
-import { RoleService } from "./services/role.service";
-import { RolesResolver } from "./resolvers/roles.resolver";
-import { RoleResolver } from "./resolvers/role.resolver";
+import { CertificatesResolver } from './resolvers/certificates.resolver';
+import { CertificateService } from './services/certificate.service';
+import { CertificateCreationStep1Component } from './domain/settings/certificates/creation/steps/step1/step1.component';
+import { CertificateCreationStep2Component } from 'app/domain/settings/certificates/creation/steps/step2/step2.component';
+import { CertificateFormComponent } from './domain/settings/certificates/certificate/form/form.component';
+import { CertificateResolver } from './resolvers/certificate.resolver';
+import { RoleService } from './services/role.service';
+import { RolesResolver } from './resolvers/roles.resolver';
+import { RoleResolver } from './resolvers/role.resolver';
 import { RoleCreationComponent } from './domain/settings/roles/creation/role-creation.component';
 import { RoleComponent } from './domain/settings/roles/role/role.component';
 import { ScopeService } from './services/scope.service';
@@ -142,6 +143,8 @@ import { UserApplicationsComponent } from './domain/settings/users/user/applicat
 import { UserApplicationComponent } from './domain/settings/users/user/applications/application/application.component';
 import { AddUserRolesComponent, UserRolesComponent } from './domain/settings/users/user/roles/roles.component';
 import { UserFactorsComponent} from './domain/settings/users/user/factors/factors.component';
+import { UserCredentialsComponent } from './domain/settings/users/user/credentials/credentials.component';
+import { UserCredentialsResolver } from './resolvers/user-credentials.resolver';
 import { UserService} from './services/user.service';
 import { UsersResolver } from './resolvers/users.resolver';
 import { UserResolver } from './resolvers/user.resolver';
@@ -229,7 +232,10 @@ import { ApplicationEmailsComponent } from './domain/applications/application/de
 import { ApplicationEmailComponent } from './domain/applications/application/design/emails/email/email.component';
 import { ApplicationAdvancedComponent } from './domain/applications/application/advanced/advanced.component';
 import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
-import { ApplicationOAuth2Component, ClaimsInfoDialog, CreateClaimComponent } from './domain/applications/application/advanced/oauth2/oauth2.component';
+import {
+  ApplicationOAuth2Component,
+  ClaimsInfoDialog,
+  CreateClaimComponent } from './domain/applications/application/advanced/oauth2/oauth2.component';
 import { ApplicationScopeComponent } from './domain/applications/application/advanced/oauth2/scopes/application-scope.component';
 import { ApplicationCertificatesComponent } from './domain/applications/application/advanced/certificates/certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
@@ -277,6 +283,8 @@ import { ApplicationResourceComponent } from './domain/applications/application/
 import { ApplicationResourceResolver } from './resolvers/application-resource.resolver';
 import { ApplicationResourcePolicyComponent } from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
 import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
+import { LoginSettingsComponent } from './domain/components/login/login-settings.component';
+import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
 
 @NgModule({
   declarations: [
@@ -311,6 +319,7 @@ import { ApplicationResourcePolicyResolver } from './resolvers/application-resou
     DomainSettingsPoliciesComponent,
     DomainSettingsMembershipsComponent,
     DomainSettingsFactorsComponent,
+    DomainSettingsWebAuthnComponent,
     ConfirmComponent,
     EmptystateComponent,
     DomainCreationComponent,
@@ -361,6 +370,7 @@ import { ApplicationResourcePolicyResolver } from './resolvers/application-resou
     UserApplicationComponent,
     UserRolesComponent,
     UserFactorsComponent,
+    UserCredentialsComponent,
     AddUserRolesComponent,
     ScopeCreationComponent,
     ScopeComponent,
@@ -426,6 +436,7 @@ import { ApplicationResourcePolicyResolver } from './resolvers/application-resou
     ApplicationResourcesComponent,
     ApplicationResourceComponent,
     ApplicationResourcePolicyComponent,
+    ApplicationLoginSettingsComponent,
     ManagementRolesComponent,
     ManagementRoleComponent,
     MembershipsComponent,
@@ -444,7 +455,8 @@ import { ApplicationResourcePolicyResolver } from './resolvers/application-resou
     ApplicationMembershipsDialog,
     UserAvatarComponent,
     NotFoundComponent,
-    UmaComponent
+    UmaComponent,
+    LoginSettingsComponent
   ],
   imports: [
     BrowserModule,
@@ -490,6 +502,7 @@ import { ApplicationResourcePolicyResolver } from './resolvers/application-resou
     UsersResolver,
     UserResolver,
     UserRolesResolver,
+    UserCredentialsResolver,
     ExtensionGrantsResolver,
     ExtensionGrantResolver,
     ScopesResolver,
