@@ -18,15 +18,13 @@ package io.gravitee.am.gateway.handler.users.resources.consents;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
-import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.Single;
-import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.core.net.SocketAddress;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.HashMap;
@@ -64,8 +62,8 @@ public class AbstractUserConsentEndpointHandler {
                         Map<String, Object> additionalInformation =
                                 user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) :  new HashMap<>();
                         // add ip address and user agent
-                        additionalInformation.put(Claims.ip_address, remoteAddress(context.request()));
-                        additionalInformation.put(Claims.user_agent, userAgent(context.request()));
+                        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+                        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
                         additionalInformation.put(Claims.domain, domain.getId());
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;
@@ -80,8 +78,8 @@ public class AbstractUserConsentEndpointHandler {
                         ((DefaultUser) principal).setId(client.getId());
                         Map<String, Object> additionalInformation = new HashMap<>();
                         // add ip address and user agent
-                        additionalInformation.put(Claims.ip_address, remoteAddress(context.request()));
-                        additionalInformation.put(Claims.user_agent, userAgent(context.request()));
+                        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+                        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
                         additionalInformation.put(Claims.domain, domain.getId());
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;
@@ -98,34 +96,11 @@ public class AbstractUserConsentEndpointHandler {
         ((DefaultUser) principal).setId(username);
         Map<String, Object> additionalInformation = new HashMap<>();
         // add ip address and user agent
-        additionalInformation.put(Claims.ip_address, remoteAddress(context.request()));
-        additionalInformation.put(Claims.user_agent, userAgent(context.request()));
+        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
         additionalInformation.put(Claims.domain, domain.getId());
         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
         return principal;
     }
 
-    private String remoteAddress(HttpServerRequest httpServerRequest) {
-        String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
-        String remoteAddress;
-
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
-            int idx = xForwardedFor.indexOf(',');
-
-            remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;
-
-            idx = remoteAddress.indexOf(':');
-
-            remoteAddress = (idx != -1) ? remoteAddress.substring(0, idx).trim() : remoteAddress.trim();
-        } else {
-            SocketAddress address = httpServerRequest.remoteAddress();
-            remoteAddress = (address != null) ? address.host() : null;
-        }
-
-        return remoteAddress;
-    }
-
-    private String userAgent(HttpServerRequest request) {
-        return request.getHeader(HttpHeaders.USER_AGENT);
-    }
 }

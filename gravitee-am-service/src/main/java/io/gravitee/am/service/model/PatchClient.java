@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
@@ -78,6 +79,7 @@ public class PatchClient {
     private Optional<Boolean> enhanceScopesWithUserPermissions;
     private Optional<Map<String, Integer>> scopeApprovals;
     private Optional<AccountSettings> accountSettings;
+    private Optional<LoginSettings> loginSettings;
     private Optional<List<TokenClaim>> tokenCustomClaims;
     private Optional<Boolean> template;
     private Optional<Map<String, Object>> metadata;
@@ -466,6 +468,14 @@ public class PatchClient {
         this.accountSettings = accountSettings;
     }
 
+    public Optional<LoginSettings> getLoginSettings() {
+        return loginSettings;
+    }
+
+    public void setLoginSettings(Optional<LoginSettings> loginSettings) {
+        this.loginSettings = loginSettings;
+    }
+
     public Optional<List<TokenClaim>> getTokenCustomClaims() {
         return tokenCustomClaims;
     }
@@ -547,6 +557,7 @@ public class PatchClient {
         SetterUtils.safeSet(toPatch::setEnhanceScopesWithUserPermissions, this.getEnhanceScopesWithUserPermissions(), boolean.class);
         SetterUtils.safeSet(toPatch::setScopeApprovals, this.getScopeApprovals());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
+        SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
         SetterUtils.safeSet(toPatch::setTokenCustomClaims, this.getTokenCustomClaims());
         SetterUtils.safeSet(toPatch::setTemplate, this.getTemplate(), boolean.class);
         SetterUtils.safeSet(toPatch::setMetadata, this.getMetadata());

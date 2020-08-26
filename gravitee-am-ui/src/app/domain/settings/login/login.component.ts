@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {DomainService} from "../../../services/domain.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {AuthService} from "../../../services/auth.service";
+import {ActivatedRoute} from '@angular/router';
+import {DomainService} from '../../../services/domain.service';
+import {SnackbarService} from '../../../services/snackbar.service';
+import {AuthService} from '../../../services/auth.service';
 
 @Component({
   selector: 'app-domain-login',
@@ -42,6 +42,16 @@ export class DomainSettingsLoginComponent implements OnInit {
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
   }
 
+  updateLoginSettings(loginSettings) {
+    // force inherit false
+    loginSettings.inherited = false;
+    this.domain.loginSettings = loginSettings
+    this.domainService.patchLoginSettings(this.domainId, this.domain).subscribe(data => {
+      this.domain = data;
+      this.snackbarService.open('Login configuration updated');
+    });
+  }
+
   save() {
     this.domainService.patchLoginSettings(this.domainId, this.domain).subscribe(data => {
       this.domain = data;
@@ -49,24 +59,4 @@ export class DomainSettingsLoginComponent implements OnInit {
       this.snackbarService.open('Login configuration updated');
     });
   }
-
-  enableRegistration(event) {
-    this.domain.loginSettings.registerEnabled = event.checked;
-    this.formChanged = true;
-  }
-
-  isRegistrationEnabled() {
-    return this.domain.loginSettings && this.domain.loginSettings.registerEnabled;
-  }
-
-
-  enableForgotPassword(event) {
-    this.domain.loginSettings.forgotPasswordEnabled = event.checked;
-    this.formChanged = true;
-  }
-
-  isForgotPasswordEnabled() {
-    return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
-  }
-
 }

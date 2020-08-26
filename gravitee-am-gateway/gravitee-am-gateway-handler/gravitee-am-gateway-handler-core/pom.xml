@@ -85,6 +85,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-auth-webauthn</artifactId>
+            <version>4.0.0-milestone5</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>io.gravitee.am.gateway.handler</groupId>

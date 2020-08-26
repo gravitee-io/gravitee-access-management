@@ -1,0 +1,62 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form (ngSubmit)="save()" fxLayout="column" #loginForm="ngForm">
+  <div *ngIf="inheritMode" fxLayout="column" class="gv-form-section">
+    <div fxLayout="column">
+        <mat-slide-toggle
+        (change)="enableInheritMode($event)"
+        [checked]="isInherited()" [disabled]="readonly">
+        Inherit configuration
+      </mat-slide-toggle>
+      <mat-hint style="font-size: 75%;">Inherit Login settings from the security domain.</mat-hint>
+    </div>
+  </div>
+
+  <div *ngIf="!inheritMode || !loginSettings.inherited">
+    <div class="gv-form-section">
+      <div fxLayout="column">
+        <mat-slide-toggle
+          (change)="enableRegistration($event)"
+          [checked]="isRegistrationEnabled()" [disabled]="readonly">
+          User registration
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Enable self user registration. A link to the create account service will be available through the login page.</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px;">
+        <mat-slide-toggle
+          (change)="enableForgotPassword($event)"
+          [checked]="isForgotPasswordEnabled()" [disabled]="readonly">
+          Forgot password
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Enable Self-service password reset (SSPR) that allows users who have forgotten their password to ask for a new one.</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px;">
+        <mat-slide-toggle
+          (change)="enablePasswordless($event)"
+          [checked]="isPasswordlessEnabled()" [disabled]="readonly">
+          Passwordless
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Enable passwordless authentication (WebAuthn / FIDO).</mat-hint>
+      </div>
+    </div>
+  </div>
+
+  <div fxLayout="row" *ngIf="!readonly">
+    <button mat-raised-button [disabled]="(!formChanged)" type="submit">SAVE</button>
+  </div>
+</form>

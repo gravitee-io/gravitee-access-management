@@ -310,6 +310,7 @@ public class DomainResource extends AbstractResource {
 
         if (hasAnyPermission(userPermissions, Permission.DOMAIN_SETTINGS, Acl.READ)) {
             filteredDomain.setLoginSettings(domain.getLoginSettings());
+            filteredDomain.setWebAuthnSettings(domain.getWebAuthnSettings());
             filteredDomain.setAccountSettings(domain.getAccountSettings());
             filteredDomain.setTags(domain.getTags());
         }

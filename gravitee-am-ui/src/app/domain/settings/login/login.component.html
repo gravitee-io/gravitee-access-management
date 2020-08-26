@@ -19,29 +19,11 @@
   <h1>Login</h1>
   <div class="gv-page-content">
     <div fxFlex="70">
-      <form (ngSubmit)="save()" fxLayout="column">
-        <div class="gv-form-section">
-          <div fxLayout="column">
-            <mat-slide-toggle
-              (change)="enableRegistration($event)"
-              [checked]="isRegistrationEnabled()" [disabled]="readonly">
-              User registration
-            </mat-slide-toggle>
-            <mat-hint style="font-size: 75%;">Enable self user registration. A link to the create account service will be available through the login page.</mat-hint>
-          </div>
-          <div fxLayout="column" style="margin-top: 10px;">
-            <mat-slide-toggle
-              (change)="enableForgotPassword($event)"
-              [checked]="isForgotPasswordEnabled()" [disabled]="readonly">
-              Forgot password
-            </mat-slide-toggle>
-            <mat-hint style="font-size: 75%;">Enable Self-service password reset (SSPR) that allows users who have forgotten their password to ask for a new one.</mat-hint>
-          </div>
-        </div>
-        <div fxLayout="row" *hasPermission="['domain_settings_update']">
-          <button mat-raised-button [disabled]="!formChanged" type="submit">SAVE</button>
-        </div>
-      </form>
+      <app-login-settings [loginSettings]="domain.loginSettings"
+                            [inheritMode]="false"
+                            [readonly]="readonly"
+                            (onSavedLoginSettings)="updateLoginSettings($event)">
+      </app-login-settings>
     </div>
     <div class="gv-page-description" fxFlex>
       <h3>Login settings</h3>

@@ -16,6 +16,7 @@
 package io.gravitee.am.model.application;
 
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.login.LoginSettings;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,6 +32,10 @@ public class ApplicationSettings {
      */
     private AccountSettings account;
     /**
+     * Login settings
+     */
+    private LoginSettings login;
+    /**
      * Advanced settings
      */
     private ApplicationAdvancedSettings advanced;
@@ -41,6 +46,7 @@ public class ApplicationSettings {
     public ApplicationSettings(ApplicationSettings other) {
         this.oauth = other.oauth != null ? new ApplicationOAuthSettings(other.oauth) : null;
         this.account = other.account != null ? new AccountSettings(other.account) : null;
+        this.login = other.login != null ? new LoginSettings(other.login) : null;
         this.advanced = other.advanced != null ? new ApplicationAdvancedSettings(other.advanced) : null;
     }
 
@@ -58,6 +64,14 @@ public class ApplicationSettings {
 
     public void setAccount(AccountSettings account) {
         this.account = account;
+    }
+
+    public LoginSettings getLogin() {
+        return login;
+    }
+
+    public void setLogin(LoginSettings login) {
+        this.login = login;
     }
 
     public ApplicationAdvancedSettings getAdvanced() {

@@ -26,7 +26,6 @@ export class UserComponent implements OnInit {
   private domainId: string;
   private organizationContext = false;
   user: any;
-  avatarUrl: string;
   navLinks: any = [];
 
   constructor(private route: ActivatedRoute,
@@ -49,6 +48,7 @@ export class UserComponent implements OnInit {
     if (!this.organizationContext) {
       this.navLinks.push({'href': 'applications' , 'label': 'Authorized Apps'});
       this.navLinks.push({'href': 'factors' , 'label': 'Multi-Factor Authentication'});
+      this.navLinks.push({'href': 'credentials' , 'label': 'Credentials'});
       this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
     }
   }

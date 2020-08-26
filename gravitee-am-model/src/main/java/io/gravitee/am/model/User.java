@@ -112,6 +112,8 @@ public class User {
 
     private List<EnrolledFactor> factors;
 
+    private boolean webAuthnRegistrationCompleted;
+
     private Map<String, Object> additionalInformation;
 
     private Date loggedAt;
@@ -581,5 +583,13 @@ public class User {
 
     public boolean isInactive() {
         return isPreRegistration() && !isRegistrationCompleted();
+    }
+
+    public boolean isWebAuthnRegistrationCompleted() {
+        return webAuthnRegistrationCompleted;
+    }
+
+    public void setWebAuthnRegistrationCompleted(boolean webAuthnRegistrationCompleted) {
+        this.webAuthnRegistrationCompleted = webAuthnRegistrationCompleted;
     }
 }

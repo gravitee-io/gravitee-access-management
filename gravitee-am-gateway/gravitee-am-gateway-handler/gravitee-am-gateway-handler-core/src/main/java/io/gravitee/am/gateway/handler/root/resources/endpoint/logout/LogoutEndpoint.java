@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.logout;
 
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
@@ -26,7 +27,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.core.net.SocketAddress;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,35 +112,16 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
     }
 
     private void report(User endUser, HttpServerRequest request) {
-        auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class).domain(domain.getId()).user(endUser).ipAddress(remoteAddress(request)).userAgent(userAgent(request)));
+        auditService.report(
+                AuditBuilder.builder(LogoutAuditBuilder.class)
+                        .domain(domain.getId())
+                        .user(endUser)
+                        .ipAddress(RequestUtils.remoteAddress(request))
+                        .userAgent(RequestUtils.userAgent(request)));
     }
 
     private boolean invalidateTokensEnabled(RoutingContext routingContext) {
         String invalidateTokensParam = routingContext.request().getParam(INVALIDATE_TOKENS_PARAMETER);
         return invalidateTokensParam != null && Boolean.valueOf(invalidateTokensParam);
-    }
-
-    private String remoteAddress(HttpServerRequest httpServerRequest) {
-        String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
-        String remoteAddress;
-
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
-            int idx = xForwardedFor.indexOf(',');
-
-            remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;
-
-            idx = remoteAddress.indexOf(':');
-
-            remoteAddress = (idx != -1) ? remoteAddress.substring(0, idx).trim() : remoteAddress.trim();
-        } else {
-            SocketAddress address = httpServerRequest.remoteAddress();
-            remoteAddress = (address != null) ? address.host() : null;
-        }
-
-        return remoteAddress;
-    }
-
-    private String userAgent(HttpServerRequest request) {
-        return request.getHeader(HttpHeaders.USER_AGENT);
     }
 }

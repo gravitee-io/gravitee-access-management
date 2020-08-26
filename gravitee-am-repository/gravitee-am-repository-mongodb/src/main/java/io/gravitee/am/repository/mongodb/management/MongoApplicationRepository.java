@@ -22,9 +22,13 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.*;
+import io.gravitee.am.model.application.ApplicationAdvancedSettings;
+import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.jose.*;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
@@ -224,6 +228,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationSettingsMongo applicationSettingsMongo = new ApplicationSettingsMongo();
         applicationSettingsMongo.setOauth(convert(other.getOauth()));
         applicationSettingsMongo.setAccount(convert(other.getAccount()));
+        applicationSettingsMongo.setLogin(convert(other.getLogin()));
         applicationSettingsMongo.setAdvanced(convert(other.getAdvanced()));
         return applicationSettingsMongo;
     }
@@ -236,6 +241,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationSettings applicationSettings = new ApplicationSettings();
         applicationSettings.setOauth(convert(other.getOauth()));
         applicationSettings.setAccount(convert(other.getAccount()));
+        applicationSettings.setLogin(convert(other.getLogin()));
         applicationSettings.setAdvanced(convert(other.getAdvanced()));
         return applicationSettings;
     }
@@ -368,47 +374,19 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     private AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {
-        if (accountSettingsMongo == null) {
-            return null;
-        }
-
-        AccountSettings accountSettings = new AccountSettings();
-        accountSettings.setInherited(accountSettingsMongo.isInherited());
-        accountSettings.setLoginAttemptsDetectionEnabled(accountSettingsMongo.isLoginAttemptsDetectionEnabled());
-        accountSettings.setMaxLoginAttempts(accountSettingsMongo.getMaxLoginAttempts());
-        accountSettings.setLoginAttemptsResetTime(accountSettingsMongo.getLoginAttemptsResetTime());
-        accountSettings.setAccountBlockedDuration(accountSettingsMongo.getAccountBlockedDuration());
-        accountSettings.setCompleteRegistrationWhenResetPassword(accountSettingsMongo.isCompleteRegistrationWhenResetPassword());
-        accountSettings.setDefaultIdentityProviderForRegistration(accountSettingsMongo.getDefaultIdentityProviderForRegistration());
-        accountSettings.setAutoLoginAfterRegistration(accountSettingsMongo.isAutoLoginAfterRegistration());
-        accountSettings.setRedirectUriAfterRegistration(accountSettingsMongo.getRedirectUriAfterRegistration());
-        accountSettings.setDynamicUserRegistration(accountSettingsMongo.isDynamicUserRegistration());
-        accountSettings.setAutoLoginAfterResetPassword(accountSettingsMongo.isAutoLoginAfterResetPassword());
-        accountSettings.setRedirectUriAfterResetPassword(accountSettingsMongo.getRedirectUriAfterResetPassword());
-        accountSettings.setSendRecoverAccountEmail(accountSettingsMongo.isSendRecoverAccountEmail());
-        return accountSettings;
+        return accountSettingsMongo != null ? accountSettingsMongo.convert() : null;
     }
 
     private AccountSettingsMongo convert(AccountSettings accountSettings) {
-        if (accountSettings == null) {
-            return null;
-        }
+        return AccountSettingsMongo.convert(accountSettings);
+    }
 
-        AccountSettingsMongo accountSettingsMongo = new AccountSettingsMongo();
-        accountSettingsMongo.setInherited(accountSettings.isInherited());
-        accountSettingsMongo.setLoginAttemptsDetectionEnabled(accountSettings.isLoginAttemptsDetectionEnabled());
-        accountSettingsMongo.setMaxLoginAttempts(accountSettings.getMaxLoginAttempts());
-        accountSettingsMongo.setLoginAttemptsResetTime(accountSettings.getLoginAttemptsResetTime());
-        accountSettingsMongo.setAccountBlockedDuration(accountSettings.getAccountBlockedDuration());
-        accountSettingsMongo.setCompleteRegistrationWhenResetPassword(accountSettings.isCompleteRegistrationWhenResetPassword());
-        accountSettingsMongo.setDefaultIdentityProviderForRegistration(accountSettings.getDefaultIdentityProviderForRegistration());
-        accountSettingsMongo.setAutoLoginAfterRegistration(accountSettings.isAutoLoginAfterRegistration());
-        accountSettingsMongo.setRedirectUriAfterRegistration(accountSettings.getRedirectUriAfterRegistration());
-        accountSettingsMongo.setDynamicUserRegistration(accountSettings.isDynamicUserRegistration());
-        accountSettingsMongo.setAutoLoginAfterResetPassword(accountSettings.isAutoLoginAfterResetPassword());
-        accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
-        accountSettingsMongo.setSendRecoverAccountEmail(accountSettings.isSendRecoverAccountEmail());
-        return accountSettingsMongo;
+    private LoginSettings convert(LoginSettingsMongo loginSettingsMongo) {
+        return loginSettingsMongo != null ? loginSettingsMongo.convert() : null;
+    }
+
+    private LoginSettingsMongo convert(LoginSettings loginSettings) {
+        return LoginSettingsMongo.convert(loginSettings);
     }
 
     private ApplicationAdvancedSettings convert(ApplicationAdvancedSettingsMongo other) {

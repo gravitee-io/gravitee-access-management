@@ -30,7 +30,6 @@ import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMon
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -139,77 +138,6 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         return client;
     }
 
-    private ClientMongo convert(Client client) {
-        if (client == null) {
-            return null;
-        }
-
-        ClientMongo clientMongo = new ClientMongo();
-        clientMongo.setId(client.getId());
-        clientMongo.setClientId(client.getClientId());
-        clientMongo.setClientSecret(client.getClientSecret());
-        clientMongo.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
-        clientMongo.setRefreshTokenValiditySeconds(client.getRefreshTokenValiditySeconds());
-        clientMongo.setRedirectUris(client.getRedirectUris());
-        clientMongo.setAuthorizedGrantTypes(client.getAuthorizedGrantTypes());
-        clientMongo.setResponseTypes(client.getResponseTypes());
-        clientMongo.setApplicationType(client.getApplicationType());
-        clientMongo.setContacts(client.getContacts());
-        clientMongo.setClientName(client.getClientName());
-        clientMongo.setLogoUri(client.getLogoUri());
-        clientMongo.setClientUri(client.getClientUri());
-        clientMongo.setPolicyUri(client.getPolicyUri());
-        clientMongo.setTosUri(client.getTosUri());
-        clientMongo.setJwksUri(client.getJwksUri());
-        clientMongo.setJwks(this.convert(client.getJwks()));
-        clientMongo.setSectorIdentifierUri(client.getSectorIdentifierUri());
-        clientMongo.setSubjectType(client.getSubjectType());
-        clientMongo.setIdTokenSignedResponseAlg(client.getIdTokenSignedResponseAlg());
-        clientMongo.setIdTokenEncryptedResponseAlg(client.getIdTokenEncryptedResponseAlg());
-        clientMongo.setIdTokenEncryptedResponseEnc(client.getIdTokenEncryptedResponseEnc());
-        clientMongo.setUserinfoSignedResponseAlg(client.getUserinfoSignedResponseAlg());
-        clientMongo.setUserinfoEncryptedResponseAlg(client.getUserinfoEncryptedResponseAlg());
-        clientMongo.setUserinfoEncryptedResponseEnc(client.getUserinfoEncryptedResponseEnc());
-        clientMongo.setRequestObjectSigningAlg(client.getRequestObjectSigningAlg());
-        clientMongo.setRequestObjectEncryptionAlg(client.getRequestObjectEncryptionAlg());
-        clientMongo.setRequestObjectEncryptionEnc(client.getRequestObjectEncryptionEnc());
-        clientMongo.setTokenEndpointAuthMethod(client.getTokenEndpointAuthMethod());
-        clientMongo.setTokenEndpointAuthSigningAlg(client.getTokenEndpointAuthSigningAlg());
-        clientMongo.setDefaultMaxAge(client.getDefaultMaxAge());
-        clientMongo.setRequireAuthTime(client.getRequireAuthTime());
-        clientMongo.setDefaultACRvalues(client.getDefaultACRvalues());
-        clientMongo.setInitiateLoginUri(client.getInitiateLoginUri());
-        clientMongo.setRequestUris(client.getRequestUris());
-        clientMongo.setScopes(client.getScopes());
-        clientMongo.setSoftwareId(client.getSoftwareId());
-        clientMongo.setSoftwareVersion(client.getSoftwareVersion());
-        clientMongo.setSoftwareStatement(client.getSoftwareStatement());
-        clientMongo.setRegistrationAccessToken(client.getRegistrationAccessToken());
-        clientMongo.setRegistrationClientUri(client.getRegistrationClientUri());
-        clientMongo.setClientIdIssuedAt(client.getClientIdIssuedAt());
-        clientMongo.setClientSecretExpiresAt(client.getClientSecretExpiresAt());
-        clientMongo.setAutoApproveScopes(client.getAutoApproveScopes());
-        clientMongo.setEnabled(client.isEnabled());
-        clientMongo.setIdentities(client.getIdentities());
-        clientMongo.setDomain(client.getDomain());
-        clientMongo.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
-        clientMongo.setCertificate(client.getCertificate());
-        clientMongo.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
-        clientMongo.setCreatedAt(client.getCreatedAt());
-        clientMongo.setUpdatedAt(client.getUpdatedAt());
-        clientMongo.setScopeApprovals(client.getScopeApprovals() != null ? new Document((Map)client.getScopeApprovals()) : new Document());
-        clientMongo.setAccountSettings(convert(client.getAccountSettings()));
-        clientMongo.setTokenCustomClaims(getMongoTokenClaims(client.getTokenCustomClaims()));
-        clientMongo.setTemplate(client.isTemplate());
-        clientMongo.setMetadata(client.getMetadata() != null ? new Document((Map)client.getMetadata()) : new Document());
-        clientMongo.setTlsClientAuthSanDns(client.getTlsClientAuthSanDns());
-        clientMongo.setTlsClientAuthSanEmail(client.getTlsClientAuthSanEmail());
-        clientMongo.setTlsClientAuthSanIp(client.getTlsClientAuthSanIp());
-        clientMongo.setTlsClientAuthSanUri(client.getTlsClientAuthSanUri());
-        clientMongo.setTlsClientAuthSubjectDn(client.getTlsClientAuthSubjectDn());
-        return clientMongo;
-    }
-
     private JWKSet convert(List<JWKMongo> jwksMongo) {
         if (jwksMongo==null) {
             return null;
@@ -302,86 +230,8 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         return key;
     }
 
-    private List<JWKMongo> convert(JWKSet jwkSet) {
-        if (jwkSet==null) {
-            return null;
-        }
-
-        return jwkSet.getKeys().stream()
-                .map(jwk -> this.convert(jwk))
-                .collect(Collectors.toList());
-    }
-
-    private JWKMongo convert(JWK jwk) {
-        if (jwk==null) {
-            return null;
-        }
-
-        JWKMongo result;
-
-        switch (KeyType.parse(jwk.getKty())) {
-            case EC: result = convert((ECKey)jwk);break;
-            case RSA:result = convert((RSAKey)jwk);break;
-            case OCT:result = convert((OCTKey)jwk);break;
-            case OKP:result = convert((OKPKey)jwk);break;
-            default: result = null;
-        }
-
-        result.setAlg(jwk.getAlg());
-        result.setKeyOps(jwk.getKeyOps()!=null?jwk.getKeyOps().stream().collect(Collectors.toList()):null);
-        result.setKid(jwk.getKid());
-        result.setKty(jwk.getKty());
-        result.setUse(jwk.getUse());
-        result.setX5c(jwk.getX5c()!=null?jwk.getX5c().stream().collect(Collectors.toList()):null);
-        result.setX5t(jwk.getX5t());
-        result.setX5tS256(jwk.getX5tS256());
-        result.setX5u(jwk.getX5u());
-
-        return result;
-    }
-
-    private JWKMongo convert(RSAKey rsaKey) {
-        JWKMongo key = new JWKMongo();
-        key.setE(rsaKey.getE());
-        key.setN(rsaKey.getN());
-        key.setD(rsaKey.getD());
-        key.setP(rsaKey.getP());
-        key.setQ(rsaKey.getQ());
-        key.setDp(rsaKey.getDp());
-        key.setDq(rsaKey.getDq());
-        key.setQi(rsaKey.getQi());
-        return key;
-    }
-
-    private JWKMongo convert(ECKey ecKey) {
-        JWKMongo key = new JWKMongo();
-        key.setCrv(ecKey.getCrv());
-        key.setX(ecKey.getX());
-        key.setY(ecKey.getY());
-        key.setD(ecKey.getD());
-        return key;
-    }
-
-    private JWKMongo convert(OKPKey okpKey) {
-        JWKMongo key = new JWKMongo();
-        key.setCrv(okpKey.getCrv());
-        key.setX(okpKey.getX());
-        key.setD(okpKey.getD());
-        return key;
-    }
-
-    private JWKMongo convert(OCTKey octKey) {
-        JWKMongo key = new JWKMongo();
-        key.setK(octKey.getK());
-        return key;
-    }
-
     private AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {
         return accountSettingsMongo != null ? accountSettingsMongo.convert() : null;
-    }
-
-    private AccountSettingsMongo convert(AccountSettings accountSettings) {
-        return AccountSettingsMongo.convert(accountSettings);
     }
 
     private List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {
@@ -391,26 +241,11 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         return mongoTokenClaims.stream().map(this::convert).collect(Collectors.toList());
     }
 
-    private List<TokenClaimMongo> getMongoTokenClaims(List<TokenClaim> tokenClaims) {
-        if (tokenClaims == null) {
-            return null;
-        }
-        return tokenClaims.stream().map(this::convert).collect(Collectors.toList());
-    }
-
     private TokenClaim convert(TokenClaimMongo mongoTokenClaim) {
         TokenClaim tokenClaim = new TokenClaim();
         tokenClaim.setTokenType(TokenTypeHint.from(mongoTokenClaim.getTokenType()));
         tokenClaim.setClaimName(mongoTokenClaim.getClaimName());
         tokenClaim.setClaimValue(mongoTokenClaim.getClaimValue());
         return tokenClaim;
-    }
-
-    private TokenClaimMongo convert(TokenClaim tokenClaim) {
-        TokenClaimMongo mongoTokenClaim = new TokenClaimMongo();
-        mongoTokenClaim.setTokenType(tokenClaim.getTokenType().toString());
-        mongoTokenClaim.setClaimName(tokenClaim.getClaimName());
-        mongoTokenClaim.setClaimValue(tokenClaim.getClaimValue());
-        return mongoTokenClaim;
     }
 }

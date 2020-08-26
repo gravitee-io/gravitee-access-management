@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.common.http.HttpHeaders;
@@ -26,7 +27,6 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
@@ -34,7 +34,6 @@ import io.vertx.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -91,8 +90,8 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
                 JsonObject authInfo = new JsonObject()
                         .put("username", username)
                         .put("password", password)
-                        .put(Claims.ip_address, remoteAddress(req))
-                        .put(Claims.user_agent, userAgent(req))
+                        .put(Claims.ip_address, RequestUtils.remoteAddress(req))
+                        .put(Claims.user_agent, RequestUtils.userAgent(req))
                         .put(Parameters.CLIENT_ID, clientId);
 
                 authProvider.authenticate(context, authInfo, res -> {
@@ -147,30 +146,5 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
         parameters.put("error", "login_failed");
         String uri = UriBuilderRequest.resolveProxyRequest(req, req.uri(), parameters, true);
         doRedirect(resp, uri);
-    }
-
-
-    private String remoteAddress(HttpServerRequest httpServerRequest) {
-        String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
-        String remoteAddress;
-
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
-            int idx = xForwardedFor.indexOf(',');
-
-            remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;
-
-            idx = remoteAddress.indexOf(':');
-
-            remoteAddress = (idx != -1) ? remoteAddress.substring(0, idx).trim() : remoteAddress.trim();
-        } else {
-            SocketAddress address = httpServerRequest.remoteAddress();
-            remoteAddress = (address != null) ? address.host() : null;
-        }
-
-        return remoteAddress;
-    }
-
-    private String userAgent(HttpServerRequest request) {
-        return request.getHeader(HttpHeaders.USER_AGENT);
     }
 }

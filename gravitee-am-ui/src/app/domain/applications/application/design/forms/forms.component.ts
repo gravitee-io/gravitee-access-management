@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
+import {Component, OnInit} from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-application-forms',
   templateUrl: './forms.component.html',
   styleUrls: ['./forms.component.scss']
 })
-export class ApplicationFormsComponent {
+export class ApplicationFormsComponent implements OnInit {
   forms: any[];
   domain: any;
   application: any;
@@ -42,6 +42,20 @@ export class ApplicationFormsComponent {
         'description': 'Login page to authenticate users',
         'template': 'LOGIN',
         'icon': 'account_box',
+        'enabled': this.applicationSettingsValid()
+      },
+      {
+        'name': 'WebAuthn Register',
+        'description': 'Passwordless page to register authenticators (devices)',
+        'template': 'WEBAUTHN_REGISTER',
+        'icon': 'fingerprint',
+        'enabled': this.applicationSettingsValid()
+      },
+      {
+        'name': 'WebAuthn Login',
+        'description': 'Passwordless page to authenticate users',
+        'template': 'WEBAUTHN_LOGIN',
+        'icon': 'fingerprint',
         'enabled': this.applicationSettingsValid()
       },
       {
@@ -108,7 +122,8 @@ export class ApplicationFormsComponent {
       return this.application.type !== 'service';
     }
     if (this.application.settings && this.application.settings.oauth && this.application.settings.oauth.grantTypes) {
-      return this.application.settings.oauth.grantTypes.includes('authorization_code') || this.application.settings.oauth.grantTypes.includes("implicit");
+      return this.application.settings.oauth.grantTypes.includes('authorization_code')
+        || this.application.settings.oauth.grantTypes.includes('implicit');
     }
     return false;
   }

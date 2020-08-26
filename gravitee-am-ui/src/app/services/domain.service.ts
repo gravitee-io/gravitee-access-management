@@ -108,6 +108,12 @@ export class DomainService {
     });
   }
 
+  patchWebAuthnSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
+      'webAuthnSettings': domain.webAuthnSettings
+    });
+  }
+
   patchAccountSettings(id, accountSettings): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
       'accountSettings': accountSettings

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebAuthn Register</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{../assets/material/material.blue_grey-blue.min.css}">
+    <link rel="stylesheet" th:href="@{../assets/material/material.icons.css}">
+    <link rel="stylesheet" th:href="@{../assets/font-awesome/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{../assets/css/webauthn_register.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="@{../assets/ico/favicon.ico}">
+</head>
+<body>
+    <div class="mdl-layout mdl-js-layout">
+        <div class="webauthn-register-container">
+            <div class="webauthn-register-form">
+                <div class="webauthn-register-form-title">
+                    <label>Passwordless Auth Setup</label>
+                </div>
+                <div id="webauthn-browser-error" class="webauthn-register-error-info" style="display: none;">
+                    <span>
+                        <span class="error">technical_error</span>
+                        <small id="webauthn-browser-error-description" class="error_description"></small>
+                    </span>
+                </div>
+                <form role="form" id="register" method="post" th:action="${action}">
+                    <div class="webauthn-register-form-content">
+                        <div class="input-textfield">
+                            <input type="hidden" id="username" name="username" th:value="${user.username}"/>
+                        </div>
+                        <div>
+                            <ul class="mdl-list">
+                                <li class="mdl-list__item mdl-list__item--three-line">
+                                <span class="mdl-list__item-primary-content">
+                                    <i class="material-icons mdl-list__item-avatar">security</i>
+                                    <span>1. Get your security device</span>
+                                    <span class="mdl-list__item-text-body">
+                                        Grab your security key like <i>Yubikey</i> or use your security platform device (fingerprint, facial recognition, ...).
+                                    </span>
+                                </span>
+                                </li>
+                                <li class="mdl-list__item mdl-list__item--three-line">
+                                <span class="mdl-list__item-primary-content">
+                                  <i class="material-icons  mdl-list__item-avatar">fingerprint</i>
+                                  <span>2. Configure your account</span>
+                                  <span class="mdl-list__item-text-body">
+                                      Press register and a security window will pop up. Follow the instructions for the registration process.
+                                  </span>
+                                </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div id="webauthn-error" class="webauthn-register-error-info" style="display: none;">
+                                <span>
+                                    <span class="error">webauthn-register_failed</span>
+                                     <small class="error_description">Invalid user</small>
+                                </span>
+                        </div>
+                    </div>
+                    <div class="webauthn-register-form-actions">
+                        <a th:href="@{register(client_id=${param.client_id}, prompt='none')}">Skip for now</a>
+                        <span style="flex: 1 1 0%;"></span>
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Register</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<script th:src="@{../assets/js/webauthn.auth.js}"></script>
+</body>
+</html>

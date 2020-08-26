@@ -20,6 +20,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.scim.SCIMSettings;
@@ -52,6 +53,7 @@ public class PatchDomain {
     private Optional<UMASettings> uma;
     private Optional<SCIMSettings> scim;
     private Optional<LoginSettings> loginSettings;
+    private Optional<WebAuthnSettings> webAuthnSettings;
     private Optional<AccountSettings> accountSettings;
     private Optional<Set<String>> tags;
 
@@ -119,6 +121,14 @@ public class PatchDomain {
         this.loginSettings = loginSettings;
     }
 
+    public Optional<WebAuthnSettings> getWebAuthnSettings() {
+        return webAuthnSettings;
+    }
+
+    public void setWebAuthnSettings(Optional<WebAuthnSettings> webAuthnSettings) {
+        this.webAuthnSettings = webAuthnSettings;
+    }
+
     public Optional<AccountSettings> getAccountSettings() {
         return accountSettings;
     }
@@ -148,6 +158,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setUma, this.getUma());
         SetterUtils.safeSet(toPatch::setScim, this.getScim());
         SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
+        SetterUtils.safeSet(toPatch::setWebAuthnSettings, this.getWebAuthnSettings());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
         SetterUtils.safeSet(toPatch::setTags, this.getTags());
 
@@ -182,6 +193,7 @@ public class PatchDomain {
                 || vhostMode != null && vhostMode.isPresent()
                 || vhosts != null && vhosts.isPresent()
                 || loginSettings != null && loginSettings.isPresent()
+                || webAuthnSettings != null && webAuthnSettings.isPresent()
                 || accountSettings != null && accountSettings.isPresent()
                 || tags != null && tags.isPresent()) {
 
