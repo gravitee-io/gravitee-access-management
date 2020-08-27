@@ -18,14 +18,22 @@ import { Subject } from "rxjs";
 
 @Injectable()
 export class NavbarService {
-  private currentResource = new Subject<any>();
-  public notifyObservable$ = this.currentResource.asObservable();
+  private currentDomain = new Subject<any>();
+  private currentEnvironment = new Subject<any>();
+  public currentDomainObs$ = this.currentDomain.asObservable();
+  public currentEnvironmentObs$ = this.currentEnvironment.asObservable();
 
   constructor() { }
 
-  notify(data) {
+  notifyDomain(data) {
     if (data) {
-      this.currentResource.next(data);
+      this.currentDomain.next(data);
+    }
+  }
+
+  notifyEnvironment(data) {
+    if (data) {
+      this.currentEnvironment.next(data);
     }
   }
 }

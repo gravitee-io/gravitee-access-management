@@ -18,6 +18,7 @@ import {Router} from '@angular/router';
 import {DomainService} from '../services/domain.service';
 import {AuthService} from '../services/auth.service';
 import {NavbarService} from "../components/navbar/navbar.service";
+import {Subscription} from "rxjs";
 
 @Component({
   selector: 'app-home',
@@ -27,16 +28,35 @@ import {NavbarService} from "../components/navbar/navbar.service";
 export class HomeComponent implements OnInit {
   readonly: boolean = true;
   isLoading = true;
-  hasEnv = true;
+  hasEnv = false;
+  subscription: Subscription;
 
   constructor(private router: Router,
               private domainService: DomainService,
               private authService: AuthService,
-              private navbarService: NavbarService) {}
+              private navbarService: NavbarService) {
+  }
 
   ngOnInit() {
 
-    if (this.authService.user().env) {
+    this.subscription = this.navbarService.currentEnvironmentObs$.subscribe(currentEnv => this.initDomain(currentEnv));
+
+    if (this.authService.user()) {
+      this.initDomain(this.authService.user().env);
+    } else {
+      this.isLoading = false;
+      this.hasEnv = false;
+    }
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
+
+  initDomain(environmentId: string) {
+
+    if (environmentId) {
+      this.hasEnv = true;
 
       // redirect user to the its domain, if any
       this.domainService.list().subscribe(response => {
@@ -45,7 +65,7 @@ export class HomeComponent implements OnInit {
         } else {
           this.isLoading = false;
           this.readonly = !this.authService.hasPermissions(['domain_create']);
-          this.navbarService.notify({});
+          this.navbarService.notifyDomain({});
         }
       });
     } else {

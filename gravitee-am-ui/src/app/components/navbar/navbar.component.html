@@ -21,12 +21,20 @@
         <gv-breadcrumb *ngIf="displayBreadcrumb()"></gv-breadcrumb>
       </div>
       <span class="fill-remaining-space"></span>
+      <div style="margin-right: 10px" *ngIf="displayEnvironments()">
+        <mat-form-field appearance="legacy">
+            <mat-select [(value)]="currentEnvironmentId" (selectionChange)="switchEnvironment($event)">
+              <mat-option *ngFor="let env of environments" [value]="env.id">
+                {{env.name}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+      </div>
       <div fxLayout="row" style="align-items: center;">
-      <span class="currentDomain">{{currentResource?.name | lowercase}}</span>
-      <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()">
-        <app-user-avatar [user]="user" [width]="'30'"></app-user-avatar>
-        <mat-icon>keyboard_arrow_down</mat-icon>
-      </button>
+        <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()">
+          <app-user-avatar [user]="user" [width]="'30'"></app-user-avatar>
+          <mat-icon>keyboard_arrow_down</mat-icon>
+        </button>
       </div>
   </mat-toolbar>
 

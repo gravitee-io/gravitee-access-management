@@ -22,6 +22,8 @@ import {NavbarService} from "./navbar.service";
 import {SnackbarService} from "../../services/snackbar.service";
 import * as _ from 'lodash';
 import {SidenavService} from "../sidenav/sidenav.service";
+import {EnvironmentService} from "../../services/environment.service";
+import {MatSelectChange} from "@angular/material/select";
 
 @Component({
   selector: 'gv-navbar',
@@ -35,26 +37,33 @@ export class NavbarComponent implements OnInit, OnDestroy {
   domains: any[];
   currentResource: any = {};
   navLinks: any = [
-    {'href': '/domains/new' , 'label': 'Create domain', 'icon': 'add'},
-    {'href': '/settings' , 'label': 'Global settings', 'icon': 'settings'},
-    {'href': '/logout' , 'label': 'Sign out', 'icon': 'exit_to_app'},
+    {'href': '/domains/new', 'label': 'Create domain', 'icon': 'add'},
+    {'href': '/settings', 'label': 'Global settings', 'icon': 'settings'},
+    {'href': '/logout', 'label': 'Sign out', 'icon': 'exit_to_app'},
   ];
+  currentEnvironmentId;
+  environments: any[] = [];
 
   constructor(private authService: AuthService,
               private domainService: DomainService,
               private navbarService: NavbarService,
               private snackbarService: SnackbarService,
               private sidenavService: SidenavService,
+              private environmentService: EnvironmentService,
               public router: Router) {
     if (!this.authService.user()) {
-      this.authService.userInfo().subscribe(() => this.initNavLinks());
+      this.authService.userInfo().subscribe(() => {
+        this.initNavLinks();
+        this.initEnvironments();
+      });
     } else {
       this.initNavLinks();
+      this.initEnvironments();
     }
   }
 
   ngOnInit() {
-    this.navbarSubscription = this.navbarService.notifyObservable$.subscribe(data => this.currentResource = data);
+    this.navbarSubscription = this.navbarService.currentDomainObs$.subscribe(data => this.currentResource = data);
     this.sidenavSubscription = this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
   }
 
@@ -68,14 +77,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   listDomains() {
-    if(this.user.env) {
+    if (this.user.env) {
       this.domainService.list().subscribe(data => this.domains = data);
     }
   }
 
   goTo(routerLink) {
     // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
-    this.router.navigateByUrl('/dummy', { skipLocationChange: true })
+    this.router.navigateByUrl('/dummy', {skipLocationChange: true})
       .then(() => this.router.navigate(routerLink));
   }
 
@@ -86,17 +95,42 @@ export class NavbarComponent implements OnInit, OnDestroy {
       !this.router.url.startsWith('/404');
   }
 
+  displayEnvironments(): boolean {
+    return this.currentEnvironmentId && this.currentEnvironmentId !== 'DEFAULT' &&
+      !this.router.url.startsWith('/settings') &&
+      !this.router.url.startsWith('/login') &&
+      !this.router.url.startsWith('/logout') &&
+      !this.router.url.startsWith('/404');
+  }
 
   private initNavLinks() {
     if (!this.user.env || !this.canDisplay(['domain_create'])) {
-      _.remove(this.navLinks, { href: '/domains/new' });
+      _.remove(this.navLinks, {href: '/domains/new'});
     }
     if (!this.canDisplay(['organization_settings_read'])) {
-      _.remove(this.navLinks, { href: '/settings' });
+      _.remove(this.navLinks, {href: '/settings'});
     }
+  }
+
+  private initEnvironments() {
+    this.environmentService.environments().subscribe(environments => {
+      this.currentEnvironmentId = this.user.env;
+      this.environments = environments;
+    });
   }
 
   private canDisplay(permissions): boolean {
     return this.authService.hasPermissions(permissions);
+  }
+
+  switchEnvironment($event: MatSelectChange) {
+
+    this.currentEnvironmentId = $event.value
+    this.user.env = this.currentEnvironmentId;
+    this.navbarService.notifyEnvironment(this.currentEnvironmentId);
+
+    if(this.router.url !== '/') {
+      this.router.navigate(["/"]);
+    }
   }
 }

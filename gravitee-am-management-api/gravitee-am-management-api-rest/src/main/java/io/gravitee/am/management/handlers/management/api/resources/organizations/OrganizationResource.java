@@ -28,8 +28,6 @@ import io.gravitee.am.management.handlers.management.api.resources.organizations
 import io.gravitee.am.management.handlers.management.api.resources.organizations.tags.TagsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.users.UsersResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.PluginsResource;
-import io.gravitee.am.service.OrganizationService;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
