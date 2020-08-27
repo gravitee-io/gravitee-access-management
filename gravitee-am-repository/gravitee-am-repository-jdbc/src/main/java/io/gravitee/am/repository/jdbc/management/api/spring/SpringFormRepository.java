@@ -33,6 +33,9 @@ public interface SpringFormRepository extends RxJava2CrudRepository<JdbcForm, St
     @Query("select * from forms f where f.reference_id = :refId and f.reference_type = :refType")
     Flowable<JdbcForm> findAll(@Param("refType") String referenceType, @Param("refId") String referenceId);
 
+    @Query("select * from forms f where f.reference_type = :refType")
+    Flowable<JdbcForm> findAll(@Param("refType") String referenceType);
+
     @Query("select * from forms f where f.reference_id = :refId and f.reference_type = :refType and f.client = :cli")
     Flowable<JdbcForm> findByClient(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("cli") String client);
 

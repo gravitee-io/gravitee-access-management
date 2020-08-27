@@ -23,6 +23,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcForm;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringFormRepository;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,13 @@ public class JdbcFormRepository extends AbstractJdbcRepository implements FormRe
                 .map(this::toEntity)
                 .toList()
                 .doOnError(error -> LOGGER.error("Unable to retrieve Forms with referenceId '{}' and referenceType '{}'", referenceId, referenceType, error));
+    }
+
+    @Override
+    public Flowable<Form> findAll(ReferenceType referenceType) {LOGGER.debug("findAll({})", referenceType);
+        return formRepository.findAll(referenceType.name())
+                .map(this::toEntity)
+                .doOnError(error -> LOGGER.error("Unable to retrieve Forms with referenceType '{}'", referenceType, error));
     }
 
     @Override

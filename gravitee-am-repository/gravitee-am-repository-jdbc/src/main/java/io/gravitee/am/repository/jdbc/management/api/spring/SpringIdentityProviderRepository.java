@@ -32,6 +32,9 @@ public interface SpringIdentityProviderRepository extends RxJava2CrudRepository<
     @Query("select * from identities i where i.reference_type = :refType and i.reference_id = :refId")
     Flowable<JdbcIdentityProvider> findAll(@Param("refType") String referenceType, @Param("refId") String referenceId);
 
+    @Query("select * from identities i where i.reference_type = :refType")
+    Flowable<JdbcIdentityProvider> findAll(@Param("refType") String referenceType);
+
     @Query("select * from identities i where i.reference_type = :refType and i.reference_id = :refId and i.id = :id")
     Maybe<JdbcIdentityProvider> findById(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("id") String id);
 }

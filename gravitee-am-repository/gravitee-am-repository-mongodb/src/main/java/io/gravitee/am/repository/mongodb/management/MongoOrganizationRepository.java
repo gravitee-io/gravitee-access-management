@@ -85,6 +85,7 @@ public class MongoOrganizationRepository extends AbstractManagementMongoReposito
 
         Organization organization = new Organization();
         organization.setId(organizationMongo.getId());
+        organization.setHrids(organizationMongo.getHrids());
         organization.setDescription(organizationMongo.getDescription());
         organization.setName(organizationMongo.getName());
         organization.setDomainRestrictions(organizationMongo.getDomainRestrictions());
@@ -99,6 +100,7 @@ public class MongoOrganizationRepository extends AbstractManagementMongoReposito
 
         OrganizationMongo organizationMongo = new OrganizationMongo();
         organizationMongo.setId(organization.getId());
+        organizationMongo.setHrids(organization.getHrids());
         organizationMongo.setDescription(organization.getDescription());
         organizationMongo.setName(organization.getName());
         organizationMongo.setDomainRestrictions(organization.getDomainRestrictions());

@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.environment;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEnvironment;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.RxJava2CrudRepository;
@@ -29,4 +30,7 @@ import org.springframework.stereotype.Repository;
 public interface SpringEnvironmentRepository extends RxJava2CrudRepository<JdbcEnvironment, String> {
     @Query("select * from environments e where e.id = :id and e.organization_id = :organizationId")
     Maybe<JdbcEnvironment> findByIdAndOrganization(String id, String organizationId);
+
+    @Query("select * from environments e where e.organization_id = :organizationId")
+    Flowable<JdbcEnvironment> findByOrganization(String organizationId);
 }

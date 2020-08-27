@@ -88,7 +88,7 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
+        return monoToSingle(action).flatMap((i) -> permissionTicketRepository.findById(item.getId()).map(this::toEntity).toSingle())
                 .doOnError((error) -> LOGGER.error("unable to create PermissionTicket with id {}", item.getId(), error));
     }
 

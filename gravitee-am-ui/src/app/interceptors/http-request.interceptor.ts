@@ -29,6 +29,7 @@ import {Router} from '@angular/router';
 import {Observable} from 'rxjs';
 import {SnackbarService} from '../services/snackbar.service';
 import {AuthService} from '../services/auth.service';
+import {EnvironmentService} from "../services/environment.service";
 
 @Injectable()
 export class HttpRequestInterceptor implements HttpInterceptor {
@@ -37,13 +38,28 @@ export class HttpRequestInterceptor implements HttpInterceptor {
 
   constructor(private snackbarService: SnackbarService,
               private authService: AuthService,
+              private environmentService: EnvironmentService,
               private router: Router) {
   }
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+
+    let orgId = 'DEFAULT';
+    let envId = 'DEFAULT';
+
+    if(this.authService.isAuthenticated()) {
+      let user = this.authService.user();
+      orgId = user.org;
+    }
+
+    if(this.environmentService.getCurrentEnvironment()) {
+      envId = this.environmentService.getCurrentEnvironment().id;
+    }
+
     request = request.clone({
       withCredentials: true,
-      setHeaders: this.xsrfToken ? {'X-Xsrf-Token': [this.xsrfToken]} : {}
+      setHeaders: this.xsrfToken ? {'X-Xsrf-Token': [this.xsrfToken]} : {},
+      url: request.url.replace(':organizationId', orgId).replace(':environmentId', envId),
     });
 
     return next.handle(request).pipe(tap((event: HttpEvent<any>) => {

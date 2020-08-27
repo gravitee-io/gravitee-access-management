@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {DomainService} from '../services/domain.service';
 import {AuthService} from '../services/auth.service';
 import {NavbarService} from "../components/navbar/navbar.service";
+import {Subscription} from "rxjs";
+import {EnvironmentService} from "../services/environment.service";
 
 @Component({
   selector: 'app-home',
@@ -25,24 +27,52 @@ import {NavbarService} from "../components/navbar/navbar.service";
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  readonly: boolean;
+  readonly: boolean = true;
   isLoading = true;
+  hasEnv = false;
+  subscription: Subscription;
 
   constructor(private router: Router,
               private domainService: DomainService,
               private authService: AuthService,
-              private navbarService: NavbarService) {}
+              private navbarService: NavbarService,
+              private environmentService: EnvironmentService) {
+  }
 
   ngOnInit() {
-    // redirect user to the its domain, if any
-    this.domainService.list().subscribe(response => {
-      if (response && response.length > 0) {
-        this.router.navigate(['/domains', response[0].id]);
-      } else {
-        this.isLoading = false;
-        this.readonly = !this.authService.hasPermissions(['domain_create']);
-        this.navbarService.notify({});
-      }
-    });
+
+    this.subscription = this.environmentService.currentEnvironmentObs$.subscribe(currentEnv => this.initDomain(currentEnv.id));
+
+    if (this.environmentService.getCurrentEnvironment()) {
+      this.initDomain(this.environmentService.getCurrentEnvironment().id);
+    } else {
+      this.isLoading = false;
+      this.hasEnv = false;
+    }
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
+
+  initDomain(environmentId: string) {
+
+    if (environmentId) {
+      this.hasEnv = true;
+
+      // redirect user to the its domain, if any
+      this.domainService.list().subscribe(response => {
+        if (response && response.length > 0) {
+          this.router.navigate(['/domains', response[0].id]);
+        } else {
+          this.isLoading = false;
+          this.readonly = !this.authService.hasPermissions(['domain_create']);
+          this.navbarService.notifyDomain({});
+        }
+      });
+    } else {
+      this.isLoading = false;
+      this.hasEnv = false;
+    }
   }
 }

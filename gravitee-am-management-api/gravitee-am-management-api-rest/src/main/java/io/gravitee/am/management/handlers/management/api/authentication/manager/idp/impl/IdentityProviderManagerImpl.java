@@ -70,26 +70,26 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        logger.info("Register event listener for identity provider events for organization {}", Organization.DEFAULT);
+        logger.info("Register event listener for identity provider events for all organizations");
         eventManager.subscribeForEvents(this, IdentityProviderEvent.class);
 
-        logger.info("Initializing identity providers for default organization");
+        logger.info("Initializing identity providers for all organizations");
         try {
-            List<IdentityProvider> identityProviders = identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT).blockingGet();
+            List<IdentityProvider> identityProviders = identityProviderService.findAll(ReferenceType.ORGANIZATION).toList().blockingGet();
             identityProviders.forEach(this::updateAuthenticationProvider);
-            logger.info("Identity providers loaded for organization {}", Organization.DEFAULT);
+            logger.info("Identity providers loaded for all organizations");
         } catch (Exception e) {
-            logger.error("Unable to initialize identity providers for organization {}", Organization.DEFAULT, e);
+            logger.error("Unable to initialize identity providers", e);
         }
     }
 
     @Override
     public void onEvent(Event<IdentityProviderEvent, Payload> event) {
-        if (event.content().getReferenceType() == ReferenceType.ORGANIZATION && Organization.DEFAULT.equals(event.content().getReferenceId())) {
+        if (event.content().getReferenceType() == ReferenceType.ORGANIZATION && event.content().getReferenceId() != null) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:
-                    updateIdentityProvider(event.content().getId(), event.type());
+                    updateIdentityProvider(event.content().getId(), event.content().getReferenceId(), event.type());
                     break;
                 case UNDEPLOY:
                     removeIdentityProvider(event.content().getId());
@@ -98,21 +98,21 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
         }
     }
 
-    private void updateIdentityProvider(String identityProviderId, IdentityProviderEvent identityProviderEvent) {
+    private void updateIdentityProvider(String identityProviderId, String organizationId, IdentityProviderEvent identityProviderEvent) {
         final String eventType = identityProviderEvent.toString().toLowerCase();
-        logger.info("Organization {} has received {} identity provider event for {}", Organization.DEFAULT, eventType, identityProviderId);
+        logger.info("Organization {} has received {} identity provider event for {}", organizationId, eventType, identityProviderId);
         identityProviderService.findById(identityProviderId)
                 .subscribe(
                         identityProvider -> {
                             updateAuthenticationProvider(identityProvider);
-                            logger.info("Identity provider {} {}d for organization {}", identityProviderId, eventType, Organization.DEFAULT);
+                            logger.info("Identity provider {} {}d for organization {}", identityProviderId, eventType, organizationId);
                         },
-                        error -> logger.error("Unable to {} identity provider for organization {}", eventType, Organization.DEFAULT, error),
+                        error -> logger.error("Unable to {} identity provider for organization {}", eventType, organizationId, error),
                         () -> logger.error("No identity provider found with id {}", identityProviderId));
     }
 
     private void updateAuthenticationProvider(IdentityProvider identityProvider) {
-        logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+        logger.info("\tInitializing identity provider: {} for organization {} [{}]", identityProvider.getName(), identityProvider.getReferenceId(), identityProvider.getType());
         try {
             // stop existing provider, if any
             clearProvider(identityProvider.getId());
@@ -134,7 +134,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     }
 
     private void removeIdentityProvider(String identityProviderId) {
-        logger.info("Organization {} has received identity provider event, delete identity provider {}", Organization.DEFAULT, identityProviderId);
+        logger.info("Received identity provider event, delete identity provider {}", identityProviderId);
         clearProvider(identityProviderId);
     }
 

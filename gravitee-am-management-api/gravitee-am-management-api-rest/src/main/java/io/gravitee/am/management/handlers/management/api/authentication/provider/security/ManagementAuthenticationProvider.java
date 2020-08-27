@@ -59,14 +59,18 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         WebAuthenticationDetails webAuthenticationDetails = (WebAuthenticationDetails) authentication.getDetails();
-        Map<String, String> details = new HashMap();
-        details.put(Claims.organization, Organization.DEFAULT);
+        Map<String, String> details = new HashMap<>();
+
         if (webAuthenticationDetails != null) {
             details.put(Claims.ip_address, webAuthenticationDetails.getRemoteAddress());
             details.put(Claims.user_agent, webAuthenticationDetails.getUserAgent());
+            details.put(Claims.organization, webAuthenticationDetails.getOrganizationId());
         }
 
-        Organization organization = organizationService.findById(Organization.DEFAULT).blockingGet();
+        details.putIfAbsent(Claims.organization, Organization.DEFAULT);
+
+        String organizationId = details.get(Claims.organization);
+        Organization organization = organizationService.findById(organizationId).blockingGet();
 
         List<String> identities = organization.getIdentities();
         Iterator<String> iter = identities.iterator();

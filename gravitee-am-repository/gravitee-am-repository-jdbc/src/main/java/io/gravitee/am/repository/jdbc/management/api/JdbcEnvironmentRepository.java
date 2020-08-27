@@ -23,6 +23,7 @@ import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEn
 import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEnvironmentRepository;
 import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +77,21 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 });
 
         return result.doOnError((error) -> LOGGER.error("unable to retrieve Environment with id {}", id, error));
+    }
+
+    @Override
+    public Flowable<Environment> findAll(String organizationId) {
+        LOGGER.debug("findById({})", organizationId);
+
+        final Flowable<Environment> result = environmentRepository.findByOrganization(organizationId)
+                .map(this::toEnvironment)
+                .flatMapSingle(environment -> domainRestrictionRepository.findAllByEnvironmentId(environment.getId())
+                        .map(JdbcEnvironment.DomainRestriction::getDomainRestriction)
+                        .toList()
+                        .doOnSuccess(environment::setDomainRestrictions)
+                        .map(domainRestriction -> environment));
+
+        return result.doOnError((error) -> LOGGER.error("unable to retrieve Environments with organizationId {}", organizationId, error));
     }
 
     @Override

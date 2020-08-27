@@ -76,12 +76,6 @@ public class ApplicationMembersResource extends AbstractResource {
     @Autowired
     private ApplicationService applicationService;
 
-    @Autowired
-    private RoleService roleService;
-
-    @Autowired
-    private GroupService groupService;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List members for an application",
@@ -140,7 +134,7 @@ public class ApplicationMembersResource extends AbstractResource {
                         .flatMap(__ -> applicationService.findById(application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                         .flatMapSingle(__ -> membershipService.addOrUpdate(organizationId, membership, authenticatedUser))
-                        .flatMap(membership1 -> addDomainUserRoleIfNecessary(organizationId, domain, newMembership, authenticatedUser)
+                        .flatMap(membership1 -> membershipService.addDomainUserRoleIfNecessary(organizationId, environmentId, domain, newMembership, authenticatedUser)
                                 .andThen(Single.just(Response
                                         .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application + "/members/" + membership1.getId()))
                                         .entity(membership1)
@@ -186,38 +180,5 @@ public class ApplicationMembersResource extends AbstractResource {
         membership.setRoleId(newMembership.getRole());
 
         return membership;
-    }
-
-    /**
-     * When adding membership to an application, some permission are necessary on the application's domain.
-     * These permissions are available through the DOMAIN_USER.
-     * For convenience, to to limit the number of actions an administrator must do to affect role on an application, the group or user will also inherit the DOMAIN_USER role on the application's domain.
-     *
-     * If the group or user already has a role on the domain, nothing is done.
-     *
-     * WARNING: this behavior is likely to change in the near future.
-     */
-    private Completable addDomainUserRoleIfNecessary(String organizationId, String domainId, NewMembership newMembership, User authenticatedUser) {
-
-        MembershipCriteria criteria = new MembershipCriteria();
-
-        if (newMembership.getMemberType() == MemberType.USER) {
-            criteria.setUserId(newMembership.getMemberId());
-        } else {
-            criteria.setGroupIds(Arrays.asList(newMembership.getMemberId()));
-        }
-
-        return membershipService.findByCriteria(ReferenceType.DOMAIN, domainId, criteria)
-                .switchIfEmpty(roleService.findDefaultRole(organizationId, DefaultRole.DOMAIN_USER, ReferenceType.DOMAIN)
-                        .flatMapSingle(role -> {
-                            final Membership domainMembership = new Membership();
-                            domainMembership.setMemberId(newMembership.getMemberId());
-                            domainMembership.setMemberType(newMembership.getMemberType());
-                            domainMembership.setRoleId(role.getId());
-                            domainMembership.setReferenceId(domainId);
-                            domainMembership.setReferenceType(ReferenceType.DOMAIN);
-                            return membershipService.addOrUpdate(organizationId, domainMembership, authenticatedUser);
-                        }).toFlowable())
-                .ignoreElements();
     }
 }

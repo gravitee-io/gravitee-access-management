@@ -54,7 +54,7 @@ public class PermissionTicketRepositoryPurgeTest extends AbstractManagementTest 
         permissionTicketExpired.setExpireAt(new Date(now.minus(10, ChronoUnit.MINUTES).toEpochMilli()));
         TestObserver<PermissionTicket> test = repository.create(permissionTicketExpired).test();
         test.awaitTerminalEvent();
-        test.assertError(NoSuchElementException.class); // because expired, findById exclude it
+        test.assertNoErrors();
 
         // fetch permission_ticket
         TestObserver<PermissionTicket> testObserver = repository.findById(ptValid.getId()).test();

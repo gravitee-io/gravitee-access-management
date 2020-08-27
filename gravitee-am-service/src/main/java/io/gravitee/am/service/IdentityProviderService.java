@@ -21,6 +21,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -40,6 +41,8 @@ public interface IdentityProviderService {
     Maybe<IdentityProvider> findById(String id);
 
     Single<List<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId);
+
+    Flowable<IdentityProvider> findAll(ReferenceType referenceType);
 
     Single<List<IdentityProvider>> findByDomain(String domain);
 

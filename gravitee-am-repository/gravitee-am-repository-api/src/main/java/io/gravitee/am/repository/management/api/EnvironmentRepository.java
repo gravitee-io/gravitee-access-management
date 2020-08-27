@@ -29,5 +29,7 @@ public interface EnvironmentRepository extends CrudRepository<Environment, Strin
 
     Maybe<Environment> findById(String id, String organizationId);
 
+    Flowable<Environment> findAll(String organizationId);
+
     Single<Long> count();
 }

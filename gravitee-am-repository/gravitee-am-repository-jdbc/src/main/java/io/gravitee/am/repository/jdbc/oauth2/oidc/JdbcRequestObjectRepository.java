@@ -74,7 +74,7 @@ public class JdbcRequestObjectRepository extends AbstractJdbcRepository implemen
                 .using(toJdbcEntity(requestObject))
                 .fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(requestObject.getId()).toSingle())
+        return monoToSingle(action).flatMap((i) -> requestObjectRepository.findById(requestObject.getId()).map(this::toEntity).toSingle())
                 .doOnError((error) -> LOGGER.error("Unable to create requestObject with id {}", requestObject.getId(), error));
     }
 
