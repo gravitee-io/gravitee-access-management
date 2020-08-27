@@ -33,6 +33,7 @@ import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -69,12 +70,6 @@ public class MembersResource extends AbstractResource {
 
     @Autowired
     private MembershipService membershipService;
-
-    @Autowired
-    private RoleService roleService;
-
-    @Autowired
-    private GroupService groupService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -127,10 +122,11 @@ public class MembersResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(domain1 -> membershipService.addOrUpdate(organizationId, membership, authenticatedUser))
-                        .map(membership1 -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/members/" + membership1.getId()))
-                                .entity(membership1)
-                                .build()))
+                        .flatMap(membership1 -> membershipService.addEnvironmentUserRoleIfNecessary(organizationId, environmentId, newMembership, authenticatedUser)
+                                .andThen(Single.just(Response
+                                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/members/" + membership1.getId()))
+                                        .entity(membership1)
+                                        .build()))))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -153,7 +149,7 @@ public class MembersResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
                 .andThen(permissionService.findAllPermissions(authenticatedUser, ReferenceType.DOMAIN, domain)
-                .map(Permission::flatten))
+                        .map(Permission::flatten))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -15,13 +15,17 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.MembershipRepository;
+import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.MembershipServiceImpl;
+import io.gravitee.am.service.model.NewMembership;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -424,5 +428,122 @@ public class MembershipServiceTest {
         verify(membershipRepository, never()).create(any());
     }
 
+    @Test
+    public void shouldAddEnvironmentUserRole() {
 
+        NewMembership membership = new NewMembership();
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId("user#1");
+
+        DefaultUser principal = new DefaultUser("username");
+        principal.setId("user#1");
+
+        User user = new User();
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        Role environmentUserRole = new Role();
+        environmentUserRole.setId("role#1");
+
+        when(membershipRepository.findByCriteria(eq(ReferenceType.ENVIRONMENT), eq("env#1"), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
+        when(roleService.findDefaultRole("orga#1", DefaultRole.ENVIRONMENT_USER, ReferenceType.ENVIRONMENT)).thenReturn(Maybe.just(environmentUserRole));
+        when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Void> completable = membershipService.addEnvironmentUserRoleIfNecessary("orga#1", "env#1", membership, principal).test();
+
+        completable.awaitTerminalEvent();
+        completable.assertNoErrors();
+        completable.assertComplete();
+    }
+
+    @Test
+    public void shouldNotAddEnvironmentUserRole_userAlreadyHasMembership() {
+
+        NewMembership membership = new NewMembership();
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId("user#1");
+
+        DefaultUser principal = new DefaultUser("username");
+        principal.setId("user#1");
+
+        User user = new User();
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        Role environmentUserRole = new Role();
+        environmentUserRole.setId("role#1");
+
+        when(membershipRepository.findByCriteria(eq(ReferenceType.ENVIRONMENT), eq("env#1"), any(MembershipCriteria.class))).thenReturn(Flowable.just(new Membership()));
+
+        TestObserver<Void> completable = membershipService.addEnvironmentUserRoleIfNecessary("orga#1", "env#1", membership, principal).test();
+
+        completable.awaitTerminalEvent();
+        completable.assertNoErrors();
+        completable.assertComplete();
+
+        verify(membershipRepository, times(0)).create(any());
+        verifyZeroInteractions(auditService);
+    }
+
+    @Test
+    public void shouldAddDomainUserRole() {
+
+        NewMembership membership = new NewMembership();
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId("user#1");
+
+        DefaultUser principal = new DefaultUser("username");
+        principal.setId("user#1");
+
+        User user = new User();
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        Role environmentUserRole = new Role();
+        environmentUserRole.setId("role#1");
+
+        when(membershipRepository.findByCriteria(eq(ReferenceType.DOMAIN), eq("domain#1"), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
+        when(roleService.findDefaultRole("orga#1", DefaultRole.DOMAIN_USER, ReferenceType.DOMAIN)).thenReturn(Maybe.just(environmentUserRole));
+        when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(membershipRepository.findByCriteria(eq(ReferenceType.ENVIRONMENT), eq("env#1"), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
+        when(roleService.findDefaultRole("orga#1", DefaultRole.ENVIRONMENT_USER, ReferenceType.ENVIRONMENT)).thenReturn(Maybe.just(environmentUserRole));
+
+        TestObserver<Void> completable = membershipService.addDomainUserRoleIfNecessary("orga#1", "env#1", "domain#1", membership, principal).test();
+
+        completable.awaitTerminalEvent();
+        completable.assertNoErrors();
+        completable.assertComplete();
+    }
+
+    @Test
+    public void shouldNotAddDomainUserRole_userAlreadyHasMembership() {
+
+        NewMembership membership = new NewMembership();
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId("user#1");
+
+        DefaultUser principal = new DefaultUser("username");
+        principal.setId("user#1");
+
+        User user = new User();
+        user.setReferenceId(ORGANIZATION_ID);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+
+        Role environmentUserRole = new Role();
+        environmentUserRole.setId("role#1");
+
+        when(membershipRepository.findByCriteria(eq(ReferenceType.ENVIRONMENT), eq("env#1"), any(MembershipCriteria.class))).thenReturn(Flowable.just(new Membership()));
+        when(membershipRepository.findByCriteria(eq(ReferenceType.DOMAIN), eq("domain#1"), any(MembershipCriteria.class))).thenReturn(Flowable.just(new Membership()));
+
+        TestObserver<Void> completable = membershipService.addDomainUserRoleIfNecessary("orga#1", "env#1", "domain#1", membership, principal).test();
+
+        completable.awaitTerminalEvent();
+        completable.assertNoErrors();
+        completable.assertComplete();
+
+        verify(membershipRepository, times(0)).create(any());
+        verifyZeroInteractions(auditService);
+    }
 }

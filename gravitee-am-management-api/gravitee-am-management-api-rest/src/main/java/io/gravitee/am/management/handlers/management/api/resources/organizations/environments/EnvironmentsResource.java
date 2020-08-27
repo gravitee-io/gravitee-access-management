@@ -20,15 +20,12 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.model.NewEnvironment;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
@@ -36,6 +33,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -53,7 +51,9 @@ public class EnvironmentsResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Create or update an environment",
-            notes = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
+            notes = "User must have the ENVIRONMENT[LIST] permission on the specified organization " +
+                    "AND either ENVIRONMENT[READ] permission on each environment " +
+                    "or ENVIRONMENT[READ] permission on the specified organization." +
                     "Each returned environment is filtered and contains only basic information such as id and name.")
     @ApiResponses({
             @ApiResponse(code = 200, message = "List all the environments of the organization", response = Environment.class, responseContainer = "List"),
@@ -62,10 +62,27 @@ public class EnvironmentsResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @Suspended final AsyncResponse response) {
 
+        User authenticatedUser = getAuthenticatedUser();
+
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ENVIRONMENT, Acl.LIST)
                 .andThen(environmentService.findAll(organizationId))
+                .flatMapMaybe(environment -> hasPermission(authenticatedUser,
+                        or(of(ReferenceType.ENVIRONMENT, environment.getId(), Permission.ENVIRONMENT, Acl.READ),
+                                of(ReferenceType.ORGANIZATION, organizationId, Permission.ENVIRONMENT, Acl.READ)))
+                        .filter(Boolean::booleanValue).map(permit -> environment))
+                .map(this::filterEnvironmentInfos)
+                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                 .toList()
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Environment filterEnvironmentInfos(Environment environment) {
+
+        Environment filteredEnvironment = new Environment();
+        filteredEnvironment.setId(environment.getId());
+        filteredEnvironment.setName(environment.getName());
+
+        return filteredEnvironment;
     }
 
     @Path("/{environmentId}")

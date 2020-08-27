@@ -28,10 +28,12 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.Member;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.MembershipAuditBuilder;
@@ -39,6 +41,7 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +84,7 @@ public class MembershipServiceImpl implements MembershipService {
         LOGGER.debug("Find membership by ID {}", id);
         return membershipRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find membership by ID", id, ex);
+                    LOGGER.error("An error occurs while trying to find membership by id {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(String.format("An error occurs while trying to find membership by ID %s", id), ex));
                 });
     }
@@ -127,21 +130,7 @@ public class MembershipServiceImpl implements MembershipService {
                                 newMembership.setRoleId(membership.getRoleId());
                                 newMembership.setCreatedAt(new Date());
                                 newMembership.setUpdatedAt(newMembership.getCreatedAt());
-                                return membershipRepository.create(newMembership)
-                                        // create event for sync process
-                                        .flatMap(membership1 -> {
-                                            Event event = new Event(Type.MEMBERSHIP, new Payload(membership1.getId(), membership1.getReferenceType(), membership1.getReferenceId(), Action.CREATE));
-                                            return eventService.create(event).flatMap(__ -> Single.just(membership1));
-                                        })
-                                        .onErrorResumeNext(ex -> {
-                                            if (ex instanceof AbstractManagementException) {
-                                                return Single.error(ex);
-                                            }
-                                            LOGGER.error("An error occurs while trying to create membership {}", membership, ex);
-                                            return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to create membership %s", membership), ex));
-                                        })
-                                        .doOnSuccess(membership1 -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).membership(membership1)))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).throwable(throwable)));
+                                return createInternal(newMembership, principal);
                             } else {
                                 // update membership
                                 Membership oldMembership = optMembership.get();
@@ -208,6 +197,63 @@ public class MembershipServiceImpl implements MembershipService {
                 });
     }
 
+    @Override
+    public Completable addDomainUserRoleIfNecessary(String organizationId, String environmentId, String domainId, NewMembership newMembership, User principal) {
+
+        MembershipCriteria criteria = convert(newMembership);
+
+        return this.findByCriteria(ReferenceType.DOMAIN, domainId, criteria)
+                .switchIfEmpty(Flowable.defer(() -> roleService.findDefaultRole(organizationId, DefaultRole.DOMAIN_USER, ReferenceType.DOMAIN)
+                        .flatMapSingle(role -> {
+                            final Membership domainMembership = new Membership();
+                            domainMembership.setMemberId(newMembership.getMemberId());
+                            domainMembership.setMemberType(newMembership.getMemberType());
+                            domainMembership.setRoleId(role.getId());
+                            domainMembership.setReferenceId(domainId);
+                            domainMembership.setReferenceType(ReferenceType.DOMAIN);
+                            return this.createInternal(domainMembership, principal);
+                        }).toFlowable()))
+                .ignoreElements()
+                .andThen(addEnvironmentUserRoleIfNecessary(organizationId, environmentId, newMembership, principal));
+    }
+
+    @Override
+    public Completable addEnvironmentUserRoleIfNecessary(String organizationId, String environmentId, NewMembership newMembership, User principal) {
+
+        MembershipCriteria criteria = convert(newMembership);
+
+        return this.findByCriteria(ReferenceType.ENVIRONMENT, environmentId, criteria)
+                .switchIfEmpty(Flowable.defer(() -> roleService.findDefaultRole(organizationId, DefaultRole.ENVIRONMENT_USER, ReferenceType.ENVIRONMENT)
+                        .flatMapSingle(role -> {
+                            final Membership environmentMembership = new Membership();
+                            environmentMembership.setMemberId(newMembership.getMemberId());
+                            environmentMembership.setMemberType(newMembership.getMemberType());
+                            environmentMembership.setRoleId(role.getId());
+                            environmentMembership.setReferenceId(environmentId);
+                            environmentMembership.setReferenceType(ReferenceType.ENVIRONMENT);
+                            return this.createInternal(environmentMembership, principal);
+                        }).toFlowable()))
+                .ignoreElements();
+    }
+
+    private Single<Membership> createInternal(Membership membership, User principal) {
+        return membershipRepository.create(membership)
+                // create event for sync process
+                .flatMap(membership1 -> {
+                    Event event = new Event(Type.MEMBERSHIP, new Payload(membership1.getId(), membership1.getReferenceType(), membership1.getReferenceId(), Action.CREATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(membership1));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to create membership {}", membership, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to create membership %s", membership), ex));
+                })
+                .doOnSuccess(membership1 -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).membership(membership1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).throwable(throwable)));
+    }
+
     private Member convert(io.gravitee.am.model.User user) {
         Member member = new Member();
         member.setId(user.getId());
@@ -220,6 +266,18 @@ public class MembershipServiceImpl implements MembershipService {
         member.setId(group.getId());
         member.setDisplayName(group.getName());
         return member;
+    }
+
+    private MembershipCriteria convert(NewMembership newMembership) {
+
+        MembershipCriteria criteria = new MembershipCriteria();
+
+        if (newMembership.getMemberType() == MemberType.USER) {
+            criteria.setUserId(newMembership.getMemberId());
+        } else {
+            criteria.setGroupIds(Collections.singletonList(newMembership.getMemberId()));
+        }
+        return criteria;
     }
 
     private Role filter(Role role) {
@@ -257,7 +315,7 @@ public class MembershipServiceImpl implements MembershipService {
                     // If role is a 'PRIMARY_OWNER' role, need to check if it is already assigned or not.
                     if (role.isSystem() && role.getName().endsWith("_PRIMARY_OWNER")) {
 
-                        if(membership.getMemberType() == MemberType.GROUP) {
+                        if (membership.getMemberType() == MemberType.GROUP) {
                             return Maybe.error(new InvalidRoleException("This role cannot be assigned to a group"));
                         }
 
