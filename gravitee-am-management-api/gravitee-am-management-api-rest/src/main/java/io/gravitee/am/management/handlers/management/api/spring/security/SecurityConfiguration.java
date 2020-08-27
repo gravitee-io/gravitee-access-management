@@ -91,6 +91,9 @@ public class SecurityConfiguration {
     private ObjectMapper objectMapper;
 
     @Autowired
+    private CockpitAuthenticationFilter cockpitAuthenticationFilter;
+
+    @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) {
         auth.authenticationProvider(userAuthenticationProvider());
     }
@@ -103,10 +106,10 @@ public class SecurityConfiguration {
         protected void configure(HttpSecurity http) throws Exception {
 
             http.requestMatchers()
-                .antMatchers("/auth/authorize", "/auth/login", "/auth/login/callback", "/auth/logout", "/auth/completeProfile", "/auth/assets/**")
+                .antMatchers("/auth/authorize", "/auth/login", "/auth/cockpit", "/auth/login/callback", "/auth/logout", "/auth/completeProfile", "/auth/assets/**")
                 .and()
             .authorizeRequests()
-                .antMatchers("/auth/login", "/auth/assets/**").permitAll()
+                .antMatchers("/auth/login", "/auth/assets/**", "/auth/cockpit").permitAll()
                 .anyRequest().authenticated()
                 .and()
             .formLogin()
@@ -129,6 +132,7 @@ public class SecurityConfiguration {
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
+            .addFilterBefore(cockpitAuthenticationFilter, AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(new RecaptchaFilter(reCaptchaService, objectMapper), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(new CheckRedirectionCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(builtInAuthFilter(), AbstractPreAuthenticatedProcessingFilter.class)
@@ -242,6 +246,11 @@ public class SecurityConfiguration {
         SocialAuthenticationFilter socialAuthenticationFilter = new SocialAuthenticationFilter("/auth/login/callback");
         socialAuthenticationFilter.setApplicationEventPublisher(applicationEventPublisher);
         return socialAuthenticationFilter;
+    }
+
+    @Bean
+    public CockpitAuthenticationFilter cockpitAuthFilter() {
+        return new CockpitAuthenticationFilter();
     }
 
     @Bean

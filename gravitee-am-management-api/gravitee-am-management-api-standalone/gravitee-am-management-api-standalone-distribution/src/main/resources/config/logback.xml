@@ -42,6 +42,7 @@
     </appender>
 
     <logger name="io.gravitee" level="INFO" />
+    <logger name="com.graviteesource" level="INFO" />
     <logger name="org.eclipse.jetty" level="INFO" />
     <logger name="org.springframework.security" level="INFO" />
 

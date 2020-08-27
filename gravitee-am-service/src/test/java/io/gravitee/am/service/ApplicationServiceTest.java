@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
@@ -25,7 +26,6 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.permissions.RoleScope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
@@ -380,7 +380,10 @@ public class ApplicationServiceTest {
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
 
-        TestObserver testObserver = applicationService.create(DOMAIN, newClient, new DefaultUser("username")).test();
+        DefaultUser user = new DefaultUser("username");
+        user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
+
+        TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

@@ -39,6 +39,7 @@
                         <label class="w3-text-blue">Password</label>
                         <input type="password" id="password" name="password" required />
                     </div>
+                    <input type="hidden" id="org" name="org" required th:value="${org}"/>
                     <div th:if="${param.error}" class="login-error-info">
                             <span>
                                 <span class="error">login_failed</span>

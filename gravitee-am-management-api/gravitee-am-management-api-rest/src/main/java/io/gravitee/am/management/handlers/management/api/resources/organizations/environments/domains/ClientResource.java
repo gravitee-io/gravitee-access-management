@@ -196,10 +196,7 @@ public class ClientResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.APPLICATION, client, Permission.APPLICATION_OPENID, Acl.UPDATE),
-                of(ReferenceType.DOMAIN, domain, Permission.APPLICATION_OPENID, Acl.UPDATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.APPLICATION_OPENID, Acl.UPDATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.APPLICATION_OPENID, Acl.UPDATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_OPENID, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> clientService.renewClientSecret(domain, client, authenticatedUser)))

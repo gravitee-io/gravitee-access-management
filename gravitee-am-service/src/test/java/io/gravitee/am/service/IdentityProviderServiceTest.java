@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.ReferenceType;
@@ -28,9 +29,11 @@ import io.gravitee.am.service.impl.IdentityProviderServiceImpl;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -119,6 +122,43 @@ public class IdentityProviderServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldFindAllByType() {
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        when(identityProviderRepository.findAll(ReferenceType.ORGANIZATION)).thenReturn(Flowable.just(identityProvider));
+
+        TestSubscriber<IdentityProvider> obs = identityProviderService.findAll(ReferenceType.ORGANIZATION).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(identityProvider);
+    }
+
+    @Test
+    public void shouldFindAllByType_noIdentityProvider() {
+
+        when(identityProviderRepository.findAll(ReferenceType.ORGANIZATION)).thenReturn(Flowable.empty());
+
+        TestSubscriber<IdentityProvider> obs = identityProviderService.findAll(ReferenceType.ORGANIZATION).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertNoErrors();
+        obs.assertComplete();
+        obs.assertNoValues();
+    }
+
+    @Test
+    public void shouldFindAllByType_TechnicalException() {
+
+        when(identityProviderRepository.findAll(ReferenceType.ORGANIZATION)).thenReturn(Flowable.error(TechnicalException::new));
+
+        TestSubscriber<IdentityProvider> obs = identityProviderService.findAll(ReferenceType.ORGANIZATION).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertError(TechnicalException.class);
     }
 
     @Test

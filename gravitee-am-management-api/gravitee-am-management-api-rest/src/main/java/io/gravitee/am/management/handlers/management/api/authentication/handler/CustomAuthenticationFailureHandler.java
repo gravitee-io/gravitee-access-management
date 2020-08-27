@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.authentication.handler;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.model.Organization;
@@ -33,25 +34,28 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import static io.gravitee.am.management.handlers.management.api.authentication.controller.LoginController.ORGANIZATION_PARAMETER_NAME;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
-    private static final String CLIENT_ID = "admin";
-
     @Autowired
     private AuditService auditService;
 
+    private String defaultFailureUrl;
+
     public CustomAuthenticationFailureHandler(String defaultFailureUrl) {
-        super(defaultFailureUrl);
+        super();
+        this.defaultFailureUrl = defaultFailureUrl;
         super.setAllowSessionCreation(false);
     }
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        String organizationId = Organization.DEFAULT;
+        String organizationId = getOrganizationId(request);
 
         EndUserAuthentication authentication = new EndUserAuthentication(request.getParameter("username"), null, new SimpleAuthenticationContext());
         authentication.getContext().set(Claims.ip_address, remoteAddress(request));
@@ -60,17 +64,33 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
         // audit event
         auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication)
-                .referenceType(ReferenceType.ORGANIZATION).referenceId(organizationId)
-                .client(CLIENT_ID).throwable(exception));
+                .referenceType(ReferenceType.ORGANIZATION).referenceId(organizationId).throwable(exception));
 
-        super.onAuthenticationFailure(request, response, exception);
+        String redirectUri = defaultFailureUrl;
+
+        if (!Organization.DEFAULT.equals(organizationId)) {
+            redirectUri = UriBuilder.fromURIString(defaultFailureUrl).addParameter("organizationId", organizationId).buildString();
+        }
+
+        super.getRedirectStrategy().sendRedirect(request, response, redirectUri);
+    }
+
+    private String getOrganizationId(HttpServletRequest request) {
+
+        String organizationId = request.getParameter(ORGANIZATION_PARAMETER_NAME);
+
+        if (organizationId == null) {
+            organizationId = Organization.DEFAULT;
+        }
+
+        return organizationId;
     }
 
     private String remoteAddress(HttpServletRequest httpServerRequest) {
         String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;

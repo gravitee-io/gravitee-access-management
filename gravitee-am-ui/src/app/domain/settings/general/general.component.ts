@@ -109,7 +109,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
         if (res) {
           this.domainService.delete(this.domain.id).subscribe(response => {
             this.snackbarService.open('Domain ' + this.domain.name + ' deleted');
-            this.navbarService.notify({});
+            this.navbarService.notifyDomain({});
             this.router.navigate(['']);
           })
         }

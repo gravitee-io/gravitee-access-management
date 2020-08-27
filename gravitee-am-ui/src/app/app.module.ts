@@ -16,7 +16,7 @@
 import 'polyfills';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import {
@@ -70,6 +70,7 @@ import { ProviderFormComponent } from './domain/settings/providers/provider/form
 import { CreateRoleMapperComponent, ProviderRolesComponent } from 'app/domain/settings/providers/provider/roles/roles.component';
 import { ProviderService } from './services/provider.service';
 import { OrganizationService } from './services/organization.service';
+import {EnvironmentService} from "./services/environment.service";
 import { AuthService } from './services/auth.service';
 import { AppConfig } from '../config/app.config';
 import { LogoutComponent } from './logout/logout.component';
@@ -483,6 +484,7 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
     DialogService,
     SnackbarService,
     OrganizationService,
+    EnvironmentService,
     AuthService,
     CertificateService,
     RoleService,
@@ -552,7 +554,13 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,
       multi: true
-    }
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initCurrentUser,
+      multi: true,
+      deps: [AuthService]
+    },
   ],
   entryComponents: [
     ConfirmComponent,
@@ -576,3 +584,11 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+
+export function initCurrentUser(authService: AuthService): () => Promise<any> {
+  return (): Promise<any> => {
+    return authService.userInfo()
+      .toPromise()
+      .catch(reason => null);
+  };
+}

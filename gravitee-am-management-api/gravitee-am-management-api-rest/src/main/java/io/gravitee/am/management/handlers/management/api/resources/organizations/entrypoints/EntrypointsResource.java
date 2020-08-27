@@ -58,7 +58,7 @@ public class EntrypointsResource extends AbstractResource {
             notes = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
                     "Each returned entrypoint is filtered and contains only basic information such as id and name.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List all the entrypoints", response = Domain.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "List all the entrypoints", response = Entrypoint.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,

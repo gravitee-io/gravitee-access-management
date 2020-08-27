@@ -21,10 +21,8 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.IdentityProviderMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
+import io.reactivex.*;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -55,6 +53,12 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     public Single<Set<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId) {
         return Observable.fromPublisher(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
                 .map(this::convert).collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Flowable<IdentityProvider> findAll(ReferenceType referenceType) {
+        return Flowable.fromPublisher(identitiesCollection.find(eq(FIELD_REFERENCE_TYPE, referenceType.name())))
+                .map(this::convert);
     }
 
     @Override
