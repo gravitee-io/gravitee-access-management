@@ -36,7 +36,7 @@ export class AuthGuard implements CanActivate {
     }
     // check if we need to load some data
     const requiredPerms = route.data.perms.only;
-    const userResult: Observable<any> = !this.authService.user() ? this.authService.userInfo() : of(this.authService.user());
+    const userResult: Observable<any> = !this.authService.isAuthenticated() ? this.authService.userInfo() : of(this.authService.user());
     let resourceResult: Observable<any> = of([]);
     if (!requiredPerms[0].startsWith('organization') && requiredPerms[0] !== 'domain_create') {
       // check if the authenticated user can navigate to the next route (domain settings or application settings)

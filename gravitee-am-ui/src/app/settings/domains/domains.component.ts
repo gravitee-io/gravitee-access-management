@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { AppConfig } from "../../../config/app.config";
-import { ActivatedRoute } from "@angular/router";
+import {Component, OnInit} from '@angular/core';
+import {AppConfig} from "../../../config/app.config";
+import {ActivatedRoute} from "@angular/router";
+import {EnvironmentService} from "../../services/environment.service";
 
 @Component({
   selector: 'app-domains',
@@ -26,10 +27,17 @@ export class DomainsComponent implements OnInit {
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
   domains = [];
+  hasEnv = false;
 
-  constructor(private route : ActivatedRoute) { }
+  constructor(private route : ActivatedRoute,
+              private environmentService: EnvironmentService) { }
 
   ngOnInit() {
+
+    if(this.environmentService.getCurrentEnvironment()){
+      this.hasEnv = true;
+    }
+
     this.domains = this.route.snapshot.data['domains'];
   }
 

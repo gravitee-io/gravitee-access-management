@@ -32,7 +32,7 @@
 
     <properties>
         <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
-        <test-container.version>1.15.0</test-container.version>
+        <test-container.version>1.15.1</test-container.version>
         <skip-repositories-tests>true</skip-repositories-tests>
     </properties>
 

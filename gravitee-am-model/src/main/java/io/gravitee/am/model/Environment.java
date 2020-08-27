@@ -28,6 +28,8 @@ public class Environment implements Resource{
 
     private String id;
 
+    private List<String> hrids;
+
     private String name;
 
     private String description;
@@ -110,5 +112,13 @@ public class Environment implements Resource{
 
     public void setOrganizationId(String organizationId) {
         this.organizationId = organizationId;
+    }
+
+    public List<String> getHrids() {
+        return hrids;
+    }
+
+    public void setHrids(List<String> hrids) {
+        this.hrids = hrids;
     }
 }

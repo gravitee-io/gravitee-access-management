@@ -16,13 +16,17 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.Form;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
@@ -34,18 +38,14 @@ import static org.junit.Assert.assertNull;
  */
 public class EnvironmentRepositoryTest extends AbstractManagementTest {
 
+    public static final String FIXED_REF_ID = "fixedRefId";
+
     @Autowired
     private EnvironmentRepository environmentRepository;
 
     @Test
     public void testFindById() {
-        Environment environment = new Environment();
-        environment.setName("testName");
-        environment.setDescription("testDescription");
-        environment.setCreatedAt(new Date());
-        environment.setUpdatedAt(environment.getUpdatedAt());
-        environment.setOrganizationId(UUID.randomUUID().toString());
-        environment.setDomainRestrictions(Arrays.asList("ValueDom1", "ValueDom2"));
+        Environment environment = buildEnv();
 
         // TODO: find another way to inject data in DB. Avoid to rely on class under test for that.
         Environment envCreated = environmentRepository.create(environment).blockingGet();
@@ -84,13 +84,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testUpdate() {
-        Environment env = new Environment();
-        env.setName("testName");
-        env.setDescription("testDescription");
-        env.setCreatedAt(new Date());
-        env.setUpdatedAt(env.getUpdatedAt());
-        env.setOrganizationId(UUID.randomUUID().toString());
-        env.setDomainRestrictions(Arrays.asList("ValueDom1", "ValueDom2"));
+        Environment env = buildEnv();
 
         Environment envCreated = environmentRepository.create(env).blockingGet();
 
@@ -128,5 +122,37 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         obs.assertNoValues();
 
         assertNull(environmentRepository.findById(envCreated.getId()).blockingGet());
+    }
+
+    @Test
+    public void testFindAllByReference() {
+        final int loop = 10;
+        for (int i = 0; i < loop; i++) {
+            final Environment environment = buildEnv();
+            environment.setOrganizationId(FIXED_REF_ID);
+            environmentRepository.create(environment).blockingGet();
+        }
+
+        for (int i = 0; i < loop; i++) {
+            // random ref id
+            environmentRepository.create(buildEnv()).blockingGet();
+        }
+
+        TestObserver<List<Environment>> testObserver = environmentRepository.findAll(FIXED_REF_ID).toList().test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(l -> l.size() == loop);
+        testObserver.assertValue(l -> l.stream().map(Environment::getId).distinct().count() == loop);
+    }
+
+    private Environment buildEnv() {
+        Environment env = new Environment();
+        env.setName("testName");
+        env.setDescription("testDescription");
+        env.setCreatedAt(new Date());
+        env.setUpdatedAt(env.getUpdatedAt());
+        env.setOrganizationId(UUID.randomUUID().toString());
+        env.setDomainRestrictions(Arrays.asList("ValueDom1", "ValueDom2"));
+        return env;
     }
 }

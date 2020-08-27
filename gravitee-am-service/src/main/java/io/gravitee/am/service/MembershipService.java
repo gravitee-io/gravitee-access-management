@@ -20,6 +20,7 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
+import io.gravitee.am.service.model.NewMembership;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -55,4 +56,24 @@ public interface MembershipService {
     default Completable delete(String membershipId) {
         return delete(membershipId, null);
     }
+
+    /**
+     * When adding membership to an application, some permissions are necessary on the application's domain.
+     * These permissions are available through the DOMAIN_USER.
+     * For convenience, to limit the number of actions an administrator must do to affect role on an application, the group or user will also inherit the DOMAIN_USER role on the application's domain.
+     *
+     * If the group or user already has a role on the domain, nothing is done.
+     *
+     * @see #addDomainUserRoleIfNecessary(String, String, String, NewMembership, User)
+     */
+    Completable addDomainUserRoleIfNecessary(String organizationId, String environmentId, String domainId, NewMembership newMembership, User principal);
+
+    /**
+     * When adding membership to a domain, some permissions are necessary on the domain's environment.
+     * These permissions are available through the ENVIRONMENT_USER.
+     * For convenience, to limit the number of actions an administrator must do to affect role on a domain, the group or user will also inherit the ENVIRONMENT_USER role on the domain's environment.
+     *
+     * If the group or user already has a role on the environment, nothing is done.
+     */
+    Completable addEnvironmentUserRoleIfNecessary(String organizationId, String environmentId, NewMembership newMembership, User principal);
 }

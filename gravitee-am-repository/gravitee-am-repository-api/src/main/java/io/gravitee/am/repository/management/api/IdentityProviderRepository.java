@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -30,6 +31,8 @@ import java.util.Set;
 public interface IdentityProviderRepository extends CrudRepository<IdentityProvider, String> {
 
     Single<Set<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId);
+
+    Flowable<IdentityProvider> findAll(ReferenceType referenceType);
 
     Single<Set<IdentityProvider>> findAll();
 

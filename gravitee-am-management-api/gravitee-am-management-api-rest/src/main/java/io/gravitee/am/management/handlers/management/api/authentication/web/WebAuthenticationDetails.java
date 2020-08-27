@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.web;
 
+import io.gravitee.am.model.Organization;
 import io.gravitee.common.http.HttpHeaders;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
+
+import static io.gravitee.am.management.handlers.management.api.authentication.controller.LoginController.ORGANIZATION_PARAMETER_NAME;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,16 +31,21 @@ public class WebAuthenticationDetails implements Serializable {
 
     private final String remoteAddress;
     private final String userAgent;
+    private String organizationId;
 
     /**
-     * Records the remote address and will also set the session Id if a session already
-     * exists (it won't create one).
+     * Records the remote address, user-agent and organization.
      *
      * @param request that the authentication request was received from
      */
     public WebAuthenticationDetails(HttpServletRequest request) {
         this.remoteAddress = remoteAddress(request);
-        userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+        this.userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+        this.organizationId = request.getParameter(ORGANIZATION_PARAMETER_NAME);
+
+        if (this.organizationId == null) {
+            this.organizationId = Organization.DEFAULT;
+        }
     }
 
     public String getUserAgent() {
@@ -46,6 +54,10 @@ public class WebAuthenticationDetails implements Serializable {
 
     public String getRemoteAddress() {
         return remoteAddress;
+    }
+
+    public String getOrganizationId() {
+        return organizationId;
     }
 
     @Override
@@ -62,7 +74,7 @@ public class WebAuthenticationDetails implements Serializable {
         String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;

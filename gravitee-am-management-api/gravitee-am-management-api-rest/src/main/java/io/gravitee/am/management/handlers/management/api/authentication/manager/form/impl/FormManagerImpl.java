@@ -53,29 +53,29 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
     private EventManager eventManager;
 
     @Autowired
-    private ITemplateResolver templateResolver;
+    private TemplateResolver templateResolver;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        String organizationId = Organization.DEFAULT;
-        logger.info("Register event listener for form events for organization {}", organizationId);
+    public void afterPropertiesSet() {
+        logger.info("Register event listener for form events");
         eventManager.subscribeForEvents(this, FormEvent.class);
 
-        logger.info("Initializing forms for organization {}", organizationId);
+        logger.info("Initializing forms");
 
-        formService.findAll(ReferenceType.ORGANIZATION, organizationId)
+        formService.findAll(ReferenceType.ORGANIZATION)
+                .toList()
                 .subscribe(
                         forms -> {
                             updateForms(forms);
-                            logger.info("Forms loaded for organization {}", organizationId);
+                            logger.info("Forms loaded");
                         },
-                        error -> logger.error("Unable to initialize forms for organization {}", organizationId, error));
+                        error -> logger.error("Unable to initialize forms", error));
     }
 
     @Override
     public void onEvent(Event<FormEvent, Payload> event) {
 
-        if (event.content().getReferenceType() == ReferenceType.ORGANIZATION && Organization.DEFAULT.equals(event.content().getReferenceId())) {
+        if (event.content().getReferenceType() == ReferenceType.ORGANIZATION && event.content().getReferenceId() != null) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:
@@ -90,7 +90,7 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
 
     private void updateForm(String formId, FormEvent formEvent) {
         final String eventType = formEvent.toString().toLowerCase();
-        logger.info("Organization {} has received {} form event for {}", Organization.DEFAULT, eventType, formId);
+        logger.info("Received {} form event for {}", eventType, formId);
         formService.findById(formId)
                 .subscribe(
                         form -> {
@@ -100,28 +100,28 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
                             } else {
                                 updateForms(Collections.singletonList(form));
                             }
-                            logger.info("Form {} {}d for organization {}", formId, eventType, Organization.DEFAULT);
+                            logger.info("Form {} {}d", formId, eventType);
                         },
-                        error -> logger.error("Unable to {} form for organization {}", eventType, Organization.DEFAULT, error),
+                        error -> logger.error("Unable to {} form {}", eventType, formId, error),
                         () -> logger.error("No form found with id {}", formId));
     }
 
     private void removeForm(String formId) {
-        logger.info("Organization {} has received form event, delete form {}", Organization.DEFAULT, formId);
+        logger.info("Received form event, delete form {}", formId);
         Form deletedForm = forms.remove(formId);
         if (deletedForm != null) {
-            ((TemplateResolver) templateResolver).removeForm(deletedForm.getTemplate());
+            templateResolver.removeForm(deletedForm);
         }
     }
 
     private void updateForms(List<Form> forms) {
         forms
                 .stream()
-                .filter(Form::isEnabled)
+                .filter(form -> form.getReferenceType() == ReferenceType.ORGANIZATION && form.isEnabled())
                 .forEach(form -> {
                     this.forms.put(form.getId(), form);
-                    ((TemplateResolver) templateResolver).addForm(form.getTemplate(), form.getContent());
-                    logger.info("Form {} loaded for organization {} " + (form.getClient() != null ? "and client {}" : ""), form.getTemplate(), Organization.DEFAULT, form.getClient());
+                    templateResolver.addForm(form);
+                    logger.info("Form {} loaded", form.getId());
                 });
     }
 }

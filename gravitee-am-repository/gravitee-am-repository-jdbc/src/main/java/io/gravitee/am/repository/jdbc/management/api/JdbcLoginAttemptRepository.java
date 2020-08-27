@@ -134,7 +134,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
                 .using(toJdbcEntity(item))
                 .fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
+        return monoToSingle(action).flatMap((i) -> loginAttemptRepository.findById(item.getId()).map(this::toEntity).toSingle())
                 .doOnError((error) -> LOGGER.error("unable to create loginAttempt with id {}", item.getId(), error));
     }
 

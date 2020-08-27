@@ -27,6 +27,8 @@ import java.util.Objects;
  */
 public class NewOrganization {
 
+    private List<String> hrids;
+
     @NotNull
     @Size(min = 1)
     private String name;
@@ -80,5 +82,13 @@ public class NewOrganization {
                 ", description='" + description + '\'' +
                 ", domain restrictions='" + domainRestrictions + '\'' +
                 '}';
+    }
+
+    public List<String> getHrids() {
+        return hrids;
+    }
+
+    public void setHrids(List<String> hrids) {
+        this.hrids = hrids;
     }
 }

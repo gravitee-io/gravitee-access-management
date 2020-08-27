@@ -46,6 +46,8 @@ public interface UserService {
 
     Maybe<User> findById(String id);
 
+    Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewUser newUser);
+
     Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> create(String domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);

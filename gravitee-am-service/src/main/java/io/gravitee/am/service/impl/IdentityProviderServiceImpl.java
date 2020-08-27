@@ -38,6 +38,7 @@ import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.IdentityProviderAuditBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -112,13 +113,19 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Single<List<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId) {
-        LOGGER.debug("Find identity providers by {}}: {}", referenceType, referenceId);
+        LOGGER.debug("Find identity providers by {}: {}", referenceType, referenceId);
         return identityProviderRepository.findAll(referenceType, referenceId)
                 .map(identityProviders -> (List<IdentityProvider>) new ArrayList<>(identityProviders))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find identity providers by domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find identity providers by " + referenceType.name(), ex));
                 });
+    }
+
+    @Override
+    public Flowable<IdentityProvider> findAll(ReferenceType referenceType) {
+        LOGGER.debug("Find identity providers by type {}", referenceType);
+        return identityProviderRepository.findAll(referenceType);
     }
 
     @Override

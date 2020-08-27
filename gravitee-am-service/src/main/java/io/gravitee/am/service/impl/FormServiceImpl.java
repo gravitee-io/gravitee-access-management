@@ -93,6 +93,12 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
+    public Flowable<Form> findAll(ReferenceType referenceType) {
+        LOGGER.debug("Find form by type {}", referenceType);
+        return formRepository.findAll(referenceType);
+    }
+
+    @Override
     public Single<List<Form>> findByDomain(String domain) {
         return findAll(ReferenceType.DOMAIN, domain);
     }

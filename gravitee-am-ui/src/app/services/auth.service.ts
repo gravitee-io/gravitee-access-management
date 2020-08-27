@@ -1,4 +1,4 @@
-import {map} from 'rxjs/operators';
+import {flatMap, map} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -18,6 +18,8 @@ import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {BehaviorSubject, Observable, Subject} from 'rxjs';
 import {AppConfig} from '../../config/app.config';
+import {EnvironmentService} from "./environment.service";
+import {NavbarService} from "../components/navbar/navbar.service";
 
 @Injectable()
 export class AuthService {
@@ -32,7 +34,8 @@ export class AuthService {
   private subject = new Subject();
   notifyObservable$ = this.subject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient,
+              private environmentService: EnvironmentService) {
     this.domainPermissionsObservable.subscribe(permissions => this.domainPermissions = permissions);
     this.applicationPermissionsObservable.subscribe(permissions => this.applicationPermissions = permissions);
   }
@@ -43,10 +46,20 @@ export class AuthService {
   }
 
   userInfo(): Observable<any> {
-    return this.http.get<any>(this.userInfoUrl).pipe(map(user => {
-      this.setUser(user);
-      return user;
-    }));
+    return this.http.get<any>(this.userInfoUrl).pipe(
+      map(user => {
+        this.setUser(user);
+        return this.currentUser;
+      }),
+      flatMap(user => {
+        return this.environmentService.getAllEnvironments().pipe(map(environments => {
+          // For now the selected environment is the first from the list but could be changed in favor of a 'last env' coming from user's preferences.
+          if(environments && environments.length >= 1) {
+            this.environmentService.setCurrentEnvironment(environments[0]);
+          }
+          return this.currentUser;
+        }))
+      }));
   }
 
   setUser(user: any) {

@@ -47,7 +47,7 @@
 
         <dozer.version>6.5.0</dozer.version>
 
-        <testcontainers.version>1.15.0</testcontainers.version>
+        <testcontainers.version>1.15.1</testcontainers.version>
         <liquibase.version>3.8.0</liquibase.version>
         <liquibase-slf4j.version>2.0.0</liquibase-slf4j.version>
 

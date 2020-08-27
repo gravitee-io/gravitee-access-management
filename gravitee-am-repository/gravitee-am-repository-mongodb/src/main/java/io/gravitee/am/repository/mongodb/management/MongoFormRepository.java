@@ -21,10 +21,7 @@ import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.FormMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -57,6 +54,11 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     @Override
     public Single<List<Form>> findAll(ReferenceType referenceType, String referenceId) {
         return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert).collect(ArrayList::new, List::add);
+    }
+
+    @Override
+    public Flowable<Form> findAll(ReferenceType referenceType) {
+        return Flowable.fromPublisher(formsCollection.find(eq(FIELD_REFERENCE_TYPE, referenceType.name()))).map(this::convert);
     }
 
     @Override

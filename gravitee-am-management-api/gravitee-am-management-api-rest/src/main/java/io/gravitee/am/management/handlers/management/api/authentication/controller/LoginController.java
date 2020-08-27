@@ -30,11 +30,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.View;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.QueryParam;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,6 +51,8 @@ import static io.gravitee.am.management.handlers.management.api.authentication.p
  */
 @Controller
 public class LoginController {
+
+    public static final String ORGANIZATION_PARAMETER_NAME = "org";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
     private static final String LOGIN_VIEW = "login";
@@ -74,8 +79,7 @@ public class LoginController {
     private ReCaptchaService reCaptchaService;
 
     @RequestMapping(value = "/login")
-    public ModelAndView login(HttpServletRequest request) {
-        String organizationId = Organization.DEFAULT;
+    public ModelAndView login(HttpServletRequest request, @RequestParam(value=ORGANIZATION_PARAMETER_NAME, defaultValue = "DEFAULT") String organizationId) {
         Map<String, Object> params = new HashMap<>();
 
         // fetch domain social identity providers
@@ -84,6 +88,7 @@ public class LoginController {
             socialProviders = organizationService.findById(organizationId).map(Organization::getIdentities).blockingGet()
                     .stream()
                     .map(identity -> identityProviderManager.getIdentityProvider(identity))
+                    .filter(Objects::nonNull)
                     .filter(IdentityProvider::isExternal)
                     .collect(Collectors.toList());
         } catch (Exception ex) {
@@ -115,8 +120,9 @@ public class LoginController {
 
         params.put("reCaptchaEnabled", reCaptchaService.isEnabled());
         params.put("reCaptchaSiteKey", reCaptchaService.getSiteKey());
+        params.put("org", organizationId);
 
-        return new ModelAndView(LOGIN_VIEW, params);
+        return new ModelAndView(organizationId + "#" + LOGIN_VIEW, params);
     }
 
     @RequestMapping(value = "/login/callback")

@@ -70,7 +70,7 @@ public class CompleteProfileController {
         model.put("user", endUser);
         model.put("privacyPolicyURI", privacyPolicyURI);
 
-        return new ModelAndView(Template.COMPLETE_PROFILE.template(), model);
+        return new ModelAndView(endUser.getReferenceId() + "#" + Template.COMPLETE_PROFILE.template(), model);
     }
 
     @RequestMapping(value = "/completeProfile", method = RequestMethod.POST)

@@ -86,7 +86,7 @@ public abstract class AbstractResource {
                 of(ReferenceType.ORGANIZATION, organizationId, permission, acls)));
     }
 
-    protected Completable checkPermissions(PermissionAcls permissionAcls) {
+    private Completable checkPermissions(PermissionAcls permissionAcls) {
 
         return hasPermission(getAuthenticatedUser(), permissionAcls)
                 .flatMapCompletable(this::checkPermission);
@@ -168,6 +168,4 @@ public abstract class AbstractResource {
 
         return Completable.complete();
     }
-
-
 }

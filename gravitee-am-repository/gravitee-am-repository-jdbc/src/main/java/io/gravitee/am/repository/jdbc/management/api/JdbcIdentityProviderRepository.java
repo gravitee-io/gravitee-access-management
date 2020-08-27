@@ -23,6 +23,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcIdentityProvider;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringIdentityProviderRepository;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +77,14 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
                 .map(list -> list.stream().collect(Collectors.toSet()))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all IdentityProvider for referenceId '{}' and referenceType '{}'",
                         referenceId, referenceType, error));
+    }
+
+    @Override
+    public Flowable<IdentityProvider> findAll(ReferenceType referenceType) {
+        LOGGER.debug("findAll()");
+        return this.identityProviderRepository.findAll(referenceType.name())
+                .map(this::toEntity)
+                .doOnError(error -> LOGGER.error("Unable to retrieve all IdentityProviders", error));
     }
 
     @Override

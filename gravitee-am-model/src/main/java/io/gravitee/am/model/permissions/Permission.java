@@ -43,7 +43,6 @@ public enum Permission {
     ORGANIZATION_MEMBER(ReferenceType.ORGANIZATION),
 
     ENVIRONMENT(ReferenceType.PLATFORM, ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT),
-    ENVIRONMENT_SETTINGS(ReferenceType.ENVIRONMENT),
 
     DOMAIN(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN),
     DOMAIN_SETTINGS(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN),
