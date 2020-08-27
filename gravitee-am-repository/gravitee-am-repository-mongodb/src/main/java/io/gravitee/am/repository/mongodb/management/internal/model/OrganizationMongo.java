@@ -28,6 +28,8 @@ public class OrganizationMongo {
 
 	private String id;
 
+	private List<String> hrids;
+
 	private String name;
 
 	private String description;
@@ -117,5 +119,13 @@ public class OrganizationMongo {
 
 	public void setIdentities(List<String> identities) {
 		this.identities = identities;
+	}
+
+	public void setHrids(List<String> hrids) {
+		this.hrids = hrids;
+	}
+
+	public List<String> getHrids() {
+		return hrids;
 	}
 }

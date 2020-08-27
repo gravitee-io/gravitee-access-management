@@ -16,14 +16,17 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Form;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.exception.FormAlreadyExistsException;
 import io.gravitee.am.service.impl.FormServiceImpl;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -84,13 +87,8 @@ public class FormServiceTest {
 
         TestObserver<List<Form>> testObserver = formService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
         testObserver.assertComplete().assertNoErrors();
-        testObserver.assertValue(forms -> forms != null && forms.size() == 2 && forms.stream().filter(
-                form -> form.getReferenceId().equals(DOMAIN) &&
-                        form.getClient().equals(targetUid) &&
-                        !form.getId().equals("templateId") &&
-                        Arrays.asList("login", "error").contains(form.getTemplate()) &&
-                        form.getContent().equals("formContent") &&
-                        form.getAssets().equals("formAsset")
+        testObserver.assertValue(forms -> forms.size() == 2 && forms.stream().filter(
+                form -> form.getReferenceId().equals(DOMAIN) && form.getClient().equals(targetUid) && !form.getId().equals("templateId") && Arrays.asList("login", "error").contains(form.getTemplate()) && form.getContent().equals("formContent") && form.getAssets().equals("formAsset")
                 ).count() == 2
         );
     }
@@ -117,5 +115,42 @@ public class FormServiceTest {
         TestObserver<List<Form>> testObserver = formService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
         testObserver.assertNotComplete();
         testObserver.assertError(FormAlreadyExistsException.class);
+    }
+
+    @Test
+    public void shouldFindAll() {
+
+        Form form = new Form();
+        when(formRepository.findAll(ReferenceType.ORGANIZATION)).thenReturn(Flowable.just(form));
+
+        TestSubscriber<Form> obs = formService.findAll(ReferenceType.ORGANIZATION).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(form);
+    }
+
+    @Test
+    public void shouldFindAll_noForm() {
+
+        when(formRepository.findAll(ReferenceType.ORGANIZATION)).thenReturn(Flowable.empty());
+
+        TestSubscriber<Form> obs = formService.findAll(ReferenceType.ORGANIZATION).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertNoErrors();
+        obs.assertComplete();
+        obs.assertNoValues();
+    }
+
+    @Test
+    public void shouldFindAll_TechnicalException() {
+
+        when(formRepository.findAll(ReferenceType.ORGANIZATION)).thenReturn(Flowable.error(TechnicalException::new));
+
+        TestSubscriber<Form> obs = formService.findAll(ReferenceType.ORGANIZATION).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertError(TechnicalException.class);
     }
 }

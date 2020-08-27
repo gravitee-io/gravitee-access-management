@@ -30,9 +30,11 @@ import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.EnvironmentServiceImpl;
 import io.gravitee.am.service.model.NewEnvironment;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -103,6 +105,43 @@ public class EnvironmentServiceTest {
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID, ORGANIZATION_ID).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertError(TechnicalException.class);
+    }
+
+    @Test
+    public void shouldFindAll() {
+
+        Environment environment = new Environment();
+        when(environmentRepository.findAll(ORGANIZATION_ID)).thenReturn(Flowable.just(environment));
+
+        TestSubscriber<Environment> obs = cut.findAll(ORGANIZATION_ID).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(environment);
+    }
+
+    @Test
+    public void shouldFindAll_noEnvironment() {
+
+        when(environmentRepository.findAll(ORGANIZATION_ID)).thenReturn(Flowable.empty());
+
+        TestSubscriber<Environment> obs = cut.findAll(ORGANIZATION_ID).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertNoErrors();
+        obs.assertComplete();
+        obs.assertNoValues();
+    }
+
+    @Test
+    public void shouldFindAll_TechnicalException() {
+
+        when(environmentRepository.findAll(ORGANIZATION_ID)).thenReturn(Flowable.error(TechnicalException::new));
+
+        TestSubscriber<Environment> obs = cut.findAll(ORGANIZATION_ID).test();
 
         obs.awaitTerminalEvent();
         obs.assertError(TechnicalException.class);

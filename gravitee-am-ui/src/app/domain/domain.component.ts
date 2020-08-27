@@ -44,7 +44,7 @@ export class DomainComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.domainService.domainUpdated$.subscribe(domain => this.domain = domain);
     setTimeout(() => {
-      this.navbarService.notify(this.domain);
+      this.navbarService.notifyDomain(this.domain);
     });
     this.initBreadcrumb();
     // redirect user according to its permissions

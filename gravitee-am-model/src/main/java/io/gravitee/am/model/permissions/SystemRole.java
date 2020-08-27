@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.permissions;
 
+import java.util.Arrays;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -34,5 +36,9 @@ public enum SystemRole {
 
     public boolean isInternalOnly() {
         return internalOnly;
+    }
+
+    public static SystemRole fromName(String name) {
+        return Arrays.stream(values()).filter(e -> e.name().equalsIgnoreCase(name)).findFirst().orElse(null);
     }
 }

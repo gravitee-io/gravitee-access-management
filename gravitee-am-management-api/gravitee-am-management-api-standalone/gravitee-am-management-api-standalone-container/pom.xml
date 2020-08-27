@@ -39,6 +39,13 @@
     </build>
 
     <dependencies>
+        <!-- GraviteeSource dependencies -->
+        <dependency>
+            <groupId>com.graviteesource.license</groupId>
+            <artifactId>gravitee-license-node</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+
         <!-- Gravitee.io -->
         <dependency>
             <groupId>io.gravitee.node</groupId>
@@ -58,6 +65,11 @@
         <dependency>
             <groupId>io.gravitee.plugin</groupId>
             <artifactId>gravitee-plugin-alert</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-cockpit</artifactId>
         </dependency>
 
         <dependency>
@@ -138,4 +150,19 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>ee</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <!-- GraviteeSource dependencies -->
+                <dependency>
+                    <groupId>com.graviteesource.license</groupId>
+                    <artifactId>gravitee-license-node</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

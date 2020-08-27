@@ -24,7 +24,7 @@ if (environment.production) {
   enableProdMode();
 }
 
-const constants = Observable.create(observer => {
+const constants = new Observable(observer => {
   fetch('constants.json', {method: 'get'}).then(response => {
     response.json().then(data => {
       observer.next(data);
@@ -33,7 +33,7 @@ const constants = Observable.create(observer => {
   })
 });
 
-const build = Observable.create(observer => {
+const build = new Observable(observer => {
   fetch('build.json', {method: 'get'}).then(response => {
     response.json().then(data => {
       observer.next(data);
@@ -42,10 +42,10 @@ const build = Observable.create(observer => {
   })
 });
 
-forkJoin(constants, build)
+forkJoin([constants, build])
   .subscribe((response) => {
-    const DEFAULT_ORGANIZATION = 'DEFAULT';
-    const DEFAULT_ENV = 'DEFAULT';
+    const DEFAULT_ORGANIZATION = ':organizationId';
+    const DEFAULT_ENV = ':environmentId';
     const PORTAL_TITLE = 'Access Management';
     const config = {};
     Object.keys(response[0]).forEach((key) => config[key] = response[0][key]);
