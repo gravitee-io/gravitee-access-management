@@ -25,8 +25,9 @@ import {NavbarService} from "../components/navbar/navbar.service";
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  readonly: boolean;
+  readonly: boolean = true;
   isLoading = true;
+  hasEnv = true;
 
   constructor(private router: Router,
               private domainService: DomainService,
@@ -34,15 +35,22 @@ export class HomeComponent implements OnInit {
               private navbarService: NavbarService) {}
 
   ngOnInit() {
-    // redirect user to the its domain, if any
-    this.domainService.list().subscribe(response => {
-      if (response && response.length > 0) {
-        this.router.navigate(['/domains', response[0].id]);
-      } else {
-        this.isLoading = false;
-        this.readonly = !this.authService.hasPermissions(['domain_create']);
-        this.navbarService.notify({});
-      }
-    });
+
+    if (this.authService.user().env) {
+
+      // redirect user to the its domain, if any
+      this.domainService.list().subscribe(response => {
+        if (response && response.length > 0) {
+          this.router.navigate(['/domains', response[0].id]);
+        } else {
+          this.isLoading = false;
+          this.readonly = !this.authService.hasPermissions(['domain_create']);
+          this.navbarService.notify({});
+        }
+      });
+    } else {
+      this.isLoading = false;
+      this.hasEnv = false;
+    }
   }
 }

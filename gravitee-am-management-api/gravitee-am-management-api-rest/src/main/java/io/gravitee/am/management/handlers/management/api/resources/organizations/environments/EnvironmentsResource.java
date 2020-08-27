@@ -15,11 +15,27 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.model.*;
+import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.model.NewEnvironment;
+import io.gravitee.common.http.MediaType;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.ws.rs.Path;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
+
+import static io.gravitee.am.management.service.permissions.Permissions.of;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -29,6 +45,28 @@ public class EnvironmentsResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
+
+    @Autowired
+    private EnvironmentService environmentService;
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Create or update an environment",
+            notes = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
+                    "Each returned environment is filtered and contains only basic information such as id and name.")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "List all the environments of the organization", response = Environment.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void list(
+            @PathParam("organizationId") String organizationId,
+            @Suspended final AsyncResponse response) {
+
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ENVIRONMENT, Acl.LIST)
+                .andThen(environmentService.findAll(organizationId))
+                .toList()
+                .subscribe(response::resume, response::resume);
+    }
 
     @Path("/{environmentId}")
     public EnvironmentResource getEnvironmentResource() {

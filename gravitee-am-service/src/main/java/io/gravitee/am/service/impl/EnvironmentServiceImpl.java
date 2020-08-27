@@ -27,6 +27,7 @@ import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.model.NewEnvironment;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.EnvironmentAuditBuilder;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -65,6 +66,13 @@ public class EnvironmentServiceImpl implements EnvironmentService {
         LOGGER.debug("Find environment by id: {}", id);
         return environmentRepository.findById(id, organizationId)
                 .switchIfEmpty(Single.error(new EnvironmentNotFoundException(id)));
+    }
+
+    @Override
+    public Flowable<Environment> findAll(String organizationId) {
+
+        LOGGER.debug("Find environments by organizationId: {}", organizationId);
+        return environmentRepository.findAll(organizationId);
     }
 
     @Override

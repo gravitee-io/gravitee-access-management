@@ -44,9 +44,6 @@ public class OrganizationResource extends AbstractResource {
     @Context
     private ResourceContext resourceContext;
 
-    @Autowired
-    private OrganizationService organizationService;
-
     @Path("environments")
     public EnvironmentsResource getEnvironmentsResource() {
         return resourceContext.getResource(EnvironmentsResource.class);

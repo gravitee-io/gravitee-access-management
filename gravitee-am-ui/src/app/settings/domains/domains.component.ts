@@ -16,6 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AppConfig } from "../../../config/app.config";
 import { ActivatedRoute } from "@angular/router";
+import {AuthService} from "../../services/auth.service";
 
 @Component({
   selector: 'app-domains',
@@ -26,10 +27,17 @@ export class DomainsComponent implements OnInit {
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
   domains = [];
+  hasEnv = false;
 
-  constructor(private route : ActivatedRoute) { }
+  constructor(private route : ActivatedRoute,
+              private authService: AuthService) { }
 
   ngOnInit() {
+
+    if(this.authService.user().env){
+      this.hasEnv = true;
+    }
+
     this.domains = this.route.snapshot.data['domains'];
   }
 

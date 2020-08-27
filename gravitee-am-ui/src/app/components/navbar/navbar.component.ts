@@ -68,7 +68,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   listDomains() {
-    this.domainService.list().subscribe(data => this.domains = data);
+    if(this.user.env) {
+      this.domainService.list().subscribe(data => this.domains = data);
+    }
   }
 
   goTo(routerLink) {
@@ -86,7 +88,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
 
   private initNavLinks() {
-    if (!this.canDisplay(['domain_create'])) {
+    if (!this.user.env || !this.canDisplay(['domain_create'])) {
       _.remove(this.navLinks, { href: '/domains/new' });
     }
     if (!this.canDisplay(['organization_settings_read'])) {

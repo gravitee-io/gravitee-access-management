@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
@@ -56,6 +57,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -487,9 +489,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMap(applicationRepository::create)
                 // create the owner
                 .flatMap(application1 -> {
-                    if (principal == null) {
+                    if (principal == null || principal.getAdditionalInformation() == null || StringUtils.isEmpty(principal.getAdditionalInformation().get(Claims.organization))) {
+                        // There is no principal or we can not find the organization the user is attached to. Can't assign role.
                         return Single.just(application1);
                     }
+
                     return roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)
                             .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the application, owner role does not exist")))
                             .flatMap(role -> {
@@ -500,8 +504,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 membership.setReferenceId(application1.getId());
                                 membership.setReferenceType(ReferenceType.APPLICATION);
                                 membership.setRoleId(role.getId());
-                                // FIXME: propagate organizationId.
-                                return membershipService.addOrUpdate("DEFAULT", membership)
+                                return membershipService.addOrUpdate((String) principal.getAdditionalInformation().get(Claims.organization), membership)
                                         .map(__ -> domain);
                             });
                 })

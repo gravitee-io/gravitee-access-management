@@ -39,6 +39,13 @@
     </build>
 
     <dependencies>
+        <!-- GraviteeSource dependencies -->
+        <dependency>
+            <groupId>com.graviteesource.license</groupId>
+            <artifactId>gravitee-license-node</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+
         <!-- Gravitee.io -->
         <dependency>
             <groupId>io.gravitee.node</groupId>

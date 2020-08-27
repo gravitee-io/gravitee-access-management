@@ -16,7 +16,7 @@
 
 -->
 <div *ngIf="!isLoading" class="home-container">
-  <div class="home-content">
+  <div class="home-content" *ngIf="hasEnv">
     <div class="home-content-header">Integrate authentication and authorization to secure access for your applications and APIs.</div>
     <div class="home-content-description">
       Identity and Access Management Platform will let you create applications, register users and manage identity providers to provide centralize authentication, authorization and user management features.
@@ -24,6 +24,16 @@
     <div class="home-content-actions">
       <a mat-raised-button color="primary" [routerLink]="['/domains', 'new']" [disabled]="readonly">Create a Security Domain</a>
       <span *ngIf="readonly">There is not enough permission, ask for support or wait for invitation to collaborate.</span>
+    </div>
+  </div>
+
+  <div class="home-content" *ngIf="!hasEnv">
+    <div class="home-content-header">You don't have any environment yet!</div>
+    <div class="home-content-description">
+      Environment allows to define and isolate different parts of your organization such as <code>out of production</code>, <code>internal</code> or <code>public</code>. Once initialized, you will be able to create security domains there.
+    </div>
+    <div>
+      Don't know how to create such environment ? Have a look at <a href="https://gravitee.io/products/cockpit" target="_blank">https://gravitee.io/products/cockpit</a>
     </div>
   </div>
 </div>

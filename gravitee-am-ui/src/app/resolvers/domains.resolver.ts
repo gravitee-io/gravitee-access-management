@@ -17,13 +17,23 @@ import { Injectable } from '@angular/core';
 import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { DomainService } from "../services/domain.service";
+import {AuthService} from "../services/auth.service";
 
 @Injectable()
 export class DomainsResolver implements Resolve<any> {
 
-  constructor(private domainService: DomainService) { }
+  constructor(private domainService: DomainService,
+              private authService: AuthService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+
+    if(!this.authService.user().env){
+      return new Observable(subscriber => {
+        subscriber.next([]);
+        subscriber.complete()
+      });
+    }
+
     return this.domainService.list();
   }
 

@@ -1,4 +1,4 @@
-import {map} from 'rxjs/operators';
+import {flatMap, map} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -18,6 +18,7 @@ import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {BehaviorSubject, Observable, Subject} from 'rxjs';
 import {AppConfig} from '../../config/app.config';
+import {EnvironmentService} from "./environment.service";
 
 @Injectable()
 export class AuthService {
@@ -32,7 +33,7 @@ export class AuthService {
   private subject = new Subject();
   notifyObservable$ = this.subject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private environmentService: EnvironmentService) {
     this.domainPermissionsObservable.subscribe(permissions => this.domainPermissions = permissions);
     this.applicationPermissionsObservable.subscribe(permissions => this.applicationPermissions = permissions);
   }
@@ -43,10 +44,19 @@ export class AuthService {
   }
 
   userInfo(): Observable<any> {
-    return this.http.get<any>(this.userInfoUrl).pipe(map(user => {
-      this.setUser(user);
-      return user;
-    }));
+    return this.http.get<any>(this.userInfoUrl).pipe(
+      map(user => {
+        this.setUser(user);
+        return this.currentUser;
+      }),
+      flatMap(user => {
+        return this.environmentService.environment().pipe(map(environment => {
+          if(environment != null) {
+            this.currentUser.env = environment.id;
+          }
+          return this.currentUser;
+        }))
+      }));
   }
 
   setUser(user: any) {

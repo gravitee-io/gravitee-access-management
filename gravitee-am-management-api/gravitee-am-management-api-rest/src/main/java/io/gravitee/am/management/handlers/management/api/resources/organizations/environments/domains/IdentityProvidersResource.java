@@ -82,9 +82,7 @@ public class IdentityProvidersResource extends AbstractResource {
             @QueryParam("userProvider") boolean userProvider,
             @Suspended final AsyncResponse response) {
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.findByDomain(domain))
@@ -120,9 +118,7 @@ public class IdentityProvidersResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkPermissions(or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE),
-                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE),
-                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)))
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))

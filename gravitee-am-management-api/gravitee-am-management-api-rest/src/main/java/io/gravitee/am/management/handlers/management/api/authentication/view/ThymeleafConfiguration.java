@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.view;
 
+import io.gravitee.am.model.Organization;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.ViewResolver;
@@ -39,7 +40,6 @@ public class ThymeleafConfiguration {
         TemplateResolver overrideTemplateResolver = (TemplateResolver) overrideTemplateResolver();
         overrideTemplateResolver.setTemplateEngine(templateEngine);
         templateEngine.setTemplateResolver(overrideTemplateResolver);
-        templateEngine.addTemplateResolver(defaultTemplateResolver());
         return templateEngine;
     }
 
@@ -55,12 +55,5 @@ public class ThymeleafConfiguration {
     public ITemplateResolver overrideTemplateResolver() {
         return new TemplateResolver();
 
-    }
-    private ITemplateResolver defaultTemplateResolver() {
-        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
-        templateResolver.setPrefix("/views/");
-        templateResolver.setSuffix(".html");
-        templateResolver.setTemplateMode("HTML");
-        return templateResolver;
     }
 }

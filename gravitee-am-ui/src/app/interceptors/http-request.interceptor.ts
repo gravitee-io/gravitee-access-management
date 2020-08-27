@@ -34,9 +34,20 @@ export class HttpRequestInterceptor implements HttpInterceptor {
               private router: Router) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+
+    let orgId = 'DEFAULT';
+    let envId = 'DEFAULT';
+
+    if(this.authService.isAuthenticated()) {
+      let user = this.authService.user();
+      orgId = user.org;
+      envId = user.env;
+    }
+
     request = request.clone({
       withCredentials: true,
-      setHeaders: this.xsrfToken ? { 'X-Xsrf-Token': [ this.xsrfToken ]} : {}
+      setHeaders: this.xsrfToken ? { 'X-Xsrf-Token': [ this.xsrfToken ]} : {},
+      url: request.url.replace(':organizationId', orgId).replace(':environmentId', envId),
     });
 
     return next.handle(request).pipe(tap((event: HttpEvent<any>) => {

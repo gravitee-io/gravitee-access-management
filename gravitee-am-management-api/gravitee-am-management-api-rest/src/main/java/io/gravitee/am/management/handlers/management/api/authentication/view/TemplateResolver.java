@@ -15,9 +15,15 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.view;
 
+import io.gravitee.am.model.Form;
+import io.gravitee.am.model.Organization;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templateresolver.AbstractConfigurableTemplateResolver;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.templateresolver.ITemplateResolver;
 import org.thymeleaf.templateresource.ITemplateResource;
 import org.thymeleaf.templateresource.StringTemplateResource;
 
@@ -33,28 +39,48 @@ import java.util.concurrent.ConcurrentMap;
 public class TemplateResolver extends AbstractConfigurableTemplateResolver {
 
     private ConcurrentMap<String, StringTemplateResource> templates = new ConcurrentHashMap<>();
-
+    private ITemplateResolver defaultTemplateResolver = defaultTemplateResolver();
     private TemplateEngine templateEngine;
 
     @Override
     protected ITemplateResource computeTemplateResource(IEngineConfiguration configuration, String ownerTemplate, String template, String resourceName, String characterEncoding, Map<String, Object> templateResolutionAttributes) {
-        if (templates.containsKey(resourceName)) {
-            return templates.get(resourceName);
+
+        if (templates.containsKey(template)) {
+            return templates.get(template);
         }
-        return null;
+
+        String fallbackTemplate = template.replaceFirst(".*#", "");
+        return defaultTemplateResolver.resolveTemplate(configuration, ownerTemplate, fallbackTemplate, templateResolutionAttributes).getTemplateResource();
     }
 
-    public void addForm(String templateName, String templateContent) {
-        templates.put(templateName, new StringTemplateResource(templateContent));
+    public void addForm(Form form) {
+        templates.put(getTemplateKey(form), new StringTemplateResource(form.getContent()));
         templateEngine.getCacheManager().clearAllCaches();
     }
 
-    public void removeForm(String templateName) {
-        templates.remove(templateName);
+    public void removeForm(Form form) {
+        templates.remove(getTemplateKey(form));
         templateEngine.getCacheManager().clearAllCaches();
     }
 
     public void setTemplateEngine(TemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
+    }
+
+    private String getTemplateKey(Form form) {
+        return getTemplateKey(form.getReferenceId(), form.getTemplate());
+    }
+
+    private String getTemplateKey(String organizationId, String template) {
+
+        return organizationId + "#" + template;
+    }
+
+    private ITemplateResolver defaultTemplateResolver() {
+        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+        templateResolver.setPrefix("/views/");
+        templateResolver.setSuffix(".html");
+        templateResolver.setTemplateMode("HTML");
+        return templateResolver;
     }
 }

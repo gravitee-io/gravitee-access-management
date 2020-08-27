@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
+import { TestBed, inject } from '@angular/core/testing';
 
-import io.gravitee.am.model.Environment;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import { EnvironmentService } from './environment.service';
 
-/**
- * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface EnvironmentRepository extends CrudRepository<Environment, String> {
+describe('EnvironmentService', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [EnvironmentService]
+    });
+  });
 
-    Maybe<Environment> findById(String id, String organizationId);
-
-    Flowable<Environment> findAll(String organizationId);
-
-    Single<Long> count();
-}
+  it('should ...', inject([EnvironmentService], (service: EnvironmentService) => {
+    expect(service).toBeTruthy();
+  }));
+});
