@@ -29,6 +29,8 @@ public class Organization implements Resource{
 
     private String id;
 
+    private List<String> hrids;
+
     private String name;
 
     private String description;
@@ -111,5 +113,13 @@ public class Organization implements Resource{
 
     public void setIdentities(List<String> identities) {
         this.identities = identities;
+    }
+
+    public List<String> getHrids() {
+        return hrids;
+    }
+
+    public void setHrids(List<String> hrids) {
+        this.hrids = hrids;
     }
 }

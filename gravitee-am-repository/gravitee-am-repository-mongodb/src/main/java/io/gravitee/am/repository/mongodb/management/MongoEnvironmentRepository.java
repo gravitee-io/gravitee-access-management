@@ -94,6 +94,7 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
 
         Environment environment = new Environment();
         environment.setId(environmentMongo.getId());
+        environment.setHrids(environmentMongo.getHrids());
         environment.setDescription(environmentMongo.getDescription());
         environment.setName(environmentMongo.getName());
         environment.setOrganizationId(environmentMongo.getOrganizationId());
@@ -108,6 +109,7 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
 
         EnvironmentMongo environmentMongo = new EnvironmentMongo();
         environmentMongo.setId(environment.getId());
+        environmentMongo.setHrids(environment.getHrids());
         environmentMongo.setDescription(environment.getDescription());
         environmentMongo.setName(environment.getName());
         environmentMongo.setOrganizationId(environment.getOrganizationId());

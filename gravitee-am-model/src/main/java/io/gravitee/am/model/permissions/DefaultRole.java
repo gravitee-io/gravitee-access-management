@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.permissions;
 
+import java.util.Arrays;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -22,6 +24,10 @@ package io.gravitee.am.model.permissions;
 public enum DefaultRole {
     ORGANIZATION_OWNER, ORGANIZATION_USER,
     DOMAIN_OWNER, DOMAIN_USER,
-    ENVIRONMENT_OWNER,
+    ENVIRONMENT_OWNER, ENVIRONMENT_USER,
     APPLICATION_OWNER, APPLICATION_USER;
+
+    public static DefaultRole fromName(String name) {
+        return Arrays.stream(values()).filter(e -> e.name().equalsIgnoreCase(name)).findFirst().orElse(null);
+    }
 }

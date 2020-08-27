@@ -27,7 +27,6 @@ import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.model.NewEnvironment;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.EnvironmentAuditBuilder;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -73,6 +72,7 @@ public class EnvironmentServiceImpl implements EnvironmentService {
 
         Environment environment = new Environment();
         environment.setId(Environment.DEFAULT);
+        environment.setHrids(Collections.singletonList(Environment.DEFAULT.toLowerCase()));
         environment.setName("Default environment");
         environment.setDescription("Default environment");
         environment.setOrganizationId(Organization.DEFAULT);
@@ -87,7 +87,6 @@ public class EnvironmentServiceImpl implements EnvironmentService {
     @Override
     public Single<Environment> createOrUpdate(String organizationId, String environmentId, NewEnvironment newEnvironment, User byUser) {
 
-
         return environmentRepository.findById(environmentId, organizationId)
                 .flatMap(environment -> {
                     environment.setName(newEnvironment.getName());
@@ -100,6 +99,7 @@ public class EnvironmentServiceImpl implements EnvironmentService {
                         .map(organization -> {
                             Environment toCreate = new Environment();
                             toCreate.setId(environmentId);
+                            toCreate.setHrids(newEnvironment.getHrids());
                             toCreate.setName(newEnvironment.getName());
                             toCreate.setDescription(newEnvironment.getDescription());
                             toCreate.setOrganizationId(organization.getId());

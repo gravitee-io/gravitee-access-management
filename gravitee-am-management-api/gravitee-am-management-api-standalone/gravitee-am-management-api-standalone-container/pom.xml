@@ -61,6 +61,11 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-cockpit</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.management</groupId>
             <artifactId>gravitee-am-management-api-service</artifactId>
             <version>${project.version}</version>
@@ -138,4 +143,19 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>ee</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <!-- GraviteeSource dependencies -->
+                <dependency>
+                    <groupId>com.graviteesource.license</groupId>
+                    <artifactId>gravitee-license-node</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

@@ -17,6 +17,7 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.service.AuditService;
@@ -78,6 +79,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         Organization organization = new Organization();
         organization.setId(Organization.DEFAULT);
+        organization.setHrids(Collections.singletonList(Organization.DEFAULT.toLowerCase()));
         organization.setName("Default organization");
         organization.setDescription("Default organization");
         organization.setDomainRestrictions(Collections.emptyList());
@@ -103,6 +105,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .switchIfEmpty(Single.defer(() -> {
                     Organization toCreate = new Organization();
                     toCreate.setId(organizationId);
+                    toCreate.setHrids(newOrganization.getHrids());
                     toCreate.setName(newOrganization.getName());
                     toCreate.setDescription(newOrganization.getDescription());
                     toCreate.setDomainRestrictions(newOrganization.getDomainRestrictions());

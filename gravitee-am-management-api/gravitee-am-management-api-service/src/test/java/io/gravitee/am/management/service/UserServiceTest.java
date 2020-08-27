@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
@@ -44,6 +45,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -281,10 +284,10 @@ public class UserServiceTest {
         verify(commonUserService).create(argument.capture());
 
         Assert.assertNotNull(argument.getValue().getRegistrationUserUri());
-        Assert.assertEquals("http://localhost:8092/test/confirmRegistration", argument.getValue().getRegistrationUserUri());
+        assertEquals("http://localhost:8092/test/confirmRegistration", argument.getValue().getRegistrationUserUri());
 
         Assert.assertNotNull(argument.getValue().getRegistrationAccessToken());
-        Assert.assertEquals("token", argument.getValue().getRegistrationAccessToken());
+        assertEquals("token", argument.getValue().getRegistrationAccessToken());
     }
 
     @Test
@@ -331,10 +334,10 @@ public class UserServiceTest {
         verify(commonUserService).create(argument.capture());
 
         Assert.assertNotNull(argument.getValue().getRegistrationUserUri());
-        Assert.assertEquals("http://localhost:8092/test/confirmRegistration", argument.getValue().getRegistrationUserUri());
+        assertEquals("http://localhost:8092/test/confirmRegistration", argument.getValue().getRegistrationUserUri());
 
         Assert.assertNotNull(argument.getValue().getRegistrationAccessToken());
-        Assert.assertEquals("token", argument.getValue().getRegistrationAccessToken());
+        assertEquals("token", argument.getValue().getRegistrationAccessToken());
     }
 
     @Test
@@ -540,5 +543,119 @@ public class UserServiceTest {
         testObserver.assertNotComplete();
         testObserver.assertError(RoleNotFoundException.class);
         verify(commonUserService, never()).update(any());
+    }
+
+    @Test
+    public void shouldUpdateUser_byExternalId() {
+
+        NewUser newUser = new NewUser();
+        newUser.setExternalId("user#1");
+        newUser.setSource("source");
+        newUser.setUsername("Username");
+        newUser.setFirstName("Firstname");
+        newUser.setLastName("Lastname");
+        newUser.setEmail("email@gravitee.io");
+
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("info1", "value1");
+        additionalInformation.put("info2", "value2");
+        additionalInformation.put(StandardClaims.PICTURE, "https://gravitee.io/my-picture");
+        newUser.setAdditionalInformation(additionalInformation);
+
+        User user = new User();
+        user.setId("user#1");
+        when(commonUserService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getExternalId(), newUser.getSource())).thenReturn(Maybe.just(user));
+        when(commonUserService.update(any(User.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        TestObserver<User> obs = userService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertNoErrors();
+        obs.assertValue(updatedUser -> {
+            assertEquals(updatedUser.getId(), user.getId());
+            assertEquals(updatedUser.getFirstName(), newUser.getFirstName());
+            assertEquals(updatedUser.getLastName(), newUser.getLastName());
+            assertEquals(updatedUser.getEmail(), newUser.getEmail());
+            assertEquals(updatedUser.getAdditionalInformation(), newUser.getAdditionalInformation());
+            assertEquals(updatedUser.getPicture(), newUser.getAdditionalInformation().get(StandardClaims.PICTURE));
+
+            return true;
+        });
+    }
+
+    @Test
+    public void shouldUpdateUser_byUsername() {
+
+        NewUser newUser = new NewUser();
+        newUser.setExternalId("user#1");
+        newUser.setSource("source");
+        newUser.setUsername("Username");
+        newUser.setFirstName("Firstname");
+        newUser.setLastName("Lastname");
+        newUser.setEmail("email@gravitee.io");
+
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("info1", "value1");
+        additionalInformation.put("info2", "value2");
+        additionalInformation.put(StandardClaims.PICTURE, "https://gravitee.io/my-picture");
+        newUser.setAdditionalInformation(additionalInformation);
+
+        User user = new User();
+        user.setId("user#1");
+        when(commonUserService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getExternalId(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.just(user));
+        when(commonUserService.update(any(User.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        TestObserver<User> obs = userService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertNoErrors();
+        obs.assertValue(updatedUser -> {
+            assertEquals(updatedUser.getId(), user.getId());
+            assertEquals(updatedUser.getFirstName(), newUser.getFirstName());
+            assertEquals(updatedUser.getLastName(), newUser.getLastName());
+            assertEquals(updatedUser.getEmail(), newUser.getEmail());
+            assertEquals(updatedUser.getAdditionalInformation(), newUser.getAdditionalInformation());
+            assertEquals(updatedUser.getPicture(), newUser.getAdditionalInformation().get(StandardClaims.PICTURE));
+
+            return true;
+        });
+    }
+
+    @Test
+    public void shouldCreateUser() {
+
+        NewUser newUser = new NewUser();
+        newUser.setExternalId("user#1");
+        newUser.setSource("source");
+        newUser.setUsername("Username");
+        newUser.setFirstName("Firstname");
+        newUser.setLastName("Lastname");
+        newUser.setEmail("email@gravitee.io");
+
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("info1", "value1");
+        additionalInformation.put("info2", "value2");
+        additionalInformation.put(StandardClaims.PICTURE, "https://gravitee.io/my-picture");
+        newUser.setAdditionalInformation(additionalInformation);
+
+        when(commonUserService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getExternalId(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(ReferenceType.ORGANIZATION, "orga#1", newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
+        when(commonUserService.create(any(User.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        TestObserver<User> obs = userService.createOrUpdate(ReferenceType.ORGANIZATION, "orga#1", newUser).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertNoErrors();
+        obs.assertValue(updatedUser -> {
+            assertNotNull(updatedUser.getId());
+            assertEquals(updatedUser.getFirstName(), newUser.getFirstName());
+            assertEquals(updatedUser.getLastName(), newUser.getLastName());
+            assertEquals(updatedUser.getEmail(), newUser.getEmail());
+            assertEquals(updatedUser.getAdditionalInformation(), newUser.getAdditionalInformation());
+            assertEquals(updatedUser.getPicture(), newUser.getAdditionalInformation().get(StandardClaims.PICTURE));
+
+            return true;
+        });
     }
 }

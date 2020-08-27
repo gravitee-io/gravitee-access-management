@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations;
 
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.audits.AuditsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.entrypoints.EntrypointsResource;
@@ -29,25 +28,11 @@ import io.gravitee.am.management.handlers.management.api.resources.organizations
 import io.gravitee.am.management.handlers.management.api.resources.organizations.tags.TagsResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.users.UsersResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.PluginsResource;
-import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Platform;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.OrganizationService;
-import io.gravitee.am.service.model.NewOrganization;
-import io.gravitee.common.http.MediaType;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
-import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 
 /**
@@ -61,26 +46,6 @@ public class OrganizationResource extends AbstractResource {
 
     @Autowired
     private OrganizationService organizationService;
-
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create or update an organization",
-            notes = "User must have the ORGANIZATION[CREATE] permission on the platform")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Organization successfully created or updated"),
-            @ApiResponse(code = 500, message = "Internal server error")})
-    public void create(
-            @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "organization", required = true)
-            @Valid @NotNull final NewOrganization newOrganization,
-            @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
-
-        checkPermission(ReferenceType.PLATFORM, Platform.DEFAULT, Permission.ORGANIZATION, Acl.CREATE)
-                .andThen(organizationService.createOrUpdate(organizationId, newOrganization, authenticatedUser))
-                .subscribe(response::resume, response::resume);
-    }
 
     @Path("environments")
     public EnvironmentsResource getEnvironmentsResource() {

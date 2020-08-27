@@ -35,6 +35,7 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -122,6 +123,23 @@ public class UserServiceImpl implements UserService {
     public Maybe<User> findById(String id) {
         return userService.findById(id)
                 .map(this::setInternalStatus);
+    }
+
+    @Override
+    public Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewUser newUser) {
+
+        return userService.findByExternalIdAndSource(referenceType, referenceId, newUser.getExternalId(), newUser.getSource())
+                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(referenceType, referenceId, newUser.getUsername(), newUser.getSource())))
+                .flatMap(existingUser -> {
+                    updateInfos(existingUser, newUser);
+                    return userService.update(existingUser).toMaybe();
+                })
+                .switchIfEmpty(Single.defer(() -> {
+                    User user = transform(newUser);
+                    user.setReferenceType(referenceType);
+                    user.setReferenceId(referenceId);
+                    return userService.create(user);
+                }));
     }
 
     @Override
@@ -586,6 +604,13 @@ public class UserServiceImpl implements UserService {
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
         return user;
+    }
+
+    private void updateInfos(User user, NewUser newUser) {
+        user.setFirstName(newUser.getFirstName());
+        user.setLastName(newUser.getLastName());
+        user.setEmail(newUser.getEmail());
+        user.setAdditionalInformation(newUser.getAdditionalInformation());
     }
 
     private io.gravitee.am.identityprovider.api.User convert(String username, UpdateUser updateUser) {
