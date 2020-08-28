@@ -39,7 +39,7 @@ paths:
       description: Logout current user (invalidate the HTTP session)
       parameters:
         - in: query
-          name: target_url
+          name: post_logout_redirect_uri
           type: string
           description: Specifies the redirect URL after logout
         - in: query

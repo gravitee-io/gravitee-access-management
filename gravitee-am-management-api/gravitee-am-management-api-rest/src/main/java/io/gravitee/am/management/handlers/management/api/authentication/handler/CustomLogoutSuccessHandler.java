@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class CustomLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
 
-    private static final String LOGOUT_URL_PARAMETER = "target_url";
+    private static final String LOGOUT_URL_PARAMETER = "post_logout_redirect_uri";
 
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
