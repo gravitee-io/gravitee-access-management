@@ -73,11 +73,13 @@ db.getCollection("users").updateMany({}, {"$rename": {"domain": "referenceId"}})
 db.getCollection("groups").updateMany({}, {"$rename": {"domain": "referenceId"}});
 db.getCollection("roles").updateMany({}, {"$rename": {"domain": "referenceId"}});
 db.getCollection("forms").updateMany({}, {"$rename": {"domain": "referenceId"}});
+db.getCollection("emails").updateMany({}, {"$rename": {"domain": "referenceId"}});
 
 db.getCollection("identities").updateMany({"referenceType": {"$exists": false}}, {"$set": {"referenceType": "DOMAIN"}});
 db.getCollection("users").updateMany({"referenceType": {"$exists": false}}, {"$set": {"referenceType": "DOMAIN"}});
 db.getCollection("groups").updateMany({"referenceType": {"$exists": false}}, {"$set": {"referenceType": "DOMAIN"}});
 db.getCollection("forms").updateMany({"referenceType": {"$exists": false}}, {"$set": {"referenceType": "DOMAIN"}});
+db.getCollection("emails").updateMany({"referenceType": {"$exists": false}}, {"$set": {"referenceType": "DOMAIN"}});
 
 // Migrate domain role permissions to oauthScopes.
 db.getCollection("roles")
