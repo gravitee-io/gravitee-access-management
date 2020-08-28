@@ -26,7 +26,7 @@ export class LogoutComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
-    this.logoutEndpoint = this.logoutEndpoint + '?target_url=' + window.location.href + '/callback';
+    this.logoutEndpoint = this.logoutEndpoint + '?post_logout_redirect_uri=' + window.location.href + '/callback';
     window.location.href = this.logoutEndpoint;
   }
 

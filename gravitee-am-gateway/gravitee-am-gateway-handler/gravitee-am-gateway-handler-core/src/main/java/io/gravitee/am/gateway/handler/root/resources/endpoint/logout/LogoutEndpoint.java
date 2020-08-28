@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 public class LogoutEndpoint implements Handler<RoutingContext> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LogoutEndpoint.class);
-    private static final String LOGOUT_URL_PARAMETER = "target_url";
+    private static final String LOGOUT_URL_PARAMETER = "post_logout_redirect_uri";
     private static final String INVALIDATE_TOKENS_PARAMETER = "invalidate_tokens";
     private static final String DEFAULT_TARGET_URL = "/";
     private Domain domain;

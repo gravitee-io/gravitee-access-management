@@ -671,7 +671,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{management_url}}/management/auth/logout?target_url=http://nowhere.com",
+									"raw": "{{management_url}}/management/auth/logout?post_logout_redirect_uri=http://nowhere.com",
 									"host": [
 										"{{management_url}}"
 									],
@@ -682,7 +682,7 @@
 									],
 									"query": [
 										{
-											"key": "target_url",
+											"key": "post_logout_redirect_uri",
 											"value": "http://nowhere.com"
 										}
 									]
@@ -989,7 +989,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{management_url}}/management/auth/logout?target_url=http://nowhere.com",
+									"raw": "{{management_url}}/management/auth/logout?post_logout_redirect_uri=http://nowhere.com",
 									"host": [
 										"{{management_url}}"
 									],
@@ -1000,7 +1000,7 @@
 									],
 									"query": [
 										{
-											"key": "target_url",
+											"key": "post_logout_redirect_uri",
 											"value": "http://nowhere.com"
 										}
 									]
@@ -2419,7 +2419,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{management_url}}/management/auth/logout?target_url=http://nowhere.com",
+									"raw": "{{management_url}}/management/auth/logout?post_logout_redirect_uri=http://nowhere.com",
 									"host": [
 										"{{management_url}}"
 									],
@@ -2430,7 +2430,7 @@
 									],
 									"query": [
 										{
-											"key": "target_url",
+											"key": "post_logout_redirect_uri",
 											"value": "http://nowhere.com"
 										}
 									]
@@ -2964,7 +2964,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{management_url}}/management/auth/logout?target_url=http://nowhere.com",
+									"raw": "{{management_url}}/management/auth/logout?post_logout_redirect_uri=http://nowhere.com",
 									"host": [
 										"{{management_url}}"
 									],
@@ -2975,7 +2975,7 @@
 									],
 									"query": [
 										{
-											"key": "target_url",
+											"key": "post_logout_redirect_uri",
 											"value": "http://nowhere.com"
 										}
 									]
