@@ -62,22 +62,16 @@ public abstract class FacebookUser {
 
     // Other fields, but there are many others that can be added if necessary (see https://developers.facebook.com/docs/graph-api/reference/user).
     public static final String ABOUT = "about";
-    public static final String CAN_REVIEW_MEASUREMENT_REQUEST = "can_review_measurement_request";
     public static final String INSTALLED = "installed";
     public static final String INSTALL_TYPE = "install_type";
-    public static final String IS_FAMEDEEPLINKINGUSER = "is_famedeeplinkinguser";
     public static final String IS_GUEST_USER = "is_guest_user";
-    public static final String IS_SHARED_LOGIN = "is_shared_login";
     public static final String LANGUAGES = "languages";
     public static final String PUBLIC_KEY = "public_key";
     public static final String QUOTES = "quotes";
-    public static final String SECURITY_SETTINGS = "security_settings";
     public static final String SHARED_LOGIN_UPGRADE_REQUIRED_BY = "shared_login_upgrade_required_by";
     public static final String SIGNIFICANT_OTHER = "significant_other";
     public static final String SPORTS = "sports";
     public static final String SUPPORTS_DONATE_BUTTON_IN_LIVE_VIDEO = "supports_donate_button_in_live_video";
-    public static final String TEST_GROUP = "test_group";
-    public static final String VIEWER_CAN_SEND_GIFT = "viewer_can_send_gift";
 
     public static final String LOCATION_STREET_FIELD = "street";
     public static final String LOCATION_CITY_FIELD = "city";
@@ -101,9 +95,8 @@ public abstract class FacebookUser {
     /**
      * Contains all others fields we can retrieve and store as additional information.
      */
-    public static final List<String> OTHER_FIELDS_LIST = Arrays.asList(ABOUT, CAN_REVIEW_MEASUREMENT_REQUEST,
-            INSTALLED, INSTALL_TYPE, IS_FAMEDEEPLINKINGUSER, IS_GUEST_USER, IS_SHARED_LOGIN, LANGUAGES, PUBLIC_KEY, QUOTES, SECURITY_SETTINGS, SHARED_LOGIN_UPGRADE_REQUIRED_BY, SIGNIFICANT_OTHER,
-            SPORTS, SUPPORTS_DONATE_BUTTON_IN_LIVE_VIDEO, TEST_GROUP, VIEWER_CAN_SEND_GIFT);
+    public static final List<String> OTHER_FIELDS_LIST = Arrays.asList(ABOUT, INSTALLED, INSTALL_TYPE, IS_GUEST_USER, LANGUAGES,
+            PUBLIC_KEY, QUOTES, SHARED_LOGIN_UPGRADE_REQUIRED_BY, SIGNIFICANT_OTHER, SPORTS, SUPPORTS_DONATE_BUTTON_IN_LIVE_VIDEO);
 
     /**
      * Contains all fields we have to retrieve from Facebook api.
