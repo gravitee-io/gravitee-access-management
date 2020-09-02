@@ -25,9 +25,9 @@ import java.util.Set;
  */
 public class FacebookIdentityProviderConfiguration implements IdentityProviderConfiguration {
 
-    private static final String USER_AUTHORIZATION_URI = "https://www.facebook.com/v7.0/dialog/oauth";
-    private static final String ACCESS_TOKEN_URI = "https://graph.facebook.com/v7.0/oauth/access_token";
-    private static final String USER_PROFILE_URI = "https://graph.facebook.com/v7.0/me";
+    private static final String USER_AUTHORIZATION_URI = "https://www.facebook.com/v8.0/dialog/oauth";
+    private static final String ACCESS_TOKEN_URI = "https://graph.facebook.com/v8.0/oauth/access_token";
+    private static final String USER_PROFILE_URI = "https://graph.facebook.com/v8.0/me";
     private static final String CODE_PARAMETER = "code";
     private static final String RESPONSE_TYPE = "code";
 
