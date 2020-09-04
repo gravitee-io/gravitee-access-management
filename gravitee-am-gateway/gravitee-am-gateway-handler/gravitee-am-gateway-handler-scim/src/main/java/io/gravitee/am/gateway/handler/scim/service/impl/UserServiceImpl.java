@@ -192,12 +192,7 @@ public class UserServiceImpl implements UserService {
                                         .flatMapSingle(userProvider -> {
                                             // no idp user check if we need to create it
                                             if (userToUpdate.getExternalId() == null) {
-                                                // if user set a password we can create the idp user
-                                                if (userToUpdate.getPassword() != null) {
-                                                    return userProvider.create(convert(userToUpdate));
-                                                } else {
-                                                    return Single.error(new UserInvalidException("No need to router idp user"));
-                                                }
+                                                return userProvider.create(convert(userToUpdate));
                                             } else {
                                                 return userProvider.update(userToUpdate.getExternalId(), convert(userToUpdate));
                                             }
@@ -400,20 +395,8 @@ public class UserServiceImpl implements UserService {
         if (scimUser.getTimezone() != null) {
             additionalInformation.put(StandardClaims.ZONEINFO, scimUser.getTimezone());
         }
-        // password
-        // if not password set disable account
-        if (user.getPassword() == null && (scimUser.getPassword() == null || scimUser.getPassword().isEmpty())) {
-            user.setEnabled(false);
-        }
-        if (user.getPassword() == null && (scimUser.getPassword() != null && !scimUser.getPassword().isEmpty())) {
-            user.setPassword(scimUser.getPassword());
-            user.setEnabled(true);
-        }
-        // we do not allow to set null password
-        if (user.getPassword() != null && (scimUser.getPassword() == null || scimUser.getPassword().isEmpty())) {
-            user.setEnabled(user.isEnabled());
-            user.setPassword(user.getPassword());
-        }
+        user.setEnabled(scimUser.isActive());
+        user.setPassword(scimUser.getPassword());
         if (scimUser.getEmails() != null && !scimUser.getEmails().isEmpty()) {
             List<Attribute> emails = scimUser.getEmails();
             user.setEmail(emails.stream().filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary())).findFirst().orElse(emails.get(0)).getValue());
