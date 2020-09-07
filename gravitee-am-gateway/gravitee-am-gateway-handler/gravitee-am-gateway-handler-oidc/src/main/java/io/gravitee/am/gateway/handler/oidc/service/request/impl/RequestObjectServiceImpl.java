@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.request.impl;
 
-import com.nimbusds.jose.Algorithm;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
@@ -34,10 +33,7 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
 import io.gravitee.am.repository.oidc.model.RequestObject;
 import io.gravitee.common.utils.UUID;
-import io.reactivex.Maybe;
-import io.reactivex.MaybeSource;
-import io.reactivex.Single;
-import io.reactivex.SingleSource;
+import io.reactivex.*;
 import io.reactivex.functions.Function;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -78,11 +74,8 @@ public class RequestObjectServiceImpl implements RequestObjectService {
         return jweService.decrypt(request, client)
                 .onErrorResumeNext(Single.error(new InvalidRequestObjectException("Malformed request object")))
                 .flatMap((Function<JWT, SingleSource<JWT>>) jwt -> {
-                    if (jwt instanceof SignedJWT) {
-                        return validateSignature((SignedJWT) jwt, client);
-                    } else {
-                        return Single.just(jwt);
-                    }
+                    return checkRequestObjectAlgorithm(jwt)
+                            .andThen(Single.defer(() -> validateSignature((SignedJWT) jwt, client)));
                 });
     }
 
@@ -119,15 +112,8 @@ public class RequestObjectServiceImpl implements RequestObjectService {
         try {
             JWT jwt = JWTParser.parse(request.getRequest());
 
-            // The authorization server shall verify that the request object is valid, the signature algorithm is not
-            // none, and the signature is correct as in clause 6.3 of [OIDC].
-            if (! (jwt instanceof SignedJWT) || jwt.getHeader().getAlgorithm() == Algorithm.NONE) {
-                    return Single.error(new InvalidRequestObjectException("Request object must be signed"));
-            }
-
-            SignedJWT signedJWT = (SignedJWT) jwt;
-
-            return validateSignature(signedJWT, client)
+            return checkRequestObjectAlgorithm(jwt)
+                    .andThen(Single.defer(() -> validateSignature((SignedJWT) jwt, client)))
                     .flatMap(new Function<JWT, SingleSource<RequestObject>>() {
                         @Override
                         public SingleSource<RequestObject> apply(JWT jwt) throws Exception {
@@ -186,5 +172,15 @@ public class RequestObjectServiceImpl implements RequestObjectService {
                         }
                     }
                 });
+    }
+
+    private Completable checkRequestObjectAlgorithm(JWT jwt) {
+        // The authorization server shall verify that the request object is valid, the signature algorithm is not
+        // none, and the signature is correct as in clause 6.3 of [OIDC].
+        if (! (jwt instanceof SignedJWT) ||
+                (jwt.getHeader().getAlgorithm() != null && "none".equalsIgnoreCase(jwt.getHeader().getAlgorithm().getName()))) {
+            return Completable.error(new InvalidRequestObjectException("Request object must be signed"));
+        }
+        return Completable.complete();
     }
 }
