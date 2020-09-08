@@ -123,6 +123,9 @@ public class UMAProvider extends AbstractService<ProtocolProvider> implements Pr
         // Resource Registration endpoint
         ResourceRegistrationEndpoint resourceRegistrationEndpoint = new ResourceRegistrationEndpoint(domain, resourceService);
         umaRouter.route(RESOURCE_REGISTRATION_PATH).handler(corsHandler);
+        umaRouter.route(RESOURCE_REGISTRATION_PATH + "/:" + RESOURCE_ID).handler(corsHandler);
+        umaRouter.route(RESOURCE_REGISTRATION_PATH + "/:" + RESOURCE_ID + RESOURCE_ACCESS_POLICIES_PATH).handler(corsHandler);
+        umaRouter.route(RESOURCE_REGISTRATION_PATH + "/:" + RESOURCE_ID + RESOURCE_ACCESS_POLICIES_PATH + "/:"+ POLICY_ID).handler(corsHandler);
 
         umaRouter
                 .get(RESOURCE_REGISTRATION_PATH)
@@ -174,6 +177,7 @@ public class UMAProvider extends AbstractService<ProtocolProvider> implements Pr
 
         // Permission endpoint Access Handler
         PermissionEndpoint permissionEndpoint = new PermissionEndpoint(domain, permissionTicketService);
+        umaRouter.route(PERMISSION_PATH).handler(corsHandler);
         umaRouter
                 .post(PERMISSION_PATH)
                 .consumes(MediaType.APPLICATION_JSON)

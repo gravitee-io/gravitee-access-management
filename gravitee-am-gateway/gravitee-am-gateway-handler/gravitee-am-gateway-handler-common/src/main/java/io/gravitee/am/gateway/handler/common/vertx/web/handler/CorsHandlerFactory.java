@@ -41,7 +41,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
         return CorsHandler.newInstance(io.vertx.ext.web.handler.CorsHandler
                 .create(environment.getProperty("http.cors.allow-origin", String.class, "*"))
                 .allowedHeaders(getStringPropertiesAsList("http.cors.allow-headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, x-xsrf-token"))
-                .allowedMethods(getHttpMethodPropertiesAsList("http.cors.allow-methods", "GET, POST"))
+                .allowedMethods(getHttpMethodPropertiesAsList("http.cors.allow-methods", "GET, POST, PUT, PATCH, DELETE"))
                 .maxAgeSeconds(environment.getProperty("http.cors.max-age", Integer.class, 86400)));
     }
 
