@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.gravitee.am.management</groupId>
         <artifactId>gravitee-am-management-api-handlers</artifactId>
-        <version>2.10.19</version>
+        <version>2.10.20-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
