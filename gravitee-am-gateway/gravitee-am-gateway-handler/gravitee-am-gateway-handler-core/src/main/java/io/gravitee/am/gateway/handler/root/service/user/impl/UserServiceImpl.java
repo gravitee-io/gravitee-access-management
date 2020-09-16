@@ -113,9 +113,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
         // set user idp source
-        AccountSettings accountSettings = getAccountSettings(domain, client);
-        final String source = accountSettings.getDefaultIdentityProviderForRegistration() != null
-                ? accountSettings.getDefaultIdentityProviderForRegistration()
+        AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+        final String source = (accountSettings != null && accountSettings.getDefaultIdentityProviderForRegistration() != null) ? accountSettings.getDefaultIdentityProviderForRegistration()
                 : (user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource());
 
         // validate user and then check user uniqueness
@@ -201,7 +200,7 @@ public class UserServiceImpl implements UserService {
                     // additional information
                     extractAdditionalInformation(user, idpUser.getAdditionalInformation());
                     // set login information
-                    AccountSettings accountSettings = getAccountSettings(domain, client);
+                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
                     if (accountSettings != null && accountSettings.isAutoLoginAfterRegistration()) {
                         user.setLoggedAt(new Date());
                         user.setLoginsCount(1l);
@@ -210,7 +209,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(userService::enhance)
                 .map(user1 -> {
-                    AccountSettings accountSettings = getAccountSettings(domain, client);
+                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
                     return new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false);
                 })
                 .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION)))
@@ -259,7 +258,7 @@ public class UserServiceImpl implements UserService {
                     // additional information
                     extractAdditionalInformation(user, idpUser.getAdditionalInformation());
                     // set login information
-                    AccountSettings accountSettings = getAccountSettings(domain, client);
+                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
                     if (accountSettings != null && accountSettings.isAutoLoginAfterResetPassword()) {
                         user.setLoggedAt(new Date());
                         user.setLoginsCount(user.getLoginsCount() + 1);
@@ -277,7 +276,7 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(userService::enhance)
                 .map(user1 -> {
-                    AccountSettings accountSettings = getAccountSettings(domain, client);
+                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
                     return new ResetPasswordResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterResetPassword() : null, accountSettings != null ? accountSettings.isAutoLoginAfterResetPassword() : false);
                 })
                 .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET)))
@@ -423,25 +422,8 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean forceUserRegistration(Domain domain, Client client) {
-        AccountSettings accountSettings = getAccountSettings(domain, client);
+        AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         return accountSettings != null && accountSettings.isCompleteRegistrationWhenResetPassword();
-    }
-
-    private AccountSettings getAccountSettings(Domain domain, Client client) {
-        // if client has no account config return domain config
-        if (client != null) {
-            if (client.getAccountSettings() == null) {
-                return domain.getAccountSettings();
-            }
-
-            // if client configuration is not inherited return the client config
-            if (!client.getAccountSettings().isInherited()) {
-                return client.getAccountSettings();
-            }
-        }
-
-        // return domain config
-        return domain.getAccountSettings();
     }
 
     private io.gravitee.am.identityprovider.api.User convert(User user) {
