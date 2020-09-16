@@ -30,13 +30,13 @@
           <div fxLayout="row">
             <mat-form-field *ngIf="user.firstName || user.internal" appearance="outline" floatLabel="always" style="margin-right: 20px;">
               <mat-label>First name</mat-label>
-              <input matInput type="text" placeholder="First name" [disabled]="!editMode() && !canEdit" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
+              <input matInput type="text" placeholder="First name" [disabled]="!editMode() || !canEdit" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
               <mat-hint *ngIf="editMode()">The first name of the User.</mat-hint>
               <mat-error *ngIf="firstName.errors?.required">Enter first name</mat-error>
             </mat-form-field>
             <mat-form-field *ngIf="user.lastName || user.internal" appearance="outline" floatLabel="always">
               <mat-label>Last name</mat-label>
-              <input matInput type="text" placeholder="Last name" [disabled]="!editMode() && !canEdit" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
+              <input matInput type="text" placeholder="Last name" [disabled]="!editMode() || !canEdit" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
               <mat-hint *ngIf="editMode()">The last name of the User.</mat-hint>
               <mat-error *ngIf="lastName.errors?.required">Enter last name</mat-error>
             </mat-form-field>
@@ -44,7 +44,7 @@
           <div fxLayout="row" *ngIf="user.email || user.internal">
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Email</mat-label>
-              <input matInput placeholder="Email" [disabled]="!editMode() && !canEdit" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" required>
+              <input matInput placeholder="Email" [disabled]="!editMode() || !canEdit" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" required>
               <mat-hint *ngIf="editMode()">Email address for the User.</mat-hint>
               <mat-error *ngIf="email.errors?.required">Enter email</mat-error>
               <mat-error *ngIf="user.email && email.errors?.email">Not a valid email</mat-error>
