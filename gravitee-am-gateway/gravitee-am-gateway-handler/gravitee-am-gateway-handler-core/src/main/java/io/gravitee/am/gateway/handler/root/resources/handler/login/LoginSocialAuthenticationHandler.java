@@ -20,9 +20,9 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpMethod;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -65,14 +65,13 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
 
         // fetch client identity providers
-        getIdentityProviders(client.getIdentities(), identityProvidersResultHandler -> {
+        getSocialIdentityProviders(client.getIdentities(), identityProvidersResultHandler -> {
             if (identityProvidersResultHandler.failed()) {
-                logger.error("Unable to fetch client identity providers", identityProvidersResultHandler.cause());
-                routingContext.fail(new InvalidRequestException("Unable to fetch client identity providers"));
+                logger.error("Unable to fetch client social identity providers", identityProvidersResultHandler.cause());
+                routingContext.fail(new InvalidRequestException("Unable to fetch client social identity providers"));
             }
 
-            List<IdentityProvider> identityProviders = identityProvidersResultHandler.result();
-            List<IdentityProvider> socialIdentityProviders = identityProviders.stream().filter(IdentityProvider::isExternal).collect(Collectors.toList());
+            List<IdentityProvider> socialIdentityProviders = identityProvidersResultHandler.result();
 
             // no social provider, continue
             if (socialIdentityProviders == null || socialIdentityProviders.isEmpty()) {
@@ -108,16 +107,14 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
 
     }
 
-    private void getIdentityProviders(Set<String> identities, Handler<AsyncResult<List<IdentityProvider>>> resultHandler) {
+    private void getSocialIdentityProviders(Set<String> identities, Handler<AsyncResult<List<IdentityProvider>>> resultHandler) {
         if (identities == null) {
             resultHandler.handle(Future.succeededFuture(Collections.emptyList()));
         } else {
-            Observable.fromIterable(identities)
-                    .flatMapMaybe(identity -> identityProviderManager.getIdentityProvider(identity))
-                    .toList()
-                    .subscribe(
-                            identityProviders -> resultHandler.handle(Future.succeededFuture(identityProviders)),
-                            error -> resultHandler.handle(Future.failedFuture(error)));
+            resultHandler.handle(Future.succeededFuture(identities.stream()
+                    .map(identity -> identityProviderManager.getIdentityProvider(identity))
+                    .filter(identityProvider -> identityProvider != null && identityProvider.isExternal())
+                    .collect(Collectors.toList())));
         }
     }
 
