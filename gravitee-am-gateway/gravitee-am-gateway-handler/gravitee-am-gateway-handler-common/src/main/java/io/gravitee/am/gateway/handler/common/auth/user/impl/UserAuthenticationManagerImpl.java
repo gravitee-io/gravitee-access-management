@@ -146,7 +146,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private Completable preAuthentication(Client client, Authentication authentication, String source) {
-        final AccountSettings accountSettings = getAccountSettings(domain, client);
+        final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
             LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                     .domain(domain.getId())
@@ -171,7 +171,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private Completable postAuthentication(Client client, Authentication authentication, String source, UserAuthentication userAuthentication) {
-        final AccountSettings accountSettings = getAccountSettings(domain, client);
+        final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
             LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                     .domain(domain.getId())
@@ -187,21 +187,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
             }
         }
         return Completable.complete();
-    }
-
-    private AccountSettings getAccountSettings(Domain domain, Client client) {
-        // if client has no account config return domain config
-        if (client.getAccountSettings() == null) {
-            return domain.getAccountSettings();
-        }
-
-        // if client configuration is not inherited return the client config
-        if (!client.getAccountSettings().isInherited()) {
-            return client.getAccountSettings();
-        }
-
-        // return domain config
-        return domain.getAccountSettings();
     }
 
     private class UserAuthentication {
