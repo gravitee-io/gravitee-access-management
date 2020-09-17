@@ -101,7 +101,12 @@ public class UserManagerImpl extends AbstractService implements UserManager, Eve
         userService.findById(userId)
                 .subscribe(
                         user -> {
-                            userStore.add(user);
+                            // if registration process is not completed, no need to add the user
+                            if (user.isPreRegistration() && !user.isRegistrationCompleted()) {
+                                logger.debug("User {} is still not registered, continue", userId);
+                            } else {
+                                userStore.add(user);
+                            }
                             logger.info("User {} {}d for domain {}", userId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} user for domain {}", eventType, domain.getName(), error),

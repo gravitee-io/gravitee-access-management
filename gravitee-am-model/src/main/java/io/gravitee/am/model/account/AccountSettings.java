@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.model.account;
 
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -206,5 +210,43 @@ public class AccountSettings {
 
     public void setRedirectUriAfterResetPassword(String redirectUriAfterResetPassword) {
         this.redirectUriAfterResetPassword = redirectUriAfterResetPassword;
+    }
+
+    public static AccountSettings getInstance(Domain domain, Client client) {
+        if (client == null) {
+            return domain.getAccountSettings();
+        }
+        // if client has no account config return domain config
+        if (client.getAccountSettings() == null) {
+            return domain.getAccountSettings();
+        }
+
+        // if client configuration is not inherited return the client config
+        if (!client.getAccountSettings().isInherited()) {
+            return client.getAccountSettings();
+        }
+
+        // return domain config
+        return domain.getAccountSettings();
+    }
+
+    public static AccountSettings getInstance(Domain domain, Application application) {
+        if (application == null) {
+            return domain.getAccountSettings();
+        }
+        // if client has no account config return domain config
+        if (application.getSettings() == null) {
+            return domain.getAccountSettings();
+        }
+        if (application.getSettings().getAccount() == null) {
+            return domain.getAccountSettings();
+        }
+        // if client configuration is not inherited return the client config
+        if (!application.getSettings().getAccount().isInherited()) {
+            return application.getSettings().getAccount();
+        }
+
+        // return domain config
+        return domain.getAccountSettings();
     }
 }

@@ -203,7 +203,7 @@ public class UserServiceImpl implements UserService {
                                                                     })
                                                                     .flatMap(newUser1 -> {
                                                                         User user = transform(newUser1);
-                                                                        AccountSettings accountSettings = getAccountSettings(domain1, client);
+                                                                        AccountSettings accountSettings = AccountSettings.getInstance(domain1, client);
                                                                         if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
                                                                             user.setRegistrationUserUri(domainService.buildUrl(domain1, "/confirmRegistration"));
                                                                             user.setRegistrationAccessToken(getUserRegistrationToken(user));
@@ -214,7 +214,7 @@ public class UserServiceImpl implements UserService {
                                                                     })
                                                                     .flatMap(user -> {
                                                                         // end pre-registration user if required
-                                                                        AccountSettings accountSettings = getAccountSettings(domain1, client);
+                                                                        AccountSettings accountSettings = AccountSettings.getInstance(domain1, client);
                                                                         if (newUser.isPreRegistration() && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
                                                                             return sendRegistrationConfirmation(user.getReferenceId(), user.getId(), principal).toSingleDefault(user);
                                                                         } else {
@@ -520,26 +520,6 @@ public class UserServiceImpl implements UserService {
         claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
 
         return jwtBuilder.sign(new JWT(claims));
-    }
-
-    private AccountSettings getAccountSettings(Domain domain, Application application) {
-        if (application == null) {
-            return domain.getAccountSettings();
-        }
-        // if client has no account config return domain config
-        if (application.getSettings() == null) {
-            return domain.getAccountSettings();
-        }
-        if (application.getSettings().getAccount() == null) {
-            return domain.getAccountSettings();
-        }
-        // if client configuration is not inherited return the client config
-        if (!application.getSettings().getAccount().isInherited()) {
-            return application.getSettings().getAccount();
-        }
-
-        // return domain config
-        return domain.getAccountSettings();
     }
 
     private io.gravitee.am.identityprovider.api.User convert(NewUser newUser) {

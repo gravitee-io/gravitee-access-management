@@ -29,6 +29,7 @@ import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -38,10 +39,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -64,6 +65,9 @@ public class UserServiceTest {
 
     @Mock
     private RoleService roleService;
+
+    @Mock
+    private GroupService groupService;
 
     @Test
     public void shouldCreateUser_invalid_identity_provider() {
@@ -133,6 +137,47 @@ public class UserServiceTest {
         TestObserver<User> testObserver = userService.create(newUser, "/").test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
+    }
+
+    @Test
+    public void shouldUpdateUser_status_enabled() {
+        final String domainId = "domain";
+
+        io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
+        when(existingUser.getId()).thenReturn("user-id");
+        when(existingUser.getId()).thenReturn("user-external-id");
+        when(existingUser.getSource()).thenReturn("user-idp");
+        when(existingUser.getUsername()).thenReturn("username");
+
+        User scimUser = mock(User.class);
+        when(scimUser.getPassword()).thenReturn("user-password");
+        when(scimUser.isActive()).thenReturn(true);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        Set<Role> roles = new HashSet<>();
+        Role role1 = new Role();
+        role1.setId("role-1");
+        Role role2 = new Role();
+        role2.setId("role-2");
+        roles.add(role1);
+        roles.add(role2);
+
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        when(userRepository.update(any())).thenReturn(Single.just(existingUser));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Single.just(Collections.emptyList()));
+
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, "/").test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        verify(userRepository, times(1)).update(userCaptor.capture());
+        assertTrue(userCaptor.getValue().isEnabled());
     }
 
 }

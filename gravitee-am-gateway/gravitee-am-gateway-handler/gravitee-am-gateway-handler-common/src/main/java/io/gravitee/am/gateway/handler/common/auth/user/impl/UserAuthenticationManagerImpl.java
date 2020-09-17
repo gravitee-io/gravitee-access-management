@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -40,8 +41,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -75,12 +78,21 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         // For each idp, try to authenticate a user
         // Try to authenticate while the user can not be authenticated
         // If user can't be authenticated, send an exception
-        if (client.getIdentities() == null || client.getIdentities().isEmpty()) {
+
+        // Skip external identity provider for authentication with credentials.
+        List<String> identities = client.getIdentities() != null ?
+                client.getIdentities()
+                        .stream()
+                        .map(idp -> identityProviderManager.getIdentityProvider(idp))
+                        .filter(idp -> idp != null && !idp.isExternal())
+                        .map(IdentityProvider::getId)
+                        .collect(Collectors.toList()) : null;
+        if (identities == null || identities.isEmpty()) {
             logger.error("No identity provider found for client : " + client.getClientId());
             return Single.error(new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId()));
         }
 
-        return Observable.fromIterable(client.getIdentities())
+        return Observable.fromIterable(identities)
                 .flatMapMaybe(authProvider -> authenticate0(client, authentication, authProvider))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException)
                 .lastOrError()
@@ -146,7 +158,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private Completable preAuthentication(Client client, Authentication authentication, String source) {
-        final AccountSettings accountSettings = getAccountSettings(domain, client);
+        final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
             LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                     .domain(domain.getId())
@@ -171,7 +183,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private Completable postAuthentication(Client client, Authentication authentication, String source, UserAuthentication userAuthentication) {
-        final AccountSettings accountSettings = getAccountSettings(domain, client);
+        final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
             LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                     .domain(domain.getId())
@@ -193,21 +205,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
             }
         }
         return Completable.complete();
-    }
-
-    private AccountSettings getAccountSettings(Domain domain, Client client) {
-        // if client has no account config return domain config
-        if (client.getAccountSettings() == null) {
-            return domain.getAccountSettings();
-        }
-
-        // if client configuration is not inherited return the client config
-        if (!client.getAccountSettings().isInherited()) {
-            return client.getAccountSettings();
-        }
-
-        // return domain config
-        return domain.getAccountSettings();
     }
 
     private class UserAuthentication {
