@@ -22,7 +22,7 @@ ENV GRAVITEEIO_HOME /opt/graviteeio-am-management-api
 
 RUN apk update \
 	&& apk add --update --no-cache zip unzip netcat-openbsd wget \
-	&& wget -O /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-management-api/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip \
+	&& wget --no-check-certificate  -O /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-management-api/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
 	&& apk del zip unzip netcat-openbsd wget \
     && mv /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
