@@ -19,10 +19,8 @@ import com.google.common.net.InternetDomainName;
 import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
-import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.exception.InvalidVirtualHostException;
 import io.reactivex.Completable;
-import io.reactivex.CompletableSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +33,7 @@ import java.util.stream.Collectors;
  */
 public class VirtualHostValidator {
 
-    public static Completable validate(VirtualHost vhost) {
+    public static Completable validate(VirtualHost vhost, List<String> domainRestrictions) {
 
         String host = vhost.getHost();
 
@@ -48,6 +46,10 @@ public class VirtualHostValidator {
 
         if (!InternetDomainName.isValid(hostWithoutPort)) {
             return Completable.error(new InvalidVirtualHostException("Host [" + hostWithoutPort + "] is invalid"));
+        }
+
+        if(!isValidDomainOrSubDomain(hostWithoutPort, domainRestrictions)) {
+            return Completable.error(new InvalidVirtualHostException("Host [" + hostWithoutPort + "] must be a subdomain of " + domainRestrictions));
         }
 
         if (host.contains(":") && split.length < 2) {
@@ -141,5 +143,36 @@ public class VirtualHostValidator {
         sanitizedOther = sanitizedOther.equals("/") ? sanitizedOther : sanitizedOther + "/";
 
         return sanitizedOther.startsWith(sanitizedPath);
+    }
+
+    public static boolean isValidDomainOrSubDomain(String domain, List<String> domainRestrictions) {
+
+        boolean isSubDomain = false;
+
+        if (domainRestrictions.isEmpty()) {
+            return true;
+        }
+
+        for (String domainRestriction : domainRestrictions) {
+
+            InternetDomainName domainIDN = InternetDomainName.from(domain);
+            InternetDomainName parentIDN = InternetDomainName.from(domainRestriction);
+
+            if(domainIDN.equals(parentIDN)) {
+                return true;
+            }
+
+            while (!isSubDomain && domainIDN.hasParent()) {
+
+                isSubDomain = parentIDN.equals(domainIDN);
+                domainIDN = domainIDN.parent();
+            }
+
+            if (isSubDomain) {
+                break;
+            }
+        }
+
+        return isSubDomain;
     }
 }

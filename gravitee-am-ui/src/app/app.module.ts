@@ -286,6 +286,7 @@ import { ApplicationResourcePolicyComponent } from './domain/applications/applic
 import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
 import { LoginSettingsComponent } from './domain/components/login/login-settings.component';
 import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
+import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolver";
 
 @NgModule({
   declarations: [
@@ -499,6 +500,7 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
     ProviderResolver,
     CertificatesResolver,
     CertificateResolver,
+    CurrentEnvironmentResolver,
     RolesResolver,
     RoleResolver,
     UsersResolver,

@@ -165,6 +165,7 @@ import {ApplicationResourcePolicyResolver} from './resolvers/application-resourc
 import {DomainSettingsEntrypointsComponent} from './domain/settings/entrypoints/entrypoints.component';
 import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
 import {ApplicationLoginSettingsComponent} from "./domain/applications/application/advanced/login/login.component";
+import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolver";
 
 const routes: Routes = [
   {
@@ -882,7 +883,8 @@ const routes: Routes = [
             component: DomainSettingsEntrypointsComponent,
             canActivate: [AuthGuard],
             resolve: {
-              entrypoint: DomainEntrypointResolver
+              entrypoint: DomainEntrypointResolver,
+              environment: CurrentEnvironmentResolver
             },
             data: {
               menu: {

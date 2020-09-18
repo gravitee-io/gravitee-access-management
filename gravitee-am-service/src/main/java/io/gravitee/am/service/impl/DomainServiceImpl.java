@@ -45,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.text.Normalizer;
 import java.util.Collection;
@@ -193,8 +194,10 @@ public class DomainServiceImpl implements DomainService {
                         domain.setCreatedAt(new Date());
                         domain.setUpdatedAt(domain.getCreatedAt());
 
-                        return validateDomain(domain)
-                                .andThen(domainRepository.create(domain));
+                        return environmentService.findById(domain.getReferenceId())
+                                .doOnSuccess(environment -> setDeployMode(domain, environment))
+                                .flatMapCompletable(environment -> validateDomain(domain, environment))
+                                .andThen(Single.defer(() -> domainRepository.create(domain)));
                     }
                 })
                 // create default system scopes
@@ -235,49 +238,6 @@ public class DomainServiceImpl implements DomainService {
                 })
                 .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).domain(domain).referenceType(ReferenceType.ENVIRONMENT).referenceId(environmentId)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).referenceType(ReferenceType.ENVIRONMENT).referenceId(environmentId).throwable(throwable)));
-    }
-
-    @Override
-    public Single<Domain> update(String domainId, UpdateDomain updateDomain, User principal) {
-        LOGGER.debug("Update an existing domain: {}", updateDomain);
-        return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(oldDomain -> {
-                    Domain domain = new Domain();
-                    domain.setId(domainId);
-                    domain.setPath(updateDomain.getPath());
-                    domain.setVhostMode(updateDomain.isVhostMode());
-                    domain.setVhosts(updateDomain.getVhosts());
-                    domain.setName(updateDomain.getName());
-                    domain.setDescription(updateDomain.getDescription());
-                    domain.setEnabled(updateDomain.isEnabled());
-                    domain.setCreatedAt(oldDomain.getCreatedAt());
-                    domain.setUpdatedAt(new Date());
-                    //As it is not managed by UpdateDomain, we keep old value
-                    domain.setOidc(oldDomain.getOidc());
-                    domain.setUma(oldDomain.getUma());
-                    domain.setScim(updateDomain.getScim());
-                    domain.setLoginSettings(updateDomain.getLoginSettings());
-                    domain.setAccountSettings(updateDomain.getAccountSettings());
-
-                    return validateDomain(domain)
-                            .andThen(domainRepository.update(domain))
-                            // create event for sync process
-                            .flatMap(domain1 -> {
-                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(domain1));
-                            })
-                            .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-
-                    LOGGER.error("An error occurs while trying to update a domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a domain", ex));
-                });
     }
 
     @Override
@@ -489,7 +449,7 @@ public class DomainServiceImpl implements DomainService {
             // Try generate uri using defined virtual hosts.
             Matcher matcher = SCHEME_PATTERN.matcher(entryPoint);
             String scheme = "http";
-            if(matcher.matches()) {
+            if (matcher.matches()) {
                 scheme = matcher.group(1);
             }
 
@@ -501,7 +461,7 @@ public class DomainServiceImpl implements DomainService {
             }
         }
 
-        if(uri == null) {
+        if (uri == null) {
             uri = entryPoint + PathUtils.sanitize(domain.getPath() + path);
         }
 
@@ -521,9 +481,44 @@ public class DomainServiceImpl implements DomainService {
 
     private Completable validateDomain(Domain domain) {
 
-        // Validate all data are correctly defined.
-       return DomainValidator.validate(domain)
+        if (domain.getReferenceType() != ReferenceType.ENVIRONMENT) {
+            return Completable.error(new InvalidDomainException("Domain must be attached to an environment"));
+        }
+
+        // Get environment domain restrictions and validate all data are correctly defined.
+        return environmentService.findById(domain.getReferenceId())
+                .flatMapCompletable(environment -> validateDomain(domain, environment));
+    }
+
+    private Completable validateDomain(Domain domain, Environment environment) {
+
+        // Get environment domain restrictions and validate all data are correctly defined.
+        return DomainValidator.validate(domain, environment.getDomainRestrictions())
                 .andThen(findAll()
                         .flatMapCompletable(domains -> VirtualHostValidator.validateDomainVhosts(domain, domains)));
+    }
+
+    private void setDeployMode(Domain domain, Environment environment) {
+
+        if(CollectionUtils.isEmpty(environment.getDomainRestrictions())) {
+            domain.setVhostMode(false);
+        } else {
+            // There are some domain restrictions defined at environment level. Switching to domain vhost mode.
+
+            // Creating one vhost per constraint.
+            List<VirtualHost> vhosts = environment.getDomainRestrictions().stream().map(domainConstraint -> {
+                VirtualHost virtualHost = new VirtualHost();
+                virtualHost.setHost(domainConstraint);
+                virtualHost.setPath(domain.getPath());
+
+                return virtualHost;
+            }).collect(Collectors.toList());
+
+            // The first one will be used as primary displayed entrypoint.
+            vhosts.get(0).setOverrideEntrypoint(true);
+
+            domain.setVhostMode(true);
+            domain.setVhosts(vhosts);
+        }
     }
 }

@@ -21,6 +21,9 @@ import {DialogService} from '../../../services/dialog.service';
 import {SnackbarService} from '../../../services/snackbar.service';
 import {BreadcrumbService} from '../../../services/breadcrumb.service';
 import {AuthService} from '../../../services/auth.service';
+import {FormControl} from "@angular/forms";
+import {Observable} from 'rxjs';
+import {map, startWith} from "rxjs/operators";
 
 @Component({
   selector: 'app-general',
@@ -34,6 +37,11 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   entrypoint: any;
   readonly = false;
   switchModeLabel: string;
+  hostControl: FormControl = new FormControl();
+  domainRestrictions: string[];
+  domainRegexList: RegExp[] = [];
+  hostOptions: Observable<string[]>;
+  hostPattern: string;
 
   constructor(private domainService: DomainService,
               private dialogService: DialogService,
@@ -45,6 +53,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   }
 
   ngOnInit() {
+
     this.domain = this.route.snapshot.parent.data['domain'];
     this.entrypoint = this.route.snapshot.data['entrypoint'];
 
@@ -54,6 +63,21 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
 
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
     this.changeSwitchModeLabel();
+
+    this.domainRestrictions = this.route.snapshot.data['environment'].domainRestrictions;
+
+    if (this.domainRestrictions === undefined) {
+      this.domainRestrictions = [];
+    }
+
+    if (this.domainRestrictions.length === 0) {
+      this.hostPattern = '^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}$';
+    } else {
+      this.hostPattern = '^' + this.domainRestrictions.map(value => '((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)?' + value).join('$|') + '$';
+    }
+
+    // Prepare host regex (used to assist user when specifying an host).
+    this.domainRestrictions.forEach(hostOption => this.domainRegexList.push(new RegExp('\\.?' + hostOption, 'i')));
   }
 
   update() {
@@ -74,12 +98,11 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
 
   addVhost() {
     if (this.domain.vhosts.length === 0) {
-      this.domain.vhosts.push({ host: '', path: this.domain.path, overrideEntrypoint: true });
+      this.domain.vhosts.push({host: '', path: this.domain.path, overrideEntrypoint: true});
     } else {
-      this.domain.vhosts.push({ host: '', path: '/' });
+      this.domain.vhosts.push({host: '', path: '/'});
     }
   }
-
 
   remove(vhost: any) {
     this.domain.vhosts = this.domain.vhosts.filter(v => v !== vhost);
@@ -97,6 +120,47 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   overrideEntrypointChange(vhost: any) {
     this.domain.vhosts.filter(v => v !== vhost).forEach(v => v.overrideEntrypoint = false);
     vhost.overrideEntrypoint = true;
+    this.formChanged = true;
+  }
+
+  getHostOptions(host: string): string[] {
+    this.domainRegexList.forEach(regex => host = host.replace(regex, ''));
+
+    if (host !== '' && !this.domainRestrictions.includes(host)) {
+      return this.domainRestrictions.map(domain => host + '.' + domain);
+    }
+
+    return this.domainRestrictions;
+  }
+
+  focus(input: HTMLInputElement) {
+    if (this.domainRestrictions.includes(input.value) && !input.value.startsWith('.')) {
+      input.value = '.' + input.value
+    }
+
+    for (let i = 0; i < this.domainRegexList.length; i++) {
+      let match = input.value.match(this.domainRegexList[i]);
+
+      if (match) {
+        let index = input.value.indexOf(match[0]);
+        input.setSelectionRange(index, index, 'none');
+        break;
+      }
+    }
+  }
+
+  unfocus(vhost: any, input: HTMLInputElement) {
+    if (input.value.startsWith('.')) {
+      input.value = input.value.replace('.', '');
+    }
+
+    if (vhost.host.startsWith('.')) {
+      vhost.host = vhost.host.replace('.', '');
+    }
+  }
+
+  hostSelected(input: HTMLInputElement) {
+    input.blur();
     this.formChanged = true;
   }
 }
