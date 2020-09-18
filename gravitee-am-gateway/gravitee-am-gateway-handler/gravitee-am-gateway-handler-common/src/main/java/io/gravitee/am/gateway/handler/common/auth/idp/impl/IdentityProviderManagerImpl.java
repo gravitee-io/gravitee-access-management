@@ -75,9 +75,8 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     }
 
     @Override
-    public Maybe<IdentityProvider> getIdentityProvider(String id) {
-        IdentityProvider identityProvider = identities.get(id);
-        return (identityProvider != null) ? Maybe.just(identityProvider) : Maybe.empty();
+    public IdentityProvider getIdentityProvider(String id) {
+        return identities.get(id);
     }
 
     @Override

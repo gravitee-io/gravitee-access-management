@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -102,6 +103,10 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(Collections.singleton("idp-1"));
 
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+
         when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
@@ -150,6 +155,10 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(Collections.singleton("idp-1"));
 
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
@@ -190,12 +199,21 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(new LinkedHashSet<>(Arrays.asList("idp-1", "idp-2")));
 
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+
+
+        IdentityProvider identityProvider2 = new IdentityProvider();
+        identityProvider2.setId("idp-2");
+
         when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
             return Single.just(user);
         });
+
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
@@ -208,6 +226,7 @@ public class UserAuthenticationManagerTest {
             }
         }));
 
+        when(identityProviderManager.getIdentityProvider("idp-2")).thenReturn(identityProvider2);
         when(identityProviderManager.get("idp-2")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
@@ -249,11 +268,14 @@ public class UserAuthenticationManagerTest {
         client.setClientId("client-id");
         client.setIdentities(Collections.singleton("idp-1"));
 
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+
         when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             return Single.error(new AccountDisabledException(idpUser.getUsername()));
         });
-
 
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
@@ -286,5 +308,22 @@ public class UserAuthenticationManagerTest {
 
         observer.assertError(AccountDisabledException.class);
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_onlyExternalProvider() {
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setIdentities(Collections.singleton("idp-1"));
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+        identityProvider.setExternal(true);
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, null).test();
+        observer.assertNotComplete();
+        observer.assertError(InternalAuthenticationServiceException.class);
+        verifyZeroInteractions(userAuthenticationService);
     }
 }

@@ -28,6 +28,7 @@ export class ApplicationEndpointsComponent implements OnInit {
   application: any;
   entrypoint: any;
   private baseUrl: string;
+  private domain: any;
   @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
 
   constructor(private route: ActivatedRoute,
@@ -36,10 +37,10 @@ export class ApplicationEndpointsComponent implements OnInit {
   }
 
   ngOnInit() {
-    const domain = this.route.snapshot.data['domain'];
+    this.domain = this.route.snapshot.data['domain'];
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.application = this.route.snapshot.parent.data['application'];
-    this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, domain);
+    this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain);
   }
 
   valueCopied(message: string) {
@@ -50,4 +51,7 @@ export class ApplicationEndpointsComponent implements OnInit {
     return this.baseUrl + path;
   }
 
+  uma2Enabled() {
+    return this.domain.uma && this.domain.uma.enabled;
+  }
 }

@@ -23,13 +23,14 @@ import io.reactivex.Maybe;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface IdentityProviderManager extends Service {
 
     Maybe<AuthenticationProvider> get(String id);
 
-    Maybe<IdentityProvider> getIdentityProvider(String id);
+    IdentityProvider getIdentityProvider(String id);
 
     Maybe<UserProvider> getUserProvider(String id);
 }

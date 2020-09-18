@@ -75,14 +75,16 @@ public class DefaultJWTParser implements JWTParser {
             // verify format
             SignedJWT signedJWT = SignedJWT.parse(payload);
             // verify signature
-            signedJWT.verify(verifier);
+            boolean verified = signedJWT.verify(verifier);
+            if (!verified) {
+                throw new JOSEException("The signature was not verified");
+            }
             Map<String, Object> claims = signedJWT
                     .getPayload()
                     .toJSONObject()
                     .entrySet()
                     .stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
             JWT jwt = new JWT(claims);
             // verify exp and nbf values
             // https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-30#section-4.1.4

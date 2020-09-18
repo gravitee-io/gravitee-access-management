@@ -49,7 +49,8 @@ export class ApplicationOAuth2Component implements OnInit {
     { name: 'IMPLICIT', value: 'implicit', checked: false, disabled: false  },
     { name: 'REFRESH TOKEN', value: 'refresh_token', checked: false, disabled: false  },
     { name: 'PASSWORD', value: 'password', checked: false },
-    { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false, disabled: false  }
+    { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false, disabled: false  },
+    { name: 'UMA TICKET', value: 'urn:ietf:params:oauth:grant-type:uma-ticket', checked: false, disabled: false  }
   ];
   customGrantTypes: any[];
   selectedScopes: any[];
