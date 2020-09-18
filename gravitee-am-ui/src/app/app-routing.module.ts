@@ -174,6 +174,7 @@ import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
 import {PlatformFlowSchemaResolver} from './resolvers/platform-flow-schema.resolver';
 import {ApplicationAnalyticsComponent} from "./domain/applications/application/analytics/analytics.component";
 import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
+import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolver";
 
 const routes: Routes = [
   {
@@ -923,7 +924,8 @@ const routes: Routes = [
             component: DomainSettingsEntrypointsComponent,
             canActivate: [AuthGuard],
             resolve: {
-              entrypoint: DomainEntrypointResolver
+              entrypoint: DomainEntrypointResolver,
+              environment: CurrentEnvironmentResolver
             },
             data: {
               menu: {

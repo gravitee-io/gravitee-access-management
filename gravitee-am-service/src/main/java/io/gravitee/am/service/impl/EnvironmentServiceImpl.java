@@ -69,6 +69,13 @@ public class EnvironmentServiceImpl implements EnvironmentService {
     }
 
     @Override
+    public Single<Environment> findById(String id) {
+        LOGGER.debug("Find environment by id: {}", id);
+        return environmentRepository.findById(id)
+                .switchIfEmpty(Single.error(new EnvironmentNotFoundException(id)));
+    }
+
+    @Override
     public Flowable<Environment> findAll(String organizationId) {
 
         LOGGER.debug("Find environments by organizationId: {}", organizationId);
