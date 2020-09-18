@@ -48,8 +48,14 @@
               </button>
               <mat-form-field appearance="outline" floatLabel="always" class="form-field">
                 <mat-label>Host</mat-label>
-                <input matInput type="text" placeholder="Listening Host" [name]="'host'+i" [(ngModel)]="vhost.host" required [readonly]="readonly">
+                <input matInput type="text" placeholder="Listening Host" [name]="'host'+i" [(ngModel)]="vhost.host" required [readonly]="readonly" #input
+                       [matAutocomplete]="auto" (click)="focus(input)" (focusout)="unfocus(vhost, input)" [pattern]="hostPattern">
                 <mat-hint>Host which must be set into the HTTP request to access this security domain.</mat-hint>
+                <mat-autocomplete #auto="matAutocomplete" (optionSelected)="hostSelected(input)">
+                  <mat-option *ngFor="let option of getHostOptions(vhost.host)" [value]="option">
+                    {{option}}
+                  </mat-option>
+                </mat-autocomplete>
               </mat-form-field>
               <mat-form-field appearance="outline" floatLabel="always" class="form-field">
                 <mat-label>Path</mat-label>

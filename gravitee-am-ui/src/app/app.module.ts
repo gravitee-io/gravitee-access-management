@@ -295,6 +295,7 @@ import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
 import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
 import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
+import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolver";
 
 @NgModule({
   declarations: [
@@ -513,6 +514,7 @@ import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver
     ProviderResolver,
     CertificatesResolver,
     CertificateResolver,
+    CurrentEnvironmentResolver,
     RolesResolver,
     RoleResolver,
     UsersResolver,
