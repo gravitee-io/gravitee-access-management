@@ -45,8 +45,6 @@ public interface DomainService {
 
     Single<Domain> create(String organizationId, String environmentId, NewDomain domain, User principal);
 
-    Single<Domain> update(String domainId, UpdateDomain domain, User principal);
-
     Single<Domain> update(String domainId, Domain domain);
 
     Single<Domain> patch(String domainId, PatchDomain domain, User principal);
@@ -55,10 +53,6 @@ public interface DomainService {
 
     default Single<Domain> create(String organizationId, String environmentId, NewDomain domain) {
         return create(organizationId, environmentId, domain, null);
-    }
-
-    default Single<Domain> update(String domainId, UpdateDomain domain) {
-        return update(domainId, domain, null);
     }
 
     default Single<Domain> patch(String domainId, PatchDomain domain) {

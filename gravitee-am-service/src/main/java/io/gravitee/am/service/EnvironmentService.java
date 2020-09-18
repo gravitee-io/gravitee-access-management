@@ -30,6 +30,8 @@ public interface EnvironmentService {
 
     Single<Environment> findById(String id, String organizationId);
 
+    Single<Environment> findById(String id);
+
     Flowable<Environment> findAll(String organizationId);
 
     Maybe<Environment> createDefault();

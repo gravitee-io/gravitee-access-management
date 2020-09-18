@@ -76,7 +76,7 @@ public class EnvironmentServiceTest {
     }
 
     @Test
-    public void shouldFindById() {
+    public void shouldFindByIdAndOrgId() {
 
         Environment environment = new Environment();
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(environment));
@@ -89,7 +89,7 @@ public class EnvironmentServiceTest {
     }
 
     @Test
-    public void shouldFindById_notExistingEnvironment() {
+    public void shouldFindByIdAndOrgId_notExistingEnvironment() {
 
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.empty());
 
@@ -100,11 +100,46 @@ public class EnvironmentServiceTest {
     }
 
     @Test
-    public void shouldFindById_technicalException() {
+    public void shouldFindByIdAndOrgId_technicalException() {
 
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID, ORGANIZATION_ID).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertError(TechnicalException.class);
+    }
+
+    @Test
+    public void shouldFindById() {
+
+        Environment environment = new Environment();
+        when(environmentRepository.findById(ENVIRONMENT_ID)).thenReturn(Maybe.just(environment));
+
+        TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(environment);
+    }
+
+    @Test
+    public void shouldFindById_notExistingEnvironment() {
+
+        when(environmentRepository.findById(ENVIRONMENT_ID)).thenReturn(Maybe.empty());
+
+        TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertError(EnvironmentNotFoundException.class);
+    }
+
+    @Test
+    public void shouldFindById_technicalException() {
+
+        when(environmentRepository.findById(ENVIRONMENT_ID)).thenReturn(Maybe.error(TechnicalException::new));
+
+        TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID).test();
 
         obs.awaitTerminalEvent();
         obs.assertError(TechnicalException.class);

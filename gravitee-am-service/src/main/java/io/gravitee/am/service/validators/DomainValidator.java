@@ -19,6 +19,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.reactivex.Completable;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +31,16 @@ import java.util.stream.Collectors;
  */
 public class DomainValidator {
 
-    public static Completable validate(Domain domain) {
+    public static Completable validate(Domain domain, List<String> domainRestrictions) {
 
         List<Completable> chain = new ArrayList<>();
 
         if (domain.getName().contains("/")) {
             return Completable.error(new InvalidDomainException("Domain name cannot contain '/' character"));
+        }
+
+        if(!CollectionUtils.isEmpty(domainRestrictions) && !domain.isVhostMode()) {
+            return Completable.error(new InvalidDomainException("Domain can only work in vhost mode"));
         }
 
         if (domain.isVhostMode()) {
@@ -51,7 +56,9 @@ public class DomainValidator {
                 return Completable.error(new InvalidDomainException("You must select one vhost to override entrypoint"));
             }
 
-            chain.addAll(domain.getVhosts().stream().map(VirtualHostValidator::validate).collect(Collectors.toList()));
+            chain.addAll(domain.getVhosts().stream()
+                    .map(vhost -> VirtualHostValidator.validate(vhost, domainRestrictions))
+                    .collect(Collectors.toList()));
         } else {
             if("/".equals(domain.getPath())) {
                 return Completable.error(new InvalidDomainException("'/' path is not allowed in context-path mode"));

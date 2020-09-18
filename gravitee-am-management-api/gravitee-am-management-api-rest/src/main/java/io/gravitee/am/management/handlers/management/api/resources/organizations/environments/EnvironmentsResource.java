@@ -81,6 +81,7 @@ public class EnvironmentsResource extends AbstractResource {
         Environment filteredEnvironment = new Environment();
         filteredEnvironment.setId(environment.getId());
         filteredEnvironment.setName(environment.getName());
+        filteredEnvironment.setDomainRestrictions(environment.getDomainRestrictions());
 
         return filteredEnvironment;
     }

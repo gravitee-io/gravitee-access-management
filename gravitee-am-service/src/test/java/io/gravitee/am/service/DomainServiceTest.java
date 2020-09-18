@@ -175,6 +175,9 @@ public class DomainServiceTest {
     @Mock
     private ResourceService resourceService;
 
+    @Mock
+    private EnvironmentService environmentService;
+
     @Test
     public void shouldFindById() {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
@@ -254,8 +257,11 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -298,6 +304,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when((domainRepository.findAll())).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.error(TechnicalException::new));
 
@@ -326,76 +333,6 @@ public class DomainServiceTest {
     }
 
     @Test
-    public void shouldUpdate() {
-        UpdateDomain updateDomain = Mockito.mock(UpdateDomain.class);
-        Domain domain = new Domain();
-        domain.setName("my-domain");
-        domain.setPath("/test");
-        when(updateDomain.getName()).thenReturn(domain.getName());
-        when(updateDomain.getPath()).thenReturn(domain.getPath());
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
-
-        TestObserver testObserver = domainService.update("my-domain", updateDomain).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(domainRepository, times(1)).findById(anyString());
-        verify(domainRepository, times(1)).update(any(Domain.class));
-        verify(eventService, times(1)).create(any());
-    }
-
-    @Test
-    public void shouldUpdate_technicalException() {
-        UpdateDomain updateDomain = Mockito.mock(UpdateDomain.class);
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.error(TechnicalException::new));
-
-        TestObserver testObserver = domainService.update("my-domain", updateDomain).test();
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, times(1)).findById(anyString());
-        verify(domainRepository, never()).update(any(Domain.class));
-    }
-
-    @Test
-    public void shouldUpdate2_technicalException() {
-        UpdateDomain updateDomain = Mockito.mock(UpdateDomain.class);
-        Domain domain = new Domain();
-        domain.setName("my-domain");
-        domain.setPath("/test");
-        when(updateDomain.getName()).thenReturn(domain.getName());
-        when(updateDomain.getPath()).thenReturn(domain.getPath());
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(domainRepository.update(any(Domain.class))).thenReturn(Single.error(TechnicalException::new));
-
-        TestObserver testObserver = domainService.update("my-domain", updateDomain).test();
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, times(1)).findById(anyString());
-    }
-
-    @Test
-    public void shouldUpdate_domainNotFound() {
-        UpdateDomain updateDomain = Mockito.mock(UpdateDomain.class);
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
-
-        TestObserver testObserver = domainService.update("my-domain", updateDomain).test();
-        testObserver.assertError(DomainNotFoundException.class);
-        testObserver.assertNotComplete();
-
-        verify(domainRepository, times(1)).findById(anyString());
-        verify(domainRepository, never()).update(any(Domain.class));
-    }
-
-    @Test
     public void shouldPatch_domainNotFound() {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
@@ -412,10 +349,13 @@ public class DomainServiceTest {
     public void shouldPatch() {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         Domain domain = new Domain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
         domain.setName("my-domain");
         domain.setPath("/test");
         when(patchDomain.patch(any())).thenReturn(domain);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
