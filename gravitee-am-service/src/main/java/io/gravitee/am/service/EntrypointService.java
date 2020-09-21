@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.reactivex.Completable;
@@ -35,7 +36,7 @@ public interface EntrypointService {
 
     Single<Entrypoint> create(String organizationId, NewEntrypoint entrypoint, User principal);
 
-    Single<Entrypoint> createDefault(String organizationId);
+    Flowable<Entrypoint> createDefaults(Organization organization);
 
     Single<Entrypoint> update(String entrypointId, String organizationId, UpdateEntrypoint entrypoint, User principal);
 

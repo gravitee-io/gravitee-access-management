@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -32,6 +33,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,6 +62,9 @@ public class EntrypointServiceTest {
     private EntrypointRepository entrypointRepository;
 
     @Mock
+    private OrganizationService organizationService;
+
+    @Mock
     private AuditService auditService;
 
     private EntrypointService cut;
@@ -67,7 +72,7 @@ public class EntrypointServiceTest {
     @Before
     public void before() {
 
-        cut = new EntrypointServiceImpl(entrypointRepository, auditService);
+        cut = new EntrypointServiceImpl(entrypointRepository, organizationService, auditService);
     }
 
     @Test
@@ -106,11 +111,15 @@ public class EntrypointServiceTest {
     }
 
     @Test
-    public void shouldCreateDefault() {
+    public void shouldCreateDefaults() {
 
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
         when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
 
-        TestObserver<Entrypoint> obs = cut.createDefault(ORGANIZATION_ID).test();
+        TestSubscriber<Entrypoint> obs = cut.createDefaults(organization).test();
 
         obs.awaitTerminalEvent();
         obs.assertValue(entrypoint -> entrypoint.getId() != null
@@ -128,7 +137,40 @@ public class EntrypointServiceTest {
     }
 
     @Test
+    public void shouldCreateDefaultsWithDomainRestrictions() {
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
+        organization.setDomainRestrictions(Arrays.asList("domain1.gravitee.io", "domain2.gravitee.io"));
+
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
+        when(entrypointRepository.create(argThat(e -> e != null && e.getUrl().equals("https://domain1.gravitee.io") && e.isDefaultEntrypoint()))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        when(entrypointRepository.create(argThat(e -> e != null && e.getUrl().equals("https://domain2.gravitee.io") && !e.isDefaultEntrypoint()))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        TestSubscriber<Entrypoint> obs = cut.createDefaults(organization).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertValueAt(0, entrypoint -> entrypoint.getId() != null
+                && entrypoint.isDefaultEntrypoint() && entrypoint.getOrganizationId().equals(ORGANIZATION_ID));
+        obs.assertValueAt(1, entrypoint -> entrypoint.getId() != null
+                && !entrypoint.isDefaultEntrypoint() && entrypoint.getOrganizationId().equals(ORGANIZATION_ID));
+
+        verify(auditService, times(2)).report(argThat(builder -> {
+            Audit audit = builder.build(new ObjectMapper());
+            assertEquals(EventType.ENTRYPOINT_CREATED, audit.getType());
+            assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
+            assertEquals(ORGANIZATION_ID, audit.getReferenceId());
+            assertEquals("system", audit.getActor().getId());
+
+            return true;
+        }));
+    }
+
+    @Test
     public void shouldCreate() {
+
+        Organization organization = new Organization();
+        organization.setId(ORGANIZATION_ID);
 
         DefaultUser user = new DefaultUser("test");
         user.setId(USER_ID);
@@ -139,6 +181,7 @@ public class EntrypointServiceTest {
         newEntrypoint.setTags(Arrays.asList("tag#1", "tags#2"));
         newEntrypoint.setUrl("https://auth.company.com");
 
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
         when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
 
         TestObserver<Entrypoint> obs = cut.create(ORGANIZATION_ID, newEntrypoint, user).test();
@@ -201,6 +244,7 @@ public class EntrypointServiceTest {
         updateEntrypoint.setTags(Arrays.asList("tag#1", "tags#2"));
         updateEntrypoint.setUrl("https://auth.company.com");
 
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(new Organization()));
         when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
         when(entrypointRepository.update(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
 
@@ -290,6 +334,7 @@ public class EntrypointServiceTest {
         updateEntrypoint.setTags(Arrays.asList("tag#1", "tags#2"));
         updateEntrypoint.setUrl("https://changed.com");
 
+        when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(new Organization()));
         when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
         when(entrypointRepository.update(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
 

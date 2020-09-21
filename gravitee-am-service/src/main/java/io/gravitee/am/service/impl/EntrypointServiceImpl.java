@@ -18,15 +18,18 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EntrypointService;
+import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.exception.InvalidEntrypointException;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.EntrypointAuditBuilder;
+import io.gravitee.am.service.validators.VirtualHostValidator;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -35,11 +38,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -52,11 +58,15 @@ public class EntrypointServiceImpl implements EntrypointService {
 
     private final EntrypointRepository entrypointRepository;
 
+    private final OrganizationService organizationService;
+
     private final AuditService auditService;
 
     public EntrypointServiceImpl(@Lazy EntrypointRepository entrypointRepository,
+                                 @Lazy OrganizationService organizationService,
                                  AuditService auditService) {
         this.entrypointRepository = entrypointRepository;
+        this.organizationService = organizationService;
         this.auditService = auditService;
     }
 
@@ -93,18 +103,35 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     @Override
-    public Single<Entrypoint> createDefault(String organizationId) {
+    public Flowable<Entrypoint> createDefaults(Organization organization) {
 
-        Entrypoint toCreate = new Entrypoint();
+        List<Single<Entrypoint>> toCreateObsList = new ArrayList<>();
 
-        toCreate.setName("Default");
-        toCreate.setDescription("Default entrypoint");
-        toCreate.setUrl("https://auth.company.com");
-        toCreate.setTags(Collections.emptyList());
-        toCreate.setOrganizationId(organizationId);
-        toCreate.setDefaultEntrypoint(true);
+        if (CollectionUtils.isEmpty(organization.getDomainRestrictions())) {
+            Entrypoint toCreate = new Entrypoint();
+            toCreate.setName("Default");
+            toCreate.setDescription("Default entrypoint");
+            toCreate.setUrl("https://auth.company.com");
+            toCreate.setTags(Collections.emptyList());
+            toCreate.setOrganizationId(organization.getId());
+            toCreate.setDefaultEntrypoint(true);
 
-        return createInternal(toCreate, null);
+            toCreateObsList.add(createInternal(toCreate, null));
+        } else {
+            for (int i = 0; i < organization.getDomainRestrictions().size(); i++) {
+                Entrypoint toCreate = new Entrypoint();
+                String domainRestriction = organization.getDomainRestrictions().get(i);
+                toCreate.setName(domainRestriction);
+                toCreate.setDescription("Entrypoint " + domainRestriction);
+                toCreate.setUrl("https://" + domainRestriction);
+                toCreate.setTags(Collections.emptyList());
+                toCreate.setOrganizationId(organization.getId());
+                toCreate.setDefaultEntrypoint(i == 0);
+                toCreateObsList.add(createInternal(toCreate, null));
+            }
+        }
+
+        return Single.mergeDelayError(toCreateObsList);
     }
 
     @Override
@@ -129,11 +156,11 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     @Override
-    public Completable delete(String id, String orgaizationId, User principal) {
+    public Completable delete(String id, String organizationId, User principal) {
 
-        LOGGER.debug("Delete entrypoint by id {} and organizationId {}", id, orgaizationId);
+        LOGGER.debug("Delete entrypoint by id {} and organizationId {}", id, organizationId);
 
-        return findById(id, orgaizationId)
+        return findById(id, organizationId)
                 .flatMapCompletable(entrypoint -> entrypointRepository.delete(id)
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_DELETED).entrypoint(entrypoint)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_DELETED).throwable(throwable))));
@@ -175,7 +202,15 @@ public class EntrypointServiceImpl implements EntrypointService {
                 throw new MalformedURLException();
             }
 
-            return Completable.complete();
+            return organizationService.findById(entrypoint.getOrganizationId())
+                    .flatMapCompletable(organization -> {
+                        String hostWithoutPort = url.getHost().split(":")[0];
+                        if (!VirtualHostValidator.isValidDomainOrSubDomain(hostWithoutPort, organization.getDomainRestrictions())) {
+                            return Completable.error(new InvalidEntrypointException("Host [" + hostWithoutPort + "] must be a subdomain of " + organization.getDomainRestrictions()));
+                        }
+
+                        return Completable.complete();
+                    });
         } catch (MalformedURLException e) {
             return Completable.error(new InvalidEntrypointException("Entrypoint must have a valid url."));
         }
