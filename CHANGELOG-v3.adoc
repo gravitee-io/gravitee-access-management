@@ -1,5 +1,36 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/244?closed=1[AM - 3.2.0 (2020-09-22)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.1.2 https://github.com/gravitee-io/issues/issues/4207[#4207]
+- Merge 3.1.3 https://github.com/gravitee-io/issues/issues/4309[#4309]
+
+=== Features
+
+*_Identity-provider_*
+
+- Add Azure AD identity provider https://github.com/gravitee-io/issues/issues/4074[#4074]
+- Add Facebook identity provider https://github.com/gravitee-io/issues/issues/3288[#3288]
+
+*_Management_*
+
+- [gateway] support passwordless https://github.com/gravitee-io/issues/issues/4073[#4073]
+
+=== Improvements
+
+*_Fapi_*
+
+- Ensure request object signature algorithm is not none https://github.com/gravitee-io/issues/issues/4051[#4051]
+
+*_Identity-provider_*
+
+- Factorize OAuth & Social identity providers https://github.com/gravitee-io/issues/issues/4108[#4108]
+
+
 == https://github.com/gravitee-io/issues/milestone/278?closed=1[AM - 3.1.3 (2020-09-18)]
 
 === Bug fixes
