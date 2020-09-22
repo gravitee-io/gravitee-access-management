@@ -1,5 +1,23 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/282?closed=1[AM - 3.0.6 (2020-09-17)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Skip external identity provider for authentication with credentials https://github.com/gravitee-io/issues/issues/4263[#4263]
+- [register] Internal Server Error (500) if an user uses the default Gravitee registration form https://github.com/gravitee-io/issues/issues/4284[#4284]
+
+*_General_*
+
+- Merge 2.10.19 https://github.com/gravitee-io/issues/issues/4257[#4257]
+
+*_Management-ui_*
+
+- User profile fields should be disabled when insufficient permissions https://github.com/gravitee-io/issues/issues/4298[#4298]
+
+
 == https://github.com/gravitee-io/issues/milestone/276?closed=1[AM - 3.1.2 (2020-08-24)]
 
 === Bug fixes
