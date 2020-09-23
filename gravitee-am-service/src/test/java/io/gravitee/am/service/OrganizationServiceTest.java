@@ -31,6 +31,7 @@ import io.gravitee.am.service.impl.OrganizationServiceImpl;
 import io.gravitee.am.service.model.NewOrganization;
 import io.gravitee.am.service.model.PatchOrganization;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -121,7 +122,7 @@ public class OrganizationServiceTest {
         when(organizationRepository.count()).thenReturn(Single.just(0L));
         when(organizationRepository.create(argThat(organization -> organization.getId().equals(Organization.DEFAULT)))).thenReturn(Single.just(defaultOrganization));
         when(roleService.createDefaultRoles("DEFAULT")).thenReturn(Completable.complete());
-        when(entrypointService.createDefault("DEFAULT")).thenReturn(Single.just(new Entrypoint()));
+        when(entrypointService.createDefaults(defaultOrganization)).thenReturn(Flowable.just(new Entrypoint()));
 
         TestObserver<Organization> obs = cut.createDefault().test();
 
@@ -188,7 +189,7 @@ public class OrganizationServiceTest {
         when(organizationRepository.findById(ORGANIZATION_ID)).thenReturn(Maybe.empty());
         when(organizationRepository.create(argThat(organization -> organization.getId().equals(ORGANIZATION_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(roleService.createDefaultRoles(ORGANIZATION_ID)).thenReturn(Completable.complete());
-        when(entrypointService.createDefault(ORGANIZATION_ID)).thenReturn(Single.just(new Entrypoint()));
+        when(entrypointService.createDefaults(any(Organization.class))).thenReturn(Flowable.just(new Entrypoint()));
 
         NewOrganization newOrganization = new NewOrganization();
         newOrganization.setName("TestName");

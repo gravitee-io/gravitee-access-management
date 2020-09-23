@@ -17,7 +17,6 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.service.AuditService;
@@ -131,7 +130,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         // Creates an organization and set ownership.
         return organizationRepository.create(toCreate)
                 .flatMap(createdOrganization ->
-                        Completable.mergeArrayDelayError(entrypointService.createDefault(createdOrganization.getId()).ignoreElement(),
+                        Completable.mergeArrayDelayError(entrypointService.createDefaults(createdOrganization).ignoreElements(),
                                 roleService.createDefaultRoles(createdOrganization.getId()))
                                 .andThen(Single.just(createdOrganization)))
                 .doOnSuccess(organization -> auditService.report(AuditBuilder.builder(OrganizationAuditBuilder.class).type(EventType.ORGANIZATION_CREATED).organization(organization).principal(owner)))

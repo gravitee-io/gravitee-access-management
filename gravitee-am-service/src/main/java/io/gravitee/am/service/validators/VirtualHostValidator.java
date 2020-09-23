@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.service.exception.InvalidVirtualHostException;
 import io.reactivex.Completable;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -149,7 +150,7 @@ public class VirtualHostValidator {
 
         boolean isSubDomain = false;
 
-        if (domainRestrictions.isEmpty()) {
+        if (CollectionUtils.isEmpty(domainRestrictions)) {
             return true;
         }
 
