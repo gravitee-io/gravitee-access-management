@@ -149,12 +149,12 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     }
   }
 
-  unfocus(vhost: any, input: HTMLInputElement) {
-    if (input.value.startsWith('.')) {
+  unfocus(vhost : any, input: HTMLInputElement) {
+    if(input.value.startsWith('.')) {
       input.value = input.value.replace('.', '');
     }
 
-    if (vhost.host.startsWith('.')) {
+    if(vhost.host.startsWith('.')) {
       vhost.host = vhost.host.replace('.', '');
     }
   }
