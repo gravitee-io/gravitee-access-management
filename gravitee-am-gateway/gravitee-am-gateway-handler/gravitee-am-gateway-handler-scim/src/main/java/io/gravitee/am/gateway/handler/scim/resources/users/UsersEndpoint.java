@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.scim.filter.Filter;
+import io.gravitee.am.common.scim.parser.SCIMFilterParser;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.User;
@@ -44,7 +46,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
         // Pagination (https://tools.ietf.org/html/rfc7644#section-3.4.2.4)
         Integer page = DEFAULT_START_INDEX;
         Integer size = MAX_ITEMS_PER_PAGE;
-
+        Filter filter = null;
 
         // The 1-based index of the first query result.
         // A value less than 1 SHALL be interpreted as 1.
@@ -63,8 +65,19 @@ public class UsersEndpoint extends AbstractUserEndpoint {
 
         }
 
+        // Filter results
+        final String filterParam = context.request().getParam("filter");
+        if (filterParam != null && !filterParam.isEmpty()) {
+            try {
+                filter = SCIMFilterParser.parse(filterParam);
+            } catch (Exception ex) {
+                context.fail(new InvalidSyntaxException(ex.getMessage()));
+                return;
+            }
+        }
+
         // user service use 0-based index
-        userService.list(page - 1, size, location(context.request()))
+        userService.list(filter, page - 1, size, location(context.request()))
                 .subscribe(
                         users -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

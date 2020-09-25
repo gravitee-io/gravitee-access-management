@@ -110,7 +110,7 @@ export class OrganizationService {
   }
 
   searchUsers(searchTerm, page, size): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/users?q=' + searchTerm + '&page=' + page + '&size=' + size);
+    return this.http.get<any>(this.organizationURL + '/users?' + searchTerm + '&page=' + page + '&size=' + size);
   }
 
   roles(type?): Observable<any> {

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "fd3b98ad-1ada-4d9f-a538-b545a7fc9971",
+		"_postman_id": "1e8784b9-4e71-4f44-972d-348196dfd13a",
 		"name": "Gravitee.io - AM - SCIM - app version",
 		"description": "Test System for Cross-domain Identity Management\nSCIM 2.0 is released as RFC7642, RFC7643 and RFC7644",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -15,7 +15,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "cd9a60b8-e05a-432a-8686-6e915265011a",
+								"id": "702efad1-64e7-473e-abb4-9116327fc2d4",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -77,7 +77,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "38e1a86b-e260-4b9a-96c4-7985b7ce5461",
+								"id": "bf2325a8-e22d-4006-82dc-26bea43ec6f6",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -130,7 +130,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "01df0737-a8dc-407d-96ad-7b8f646cde42",
+								"id": "776be139-dc72-4303-9bc7-08f41160430d",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function(){}, 10000);"
@@ -179,7 +179,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "0a51c5d5-6aa9-46a6-9e02-dce04f51d1cc",
+								"id": "057decc6-d12b-41d2-ad6a-b31f4d2c7ea3",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -230,7 +230,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "3e283282-6165-471d-85a3-fa95b40438c3",
+										"id": "eb7dec3b-3645-4a24-8399-c18b4b8eb278",
 										"exec": [
 											"pm.test(\"Status code is 404\", function () {",
 											"    pm.response.to.have.status(404);",
@@ -263,7 +263,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "084a5dd9-ed9b-4938-9d50-adc45f4f309f",
+										"id": "ebaf443d-cde2-4f94-bb57-90dd68930ae7",
 										"exec": [
 											"pm.test(\"Status code is 404\", function () {",
 											"    pm.response.to.have.status(404);",
@@ -296,7 +296,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d15c97e7-c031-4f3b-9d86-0fe44a582d5b",
+										"id": "d5b7265e-7e12-4f36-8605-659f3b5881cd",
 										"exec": [
 											"pm.test(\"Status code is 404\", function () {",
 											"    pm.response.to.have.status(404);",
@@ -336,7 +336,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "99702a25-2695-41c2-99cc-59c4de631a21",
+										"id": "6a01c163-ae6a-462f-8fc2-deb2a191c218",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -404,7 +404,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "55087029-be20-4c12-9f22-daae96d94cfb",
+										"id": "a3cb60ee-c3bb-428c-89d8-fe8ca8676c63",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -415,7 +415,7 @@
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig']);",
 											"    pm.expect(jsonData.patch.supported).to.eql(false);",
 											"    pm.expect(jsonData.bulk.supported).to.eql(false);",
-											"    pm.expect(jsonData.filter.supported).to.eql(false);",
+											"    pm.expect(jsonData.filter.supported).to.eql(true);",
 											"    pm.expect(jsonData.changePassword.supported).to.eql(false);",
 											"    pm.expect(jsonData.sort.supported).to.eql(false);",
 											"    pm.expect(jsonData.etag.supported).to.eql(false);",
@@ -456,7 +456,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "3d4d4d74-769a-4527-bf5c-59d90ba8a3e3",
+										"id": "9d72f159-7a4c-4086-8eb8-c0af50a6ac5f",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -496,7 +496,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "171f53b1-3d4e-4853-a074-2da4e353b076",
+										"id": "ab1176e6-a196-40d7-a73a-79822ee9b7e4",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -542,7 +542,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "cfd026b7-b900-4560-a0a9-bf69c29e050d",
+										"id": "e2dc1b9c-4ccd-4fc3-9d27-2024d488d8bd",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -586,7 +586,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "173eba8b-abd7-4064-9a54-f81694bda170",
+										"id": "b3084f67-2776-40eb-8abe-86289a982c2d",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -636,7 +636,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "563a8849-2048-403e-bc88-a0bed597a5c5",
+										"id": "aeec2068-5950-4aab-99fc-acca6ae5f04d",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -681,7 +681,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d26f0480-4f1d-497b-bf0e-d2a7edd3d246",
+										"id": "e745e539-7ee6-4f0d-a3b4-20e1f6c3b1e9",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -732,7 +732,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "4fb173af-8ae3-4da3-bca2-70cce2575d43",
+										"id": "f42a6710-83d9-4b8f-9005-c8d89fffe45f",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -777,7 +777,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "8975679e-4eec-4f35-852f-030445ee5e3d",
+										"id": "fb9a71a1-e099-46f8-a5e4-51f041964f3b",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -828,7 +828,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "49534273-ef8c-4334-b484-015ea9a2110a",
+										"id": "bdc15aa0-2039-44eb-8921-dc7db89536f9",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -868,7 +868,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e2dbe074-b36d-421d-b966-dc87eabce908",
+										"id": "ffca470d-4f1d-4d0d-b09a-11f7a523a23f",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -914,7 +914,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9b03675d-5364-4b9a-9d6d-18239b200902",
+										"id": "5a45da68-f916-4c44-81a3-1ce3183ae50c",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -959,7 +959,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "cf2af698-eb0b-4380-bed2-bb6fdd4b46cf",
+										"id": "788b6789-2bb6-499b-9be3-a98797f0bd76",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1010,7 +1010,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "302dddee-a124-454a-94d1-e8f47f2336fb",
+										"id": "cd2acf95-af43-47d7-9a3a-7c84bd95295a",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1054,7 +1054,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9e71a107-6555-4c6f-9dac-7ad5e89c1b51",
+										"id": "37a9e324-b370-4f5b-8084-708b16439fa0",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1104,7 +1104,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d342481a-6911-420e-86e6-b4ce98bc90e9",
+										"id": "7075a551-1b4d-491e-ae67-f1b36dfd67cd",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1149,7 +1149,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "97318852-82c0-403c-bdd6-66c944cef716",
+										"id": "829aa230-7348-4dff-8440-2037124850e8",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1207,7 +1207,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d9b25901-249b-408f-bc50-737ee7f2d23b",
+										"id": "cd2c3ebc-b37e-45dc-bbcb-c5ab596b74c2",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -1263,7 +1263,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "410e994b-ac12-40bc-b22a-0b9f8573fb28",
+										"id": "d601ea2b-3cbd-4401-9522-9cb2bb4ef419",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1318,7 +1318,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "2ff83756-5e78-4919-8594-38df1a3cfc85",
+										"id": "b4885851-5757-4109-ae7b-e0e8ad5ff34a",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1337,7 +1337,7 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "8fb60b6b-b8df-4570-b51d-5663f1a1f4cd",
+										"id": "13d355fd-07ba-4249-a528-0833bf32d6d9",
 										"exec": [
 											""
 										],
@@ -1398,7 +1398,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4e6dc44f-554b-4aa4-a5fe-bc240f1a9a6d",
+												"id": "fb71a0c9-0f86-4572-97ae-16f7a93e2465",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1449,7 +1449,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "70d57c9e-564f-48da-837e-ba4454683060",
+												"id": "76e824d0-c6e0-4be3-a68c-86cbfef6046b",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1506,7 +1506,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ff8dd646-22ea-46dd-bd06-9e97a184c392",
+												"id": "bd5c98dd-707a-486c-9668-cb69192dd7e8",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1563,7 +1563,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "55c18792-38c7-4814-b5b3-00ceef0a5c07",
+												"id": "35fdbc31-454b-4734-b909-8ca150d5115d",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1620,7 +1620,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "79f12714-45f1-4137-854d-bc61198cf4c4",
+												"id": "173ed4b8-e7e6-44bf-8996-3fbfff285ff2",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1677,7 +1677,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b967933f-9c41-4921-8884-5586d6ac03c2",
+												"id": "bdb2d98b-6833-4a7a-ad1f-fe28f3c5b0b5",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1734,7 +1734,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "373de481-5340-45db-9c97-fce086f24c80",
+												"id": "8ddbea90-72f1-4e2f-bacc-aa15a1a28674",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -1790,7 +1790,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "6ccd3c92-d68a-4543-a302-cc3e2f4f3078",
+												"id": "964b2b95-6a73-4bf9-9348-abdfaa587322",
 												"exec": [
 													"pm.test(\"Status code is 409\", function () {",
 													"    pm.response.to.have.status(409);",
@@ -1854,7 +1854,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "a09375d7-c8ca-4e59-99f7-9d0fa59b86c6",
+												"id": "a51c35e8-c748-4a70-a914-e9bc04ab48bd",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -1911,7 +1911,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "1d6465b9-076b-43e9-87cf-e378be6404c8",
+												"id": "85bfbf1b-b0f1-456e-b595-65289fef1671",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1963,7 +1963,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "7c1b8f08-bf6e-4997-933c-ec980551bec6",
+												"id": "584e9999-92f4-43b7-b7d5-33309a9aaa8e",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2027,7 +2027,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "e36de2a7-32c3-4a00-a364-d23fa6905da3",
+												"id": "bb757cde-314b-438d-a69e-75bbb80ec32e",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2069,6 +2069,327 @@
 										}
 									},
 									"response": []
+								},
+								{
+									"name": "Filter users - invalid filter",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "45f020ac-5759-4308-9e58-a3f0e1fa240a",
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM list users - invalid filter\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"    pm.expect(jsonData.scimType).to.eql('invalidSyntax');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=invalid",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users"
+											],
+											"query": [
+												{
+													"key": "filter",
+													"value": "invalid"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Filter users - user not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "3e663247-dbd2-4dcf-94f0-e01868132f27",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM list users - unknown user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+													"    pm.expect(jsonData.totalResults).to.eql(0);",
+													"    pm.expect(jsonData.startIndex).to.eql(1);",
+													"    pm.expect(jsonData.itemsPerPage).to.eql(0);",
+													"    pm.expect(jsonData.Resources.length).to.eql(0);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=userName eq \"invalid\"",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users"
+											],
+											"query": [
+												{
+													"key": "filter",
+													"value": "userName eq \"invalid\""
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Filter users - user found - simple filter - eq operand",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c86b4a12-606a-401a-af83-faa93ab8abad",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM list users - simple filter - eq\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+													"    pm.expect(jsonData.totalResults).to.eql(1);",
+													"    pm.expect(jsonData.startIndex).to.eql(1);",
+													"    pm.expect(jsonData.itemsPerPage).to.eql(1);",
+													"    pm.expect(jsonData.Resources.length).to.eql(1);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=userName eq \"bjensen@example.com\"",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users"
+											],
+											"query": [
+												{
+													"key": "filter",
+													"value": "userName eq \"bjensen@example.com\""
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Filter users - user found - simple filter - regex operand",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "83ae9087-dbd5-42dc-a144-40082963c43c",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM list users - simple filter - regex\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+													"    pm.expect(jsonData.totalResults).to.eql(1);",
+													"    pm.expect(jsonData.startIndex).to.eql(1);",
+													"    pm.expect(jsonData.itemsPerPage).to.eql(1);",
+													"    pm.expect(jsonData.Resources.length).to.eql(1);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=userName co \"bjensen\"",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users"
+											],
+											"query": [
+												{
+													"key": "filter",
+													"value": "userName co \"bjensen\""
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Filter users - user found - complex filter - or operand",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "5b0b750b-f6fe-49fa-8849-a515551b5663",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM list users - complex filter - or\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+													"    pm.expect(jsonData.totalResults).to.eql(1);",
+													"    pm.expect(jsonData.startIndex).to.eql(1);",
+													"    pm.expect(jsonData.itemsPerPage).to.eql(1);",
+													"    pm.expect(jsonData.Resources.length).to.eql(1);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=userName eq \"invalid\" or name.givenName eq \"Barbara\"",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users"
+											],
+											"query": [
+												{
+													"key": "filter",
+													"value": "userName eq \"invalid\" or name.givenName eq \"Barbara\""
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Filter users - user found - complex filter - and operand",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "cb833f93-04a7-489d-b7da-af88502f61bd",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM list users - complex filter - and\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:ListResponse']);",
+													"    pm.expect(jsonData.totalResults).to.eql(1);",
+													"    pm.expect(jsonData.startIndex).to.eql(1);",
+													"    pm.expect(jsonData.itemsPerPage).to.eql(1);",
+													"    pm.expect(jsonData.Resources.length).to.eql(1);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=name.givenName eq \"Barbara\" and active eq false and meta.created ge \"2020-10-14T20:18:43.048Z\"",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users"
+											],
+											"query": [
+												{
+													"key": "filter",
+													"value": "name.givenName eq \"Barbara\" and active eq false and meta.created ge \"2020-10-14T20:18:43.048Z\""
+												}
+											]
+										}
+									},
+									"response": []
 								}
 							],
 							"protocolProfileBehavior": {},
@@ -2083,7 +2404,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "49918fc3-664a-44bf-968d-bd59ce7cc83c",
+												"id": "4f4c7cd9-63a8-46fc-a4bf-f1f79948633c",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -2134,7 +2455,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "c048475d-f61c-440a-91ab-417ff1bdfada",
+												"id": "d0d71d89-a4c4-447d-874c-02979fcc0f15",
 												"exec": [
 													"pm.test(\"Status code is 204\", function () {",
 													"    pm.response.to.have.status(204);",
@@ -2178,7 +2499,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "1aa96f17-d43e-41d6-bd1e-95da688cc699",
+												"id": "515ee4d5-3944-40e4-9a8b-48b6b078d9d2",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2240,7 +2561,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "499ea95b-426d-413a-902a-cd9f5105de3d",
+												"id": "65916c19-8421-4070-af52-c02073685453",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -2291,7 +2612,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b07a412d-855b-4744-98b0-9ab565621de0",
+												"id": "26f5545a-26b6-4649-9376-cfbdbc148d5f",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -2348,7 +2669,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f74ec697-854f-4014-9eed-0f9537df76b6",
+												"id": "9c5703df-9041-4669-b438-a8d76aa7ad0d",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -2404,7 +2725,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "a0564c07-2c05-4731-ae1e-59ebaf04e4bb",
+												"id": "baa23664-e630-4bbf-90a4-f682c899b464",
 												"exec": [
 													"pm.test(\"Status code is 409\", function () {",
 													"    pm.response.to.have.status(409);",
@@ -2468,7 +2789,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "1f9c7cd4-9934-4261-9ead-065df1e6a1a6",
+												"id": "3c2c6942-2917-46f6-93fe-d11d24b48228",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -2525,7 +2846,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "7c3fa9d3-c21a-446b-b60a-c51503d7fd69",
+												"id": "e80c87d3-9448-4540-83a3-00f096bd57c2",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -2577,7 +2898,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "6abcce16-9627-47c2-8399-01dce19d7ef1",
+												"id": "4dc79ae1-e9e4-422e-ad46-2a3d60223a8d",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2641,7 +2962,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "959dbae9-c5d4-4b1c-b612-73f3f85bf236",
+												"id": "7d54ab43-fa08-4011-9161-52e377ff08e8",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2696,7 +3017,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "04cfa6c2-a703-48a9-878a-b2270232d341",
+												"id": "9122a083-8a10-4c65-b2c8-4881c76c91f1",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -2747,7 +3068,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "0ddc4c29-672d-4f2c-80c2-38179b075dbe",
+												"id": "b53a1699-fe5f-4380-be29-796d298165e9",
 												"exec": [
 													"pm.test(\"Status code is 204\", function () {",
 													"    pm.response.to.have.status(204);",
@@ -2791,7 +3112,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "a5aa8ea8-b71a-48c1-91d3-7807d2920321",
+												"id": "6d38066c-1e79-4572-87f1-46556823ce7a",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2850,7 +3171,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "bc2eb12d-f2ba-451b-b148-64109fc1a315",
+						"id": "d797ca1f-8117-4437-818a-469adec6b0a8",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",

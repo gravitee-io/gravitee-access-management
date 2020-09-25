@@ -15,11 +15,12 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -41,7 +42,7 @@ public interface UserRepository extends CrudRepository<User, String> {
 
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
-    Single<Page<User>> search(String domain, String query, int page, int size);
+    Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size);
 
     Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict);
 

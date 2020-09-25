@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { UserService} from "../../../services/user.service";
-import { SnackbarService } from "../../../services/snackbar.service";
-import { DialogService } from "../../../services/dialog.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { OrganizationService } from "../../../services/organization.service";
-import {AuthService} from "../../../services/auth.service";
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
+import { UserService} from '../../../services/user.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
+import { OrganizationService } from '../../../services/organization.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-users',
@@ -28,6 +29,8 @@ import {AuthService} from "../../../services/auth.service";
 })
 export class UsersComponent implements OnInit {
   private searchValue: string;
+  private isLoading: boolean;
+  private hasValue: boolean;
   organizationContext: boolean;
   requiredReadPermission: string;
   pagedUsers: any;
@@ -35,6 +38,7 @@ export class UsersComponent implements OnInit {
   domainId: string;
   page: any = {};
   createMode: boolean;
+  searchMode = 'standard';
 
   constructor(private userService: UserService,
               private organizationService: OrganizationService,
@@ -42,7 +46,8 @@ export class UsersComponent implements OnInit {
               private snackbarService: SnackbarService,
               private authService: AuthService,
               private route: ActivatedRoute,
-              private router: Router) {
+              private router: Router,
+              public dialog: MatDialog) {
     this.page.pageNumber = 0;
     this.page.size = 25;
   }
@@ -60,18 +65,26 @@ export class UsersComponent implements OnInit {
     this.pagedUsers = this.route.snapshot.data['users'];
     this.users = this.pagedUsers.data;
     this.page.totalElements = this.pagedUsers.totalCount;
+    this.hasValue = this.pagedUsers.totalCount > 0;
   }
 
   get isEmpty() {
-    return !this.users || this.users.length === 0 && !this.searchValue;
+    return !this.users || this.users.length === 0 && (!this.searchValue && !this.hasValue) && !this.isLoading;
   }
 
   loadUsers() {
-    let findUsers = (this.searchValue) ?
-      this.userService.search(this.domainId, this.searchValue + '*', this.page.pageNumber, this.page.size, this.organizationContext) :
-      (this.organizationContext ? this.organizationService.users(this.page.pageNumber, this.page.size) : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size));
-
+    let findUsers;
+    if (this.searchValue) {
+      const searchTerm = this.searchMode === 'standard' ? 'q=' + this.searchValue + '*' : 'filter=' + this.searchValue;
+      findUsers = this.userService.search(this.domainId, searchTerm, this.page.pageNumber, this.page.size, this.organizationContext);
+    } else {
+      findUsers = this.organizationContext
+        ? this.organizationService.users(this.page.pageNumber, this.page.size)
+        : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+    }
+    this.isLoading = true;
     findUsers.subscribe(pagedUsers => {
+      this.isLoading = false;
       this.page.totalElements = pagedUsers.totalCount;
       this.users = pagedUsers.data;
     });
@@ -84,7 +97,7 @@ export class UsersComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.userService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("User deleted");
+            this.snackbarService.open('User deleted');
             this.page.pageNumber = 0;
             this.loadUsers();
           });
@@ -92,8 +105,12 @@ export class UsersComponent implements OnInit {
       });
   }
 
-  onSearch(event) {
-    this.searchValue = event.target.value;
+  discardSearchValue() {
+    this.searchValue = null;
+    this.loadUsers();
+  }
+
+  onSearch() {
     this.loadUsers();
   }
 
@@ -109,4 +126,17 @@ export class UsersComponent implements OnInit {
   hasReadPermissions(): boolean {
     return this.authService.hasPermissions([this.requiredReadPermission]);
   }
+
+  openDialog() {
+    this.dialog.open(UsersSearchInfoDialog, {});
+  }
 }
+
+@Component({
+  selector: 'users-search-info-dialog',
+  templateUrl: './dialog/users-search-info.component.html',
+})
+export class UsersSearchInfoDialog {
+  constructor(public dialogRef: MatDialogRef<UsersSearchInfoDialog>) {}
+}
+

@@ -1,4 +1,5 @@
 ngx-datatable {
+  margin-top: 10px;
   .user-header {
     margin: 5px;
     align-items: center;
@@ -20,16 +21,9 @@ ngx-datatable {
 }
 
 .users-search {
-  text-align: center;
-
-  mat-form-field {
-    width: 70%;
-  }
-
-  mat-icon {
-    vertical-align: middle;
-    padding-bottom: 4px;
-  }
+  font-size: 14px;
+  margin: 0 auto;
+  width: 80%;
 }
 
 :host /deep/ .user-name-cell {
@@ -66,4 +60,13 @@ ngx-datatable {
 :host /deep/ .user-locked .mat-badge-content {
   color: white;
   background: red;
+}
+
+:host /deep/ #users-search-input.mat-form-field-appearance-fill .mat-form-field-flex {
+  border-radius: 4px 0;
+}
+
+:host /deep/ #users-search-mode.mat-form-field-appearance-fill .mat-form-field-flex {
+  border-radius: 0px 4px 0px 0px;
+  background: #a9a9a9;
 }

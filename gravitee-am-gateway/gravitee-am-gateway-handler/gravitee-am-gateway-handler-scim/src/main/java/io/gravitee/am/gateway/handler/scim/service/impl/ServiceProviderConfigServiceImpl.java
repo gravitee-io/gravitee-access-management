@@ -34,7 +34,7 @@ public class ServiceProviderConfigServiceImpl implements ServiceProviderConfigSe
         ServiceProviderConfiguration serviceProviderConfiguration = new ServiceProviderConfiguration();
         serviceProviderConfiguration.setPatch(new ComplexType(false));
         serviceProviderConfiguration.setBulk(new ComplexType(false));
-        serviceProviderConfiguration.setFilter(new ComplexType(false));
+        serviceProviderConfiguration.setFilter(new ComplexType(true));
         serviceProviderConfiguration.setChangePassword(new ComplexType(false));
         serviceProviderConfiguration.setSort(new ComplexType(false));
         serviceProviderConfiguration.setEtag(new ComplexType(false));

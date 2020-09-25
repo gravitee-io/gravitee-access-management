@@ -13,28 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.scim.service;
-
-import io.gravitee.am.gateway.handler.scim.model.ListResponse;
-import io.gravitee.am.gateway.handler.scim.model.User;
-import io.gravitee.am.common.scim.filter.Filter;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+package io.gravitee.am.common.scim;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public interface Schema {
 
-    Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl);
-
-    Maybe<User> get(String userId, String baseUrl);
-
-    Single<User> create(User user, String baseUrl);
-
-    Single<User> update(String userId, User user, String baseUrl);
-
-    Completable delete(String userId);
+    String SCHEMA_URI_CORE = "urn:ietf:params:scim:schemas:core:2.0";
+    String SCHEMA_URI_USER = "urn:ietf:params:scim:schemas:core:2.0:User";
+    String SCHEMA_URI_GROUP = "urn:ietf:params:scim:schemas:core:2.0:Group";
 }

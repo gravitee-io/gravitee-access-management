@@ -19,6 +19,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
@@ -35,7 +36,7 @@ public interface UserService {
 
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
-    Single<Page<User>> search(String domain, String query, int page, int size);
+    Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size);
 
     Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
 

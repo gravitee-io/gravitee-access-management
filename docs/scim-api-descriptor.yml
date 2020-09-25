@@ -54,6 +54,11 @@ paths:
       - application/json
       parameters:
       - in: query
+        name: filter
+        type: string
+        description: Filter expression used to restrict results to one or more specific resource types.
+        example: userName eq "john"
+      - in: query
         name: startIndex
         type: integer
         description: The 1-based index of the first query result.
