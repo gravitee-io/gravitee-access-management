@@ -64,7 +64,6 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
         CodecRegistry defaultCodecRegistry = MongoClients.getDefaultCodecRegistry();
         CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder()
-                .register("io.gravitee.am.repository.mongodb.model", "io.gravitee.am.model")
                 .automatic(true)
                 .build());
 

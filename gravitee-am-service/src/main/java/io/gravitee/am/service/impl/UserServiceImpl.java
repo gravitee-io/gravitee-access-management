@@ -26,8 +26,12 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.validators.UserValidator;
@@ -105,8 +109,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<Page<User>> search(String domain, String query, int page, int size) {
-        return search(ReferenceType.DOMAIN, domain, query, page, size);
+    public Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size) {
+        LOGGER.debug("Search users for {} {} with filter {}", referenceType, referenceId, filterCriteria);
+        return userRepository.search(referenceType, referenceId, filterCriteria, page, size)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search users for {} {} and filter {}", referenceType, referenceId, filterCriteria, ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for %s %s and filter %s", referenceType, referenceId, filterCriteria), ex));
+                });
     }
 
     @Override

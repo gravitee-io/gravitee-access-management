@@ -13,28 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.scim.service;
-
-import io.gravitee.am.gateway.handler.scim.model.ListResponse;
-import io.gravitee.am.gateway.handler.scim.model.User;
-import io.gravitee.am.common.scim.filter.Filter;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+package io.gravitee.am.common.scim;
 
 /**
+ * See <a href="https://tools.ietf.org/html/rfc7643#section-3.1">3.1.  Common Attributes</a>
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public interface CommonAttribute {
 
-    Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl);
-
-    Maybe<User> get(String userId, String baseUrl);
-
-    Single<User> create(User user, String baseUrl);
-
-    Single<User> update(String userId, User user, String baseUrl);
-
-    Completable delete(String userId);
+    /**
+     * A unique identifier for a SCIM resource as defined by the service provider.
+     */
+    String ID = "id";
+    /**
+     * A String that is an identifier for the resource as defined by the provisioning client.
+     */
+    String EXTERNAL_ID= "externalId";
+    /**
+     * A complex attribute containing resource metadata.
+     */
+    String META = "meta";
 }

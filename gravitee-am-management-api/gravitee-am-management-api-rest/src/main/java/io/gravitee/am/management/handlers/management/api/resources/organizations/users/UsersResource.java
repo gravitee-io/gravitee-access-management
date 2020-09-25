@@ -15,8 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
-import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -50,16 +49,10 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 @Api(tags = {"user"})
-public class UsersResource extends AbstractResource {
-
-    private static final int MAX_USERS_SIZE_PER_PAGE = 30;
-    private static final String MAX_USERS_SIZE_PER_PAGE_STRING = "30";
+public class UsersResource extends AbstractUsersResource {
 
     @Context
     private ResourceContext resourceContext;
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -79,24 +72,19 @@ public class UsersResource extends AbstractResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @QueryParam("q") String query,
+            @QueryParam("filter") String filter,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
         io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
-        final Single<Page<User>> usersPageObs;
-
-        if (query != null) {
-            usersPageObs = userService.search(ReferenceType.ORGANIZATION, organizationId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
-        } else {
-            usersPageObs = userService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
-        }
 
         permissionService.findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
                 .flatMap(organizationPermissions ->
                         checkPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.LIST)
-                                .andThen(usersPageObs.flatMap(pagedUsers ->
-                                        Observable.fromIterable(pagedUsers.getData())
+                                .andThen(searchUsers(ReferenceType.DOMAIN, organizationId, query, filter, page, size)
+                                        .flatMap(pagedUsers ->
+                                                Observable.fromIterable(pagedUsers.getData())
                                                 .flatMapSingle(user -> filterUserInfos(organizationPermissions, user))
                                                 .toSortedList(Comparator.comparing(User::getUsername))
                                                 .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount())))))

@@ -16,9 +16,9 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.reactivex.observers.TestObserver;
@@ -168,59 +168,57 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
     }
 
     @Test
-    public void testSearch_strict() {
-        final String domain = "domain";
-        // create user
-        User user = new User();
-        user.setReferenceType(ReferenceType.DOMAIN);
-        user.setReferenceId(domain);
-        user.setUsername("testUsername");
-        userRepository.create(user).blockingGet();
-
-        User user2 = new User();
-        user2.setReferenceType(ReferenceType.DOMAIN);
-        user2.setReferenceId(domain);
-        user2.setUsername("testUsername2");
-        userRepository.create(user2).blockingGet();
-
-        // fetch user
-        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername", 0, 10).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(users -> users.getData().size() == 1);
-        testObserver.assertValue(users -> users.getData().iterator().next().getUsername().equals(user.getUsername()));
-
+    public void testSearch_byUsername_strict() {
+        testSearch_strict("testUsername");
     }
 
     @Test
-    public void testSearch_wildcard() {
-        final String domain = "domain";
-        // create user
-        User user = new User();
-        user.setReferenceType(ReferenceType.DOMAIN);
-        user.setReferenceId(domain);
-        user.setUsername("testUsername");
-        userRepository.create(user).blockingGet();
-
-        User user2 = new User();
-        user2.setReferenceType(ReferenceType.DOMAIN);
-        user2.setReferenceId(domain);
-        user2.setUsername("testUsername2");
-        userRepository.create(user2).blockingGet();
-
-        // fetch user
-        TestObserver<Page<User>> testObserver = userRepository.search(domain, "testUsername*", 0, 10).test();
-        testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(users -> users.getData().size() == 2);
+    public void testSearch_byDisplayName_strict() {
+        testSearch_strict("displayName");
     }
 
     @Test
-    public void testSearch_paged() {
+    public void testSearch_byFirstName_strict() {
+        testSearch_strict("firstName");
+    }
+
+    @Test
+    public void testSearch_byLastName_strict() {
+        testSearch_strict("lastName");
+    }
+
+    @Test
+    public void testSearch_email_strict() {
+        testSearch_strict("user.name@mail.com");
+    }
+
+    @Test
+    public void testSearch_byUsername_wildcard() {
+        testSearch_wildcard("testUsername*");
+    }
+
+    @Test
+    public void testSearch_byDisplayName_wildcard() {
+        testSearch_wildcard("displayName*");
+    }
+
+    @Test
+    public void testSearch_byFirstName_wildcard() {
+        testSearch_wildcard("firstName*");
+    }
+
+    @Test
+    public void testSearch_byLastName_wildcard() {
+        testSearch_wildcard("lastName*");
+    }
+
+    @Test
+    public void testSearch_email_wildcard() {
+        testSearch_wildcard("user.name@mail.com*");
+    }
+
+    @Test
+    public void testSearch_byUsername_paged() {
         final String domain = "domain";
         // create user
         User user1 = new User();
@@ -242,7 +240,7 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         userRepository.create(user3).blockingGet();
 
         // fetch user (page 0)
-        TestObserver<Page<User>> testObserverP0 = userRepository.search(domain, "testUsername*", 0, 2).test();
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, "testUsername*", 0, 2).test();
         testObserverP0.awaitTerminalEvent();
 
         testObserverP0.assertComplete();
@@ -254,7 +252,7 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         });
 
         // fetch user (page 1)
-        TestObserver<Page<User>> testObserverP1 = userRepository.search(domain, "testUsername*", 1, 2).test();
+        TestObserver<Page<User>> testObserverP1 = userRepository.search(ReferenceType.DOMAIN, domain, "testUsername*", 1, 2).test();
         testObserverP1.awaitTerminalEvent();
 
         testObserverP1.assertComplete();
@@ -310,6 +308,72 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(users -> users.size() == 2);
+    }
+
+    private void testSearch_strict(String query) {
+        final String domain = "domain";
+        // create user
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain);
+        user.setFirstName("firstName");
+        user.setLastName("lastName");
+        user.setDisplayName("displayName");
+        user.setUsername("testUsername");
+        user.setEmail("user.name@mail.com");
+        userRepository.create(user).blockingGet();
+
+        User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setFirstName("firstName2");
+        user2.setLastName("lastName2");
+        user2.setDisplayName("displayName2");
+        user2.setUsername("testUsername2");
+        user2.setEmail("user.name@mail.com2");
+        userRepository.create(user2).blockingGet();
+
+        // fetch user
+        TestObserver<Page<User>> testObserver = userRepository.search(ReferenceType.DOMAIN, domain, query, 0, 10).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 1);
+        testObserver.assertValue(users -> users.getData().iterator().next().getUsername().equals(user.getUsername()));
+
+    }
+
+    private void testSearch_wildcard(String query) {
+        final String domain = "domain";
+        // create user
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain);
+        user.setFirstName("firstName");
+        user.setLastName("lastName");
+        user.setDisplayName("displayName");
+        user.setUsername("testUsername");
+        user.setEmail("user.name@mail.com");
+        userRepository.create(user).blockingGet();
+
+        User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setFirstName("firstName2");
+        user2.setLastName("lastName2");
+        user2.setDisplayName("displayName2");
+        user2.setUsername("testUsername2");
+        user2.setEmail("user.name@mail.com2");
+        userRepository.create(user2).blockingGet();
+
+        // fetch user
+        TestObserver<Page<User>> testObserver = userRepository.search(ReferenceType.DOMAIN, domain, query, 0, 10).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 2);
     }
 
 }

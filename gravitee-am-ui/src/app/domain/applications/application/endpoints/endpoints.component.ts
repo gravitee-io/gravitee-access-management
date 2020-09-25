@@ -54,4 +54,8 @@ export class ApplicationEndpointsComponent implements OnInit {
   uma2Enabled() {
     return this.domain.uma && this.domain.uma.enabled;
   }
+
+  scimEnabled() {
+    return this.domain.scim && this.domain.scim.enabled;
+  }
 }

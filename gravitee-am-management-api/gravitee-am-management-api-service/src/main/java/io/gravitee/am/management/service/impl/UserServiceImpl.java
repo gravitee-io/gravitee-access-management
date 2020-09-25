@@ -29,6 +29,7 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
@@ -59,9 +60,6 @@ public class UserServiceImpl implements UserService {
 
     @Value("${user.registration.token.expire-after:86400}")
     private Integer expireAfter;
-
-    @Value("${gateway.url:http://localhost:8092}")
-    private String gatewayUrl;
 
     @Autowired
     private io.gravitee.am.service.UserService userService;
@@ -97,8 +95,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<Page<User>> search(String domain, String query, int page, int size) {
-        return search(ReferenceType.DOMAIN, domain, query, page, size);
+    public Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size) {
+        return userService.search(referenceType, referenceId, filterCriteria, page, size);
     }
 
     @Override

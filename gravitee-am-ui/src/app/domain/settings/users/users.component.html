@@ -18,11 +18,20 @@
 <div class="gv-page-container" fxLayout="column">
   <h1 *ngIf="!isEmpty">Users</h1>
 
-  <div *ngIf="!isEmpty" class="users-search">
-    <mat-form-field>
-      <mat-icon matPrefix="">search</mat-icon>
-      <input type="text" matInput placeholder="Search" (input)="onSearch($event)">
-      <mat-hint align="end">By username</mat-hint>
+  <div *ngIf="!isEmpty" class="users-search" fxLayout="row" style="align-items: baseline;">
+    <mat-form-field id="users-search-input" appearance="fill" floatLabel="always" fxFlex="80">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Search for users</mat-label>
+      <input [(ngModel)]="searchValue" type="text" matInput placeholder="Search" (keyup.enter)="onSearch()">
+      <button *ngIf="searchValue" mat-icon-button matSuffix (click)="discardSearchValue()"><mat-icon>close</mat-icon></button>
+      <mat-hint align="end">Press <b>enter</b> to perform the search request <mat-icon (click)="openDialog()" style="font-size: 15px; color:black; cursor: pointer;">info_outline</mat-icon></mat-hint>
+    </mat-form-field>
+    <mat-form-field id="users-search-mode" appearance="fill" floatLabel="always" fxFlex="20">
+      <mat-label>Search by</mat-label>
+      <mat-select [(value)]="searchMode">
+        <mat-option value="standard">Standard</mat-option>
+        <mat-option value="advanced">Advanced (SCIM 2.0 syntax)</mat-option>
+      </mat-select>
     </mat-form-field>
   </div>
 

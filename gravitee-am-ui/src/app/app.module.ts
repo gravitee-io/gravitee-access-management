@@ -134,7 +134,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { HumanDatePipe } from './pipes/human-date.pipe';
 import { MapToIterablePipe } from './pipes/map-to-iterable.pipe';
 import { DummyComponent } from './components/dummy/dummy.component';
-import { UsersComponent } from './domain/settings/users/users.component';
+import {UsersComponent, UsersSearchInfoDialog} from './domain/settings/users/users.component';
 import { UserComponent } from './domain/settings/users/user/user.component';
 import { UserCreationComponent } from './domain/settings/users/creation/user-creation.component';
 import { UserClaimComponent } from './domain/settings/users/creation/user-claim.component';
@@ -456,7 +456,8 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
     UserAvatarComponent,
     NotFoundComponent,
     UmaComponent,
-    LoginSettingsComponent
+    LoginSettingsComponent,
+    UsersSearchInfoDialog
   ],
   imports: [
     BrowserModule,
@@ -571,7 +572,8 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
     AddUserRolesComponent,
     AddGroupRolesComponent,
     DomainMembershipsDialog,
-    ApplicationMembershipsDialog
+    ApplicationMembershipsDialog,
+    UsersSearchInfoDialog
   ],
   bootstrap: [AppComponent]
 })

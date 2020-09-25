@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.service.impl;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
@@ -26,9 +27,11 @@ import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.validators.UserValidator;
@@ -68,9 +71,13 @@ public class UserServiceImpl implements UserService {
     private IdentityProviderManager identityProviderManager;
 
     @Override
-    public Single<ListResponse<User>> list(int page, int size, String baseUrl) {
+    public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
         LOGGER.debug("Find users by domain: {}", domain.getId());
-        return userRepository.findByDomain(domain.getId(), page, size)
+        Single<Page<io.gravitee.am.model.User>> findUsers = filter != null ?
+                userRepository.search(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), page, size) :
+                userRepository.findByDomain(domain.getId(), page, size);
+
+        return findUsers
                 .flatMap(userPage -> {
                     // A negative value SHALL be interpreted as "0".
                     // A value of "0" indicates that no resource results are to be returned except for "totalResults".
@@ -87,8 +94,8 @@ public class UserServiceImpl implements UserService {
                     }
                 })
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find users by domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s", domain), ex));
+                    LOGGER.error("An error occurs while trying to find users for the security domain {}", domain.getName(), ex);
+                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users the security domain %s", domain.getName()), ex));
                 });
     }
 
@@ -312,7 +319,7 @@ public class UserServiceImpl implements UserService {
         User scimUser = new User();
         scimUser.setSchemas(User.SCHEMAS);
         scimUser.setId(user.getId());
-        scimUser.setExternalId(get(additionalInformation, StandardClaims.SUB, String.class));
+        scimUser.setExternalId(user.getExternalId());
         scimUser.setUserName(user.getUsername());
 
         Name name = new Name();

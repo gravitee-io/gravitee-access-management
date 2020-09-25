@@ -70,7 +70,7 @@
         <mat-hint>Exposes the JWKs (JSON Web Keys) used to sign or encrypt JWTs issued by the authorization server</mat-hint>
         <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/oidc/.well-known/jwks.json')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
       </mat-form-field>
-      <mat-form-field appearance="outline" floatLabel="always">
+      <mat-form-field *ngIf="scimEnabled()" appearance="outline" floatLabel="always">
         <mat-label>SCIM Configuration endpoint</mat-label>
         <input matInput type="text" name="scimConfigurationEndpoint" [value]="endpoint('/scim/ServiceProviderConfig')" disabled>
         <mat-hint>The SCIM configuration endpoint allows third party systems to get the complete SCIM configuration</mat-hint>
