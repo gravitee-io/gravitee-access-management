@@ -36,7 +36,7 @@ export class GroupCreationComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -46,12 +46,12 @@ export class GroupCreationComponent implements OnInit {
     if (this.organizationContext) {
       this.organizationService.createGroup(this.group).subscribe(data => {
         this.snackbarService.open('Group ' + data.name + ' created');
-        this.router.navigate(['/settings', 'management', 'groups', data.id]);
+        this.router.navigate(['/settings', 'groups', data.id]);
       });
     } else {
       this.groupService.create(this.domainId, this.group).subscribe(data => {
         this.snackbarService.open('Group ' + data.name + ' created');
-        this.router.navigate(['/domains', this.domainId, 'settings', 'groups', data.id]);
+        this.router.navigate(['..', data.id], {relativeTo: this.route} );
       });
     }
   }

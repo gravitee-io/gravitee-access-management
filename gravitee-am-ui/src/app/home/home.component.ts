@@ -30,9 +30,11 @@ export class HomeComponent implements OnInit {
   readonly: boolean = true;
   isLoading = true;
   hasEnv = false;
+  currentEnvironment: any;
   subscription: Subscription;
 
   constructor(private router: Router,
+              private route: ActivatedRoute,
               private domainService: DomainService,
               private authService: AuthService,
               private navbarService: NavbarService,
@@ -40,30 +42,24 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit() {
-
-    this.subscription = this.environmentService.currentEnvironmentObs$.subscribe(currentEnv => this.initDomain(currentEnv.id));
-
-    if (this.environmentService.getCurrentEnvironment()) {
-      this.initDomain(this.environmentService.getCurrentEnvironment().id);
-    } else {
-      this.isLoading = false;
-      this.hasEnv = false;
-    }
+    this.subscription = this.environmentService.currentEnvironmentObs$.subscribe(environment => {
+      this.currentEnvironment = environment;
+      this.initDomain(environment);
+    });
   }
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
   }
 
-  initDomain(environmentId: string) {
-
-    if (environmentId) {
+  initDomain(environment: any) {
+    if (this.hasCurrentEnvironment()) {
       this.hasEnv = true;
 
-      // redirect user to the its domain, if any
+      // redirect user to the first domain, if any.
       this.domainService.list().subscribe(response => {
         if (response && response.length > 0) {
-          this.router.navigate(['/domains', response[0].id]);
+          this.router.navigate(['environments', environment.hrids[0], 'domains', response[0].id], { relativeTo: this.route});
         } else {
           this.isLoading = false;
           this.readonly = !this.authService.hasPermissions(['domain_create']);
@@ -74,5 +70,9 @@ export class HomeComponent implements OnInit {
       this.isLoading = false;
       this.hasEnv = false;
     }
+  }
+
+  private hasCurrentEnvironment(): boolean {
+    return this.currentEnvironment && this.currentEnvironment !== EnvironmentService.NO_ENVIRONMENT;
   }
 }

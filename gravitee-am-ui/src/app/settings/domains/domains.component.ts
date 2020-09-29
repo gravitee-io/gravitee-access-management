@@ -28,17 +28,13 @@ export class DomainsComponent implements OnInit {
   version = AppConfig.settings.version;
   domains = [];
   hasEnv = false;
+  currentEnvironment: any;
 
-  constructor(private route : ActivatedRoute,
-              private environmentService: EnvironmentService) { }
+  constructor(private route : ActivatedRoute) { }
 
   ngOnInit() {
-
-    if(this.environmentService.getCurrentEnvironment()){
-      this.hasEnv = true;
-    }
-
     this.domains = this.route.snapshot.data['domains'];
+    this.hasEnv = this.route.snapshot.data['environment'] !== null;
   }
 
   get isEmpty() {

@@ -37,8 +37,8 @@ export class ApplicationAccountSettingsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.application = this.route.snapshot.data['application'];
     this.accountSettings = this.application.settings.account || { 'inherited' : true };
     this.readonly = !this.authService.hasPermissions(['application_settings_update']);
   }
@@ -47,7 +47,7 @@ export class ApplicationAccountSettingsComponent implements OnInit {
     this.accountSettings = accountSettings;
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'account' : accountSettings}}).subscribe(data => {
       this.application = data;
-      this.route.snapshot.parent.data['application'] = this.application;
+      this.route.snapshot.data['application'] = this.application;
       this.snackbarService.open('Application updated');
     });
   }

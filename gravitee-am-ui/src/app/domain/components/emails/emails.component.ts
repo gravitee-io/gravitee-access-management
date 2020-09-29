@@ -32,7 +32,7 @@ export class EmailsComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
+    this.appId = this.route.snapshot.params['appId'];
 
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.viewPermission = 'organization_form_read';

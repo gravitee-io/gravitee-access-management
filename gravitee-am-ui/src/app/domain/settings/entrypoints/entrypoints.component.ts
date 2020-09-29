@@ -19,7 +19,6 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {DomainService} from '../../../services/domain.service';
 import {DialogService} from '../../../services/dialog.service';
 import {SnackbarService} from '../../../services/snackbar.service';
-import {BreadcrumbService} from '../../../services/breadcrumb.service';
 import {AuthService} from '../../../services/auth.service';
 import {FormControl} from "@angular/forms";
 import {Observable} from 'rxjs';
@@ -48,13 +47,12 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
               private snackbarService: SnackbarService,
               private router: Router,
               private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
               private authService: AuthService) {
   }
 
   ngOnInit() {
 
-    this.domain = this.route.snapshot.parent.data['domain'];
+    this.domain = this.route.snapshot.data['domain'];
     this.entrypoint = this.route.snapshot.data['entrypoint'];
 
     if (this.domain.vhosts === undefined) {
@@ -84,7 +82,6 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     this.domainService.patchEntrypoints(this.domain.id, this.domain).subscribe(response => {
       this.domain = response;
       this.domainService.notify(this.domain);
-      this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domain.id, this.domain.name);
       this.formChanged = false;
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
     });

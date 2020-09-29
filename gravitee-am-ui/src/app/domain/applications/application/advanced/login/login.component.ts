@@ -37,8 +37,8 @@ export class ApplicationLoginSettingsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.application = this.route.snapshot.data['application'];
     this.loginSettings = this.application.settings.login || { 'inherited' : true };
     this.readonly = !this.authService.hasPermissions(['application_settings_update']);
   }
@@ -47,7 +47,7 @@ export class ApplicationLoginSettingsComponent implements OnInit {
     this.loginSettings = loginSettings;
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'login' : loginSettings}}).subscribe(data => {
       this.application = data;
-      this.route.snapshot.parent.parent.data['application'] = this.application;
+      this.route.snapshot.data['application'] = this.application;
       this.snackbarService.open('Application updated');
     });
   }

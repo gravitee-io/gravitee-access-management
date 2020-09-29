@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { BreadcrumbService } from '../../../../services/breadcrumb.service';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
 
 @Component({
   selector: 'app-group',
@@ -29,17 +28,15 @@ export class GroupComponent implements OnInit {
   navLinks: any = [ ];
 
   constructor(private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService) { }
+              private router: Router) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.group = this.route.snapshot.data['group'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
     this.initNavLinks();
-    this.initBreadcrumb();
   }
 
   initNavLinks() {
@@ -48,16 +45,6 @@ export class GroupComponent implements OnInit {
 
     if (!this.organizationContext) {
       this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
-    }
-  }
-
-  initBreadcrumb() {
-    if (this.organizationContext) {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/groups/' + this.group.id + '$', this.group.name);
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/groups/members', 'Members');
-    } else {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/groups/' + this.group.id + '$', this.group.name);
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/groups/' + this.group.id + '/members', 'Members');
     }
   }
 }

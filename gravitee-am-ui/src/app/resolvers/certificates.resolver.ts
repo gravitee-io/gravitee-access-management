@@ -24,9 +24,7 @@ export class CertificatesResolver implements Resolve<any> {
   constructor(private certificateService: CertificateService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') :
-      route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') :
-        route.parent.parent.parent.paramMap.get('domainId');
+    const domainId = route.paramMap.get('domainId');
     return this.certificateService.findByDomain(domainId);
   }
 }

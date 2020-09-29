@@ -40,8 +40,9 @@ public class Email {
     public Email() {
     }
 
-    public Email(boolean enabled) {
+    public Email(boolean enabled, String template) {
         this.enabled = enabled;
+        this.template = template;
     }
 
     public Email(Email other) {

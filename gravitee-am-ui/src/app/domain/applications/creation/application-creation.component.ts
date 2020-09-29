@@ -35,7 +35,7 @@ export class ApplicationCreationComponent implements OnInit {
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.application.domain = this.domainId;
   }
 
@@ -50,9 +50,7 @@ export class ApplicationCreationComponent implements OnInit {
 
     this.applicationService.create(this.application.domain, app).subscribe(data => {
       this.snackbarService.open('Application ' + data.name + ' created');
-      // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
-      this.router.navigateByUrl('/dummy', { skipLocationChange: true })
-        .then(() => this.router.navigate(['/domains', this.application.domain, 'applications', data.id]));
+      this.router.navigate(['..', data.id], {relativeTo: this.route});
     });
   }
 

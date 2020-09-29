@@ -195,6 +195,7 @@ public class OrganizationServiceTest {
         newOrganization.setName("TestName");
         newOrganization.setDescription("TestDescription");
         newOrganization.setDomainRestrictions(Collections.singletonList("TestDomainRestriction"));
+        newOrganization.setHrids(Collections.singletonList("testOrgHRID"));
 
         DefaultUser createdBy = new DefaultUser("test");
         createdBy.setId(USER_ID);
@@ -207,6 +208,7 @@ public class OrganizationServiceTest {
             assertEquals(newOrganization.getName(), organization.getName());
             assertEquals(newOrganization.getDescription(), organization.getDescription());
             assertEquals(newOrganization.getDomainRestrictions(), organization.getDomainRestrictions());
+            assertEquals(newOrganization.getHrids(), organization.getHrids());
 
             return true;
         });
@@ -267,6 +269,7 @@ public class OrganizationServiceTest {
         newOrganization.setName("TestName");
         newOrganization.setDescription("TestDescription");
         newOrganization.setDomainRestrictions(Collections.singletonList("TestDomainRestriction"));
+        newOrganization.setHrids(Collections.singletonList("TestHridUpdate"));
 
         DefaultUser createdBy = new DefaultUser("test");
         createdBy.setId(USER_ID);
@@ -279,6 +282,7 @@ public class OrganizationServiceTest {
             assertEquals(newOrganization.getName(), organization.getName());
             assertEquals(newOrganization.getDescription(), organization.getDescription());
             assertEquals(newOrganization.getDomainRestrictions(), organization.getDomainRestrictions());
+            assertEquals(newOrganization.getHrids(), organization.getHrids());
 
             return true;
         });

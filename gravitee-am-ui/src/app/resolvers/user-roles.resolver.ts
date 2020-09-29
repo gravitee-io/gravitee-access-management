@@ -26,11 +26,11 @@ export class UserRolesResolver implements Resolve<any> {
               private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const userId = route.parent.paramMap.get('userId');
+    const userId = route.paramMap.get('userId');
     if (state.url.startsWith('/settings')) {
       return this.organizationService.userRoles(userId);
     }
-    const domainId = route.parent.parent.parent.paramMap.get('domainId');
+    const domainId = route.paramMap.get('domainId');
     return this.userService.roles(domainId, userId);
   }
 

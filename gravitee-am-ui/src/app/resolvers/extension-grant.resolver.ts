@@ -24,7 +24,7 @@ export class ExtensionGrantResolver implements Resolve<any> {
   constructor(private extensionGrantService: ExtensionGrantService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId: string = route.parent.parent.paramMap.get('domainId');
+    let domainId: string = route.paramMap.get('domainId');
     let tokenGranterId: string = route.paramMap.get('extensionGrantId');
     return this.extensionGrantService.get(domainId, tokenGranterId);
   }

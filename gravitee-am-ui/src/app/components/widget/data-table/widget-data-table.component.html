@@ -30,7 +30,7 @@
   <ngx-datatable-column [name]="columns[0].name" [prop]="columns[0].name">
     <ng-template let-row="row" ngx-datatable-cell-template>
       <span *ngIf="row.deleted">{{row.name}}</span>
-      <a *ngIf="!row.deleted" (click)="goTo(row.link)">{{row.name}}</a>
+      <a *ngIf="!row.deleted" [routerLink]="row.link">{{row.name}}</a>
     </ng-template>
   </ngx-datatable-column>
   <ngx-datatable-column [name]="columns[1].name" [prop]="columns[1].name">

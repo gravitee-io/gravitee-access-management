@@ -52,6 +52,7 @@ public class Environment implements Resource{
         this.name = cloned.name;
         this.description = cloned.description;
         this.domainRestrictions = cloned.domainRestrictions;
+        this.hrids = cloned.hrids;
         this.organizationId = cloned.organizationId;
         this.createdAt = cloned.createdAt;
         this.updatedAt = cloned.updatedAt;

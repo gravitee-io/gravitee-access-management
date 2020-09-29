@@ -15,7 +15,6 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 import { OrganizationService } from '../../../../services/organization.service';
 import { CertificateService}  from '../../../../services/certificate.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -36,7 +35,6 @@ export class CertificateComponent implements OnInit {
   updateCertificateConfiguration: any;
 
   constructor(private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
               private organizationService: OrganizationService,
               private certificateService: CertificateService,
               private snackbarService: SnackbarService,
@@ -44,18 +42,16 @@ export class CertificateComponent implements OnInit {
               private dialogService: DialogService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.certificate = this.route.snapshot.data['certificate'];
     this.certificateConfiguration = JSON.parse(this.certificate.configuration);
     this.updateCertificateConfiguration = this.certificateConfiguration;
     this.organizationService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
-    this.initBreadcrumb();
   }
 
   update() {
     this.certificate.configuration = JSON.stringify(this.updateCertificateConfiguration);
     this.certificateService.update(this.domainId, this.certificate.id, this.certificate).subscribe(data => {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/certificates/'+this.certificate.id+'$', this.certificate.name);
       this.snackbarService.open("Certificate updated");
     })
   }
@@ -68,7 +64,7 @@ export class CertificateComponent implements OnInit {
         if (res) {
           this.certificateService.delete(this.domainId, this.certificate.id).subscribe(() => {
             this.snackbarService.open("Certificate deleted");
-            this.router.navigate(['/domains', this.domainId, 'settings', 'certificates']);
+            this.router.navigate(['..'], { relativeTo: this.route });
           });
         }
       });
@@ -81,9 +77,4 @@ export class CertificateComponent implements OnInit {
       this.updateCertificateConfiguration = configurationWrapper.configuration;
     });
   }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/certificates/'+this.certificate.id+'$', this.certificate.name);
-  }
-
 }

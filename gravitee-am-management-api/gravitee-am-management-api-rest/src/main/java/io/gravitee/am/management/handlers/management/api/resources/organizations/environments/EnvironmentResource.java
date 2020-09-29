@@ -31,6 +31,11 @@ public class EnvironmentResource extends AbstractResource {
     @Context
     private ResourceContext resourceContext;
 
+    @Path("members")
+    public MembersResource getMembersResource() {
+        return resourceContext.getResource(MembersResource.class);
+    }
+
     @Path("/domains")
     public DomainsResource getDomainsResource() {
         return resourceContext.getResource(DomainsResource.class);

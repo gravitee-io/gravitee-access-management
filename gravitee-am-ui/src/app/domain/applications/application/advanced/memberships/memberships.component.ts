@@ -44,8 +44,8 @@ export class ApplicationMembershipsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.application = this.route.snapshot.data['application'];
     this.appId = this.application.id;
     this.members = this.route.snapshot.data['members'];
     this.createMode = this.authService.hasPermissions(['application_member_create']);

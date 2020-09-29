@@ -17,18 +17,17 @@ import {Injectable} from '@angular/core';
 import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
 import {Observable} from 'rxjs';
 import {DomainService} from '../services/domain.service';
+import {tap} from "rxjs/operators";
+import {NavbarService} from "../components/navbar/navbar.service";
 
 @Injectable()
 export class DomainResolver implements Resolve<any> {
 
-  constructor(private domainService: DomainService) { }
+  constructor(private domainService: DomainService, private navbarService: NavbarService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') :
-      route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') :
-        route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') :
-          route.parent.parent.parent.paramMap.get('domainId');
-    return this.domainService.get(domainId);
+    const domainId = route.paramMap.get('domainId');
+    return this.domainService.get(domainId)
+      .pipe(tap(domain =>  this.navbarService.notifyDomain(domain)));
   }
-
 }

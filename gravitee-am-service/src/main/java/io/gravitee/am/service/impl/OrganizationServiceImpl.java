@@ -98,6 +98,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                     toUpdate.setName(newOrganization.getName());
                     toUpdate.setDescription(newOrganization.getDescription());
                     toUpdate.setDomainRestrictions(newOrganization.getDomainRestrictions());
+                    toUpdate.setHrids(newOrganization.getHrids());
 
                     return updateInternal(toUpdate, byUser, organization).toMaybe();
                 })

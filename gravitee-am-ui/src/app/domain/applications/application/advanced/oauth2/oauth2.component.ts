@@ -67,8 +67,8 @@ export class ApplicationOAuth2Component implements OnInit {
               public dialog: MatDialog) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.application = this.route.snapshot.data['application'];
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'];
     this.scopes = this.route.snapshot.data['scopes'];
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
@@ -88,7 +88,7 @@ export class ApplicationOAuth2Component implements OnInit {
     this.cleanCustomClaims();
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : this.applicationOauthSettings}}).subscribe(data => {
       this.application = data;
-      this.route.snapshot.parent.parent.data['application'] = this.application;
+      this.route.snapshot.data['application'] = this.application;
       this.scopes = this.route.snapshot.data['scopes'];
       this.applicationOauthSettings = {};
       this.formChanged = false;

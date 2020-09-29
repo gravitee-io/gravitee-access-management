@@ -39,8 +39,8 @@ export class MembershipsResolver implements Resolve<any> {
         );
     }
 
-    const domainId = (route.parent.parent.paramMap.get('domainId')) ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
-    const appId = route.parent.parent.paramMap.get('appId');
+    const domainId = route.paramMap.get('domainId');
+    const appId = route.paramMap.get('appId');
 
     if (appId) {
       return this.applicationService.members(domainId, appId);
