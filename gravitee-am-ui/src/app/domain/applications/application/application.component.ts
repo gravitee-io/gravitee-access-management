@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 import {AuthService} from '../../../services/auth.service';
-import {BreadcrumbService} from '../../../services/breadcrumb.service';
 import * as _ from 'lodash';
+import {filter} from "rxjs/operators";
+import {Subject, Subscription} from "rxjs";
 
 @Component({
   selector: 'app-application',
@@ -37,14 +38,15 @@ export class ApplicationComponent implements OnInit {
   ];
 
   constructor(private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
+              private router: Router,
               private authService: AuthService) {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.application = this.route.snapshot.data['application'];
     this.logoUrl = 'assets/application-type-icons/' + this.application.type.toLowerCase() + '.png';
+
     if (this.application.type === 'service') {
       _.remove(this.navLinks, { href: 'idp' });
       _.remove(this.navLinks, { href: 'design' });
@@ -56,21 +58,11 @@ export class ApplicationComponent implements OnInit {
       _.remove(this.navLinks, { href: 'design' });
     }
     if (!this.canDisplay(['application_settings_read'])
-            && !this.canDisplay(['application_oauth_read'])
-            && !this.canDisplay(['application_certificate_list'])
-          ) {
+      && !this.canDisplay(['application_oauth_read'])
+      && !this.canDisplay(['application_certificate_list'])
+    ) {
       _.remove(this.navLinks, { href: 'settings' });
     }
-    setTimeout(() => this.initBreadcrumb());
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '$', this.application.name);
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/idp$', 'IdP');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/design', 'Design');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/design/forms', 'Forms');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/design/emails', 'Emails');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.application.id + '/advanced', 'Advanced');
   }
 
   private canDisplay(permissions): boolean {

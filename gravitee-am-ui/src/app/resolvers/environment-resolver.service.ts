@@ -15,17 +15,19 @@
  */
 import {Injectable} from '@angular/core';
 import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from "@angular/router";
-import {Observable, Subscription} from "rxjs";
-import {NavbarService} from "../components/navbar/navbar.service";
+import {Observable} from "rxjs";
 import {EnvironmentService} from "../services/environment.service";
+import {tap} from "rxjs/operators";
 
 @Injectable()
-export class CurrentEnvironmentResolver implements Resolve<any> {
+export class EnvironmentResolver implements Resolve<any> {
 
-  constructor(private environmentService : EnvironmentService) {
+  constructor(private environmentService: EnvironmentService) {
   }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
-    return this.environmentService.getCurrentEnvironment();
+    const envHrid = route.paramMap.get('envHrid');
+    return this.environmentService.getEnvironmentById(envHrid)
+      .pipe(tap(environment => this.environmentService.setCurrentEnvironment(environment)));
   }
 }

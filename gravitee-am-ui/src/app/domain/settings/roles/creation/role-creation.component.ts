@@ -38,7 +38,7 @@ export class RoleCreationComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -49,12 +49,12 @@ export class RoleCreationComponent implements OnInit {
     if (this.organizationContext) {
       this.organizationService.createRole(this.role).subscribe(data => {
         this.snackbarService.open('Role ' + data.name + ' created');
-        this.router.navigate(['/settings', 'management', 'roles', data.id]);
+        this.router.navigate(['/settings', 'roles', data.id]);
       });
     } else {
       this.roleService.create(this.domainId, this.role).subscribe(data => {
         this.snackbarService.open('Role ' + data.name + ' created');
-        this.router.navigate(['/domains', this.domainId, 'settings', 'roles', data.id]);
+        this.router.navigate(['..', data.id], { relativeTo: this.route });
       });
     }
   }

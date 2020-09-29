@@ -35,8 +35,8 @@ export class ApplicationResourcesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.application = this.route.snapshot.data['application'];
     const pagedResources = this.route.snapshot.data['resources'];
     this.resources = pagedResources.data;
     this.page.totalElements = pagedResources.totalCount;

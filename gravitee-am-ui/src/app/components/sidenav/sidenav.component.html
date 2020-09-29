@@ -15,30 +15,49 @@
     limitations under the License.
 
 -->
-<div class="gv-sidenav" fxLayout="column" fxFlex [ngClass]="{'gv-sidenav-min': reducedMode, 'gv-sidenav-settings': displaySettingsLevel}">
+<div class="gv-sidenav" fxLayout="column" fxFlex [ngClass]="{'gv-sidenav-min': reducedMode, 'gv-sidenav-settings': isGlobalSettings }">
   <mat-toolbar class="navigation-header" fxLayout="row" fxLayoutAlign="space-between center">
     <a [routerLink]="['']" style="text-decoration: none;" [matTooltip]="title + ' / ' + version" [matTooltipPosition]="'right'">
     <div fxLayout="row" fxLayoutAlign="center center">
         <img class="logo-image"
              [ngClass]="{'reduce-mode': reducedMode}"
-             [src]="displaySettingsLevel ? 'assets/theme/logo_gravitee_light.png' : 'assets/theme/logo_gravitee_dark.png'"
-             (error)="displaySettingsLevel ? mainLogo.src='assets/logo_gravitee_light.png' : mainLogo.src='assets/logo_gravitee_dark.png'"
+             [src]="isGlobalSettings ? 'assets/theme/logo_gravitee_light.png' : 'assets/theme/logo_gravitee_dark.png'"
+             (error)="isGlobalSettings ? mainLogo.src='assets/logo_gravitee_light.png' : mainLogo.src='assets/logo_gravitee_dark.png'"
              #mainLogo/>
     </div>
     </a>
   </mat-toolbar>
 
+  <div class="side-nav-environments" *ngIf="canDisplayEnvironments()">
+    <mat-form-field *ngIf="!reducedMode">
+      <mat-select [(value)]="currentEnvironment" (selectionChange)="switchEnvironment($event)" [disabled]="environments.length === 1">
+        <mat-option *ngFor="let env of environments" [value]="env">
+          {{env.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
   <mat-list class="sidenav-list">
     <!-- First level menus -->
-    <div *ngIf="displayFirstLevel">
-      <mat-list-item *ngFor="let subPath of currentSubPaths">
-        <a [routerLink]="subPath.fullPath" title="{{subPath.data.menu.label}}"
-           routerLinkActive="sidenav-active">
-          <mat-icon>{{subPath.data.menu.icon}}</mat-icon>
-          <span *ngIf="!reducedMode">{{subPath.data.menu.label}}</span>
+    <div>
+      <mat-list-item *ngFor="let menuItem of topMenuItems">
+        <a [routerLink]="menuItem.path" title="{{menuItem.label}}" *ngIf="menuItem.display"
+           routerLinkActive="sidenav-active" [routerLinkActiveOptions]="menuItem.routerLinkActiveOptions">
+          <mat-icon>{{menuItem.icon}}</mat-icon>
+          <span *ngIf="!reducedMode">{{menuItem.label}}</span>
         </a>
       </mat-list-item>
     </div>
+  </mat-list>
+
+  <mat-list class="sidenav-list">
+    <mat-list-item>
+      <a *ngIf="canDisplayOrganizationSettings()" [routerLink]="[ '/settings' ]" title="Organization settings" routerLinkActive="sidenav-active">
+        <mat-icon>settings_applications</mat-icon>
+        <span *ngIf="!reducedMode">Organization settings</span>
+      </a>
+    </mat-list-item>
   </mat-list>
 
   <mat-list class="sidenav-footer">

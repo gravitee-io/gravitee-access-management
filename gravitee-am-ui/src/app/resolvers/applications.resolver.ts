@@ -27,12 +27,7 @@ export class ApplicationsResolver implements Resolve<any> {
   constructor(private applicationService: ApplicationService, private dashboardService: DashboardService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId');
-
-    // try access domainId from higher levels
-    if (!domainId && route.parent.parent) {
-      domainId = route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : (route.parent.parent.parent && route.parent.parent.parent.paramMap.get('domainId')) ? route.parent.parent.parent.paramMap.get('domainId') : null;
-    }
+    let domainId = route.paramMap.get('domainId');
 
     if (domainId) {
       return this.applicationService.findByDomain(domainId, this.default_page, this.default_size);

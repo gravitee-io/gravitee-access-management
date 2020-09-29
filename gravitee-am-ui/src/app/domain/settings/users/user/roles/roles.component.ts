@@ -46,14 +46,14 @@ export class UserRolesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.editMode = this.authService.hasPermissions(['organization_user_update']);
     } else {
       this.editMode = this.authService.hasPermissions(['domain_user_update']);
     }
-    this.user = this.route.snapshot.parent.data['user'];
+    this.user = this.route.snapshot.data['user'];
     this.userRoles = this.route.snapshot.data['roles'];
   }
 
@@ -78,7 +78,7 @@ export class UserRolesComponent implements OnInit {
         if (res) {
           this.userService.revokeRole(this.domainId, this.user.id, role.id, this.organizationContext).subscribe(user => {
             this.user = user;
-            this.route.snapshot.parent.data['user'] = user;
+            this.route.snapshot.data['user'] = user;
             this.snackbarService.open('Role ' + role.name + ' revoked');
             this.loadRoles();
           });
@@ -96,7 +96,7 @@ export class UserRolesComponent implements OnInit {
   private assignRoles(roles) {
     this.userService.assignRoles(this.domainId, this.user.id, roles, this.organizationContext).subscribe(user => {
       this.user = user;
-      this.route.snapshot.parent.data['user'] = user;
+      this.route.snapshot.data['user'] = user;
       this.snackbarService.open('Role(s) assigned');
       this.loadRoles();
     });

@@ -26,7 +26,7 @@
                    [rows]='domains'>
       <ngx-datatable-column name="Name" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.name}}
+          <a [routerLink]="[ row.id ]">{{row.name}}</a>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="State" [flexGrow]="1">
@@ -35,10 +35,10 @@
           <ng-template #elseBlock><span style="color: orange;">Disabled</span></ng-template>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Actions" [flexGrow]="1">
+      <ngx-datatable-column *hasPermission="['domain_settings_read']" name="Actions" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-icon-button [routerLink]="['/domains', row.id, 'settings']"><mat-icon>settings</mat-icon></a>
+            <a mat-icon-button [routerLink]="[ row.id, 'settings']"><mat-icon>settings</mat-icon></a>
           </div>
         </ng-template>
       </ngx-datatable-column>

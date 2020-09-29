@@ -38,8 +38,8 @@ export class ApplicationCertificatesComponent implements OnInit {
               private certificateService: CertificateService) { }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.application = this.route.snapshot.data['application'];
     this.certificates = this.route.snapshot.data['certificates'];
     if (this.application.certificate) {
       this.selectedCertificate = this.application.certificate;
@@ -51,7 +51,7 @@ export class ApplicationCertificatesComponent implements OnInit {
     let data = {'certificate': (this.selectedCertificate) ? this.selectedCertificate : null };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
       this.application = data;
-      this.route.snapshot.parent.parent.data['application'] = this.application;
+      this.route.snapshot.data['application'] = this.application;
       this.certificatePublicKey = null;
       this.formChanged = false;
       this.snackbarService.open('Application updated');

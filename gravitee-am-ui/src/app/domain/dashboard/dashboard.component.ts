@@ -142,6 +142,6 @@ export class DomainDashboardComponent implements OnInit {
   constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domain = this.route.parent.snapshot.data['domain'];
+    this.domain = this.route.snapshot.data['domain'];
   }
 }

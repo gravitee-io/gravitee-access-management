@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 import {SnackbarService} from '../../../../../services/snackbar.service';
 import {ApplicationService} from '../../../../../services/application.service';
 import {DialogService} from '../../../../../services/dialog.service';
 import {AuthService} from '../../../../../services/auth.service';
 import * as _ from 'lodash';
+import {filter} from "rxjs/operators";
+import {ApplicationComponent} from "../../application.component";
 
 @Component({
   selector: 'application-general',
@@ -73,7 +75,7 @@ export class ApplicationGeneralComponent implements OnInit {
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.domainId = this.domain.id;
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.application = this.route.snapshot.data['application'];
     this.applicationType = this.application.type.toUpperCase();
     this.applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
     this.applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
@@ -88,7 +90,6 @@ export class ApplicationGeneralComponent implements OnInit {
     }
   }
 
-
   update() {
     const data: any = {};
     data.name = this.application.name;
@@ -98,7 +99,7 @@ export class ApplicationGeneralComponent implements OnInit {
     data.settings.advanced = { 'skipConsent' : this.applicationAdvancedSettings.skipConsent };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
       this.application = response;
-      this.route.snapshot.parent.parent.data['application'] = this.application;
+      this.route.snapshot.data['application'] = this.application;
       this.application.type = this.application.type.toUpperCase();
       this.form.reset(this.application);
       this.formChanged = false;
@@ -114,7 +115,7 @@ export class ApplicationGeneralComponent implements OnInit {
         if (res) {
           this.applicationService.delete(this.domainId, this.application.id).subscribe(response => {
             this.snackbarService.open('Application deleted');
-            this.router.navigate(['/domains', this.domainId, 'applications']);
+            this.router.navigate(['../..'], { relativeTo: this.route });
           });
         }
       });
@@ -135,6 +136,7 @@ export class ApplicationGeneralComponent implements OnInit {
   }
 
   changeApplicationType() {
+
     this.dialogService
       .confirm('Change application type', 'Are you sure you want to change the type of the application ?')
       .subscribe(res => {
@@ -143,7 +145,7 @@ export class ApplicationGeneralComponent implements OnInit {
             this.application = data;
             this.snackbarService.open('Application type changed');
             this.router.navigateByUrl('/dummy', { skipLocationChange: true })
-              .then(() => this.router.navigate(['/domains', this.domainId, 'applications', this.application.id]));
+              .then(() => this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domainId, 'applications', this.application.id]));
           });
         }
       });

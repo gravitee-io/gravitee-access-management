@@ -40,7 +40,7 @@ export class ApplicationsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     const pagedApps = this.route.snapshot.data['applications'];
     this.applications = pagedApps.data;
     this.page.totalElements = pagedApps.totalCount;

@@ -32,7 +32,7 @@ export class TagCreationComponent {
   create() {
     this.tagService.create(this.tag).subscribe(data => {
       this.snackbarService.open("Sharding Tag " + data.name + " created");
-      this.router.navigate(['/settings', 'management', 'tags', data.id]);
+      this.router.navigate(['/settings', 'tags', data.id]);
     });
   }
 

@@ -109,7 +109,7 @@ export class AuditsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.requiredReadPermission = 'organization_audit_read';
@@ -144,11 +144,8 @@ export class AuditsComponent implements OnInit {
 
     if ('organization' === row.actor.referenceType) {
       routerLink.push('/settings');
-      routerLink.push('management');
     } else if ('domain' === row.actor.referenceType) {
-      routerLink.push('/domains');
-      routerLink.push(row.actor.referenceId ? row.actor.referenceId : row.referenceId);
-      routerLink.push('settings');
+      routerLink.push('..');
     }
 
     if(routerLink.length > 0) {
@@ -169,9 +166,10 @@ export class AuditsComponent implements OnInit {
 
     if ('organization' === row.target.referenceType) {
       routerLink.push('/settings');
-      routerLink.push('management');
     } else {
-      routerLink.push('/domains');
+      routerLink.push('/environments');
+      routerLink.push(this.route.snapshot.paramMap.get('envHrid'));
+      routerLink.push('domains');
       routerLink.push(row.target.referenceId);
 
       if (row.target.type !== 'CLIENT' && row.target.type !== 'APPLICATION') {

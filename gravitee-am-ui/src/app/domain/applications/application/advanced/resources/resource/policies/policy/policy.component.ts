@@ -15,7 +15,6 @@
  */
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {BreadcrumbService} from '../../../../../../../../services/breadcrumb.service';
 import 'codemirror/mode/groovy/groovy.js';
 
 @Component({
@@ -28,14 +27,12 @@ export class ApplicationResourcePolicyComponent implements OnInit {
     config: any;
     condition: string;
 
-    constructor(private route: ActivatedRoute,
-                private breadcrumbService: BreadcrumbService) {
+    constructor(private route: ActivatedRoute) {
     }
 
     ngOnInit(): void {
         this.config = { lineNumbers: true, mode: 'groovy', readOnly: true };
         this.policy = this.route.snapshot.data['policy'];
         this.condition = JSON.parse(this.policy.condition)['onRequestScript'];
-        this.breadcrumbService.addFriendlyNameForRouteRegex(window.location.pathname + '$', this.policy.name);
     }
 }

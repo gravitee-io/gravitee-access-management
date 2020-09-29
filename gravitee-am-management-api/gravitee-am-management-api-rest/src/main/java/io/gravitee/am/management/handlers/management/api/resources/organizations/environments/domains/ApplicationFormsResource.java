@@ -87,7 +87,7 @@ public class ApplicationFormsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.READ)
                 .andThen(formService.findByDomainAndClientAndTemplate(domain, application, emailTemplate.template()))
                 .map(form -> Response.ok(form).build())
-                .defaultIfEmpty(Response.ok(new Form(false)).build())
+                .defaultIfEmpty(Response.ok(new Form(false, emailTemplate.template())).build())
                 .subscribe(response::resume, response::resume);
     }
 

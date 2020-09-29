@@ -34,7 +34,7 @@ export class DomainSettingsRolesComponent implements OnInit {
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.roles = this.route.snapshot.data['roles'];
   }
 

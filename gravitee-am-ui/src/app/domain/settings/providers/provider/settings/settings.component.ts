@@ -19,7 +19,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProviderService } from '../../../../../services/provider.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { OrganizationService } from '../../../../../services/organization.service';
-import { BreadcrumbService } from '../../../../../services/breadcrumb.service';
 import { DomainService } from '../../../../../services/domain.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import * as _ from 'lodash';
@@ -52,13 +51,12 @@ export class ProviderSettingsComponent implements OnInit {
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService,
               private domainService: DomainService,
               private dialogService: DialogService,
               private entrypointService: EntrypointService) { }
 
   ngOnInit() {
-    this.provider = this.route.snapshot.parent.data['provider'];
+    this.provider = this.route.snapshot.data['provider'];
     this.certificates = this.route.snapshot.data['certificates'];
     this.customCode = '<a th:href="${authorizeUrls.get(\'' + this.provider.id + '\')}">SIGN IN WITH OAUTH2 PROVIDER</a>';
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
@@ -69,8 +67,8 @@ export class ProviderSettingsComponent implements OnInit {
       this.entrypoint = { url: AppConfig.settings.baseURL};
       this.redirectUri = this.entrypoint.url + '/auth/login/callback?provider=' + this.provider.id;
     } else {
-      this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-      this.domain = this.route.snapshot.parent.parent.data['domain'];
+      this.domainId = this.route.snapshot.params['domainId'];
+      this.domain = this.route.snapshot.data['domain'];
       this.domainService.getEntrypoint(this.domainId).subscribe(data => {
         this.entrypoint = data;
         this.redirectUri = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain) + '/login/callback?provider=' + this.provider.id;
@@ -100,11 +98,6 @@ export class ProviderSettingsComponent implements OnInit {
   update() {
     this.provider.configuration = JSON.stringify(this.updateProviderConfiguration);
     this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
-      if (this.organizationContext) {
-        this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '$', this.provider.name);
-      } else {
-        this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/providers/' + this.provider.id + '$', this.provider.name);
-      }
       this.snackbarService.open('Provider updated');
       this.configurationPristine = true;
       this.form.reset(data);
@@ -119,11 +112,7 @@ export class ProviderSettingsComponent implements OnInit {
         if (res) {
           this.providerService.delete(this.domainId, this.provider.id, this.organizationContext).subscribe(() => {
             this.snackbarService.open('Identity provider deleted');
-            if (this.organizationContext) {
-              this.router.navigate(['/settings', 'management', 'providers']);
-            } else {
-              this.router.navigate(['/domains', this.domainId, 'settings', 'providers']);
-            }
+            this.router.navigate(['../..'], { relativeTo: this.route });
           });
         }
       });

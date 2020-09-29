@@ -107,6 +107,7 @@ public class EnvironmentServiceImpl implements EnvironmentService {
                     environment.setName(newEnvironment.getName());
                     environment.setDescription(newEnvironment.getDescription());
                     environment.setDomainRestrictions(newEnvironment.getDomainRestrictions());
+                    environment.setHrids(newEnvironment.getHrids());
 
                     return updateInternal(environment, byUser).toMaybe();
                 })

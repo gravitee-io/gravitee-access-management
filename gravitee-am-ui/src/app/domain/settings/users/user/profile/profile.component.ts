@@ -47,7 +47,7 @@ export class UserProfileComponent implements OnInit {
               private factoryResolver: ComponentFactoryResolver) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.canEdit = this.authService.hasPermissions(['organization_user_update']);
@@ -56,7 +56,7 @@ export class UserProfileComponent implements OnInit {
       this.canEdit = this.authService.hasPermissions(['domain_user_update']);
       this.canDelete = this.authService.hasPermissions(['domain_user_delete']);
     }
-    this.user = this.route.snapshot.parent.data['user'];
+    this.user = this.route.snapshot.data['user'];
   }
 
   update() {
@@ -73,15 +73,14 @@ export class UserProfileComponent implements OnInit {
   }
 
   delete(event) {
-    // TODO we should be able to delete platform users
     event.preventDefault();
     this.dialogService
       .confirm('Delete User', 'Are you sure you want to delete this user ?')
       .subscribe(res => {
         if (res) {
-          this.userService.delete(this.domainId, this.user.id).subscribe(response => {
+          this.userService.delete(this.domainId, this.user.id, this.organizationContext).subscribe(response => {
             this.snackbarService.open('User ' + this.user.username + ' deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'users']);
+              this.router.navigate(['../..'], { relativeTo: this.route });
           });
         }
       });

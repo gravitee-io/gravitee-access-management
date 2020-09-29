@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { OrganizationService } from '../../../../../services/organization.service';
-import { ReporterService } from '../../../../../services/reporter.service';
-import { BreadcrumbService } from '../../../../../services/breadcrumb.service';
-import { SnackbarService } from '../../../../../services/snackbar.service';
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {OrganizationService} from '../../../../../services/organization.service';
+import {ReporterService} from '../../../../../services/reporter.service';
+import {SnackbarService} from '../../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-reporter',
@@ -42,11 +41,11 @@ export class ReporterComponent implements OnInit {
               private router: Router,
               private organizationService: OrganizationService,
               private reporterService: ReporterService,
-              private breadcrumbService: BreadcrumbService,
               private snackbarService: SnackbarService) {
   }
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
+
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -61,7 +60,6 @@ export class ReporterComponent implements OnInit {
         self.reporterSchema['properties'][key].default = '';
       });
     });
-    this.initBreadcrumb();
   }
 
   update() {
@@ -72,7 +70,6 @@ export class ReporterComponent implements OnInit {
       this.updateReporterConfiguration = this.reporterConfiguration;
       this.formChanged = false;
       this.form.reset(this.reporter);
-      this.initBreadcrumb();
       this.snackbarService.open('Reporter updated');
     });
   }
@@ -89,13 +86,4 @@ export class ReporterComponent implements OnInit {
     this.reporter.enabled = event.checked;
     this.formChanged = true;
   }
-
-  initBreadcrumb() {
-    if (this.organizationContext) {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/audits/settings/' + this.reporter.id + '$', this.reporter.name);
-    } else {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/audits/settings/' + this.reporter.id + '$', this.reporter.name);
-    }
-  }
-
 }

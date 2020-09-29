@@ -1,4 +1,4 @@
-import {flatMap, map} from 'rxjs/operators';
+import {flatMap, map, mergeMap} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -25,8 +25,11 @@ import {NavbarService} from "../components/navbar/navbar.service";
 export class AuthService {
   private userInfoUrl: string = AppConfig.settings.baseURL + '/user';
   private currentUser: any;
+  private environmentPermissions: any[];
   private domainPermissions: any[];
   private applicationPermissions: any[];
+  private environmentPermissionsSource = new BehaviorSubject(null);
+  private environmentPermissionsObservable = this.environmentPermissionsSource.asObservable();
   private domainPermissionsSource = new BehaviorSubject(null);
   private domainPermissionsObservable = this.domainPermissionsSource.asObservable();
   private applicationPermissionsSource = new BehaviorSubject(null);
@@ -34,8 +37,8 @@ export class AuthService {
   private subject = new Subject();
   notifyObservable$ = this.subject.asObservable();
 
-  constructor(private http: HttpClient,
-              private environmentService: EnvironmentService) {
+  constructor(private http: HttpClient) {
+    this.environmentPermissionsObservable.subscribe(permissions => this.environmentPermissions = permissions);
     this.domainPermissionsObservable.subscribe(permissions => this.domainPermissions = permissions);
     this.applicationPermissionsObservable.subscribe(permissions => this.applicationPermissions = permissions);
   }
@@ -50,15 +53,6 @@ export class AuthService {
       map(user => {
         this.setUser(user);
         return this.currentUser;
-      }),
-      flatMap(user => {
-        return this.environmentService.getAllEnvironments().pipe(map(environments => {
-          // For now the selected environment is the first from the list but could be changed in favor of a 'last env' coming from user's preferences.
-          if(environments && environments.length >= 1) {
-            this.environmentService.setCurrentEnvironment(environments[0]);
-          }
-          return this.currentUser;
-        }))
       }));
   }
 
@@ -83,6 +77,7 @@ export class AuthService {
   hasPermissions(permissions): boolean {
     return this.isAuthenticated() &&
       permissions.every(v => this.user().permissions.indexOf(v) >= 0 ||
+        (this.environmentPermissions && this.environmentPermissions.indexOf(v) >= 0) ||
         (this.domainPermissions && this.domainPermissions.indexOf(v) >= 0) ||
         (this.applicationPermissions && this.applicationPermissions.indexOf(v) >= 0));
   }
@@ -96,12 +91,20 @@ export class AuthService {
     this.subject.next('Unauthorized');
   }
 
+  reloadEnvironmentPermissions(permissions) {
+    this.environmentPermissionsSource.next(permissions);
+  }
+
   reloadDomainPermissions(permissions) {
     this.domainPermissionsSource.next(permissions);
   }
 
   reloadApplicationPermissions(permissions) {
     this.applicationPermissionsSource.next(permissions);
+  }
+
+  environmentPermissionsLoaded(): boolean {
+    return this.environmentPermissions != null;
   }
 
   domainPermissionsLoaded(): boolean {

@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {SnackbarService} from "../../../../../../services/snackbar.service";
 import {DialogService} from "../../../../../../services/dialog.service";
 import {UserService} from "../../../../../../services/user.service";
 import * as _ from 'lodash';
 import {AuthService} from "../../../../../../services/auth.service";
-import {BreadcrumbService} from "../../../../../../services/breadcrumb.service";
 
 @Component({
   selector: 'app-user-application',
@@ -40,19 +39,16 @@ export class UserApplicationComponent implements OnInit {
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
               private userService: UserService,
-              private breadcrumbService: BreadcrumbService,
               private authService: AuthService) {
   }
 
   ngOnInit() {
     this.application = this.route.snapshot.data['application'];
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.userId = this.route.snapshot.parent.params['userId'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.userId = this.route.snapshot.params['userId'];
     this.consents = this.route.snapshot.data['consents'];
     this.clientId = this.route.snapshot.queryParamMap.get('clientId');
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
-
-    this.initBreadcrumb();
   }
 
   revokeApplication(event) {
@@ -102,9 +98,5 @@ export class UserApplicationComponent implements OnInit {
     return {
       'row-disabled': row.status !== 'approved'
     };
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.userId + '/applications/'+this.application.id+'.*$', this.application.name);
   }
 }

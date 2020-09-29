@@ -40,8 +40,8 @@ export class UserCredentialsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.user = this.route.snapshot.parent.data['user'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.user = this.route.snapshot.data['user'];
     this.credentials = this.route.snapshot.data['credentials'];
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
   }

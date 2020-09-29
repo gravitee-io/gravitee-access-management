@@ -39,8 +39,8 @@ export class ApplicationMetadataComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.application = this.route.snapshot.data['application'];
     this.initMetadata();
   }
 
@@ -109,7 +109,7 @@ export class ApplicationMetadataComponent implements OnInit {
     });
     this.applicationService.patch(this.domainId, this.application.id, { 'metadata' : metadata }).subscribe(data => {
       this.application = data;
-      this.route.snapshot.parent.parent.data['application'] = this.application;
+      this.route.snapshot.data['application'] = this.application;
       this.formChanged = false;
       this.snackbarService.open('Application updated');
       this.appMetadata = [];

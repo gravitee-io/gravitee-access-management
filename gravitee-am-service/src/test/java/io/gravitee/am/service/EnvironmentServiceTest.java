@@ -240,6 +240,7 @@ public class EnvironmentServiceTest {
         newEnvironment.setName("TestName");
         newEnvironment.setDescription("TestDescription");
         newEnvironment.setDomainRestrictions(Collections.singletonList("TestDomainRestriction"));
+        newEnvironment.setHrids(Collections.singletonList("testEnvHRID"));
 
         DefaultUser createdBy = new DefaultUser("test");
         createdBy.setId(USER_ID);
@@ -252,6 +253,7 @@ public class EnvironmentServiceTest {
             assertEquals(newEnvironment.getName(), environment.getName());
             assertEquals(newEnvironment.getDescription(), environment.getDescription());
             assertEquals(newEnvironment.getDomainRestrictions(), environment.getDomainRestrictions());
+            assertEquals(newEnvironment.getHrids(), environment.getHrids());
 
             return true;
         });
@@ -339,6 +341,7 @@ public class EnvironmentServiceTest {
         newEnvironment.setName("TestName");
         newEnvironment.setDescription("TestDescription");
         newEnvironment.setDomainRestrictions(Collections.singletonList("TestDomainRestriction"));
+        newEnvironment.setHrids(Collections.singletonList("testHRIDUpdated"));
 
         DefaultUser createdBy = new DefaultUser("test");
         createdBy.setId(USER_ID);
@@ -351,6 +354,7 @@ public class EnvironmentServiceTest {
             assertEquals(newEnvironment.getName(), environment.getName());
             assertEquals(newEnvironment.getDescription(), environment.getDescription());
             assertEquals(newEnvironment.getDomainRestrictions(), environment.getDomainRestrictions());
+            assertEquals(newEnvironment.getHrids(), environment.getHrids());
 
             return true;
         });

@@ -15,19 +15,23 @@
  */
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {Observable, Subject} from 'rxjs';
+import {Observable, ReplaySubject, Subject} from 'rxjs';
 import {AppConfig} from '../../config/app.config';
-import {map} from "rxjs/operators";
+import {map, mergeMap} from "rxjs/operators";
+import {AuthService} from "./auth.service";
 
 @Injectable()
 export class EnvironmentService {
+  public static NO_ENVIRONMENT: string = 'NO_ENVIRONMENT';
+
   private organizationURL = AppConfig.settings.organizationBaseURL;
   private currentEnvironment;
-  private currentEnvironmentSubject = new Subject<any>();
+  private currentEnvironmentSubject = new ReplaySubject<any>(1);
   public currentEnvironmentObs$ = this.currentEnvironmentSubject.asObservable();
   private allEnvironments: any[];
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient,
+              private authService: AuthService) {
   }
 
   getAllEnvironments(): Observable<any[]> {
@@ -50,14 +54,18 @@ export class EnvironmentService {
   }
 
   setCurrentEnvironment(environment) {
-    this.currentEnvironment = environment;
-    this.notifyEnvironment(this.currentEnvironment);
+    if (this.currentEnvironment !== environment) {
+      this.currentEnvironment = environment;
+      this.notifyEnvironment(this.currentEnvironment);
+    }
   }
 
   getEnvironmentById(id: String): Observable<any> {
     return this.getAllEnvironments().pipe(map(environments => {
-      if(environments && environments.length > 0) {
-        return environments.find(e => e.id === id);
+      if (environments && environments.length > 0) {
+        let find = environments.find(e => e.id === id || e.hrids.includes(id));
+        this.setCurrentEnvironment(find);
+        return find;
       }
 
       return null;
@@ -68,5 +76,14 @@ export class EnvironmentService {
     if (environment) {
       this.currentEnvironmentSubject.next(environment);
     }
+  }
+
+  permissions(id): Observable<any> {
+    return this.getEnvironmentById(id)
+      .pipe(mergeMap(environment => this.http.get<any>(this.organizationURL + '/environments/' + environment.id + '/members/permissions')),
+        map(perms => {
+          this.authService.reloadEnvironmentPermissions(perms);
+          return perms;
+        }));
   }
 }

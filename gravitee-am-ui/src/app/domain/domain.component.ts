@@ -16,7 +16,6 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {SidenavService} from '../components/sidenav/sidenav.service';
-import {BreadcrumbService} from '../services/breadcrumb.service';
 import {DomainService} from '../services/domain.service';
 import {NavbarService} from '../components/navbar/navbar.service';
 import {SnackbarService} from '../services/snackbar.service';
@@ -29,45 +28,34 @@ import {AuthService} from '../services/auth.service';
 })
 export class DomainComponent implements OnInit {
   domain: any = {};
+  environment: any = {};
 
   constructor(private route: ActivatedRoute,
               private router: Router,
               private sidenavService: SidenavService,
               private navbarService: NavbarService,
-              private breadcrumbService: BreadcrumbService,
               private snackbarService: SnackbarService,
               private domainService: DomainService,
               private authService: AuthService) {
   }
 
   ngOnInit() {
+    this.environment = this.route.snapshot.data['environment'];
     this.domain = this.route.snapshot.data['domain'];
     this.domainService.domainUpdated$.subscribe(domain => this.domain = domain);
-    setTimeout(() => {
-      this.navbarService.notifyDomain(this.domain);
-    });
-    this.initBreadcrumb();
+
     // redirect user according to its permissions
     if (this.router.url.indexOf('applications') === -1 && this.router.url.indexOf('settings') === -1) {
       if (this.canNavigate(['domain_analytics_read'])) {
-        this.router.navigate(['/domains', this.domain.id, 'dashboard']);
+        this.router.navigate(['dashboard'], {relativeTo: this.route});
       } else if (this.canNavigate(['application_list'])) {
-        this.router.navigate(['/domains', this.domain.id, 'applications']);
+        this.router.navigate(['applications'], {relativeTo: this.route});
       } else {
-        this.router.navigate(['/domains', this.domain.id, 'settings']);
+        this.router.navigate(['settings'], {relativeTo: this.route});
       }
     } else {
       this.router.navigateByUrl(this.router.url);
     }
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domain.id, this.domain.name);
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domain.id + '/settings/(providers|certificates|roles)/.*', ' ');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domain.id + '/settings/(providers|certificates|roles)/new$', 'new');
-    this.breadcrumbService.hideRoute('/domains');
-    this.breadcrumbService.hideRouteRegex('/domains/' + this.domain.id + '/settings/providers/.*/settings$');
-    this.breadcrumbService.hideRouteRegex('/domains/' + this.domain.id + '/clients/.*/settings$');
   }
 
   enable() {

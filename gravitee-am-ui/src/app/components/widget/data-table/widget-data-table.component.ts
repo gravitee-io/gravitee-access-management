@@ -49,12 +49,12 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
       this.sorts = [{prop: columnValue, dir: 'desc'}];
       this.rows = Object.keys(response).map(key => {
         const obj = {};
-        obj[columnName] = this.getColumnName(key, metadata);
+        obj[columnName] = WidgetDataTableComponent.getColumnName(key, metadata);
         obj[columnValue] = response[key];
         obj['name'] = obj[columnName];
         obj['value'] =  obj[columnValue]
-        obj['deleted'] = this.resourceDeleted(key, metadata);
-        obj['link'] = this.getResourceLink(key, metadata, field);
+        obj['deleted'] = WidgetDataTableComponent.resourceDeleted(key, metadata);
+        obj['link'] = WidgetDataTableComponent.getResourceLink(key, metadata, field);
         return obj;
       });
       setTimeout(() => {
@@ -63,13 +63,7 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
     }
   }
 
-  goTo(routerLink) {
-    // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
-    this.router.navigateByUrl('/dummy', { skipLocationChange: true })
-      .then(() => this.router.navigate(routerLink));
-  }
-
-  private getColumnName(key, metadata): string {
+  private static getColumnName(key, metadata): string {
     if (!metadata && !metadata[key]) {
       return key;
     } else {
@@ -77,14 +71,14 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
     }
   }
 
-  private getResourceLink(key, metadata, field) {
+  private static getResourceLink(key, metadata, field) {
     if ('application' === field) {
-      return ['/domains', metadata[key].domain, 'applications', key];
+      return ['..', 'applications', key];
     }
     return ['.'];
   }
 
-  private resourceDeleted(key, metadata) {
+  private static resourceDeleted(key, metadata) {
     if (!metadata || !metadata[key]) {
       return true;
     }
