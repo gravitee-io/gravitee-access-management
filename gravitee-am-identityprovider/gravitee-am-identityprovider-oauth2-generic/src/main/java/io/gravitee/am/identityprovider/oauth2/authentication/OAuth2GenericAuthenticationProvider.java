@@ -117,7 +117,7 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
                 }
 
                 // configuration verification
-                Assert.notNull(configuration.getUserAuthorizationUri(), "OAuth 2.0 Authoriziation endpoint is required");
+                Assert.notNull(configuration.getUserAuthorizationUri(), "OAuth 2.0 Authorization endpoint is required");
 
                 if (configuration.getAccessTokenUri() == null && io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())) {
                     throw new IllegalStateException("OAuth 2.0 token endpoint is required for the Authorization code flow");

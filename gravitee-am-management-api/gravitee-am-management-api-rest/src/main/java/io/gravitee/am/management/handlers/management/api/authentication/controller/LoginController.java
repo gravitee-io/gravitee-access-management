@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.controller;
 
+import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
@@ -23,6 +24,7 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.ReCaptchaService;
 import io.gravitee.common.http.HttpHeaders;
+import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,7 +96,8 @@ public class LoginController {
                 String identityId = identity.getId();
                 SocialAuthenticationProvider socialAuthenticationProvider = (SocialAuthenticationProvider) identityProviderManager.get(identityId);
                 if (socialAuthenticationProvider != null) {
-                    authorizeUrls.put(identityId, socialAuthenticationProvider.signInUrl(buildRedirectUri(request, identityId)).getUri());
+                    final Maybe<Request> maybe = socialAuthenticationProvider.asyncSignInUrl(buildRedirectUri(request, identityId));
+                    authorizeUrls.put(identityId, maybe.blockingGet().getUri());
                 }
             });
 

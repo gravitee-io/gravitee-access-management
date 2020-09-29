@@ -28,6 +28,7 @@ export class ProviderCreationStep1Component implements OnInit {
     'inline-am-idp': 'Inline',
     'oauth2-generic-am-idp': 'OpenID Connect',
     'azure-ad-am-idp': 'Azure AD',
+    'twitter-am-idp': 'Twitter',
     'github-am-idp': 'GitHub',
     'facebook-am-idp': 'Facebook',
     'http-am-idp': 'HTTP',

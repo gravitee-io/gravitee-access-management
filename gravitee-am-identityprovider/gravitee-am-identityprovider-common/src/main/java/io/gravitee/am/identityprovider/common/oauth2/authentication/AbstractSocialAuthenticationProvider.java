@@ -143,15 +143,25 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
 
     protected final class Token {
         private String value;
+        private String secret;
         private TokenTypeHint typeHint;
 
         public Token(String value, TokenTypeHint typeHint) {
+            this(value, null, typeHint);
+        }
+
+        public Token(String value, String secret, TokenTypeHint typeHint) {
             this.value = value;
+            this.secret = secret;
             this.typeHint = typeHint;
         }
 
         public String getValue() {
             return value;
+        }
+
+        public String getSecret() {
+            return secret;
         }
 
         public TokenTypeHint getTypeHint() {

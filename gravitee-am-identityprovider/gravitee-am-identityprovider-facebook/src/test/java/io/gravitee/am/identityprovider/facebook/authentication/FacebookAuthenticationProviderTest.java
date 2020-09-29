@@ -105,6 +105,22 @@ public class FacebookAuthenticationProviderTest {
     }
 
     @Test
+    public void shouldGenerateAsyncSignInUrl() {
+
+        when(configuration.getUserAuthorizationUri()).thenReturn("https://www.facebook.com/v7.0/dialog/oauth");
+        when(configuration.getClientId()).thenReturn("testClientId");
+        when(configuration.getResponseType()).thenReturn("code");
+        when(configuration.getScopes()).thenReturn(Collections.emptySet());
+
+        Request request = (Request)cut.asyncSignInUrl("https://gravitee.io").blockingGet();
+
+        assertNotNull(request);
+        assertEquals(HttpMethod.GET, request.getMethod());
+        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code", request.getUri());
+        assertNull(request.getHeaders());
+    }
+
+    @Test
     public void shouldGenerateSignInUrl_withScopes() {
 
         when(configuration.getUserAuthorizationUri()).thenReturn("https://www.facebook.com/v7.0/dialog/oauth");

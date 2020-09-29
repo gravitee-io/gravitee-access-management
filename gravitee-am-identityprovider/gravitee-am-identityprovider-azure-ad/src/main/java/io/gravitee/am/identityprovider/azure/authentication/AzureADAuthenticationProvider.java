@@ -22,7 +22,6 @@ import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
-import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.azure.AzureADIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.azure.authentication.spring.AzureADAuthenticationProviderConfiguration;
@@ -78,10 +77,6 @@ public class AzureADAuthenticationProvider extends AbstractOpenIDConnectAuthenti
     @Override
     protected IdentityProviderRoleMapper getIdentityProviderRoleMapper() {
         return this.roleMapper;
-    }
-    @Override
-    public Request signInUrl(String redirectUri) {
-        return super.signInUrl(redirectUri);
     }
 
     private void forceOpenIdScope() {
