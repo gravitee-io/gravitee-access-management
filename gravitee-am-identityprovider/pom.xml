@@ -43,6 +43,7 @@
         <module>gravitee-am-identityprovider-http</module>
         <module>gravitee-am-identityprovider-azure-ad</module>
         <module>gravitee-am-identityprovider-facebook</module>
+        <module>gravitee-am-identityprovider-twitter</module>
     </modules>
 
     <dependencies>

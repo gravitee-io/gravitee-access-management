@@ -117,9 +117,24 @@ public class AzureADAuthenticationProviderTest {
         // openid scope will be added by default
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getTenantId()).thenReturn(TEST_TENANT_ID);
-       // when(configuration.getScopes()).thenReturn(new HashSet<>());
 
         Request request = provider.signInUrl("https://gravitee.io");
+
+        Assert.assertNotNull(request);
+        assertEquals(HttpMethod.GET, request.getMethod());
+        assertEquals("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=openid profile email&redirect_uri=https://gravitee.io", request.getUri());
+        assertNull(request.getHeaders());
+    }
+
+    @Test
+    public void shouldGenerateAsyncSignInUrl() throws Exception {
+        forceProviderInfoForTest();
+
+        // openid scope will be added by default
+        when(configuration.getClientId()).thenReturn("testClientId");
+        when(configuration.getTenantId()).thenReturn(TEST_TENANT_ID);
+
+        Request request = (Request) provider.asyncSignInUrl("https://gravitee.io").blockingGet();
 
         Assert.assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());

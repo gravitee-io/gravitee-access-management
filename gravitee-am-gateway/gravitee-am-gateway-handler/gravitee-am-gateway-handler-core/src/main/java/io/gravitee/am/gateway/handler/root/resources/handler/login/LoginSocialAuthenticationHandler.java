@@ -144,11 +144,8 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                 .flatMap(authenticationProvider -> {
                     Map<String, String> parameters = Collections.singletonMap("provider", identityProviderId);
                     String redirectUri = buildUri(context.request(), context.get(CONTEXT_PATH) + "/login/callback", parameters);
-                    Request signInURL = ((SocialAuthenticationProvider) authenticationProvider).signInUrl(redirectUri);
-                    if (signInURL == null) {
-                        return Maybe.empty();
-                    }
-                    return Maybe.just(HttpMethod.GET.equals(signInURL.getMethod()) ? signInURL.getUri() : buildUri(context.request(), context.get(CONTEXT_PATH) + "/login/SSO/POST", parameters));
+                    Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri);
+                    return signInURL.map(request -> HttpMethod.GET.equals(request.getMethod()) ? request.getUri() : buildUri(context.request(), context.get(CONTEXT_PATH) + "/login/SSO/POST", parameters));
                 });
     }
 

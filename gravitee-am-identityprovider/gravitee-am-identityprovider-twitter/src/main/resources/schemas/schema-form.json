@@ -1,0 +1,35 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:facebook:FacebookIdentityProviderConfiguration",
+  "description": "Twitter identity provider, let you register and set up permissions and authorization options for OAuth 2.0 protocol.\n\nhttps://developer.twitter.com/en/docs/authentication/guides/log-in-with-twitter",
+  "properties" : {
+    "clientId" : {
+      "type" : "string",
+      "title": "Client ID",
+      "description": "Required. The client ID you received from Twitter when you registered."
+    },
+    "clientSecret" : {
+      "type" : "string",
+      "title": "Client Secret",
+      "description": "Required. The client secret you received from Twitter for your Twitter App."
+    },
+    "connectTimeout" : {
+      "type" : "integer",
+      "default": 10000,
+      "minimum": 1,
+      "title": "HTTP Client connect timeout",
+      "description": "Duration of time in milliseconds that connects will block. (default 10000 ms)"
+    },
+    "maxPoolSize" : {
+      "type" : "integer",
+      "default": 200,
+      "minimum": 1,
+      "title": "HTTP Client max pool size",
+      "description": "Maximum pool of connections can grow to. (default 200)"
+    }
+  },
+  "required": [
+    "clientId",
+    "clientSecret"
+  ]
+}

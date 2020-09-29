@@ -24,10 +24,10 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
@@ -95,11 +95,18 @@ public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
 
     private void parseSSOSignInURL(RoutingContext routingContext, String identityProvider, SocialAuthenticationProvider authenticationProvider, Handler<AsyncResult<Request>> resultHandler) {
         try {
-            Request request = authenticationProvider.signInUrl(buildRedirectUri(routingContext, identityProvider));
-            if (HttpMethod.GET.equals(request.getMethod())) {
-                throw new InvalidRequestException("SSO Sign In URL HTTP Method must be POST");
-            }
-            resultHandler.handle(Future.succeededFuture(request));
+            Maybe<Request> signInURL = authenticationProvider.asyncSignInUrl(buildRedirectUri(routingContext, identityProvider));
+            signInURL
+                    .subscribe(
+                            request -> {
+                                if (HttpMethod.GET.equals(request.getMethod())) {
+                                    resultHandler.handle(Future.failedFuture(new InvalidRequestException("SSO Sign In URL HTTP Method must be POST")));
+                                } else {
+                                    resultHandler.handle(Future.succeededFuture(request));
+                                }
+                            },
+                            error -> resultHandler.handle(Future.failedFuture(new InvalidRequestException("Unable to parse SSO Sign URL"))),
+                            () -> resultHandler.handle(Future.failedFuture(new InvalidRequestException("Unable to parse SSO Sign URL"))));
         } catch (Exception ex) {
             logger.error("Failed to parse SSO Sign In URL", ex);
             resultHandler.handle(Future.failedFuture(new InvalidRequestException("Unable to parse SSO Sign URL")));
@@ -116,10 +123,14 @@ public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
 
     private Map<String, String> getParams(String query) {
         Map<String, String> query_pairs = new LinkedHashMap<>();
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            int idx = pair.indexOf("=");
-            query_pairs.put(pair.substring(0, idx), pair.substring(idx + 1));
+        if (query != null) {
+            String[] pairs = query.split("&");
+            for (String pair : pairs) {
+                if (!pair.isEmpty()) {
+                    int idx = pair.indexOf("=");
+                    query_pairs.put(pair.substring(0, idx), pair.substring(idx + 1));
+                }
+            }
         }
         return query_pairs;
     }

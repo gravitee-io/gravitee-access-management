@@ -36,6 +36,7 @@ export class DomainSettingsProvidersComponent implements OnInit {
     'oauth2-generic-am-idp': 'OpenID Connect',
     'github-am-idp': 'GitHub',
     'azure-ad-am-idp': 'Azure AD',
+    'twitter-am-idp': 'Twitter',
     'facebook-am-idp': 'Facebook'
   };
   private identityProviderIcons: any = {
@@ -45,6 +46,7 @@ export class DomainSettingsProvidersComponent implements OnInit {
     'oauth2-generic-am-idp': 'cloud_queue',
     'github-am-idp': 'cloud_queue',
     'azure-ad-am-idp': 'cloud_queue',
+    'twitter-am-idp': 'cloud_queue',
     'facebook-am-idp': 'cloud_queue'
   };
   domainId: string;

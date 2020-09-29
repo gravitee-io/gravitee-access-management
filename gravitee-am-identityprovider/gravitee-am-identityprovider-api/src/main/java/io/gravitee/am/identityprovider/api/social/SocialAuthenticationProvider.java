@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.api.social;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.common.Request;
+import io.reactivex.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -24,5 +25,30 @@ import io.gravitee.am.identityprovider.api.common.Request;
  */
 public interface SocialAuthenticationProvider <T extends SocialIdentityProviderConfiguration> extends AuthenticationProvider {
 
+    /**
+     * Generate the signIn Url.
+     *
+     * @param redirectUri
+     * @return
+     * @Deprecated use the asyncSignInUrl instead
+     */
+    @Deprecated
     Request signInUrl(String redirectUri);
+
+    /**
+     * Generate the signIn Url in asynchronous way
+     * to avoid blocking thread when an http
+     * call out is required to generate the url.
+     *
+     * @param redirectUri
+     * @return
+     */
+    default Maybe<Request> asyncSignInUrl(String redirectUri) {
+        Request request = signInUrl(redirectUri);
+        if (request != null) {
+            return Maybe.just(request);
+        } else {
+            return Maybe.<Request>empty();
+        }
+    }
 }

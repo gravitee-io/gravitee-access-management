@@ -86,6 +86,14 @@
 
         <dependency>
             <groupId>io.gravitee.am.identityprovider</groupId>
+            <artifactId>gravitee-am-identityprovider-twitter</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.identityprovider</groupId>
             <artifactId>gravitee-am-identityprovider-oauth2-generic</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
@@ -268,6 +276,12 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.identityprovider</groupId>
                                     <artifactId>gravitee-am-identityprovider-facebook</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-twitter</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
