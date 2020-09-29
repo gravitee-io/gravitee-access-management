@@ -36,7 +36,7 @@ export class ScopeCreationComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
   }
 
   create() {
@@ -46,7 +46,7 @@ export class ScopeCreationComponent implements OnInit {
     }
     this.scopeService.create(this.domainId, this.scope).subscribe(data => {
     this.snackbarService.open('Scope ' + data.name + ' created');
-    this.router.navigate(['/domains', this.domainId, 'settings', 'scopes', data.id]);
+    this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 

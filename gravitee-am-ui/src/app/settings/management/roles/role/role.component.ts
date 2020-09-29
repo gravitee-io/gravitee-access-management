@@ -18,7 +18,6 @@ import {NgForm} from '@angular/forms';
 import {MatTableDataSource} from '@angular/material/table';
 import {ActivatedRoute, Router} from '@angular/router';
 import {SnackbarService} from '../../../../services/snackbar.service';
-import {BreadcrumbService} from '../../../../services/breadcrumb.service';
 import {DialogService} from '../../../../services/dialog.service';
 import {OrganizationService} from '../../../../services/organization.service';
 import {AuthService} from '../../../../services/auth.service';
@@ -41,7 +40,6 @@ export class ManagementRoleComponent implements OnInit {
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService,
               private authService: AuthService,
               private dialogService: DialogService) {
   }
@@ -52,7 +50,6 @@ export class ManagementRoleComponent implements OnInit {
     this.readonly = this.role.system || (!this.authService.hasPermissions(['organization_role_update']));
     this.deleteMode = this.authService.hasPermissions(['organization_role_delete']);
     this.initPermissionsDatasource();
-    this.initBreadcrumb();
   }
 
   private initPermissionsDatasource() {
@@ -99,7 +96,7 @@ export class ManagementRoleComponent implements OnInit {
         if (res) {
           this.organizationService.deleteRole(this.role.id).subscribe(() => {
             this.snackbarService.open('Role ' + this.role.name + ' deleted');
-            this.router.navigate(['/settings', 'management', 'roles']);
+            this.router.navigate(['/settings', 'roles']);
           });
         }
       })
@@ -112,10 +109,6 @@ export class ManagementRoleComponent implements OnInit {
 
   hasPermissions(action) {
     return this.allPermissions.data.every(p => p[action] === true);
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/roles/' + this.role.id + '(:?.*)?$', this.role.name.toLowerCase());
   }
 
   applyFilter(filterValue) {

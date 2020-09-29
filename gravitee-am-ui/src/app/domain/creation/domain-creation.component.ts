@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { DomainService } from '../../services/domain.service';
-import { SnackbarService } from '../../services/snackbar.service';
-import { BreadcrumbService } from '../../services/breadcrumb.service';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {DomainService} from '../../services/domain.service';
+import {SnackbarService} from '../../services/snackbar.service';
 
 @Component({
   selector: 'app-creation',
@@ -31,17 +30,16 @@ export class DomainCreationComponent implements OnInit {
   constructor(private domainService: DomainService,
               private snackbarService: SnackbarService,
               private router: Router,
-              private breadcrumbService: BreadcrumbService) { }
+              private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.breadcrumbService.addFriendlyNameForRoute('/domains', 'Domains');
     this.displayNavLink = !this.router.url.startsWith('/settings');
   }
 
   create() {
     this.domainService.create(this.domain).subscribe(data => {
       this.snackbarService.open('Domain ' + data.name + ' created');
-      this.router.navigate(['/domains', data.id])
+      this.router.navigate(['..', data.id], { relativeTo: this.route })
     });
   }
 }

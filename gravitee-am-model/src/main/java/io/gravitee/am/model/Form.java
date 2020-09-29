@@ -37,8 +37,9 @@ public class Form {
     public Form() {
     }
 
-    public Form(boolean enabled) {
+    public Form(boolean enabled, String template) {
         this.enabled = enabled;
+        this.template = template;
     }
 
     public Form(Form other) {

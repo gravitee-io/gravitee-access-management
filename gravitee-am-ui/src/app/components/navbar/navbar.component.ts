@@ -31,18 +31,14 @@ import {MatSelectChange} from "@angular/material/select";
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  private navbarSubscription: Subscription;
+  private domainSubscription: Subscription;
+  private environmentSubscription: Subscription;
   private sidenavSubscription: Subscription;
   reducedMode = false;
   domains: any[];
-  currentResource: any = {};
-  navLinks: any = [
-    {'href': '/domains/new', 'label': 'Create domain', 'icon': 'add'},
-    {'href': '/settings', 'label': 'Global settings', 'icon': 'settings'},
-    {'href': '/logout', 'label': 'Sign out', 'icon': 'exit_to_app'},
-  ];
+  currentDomain: any = {};
+  navLinks: any[];
   currentEnvironment;
-  environments: any[] = [];
 
   constructor(private authService: AuthService,
               private domainService: DomainService,
@@ -51,19 +47,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
               private sidenavService: SidenavService,
               private environmentService: EnvironmentService,
               public router: Router) {
-
-    this.currentEnvironment = this.environmentService.getCurrentEnvironment();
-    this.initNavLinks();
-    this.initEnvironments();
   }
 
   ngOnInit() {
-    this.navbarSubscription = this.navbarService.currentDomainObs$.subscribe(data => this.currentResource = data);
+    this.environmentSubscription = this.environmentService.currentEnvironmentObs$.subscribe(environment => {
+      this.currentEnvironment = environment;
+      this.initNavLinks();
+    });
+    this.domainSubscription = this.navbarService.currentDomainObs$.subscribe(data => {
+      this.currentDomain = data;
+    });
     this.sidenavSubscription = this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
   }
 
   ngOnDestroy(): void {
-    this.navbarSubscription.unsubscribe();
+    this.environmentSubscription.unsubscribe();
+    this.domainSubscription.unsubscribe();
     this.sidenavSubscription.unsubscribe();
   }
 
@@ -72,17 +71,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   listDomains() {
-    if(this.currentEnvironment) {
+    if(this.hasCurrentEnvironment()) {
       this.domainService.list().subscribe(data => this.domains = data);
     } else {
       this.domains = [];
     }
-  }
-
-  goTo(routerLink) {
-    // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
-    this.router.navigateByUrl('/dummy', {skipLocationChange: true})
-      .then(() => this.router.navigate(routerLink));
   }
 
   displayBreadcrumb(): boolean {
@@ -92,38 +85,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
       !this.router.url.startsWith('/404');
   }
 
-  displayEnvironments(): boolean {
-    return this.currentEnvironment &&
-      !this.router.url.startsWith('/settings') &&
-      !this.router.url.startsWith('/login') &&
-      !this.router.url.startsWith('/logout') &&
-      !this.router.url.startsWith('/404');
-  }
-
   private initNavLinks() {
-    if (this.currentEnvironment === undefined || !this.canDisplay(['domain_create'])) {
-      _.remove(this.navLinks, {href: '/domains/new'});
+
+    this.navLinks = [];
+
+    if (this.hasCurrentEnvironment() && this.canDisplay(['domain_list'])) {
+      this.navLinks.push({'href': '/environments/' + this.currentEnvironment.hrids[0] + '/domains', 'label': 'All domains', 'icon': 'developer_board'});
     }
-    if (!this.canDisplay(['organization_settings_read'])) {
-      _.remove(this.navLinks, {href: '/settings'});
+
+    if (this.hasCurrentEnvironment() && this.canDisplay(['domain_create'])) {
+      this.navLinks.push({'href': '/environments/' + this.currentEnvironment.hrids[0] + '/domains/new', 'label': 'Create domain', 'icon': 'add'});
     }
+
+    this.navLinks.push({'href': '/logout', 'label': 'Sign out', 'icon': 'exit_to_app'});
   }
 
-  private initEnvironments() {
-    this.environmentService.getAllEnvironments().subscribe(environments => {
-      this.environments = environments;
-    });
+  hasCurrentEnvironment(): boolean {
+    return this.currentEnvironment && this.currentEnvironment !== EnvironmentService.NO_ENVIRONMENT;
   }
 
   private canDisplay(permissions): boolean {
     return this.authService.hasPermissions(permissions);
-  }
-
-  switchEnvironment($event: MatSelectChange) {
-    this.environmentService.setCurrentEnvironment($event.value);
-
-    if (this.router.url !== '/') {
-      this.router.navigate(["/"]);
-    }
   }
 }

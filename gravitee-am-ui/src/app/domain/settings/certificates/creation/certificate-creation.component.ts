@@ -36,14 +36,14 @@ export class CertificateCreationComponent {
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
   }
 
   create() {
     this.certificate.configuration = JSON.stringify(this.certificate.configuration);
     this.certificateService.create(this.domainId, this.certificate).subscribe(data => {
       this.snackbarService.open('Certificate ' + data.name + ' created');
-      this.router.navigate(['/domains', this.domainId, 'settings', 'certificates', data.id]);
+      this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 

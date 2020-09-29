@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { NgForm } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ScopeService } from '../../../../services/scope.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { BreadcrumbService } from '../../../../services/breadcrumb.service';
-import { DialogService } from '../../../../services/dialog.service';
-import { AuthService } from '../../../../services/auth.service';
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {NgForm} from '@angular/forms';
+import {ActivatedRoute, Router} from '@angular/router';
+import {ScopeService} from '../../../../services/scope.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
+import {DialogService} from '../../../../services/dialog.service';
+import {AuthService} from '../../../../services/auth.service';
 import * as moment from 'moment';
 
 @Component({
@@ -42,16 +41,14 @@ export class ScopeComponent implements OnInit {
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService,
               private dialogService: DialogService,
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.scope = this.route.snapshot.data['scope'];
     this.editMode = this.authService.hasPermissions(['domain_scope_update']);
     this.deleteMode = this.authService.hasPermissions(['domain_scope_delete']);
-    this.initBreadcrumb();
   }
 
   update() {
@@ -63,17 +60,12 @@ export class ScopeComponent implements OnInit {
     }
     this.scopeService.update(this.domainId, this.scope.id, this.scope).subscribe(data => {
       this.scope = data;
-      this.initBreadcrumb();
       this.formChanged = false;
       this.scopeForm.reset(this.scope);
       this.expiresIn = null;
       this.unitTime = null;
       this.snackbarService.open('Scope updated');
     });
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/scopes/' + this.scope.id + '$', this.scope.name);
   }
 
   formIsInvalid() {
@@ -106,7 +98,7 @@ export class ScopeComponent implements OnInit {
         if (res) {
           this.scopeService.delete(this.domainId, this.scope.id).subscribe(() => {
             this.snackbarService.open('Scope deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'scopes']);
+            this.router.navigate(['..'], { relativeTo: this.route });
           });
         }
       });

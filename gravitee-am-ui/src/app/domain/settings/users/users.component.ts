@@ -48,7 +48,7 @@ export class UsersComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.createMode = false;
@@ -83,7 +83,7 @@ export class UsersComponent implements OnInit {
       .confirm('Delete User', 'Are you sure you want to delete this user ?')
       .subscribe(res => {
         if (res) {
-          this.userService.delete(this.domainId, id).subscribe(response => {
+          this.userService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
             this.snackbarService.open("User deleted");
             this.page.pageNumber = 0;
             this.loadUsers();

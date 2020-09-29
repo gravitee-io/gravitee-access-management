@@ -59,8 +59,8 @@ export class EmailComponent implements OnInit, AfterViewInit {
               public dialog: MatDialog) { }
 
   ngOnInit() {
-    this.domainId = (this.route.snapshot.parent.parent.params['domainId']) ? this.route.snapshot.parent.parent.params['domainId'] : this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.appId = this.route.snapshot.params['appId'];
     this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.email = this.route.snapshot.data['email']
 

@@ -82,7 +82,7 @@ public class ApplicationEmailsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.READ)
                 .andThen(emailTemplateService.findByDomainAndClientAndTemplate(domain, application, emailTemplate.template())
                         .map(email -> Response.ok(email).build())
-                        .defaultIfEmpty(Response.ok(new Email(false)).build()))
+                        .defaultIfEmpty(Response.ok(new Email(false, emailTemplate.template())).build()))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -36,16 +36,14 @@ export class ExtensionGrantCreationComponent implements OnInit {
               private route: ActivatedRoute) { }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
   }
 
   create() {
     this.extensionGrant.configuration = JSON.stringify(this.extensionGrant.configuration);
     this.extensionGrantService.create(this.domainId, this.extensionGrant).subscribe(data => {
       this.snackbarService.open('Extension grant ' + data.name + ' created');
-      // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
-      this.router.navigateByUrl('/dummy', { skipLocationChange: true })
-        .then(() => this.router.navigate(['/domains', this.domainId, 'settings', 'extensionGrants', data.id]));
+      this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 

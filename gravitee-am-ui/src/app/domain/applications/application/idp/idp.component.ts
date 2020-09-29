@@ -59,8 +59,8 @@ export class ApplicationIdPComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.data['application'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.application = this.route.snapshot.data['application'];
     this.application.identities = this.application.identities || [];
     this.readonly = !this.authService.hasPermissions(['application_identity_provider_update']);
     this.providerService.findByDomain(this.domainId).subscribe(data => {

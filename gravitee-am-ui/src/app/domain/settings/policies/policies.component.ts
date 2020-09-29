@@ -70,7 +70,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
               public dialog: MatDialog) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.policies = this.route.snapshot.data['policies'] || {};
     this.organizationService.policies().subscribe(data => this.policyPlugins = data);
     this.readonly = !this.authService.hasPermissions(['domain_extension_point_update']);

@@ -26,11 +26,11 @@ export class GroupMembersResolver implements Resolve<any> {
               private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const groupId = route.parent.paramMap.get('groupId');
+    const groupId = route.paramMap.get('groupId');
     if (state.url.startsWith('/settings')) {
       return this.organizationService.groupMembers(groupId);
     }
-    const domainId = route.parent.parent.parent.paramMap.get('domainId');
+    const domainId = route.paramMap.get('domainId');
     return this.groupService.findMembers(domainId, groupId, 0,  25);
   }
 

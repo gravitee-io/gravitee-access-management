@@ -22,7 +22,7 @@
       Identity and Access Management Platform will let you create applications, register users and manage identity providers to provide centralize authentication, authorization and user management features.
     </div>
     <div class="home-content-actions">
-      <a mat-raised-button color="primary" [routerLink]="['/domains', 'new']" [disabled]="readonly">Create a Security Domain</a>
+      <a mat-raised-button color="primary" [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', 'new']" [disabled]="readonly">Create a Security Domain</a>
       <span *ngIf="readonly">There is not enough permission, ask for support or wait for invitation to collaborate.</span>
     </div>
   </div>

@@ -32,7 +32,7 @@ export class DomainSettingsFactorsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.factors = this.route.snapshot.data['factors'];
   }
 

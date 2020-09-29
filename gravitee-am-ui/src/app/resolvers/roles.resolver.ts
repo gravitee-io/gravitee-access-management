@@ -27,7 +27,7 @@ export class RolesResolver implements Resolve<any> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
 
-    if (state.url.startsWith('/settings/management/providers')) {
+    if (state.url.startsWith('/settings/providers')) {
       return this.organizationService.roles('ORGANIZATION');
     }
 
@@ -35,7 +35,7 @@ export class RolesResolver implements Resolve<any> {
       return this.organizationService.roles();
     }
 
-    const domainId = (route.parent.parent.paramMap.get('domainId')) ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
+    const domainId = route.paramMap.get('domainId');
     return this.roleService.findByDomain(domainId);
   }
 

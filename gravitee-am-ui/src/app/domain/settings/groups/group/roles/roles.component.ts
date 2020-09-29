@@ -46,8 +46,8 @@ export class GroupRolesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.group = this.route.snapshot.parent.data['group'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.group = this.route.snapshot.data['group'];
     this.groupRoles = this.route.snapshot.data['roles'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
@@ -78,7 +78,7 @@ export class GroupRolesComponent implements OnInit {
         if (res) {
           this.groupService.revokeRole(this.domainId, this.group.id, role.id, this.organizationContext).subscribe(group => {
             this.group = group;
-            this.route.snapshot.parent.data['group'] = group;
+            this.route.snapshot.data['group'] = group;
             this.snackbarService.open('Role ' + role.name + ' revoked');
             this.loadRoles();
           });
@@ -101,7 +101,7 @@ export class GroupRolesComponent implements OnInit {
   private assignRoles(roles) {
     this.groupService.assignRoles(this.domainId, this.group.id, roles, this.organizationContext).subscribe(group => {
       this.group = group;
-      this.route.snapshot.parent.data['group'] = group;
+      this.route.snapshot.data['group'] = group;
       this.snackbarService.open('Role(s) assigned');
       this.loadRoles();
     });

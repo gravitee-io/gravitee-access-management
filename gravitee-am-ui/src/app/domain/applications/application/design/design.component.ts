@@ -47,12 +47,10 @@ export class ApplicationDesignComponent implements OnInit, OnDestroy {
   }
 
   private loadPermissions(): void {
-    const domainId = this.route.snapshot.parent.parent.params['domainId'];
-    const appId = this.route.snapshot.parent.params['appId'];
     if (this.canNavigate(['application_form_list', 'application_form_read'])) {
-      this.router.navigate(['/domains', domainId, 'applications', appId, 'design', 'forms']);
+      this.router.navigate(['forms'], { relativeTo: this.route });
     } else if (this.canNavigate(['application_email_template_list', 'application_email_template_read'])) {
-      this.router.navigate(['/domains', domainId, 'applications', appId, 'design', 'emails']);
+      this.router.navigate(['emails'], { relativeTo: this.route });
     }
   }
 

@@ -93,7 +93,7 @@ export class DashboardComponent implements OnInit {
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.fetch();
   }
 

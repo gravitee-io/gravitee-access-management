@@ -49,7 +49,7 @@ export class ApplicationOverviewComponent implements OnInit {
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.entrypoint = this.route.snapshot.data['entrypoint'];
-    this.application = this.route.snapshot.parent.data['application'];
+    this.application = this.route.snapshot.data['application'];
     this.safeClientSecret = this.hidden;
     this.safeAuthorizationHeader = this.hidden;
     const applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};

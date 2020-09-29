@@ -17,7 +17,9 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.common.http.MediaType;
@@ -82,6 +84,7 @@ public class EnvironmentsResource extends AbstractResource {
         filteredEnvironment.setId(environment.getId());
         filteredEnvironment.setName(environment.getName());
         filteredEnvironment.setDomainRestrictions(environment.getDomainRestrictions());
+        filteredEnvironment.setHrids(environment.getHrids());
 
         return filteredEnvironment;
     }

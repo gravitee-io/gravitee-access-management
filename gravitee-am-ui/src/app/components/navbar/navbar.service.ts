@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Subject } from "rxjs";
+import {ReplaySubject, Subject} from "rxjs";
 
 @Injectable()
 export class NavbarService {
-  private currentDomain = new Subject<any>();
+  private currentDomain = new ReplaySubject<any>(1);
   public currentDomainObs$ = this.currentDomain.asObservable();
 
   constructor() { }

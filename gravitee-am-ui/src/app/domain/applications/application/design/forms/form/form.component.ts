@@ -16,7 +16,6 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {AuthService} from '../../../../../../services/auth.service';
-import {BreadcrumbService} from '../../../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-application-form',
@@ -33,21 +32,15 @@ export class ApplicationFormComponent implements OnInit {
   deleteMode: boolean;
 
   constructor(private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.appId = this.route.snapshot.params['appId'];
     this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.createMode = this.authService.hasPermissions(['application_form_create']);
     this.editMode = this.authService.hasPermissions(['application_form_update']);
     this.deleteMode = this.authService.hasPermissions(['application_form_delete']);
-    this.initBreadcrumb();
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.appId + '/design/forms/form*', this.template);
   }
 }

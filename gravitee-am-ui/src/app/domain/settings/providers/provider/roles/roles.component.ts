@@ -43,11 +43,11 @@ export class ProviderRolesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
-    this.provider = this.route.snapshot.parent.data['provider'];
+    this.provider = this.route.snapshot.data['provider'];
     this.roles = this.route.snapshot.data['roles'];
     if (this.provider.roleMapper) {
       this.providerRoleMapper = this.provider.roleMapper;

@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-user',
@@ -29,18 +28,16 @@ export class UserComponent implements OnInit {
   navLinks: any = [];
 
   constructor(private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService) {
+              private router: Router) {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.user = this.route.snapshot.data['user'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
     this.initNavLinks();
-    this.initBreadcrumb();
   }
 
   initNavLinks() {
@@ -50,15 +47,6 @@ export class UserComponent implements OnInit {
       this.navLinks.push({'href': 'factors' , 'label': 'Multi-Factor Authentication'});
       this.navLinks.push({'href': 'credentials' , 'label': 'Credentials'});
       this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
-    }
-  }
-
-  initBreadcrumb() {
-    if (this.organizationContext) {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/users/' + this.user.id + '$', this.user.username);
-    } else {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '$', this.user.username);
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '/applications$', 'Authorized Apps');
     }
   }
 }

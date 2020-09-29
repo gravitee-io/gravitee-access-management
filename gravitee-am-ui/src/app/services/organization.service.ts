@@ -237,7 +237,11 @@ export class OrganizationService {
     return this.http.get<any>(this.organizationURL + '/users/' + userId);
   }
 
-  userRoles(userId): Observable<any>  {
+  deleteUser(userId): Observable<any> {
+    return this.http.delete<any>(this.organizationURL + '/users/' + userId);
+  }
+
+  userRoles(userId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/users/' + userId + '/roles');
   }
 

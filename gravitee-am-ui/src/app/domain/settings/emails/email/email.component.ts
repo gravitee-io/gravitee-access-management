@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { BreadcrumbService } from '../../../../services/breadcrumb.service';
-import { AuthService } from '../../../../services/auth.service';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
+import {AuthService} from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-domain-email',
@@ -32,20 +31,14 @@ export class DomainSettingsEmailComponent implements OnInit {
   deleteMode: boolean;
 
   constructor(private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.createMode = this.authService.hasPermissions(['domain_email_template_create']);
     this.editMode = this.authService.hasPermissions(['domain_email_template_update']);
     this.deleteMode = this.authService.hasPermissions(['domain_email_template_delete']);
-    this.initBreadcrumb();
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/emails/email*', this.template);
   }
 }

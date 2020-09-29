@@ -26,11 +26,12 @@ export class ReporterResolver implements Resolve<any> {
               private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+
     const reporterId = route.paramMap.get('reporterId');
     if (state.url.startsWith('/settings')) {
       return this.organizationService.reporter(reporterId);
     }
-    const domainId = route.parent.parent.paramMap.get('domainId');
+    const domainId = route.paramMap.get('domainId');
     return this.reporterService.get(domainId, reporterId);
   }
 

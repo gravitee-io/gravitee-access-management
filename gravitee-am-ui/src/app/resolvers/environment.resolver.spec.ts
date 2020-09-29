@@ -15,16 +15,16 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import { CurrentEnvironmentResolver } from './current-environment.resolver';
+import { EnvironmentResolver } from './environment-resolver.service';
 
-describe('CurrentEnvironmentResolver', () => {
+describe('EnvironmentResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [CurrentEnvironmentResolver]
+      providers: [EnvironmentResolver]
     });
   });
 
-  it('should ...', inject([CurrentEnvironmentResolver], (service: CurrentEnvironmentResolver) => {
+  it('should ...', inject([EnvironmentResolver], (service: EnvironmentResolver) => {
     expect(service).toBeTruthy();
   }));
 });

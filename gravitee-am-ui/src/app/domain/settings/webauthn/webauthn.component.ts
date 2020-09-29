@@ -39,7 +39,7 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.domain = this.route.snapshot.data['domain'];
     this.domain.webAuthnSettings = this.domain.webAuthnSettings || {};
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);

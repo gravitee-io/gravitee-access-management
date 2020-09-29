@@ -29,7 +29,7 @@ export class ReportersResolver implements Resolve<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.reporters();
     }
-    const domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
+    const domainId = route.paramMap.get('domainId');
     return this.reporterService.findByDomain(domainId);
   }
 
