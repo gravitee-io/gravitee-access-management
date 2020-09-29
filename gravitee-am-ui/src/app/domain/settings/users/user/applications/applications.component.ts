@@ -43,8 +43,8 @@ export class UserApplicationsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.user = this.route.snapshot.parent.data['user'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.user = this.route.snapshot.data['user'];
     this.consents = _.sortBy(this.route.snapshot.data['consents'], 'updatedAt').reverse();
     this.appConsentsGrouped  = _.groupBy(this.consents, 'clientId');
     this.appConsents = _.uniqBy(this.consents, 'clientId');

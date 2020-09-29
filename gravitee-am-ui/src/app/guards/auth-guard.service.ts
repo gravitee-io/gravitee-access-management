@@ -20,11 +20,13 @@ import {catchError, map} from 'rxjs/operators';
 import {AuthService} from './../services/auth.service';
 import {DomainService} from '../services/domain.service';
 import {ApplicationService} from '../services/application.service';
+import {EnvironmentService} from "../services/environment.service";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
 
   constructor(private authService: AuthService,
+              private environmentService: EnvironmentService,
               private domainService: DomainService,
               private applicationService: ApplicationService) {}
 
@@ -35,26 +37,35 @@ export class AuthGuard implements CanActivate {
       return true;
     }
     // check if we need to load some data
+    const combineSources: any[] = [];
+
     const requiredPerms = route.data.perms.only;
-    const userResult: Observable<any> = !this.authService.isAuthenticated() ? this.authService.userInfo() : of(this.authService.user());
-    let resourceResult: Observable<any> = of([]);
+    combineSources.push(!this.authService.isAuthenticated() ? this.authService.userInfo() : of(this.authService.user()));
+
     if ((requiredPerms[0].startsWith('domain') || requiredPerms[0].startsWith('application')) && requiredPerms[0] !== 'domain_create') {
       // check if the authenticated user can navigate to the next route (domain settings or application settings)
-      const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
-      const appId = route.parent.paramMap.get('appId') ? route.parent.paramMap.get('appId') : route.parent.parent.paramMap.get('appId');
-      // if permissions have been already loaded, continue;
-      if ((appId && !this.authService.applicationPermissionsLoaded()) || (domainId && !this.authService.domainPermissionsLoaded())) {
-        resourceResult = (domainId && appId) ? this.applicationService.permissions(domainId, appId) : this.domainService.permissions(domainId);
+      const environmentId = route.paramMap.get('envHrid');
+      const domainId = route.paramMap.get('domainId');
+      const appId = route.paramMap.get('appId');
+
+      if(environmentId && !this.authService.environmentPermissionsLoaded()) {
+        combineSources.push(this.environmentService.permissions(environmentId));
+      }
+
+      if(domainId && !this.authService.domainPermissionsLoaded()) {
+        combineSources.push(this.domainService.permissions(domainId));
+      }
+
+      if (appId && !this.authService.applicationPermissionsLoaded()) {
+        combineSources.push(this.applicationService.permissions(domainId, appId));
       }
     }
     // check permissions
-    return combineLatest([userResult, resourceResult]).pipe(
+    return combineLatest(combineSources).pipe(
       map(() =>  this.isAuthorized(requiredPerms)),
       catchError((err) => {
         return of(false);
-      })
-    );
-
+      }));
   }
 
   canDisplay(route: ActivatedRouteSnapshot, path): boolean {

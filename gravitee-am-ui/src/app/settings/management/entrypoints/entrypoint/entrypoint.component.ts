@@ -17,7 +17,6 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {NgForm} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {SnackbarService} from '../../../../services/snackbar.service';
-import {BreadcrumbService} from '../../../../services/breadcrumb.service';
 import {EntrypointService} from '../../../../services/entrypoint.service';
 import {DialogService} from '../../../../services/dialog.service';
 import {AuthService} from '../../../../services/auth.service';
@@ -43,14 +42,12 @@ export class EntrypointComponent implements OnInit {
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService,
               private dialogService: DialogService,
               private authService: AuthService) { }
 
   ngOnInit() {
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.readonly = !this.authService.hasPermissions(['organization_entrypoint_update']);
-    this.initBreadcrumb();
     this.initTags();
   }
 
@@ -80,7 +77,6 @@ export class EntrypointComponent implements OnInit {
   update() {
     this.entrypointService.update(this.entrypoint.id, this.entrypoint).subscribe(data => {
       this.entrypoint = data;
-      this.initBreadcrumb();
       this.entrypointForm.reset(Object.assign({}, this.entrypoint));
       this.snackbarService.open('Entrypoint updated');
     });
@@ -94,14 +90,10 @@ export class EntrypointComponent implements OnInit {
         if (res) {
           this.entrypointService.delete(this.entrypoint.id).subscribe(response => {
             this.snackbarService.open('Entrypoint deleted');
-            this.router.navigate(['/settings', 'management', 'entrypoints']);
+            this.router.navigate(['/settings', 'entrypoints']);
           });
         }
       });
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/entrypoints/' + this.entrypoint.id + '$', this.entrypoint.name);
   }
 
   canDelete() {

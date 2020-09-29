@@ -17,10 +17,10 @@
 -->
 <div class="settings-sidenav">
   <mat-list>
-    <div class="settings-sidenav-item" *ngFor="let keyValuePair of paths | mapToIterable">
-      <h3 matSubheader>{{keyValuePair.key}}</h3>
-      <mat-list-item *ngFor="let link of keyValuePair.value">
-        <h4 matLine><a [routerLink]="[link.path]" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">{{link.data.menu.label}}</a></h4>
+    <div class="settings-sidenav-item" *ngFor="let itemGroup of subMenuItems | mapToIterable">
+      <h3 matSubheader>{{itemGroup.key}}</h3>
+      <mat-list-item *ngFor="let menuItem of itemGroup.value">
+        <h4 matLine><a [routerLink]="menuItem.path" routerLinkActive="active">{{menuItem.label}}</a></h4>
       </mat-list-item>
     </div>
   </mat-list>

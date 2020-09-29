@@ -55,7 +55,7 @@ export class UserCreationComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
       this.userProviders = response;
     });
@@ -75,7 +75,7 @@ export class UserCreationComponent implements OnInit {
     this.user.preRegistration = this.preRegistration;
     this.userService.create(this.domainId, this.user).subscribe(data => {
       this.snackbarService.open('User ' + data.username + ' created');
-      this.router.navigate(['/domains', this.domainId, 'settings', 'users', data.id]);
+      this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 

@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
-import { UserService } from '../services/user.service';
+import {TestBed, inject} from '@angular/core/testing';
 
-@Injectable()
-export class EnrolledFactorsResolver implements Resolve<any> {
+import {NavigationService} from './navigation.service';
 
-  constructor(private userService: UserService) { }
+describe('NavigationService', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [NavigationService]
+    });
+  });
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const domainId = route.paramMap.get('domainId');
-    const userId = route.paramMap.get('userId');
-    return this.userService.factors(domainId, userId);
-  }
-
-}
+  it('should ...', inject([NavigationService], (service: NavigationService) => {
+    expect(service).toBeTruthy();
+  }));
+});

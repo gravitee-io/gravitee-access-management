@@ -32,7 +32,7 @@ export class EntrypointCreationComponent {
   create() {
     this.entrypointService.create(this.entrypoint).subscribe(data => {
       this.snackbarService.open("Entrypoint " + data.name + " created");
-      this.router.navigate(['/settings', 'management', 'entrypoints', data.id]);
+      this.router.navigate(['/settings', 'entrypoints', data.id]);
     });
   }
 

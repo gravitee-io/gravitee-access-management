@@ -21,16 +21,8 @@
         <gv-breadcrumb *ngIf="displayBreadcrumb()"></gv-breadcrumb>
       </div>
       <span class="fill-remaining-space"></span>
-      <div style="margin-right: 10px" *ngIf="displayEnvironments()">
-        <mat-form-field appearance="legacy">
-            <mat-select [(value)]="currentEnvironment" (selectionChange)="switchEnvironment($event)">
-              <mat-option *ngFor="let env of environments" [value]="env">
-                {{env.name}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-      </div>
       <div fxLayout="row" style="align-items: center;">
+        <span class="currentDomain">{{currentDomain?.name | lowercase}}</span>
         <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()">
           <app-user-avatar [user]="user" [width]="'30'"></app-user-avatar>
           <mat-icon>keyboard_arrow_down</mat-icon>
@@ -47,10 +39,10 @@
           <small>{{user.preferred_username}}</small>
         </div>
       </div>
-      <div class="userAccountActions first">
+      <div class="userAccountActions first" *ngIf="hasCurrentEnvironment()">
         <mat-list>
           <h3 matSubheader>Domains</h3>
-          <a (click)="goTo(['/domains', domain.id])" *ngFor="let domain of domains" mat-menu-item>
+          <a [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.id]" *ngFor="let domain of domains" mat-menu-item>
             <mat-list-item [ngClass]="{'domain-disabled':!domain.enabled}">
                 <mat-icon mat-list-icon>domain</mat-icon>
                 <h4 matLine >{{domain.name}}</h4>

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {BreadcrumbService} from '../../../../services/breadcrumb.service';
+import {ActivatedRoute} from '@angular/router';
 
 @Component({
   selector: 'app-provider',
@@ -29,25 +28,10 @@ export class ProviderComponent implements OnInit {
     {'href': 'mappers' , 'label': 'User mappers'},
     {'href': 'roles' , 'label': 'Role mappers'}];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService) { }
+  constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.provider = this.route.snapshot.data['provider'];
-    this.initBreadcrumb();
-  }
-
-  initBreadcrumb() {
-    if (this.router.routerState.snapshot.url.startsWith('/settings')) {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '$', this.provider.name);
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '/mappers$', 'user mappers');
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '/roles$', 'role mappers');
-    } else {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/providers/' + this.provider.id + '$', this.provider.name);
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/providers/' + this.provider.id + '/mappers$', 'user mappers');
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/providers/' + this.provider.id + '/roles$', 'role mappers');
-    }
   }
 }

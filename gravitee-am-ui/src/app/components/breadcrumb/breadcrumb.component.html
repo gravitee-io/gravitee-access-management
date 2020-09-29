@@ -16,10 +16,8 @@
 
 -->
 <ul>
-  <li *ngFor="let url of urls; let last = last" [ngClass]="{'breadcrumb-item': true, 'active': last}"> <!-- disable link of last item -->
-    <a role="button" *ngIf="!last && url == prefix" (click)="navigateTo('/')">{{url}}</a>
-    <a role="button" *ngIf="!last && url != prefix" (click)="navigateTo(url.navigateTo)">{{url.displayUrl}}</a>
-    <span *ngIf="last">{{url.displayUrl}}</span>
-    <span *ngIf="last && url == prefix">{{friendlyName('/')}}</span>
+  <li *ngFor="let breadcrumbItem of breadcrumbItems; let last = last" [ngClass]="{'breadcrumb-item': true, 'active': last}"> <!-- disable link of last item -->
+    <a role="button" *ngIf="!last" [routerLink]="breadcrumbItem.path">{{breadcrumbItem.label}}</a>
+    <span *ngIf="last">{{breadcrumbItem.label}}</span>
   </li>
 </ul>

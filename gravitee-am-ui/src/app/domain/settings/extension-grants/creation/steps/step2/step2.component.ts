@@ -42,7 +42,7 @@ export class ExtensionGrantCreationStep2Component implements OnInit {
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.organizationService.extensionGrantSchema(this.extensionGrant.type).subscribe(data => {
       this.extensionGrantSchema = data;
       // set the grant_type value

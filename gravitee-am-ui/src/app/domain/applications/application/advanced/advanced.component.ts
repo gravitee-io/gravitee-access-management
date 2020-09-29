@@ -46,18 +46,16 @@ export class ApplicationAdvancedComponent implements OnInit, OnDestroy {
   }
 
   private loadPermissions(): void {
-    const domainId = this.route.snapshot.parent.parent.params['domainId'];
-    const appId = this.route.snapshot.parent.params['appId'];
     if (this.canNavigate(['application_settings_read'])) {
-      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'general']);
+      this.router.navigate(['general'], { relativeTo: this.route });
     } else if (this.canNavigate(['application_oauth_read'])) {
-      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'oauth2']);
+      this.router.navigate(['oauth2'], { relativeTo: this.route });
     } else if (this.canNavigate(['application_member_list'])) {
-      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'members']);
+      this.router.navigate(['members'], { relativeTo: this.route });
     } else if (this.canNavigate(['application_certificate_read'])) {
-      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'certificates']);
+      this.router.navigate(['certificates'], { relativeTo: this.route });
     } else if (this.canNavigate(['application_factor_read'])) {
-      this.router.navigate(['/domains', domainId, 'applications', appId, 'settings', 'factors']);
+      this.router.navigate(['factors'], { relativeTo: this.route });
     }
   }
 

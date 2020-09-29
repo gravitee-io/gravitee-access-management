@@ -70,7 +70,7 @@ import { ProviderFormComponent } from './domain/settings/providers/provider/form
 import { CreateRoleMapperComponent, ProviderRolesComponent } from 'app/domain/settings/providers/provider/roles/roles.component';
 import { ProviderService } from './services/provider.service';
 import { OrganizationService } from './services/organization.service';
-import {EnvironmentService} from "./services/environment.service";
+import { EnvironmentService} from "./services/environment.service";
 import { AuthService } from './services/auth.service';
 import { AppConfig } from '../config/app.config';
 import { LogoutComponent } from './logout/logout.component';
@@ -278,7 +278,6 @@ import { FactorResolver } from './resolvers/factor.resolver';
 import { EnrolledFactorsResolver } from './resolvers/enrolled-factors.resolver';
 import { IdenticonHashDirective } from './directives/identicon-hash.directive';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
-import { BreadcrumbService } from './services/breadcrumb.service';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { UmaComponent } from './domain/settings/uma/uma.component';
 import { ApplicationResourcesComponent } from './domain/applications/application/advanced/resources/resources.component';
@@ -295,7 +294,9 @@ import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
 import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
 import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
-import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolver";
+import {EnvironmentResolver} from "./resolvers/environment-resolver.service";
+import {NavigationService} from "./services/navigation.service";
+import {map, mergeMap} from "rxjs/operators";
 import {CockpitComponent} from "./settings/cockpit/cockpit.component";
 import {InstallationResolver} from "./resolvers/installation.resolver";
 import {InstallationService} from "./services/installation.service";
@@ -377,6 +378,7 @@ import {InstallationService} from "./services/installation.service";
     MapToIterablePipe,
     SafePipe,
     DummyComponent,
+    UsersComponent,
     UsersComponent,
     UserComponent,
     UserCreationComponent,
@@ -494,10 +496,10 @@ import {InstallationService} from "./services/installation.service";
     HighchartsChartModule
   ],
   providers: [
-    BreadcrumbService,
     DomainService,
     ProviderService,
     SidenavService,
+    NavigationService,
     NavbarService,
     DialogService,
     SnackbarService,
@@ -519,7 +521,7 @@ import {InstallationService} from "./services/installation.service";
     ProviderResolver,
     CertificatesResolver,
     CertificateResolver,
-    CurrentEnvironmentResolver,
+    EnvironmentResolver,
     RolesResolver,
     RoleResolver,
     UsersResolver,
@@ -585,7 +587,7 @@ import {InstallationService} from "./services/installation.service";
       provide: APP_INITIALIZER,
       useFactory: initCurrentUser,
       multi: true,
-      deps: [AuthService]
+      deps: [AuthService, EnvironmentService]
     },
   ],
   entryComponents: [
@@ -612,9 +614,19 @@ import {InstallationService} from "./services/installation.service";
 })
 export class AppModule { }
 
-export function initCurrentUser(authService: AuthService): () => Promise<any> {
+export function initCurrentUser(authService: AuthService, environmentService: EnvironmentService): () => Promise<any> {
   return (): Promise<any> => {
-    return authService.userInfo()
+    return authService.userInfo().pipe(mergeMap(user => {
+      return environmentService.getAllEnvironments().pipe(map(environments => {
+        // For now the selected environment is the first from the list but could be changed in favor of a 'last env' coming from user's preferences.
+        if (environments && environments.length >= 1) {
+          environmentService.setCurrentEnvironment(environments[0]);
+        } else {
+          environmentService.setCurrentEnvironment(EnvironmentService.NO_ENVIRONMENT);
+        }
+        return user;
+      }))
+    }))
       .toPromise()
       .catch(reason => null);
   };

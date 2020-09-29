@@ -33,7 +33,7 @@ export class FormsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
+    this.appId = this.route.snapshot.params['appId'];
 
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.viewPermission = 'organization_form_read';

@@ -46,7 +46,7 @@
               <svg width="40" height="40" [identiconHash]="row.name"></svg>
             </div>
             <div class="app-information" fxLayout="column">
-              <a [routerLink]="['/domains', domainId, 'applications', row.id]">{{row.name}}</a>
+              <a [routerLink]="[row.id]">{{row.name}}</a>
               <small>{{row.type}}</small>
             </div>
           </div>
@@ -66,7 +66,7 @@
                   [icon]="'devices'"></app-emptystate>
 
   <div *hasPermission="['application_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
-    <a mat-fab color="primary" [routerLink]="this.newApplicationRouterLink">
+    <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>
   </div>

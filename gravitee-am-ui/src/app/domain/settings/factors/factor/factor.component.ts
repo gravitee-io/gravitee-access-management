@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router} from '@angular/router';
-import { BreadcrumbService } from '../../../../services/breadcrumb.service';
-import { OrganizationService } from '../../../../services/organization.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { DialogService } from '../../../../services/dialog.service';
-import { AuthService } from '../../../../services/auth.service';
-import { FactorService } from '../../../../services/factor.service';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {OrganizationService} from '../../../../services/organization.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
+import {DialogService} from '../../../../services/dialog.service';
+import {AuthService} from '../../../../services/auth.service';
+import {FactorService} from '../../../../services/factor.service';
 
 @Component({
   selector: 'app-factor',
@@ -40,7 +39,6 @@ export class FactorComponent implements OnInit {
 
   constructor(private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService,
               private organizationService: OrganizationService,
               private factorService: FactorService,
               private snackbarService: SnackbarService,
@@ -48,7 +46,7 @@ export class FactorComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.factor = this.route.snapshot.data['factor'];
     this.factorConfiguration = JSON.parse(this.factor.configuration);
     this.updateFactorConfiguration = this.factorConfiguration;
@@ -60,13 +58,11 @@ export class FactorComponent implements OnInit {
         this.factor.factorType = this.factorSchema.properties.factorType.default;
       }
     });
-    this.initBreadcrumb();
   }
 
   update() {
     this.factor.configuration = JSON.stringify(this.updateFactorConfiguration);
     this.factorService.update(this.domainId, this.factor.id, this.factor).subscribe(data => {
-      this.initBreadcrumb();
       this.snackbarService.open('Factor updated');
     })
   }
@@ -79,10 +75,6 @@ export class FactorComponent implements OnInit {
     });
   }
 
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/factors/' + this.factor.id + '$', this.factor.name);
-  }
-
   delete(event) {
     event.preventDefault();
     this.dialogService
@@ -91,7 +83,7 @@ export class FactorComponent implements OnInit {
         if (res) {
           this.factorService.delete(this.domainId, this.factor.id).subscribe(() => {
             this.snackbarService.open('Factor deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'factors']);
+            this.router.navigate(['..'], { relativeTo: this.route });
           });
         }
       });

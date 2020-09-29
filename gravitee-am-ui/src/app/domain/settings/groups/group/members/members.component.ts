@@ -52,14 +52,14 @@ export class GroupMembersComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.editMode = this.authService.hasPermissions(['organization_group_update']);
     } else {
       this.editMode = this.authService.hasPermissions(['domain_group_update']);
     }
-    this.group = this.route.snapshot.parent.data['group'];
+    this.group = this.route.snapshot.data['group'];
     const pagedMembers = this.route.snapshot.data['members'];
     this.page.totalElements = pagedMembers.totalCount;
     this.members = Object.assign([], pagedMembers.data);

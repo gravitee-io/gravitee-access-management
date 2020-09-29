@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { AfterViewInit, Component, ElementRef, Inject, Input, OnInit, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material';
-import { ActivatedRoute, Router } from '@angular/router';
-import { BreadcrumbService } from '../../../../services/breadcrumb.service';
-import { FormService } from '../../../../services/form.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { DialogService } from '../../../../services/dialog.service';
+import {AfterViewInit, Component, ElementRef, Inject, Input, OnInit, ViewChild} from '@angular/core';
+import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material';
+import {ActivatedRoute, Router} from '@angular/router';
+import {FormService} from '../../../../services/form.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
+import {DialogService} from '../../../../services/dialog.service';
 
 export interface DialogData {
   rawTemplate: string;
@@ -53,7 +52,6 @@ export class FormComponent implements OnInit, AfterViewInit {
 
   constructor(private router: Router,
               private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
               private formService: FormService,
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
@@ -61,8 +59,8 @@ export class FormComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.rawTemplate = this.route.snapshot.queryParams['template'];
-    this.domainId = (this.route.snapshot.parent.parent.params['domainId']) ? this.route.snapshot.parent.parent.params['domainId'] : this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.appId = this.route.snapshot.params['appId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -79,15 +77,10 @@ export class FormComponent implements OnInit, AfterViewInit {
 
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');;
     this.formName = this.template.charAt(0).toUpperCase() + this.template.slice(1);
-    this.initBreadcrumb();
   }
 
   ngAfterViewInit(): void {
     this.enableCodeMirror();
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/forms/form*', this.template);
   }
 
   isEnabled() {

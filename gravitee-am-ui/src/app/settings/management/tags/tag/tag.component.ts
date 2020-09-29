@@ -17,7 +17,6 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {NgForm} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {SnackbarService} from '../../../../services/snackbar.service';
-import {BreadcrumbService} from '../../../../services/breadcrumb.service';
 import {TagService} from '../../../../services/tag.service';
 import {DialogService} from '../../../../services/dialog.service';
 import {AuthService} from '../../../../services/auth.service';
@@ -36,20 +35,17 @@ export class TagComponent implements OnInit {
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService,
               private dialogService: DialogService,
               private authService: AuthService) { }
 
   ngOnInit() {
     this.tag = this.route.snapshot.data['tag'];
     this.readonly = !this.authService.hasPermissions(['organization_tag_update']);
-    this.initBreadcrumb();
   }
 
   update() {
     this.tagService.update(this.tag.id, this.tag).subscribe(data => {
       this.tag = data;
-      this.initBreadcrumb();
       this.tagForm.reset(Object.assign({}, this.tag));
       this.snackbarService.open('Sharding tag updated');
     });
@@ -63,13 +59,9 @@ export class TagComponent implements OnInit {
         if (res) {
           this.tagService.delete(this.tag.id).subscribe(response => {
             this.snackbarService.open('Sharding tag deleted');
-            this.router.navigate(['/settings', 'management', 'tags']);
+            this.router.navigate(['/settings', 'tags']);
           });
         }
       });
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/tags/' + this.tag.id + '$', this.tag.name);
   }
 }

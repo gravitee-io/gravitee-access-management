@@ -30,7 +30,7 @@ export class ApplicationEmailsComponent {
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.application = this.route.snapshot.data['application'];
     this.emails = this.getEmails();
   }
 

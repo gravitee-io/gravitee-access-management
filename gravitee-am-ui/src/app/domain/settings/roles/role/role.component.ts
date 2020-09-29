@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { MatInput } from '@angular/material/input';
-import { RoleService } from '../../../../services/role.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { BreadcrumbService } from '../../../../services/breadcrumb.service';
-import { DialogService } from '../../../../services/dialog.service';
-import { AuthService } from '../../../../services/auth.service';
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {MatInput} from '@angular/material/input';
+import {RoleService} from '../../../../services/role.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
+import {DialogService} from '../../../../services/dialog.service';
+import {AuthService} from '../../../../services/auth.service';
 import * as _ from 'lodash';
 
 export interface Scope {
@@ -47,12 +46,11 @@ export class RoleComponent implements OnInit {
               private snackbarService: SnackbarService,
               private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService,
               private dialogService: DialogService,
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.role = this.route.snapshot.data['role'];
     this.scopes = this.route.snapshot.data['scopes'];
     this.editMode = this.authService.hasPermissions(['domain_role_update']);
@@ -61,7 +59,6 @@ export class RoleComponent implements OnInit {
       this.role.permissions = [];
     }
 
-    this.initBreadcrumb();
     this.initScopes();
   }
 
@@ -84,7 +81,6 @@ export class RoleComponent implements OnInit {
     this.role.permissions = _.map(this.selectedPermissions, permission => permission.key);
     this.roleService.update(this.domainId, this.role.id, this.role).subscribe(data => {
       this.role = data;
-      this.initBreadcrumb();
       this.snackbarService.open("Role updated");
     });
   }
@@ -97,7 +93,7 @@ export class RoleComponent implements OnInit {
         if (res) {
           this.roleService.delete(this.domainId, this.role.id).subscribe(() => {
             this.snackbarService.open('Role '+ this.role.name + ' deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'roles']);
+            this.router.navigate(['..'], { relativeTo: this.route });
           });
         }
       });
@@ -116,9 +112,5 @@ export class RoleComponent implements OnInit {
 
     this.chipInput['nativeElement'].blur();
     this.formChanged = true;
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/roles/'+this.role.id+'$', this.role.name);
   }
 }

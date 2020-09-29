@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import { BreadcrumbService } from '../../../../services/breadcrumb.service';
-import { OrganizationService } from '../../../../services/organization.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { ExtensionGrantService } from '../../../../services/extension-grant.service';
+import {OrganizationService} from '../../../../services/organization.service';
+import {SnackbarService} from '../../../../services/snackbar.service';
+import {ExtensionGrantService} from '../../../../services/extension-grant.service';
 import {DialogService} from '../../../../services/dialog.service';
 import {AuthService} from '../../../../services/auth.service';
 
@@ -42,7 +41,6 @@ export class ExtensionGrantComponent implements OnInit {
 
   constructor(private route: ActivatedRoute,
               private router: Router,
-              private breadcrumbService: BreadcrumbService,
               private organizationService: OrganizationService,
               private extensionGrantService: ExtensionGrantService,
               private snackbarService: SnackbarService,
@@ -50,7 +48,7 @@ export class ExtensionGrantComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.extensionGrant = this.route.snapshot.data['extensionGrant'];
     this.identityProviders = this.route.snapshot.data['identityProviders'];
     this.extensionGrantConfiguration = JSON.parse(this.extensionGrant.configuration);
@@ -63,13 +61,11 @@ export class ExtensionGrantComponent implements OnInit {
         this.extensionGrant.grantType = this.extensionGrantSchema.properties.grantType.default;
       }
     });
-    this.initBreadcrumb();
   }
 
   update() {
     this.extensionGrant.configuration = JSON.stringify(this.updateTokenGranterConfiguration);
     this.extensionGrantService.update(this.domainId, this.extensionGrant.id, this.extensionGrant).subscribe(data => {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/extensionGrants/' + this.extensionGrant.id + '$', this.extensionGrant.name);
       this.snackbarService.open('Extension grant updated');
     })
   }
@@ -80,10 +76,6 @@ export class ExtensionGrantComponent implements OnInit {
       this.configurationIsValid = configurationWrapper.isValid;
       this.updateTokenGranterConfiguration = configurationWrapper.configuration;
     });
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/extensionGrants/' + this.extensionGrant.id + '$', this.extensionGrant.name);
   }
 
   enableCreateUser(event) {
@@ -104,7 +96,7 @@ export class ExtensionGrantComponent implements OnInit {
         if (res) {
           this.extensionGrantService.delete(this.domainId, this.extensionGrant.id).subscribe(() => {
             this.snackbarService.open('Extension grant deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'extensionGrants']);
+            this.router.navigate(['..'], { relativeTo: this.route });
           });
         }
       });

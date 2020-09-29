@@ -18,7 +18,6 @@ import {ActivatedRoute} from '@angular/router';
 import {DialogService} from 'app/services/dialog.service';
 import {SnackbarService} from '../../../services/snackbar.service';
 import {ExtensionGrantService} from '../../../services/extension-grant.service';
-import {BreadcrumbService} from '../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-extension-grants',
@@ -35,13 +34,11 @@ export class DomainSettingsExtensionGrantsComponent implements OnInit {
   constructor(private extensionGrantService: ExtensionGrantService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
-              private breadcrumbService: BreadcrumbService,
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     this.extensionGrants = this.route.snapshot.data['extensionGrants'];
-    this.initBreadcrumb();
   }
 
   get isEmpty() {
@@ -71,9 +68,5 @@ export class DomainSettingsExtensionGrantsComponent implements OnInit {
           });
         }
       });
-  }
-
-  private initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domainId + '/settings/extensionGrants', 'extension grants');
   }
 }

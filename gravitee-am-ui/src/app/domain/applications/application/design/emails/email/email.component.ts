@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { AuthService } from '../../../../../../services/auth.service';
-import { BreadcrumbService } from '../../../../../../services/breadcrumb.service';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
+import {AuthService} from '../../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-email',
@@ -33,21 +32,15 @@ export class ApplicationEmailComponent implements OnInit {
   deleteMode: boolean;
 
   constructor(private route: ActivatedRoute,
-              private authService: AuthService,
-              private breadcrumbService: BreadcrumbService) { }
+              private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
+    this.domainId = this.route.snapshot.params['domainId'];
+    this.appId = this.route.snapshot.params['appId'];
     this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.createMode = this.authService.hasPermissions(['application_email_template_create']);
     this.editMode = this.authService.hasPermissions(['application_email_template_update']);
     this.deleteMode = this.authService.hasPermissions(['application_email_template_delete']);
-    this.initBreadcrumb();
-  }
-
-  initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.appId + '/design/emails/email*', this.template);
   }
 }

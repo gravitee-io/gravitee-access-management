@@ -67,7 +67,7 @@ public class FormsResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_FORM, Acl.READ)
                 .andThen(formService.findByTemplate(ReferenceType.ORGANIZATION, organizationId, formTemplate.template())
                         .map(page -> Response.ok(page).build())
-                        .defaultIfEmpty(Response.ok(new Form(false)).build()))
+                        .defaultIfEmpty(Response.ok(new Form(false, formTemplate.template())).build()))
                 .subscribe(response::resume, response::resume);
     }
 

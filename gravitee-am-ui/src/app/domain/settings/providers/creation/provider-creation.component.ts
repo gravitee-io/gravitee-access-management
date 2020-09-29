@@ -38,7 +38,7 @@ export class ProviderCreationComponent implements OnInit {
               private route: ActivatedRoute) { }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.params['domainId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -48,11 +48,7 @@ export class ProviderCreationComponent implements OnInit {
   create() {
     this.providerService.create(this.domainId, this.provider, this.organizationContext).subscribe(data => {
       this.snackbarService.open('Provider ' + data.name + ' created');
-      if (this.organizationContext) {
-        this.router.navigate(['/settings', 'management', 'providers', data.id]);
-      } else {
-        this.router.navigate(['/domains', this.domainId, 'settings', 'providers', data.id]);
-      }
+      this.router.navigate(['..', data.id], { relativeTo: this.route });
     });
   }
 
