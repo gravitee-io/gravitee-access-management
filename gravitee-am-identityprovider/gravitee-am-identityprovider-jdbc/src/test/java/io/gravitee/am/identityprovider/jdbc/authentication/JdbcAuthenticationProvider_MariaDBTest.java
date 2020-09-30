@@ -13,37 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api;
+package io.gravitee.am.identityprovider.jdbc.authentication;
 
-import io.gravitee.common.component.Lifecycle;
-import io.gravitee.common.service.Service;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.gravitee.am.identityprovider.jdbc.authentication.spring.JdbcAuthenticationProviderConfiguration;
+import io.gravitee.am.identityprovider.jdbc.configuration.JdbcAuthenticationProviderConfigurationTest_MariaDB;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserProvider extends Service<UserProvider> {
-
-    Maybe<User> findByUsername(String username);
-
-    Single<User> create(User user);
-
-    Single<User> update(String id, User updateUser);
-
-    Completable delete(String id);
-
-    default Lifecycle.State lifecycleState() {
-        return Lifecycle.State.INITIALIZED;
-    }
-
-    default UserProvider start() throws Exception {
-        return this;
-    }
-
-    default UserProvider stop() throws Exception {
-        return this;
-    }
-}
+@ContextConfiguration(classes = { JdbcAuthenticationProviderConfigurationTest_MariaDB.class, JdbcAuthenticationProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+public class JdbcAuthenticationProvider_MariaDBTest extends JdbcAuthenticationProviderTest { }

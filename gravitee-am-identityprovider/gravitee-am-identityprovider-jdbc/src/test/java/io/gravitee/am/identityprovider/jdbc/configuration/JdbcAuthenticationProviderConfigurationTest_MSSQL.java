@@ -13,37 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api;
+package io.gravitee.am.identityprovider.jdbc.configuration;
 
-import io.gravitee.common.component.Lifecycle;
-import io.gravitee.common.service.Service;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserProvider extends Service<UserProvider> {
+@Configuration
+public class JdbcAuthenticationProviderConfigurationTest_MSSQL extends JdbcAuthenticationProviderConfigurationTest {
 
-    Maybe<User> findByUsername(String username);
-
-    Single<User> create(User user);
-
-    Single<User> update(String id, User updateUser);
-
-    Completable delete(String id);
-
-    default Lifecycle.State lifecycleState() {
-        return Lifecycle.State.INITIALIZED;
+    public String url() {
+        return "r2dbc:tc:sqlserver:///?TC_IMAGE_TAG=2017-CU12";
     }
 
-    default UserProvider start() throws Exception {
-        return this;
-    }
-
-    default UserProvider stop() throws Exception {
-        return this;
+    @Override
+    public String protocol() {
+        return "sqlserver";
     }
 }
