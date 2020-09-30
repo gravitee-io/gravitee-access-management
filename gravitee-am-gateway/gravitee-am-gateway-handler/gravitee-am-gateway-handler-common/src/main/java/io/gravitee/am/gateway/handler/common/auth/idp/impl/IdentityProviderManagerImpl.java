@@ -19,6 +19,7 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.context.provider.UserProperties;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
@@ -166,6 +167,8 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 providers.put(identityProvider.getId(), authenticationProvider);
                 identities.put(identityProvider.getId(), identityProvider);
                 if (userProvider != null) {
+                    // start the user provider
+                    userProvider.start();
                     userProviders.put(identityProvider.getId(), userProvider);
                 } else {
                     userProviders.remove(identityProvider.getId());
@@ -184,15 +187,23 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     private void clearProvider(String identityProviderId) {
         AuthenticationProvider authenticationProvider = providers.remove(identityProviderId);
+        UserProvider userProvider = userProviders.remove(identityProviderId);
+        identities.remove(identityProviderId);
         if (authenticationProvider != null) {
             // stop the authentication provider
             try {
                 authenticationProvider.stop();
             } catch (Exception e) {
-                logger.error("An error occurs while stopping the identity provider : {}", identityProviderId, e);
+                logger.error("An error has occurred while stopping the authentication provider : {}", identityProviderId, e);
             }
         }
-        identities.remove(identityProviderId);
-        userProviders.remove(identityProviderId);
+        if (userProvider != null) {
+            // stop the user provider
+            try {
+                userProvider.stop();
+            } catch (Exception e) {
+                logger.error("An error has occurred while stopping the user provider : {}", identityProviderId, e);
+            }
+        }
     }
 }

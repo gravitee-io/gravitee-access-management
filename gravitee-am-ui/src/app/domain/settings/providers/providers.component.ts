@@ -38,7 +38,8 @@ export class DomainSettingsProvidersComponent implements OnInit {
     'azure-ad-am-idp': 'Azure AD',
     'twitter-am-idp': 'Twitter',
     'facebook-am-idp': 'Facebook',
-    'franceconnect-am-idp': 'FranceConnect'
+    'franceconnect-am-idp': 'FranceConnect',
+    'jdbc-am-idp': 'JDBC'
   };
   private identityProviderIcons: any = {
     'ldap-am-idp' : 'device_hub',

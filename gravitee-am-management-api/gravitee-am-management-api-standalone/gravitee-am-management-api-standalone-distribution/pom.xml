@@ -125,6 +125,14 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.identityprovider</groupId>
+            <artifactId>gravitee-am-identityprovider-jdbc</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.certificate</groupId>
             <artifactId>gravitee-am-certificate-javakeystore</artifactId>
             <version>${project.version}</version>
@@ -302,6 +310,12 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.identityprovider</groupId>
                                     <artifactId>gravitee-am-identityprovider-franceconnect</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.identityprovider</groupId>
+                                    <artifactId>gravitee-am-identityprovider-jdbc</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

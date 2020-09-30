@@ -145,7 +145,15 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
     private void removeUserProvider(String identityProviderId) {
         logger.info("Management API has received a undeploy identity provider event for {}", identityProviderId);
-        userProviders.remove(identityProviderId);
+        UserProvider userProvider = userProviders.remove(identityProviderId);
+        if (userProvider != null) {
+            // stop the user provider
+            try {
+                userProvider.stop();
+            } catch (Exception e) {
+                logger.error("An error has occurred while stopping the user provider : {}", identityProviderId, e);
+            }
+        }
     }
 
     private void loadUserProvider(IdentityProvider identityProvider) {
@@ -153,6 +161,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             UserProvider userProvider = identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
             if (userProvider != null) {
                 logger.info("Initializing user provider : {}", identityProvider.getId());
+                userProvider.start();
                 userProviders.put(identityProvider.getId(), userProvider);
             } else {
                 userProviders.remove(identityProvider.getId());

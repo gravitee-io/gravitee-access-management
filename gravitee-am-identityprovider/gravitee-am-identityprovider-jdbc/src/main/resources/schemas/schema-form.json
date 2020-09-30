@@ -1,0 +1,107 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:jdbc:JdbcIdentityProviderConfiguration",
+  "properties" : {
+    "host" : {
+      "type" : "string",
+      "title": "Database connection host",
+      "description": "IP address or DNS of the database server."
+    },
+    "port" : {
+      "type": "number",
+      "title": "Database connection port",
+      "description": "Database server port number."
+    },
+    "protocol" : {
+      "type": "string",
+      "enum": ["postgresql", "mysql", "sqlserver", "mariadb"],
+      "title": "Database driver identifier",
+      "description": "Type of your relational database (RDBMS). PostgreSQL, MySQL, SQL Server, MariaDB, ..."
+    },
+    "database" : {
+      "type" : "string",
+      "title": "The database used to run query",
+      "description": "The database used to run query to search for users."
+    },
+    "usersTable" : {
+      "type" : "string",
+      "default": "users",
+      "title": "The table used to run query",
+      "description": "The table used to run query to search for users."
+    },
+    "user" : {
+      "type" : "string",
+      "title": "Authentication user",
+      "description": "User to access database."
+    },
+    "password" : {
+      "type" : "string",
+      "title": "Authentication password",
+      "description": "User password.",
+      "widget": "password"
+    },
+    "selectUserByUsernameQuery" : {
+      "type" : "string",
+      "default": "SELECT * FROM users WHERE username = %s",
+      "widget": "textarea",
+      "title": "Query to find for a user using its identifier (username)",
+      "description": "The query which is executed to search for an user using its identifier (username)."
+    },
+    "identifierAttribute": {
+      "type": "string",
+      "title": "User identifier attribute",
+      "default": "id",
+      "description": "Identifier field of your users"
+    },
+    "usernameAttribute" : {
+      "type" : "string",
+      "default": "username",
+      "title": "User username attribute",
+      "description": "Username field of your users"
+    },
+    "passwordAttribute" : {
+      "type" : "string",
+      "default": "password",
+      "title": "User password attribute",
+      "description": "Password field of your users"
+    },
+    "passwordEncoder" : {
+      "type": "string",
+      "enum": ["BCrypt", "None"],
+      "default": "BCrypt",
+      "title": "Password encoder",
+      "description": "The encoding mechanism used to store user password value."
+    },
+    "options" : {
+      "title": "Connection options",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "option": {
+            "title": "Option",
+            "description": "Connection option name (https://r2dbc.io/ for more information)",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "description": "Connection option value (https://r2dbc.io/ for more information)",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "host",
+    "protocol",
+    "database",
+    "usersTable",
+    "user",
+    "selectUserByUsernameQuery",
+    "identifierAttribute",
+    "usernameAttribute",
+    "passwordAttribute",
+    "passwordEncoder"
+  ]
+}

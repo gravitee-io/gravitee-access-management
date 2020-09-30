@@ -33,7 +33,8 @@ export class ProviderCreationStep1Component implements OnInit {
     'facebook-am-idp': 'Facebook',
     'http-am-idp': 'HTTP',
     'saml2-generic-am-idp': 'SAML 2.0',
-    'franceconnect-am-idp': 'FranceConnect'
+    'franceconnect-am-idp': 'FranceConnect',
+    'jdbc-am-idp': 'JDBC'
   };
   @Input() provider;
   providers: any[];

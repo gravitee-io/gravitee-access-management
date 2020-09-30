@@ -13,37 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api;
-
-import io.gravitee.common.component.Lifecycle;
-import io.gravitee.common.service.Service;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+package io.gravitee.am.identityprovider.jdbc.utils;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserProvider extends Service<UserProvider> {
+public final class ParametersUtils {
 
-    Maybe<User> findByUsername(String username);
-
-    Single<User> create(User user);
-
-    Single<User> update(String id, User updateUser);
-
-    Completable delete(String id);
-
-    default Lifecycle.State lifecycleState() {
-        return Lifecycle.State.INITIALIZED;
-    }
-
-    default UserProvider start() throws Exception {
-        return this;
-    }
-
-    default UserProvider stop() throws Exception {
-        return this;
+    public static String getIndexParameter(String database, int index, String field) {
+        switch (database) {
+            case "mysql":
+            case "mariadb":
+                return "?";
+            case "postgresql":
+                return "$" + index;
+            case "sqlserver":
+                return "@" + field;
+            default:
+                return "" + index;
+        }
     }
 }

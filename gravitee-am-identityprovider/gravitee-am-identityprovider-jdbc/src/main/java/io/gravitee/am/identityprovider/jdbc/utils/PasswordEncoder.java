@@ -13,37 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api;
-
-import io.gravitee.common.component.Lifecycle;
-import io.gravitee.common.service.Service;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+package io.gravitee.am.identityprovider.jdbc.utils;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserProvider extends Service<UserProvider> {
+public enum PasswordEncoder {
 
-    Maybe<User> findByUsername(String username);
+    NONE("None"),
+    BCRYPT("BCrypt");
 
-    Single<User> create(User user);
+    private final String value;
 
-    Single<User> update(String id, User updateUser);
-
-    Completable delete(String id);
-
-    default Lifecycle.State lifecycleState() {
-        return Lifecycle.State.INITIALIZED;
+    PasswordEncoder(String value) {
+        this.value = value;
     }
 
-    default UserProvider start() throws Exception {
-        return this;
-    }
-
-    default UserProvider stop() throws Exception {
-        return this;
+    public String getValue() {
+        return value;
     }
 }
+

@@ -13,37 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.api;
+package io.gravitee.am.identityprovider.jdbc.utils;
 
-import io.gravitee.common.component.Lifecycle;
-import io.gravitee.common.service.Service;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserProvider extends Service<UserProvider> {
+public final class ColumnMapRowMapper {
 
-    Maybe<User> findByUsername(String username);
-
-    Single<User> create(User user);
-
-    Single<User> update(String id, User updateUser);
-
-    Completable delete(String id);
-
-    default Lifecycle.State lifecycleState() {
-        return Lifecycle.State.INITIALIZED;
-    }
-
-    default UserProvider start() throws Exception {
-        return this;
-    }
-
-    default UserProvider stop() throws Exception {
-        return this;
+    public static Map<String, Object> mapRow(Row row, RowMetadata rowMetadata) {
+        Map<String, Object> claims = new HashMap(rowMetadata.getColumnNames()
+                .stream()
+                .filter(c -> row.get(c) != null)
+                .collect(Collectors.toMap(c -> c, c -> row.get(c))));
+        return claims;
     }
 }
