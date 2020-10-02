@@ -1,0 +1,49 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:linkedin:LinkedinIdentityProviderConfiguration",
+  "description": "LinkedIn identity provider, let you register and set up permissions and authorization options for OAuth 2.0 protocol.\n\nhttps://www.linkedin.com/developers/\n\nNOTE: r_basicprofile is available only for some linkedin <a link=\"https://www.linkedin.com/developers/products\">products</a>",
+  "properties" : {
+    "clientId" : {
+      "type" : "string",
+      "title": "Client ID",
+      "description": "Required. The client ID you received from LinkedIn when you registered."
+    },
+    "clientSecret" : {
+      "type" : "string",
+      "title": "Client Secret",
+      "description": "Required. The client secret you received from LinkedIn for your LinkedIn App."
+    },
+    "scopes":{
+      "type": "array",
+      "title": "Scopes",
+      "description": "Scopes let you specify exactly what type of access you need. Scopes limit access for OAuth tokens.",
+      "items":
+        {
+          "type": "string",
+          "enum": [
+            "r_emailaddress",
+            "r_liteprofile",
+            "r_basicprofile"]
+        },
+      "default": ["r_emailaddress", "r_liteprofile"]
+    },
+    "connectTimeout" : {
+      "type" : "integer",
+      "default": 10000,
+      "minimum": 1,
+      "title": "HTTP Client connect timeout",
+      "description": "Duration of time in milliseconds that connects will block. (default 10000 ms)"
+    },
+    "maxPoolSize" : {
+      "type" : "integer",
+      "default": 100,
+      "minimum": 1,
+      "title": "HTTP Client max pool size",
+      "description": "Maximum pool of connections can grow to. (default 100)"
+    }
+  },
+  "required": [
+    "clientId",
+    "clientSecret"
+  ]
+}

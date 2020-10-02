@@ -63,6 +63,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         sMap.put("facebook-am-idp", "facebook");
         sMap.put("franceconnect-am-idp", "franceconnect");
         sMap.put("azure-ad-am-idp", "microsoft");
+        sMap.put("linkedin-am-idp", "linkedin");
         socialProviders = Collections.unmodifiableMap(sMap);
     }
     private static final String OAUTH2_PROVIDER_CONTEXT_KEY = "oauth2Providers";

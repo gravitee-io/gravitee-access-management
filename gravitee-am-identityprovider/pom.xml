@@ -47,6 +47,7 @@
         <module>gravitee-am-identityprovider-franceconnect</module>
         <module>gravitee-am-identityprovider-jdbc</module>
         <module>gravitee-am-identityprovider-google</module>
+        <module>gravitee-am-identityprovider-linkedin</module>
     </modules>
 
     <dependencies>
