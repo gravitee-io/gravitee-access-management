@@ -60,6 +60,7 @@ public class LoginController {
         sMap.put("facebook-am-idp", "facebook");
         sMap.put("franceconnect-am-idp", "franceconnect");
         sMap.put("azure-ad-am-idp", "microsoft");
+        sMap.put("linkedin-am-idp", "linkedin");
         socialProviderTypes = Collections.unmodifiableMap(sMap);
     }
 
