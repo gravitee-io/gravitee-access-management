@@ -49,7 +49,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 public class LoginSocialAuthenticationHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginSocialAuthenticationHandler.class);
-    private static final List<String> socialProviders = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket");
+    private static final List<String> socialProviders = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket", "franceconnect");
     private static final String OAUTH2_PROVIDER_CONTEXT_KEY = "oauth2Providers";
     private static final String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
     private static final String SOCIAL_AUTHORIZE_URL_CONTEXT_KEY = "authorizeUrls";
