@@ -273,3 +273,9 @@ a, a:hover, a:focus {
     color: #fff;
     background-color: #29a34e !important;;
 }
+
+.btn-franceconnect {
+    background: none;
+    box-shadow: none;
+    height: 70px;
+}

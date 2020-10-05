@@ -1,0 +1,77 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:franceconnect:FranceConnectIdentityProviderConfiguration",
+  "description": "FranceConnect identity provider, let you register and set up permissions and authorization options for OAuth 2.0 protocol.\n\nhttps://partenaires.franceconnect.gouv.fr/ ",
+  "properties" : {
+    "environment" : {
+      "type": "string",
+      "enum": [
+        "DEVELOPMENT",
+        "INTEGRATION",
+        "PRODUCTION"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "titleMap": {
+          "DEVELOPMENT": "Dev - https://fcp.integ01.dev-franceconnect.fr",
+          "INTEGRATION": "Integration - https://fcp.integ01.dev-franceconnect.fr",
+          "PRODUCTION": "Production - https://app.franceconnect.gouv.fr"
+        }
+      },
+      "default": "PRODUCTION",
+      "title": "Environment",
+      "description": "FranceConnect is providing two environments (integration and production. development is provided for https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service)."
+    },
+    "clientId" : {
+      "type" : "string",
+      "title": "Client ID",
+      "description": "Required. The client ID you received from FranceConnect when you registered."
+    },
+    "clientSecret" : {
+      "type" : "string",
+      "title": "Client Secret",
+      "description": "Required. The client secret you received from FranceConnect for your FranceConnect App."
+    },
+    "scopes":{
+      "type": "array",
+      "title": "Scopes",
+      "description": "Scopes let you specify exactly what type of access you need. Scopes limit access for OAuth tokens.",
+      "items":
+        {
+          "type": "string",
+          "enum": [
+            "openid",
+            "profile",
+            "birth",
+            "identite_pivot",
+            "given_name",
+            "family_name",
+            "birthdate",
+            "gender",
+            "birthplace",
+            "birthcountry",
+            "email",
+            "preferred_username"]
+        }
+    },
+    "connectTimeout" : {
+      "type" : "integer",
+      "default": 10000,
+      "minimum": 1,
+      "title": "HTTP Client connect timeout",
+      "description": "Duration of time in milliseconds that connects will block. (default 10000 ms)"
+    },
+    "maxPoolSize" : {
+      "type" : "integer",
+      "default": 100,
+      "minimum": 1,
+      "title": "HTTP Client max pool size",
+      "description": "Maximum pool of connections can grow to. (default 100)"
+    }
+  },
+  "required": [
+    "environment",
+    "clientId",
+    "clientSecret"
+  ]
+}

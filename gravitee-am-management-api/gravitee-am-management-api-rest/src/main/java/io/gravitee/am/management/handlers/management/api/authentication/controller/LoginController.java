@@ -52,7 +52,7 @@ public class LoginController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
     private static final String LOGIN_VIEW = "login";
-    private static final List<String> socialProviderTypes = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket");
+    private static final List<String> socialProviderTypes = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket", "franceconnect");
 
     @Autowired
     private OrganizationService organizationService;

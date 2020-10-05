@@ -37,7 +37,8 @@ export class DomainSettingsProvidersComponent implements OnInit {
     'github-am-idp': 'GitHub',
     'azure-ad-am-idp': 'Azure AD',
     'twitter-am-idp': 'Twitter',
-    'facebook-am-idp': 'Facebook'
+    'facebook-am-idp': 'Facebook',
+    'franceconnect-am-idp': 'FranceConnect'
   };
   private identityProviderIcons: any = {
     'ldap-am-idp' : 'device_hub',
@@ -47,7 +48,8 @@ export class DomainSettingsProvidersComponent implements OnInit {
     'github-am-idp': 'cloud_queue',
     'azure-ad-am-idp': 'cloud_queue',
     'twitter-am-idp': 'cloud_queue',
-    'facebook-am-idp': 'cloud_queue'
+    'facebook-am-idp': 'cloud_queue',
+    'franceconnect-am-idp': 'cloud_queue'
   };
   domainId: string;
 
