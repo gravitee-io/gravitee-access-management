@@ -201,7 +201,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -219,7 +219,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn("idp-id");
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -244,7 +244,7 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
         when(domain.getAccountSettings()).thenReturn(accountSettings);
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -265,7 +265,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), false)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
