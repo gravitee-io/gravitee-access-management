@@ -147,13 +147,11 @@ public class UsersResource extends AbstractResource {
 
     private Single<User> filterUserInfos(Map<Permission, Set<Acl>> organizationPermissions, User user) {
 
-        User filteredUser = new User();
-        filteredUser.setId(user.getId());
-        filteredUser.setUsername(user.getUsername());
-        filteredUser.setDisplayName(user.getDisplayName());
-        filteredUser.setPicture(user.getPicture());
+        User filteredUser;
 
         if (hasPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.READ)) {
+            // Current user has read permission, copy all information.
+            filteredUser = new User(user);
             filteredUser.setLoggedAt(user.getLoggedAt());
 
             if (user.getSource() != null) {
@@ -165,6 +163,13 @@ public class UsersResource extends AbstractResource {
                         .defaultIfEmpty(filteredUser)
                         .toSingle();
             }
+        } else {
+            // Current user doesn't have read permission, select only few information and remove default values that could be inexact.
+            filteredUser = new User(false);
+            filteredUser.setId(user.getId());
+            filteredUser.setUsername(user.getUsername());
+            filteredUser.setDisplayName(user.getDisplayName());
+            filteredUser.setPicture(user.getPicture());
         }
 
         return Single.just(filteredUser);

@@ -203,7 +203,7 @@ public class DefaultOrganizationUpgraderTest {
         User adminUser = new User();
         adminUser.setId("adminId");
         adminUser.setUsername("admin");
-        adminUser.setLoginsCount(10);
+        adminUser.setLoginsCount(10L);
         adminUser.setRoles(Arrays.asList("role-id"));
 
         Organization defaultOrganization = new Organization();
