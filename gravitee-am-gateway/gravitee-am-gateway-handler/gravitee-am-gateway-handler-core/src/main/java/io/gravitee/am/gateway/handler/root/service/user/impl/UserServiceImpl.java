@@ -287,7 +287,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.findByDomainAndEmail(domain.getId(), email, false)
+        return userService.findByDomainAndEmail(domain.getId(), email, true)
                 .flatMap(users -> {
                     Optional<User> optionalUser = users
                             .stream()
