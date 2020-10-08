@@ -22,6 +22,7 @@ import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
 import io.gravitee.am.gateway.certificate.jwt.JWTParser;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -47,10 +48,7 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.MaybeSource;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -293,23 +291,56 @@ public class UserServiceImpl implements UserService {
                             .stream()
                             .filter(user -> user.getEmail() != null && email.toLowerCase().equals(user.getEmail().toLowerCase()))
                             .findFirst();
-                    // if user has no email or email is unknown throw user not found exception
-                    if (!optionalUser.isPresent()) {
+
+                    if (optionalUser.isPresent()) {
+                        User user = optionalUser.get();
+                        // check if user can update its password according to its identity provider type
+                        return identityProviderManager.getUserProvider(user.getSource())
+                                .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
+                                .map(__ -> {
+                                    // if user registration is not completed and force registration option is disabled throw invalid account exception
+                                    if (user.isInactive() && !forceUserRegistration(domain, client)) {
+                                        throw new AccountInactiveException("User [ " + user.getUsername() + " ]needs to complete the activation process");
+                                    }
+                                    return user;
+                                });
+                    }
+
+                    // if user has no email or email is unknown
+                    // fallback to registered user providers if user has never been authenticated
+                    if (client.getIdentities() == null || client.getIdentities().isEmpty()) {
                         return Single.error(new UserNotFoundException(email));
                     }
 
-                    User user = optionalUser.get();
-                    // check if user can update its password according to its identity provider type
-                    return identityProviderManager.getUserProvider(user.getSource())
-                            .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
-                            .map(__ -> {
-                                // if user registration is not completed and force registration option is disabled throw invalid account exception
-                                if (user.isInactive() && !forceUserRegistration(domain, client)) {
-                                    throw new AccountInactiveException("User [ " + user.getUsername() + " ]needs to complete the activation process");
-                                }
-                                return user;
-                            });
-
+                    return Observable.fromIterable(client.getIdentities())
+                            .flatMapMaybe(authProvider -> {
+                                return identityProviderManager.getUserProvider(authProvider)
+                                        .flatMap(userProvider -> {
+                                            return userProvider.findByEmail(email)
+                                                    .map(user -> Optional.of(user))
+                                                    .defaultIfEmpty(Optional.empty())
+                                                    .onErrorReturnItem(Optional.empty());
+                                        })
+                                        .defaultIfEmpty(Optional.empty());
+                            })
+                            .takeUntil(optional -> { return optional.isPresent(); })
+                            .lastOrError()
+                            .flatMap(optional -> {
+                                io.gravitee.am.identityprovider.api.User idpUser = optional.get();
+                                User newUser = new User();
+                                newUser.setId(RandomString.generate());
+                                newUser.setExternalId(idpUser.getId());
+                                newUser.setUsername(idpUser.getUsername());
+                                newUser.setInternal(true);
+                                newUser.setEmail(idpUser.getEmail());
+                                newUser.setFirstName(idpUser.getFirstName());
+                                newUser.setLastName(idpUser.getLastName());
+                                newUser.setAdditionalInformation(idpUser.getAdditionalInformation());
+                                newUser.setCreatedAt(new Date());
+                                newUser.setUpdatedAt(newUser.getCreatedAt());
+                                return userService.create(newUser);
+                            })
+                            .onErrorResumeNext(Single.error(new UserNotFoundException(email)));
                 })
                 .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user, client)).start())
                 .doOnSuccess(user1 -> {

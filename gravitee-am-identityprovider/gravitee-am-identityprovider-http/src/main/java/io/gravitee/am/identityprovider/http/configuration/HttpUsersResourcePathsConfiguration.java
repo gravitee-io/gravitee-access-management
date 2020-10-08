@@ -23,6 +23,7 @@ public class HttpUsersResourcePathsConfiguration {
 
     private HttpResourceConfiguration createResource;
     private HttpResourceConfiguration readResource;
+    private HttpResourceConfiguration readResourceByEmail;
     private HttpResourceConfiguration updateResource;
     private HttpResourceConfiguration deleteResource;
 
@@ -40,6 +41,14 @@ public class HttpUsersResourcePathsConfiguration {
 
     public void setReadResource(HttpResourceConfiguration readResource) {
         this.readResource = readResource;
+    }
+
+    public HttpResourceConfiguration getReadResourceByEmail() {
+        return readResourceByEmail;
+    }
+
+    public void setReadResourceByEmail(HttpResourceConfiguration readResourceByEmail) {
+        this.readResourceByEmail = readResourceByEmail;
     }
 
     public HttpResourceConfiguration getUpdateResource() {

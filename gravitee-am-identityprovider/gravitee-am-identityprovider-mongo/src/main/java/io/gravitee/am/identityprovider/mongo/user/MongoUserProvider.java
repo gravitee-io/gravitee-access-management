@@ -27,7 +27,6 @@ import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenti
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -65,6 +64,14 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
     private MongoIdentityProviderConfiguration configuration;
 
     private MongoCollection<Document> usersCollection;
+
+    @Override
+    public Maybe<User> findByEmail(String email) {
+        String rawQuery = this.configuration.getFindUserByEmailQuery().replaceAll("\\?", email);
+        String jsonQuery = convertToJsonString(rawQuery);
+        BsonDocument query = BsonDocument.parse(jsonQuery);
+        return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert);
+    }
 
     @Override
     public Maybe<User> findByUsername(String username) {
