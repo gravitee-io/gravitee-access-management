@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.http.authentication.spring;
 
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
+import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -40,20 +41,27 @@ public class HttpAuthenticationProviderConfiguration {
     private HttpIdentityProviderConfiguration configuration;
 
     @Bean
+    public WebClientBuilder webClientBuilder() {
+        return new WebClientBuilder();
+    }
+
+    @Bean
     @Qualifier("idpHttpAuthWebClient")
-    public WebClient httpClient() {
+    public WebClient httpClient(WebClientBuilder webClientBuilder) {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
                 .setUserAgent(DEFAULT_USER_AGENT)
                 .setConnectTimeout(configuration.getConnectTimeout())
                 .setMaxPoolSize(configuration.getMaxPoolSize());
 
-        if (configuration.getAuthenticationResource().getBaseURL() != null
-                && configuration.getAuthenticationResource().getBaseURL().startsWith("https://")) {
+        final boolean ssl = configuration.getAuthenticationResource().getBaseURL() != null
+                && configuration.getAuthenticationResource().getBaseURL().startsWith("https://");
+        if (ssl) {
             httpClientOptions.setSsl(true);
             httpClientOptions.setTrustAll(true);
         }
 
-        return WebClient.create(vertx, httpClientOptions);
+
+        return webClientBuilder.createWebClient(vertx, httpClientOptions);
     }
 }
