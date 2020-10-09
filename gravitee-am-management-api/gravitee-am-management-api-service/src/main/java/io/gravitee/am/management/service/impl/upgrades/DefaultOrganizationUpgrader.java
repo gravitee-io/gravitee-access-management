@@ -91,7 +91,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                     // update organization identities
                     PatchOrganization patchOrganization = new PatchOrganization();
                     patchOrganization.setIdentities(adminDomain.getIdentities() != null ? new ArrayList<>(adminDomain.getIdentities()) : null);
-                    organizationService.update(organization.getId(), patchOrganization,null).blockingGet();
+                    organizationService.update(organization.getId(), patchOrganization, null).blockingGet();
 
                     // Must grant owner power to all existing users to be iso-functional with v2 where all users could do everything.
                     Role organizationOwnerRole = roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION).blockingGet();
@@ -112,36 +112,35 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                     User adminUser = createAdminUser(inlineProvider);
                     membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
                 }
-            } else {
-                logger.info("One or more organizations already exist. Check if default organization is up to date");
+            }
 
-                // If default organization exist (and only if), need to check that inline idp and default admin user has 'admin' role.
-                organization = organizationService.findById(Organization.DEFAULT).blockingGet();
+            // Get organization with fresh data.
+            organization = organizationService.findById(Organization.DEFAULT).blockingGet();
 
-                if (organization != null) {
-                    final List<String> identities = organization.getIdentities();
+            logger.info("Check if default organization is up to date");
 
-                    IdentityProvider inlineIdp = identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)
-                            .flattenAsFlowable(identityProviders -> identityProviders)
-                            .filter(identityProvider -> identityProvider.getType().equals("inline-am-idp")
-                                    && !identityProvider.isExternal()
-                                    && identities.contains(identityProvider.getId()))
-                            .firstElement().blockingGet();
+            // Need to check that inline idp and default admin user has 'admin' role.
+            final List<String> identities = organization.getIdentities();
 
-                    // If inline idp doesn't exist or is not enabled, it is probably an administrator choice. So do not go further.
-                    if (inlineIdp != null) {
-                        // If inline idp doesn't have "admin" user in its configuration, it is probably an administrator choice. So do not go further.
-                        if (inlineIdp.getConfiguration().contains(",\"username\":\"" + ADMIN_USERNAME + "\",") && inlineIdp.getRoleMapper().isEmpty()) {
+            IdentityProvider inlineIdp = identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)
+                    .flattenAsFlowable(identityProviders -> identityProviders)
+                    .filter(identityProvider -> identityProvider.getType().equals("inline-am-idp")
+                            && !identityProvider.isExternal()
+                            && identities.contains(identityProvider.getId()))
+                    .firstElement().blockingGet();
 
-                            // Check the user admin exists.
-                            User adminUser = userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, ADMIN_USERNAME, inlineIdp.getId()).blockingGet();
+            // If inline idp doesn't exist or is not enabled, it is probably an administrator choice. So do not go further.
+            if (inlineIdp != null) {
+                // If inline idp doesn't have "admin" user in its configuration, it is probably an administrator choice. So do not go further.
+                if (inlineIdp.getConfiguration().contains(",\"username\":\"" + ADMIN_USERNAME + "\",") && inlineIdp.getRoleMapper().isEmpty()) {
 
-                            if (adminUser == null) {
-                                // Create the admin user with organization primary owner role on the default organization.
-                                adminUser = createAdminUser(inlineIdp);
-                                membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
-                            }
-                        }
+                    // Check the user admin exists.
+                    User adminUser = userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, ADMIN_USERNAME, inlineIdp.getId()).blockingGet();
+
+                    if (adminUser == null) {
+                        // Create the admin user with organization primary owner role on the default organization.
+                        adminUser = createAdminUser(inlineIdp);
+                        membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
                     }
                 }
             }
