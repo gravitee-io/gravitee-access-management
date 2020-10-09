@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.github.authentication.spring;
 
 import io.gravitee.am.identityprovider.github.GithubIdentityProviderConfiguration;
+import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -40,14 +41,20 @@ public class GithubAuthenticationProviderConfiguration {
     private GithubIdentityProviderConfiguration configuration;
 
     @Bean
+    public WebClientBuilder webClientBuilder() {
+        return new WebClientBuilder();
+    }
+
+    @Bean
     @Qualifier("gitHubWebClient")
-    public WebClient httpClient() {
+    public WebClient httpClient(WebClientBuilder webClientBuilder) {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
                 .setUserAgent(DEFAULT_USER_AGENT)
                 .setConnectTimeout(configuration.getConnectTimeout())
-                .setMaxPoolSize(configuration.getMaxPoolSize());
+                .setMaxPoolSize(configuration.getMaxPoolSize())
+                .setSsl(true); // TLS is mandatory for GitHub IdP.
 
-        return WebClient.create(vertx, httpClientOptions);
+        return webClientBuilder.createWebClient(vertx, httpClientOptions);
     }
 }
