@@ -56,10 +56,18 @@ public class HttpUserProviderTestConfiguration {
         HttpResourceConfiguration readResource = new HttpResourceConfiguration();
         readResource.setBaseURL("/users?username={#user.username}");
         readResource.setHttpMethod(HttpMethod.GET);
-        HttpResponseErrorCondition reasdErrorCondition = new HttpResponseErrorCondition();
-        reasdErrorCondition.setValue("{#usersResponse.status == 404}");
-        reasdErrorCondition.setException("io.gravitee.am.service.exception.UserNotFoundException");
-        readResource.setHttpResponseErrorConditions(Arrays.asList(reasdErrorCondition));
+        HttpResponseErrorCondition readErrorCondition = new HttpResponseErrorCondition();
+        readErrorCondition.setValue("{#usersResponse.status == 404}");
+        readErrorCondition.setException("io.gravitee.am.service.exception.UserNotFoundException");
+        readResource.setHttpResponseErrorConditions(Arrays.asList(readErrorCondition));
+
+        HttpResourceConfiguration readByEmailResource = new HttpResourceConfiguration();
+        readByEmailResource.setBaseURL("/users?email={#user.email}");
+        readByEmailResource.setHttpMethod(HttpMethod.GET);
+        HttpResponseErrorCondition readByEmailErrorCondition = new HttpResponseErrorCondition();
+        readByEmailErrorCondition.setValue("{#usersResponse.status == 404}");
+        readByEmailErrorCondition.setException("io.gravitee.am.service.exception.UserNotFoundException");
+        readByEmailResource.setHttpResponseErrorConditions(Arrays.asList(readByEmailErrorCondition));
 
         HttpResourceConfiguration updateResource = new HttpResourceConfiguration();
         updateResource.setBaseURL("/users/{#user.id}");
@@ -91,6 +99,7 @@ public class HttpUserProviderTestConfiguration {
         HttpUsersResourcePathsConfiguration pathsConfiguration = new HttpUsersResourcePathsConfiguration();
         pathsConfiguration.setCreateResource(createResource);
         pathsConfiguration.setReadResource(readResource);
+        pathsConfiguration.setReadResourceByEmail(readByEmailResource);
         pathsConfiguration.setUpdateResource(updateResource);
         pathsConfiguration.setDeleteResource(deleteResource);
         usersResourceConfiguration.setPaths(pathsConfiguration);

@@ -60,6 +60,12 @@
       "title": "Query to find for a user using its identifier (username)",
       "description": "The query which is executed to search for an user using its identifier (username)."
     },
+    "findUserByEmailQuery" : {
+      "type" : "string",
+      "default": "{email: ?}",
+      "title": "Query to find for a user using its email",
+      "description": "The query which is executed to search for an user using its email."
+    },
     "usernameField" : {
       "type" : "string",
       "default": "username",
@@ -84,6 +90,7 @@
     "database",
     "usersCollection",
     "findUserByUsernameQuery",
+    "findUserByEmailQuery",
     "usernameField",
     "passwordField",
     "passwordEncoder"

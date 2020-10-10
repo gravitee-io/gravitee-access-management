@@ -110,6 +110,34 @@ public class HttpUserProviderTest {
     }
 
     @Test
+    public void shouldFindUserByEmail() {
+        stubFor(get(urlPathEqualTo("/api/users"))
+                .withQueryParam("email", new EqualToPattern("johndoe@mail.com"))
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
+
+        TestObserver<User> testObserver = userProvider.findByEmail("johndoe@mail.com").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "123456789".equals(u.getId()));
+        testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldFindUserByEmail_arrayResponse() {
+        stubFor(get(urlPathEqualTo("/api/users"))
+                .withQueryParam("email", new EqualToPattern("johndoe@mail.com"))
+                .willReturn(okJson("[{\"id\" : \"123456789\", \"username\" : \"johndoe\"}]")));
+
+        TestObserver<User> testObserver = userProvider.findByEmail("johndoe@mail.com").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "123456789".equals(u.getId()));
+        testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldUpdateUser() {
         DefaultUser user = new DefaultUser("johndoe");
 
