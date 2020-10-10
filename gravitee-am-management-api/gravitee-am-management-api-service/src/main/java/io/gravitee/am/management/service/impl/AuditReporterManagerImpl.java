@@ -39,6 +39,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -109,8 +110,11 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                 removeReporter(reporter.getId());
             }
         });
+
         // deploy verticle
-        deployReporterVerticle(auditReporters.values());
+        List<Reporter> allReporters = new ArrayList<>(auditReporters.values());
+        allReporters.add(new EventBusReporterWrapper(vertx, internalReporter));
+        deployReporterVerticle(allReporters);
     }
 
     @Override
