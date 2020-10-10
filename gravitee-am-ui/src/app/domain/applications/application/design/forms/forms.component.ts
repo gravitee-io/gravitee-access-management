@@ -70,7 +70,7 @@ export class ApplicationFormsComponent {
         'description': 'Reset password page to make a new password',
         'template': 'RESET_PASSWORD',
         'icon': 'lock_open',
-        'enabled': this.applicationSettingsValid() && this.allowResetPassword()
+        'enabled': this.applicationSettingsValid()
       },
       {
         'name': 'User consent',
