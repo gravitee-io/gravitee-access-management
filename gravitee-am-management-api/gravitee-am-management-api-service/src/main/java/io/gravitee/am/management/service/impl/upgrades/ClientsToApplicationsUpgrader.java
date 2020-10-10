@@ -56,6 +56,11 @@ public class ClientsToApplicationsUpgrader implements Upgrader, Ordered {
                                 .flatMapObservable(clients -> Observable.fromIterable(clients))
                                 .flatMapSingle(client -> {
                                     LOGGER.info("Update client : {} - {}", client.getId(), client.getClientId());
+                                    // force tokenEndpointAuthMethod to null, because this feature was not used in AM v2
+                                    // for example even if the tokenEndpointAuthMethod was set to 'client_secret_basic'
+                                    // the client was able to use any kind of authentication method (e.g post)
+                                    client.setTokenEndpointAuthMethod(null);
+                                    // flag client as AM V2
                                     if (client.getSoftwareVersion() == null || client.getSoftwareVersion().isEmpty()) {
                                         client.setSoftwareVersion(AM_V2_VERSION);
                                     }
