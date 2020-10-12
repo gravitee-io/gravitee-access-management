@@ -22,9 +22,12 @@ import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.reactivex.SingleSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -97,14 +100,29 @@ public class UserServiceImpl implements UserService {
                     }
                     // fetch roles information and enhance user data
                     if (!roles.isEmpty()) {
-                        return roleService.findByIdIn(new ArrayList<>(roles))
-                                .map(roles1 -> {
-                                    user.setRolesPermissions(roles1);
-                                    return user;
-                                });
+                        return enhanceRolesPermissions(user, roles);
 
                     }
                     return Single.just(user);
                 });
     }
+    
+    @Override
+    public Single<User> enhanceRolesPermissions(User user) {
+    	return enhanceRolesPermissions(user, user.getRoles());
+    }
+
+	/**
+	 * Fetch roles and set them to the user as roles-permissions.
+	 * @param user user to enhance
+	 * @param roleIds identifiers of the roles
+	 * @return user enhanced with roles and permissions
+	 */
+    private Single<User> enhanceRolesPermissions(User user, Collection<String> roleIds) {
+		return roleService.findByIdIn(new ArrayList<>(roleIds))
+		        .map(roles1 -> {
+		            user.setRolesPermissions(roles1);
+		            return user;
+		        });
+	}
 }

@@ -128,7 +128,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                         user.setRoles(idpUser.getRoles());
                                         return user;
                                     })
-                                    .flatMap(user -> userService.enhance(user).toMaybe())
+                                    .flatMap(user -> userService.enhanceRolesPermissions(user).toMaybe())
                                     .switchIfEmpty(Maybe.error(new InvalidGrantException("Unknown user: " + endUser.getId())));
                         } else {
                             User user = new User();
