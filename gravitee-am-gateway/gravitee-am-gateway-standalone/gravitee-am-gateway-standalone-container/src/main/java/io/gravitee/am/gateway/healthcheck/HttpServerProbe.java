@@ -55,6 +55,7 @@ public class HttpServerProbe implements Probe {
         NetClient client = vertx.createNetClient(options);
 
         client.rxConnect(port, host)
+                .doFinally(client::close)
                 .subscribe(
                         socket -> future.complete(Result.healthy()),
                         error -> future.complete(Result.unhealthy(error.getCause())));

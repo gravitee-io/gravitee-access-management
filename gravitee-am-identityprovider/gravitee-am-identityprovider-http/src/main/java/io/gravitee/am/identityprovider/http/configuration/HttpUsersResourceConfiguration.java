@@ -24,6 +24,7 @@ public class HttpUsersResourceConfiguration {
     private boolean enabled;
     private String baseURL;
     private String identifierAttribute = "id";
+    private String usernameAttribute = "username";
     private HttpUsersResourcePathsConfiguration paths;
 
     public boolean isEnabled() {
@@ -48,6 +49,14 @@ public class HttpUsersResourceConfiguration {
 
     public void setIdentifierAttribute(String identifierAttribute) {
         this.identifierAttribute = identifierAttribute;
+    }
+
+    public String getUsernameAttribute() {
+        return usernameAttribute;
+    }
+
+    public void setUsernameAttribute(String usernameAttribute) {
+        this.usernameAttribute = usernameAttribute;
     }
 
     public HttpUsersResourcePathsConfiguration getPaths() {

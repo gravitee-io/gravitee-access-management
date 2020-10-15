@@ -21,6 +21,7 @@ import io.gravitee.am.identityprovider.http.HttpIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResponseErrorCondition;
+import io.gravitee.am.service.http.WebClientBuilder;
 import io.gravitee.common.http.HttpHeader;
 import io.gravitee.common.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -82,5 +83,10 @@ public class HttpAuthenticationProviderTestConfiguration {
     @Bean
     public Vertx vertx() {
         return Vertx.vertx();
+    }
+
+    @Bean
+    public WebClientBuilder webClientBuilder() {
+        return new WebClientBuilder();
     }
 }

@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
+import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.reactivex.core.Vertx;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -68,5 +69,10 @@ public class OAuth2GenericAuthenticationProviderTestConfiguration {
     @Bean
     public Vertx vertx() {
         return Vertx.vertx();
+    }
+
+    @Bean
+    public WebClientBuilder webClientBuilder() {
+        return new WebClientBuilder();
     }
 }

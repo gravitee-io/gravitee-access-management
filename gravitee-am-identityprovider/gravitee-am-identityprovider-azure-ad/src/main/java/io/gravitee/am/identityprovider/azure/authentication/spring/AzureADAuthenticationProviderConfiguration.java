@@ -16,7 +16,7 @@
 package io.gravitee.am.identityprovider.azure.authentication.spring;
 
 import io.gravitee.am.identityprovider.azure.AzureADIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.common.oauth2.utils.WebClientBuilder;
+import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -31,6 +31,9 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class AzureADAuthenticationProviderConfiguration {
+
+    private static final String DEFAULT_USER_AGENT = "Gravitee.io-AM/3";
+
     @Autowired
     private Vertx vertx;
 
@@ -38,8 +41,19 @@ public class AzureADAuthenticationProviderConfiguration {
     private AzureADIdentityProviderConfiguration configuration;
 
     @Bean
+    public WebClientBuilder webClientBuilder() {
+        return new WebClientBuilder();
+    }
+
+    @Bean
     @Qualifier("azureAdWebClient")
-    public WebClient httpClient() {
-        return WebClientBuilder.build(vertx, configuration);
+    public WebClient httpClient(io.gravitee.am.service.http.WebClientBuilder webClientBuilder) {
+        WebClientOptions httpClientOptions = new WebClientOptions();
+        httpClientOptions
+                .setUserAgent(DEFAULT_USER_AGENT)
+                .setConnectTimeout(configuration.getConnectTimeout())
+                .setMaxPoolSize(configuration.getMaxPoolSize());
+
+        return webClientBuilder.createWebClient(vertx, httpClientOptions);
     }
 }

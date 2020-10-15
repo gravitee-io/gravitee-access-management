@@ -30,7 +30,7 @@ db.getCollection("roles").updateMany({"domain": "admin", "system": true}, {
 });
 
 // Custom admin roles are useless in v2. Remove them.
-db.getCollection("roles").remove({"domain": "admin", "system": false});
+db.getCollection("roles").remove({"domain": "admin", "$or": [{"system": {"$exists": false}}, {"system": false}]});
 
 // Migrate admin groups to default organization.
 db.getCollection("groups").updateMany({"domain": "admin"}, {
@@ -83,12 +83,12 @@ db.getCollection("emails").updateMany({"referenceType": {"$exists": false}}, {"$
 
 // Migrate domain role permissions to oauthScopes.
 db.getCollection("roles")
-    .find({"referenceType": {"$exists": false}, "system": false})
+    .find({"referenceType": {"$exists": false}, "$or": [{"system": {"$exists": false}}, {"system": false}]})
     .forEach(function (role) {
         db.getCollection("roles").update({_id: role._id}, {
             "$set": {
                 "referenceType": "DOMAIN",
-                "oauthScopes": role.permissions,
+                "oauthScopes": role.permissions ? role.permissions : [],
                 "permissionAcls": {}
             }
         });

@@ -76,23 +76,23 @@ public class User {
 
     private List<Certificate> x509Certificates;
 
-    private boolean accountNonExpired = true;
+    private Boolean accountNonExpired = true;
 
-    private boolean accountNonLocked = true;
+    private Boolean accountNonLocked = true;
 
     private Date accountLockedAt;
 
     private Date accountLockedUntil;
 
-    private boolean credentialsNonExpired = true;
+    private Boolean credentialsNonExpired = true;
 
-    private boolean enabled = true;
+    private Boolean enabled = true;
 
-    private boolean internal;
+    private Boolean internal = false;
 
-    private boolean preRegistration;
+    private Boolean preRegistration = false;
 
-    private boolean registrationCompleted;
+    private Boolean registrationCompleted = false;
 
     private Boolean newsletter;
 
@@ -108,7 +108,7 @@ public class User {
 
     private String client;
 
-    private long loginsCount;
+    private Long loginsCount = 0L;
 
     private List<EnrolledFactor> factors;
 
@@ -124,6 +124,21 @@ public class User {
 
     public User() {
     }
+
+    public User(boolean withDefaultValues) {
+
+        if(!withDefaultValues) {
+            this.accountNonExpired = null;
+            this.accountNonLocked = null;
+            this.credentialsNonExpired = null;
+            this.enabled = null;
+            this.internal = null;
+            this.registrationCompleted = null;
+            this.preRegistration = null;
+            this.loginsCount = null;
+        }
+    }
+
 
     public User(User other) {
         this.id = other.id;
@@ -381,19 +396,19 @@ public class User {
         this.x509Certificates = x509Certificates;
     }
 
-    public boolean isAccountNonExpired() {
+    public Boolean isAccountNonExpired() {
         return accountNonExpired;
     }
 
-    public void setAccountNonExpired(boolean accountNonExpired) {
+    public void setAccountNonExpired(Boolean accountNonExpired) {
         this.accountNonExpired = accountNonExpired;
     }
 
-    public boolean isAccountNonLocked() {
+    public Boolean isAccountNonLocked() {
         return accountNonLocked;
     }
 
-    public void setAccountNonLocked(boolean accountNonLocked) {
+    public void setAccountNonLocked(Boolean accountNonLocked) {
         this.accountNonLocked = accountNonLocked;
     }
 
@@ -413,43 +428,43 @@ public class User {
         this.accountLockedUntil = accountLockedUntil;
     }
 
-    public boolean isCredentialsNonExpired() {
+    public Boolean isCredentialsNonExpired() {
         return credentialsNonExpired;
     }
 
-    public void setCredentialsNonExpired(boolean credentialsNonExpired) {
+    public void setCredentialsNonExpired(Boolean credentialsNonExpired) {
         this.credentialsNonExpired = credentialsNonExpired;
     }
 
-    public boolean isEnabled() {
+    public Boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 
-    public boolean isInternal() {
+    public Boolean isInternal() {
         return internal;
     }
 
-    public void setInternal(boolean internal) {
+    public void setInternal(Boolean internal) {
         this.internal = internal;
     }
 
-    public boolean isPreRegistration() {
+    public Boolean isPreRegistration() {
         return preRegistration;
     }
 
-    public void setPreRegistration(boolean preRegistration) {
+    public void setPreRegistration(Boolean preRegistration) {
         this.preRegistration = preRegistration;
     }
 
-    public boolean isRegistrationCompleted() {
+    public Boolean isRegistrationCompleted() {
         return registrationCompleted;
     }
 
-    public void setRegistrationCompleted(boolean registrationCompleted) {
+    public void setRegistrationCompleted(Boolean registrationCompleted) {
         this.registrationCompleted = registrationCompleted;
     }
 
@@ -509,11 +524,11 @@ public class User {
         this.client = client;
     }
 
-    public long getLoginsCount() {
+    public Long getLoginsCount() {
         return loginsCount;
     }
 
-    public void setLoginsCount(long loginsCount) {
+    public void setLoginsCount(Long loginsCount) {
         this.loginsCount = loginsCount;
     }
 
@@ -581,7 +596,7 @@ public class User {
         this.updatedAt = updatedAt;
     }
 
-    public boolean isInactive() {
+    public Boolean isInactive() {
         return isPreRegistration() && !isRegistrationCompleted();
     }
 

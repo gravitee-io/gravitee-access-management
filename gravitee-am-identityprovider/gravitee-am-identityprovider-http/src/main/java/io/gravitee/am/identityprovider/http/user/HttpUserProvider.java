@@ -67,41 +67,24 @@ public class HttpUserProvider implements UserProvider {
     private HttpIdentityProviderConfiguration configuration;
 
     @Override
+    public Maybe<User> findByEmail(String email) {
+        // prepare request
+        final HttpUsersResourceConfiguration usersResourceConfiguration = configuration.getUsersResource();
+        final HttpResourceConfiguration readResourceConfiguration = usersResourceConfiguration.getPaths().getReadResourceByEmail();
+        final DefaultUser user = new DefaultUser(null);
+        user.setEmail(email);
+
+        return findByUser(usersResourceConfiguration, readResourceConfiguration, user);
+    }
+
+    @Override
     public Maybe<User> findByUsername(String username) {
-        try {
-            // prepare context
-            AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
-            TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
-            DefaultUser user = new DefaultUser(username);
-            templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, user);
+        // prepare request
+        final HttpUsersResourceConfiguration usersResourceConfiguration = configuration.getUsersResource();
+        final HttpResourceConfiguration readResourceConfiguration = usersResourceConfiguration.getPaths().getReadResource();
+        final DefaultUser user = new DefaultUser(username);
 
-            // prepare request
-            final HttpUsersResourceConfiguration usersResourceConfiguration = configuration.getUsersResource();
-            final HttpResourceConfiguration readResourceConfiguration = usersResourceConfiguration.getPaths().getReadResource();
-            final String readUserURI = usersResourceConfiguration.getBaseURL() + readResourceConfiguration.getBaseURL();
-            final HttpMethod readUserHttpMethod = HttpMethod.valueOf(readResourceConfiguration.getHttpMethod().toString());
-            final List<HttpHeader> readUserHttpHeaders = readResourceConfiguration.getHttpHeaders();
-            final String readUserBody = readResourceConfiguration.getHttpBody();
-            final Single<HttpResponse<Buffer>> requestHandler = processRequest(templateEngine, readUserURI, readUserHttpMethod, readUserHttpHeaders, readUserBody);
-
-            return requestHandler
-                    .toMaybe()
-                    .map(httpResponse -> {
-                        final List<HttpResponseErrorCondition> errorConditions = readResourceConfiguration.getHttpResponseErrorConditions();
-                        Map<String, Object> userAttributes = processResponse(templateEngine, errorConditions, httpResponse);
-                        return convert(user.getUsername(), userAttributes);
-                    })
-                    .onErrorResumeNext(ex -> {
-                        if (ex instanceof AbstractManagementException) {
-                            return Maybe.error(ex);
-                        }
-                        LOGGER.error("An error has occurred while searching user {} from the remote HTTP identity provider", username, ex);
-                        return Maybe.error(new TechnicalManagementException("An error has occurred while searching user from the remote HTTP identity provider", ex));
-                    });
-        } catch (Exception ex) {
-            LOGGER.error("An error has occurred while searching the user {}", username, ex);
-            return Maybe.error(new TechnicalManagementException("An error has occurred while searching the user", ex));
-        }
+        return findByUser(usersResourceConfiguration, readResourceConfiguration, user);
     }
 
     @Override
@@ -219,13 +202,54 @@ public class HttpUserProvider implements UserProvider {
         }
     }
 
+    private Maybe<User> findByUser(HttpUsersResourceConfiguration usersResourceConfiguration,
+                                   HttpResourceConfiguration readResourceConfiguration,
+                                   User user) {
+        try {
+            // prepare context
+            AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
+            TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
+            templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, user);
+
+            // prepare request
+            final String readUserURI = usersResourceConfiguration.getBaseURL() + readResourceConfiguration.getBaseURL();
+            final HttpMethod readUserHttpMethod = HttpMethod.valueOf(readResourceConfiguration.getHttpMethod().toString());
+            final List<HttpHeader> readUserHttpHeaders = readResourceConfiguration.getHttpHeaders();
+            final String readUserBody = readResourceConfiguration.getHttpBody();
+            final Single<HttpResponse<Buffer>> requestHandler = processRequest(templateEngine, readUserURI, readUserHttpMethod, readUserHttpHeaders, readUserBody);
+
+            return requestHandler
+                    .toMaybe()
+                    .map(httpResponse -> {
+                        final List<HttpResponseErrorCondition> errorConditions = readResourceConfiguration.getHttpResponseErrorConditions();
+                        Map<String, Object> userAttributes = processResponse(templateEngine, errorConditions, httpResponse);
+                        return convert(user.getUsername(), userAttributes);
+                    })
+                    .onErrorResumeNext(ex -> {
+                        if (ex instanceof AbstractManagementException) {
+                            return Maybe.error(ex);
+                        }
+                        LOGGER.error("An error has occurred while searching user {} from the remote HTTP identity provider", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
+                        return Maybe.error(new TechnicalManagementException("An error has occurred while searching user from the remote HTTP identity provider", ex));
+                    });
+        } catch (Exception ex) {
+            LOGGER.error("An error has occurred while searching the user {}", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
+            return Maybe.error(new TechnicalManagementException("An error has occurred while searching the user", ex));
+        }
+    }
+
+
     private User convert(String username, Map<String, Object> userAttributes) {
         final String identifierAttribute = configuration.getUsersResource().getIdentifierAttribute();
-        DefaultUser user = new DefaultUser(username);
+        final String usernameAttribute = configuration.getUsersResource().getUsernameAttribute();
+        final String id = (String) userAttributes.get(identifierAttribute);
+        final String usernameValue = (username != null) ? username : (userAttributes.get(usernameAttribute) != null) ? (String) userAttributes.get(usernameAttribute) : id;
+        DefaultUser user = new DefaultUser(usernameValue);
         // set external id
-        user.setId(userAttributes.get(identifierAttribute).toString());
+        user.setId(id);
         // remove sensitive value if any
         userAttributes.remove(identifierAttribute);
+        userAttributes.remove(usernameAttribute);
         userAttributes.remove("password");
         Map<String, Object> claims = new HashMap<>();
         userAttributes.forEach((k, v) -> claims.put(k, v));

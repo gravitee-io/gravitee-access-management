@@ -86,7 +86,7 @@ export class DomainSettingsFormsComponent implements OnInit {
         'description': 'Reset password page to make a new password',
         'template': 'RESET_PASSWORD',
         'icon': 'lock_open',
-        'enabled': this.allowResetPassword()
+        'enabled': true
       },
       {
         'name': 'User consent',

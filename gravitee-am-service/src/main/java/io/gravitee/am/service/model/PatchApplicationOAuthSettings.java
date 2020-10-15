@@ -529,7 +529,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setRequestObjectSigningAlg, this.getRequestObjectSigningAlg());
         SetterUtils.safeSet(toPatch::setRequestObjectEncryptionAlg, this.getRequestObjectEncryptionAlg());
         SetterUtils.safeSet(toPatch::setRequestObjectEncryptionEnc, this.getRequestObjectEncryptionEnc());
-        SetterUtils.set(toPatch::setTokenEndpointAuthMethod, this.getTokenEndpointAuthMethod());
+        SetterUtils.safeSet(toPatch::setTokenEndpointAuthMethod, this.getTokenEndpointAuthMethod());
         SetterUtils.safeSet(toPatch::setTokenEndpointAuthSigningAlg, this.getTokenEndpointAuthSigningAlg());
         SetterUtils.safeSet(toPatch::setDefaultMaxAge, this.getDefaultMaxAge());
         SetterUtils.safeSet(toPatch::setRequireAuthTime, this.getRequireAuthTime(), boolean.class);

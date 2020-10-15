@@ -37,6 +37,7 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private String database;
     private String usersCollection;
     private String findUserByUsernameQuery;
+    private String findUserByEmailQuery = "{email: ?}";
     private String usernameField = FIELD_USERNAME;
     private String passwordField = FIELD_PASSWORD;
     private String passwordEncoder = PasswordEncoder.BCRYPT.getValue();
@@ -124,6 +125,14 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
 
     public void setFindUserByUsernameQuery(String findUserByUsernameQuery) {
         this.findUserByUsernameQuery = findUserByUsernameQuery;
+    }
+
+    public String getFindUserByEmailQuery() {
+        return findUserByEmailQuery;
+    }
+
+    public void setFindUserByEmailQuery(String findUserByEmailQuery) {
+        this.findUserByEmailQuery = findUserByEmailQuery;
     }
 
     public String getUsernameField() {

@@ -18,8 +18,6 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Platform;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
@@ -33,7 +31,6 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.SingleSource;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -47,9 +44,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Comparator;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -168,18 +162,10 @@ public class UsersResource extends AbstractResource {
     }
 
     private Single<User> filterUserInfos(Boolean hasPermission, User user) {
-        User filteredUser = new User();
-        filteredUser.setId(user.getId());
-        filteredUser.setUsername(user.getUsername());
-        filteredUser.setEnabled(user.isEnabled());
-        filteredUser.setDisplayName(user.getDisplayName());
-        filteredUser.setPicture(user.getPicture());
-        filteredUser.setAccountNonLocked(user.isAccountNonLocked());
-        filteredUser.setAccountLockedUntil(user.getAccountLockedUntil());
-
+        User filteredUser;
         if (hasPermission) {
-            filteredUser.setLoggedAt(user.getLoggedAt());
-            filteredUser.setAdditionalInformation(user.getAdditionalInformation());
+            // Current user has read permission, copy all information.
+            filteredUser = new User(user);
             if (user.getSource() != null) {
                 return identityProviderService.findById(user.getSource())
                         .map(idP -> {
@@ -189,6 +175,14 @@ public class UsersResource extends AbstractResource {
                         .defaultIfEmpty(filteredUser)
                         .toSingle();
             }
+        } else {
+            // Current user doesn't have read permission, select only few information and remove default values that could be inexact.
+            filteredUser = new User(false);
+            filteredUser.setId(user.getId());
+            filteredUser.setUsername(user.getUsername());
+            filteredUser.setEnabled(user.isEnabled());
+            filteredUser.setDisplayName(user.getDisplayName());
+            filteredUser.setPicture(user.getPicture());
         }
 
         return Single.just(filteredUser);

@@ -86,9 +86,10 @@ public class DefaultOrganizationUpgraderTest {
         User adminUser = new User();
         adminUser.setId("admin-id");
 
-        when(organizationService.createDefault()).thenReturn(Maybe.just(new Organization()));
+        final Organization organization = new Organization();
+        when(organizationService.createDefault()).thenReturn(Maybe.just(organization));
         when(identityProviderService.create(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(NewIdentityProvider.class), isNull())).thenReturn(Single.just(idp));
-        when(organizationService.update(eq(Organization.DEFAULT), any(PatchOrganization.class), isNull())).thenReturn(Single.just(new Organization()));
+        when(organizationService.update(eq(Organization.DEFAULT), any(PatchOrganization.class), isNull())).thenReturn(Single.just(organization));
         when(userService.create(argThat(user -> !user.isInternal()
                 && user.getUsername().equals("admin")
                 && user.getSource().equals(idp.getId())
@@ -96,6 +97,8 @@ public class DefaultOrganizationUpgraderTest {
                 && user.getReferenceId().equals(Organization.DEFAULT)))).thenReturn(Single.just(adminUser));
         when(domainService.findById("admin")).thenReturn(Maybe.empty());
         doNothing().when(membershipHelper).setOrganizationPrimaryOwnerRole(argThat(user -> user.getId().equals(adminUser.getId())));
+        when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(organization));
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.emptyList()));
 
         assertTrue(cut.upgrade());
     }
@@ -203,7 +206,7 @@ public class DefaultOrganizationUpgraderTest {
         User adminUser = new User();
         adminUser.setId("adminId");
         adminUser.setUsername("admin");
-        adminUser.setLoginsCount(10);
+        adminUser.setLoginsCount(10L);
         adminUser.setRoles(Arrays.asList("role-id"));
 
         Organization defaultOrganization = new Organization();
@@ -248,7 +251,6 @@ public class DefaultOrganizationUpgraderTest {
         when(domainService.findById("admin")).thenReturn(Maybe.just(new Domain()));
         when(domainService.delete("admin")).thenReturn(Completable.complete());
 
-
         when(roleService.findDefaultRole(Organization.DEFAULT, DefaultRole.ORGANIZATION_OWNER, ReferenceType.ORGANIZATION))
                 .thenReturn(Maybe.just(adminRole)); // Role has been created.
 
@@ -262,6 +264,9 @@ public class DefaultOrganizationUpgraderTest {
                 .thenReturn(Single.just(new Page<>(Arrays.asList(user, user), 2, totalUsers)));
 
         doNothing().when(membershipHelper).setRole(eq(user), eq(adminRole));
+
+        when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(organization));
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.emptyList()));
 
         cut.upgrade();
 
