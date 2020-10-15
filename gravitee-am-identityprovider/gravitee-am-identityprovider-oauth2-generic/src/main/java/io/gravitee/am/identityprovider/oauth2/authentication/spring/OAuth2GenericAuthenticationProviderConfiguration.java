@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication.spring;
 
-import io.gravitee.am.identityprovider.common.oauth2.utils.WebClientBuilder;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
+import io.gravitee.am.service.http.WebClientBuilder;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OAuth2GenericAuthenticationProviderConfiguration {
 
+    private static final String DEFAULT_USER_AGENT = "Gravitee.io-AM/3";
+    private static final String HTTPS = "https://";
+
     @Autowired
     private Vertx vertx;
 
@@ -38,8 +42,33 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
     private OAuth2GenericIdentityProviderConfiguration configuration;
 
     @Bean
+    public WebClientBuilder webClientBuilder() {
+        return new WebClientBuilder();
+    }
+
+    @Bean
     @Qualifier("oauthWebClient")
-    public WebClient httpClient() {
-        return WebClientBuilder.build(vertx, configuration);
+    public WebClient httpClient(WebClientBuilder webClientBuilder) {
+        WebClientOptions httpClientOptions = new WebClientOptions();
+        httpClientOptions
+                .setUserAgent(DEFAULT_USER_AGENT)
+                .setConnectTimeout(configuration.getConnectTimeout())
+                .setMaxPoolSize(configuration.getMaxPoolSize())
+                .setSsl(isTLS());
+
+        return webClientBuilder.createWebClient(vertx, httpClientOptions);
+    }
+
+    /**
+     * Check if all defined oauth2 urls are secured or not.
+     * This method is mainly used to determine if ssl should be enabled on the webClient used to communicate with the oauth2 server.
+     *
+     * @return <code>true</code> if all urls are secured, <code>false</code> else.
+     */
+    private boolean isTLS() {
+        return configuration.getAccessTokenUri() != null && configuration.getAccessTokenUri().startsWith(HTTPS)
+                && configuration.getUserAuthorizationUri() != null && configuration.getUserAuthorizationUri().startsWith(HTTPS)
+                && configuration.getUserProfileUri() != null && configuration.getUserProfileUri().startsWith(HTTPS)
+                && configuration.getWellKnownUri() != null && configuration.getWellKnownUri().startsWith(HTTPS);
     }
 }

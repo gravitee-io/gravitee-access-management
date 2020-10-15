@@ -27,6 +27,10 @@ import io.reactivex.Single;
  */
 public interface UserProvider extends Service<UserProvider> {
 
+    default Maybe<User> findByEmail(String email) {
+        return Maybe.empty();
+    }
+
     Maybe<User> findByUsername(String username);
 
     Single<User> create(User user);
