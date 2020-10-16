@@ -236,9 +236,9 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
     }
 
     private User createUser(Map<String, Object> attributes) {
-        String username = (String) attributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.SUB));
+        String username = String.valueOf(attributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.SUB)));
         User user = new DefaultUser(username);
-        ((DefaultUser) user).setId((String) attributes.get(StandardClaims.SUB));
+        ((DefaultUser) user).setId(String.valueOf(attributes.get(StandardClaims.SUB)));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, attributes.get(StandardClaims.SUB));
@@ -247,7 +247,7 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
         additionalInformation.putAll(applyUserMapping(attributes));
         // update username if user mapping has been changed
         if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
-            ((DefaultUser) user).setUsername((String) additionalInformation.get(StandardClaims.PREFERRED_USERNAME));
+            ((DefaultUser) user).setUsername(String.valueOf(additionalInformation.get(StandardClaims.PREFERRED_USERNAME)));
         }
         ((DefaultUser) user).setAdditionalInformation(additionalInformation);
         // set user roles
