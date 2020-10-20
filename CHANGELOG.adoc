@@ -15,6 +15,7 @@
 
 - Users should be found from their IDP during forgot password process https://github.com/gravitee-io/issues/issues/4360[#4360]
 
+
 == https://github.com/gravitee-io/issues/milestone/283?closed=1[AM - 2.10.19 (2020-09-08)]
 
 === Bug fixes

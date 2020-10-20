@@ -1,5 +1,32 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/288?closed=1[AM - 3.0.7 (2020-10-15)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 2.10.20 https://github.com/gravitee-io/issues/issues/4426[#4426]
+
+*_Management_*
+
+- Application tokenEndpointAuthMethod is reset sometimes https://github.com/gravitee-io/issues/issues/4427[#4427]
+- Audit logs of the global settings are not working https://github.com/gravitee-io/issues/issues/4342[#4342]
+- Domain roles are not well migrated in v3 https://github.com/gravitee-io/issues/issues/4425[#4425]
+- Invalid application tokenEndpointAuthMethod value during v2 migration https://github.com/gravitee-io/issues/issues/4428[#4428]
+- User information return in users resource are invalid https://github.com/gravitee-io/issues/issues/4353[#4353]
+
+*_Management-ui_*
+
+- Enable custom reset password form even if the SSPR is disabled https://github.com/gravitee-io/issues/issues/4343[#4343]
+
+=== Improvements
+
+*_Identity-provider_*
+
+- Add HTTP proxy configuration https://github.com/gravitee-io/issues/issues/4396[#4396]
+
+
 == https://github.com/gravitee-io/issues/milestone/244?closed=1[AM - 3.2.0 (2020-09-22)]
 
 === Bug fixes
