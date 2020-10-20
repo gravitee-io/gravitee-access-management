@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/298?closed=1[AM - 2.10.21 (2020-10-20)]
+
+=== Bug fixes
+
+*_Identity-provider_*
+
+- [http] cast issue https://github.com/gravitee-io/issues/issues/4474[#4474]
+
+
 == https://github.com/gravitee-io/issues/milestone/290?closed=1[AM - 2.10.20 (2020-10-10)]
 
 === Bug fixes
