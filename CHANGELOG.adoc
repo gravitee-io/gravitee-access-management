@@ -1,5 +1,20 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/290?closed=1[AM - 2.10.20 (2020-10-10)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Email with special characters are not found during forgot password process https://github.com/gravitee-io/issues/issues/4359[#4359]
+- Net client is not closed after HTTP health check probe https://github.com/gravitee-io/issues/issues/4384[#4384]
+
+=== Improvements
+
+*_Gateway_*
+
+- Users should be found from their IDP during forgot password process https://github.com/gravitee-io/issues/issues/4360[#4360]
+
 == https://github.com/gravitee-io/issues/milestone/283?closed=1[AM - 2.10.19 (2020-09-08)]
 
 === Bug fixes
