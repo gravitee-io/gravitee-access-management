@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/296?closed=1[AM - 3.2.1 (2020-10-15)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.0.7 https://github.com/gravitee-io/issues/issues/4471[#4471]
+
+
 == https://github.com/gravitee-io/issues/milestone/288?closed=1[AM - 3.0.7 (2020-10-15)]
 
 === Bug fixes
