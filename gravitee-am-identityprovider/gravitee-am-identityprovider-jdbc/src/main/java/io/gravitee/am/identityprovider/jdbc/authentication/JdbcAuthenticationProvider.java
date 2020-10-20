@@ -87,8 +87,11 @@ public class JdbcAuthenticationProvider extends AbstractService<AuthenticationPr
                 .option(HOST, configuration.getHost())
                 .option(PORT, configuration.getPort())
                 .option(USER, configuration.getUser())
-                .option(PASSWORD, configuration.getPassword())
                 .option(DATABASE, configuration.getDatabase());
+
+        if (configuration.getPassword() != null) {
+            builder.option(PASSWORD, configuration.getPassword());
+        }
 
         List<Map<String, String>> options = configuration.getOptions();
         if (options != null && !options.isEmpty()) {
