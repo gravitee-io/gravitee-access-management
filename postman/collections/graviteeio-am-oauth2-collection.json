@@ -2163,11 +2163,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -2177,7 +2180,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -2261,13 +2265,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -2483,11 +2483,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -2497,7 +2500,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -2581,13 +2585,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -2667,11 +2667,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -2681,7 +2684,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -2760,14 +2764,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"oauth",
-												"consent"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -3096,11 +3095,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -3110,7 +3112,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -3194,13 +3197,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -3278,17 +3277,20 @@
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
+													"    var responseHTML = cheerio.load(pm.response.text());",
 													"    ",
-													"    var scope1 = responseHTML.find('[name=\"scope.scope1\"]').val();",
-													"    var openid = responseHTML.find('[name=\"scope.openid\"]').val();",
-													"    var test = responseHTML.find('[name=\"scope.test\"]').val();",
+													"    var scope1 = responseHTML('[name=\"scope.scope1\"]').val();",
+													"    var openid = responseHTML('[name=\"scope.openid\"]').val();",
+													"    var test = responseHTML('[name=\"scope.test\"]').val();",
 													"    tests[\"Scope 1 is already approved\"] = scope1 === undefined;",
 													"    pm.expect(openid).not.equal(null);",
 													"    pm.expect(test).not.equal(null);",
 													"    ",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -3385,14 +3387,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"oauth",
-												"consent"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -3790,13 +3787,16 @@
 													"",
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
-													"    ",
+													"",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -3806,7 +3806,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -3890,13 +3891,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -4180,13 +4177,16 @@
 													"",
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
-													"    ",
+													"",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -4196,7 +4196,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -4280,13 +4281,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -4581,13 +4578,16 @@
 													"",
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
-													"    ",
+													"",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -4597,7 +4597,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -4681,13 +4682,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -4982,11 +4979,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -4996,7 +4996,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -5080,13 +5081,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -5233,13 +5230,16 @@
 													"",
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
-													"    ",
+													"",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -5249,7 +5249,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -5333,14 +5334,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"oauth",
-												"consent"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -5570,13 +5566,16 @@
 													"",
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
-													"    ",
+													"",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -5586,7 +5585,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -5670,13 +5670,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -5974,13 +5970,16 @@
 													"",
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
-													"    ",
+													"",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -5990,7 +5989,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -6074,13 +6074,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -6378,13 +6374,16 @@
 													"",
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
-													"    ",
+													"",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -6394,7 +6393,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -6478,13 +6478,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -6788,11 +6784,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -6802,7 +6801,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -6886,13 +6886,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -7194,13 +7190,16 @@
 													"",
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
-													"    ",
+													"",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -7210,7 +7209,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -7294,13 +7294,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -7605,13 +7601,16 @@
 													"",
 													"pm.test(\"Should be ok\", function () {",
 													"    pm.response.to.be.ok;",
-													"    ",
+													"",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -7621,7 +7620,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -7705,13 +7705,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -8003,8 +7999,6 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.be.header('Content-Length', '0');",
 													"    pm.response.to.have.header('Location');",
-													"    //TODO: A valider avec Titouan",
-													"    //pm.response.to.not.have.header('Set-Cookie');",
 													"});",
 													"",
 													"pm.test(\"Should be a location error\", function() {",
@@ -8073,7 +8067,6 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.be.header('Content-Length', '0');",
 													"    pm.response.to.have.header('Location');",
-													"    pm.response.to.not.have.header('Set-Cookie');",
 													"});",
 													"",
 													"pm.test(\"Should be a location error\", function() {",
@@ -8133,7 +8126,6 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.be.header('Content-Length', '0');",
 													"    pm.response.to.have.header('Location');",
-													"    pm.response.to.not.have.header('Set-Cookie');",
 													"});",
 													"",
 													"pm.test(\"Should be a location error\", function() {",
@@ -8197,7 +8189,6 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.be.header('Content-Length', '0');",
 													"    pm.response.to.have.header('Location');",
-													"    pm.response.to.not.have.header('Set-Cookie');",
 													"});",
 													"",
 													"pm.test(\"Should be a location error\", function() {",
@@ -8326,7 +8317,6 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.be.header('Content-Length', '0');",
 													"    pm.response.to.have.header('Location');",
-													"    pm.response.to.not.have.header('Set-Cookie');",
 													"});",
 													"",
 													"pm.test(\"Should be a location error\", function() {",
@@ -8441,7 +8431,6 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.be.header('Content-Length', '0');",
 													"    pm.response.to.have.header('Location');",
-													"    pm.response.to.not.have.header('Set-Cookie');",
 													"});",
 													"",
 													"pm.test(\"Should be a location error\", function() {",
@@ -8507,7 +8496,6 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.be.header('Content-Length', '0');",
 													"    pm.response.to.have.header('Location');",
-													"    pm.response.to.not.have.header('Set-Cookie');",
 													"});",
 													"",
 													"pm.test(\"Should be a location error\", function() {",
@@ -8788,7 +8776,6 @@
 													"    pm.response.to.be.redirection;",
 													"    pm.response.to.be.header('Content-Length', '0');",
 													"    pm.response.to.have.header('Location');",
-													"    pm.response.to.not.have.header('Set-Cookie');",
 													"});",
 													"",
 													"pm.test(\"Should be a location error\", function() {",
@@ -8926,11 +8913,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -8940,7 +8930,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -9024,13 +9015,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -9247,11 +9234,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -9261,7 +9251,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -9345,13 +9336,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -9574,11 +9561,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -9588,7 +9578,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -9672,13 +9663,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -10023,11 +10010,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -10037,7 +10027,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -10121,13 +10112,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/login",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"login"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -10338,11 +10325,14 @@
 													"    pm.response.to.be.ok;",
 													"    ",
 													"    // Extract the XSRF token to send it with the next request.",
-													"    var responseHTML = cheerio(pm.response.text());",
-													"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
 													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
 													"});"
-												]
+												],
+												"type": "text/javascript"
 											}
 										},
 										{
@@ -10352,7 +10342,8 @@
 												"type": "text/javascript",
 												"exec": [
 													""
-												]
+												],
+												"type": "text/javascript"
 											}
 										}
 									],
@@ -10431,14 +10422,9 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
+											"raw": "{{action}}",
 											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domain}}",
-												"oauth",
-												"consent"
+												"{{action}}"
 											]
 										},
 										"description": "The client does not have a redirect_uri define"
@@ -15196,11 +15182,14 @@
 											"    pm.response.to.be.ok;",
 											"    ",
 											"    // Extract the XSRF token to send it with the next request.",
-											"    var responseHTML = cheerio(pm.response.text());",
-											"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    var responseHTML = cheerio.load(pm.response.text());",
+											"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    const action = responseHTML('form').attr('action');",
 											"    pm.environment.set('xsrf', xsrfToken);",
+											"    pm.environment.set('action', action);",
 											"});"
-										]
+										],
+										"type": "text/javascript"
 									}
 								},
 								{
@@ -15210,7 +15199,8 @@
 										"type": "text/javascript",
 										"exec": [
 											""
-										]
+										],
+										"type": "text/javascript"
 									}
 								}
 							],
@@ -15294,13 +15284,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/login",
+									"raw": "{{action}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"login"
+										"{{action}}"
 									]
 								},
 								"description": "The client does not have a redirect_uri define"
@@ -15380,11 +15366,14 @@
 											"    pm.response.to.be.ok;",
 											"    ",
 											"    // Extract the XSRF token to send it with the next request.",
-											"    var responseHTML = cheerio(pm.response.text());",
-											"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    var responseHTML = cheerio.load(pm.response.text());",
+											"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    const action = responseHTML('form').attr('action');",
 											"    pm.environment.set('xsrf', xsrfToken);",
+											"    pm.environment.set('action', action);",
 											"});"
-										]
+										],
+										"type": "text/javascript"
 									}
 								},
 								{
@@ -15394,7 +15383,8 @@
 										"type": "text/javascript",
 										"exec": [
 											""
-										]
+										],
+										"type": "text/javascript"
 									}
 								}
 							],
@@ -15483,14 +15473,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
+									"raw": "{{action}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"oauth",
-										"consent"
+										"{{action}}"
 									]
 								},
 								"description": "The client does not have a redirect_uri define"

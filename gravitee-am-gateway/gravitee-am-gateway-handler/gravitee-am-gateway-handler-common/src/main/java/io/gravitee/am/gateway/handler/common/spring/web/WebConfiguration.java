@@ -15,9 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.common.spring.web;
 
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.*;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.AuthenticationFlowHandlerImpl;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.PolicyChainHandlerImpl;
+import io.gravitee.am.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,17 +35,23 @@ import org.springframework.context.annotation.Configuration;
 public class WebConfiguration {
 
     @Bean
-    public CorsHandlerFactory corsHandler() { return new CorsHandlerFactory(); }
+    public CorsHandlerFactory corsHandler() {
+        return new CorsHandlerFactory();
+    }
 
     @Bean
-    public SessionHandlerFactory sessionHandler() { return new SessionHandlerFactory(); }
+    public CookieSessionHandler sessionHandler(JWTService jwtService, CertificateManager certificateManager, UserService userService) {
+        return new CookieSessionHandler(jwtService, certificateManager, userService);
+    }
 
     @Bean
-    public SSOSessionHandlerFactory ssoSessionHandler() { return new SSOSessionHandlerFactory(); }
+    public SSOSessionHandlerFactory ssoSessionHandler() {
+        return new SSOSessionHandlerFactory();
+    }
 
     @Bean
-    public CookieHandlerFactory cookieHandler() {
-        return new CookieHandlerFactory();
+    public CookieHandler cookieHandler(@Value("${http.cookie.secure:false}") boolean cookieSecure) {
+        return new CookieHandler(cookieSecure);
     }
 
     @Bean

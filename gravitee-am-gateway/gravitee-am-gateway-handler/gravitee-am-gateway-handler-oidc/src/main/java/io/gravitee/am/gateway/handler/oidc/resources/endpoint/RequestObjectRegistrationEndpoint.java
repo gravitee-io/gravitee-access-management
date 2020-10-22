@@ -32,6 +32,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -44,9 +45,7 @@ public class RequestObjectRegistrationEndpoint implements Handler<RoutingContext
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestObjectRegistrationEndpoint.class);
 
-    private static final String CLIENT_CONTEXT_KEY = "client";
-
-    private RequestObjectService requestObjectService;
+    private final RequestObjectService requestObjectService;
 
     public RequestObjectRegistrationEndpoint(RequestObjectService requestObjectService) {
         this.requestObjectService = requestObjectService;
@@ -86,7 +85,7 @@ public class RequestObjectRegistrationEndpoint implements Handler<RoutingContext
     private String extractOrigin(RoutingContext context) {
         String basePath = "/";
         try {
-            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH), null);
+            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH));
         } catch (Exception e) {
             LOGGER.error("Unable to resolve OAuth 2.0 Authorization Request origin uri", e);
         }

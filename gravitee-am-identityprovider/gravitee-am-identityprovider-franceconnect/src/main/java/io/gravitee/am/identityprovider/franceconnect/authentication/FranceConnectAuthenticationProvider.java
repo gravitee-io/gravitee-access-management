@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -99,20 +100,24 @@ public class FranceConnectAuthenticationProvider extends AbstractSocialAuthentic
     }
 
     @Override
-    public Request signInUrl(String redirectUri) {
+    public Request signInUrl(String redirectUri, String state) {
         try {
             UriBuilder builder = UriBuilder.fromHttpUrl(getConfiguration().getUserAuthorizationUri());
             builder.addParameter(Parameters.CLIENT_ID, getConfiguration().getClientId());
             if (getConfiguration().getEnvironment() == FranceConnectIdentityProviderConfiguration.Environment.DEVELOPMENT) {
                 // NOTE: Port is being proxied by nginx. Please have a look to the README.adoc file
                 QueryStringDecoder decoder = new QueryStringDecoder(redirectUri);
-                builder.addParameter(Parameters.REDIRECT_URI, "http://localhost:4242/callback?provider=" + decoder.parameters().get("provider").get(0));
+                builder.addParameter(Parameters.REDIRECT_URI, "http://localhost:4242/callback");
             } else {
                 builder.addParameter(Parameters.REDIRECT_URI, redirectUri);
             }
+
             builder.addParameter(Parameters.RESPONSE_TYPE, getConfiguration().getResponseType());
             builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
-            builder.addParameter(Parameters.STATE, SecureRandomString.generate());
+
+            if(!StringUtils.isEmpty(state)) {
+                builder.addParameter(Parameters.STATE, state);
+            }
 
             if (getConfiguration().getScopes() != null && !getConfiguration().getScopes().isEmpty()) {
                 builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, getConfiguration().getScopes()));
@@ -143,7 +148,7 @@ public class FranceConnectAuthenticationProvider extends AbstractSocialAuthentic
         if (getConfiguration().getEnvironment() == FranceConnectIdentityProviderConfiguration.Environment.DEVELOPMENT) {
             // NOTE: Port is being proxied by nginx. Please have a look to the README.adoc file
             QueryStringDecoder decoder = new QueryStringDecoder((String) authentication.getContext().get(REDIRECT_URI));
-            urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, "http://localhost:4242/callback?provider=" + decoder.parameters().get("provider").get(0)));
+            urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, "http://localhost:4242/callback"));
         } else {
             urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, (String) authentication.getContext().get(REDIRECT_URI)));
         }

@@ -20,6 +20,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthResponse;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -73,7 +74,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
 
             // set raw token to the current context
             if (extractRawToken) {
-                context.put(RAW_TOKEN_CONTEXT_KEY, jwtToken);
+                context.put(ConstantKeys.RAW_TOKEN_CONTEXT_KEY, jwtToken);
             }
 
             oAuth2AuthProvider.decodeToken(jwtToken, offlineVerification, handler -> {
@@ -88,12 +89,12 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
 
                 // set token to the current context
                 if (extractToken) {
-                    context.put(TOKEN_CONTEXT_KEY, token);
+                    context.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
                 }
 
                 // set client to the current context
                 if (extractClient) {
-                    context.put(CLIENT_CONTEXT_KEY, client);
+                    context.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                 }
 
                 // check if current subject can access its own resources

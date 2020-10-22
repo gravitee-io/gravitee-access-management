@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.uma.resources.response.ResourceResponse;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
@@ -62,8 +62,8 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), accessToken.getSub())
                 .flatMapPublisher(Flowable::fromIterable)
@@ -81,8 +81,8 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
     }
 
     public void create(RoutingContext context) {
-        JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String basePath = UriBuilderRequest.resolveProxyRequest(context);
 
         this.extractRequest(context)
@@ -103,8 +103,8 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
     }
 
     public void get(RoutingContext context) {
-        JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String resource_id = context.request().getParam(RESOURCE_ID);
 
         this.resourceService.findByDomainAndClientAndUserAndResource(domain.getId(), client.getId(), accessToken.getSub(), resource_id)
@@ -127,8 +127,8 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
      * @param context
      */
     public void update(RoutingContext context) {
-        JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String resource_id = context.request().getParam(RESOURCE_ID);
 
         this.extractRequest(context)
@@ -145,8 +145,8 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
     }
 
     public void delete(RoutingContext context) {
-        JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String resource_id = context.request().getParam(RESOURCE_ID);
 
         this.resourceService.delete(domain.getId(), client.getId(), accessToken.getSub(), resource_id)

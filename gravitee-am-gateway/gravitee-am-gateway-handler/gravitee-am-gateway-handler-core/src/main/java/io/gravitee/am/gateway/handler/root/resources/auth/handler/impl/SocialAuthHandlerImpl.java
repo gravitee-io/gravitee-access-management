@@ -18,38 +18,29 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.impl.AuthHandlerImpl;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
+import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AuthProvider;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.net.URISyntaxException;
-import java.util.Collections;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SocialAuthHandlerImpl extends AuthHandlerImpl {
+public class SocialAuthHandlerImpl implements SocialAuthHandler {
 
-    private static final String USERNAME_PARAMETER = "username";
-    private static final String PASSWORD_PARAMETER = "password";
-    private static final String PROVIDER_PARAMETER = "provider";
-    private SocialAuthenticationProvider socialAuthenticationProvider;
+    private final SocialAuthenticationProvider socialAuthenticationProvider;
 
-    public SocialAuthHandlerImpl(AuthProvider authProvider) {
-        super(authProvider);
-        socialAuthenticationProvider = (SocialAuthenticationProvider) authProvider;
+    public SocialAuthHandlerImpl(SocialAuthenticationProvider authProvider) {
+        socialAuthenticationProvider = authProvider;
     }
 
     /**
@@ -58,77 +49,36 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
      */
     @Override
     public void handle(RoutingContext ctx) {
+
         if (handlePreflight(ctx)) {
             return;
         }
 
-        User user = ctx.user();
+        User user = (User) ctx.getDelegate().user();
         if (user != null) {
             // proceed to AuthZ
-            authorizeUser(ctx, user);
+            ctx.next();
             return;
         }
-        // parse the request in order to extract the credentials object
-        parseCredentials(ctx, res -> {
-            if (res.failed()) {
-                processException(ctx, res.cause());
-                return;
-            }
-            // check if the user has been set
-            User updatedUser = ctx.user();
 
-            if (updatedUser != null) {
-                Session session = ctx.session();
-                if (session != null) {
-                    // the user has upgraded from unauthenticated to authenticated
-                    // session should be upgraded as recommended by owasp
-                    session.regenerateId();
-                }
-                // proceed to AuthZ
-                authorizeUser(ctx, updatedUser);
-                return;
-            }
+        JsonObject clientCredentials = new JsonObject()
+                .put(USERNAME_PARAM_KEY, "__social__")
+                .put(PASSWORD_PARAM_KEY, "__social__")
+                .put(Parameters.REDIRECT_URI, UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.request().path()));
 
-            // proceed to authN
-            getSocialAuthenticationProvider().authenticate(ctx, res.result(), authN -> {
-                if (authN.succeeded()) {
-                    User authenticated = authN.result();
-                    ctx.setUser(authenticated);
-                    Session session = ctx.session();
-                    if (session != null) {
-                        // the user has upgraded from unauthenticated to authenticated
-                        // session should be upgraded as recommended by owasp
-                        session.regenerateId();
-                    }
-                    // proceed to AuthZ
-                    authorizeUser(ctx, authenticated);
-                } else {
-                    String header = authenticateHeader(ctx);
-                    if (header != null) {
-                        ctx.response()
-                                .putHeader("WWW-Authenticate", header);
-                    }
-                    // to allow further processing if needed
-                    processException(ctx, new HttpStatusException(401, authN.cause()));
-                }
-            });
+        // proceed to authN
+        getSocialAuthenticationProvider().authenticate(ctx, clientCredentials, authN -> {
+            if (authN.succeeded()) {
+                final User authenticated = authN.result();
+                ctx.getDelegate().setUser(authenticated);
+                ctx.next();
+            } else {
+                // to allow further processing if needed
+                processException(ctx, new HttpStatusException(401, authN.cause()));
+            }
         });
     }
 
-    protected final void parseAuthorization(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
-        try {
-            JsonObject clientCredentials = new JsonObject()
-                    .put(USERNAME_PARAMETER, "__social__")
-                    .put(PASSWORD_PARAMETER, "__social__")
-                    .put(Parameters.REDIRECT_URI, buildRedirectUri(context.request()));
-
-            handler.handle(Future.succeededFuture(clientCredentials));
-        } catch (Exception e) {
-            handler.handle(Future.failedFuture(e));
-        }
-    }
-
-    @Override
     protected void processException(RoutingContext ctx, Throwable exception) {
         if (exception != null && exception.getCause() != null) {
             // override default process exception to redirect to the login page
@@ -137,7 +87,8 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
                 return;
             }
         }
-        super.processException(ctx, exception);
+        // fallback 500
+        ctx.fail(exception);
     }
 
     private SocialAuthenticationProvider getSocialAuthenticationProvider() {
@@ -165,24 +116,4 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
 
         return false;
     }
-
-    private void authorizeUser(RoutingContext ctx, User user) {
-        authorize(user, authZ -> {
-            if (authZ.failed()) {
-                processException(ctx, authZ.cause());
-                return;
-            }
-            // success, allowed to continue
-            ctx.next();
-        });
-    }
-
-    private String buildRedirectUri(io.vertx.core.http.HttpServerRequest request) throws URISyntaxException {
-        return UriBuilderRequest.resolveProxyRequest(
-                new io.vertx.reactivex.core.http.HttpServerRequest(request),
-                request.path(),
-                // append provider query param to avoid redirect mismatch exception
-                Collections.singletonMap("provider", request.getParam(PROVIDER_PARAMETER)));
-    }
-
 }

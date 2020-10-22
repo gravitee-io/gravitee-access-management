@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionTicket;
@@ -26,7 +26,6 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Single;
 import io.vertx.reactivex.core.buffer.Buffer;
-import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Assert;
@@ -77,8 +76,8 @@ public class PermissionEndpointTest {
 
     @Before
     public void setUp() {
-        when(context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY)).thenReturn(jwt);
-        when(context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(context.get(ConstantKeys.TOKEN_CONTEXT_KEY)).thenReturn(jwt);
+        when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(domain.getId()).thenReturn(DOMAIN_ID);
         when(client.getId()).thenReturn(CLIENT_ID);
     }

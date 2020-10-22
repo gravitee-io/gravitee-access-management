@@ -24,7 +24,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public abstract class AuthenticationFlowStep {
 
-    private Handler<RoutingContext> handler;
+    private final Handler<RoutingContext> handler;
 
     public AuthenticationFlowStep(Handler<RoutingContext> handler) {
         this.handler = handler;

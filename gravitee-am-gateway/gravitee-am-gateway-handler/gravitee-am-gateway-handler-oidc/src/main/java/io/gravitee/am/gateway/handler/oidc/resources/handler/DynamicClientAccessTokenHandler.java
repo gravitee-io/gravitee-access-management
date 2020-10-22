@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.resources.handler;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
@@ -36,8 +36,8 @@ public class DynamicClientAccessTokenHandler implements Handler<RoutingContext> 
 
     @Override
     public void handle(RoutingContext context) {
-        final JWT token = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        final Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        final JWT token = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         if (token.hasScope(Scope.DCR_ADMIN.getKey())) {
             context.next();
@@ -45,7 +45,7 @@ public class DynamicClientAccessTokenHandler implements Handler<RoutingContext> 
         }
 
         // if not dcr admin, access token must match client registration token
-        final String rawToken = context.get(OAuth2AuthHandler.RAW_TOKEN_CONTEXT_KEY);
+        final String rawToken = context.get(ConstantKeys.RAW_TOKEN_CONTEXT_KEY);
         if (rawToken == null || !rawToken.equals(client.getRegistrationAccessToken())) {
             context.fail(new ClientRegistrationForbiddenException("Non matching registration_access_token"));
             return;

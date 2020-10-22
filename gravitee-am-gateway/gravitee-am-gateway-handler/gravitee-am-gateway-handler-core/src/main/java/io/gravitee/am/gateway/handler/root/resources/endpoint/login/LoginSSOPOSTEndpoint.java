@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
+import io.gravitee.am.common.exception.oauth2.BadClientCredentialsException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
-import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
@@ -28,16 +30,21 @@ import io.reactivex.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -47,91 +54,37 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginSSOPOSTEndpoint.class);
-    private static final String PROVIDER_PARAMETER = "provider";
-    private static final String FORM_ACTION_CONTEXT_KEY = "action";
     private static final String FORM_PARAMETERS = "parameters";
-    private ThymeleafTemplateEngine engine;
-    private Domain domain;
 
-    public LoginSSOPOSTEndpoint(ThymeleafTemplateEngine engine, Domain domain) {
+    private final ThymeleafTemplateEngine engine;
+
+    public LoginSSOPOSTEndpoint(ThymeleafTemplateEngine engine) {
         this.engine = engine;
-        this.domain = domain;
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
-        final String identityProvider = routingContext.request().getParam(PROVIDER_PARAMETER);
-        final AuthenticationProvider authenticationProvider = routingContext.get(PROVIDER_PARAMETER);
 
-        if (!canHandle(authenticationProvider)) {
-            logger.error("Identity provider {} invalid or unknown for SSO POST login", identityProvider);
-            routingContext.fail(new InvalidRequestException("Identity provider " + identityProvider + " invalid or unknown for SSO POST login"));
+        // Prepare context to render post form.
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+
+        routingContext.put(ACTION_KEY, queryParams.get(ACTION_KEY));
+        routingContext.put(FORM_PARAMETERS, queryParams.remove(ACTION_KEY));
+
+        if (StringUtils.isEmpty(routingContext.get(ACTION_KEY)) || ((MultiMap) routingContext.get(FORM_PARAMETERS)).isEmpty()) {
+            routingContext.fail(new BadClientCredentialsException());
             return;
         }
 
-        parseSSOSignInURL(routingContext, identityProvider, (SocialAuthenticationProvider) authenticationProvider, resultHandler -> {
-            if (resultHandler.failed()) {
-                routingContext.fail(resultHandler.cause());
-                return;
+        // Render login SSO POST form.
+        engine.render(routingContext.data(), "login_sso_post", res -> {
+            if (res.succeeded()) {
+                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                routingContext.response().end(res.result());
+            } else {
+                logger.error("Unable to render Login SSO POST page", res.cause());
+                routingContext.fail(res.cause());
             }
-
-            Request request = resultHandler.result();
-            // prepare context
-            routingContext.put(FORM_ACTION_CONTEXT_KEY, request.getUri());
-            routingContext.put(FORM_PARAMETERS, getParams(request.getBody()));
-
-            // render login SSO POST page
-            engine.render(routingContext.data(), "login_sso_post", res -> {
-                if (res.succeeded()) {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(res.result());
-                } else {
-                    logger.error("Unable to render Login SSO POST page", res.cause());
-                    routingContext.fail(res.cause());
-                }
-            });
         });
-    }
-
-    private void parseSSOSignInURL(RoutingContext routingContext, String identityProvider, SocialAuthenticationProvider authenticationProvider, Handler<AsyncResult<Request>> resultHandler) {
-        try {
-            Maybe<Request> signInURL = authenticationProvider.asyncSignInUrl(buildRedirectUri(routingContext, identityProvider));
-            signInURL
-                    .subscribe(
-                            request -> {
-                                if (HttpMethod.GET.equals(request.getMethod())) {
-                                    resultHandler.handle(Future.failedFuture(new InvalidRequestException("SSO Sign In URL HTTP Method must be POST")));
-                                } else {
-                                    resultHandler.handle(Future.succeededFuture(request));
-                                }
-                            },
-                            error -> resultHandler.handle(Future.failedFuture(new InvalidRequestException("Unable to parse SSO Sign URL"))),
-                            () -> resultHandler.handle(Future.failedFuture(new InvalidRequestException("Unable to parse SSO Sign URL"))));
-        } catch (Exception ex) {
-            logger.error("Failed to parse SSO Sign In URL", ex);
-            resultHandler.handle(Future.failedFuture(new InvalidRequestException("Unable to parse SSO Sign URL")));
-        }
-    }
-
-    private String buildRedirectUri(RoutingContext context, String identityProvider) throws URISyntaxException {
-        return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/callback", Collections.singletonMap("provider", identityProvider));
-    }
-
-    private boolean canHandle(AuthenticationProvider authenticationProvider) {
-        return authenticationProvider != null && (authenticationProvider instanceof SocialAuthenticationProvider);
-    }
-
-    private Map<String, String> getParams(String query) {
-        Map<String, String> query_pairs = new LinkedHashMap<>();
-        if (query != null) {
-            String[] pairs = query.split("&");
-            for (String pair : pairs) {
-                if (!pair.isEmpty()) {
-                    int idx = pair.indexOf("=");
-                    query_pairs.put(pair.substring(0, idx), pair.substring(idx + 1));
-                }
-            }
-        }
-        return query_pairs;
     }
 }

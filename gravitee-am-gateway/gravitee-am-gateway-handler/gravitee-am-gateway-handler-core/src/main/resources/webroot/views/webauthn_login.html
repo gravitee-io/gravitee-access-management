@@ -37,10 +37,10 @@
                             <input type="text" id="username" name="username" autofocus="autofocus" required />
                         </div>
                         <div id="webauthn-error" class="webauthn-login-error-info" style="display: none;">
-                                <span>
-                                    <span class="error">login_failed</span>
-                                     <small class="error_description">Invalid user</small>
-                                </span>
+                            <span>
+                                <span class="error">login_failed</span>
+                                 <small class="error_description">Invalid user</small>
+                            </span>
                         </div>
                     </div>
                     <div class="webauthn-login-form-actions">
@@ -48,7 +48,7 @@
                     </div>
                     <div class="webauthn-login-form-additional-actions">
                         <div>
-                            <span>Cannot login ? </span><a th:href="@{../login(client_id=${param.client_id})}">switch to default sign in process</a>
+                            <span>Cannot login ? </span><a th:href="${loginAction}">switch to default sign in process</a>
                         </div>
                     </div>
                 </form>

@@ -27,8 +27,7 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.ext.web.handler.SessionHandler;
-import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -59,7 +58,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
 
         RegisterSubmissionEndpoint registerSubmissionEndpoint = new RegisterSubmissionEndpoint(userService, domain);
         router.route(HttpMethod.POST, "/register")
-                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(BodyHandler.create())
                 .handler(registerSubmissionEndpoint)
                 .failureHandler(new ErrorHandler());
     }
@@ -79,12 +78,12 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
         when(userService.register(eq(client), any(), any())).thenReturn(Single.just(new RegistrationResponse()));
 
         testRequest(
-                HttpMethod.POST, "/register",
+                HttpMethod.POST, "/register?client_id=client-id",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/register?success=registration_succeed&client_id=client-id"));
+                    assertTrue(location.endsWith("/register?client_id=client-id&success=registration_succeed"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -108,7 +107,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
         when(userService.register(eq(client), any(), any())).thenReturn(Single.just(registrationResponse));
 
         testRequest(
-                HttpMethod.POST, "/register",
+                HttpMethod.POST, "/register?client_id=client-id",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
@@ -133,12 +132,12 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
         when(userService.register(eq(client), any(), any())).thenReturn(Single.error(new UserAlreadyExistsException("test")));
 
         testRequest(
-                HttpMethod.POST, "/register",
+                HttpMethod.POST, "/register?client_id=client-id",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/register?error=registration_failed&client_id=client-id"));
+                    assertTrue(location.endsWith("/register?client_id=client-id&error=registration_failed"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -158,12 +157,12 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
         when(userService.register(eq(client), any(), any())).thenReturn(Single.error(new InvalidUserException("Username invalid")));
 
         testRequest(
-                HttpMethod.POST, "/register",
+                HttpMethod.POST, "/register?client_id=client-id",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/register?warning=invalid_user_information&client_id=client-id"));
+                    assertTrue(location.endsWith("/register?client_id=client-id&warning=invalid_user_information"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -183,12 +182,12 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
         when(userService.register(eq(client), any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("test")));
 
         testRequest(
-                HttpMethod.POST, "/register",
+                HttpMethod.POST, "/register?client_id=client-id",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/register?warning=invalid_email&client_id=client-id"));
+                    assertTrue(location.endsWith("/register?client_id=client-id&warning=invalid_email"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

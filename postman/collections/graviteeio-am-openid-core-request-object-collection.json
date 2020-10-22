@@ -597,6 +597,7 @@
 									"    pm.environment.set('revocationEndpoint', body.revocation_endpoint);",
 									"    pm.environment.set('registrationEndpoint', body.registration_endpoint);",
 									"    pm.environment.set('registrationRenewSecretEndpoint', body.registration_renew_secret_endpoint);",
+									"    pm.environment.set('logoutEndpoint', body.end_session_endpoint);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1423,7 +1424,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"client_name\": \"client_rs256\",\n    \"redirect_uris\": [\n        \"https://op-test:60001/authz_cb\"\n    ],\n    \"application_type\": \"web\",\n    \"contacts\": [\n        \"roland@example.com\"\n    ],\n    \"response_types\": [\n        \"code\",\n        \"token\",\n        \"id_token\"\n    ],\n    \"grant_types\": [\n        \"authorization_code\",\n        \"implicit\",\n        \"password\"\n    ],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\n        \"https://op-test:60001/logout\"\n    ],\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"request_object_signing_alg\": \"RS256\",\n    \"jwks\": {\n        \"keys\": [\n            {\n            \t\"use\": \"sig\",\n                \"kid\": \"rsa-signature\",\n                \"kty\": \"RSA\",\n                \"e\": \"AQAB\",\n                \"n\": \"4-iLfs52Ta-7s3W_X4-E-f8SwigNhOqigF0Mjoce8mWTQGjS9U1kOuSJKnS9c4gf5vZhBB8iGkufMDvl5nwB0JgcihG6QUiN1NT8WPasJLjRTYQmJNCIYBac0oSZfHIUq8C4kmbFbWqXdp3uB-0l9qalD_HlckBt6lJ4VEb-ntbDpWgQnSxtRDzPZgH_kqJ3sNGnXnd5uNcG1W9v0IC-Wz1-kZ1eFM9-HqfnhGLr4yOr1sSeRQTJUaT12ixSKwn7qBJvnSSUlevIao-Zje2wnvTGVAgsEIuGulw0KWH9hLnYecyTPf3YR7v9sv8ff1qpn0LOmOWOfXYvXqteEcdh9w\"\n            }\n        ]\n    }\n}"
+							"raw": "{\n    \"client_name\": \"client_rs256\",\n    \"redirect_uris\": [\n        \"https://op-test:60001/authz_cb\",\n        \"https://op-test-from-query-param:60001/authz_cb\"\n    ],\n    \"application_type\": \"web\",\n    \"contacts\": [\n        \"roland@example.com\"\n    ],\n    \"response_types\": [\n        \"code\",\n        \"token\",\n        \"id_token\"\n    ],\n    \"grant_types\": [\n        \"authorization_code\",\n        \"implicit\",\n        \"password\"\n    ],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\n        \"https://op-test:60001/logout\"\n    ],\n    \"token_endpoint_auth_method\": \"client_secret_basic\",\n    \"request_object_signing_alg\": \"RS256\",\n    \"jwks\": {\n        \"keys\": [\n            {\n            \t\"use\": \"sig\",\n                \"kid\": \"rsa-signature\",\n                \"kty\": \"RSA\",\n                \"e\": \"AQAB\",\n                \"n\": \"4-iLfs52Ta-7s3W_X4-E-f8SwigNhOqigF0Mjoce8mWTQGjS9U1kOuSJKnS9c4gf5vZhBB8iGkufMDvl5nwB0JgcihG6QUiN1NT8WPasJLjRTYQmJNCIYBac0oSZfHIUq8C4kmbFbWqXdp3uB-0l9qalD_HlckBt6lJ4VEb-ntbDpWgQnSxtRDzPZgH_kqJ3sNGnXnd5uNcG1W9v0IC-Wz1-kZ1eFM9-HqfnhGLr4yOr1sSeRQTJUaT12ixSKwn7qBJvnSSUlevIao-Zje2wnvTGVAgsEIuGulw0KWH9hLnYecyTPf3YR7v9sv8ff1qpn0LOmOWOfXYvXqteEcdh9w\"\n            }\n        ]\n    }\n}"
 						},
 						"url": {
 							"raw": "{{registrationEndpoint}}",
@@ -1435,7 +1436,7 @@
 					"response": []
 				},
 				{
-					"name": "Override state and nonce",
+					"name": "Do not override state and nonce",
 					"event": [
 						{
 							"listen": "test",
@@ -1451,15 +1452,13 @@
 									"    pm.response.to.have.header('Location');",
 									"});",
 									"",
-									"pm.test(\"Should be a location error\", function() {",
+									"pm.test(\"Should redirect to login\", function() {",
 									"    var location = postman.getResponseHeader('Location');",
 									"    let domain = pm.environment.get(\"domain\");",
 									"    ",
 									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('ro_client_id'));",
-									"    ",
-									"    // Non overridable field",
-									"    tests['Contains the state'] = location.includes('state=override-state');",
-									"    tests['Contains the nonce'] = location.includes('nonce=override-nonce');",
+									"",
+									"    pm.environment.set('redirection', location);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1483,7 +1482,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=https://op-test:60001/authz_cb&state=1234-5678-9876&request=eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsInN0YXRlIjoib3ZlcnJpZGUtc3RhdGUiLCJleHAiOjE1ODg2ODExMDAsIm5vbmNlIjoib3ZlcnJpZGUtbm9uY2UifQ.uQLxFiaReQwWqT-TnMXPNrIMdEaHMDlar90iuv_ub3njH1hTNIYV_IdRWs-2Skx5e9tYxnSNt7swHPE1aLKnnmylo52sa2-d7gOxkIiGzsnET8io-_AQsSocl25x8IiXP6IYyUSclVHFUNc_hjcbWkgw2oNXH8f6gx_z7nMahMbEW0L2XlA7fq7SZXzZE78hd9VZ3IaVVUHV90CafYt7kf_Y3Y7VpqoNPXpmfjLQKGWi9tXwmwfoS2OgqlrnXr5kVUiPhbO1OernunlZW7E3er3hBtguhYNzgtXU2iZQEjUD-rPfrnEJdNxdCxq8DnSgKJxBIzabjaJLG5BdgVD7qw&scope=openid&nonce=n-0S6_WzA2Mj",
+							"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=https://op-test-from-query-param:60001/authz_cb&state=1234-5678-9876&request=eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsInN0YXRlIjoib3ZlcnJpZGUtc3RhdGUiLCJleHAiOjE1ODg2ODExMDAsIm5vbmNlIjoib3ZlcnJpZGUtbm9uY2UifQ.uQLxFiaReQwWqT-TnMXPNrIMdEaHMDlar90iuv_ub3njH1hTNIYV_IdRWs-2Skx5e9tYxnSNt7swHPE1aLKnnmylo52sa2-d7gOxkIiGzsnET8io-_AQsSocl25x8IiXP6IYyUSclVHFUNc_hjcbWkgw2oNXH8f6gx_z7nMahMbEW0L2XlA7fq7SZXzZE78hd9VZ3IaVVUHV90CafYt7kf_Y3Y7VpqoNPXpmfjLQKGWi9tXwmwfoS2OgqlrnXr5kVUiPhbO1OernunlZW7E3er3hBtguhYNzgtXU2iZQEjUD-rPfrnEJdNxdCxq8DnSgKJxBIzabjaJLG5BdgVD7qw&scope=openid&nonce=n-0S6_WzA2Mj&max_age=120000",
 							"host": [
 								"{{authorizationEndpoint}}"
 							],
@@ -1498,7 +1497,7 @@
 								},
 								{
 									"key": "redirect_uri",
-									"value": "https://op-test:60001/authz_cb"
+									"value": "https://op-test-from-query-param:60001/authz_cb"
 								},
 								{
 									"key": "state",
@@ -1507,96 +1506,6 @@
 								{
 									"key": "request",
 									"value": "eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOlwvXC9jMmlkLmNvbSIsInN0YXRlIjoib3ZlcnJpZGUtc3RhdGUiLCJleHAiOjE1ODg2ODExMDAsIm5vbmNlIjoib3ZlcnJpZGUtbm9uY2UifQ.uQLxFiaReQwWqT-TnMXPNrIMdEaHMDlar90iuv_ub3njH1hTNIYV_IdRWs-2Skx5e9tYxnSNt7swHPE1aLKnnmylo52sa2-d7gOxkIiGzsnET8io-_AQsSocl25x8IiXP6IYyUSclVHFUNc_hjcbWkgw2oNXH8f6gx_z7nMahMbEW0L2XlA7fq7SZXzZE78hd9VZ3IaVVUHV90CafYt7kf_Y3Y7VpqoNPXpmfjLQKGWi9tXwmwfoS2OgqlrnXr5kVUiPhbO1OernunlZW7E3er3hBtguhYNzgtXU2iZQEjUD-rPfrnEJdNxdCxq8DnSgKJxBIzabjaJLG5BdgVD7qw"
-								},
-								{
-									"key": "scope",
-									"value": "openid"
-								},
-								{
-									"key": "nonce",
-									"value": "n-0S6_WzA2Mj"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Override max_age  parameters",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "f0cd5ae5-ecf9-4b5f-8987-a5ad78c2ce5a",
-								"exec": [
-									"pm.test(\"Status code is 302\", function () {",
-									"    pm.response.to.have.status(302);",
-									"});",
-									"",
-									"pm.test(\"Should be redirected\", function () {",
-									"    pm.response.to.be.redirection;",
-									"    pm.response.to.have.header('Location');",
-									"});",
-									"",
-									"pm.test(\"Should be a location error\", function() {",
-									"    var location = postman.getResponseHeader('Location');",
-									"    let domain = pm.environment.get(\"domain\");",
-									"    ",
-									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('ro_client_id'));",
-									"    ",
-									"    // Non overridable field",
-									"    tests['Contains the state'] = location.includes('state=1234-5678-9876');",
-									"    tests['Contains the nonce'] = location.includes('nonce=n-0S6_WzA2Mj');",
-									"    ",
-									"    // Fiels which can be overriden ",
-									"    tests['Contains the overriden max_age'] = location.includes('max_age=360000');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"id": "bdc59e6c-1793-4e05-ab66-ea32cb231a67",
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "basic"
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=https://op-test:60001/authz_cb&state=1234-5678-9876&request=eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJtYXhfYWdlIjozNjAwMDAsInN1YiI6ImFsaWNlIiwiaXNzIjoiaHR0cHM6XC9cL2MyaWQuY29tIiwiZXhwIjoxNTg4NjgxMTE2fQ.33cW-zv1m4wPBQzrmK97HlFvEyJYm5HwLEOmJXMStFTMalUtq60w3f4fHm_HhEo_QjPnNBFant-GLefbdV9YMCf7_YWPIV2jr34VssE2OU2I3ywh8DVCQY2gmtDABKlufo7JaDjFtniCv7YtXwjpP72E8jLpbaqhUD_Gx0cmfUNOzmXF2o9IK1YKRUseMpYP7KVaiA_MB1mBlUfZdOS-Yk_xqpPMzaxqeKBSpEDpBB6UQKRY4jUuLrqzDO9XaFVq0jdqxQwuewf89f1sUFzta08FGWKonG5URrVxmhJ5z0nQZS35pNC5po2yFT5l-wWajkZn9LiCJkWsKv5V42r_Og&scope=openid&nonce=n-0S6_WzA2Mj&max_age=120000",
-							"host": [
-								"{{authorizationEndpoint}}"
-							],
-							"query": [
-								{
-									"key": "response_type",
-									"value": "code"
-								},
-								{
-									"key": "client_id",
-									"value": "{{ro_client_id}}"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "https://op-test:60001/authz_cb"
-								},
-								{
-									"key": "state",
-									"value": "1234-5678-9876"
-								},
-								{
-									"key": "request",
-									"value": "eyJraWQiOiJyc2Etc2lnbmF0dXJlIiwiYWxnIjoiUlMyNTYifQ.eyJtYXhfYWdlIjozNjAwMDAsInN1YiI6ImFsaWNlIiwiaXNzIjoiaHR0cHM6XC9cL2MyaWQuY29tIiwiZXhwIjoxNTg4NjgxMTE2fQ.33cW-zv1m4wPBQzrmK97HlFvEyJYm5HwLEOmJXMStFTMalUtq60w3f4fHm_HhEo_QjPnNBFant-GLefbdV9YMCf7_YWPIV2jr34VssE2OU2I3ywh8DVCQY2gmtDABKlufo7JaDjFtniCv7YtXwjpP72E8jLpbaqhUD_Gx0cmfUNOzmXF2o9IK1YKRUseMpYP7KVaiA_MB1mBlUfZdOS-Yk_xqpPMzaxqeKBSpEDpBB6UQKRY4jUuLrqzDO9XaFVq0jdqxQwuewf89f1sUFzta08FGWKonG5URrVxmhJ5z0nQZS35pNC5po2yFT5l-wWajkZn9LiCJkWsKv5V42r_Og"
 								},
 								{
 									"key": "scope",
@@ -1616,7 +1525,133 @@
 					"response": []
 				},
 				{
-					"name": "Use redirect_uri from request_object",
+					"name": "Redirect to login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "fcbc7417-c1a9-4a84-aaf3-60d2958a2f8b",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
+									"    ",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio.load(pm.response.text());",
+									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    const action = responseHTML('form').attr('action');",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"    pm.environment.set('action', action);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "25716217-4872-4dd8-b33a-62653afd2292",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Post login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f0cd5ae5-ecf9-4b5f-8987-a5ad78c2ce5a",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "bdc59e6c-1793-4e05-ab66-ea32cb231a67",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{ro_client_id}}",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "user",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{action}}",
+							"host": [
+								"{{action}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect after login",
 					"event": [
 						{
 							"listen": "test",
@@ -1630,20 +1665,8 @@
 									"pm.test(\"Should be redirected\", function () {",
 									"    pm.response.to.be.redirection;",
 									"    pm.response.to.have.header('Location');",
-									"});",
 									"",
-									"pm.test(\"Should be a location error\", function() {",
-									"    var location = postman.getResponseHeader('Location');",
-									"    let domain = pm.environment.get(\"domain\");",
-									"    ",
-									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('ro_client_id'));",
-									"    ",
-									"    // Non overridable field",
-									"    tests['Contains the state'] = location.includes('state=1234-5678-9876');",
-									"    tests['Contains the nonce'] = location.includes('nonce=n-0S6_WzA2Mj');",
-									"    ",
-									"    // Fiels which can be overriden ",
-									"    tests['Contains the overriden redirect_uri'] = location.includes('redirect_uri=https%3A%2F%2Fop-test%3A60001%2Fauthz_cb');",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1653,6 +1676,241 @@
 							"listen": "prerequest",
 							"script": {
 								"id": "76b397f7-b3e5-47e2-b1ee-38f060b19a09",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect to consent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9d68d5e4-b6e9-4297-bf99-1d28fa62cc58",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
+									"    ",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio.load(pm.response.text());",
+									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    const action = responseHTML('form').attr('action');",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"    pm.environment.set('action', action);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "04f24212-1fbe-4709-9f87-0a9ffe0661d7",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Post consent form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4dccdcff-3441-4753-8a45-45f2807f665b",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "1264aff2-9c44-4def-b9c7-5cd9860ce083",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "scope.openid",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "user_oauth_approval",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{action}}",
+							"host": [
+								"{{action}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect after consent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "354b624e-b491-4cb4-afc8-c5c1ed109205",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected to client app\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"   const location = postman.getResponseHeader(\"Location\");",
+									"",
+									"    // State must come from request object",
+									"    tests['Contains the request object state'] = location.includes('state=override-state');",
+									"    ",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Redirect to query param redirect_uri'] = location.includes('https://op-test-from-query-param:60001/authz_cb');",
+									"",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Contains a code'] = location.includes('code=');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "6a19f609-b203-496c-9f47-5de4b17342bb",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Use redirect_uri from request_object",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c65aae37-7ee4-4d72-8926-12c67c923a0e",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"});",
+									"",
+									"pm.test(\"Should be redirected to client app\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"   const location = postman.getResponseHeader(\"Location\");",
+									"",
+									"    // State must come from request object",
+									"    tests['Contains the request object state'] = location.includes('state=1234-5678-9876');",
+									"    ",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Redirect to query param redirect_uri'] = location.includes('https://op-test:60001/authz_cb');",
+									"",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Contains a code'] = location.includes('code=');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "0279df5a-ac13-4e9f-95be-fe311463cd55",
 								"exec": [
 									""
 								],
@@ -1704,13 +1962,59 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "11bb9394-7806-496c-800b-53f290aa364f",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "d12211e0-94c6-453c-813e-6e627ad6f637",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{logoutEndpoint}}",
+							"host": [
+								"{{logoutEndpoint}}"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"event": [
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "f96f25b4-8495-490f-ac4a-b614bc8e06ba",
+						"id": "6706e619-61e7-4254-9ef8-c883c60716bb",
 						"type": "text/javascript",
 						"exec": [
 							""
@@ -1720,7 +2024,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "f168702e-f7b8-491f-8683-12be93b9aab0",
+						"id": "ddea1b24-2e47-424d-9887-0b616263c1f2",
 						"type": "text/javascript",
 						"exec": [
 							""
@@ -1739,7 +2043,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "9d68d5e4-b6e9-4297-bf99-1d28fa62cc58",
+								"id": "b87fc6cc-3d2b-4a70-9439-00a0742db78c",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -1759,7 +2063,7 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "04f24212-1fbe-4709-9f87-0a9ffe0661d7",
+								"id": "06d25c5d-0e63-4c5b-b00a-d078a9da0e04",
 								"exec": [
 									""
 								],
@@ -1815,7 +2119,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "354b624e-b491-4cb4-afc8-c5c1ed109205",
+								"id": "bd4e2241-da9e-424d-a91a-76946e4f7d16",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -1880,7 +2184,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "c65aae37-7ee4-4d72-8926-12c67c923a0e",
+								"id": "5be22c76-0dbf-42d4-9606-df0c3448667b",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -1906,7 +2210,7 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "0279df5a-ac13-4e9f-95be-fe311463cd55",
+								"id": "66424272-dd48-408d-92e8-122aebb1cbee",
 								"exec": [
 									""
 								],
@@ -1965,7 +2269,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "11bb9394-7806-496c-800b-53f290aa364f",
+								"id": "5b4004a2-7491-40c0-bea2-3f286550b203",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -1976,15 +2280,13 @@
 									"    pm.response.to.have.header('Location');",
 									"});",
 									"",
-									"pm.test(\"Should be a location error\", function() {",
+									"pm.test(\"Should redirect to login\", function() {",
 									"    var location = postman.getResponseHeader('Location');",
 									"    let domain = pm.environment.get(\"domain\");",
 									"    ",
 									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('ro_client_id'));",
 									"    ",
-									"    // Non overridable field",
-									"    tests['Contains the state'] = location.includes('state=1234-5678-9876');",
-									"    tests['Contains the nonce'] = location.includes('nonce=n-0S6_WzA2Mj');",
+									"    pm.environment.set('redirection', location);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1993,7 +2295,7 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "d12211e0-94c6-453c-813e-6e627ad6f637",
+								"id": "6c9c38d0-358d-4da9-a7ab-05b1b54a34cb",
 								"exec": [
 									""
 								],
@@ -2047,34 +2349,26 @@
 					"response": []
 				},
 				{
-					"name": "Override max_age  parameters",
+					"name": "Redirect to login form",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
-								"id": "b87fc6cc-3d2b-4a70-9439-00a0742db78c",
+								"id": "1854f71d-bd2a-4856-b65d-b32c1ab0ce0a",
 								"exec": [
-									"pm.test(\"Status code is 302\", function () {",
-									"    pm.response.to.have.status(302);",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Should be redirected\", function () {",
-									"    pm.response.to.be.redirection;",
-									"    pm.response.to.have.header('Location');",
-									"});",
-									"",
-									"pm.test(\"Should be a location error\", function() {",
-									"    var location = postman.getResponseHeader('Location');",
-									"    let domain = pm.environment.get(\"domain\");",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('ro_client_id'));",
-									"    ",
-									"    // Non overridable field",
-									"    tests['Contains the state'] = location.includes('state=1234-5678-9876');",
-									"    tests['Contains the nonce'] = location.includes('nonce=n-0S6_WzA2Mj');",
-									"    ",
-									"    // Fiels which can be overriden ",
-									"    tests['Contains the overriden max_age'] = location.includes('max_age=360000');",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio.load(pm.response.text());",
+									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    const action = responseHTML('form').attr('action');",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"    pm.environment.set('action', action);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -2083,7 +2377,7 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "06d25c5d-0e63-4c5b-b00a-d078a9da0e04",
+								"id": "fb555bef-d6c5-4628-bfa6-3dce2fd3a6b2",
 								"exec": [
 									""
 								],
@@ -2092,51 +2386,311 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "basic"
-						},
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{ro_client_id}}&redirect_uri=https://op-test:60001/authz_cb&state=1234-5678-9876&request=eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.UX9GDda9Rc32qyNlNTbxcMOWcREvu7OJz2txZyHkplEB88-5_uEqOs3oXTjM1EJQKyLtr74ejUmY5-Cdto7EYwSgnTEs78qM6AcXZvOdwv_KLEb_PsvcNkcjds_cmuJlM_dhuO3ENBQ4SW11t3MuoUfzMteEr2GDYoR99J9eMjzfaH0TicXlb-E_yGnsj3McxBZXCs0tbYOkLOdKIlZsQ3FDTEtRavvxWXAItg8_91I68rM0a3GagW3yvYxiR6mhKUo1YKhVLVJjDHRl52lfgO1bbEyS32T-TLLgC1fJ1LnzUGjA5PkXn-C1E36oeV1NhLXbOnn6QsYjfHQALYNSjA.qvdEx3YjADz32zgb.iWfYVfmTMosMtqxny6jWann0uH3eiyZ2hiI8uhllga3LPJGqIuZXxhn9t-vIjraQLwI6Rp6AKunaOMuZNNl5xXpa8f2Lnv3-Ee1QsG8QL0tIKRabsODqIRXNq7ZnQQv8xrLEw7ZtamKxl8L_dHEcu-2GzUXDIdQtosxTPqJ0RkhOPxvNfIFLZgpY8nwexzraQzT_EFH0UFwjxsuvxsX2PpLuhV7XPSzIG6UzCtdYdulTu7TcVnQUO1OFJ6YNHNY5Z01cJ7LL4yxpmqYg9WemDl92N0AuCcMUsPXC0EFcKCkYtCqnciYtgZQRdJdccZqI9uPNXzdhf3HIa7RDhgnaqLuz22b1thCb4mXnJPBk6v5fulZrbvzPZUGfO6g9kn60ybaBekBLoL_zmDfyKABh8rxrOKbO_rQNvTQ0facXYe01c1Q91CnF1k5ss_Mnf3kYw4ylpZsVk887nIEyE3CgB7S82GEm36oVBr9jm93yIsJwARQ_r04BrcfTq7eDlWbeylrqSQFfJ9ElVCoGJEUuReuQXAKfRUxjArdU1dOt51xGrKnSoL7krGoN-3AJPmvxkqn2qa9ZywTbys7raY7Ie47i4bUA_ae4VhjNl9WP6520uP_4H9YGLgLbTO4Mvazme3GYCabsx2G_FBD3LqHpXA.udp9A-KR05FTON-Nidzh0g&scope=openid&nonce=n-0S6_WzA2Mj&max_age=120000",
+							"raw": "{{redirection}}",
 							"host": [
-								"{{authorizationEndpoint}}"
-							],
-							"query": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Post login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ca6b5eb0-8362-4429-90a7-d7bf190e4f39",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "aac0f86e-682d-4c67-8329-094e7349b2f5",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
 								{
-									"key": "response_type",
-									"value": "code"
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
 								},
 								{
 									"key": "client_id",
-									"value": "{{ro_client_id}}"
+									"value": "{{ro_client_id}}",
+									"type": "text"
 								},
 								{
-									"key": "redirect_uri",
-									"value": "https://op-test:60001/authz_cb"
+									"key": "username",
+									"value": "user",
+									"type": "text"
 								},
 								{
-									"key": "state",
-									"value": "1234-5678-9876"
-								},
-								{
-									"key": "request",
-									"value": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.UX9GDda9Rc32qyNlNTbxcMOWcREvu7OJz2txZyHkplEB88-5_uEqOs3oXTjM1EJQKyLtr74ejUmY5-Cdto7EYwSgnTEs78qM6AcXZvOdwv_KLEb_PsvcNkcjds_cmuJlM_dhuO3ENBQ4SW11t3MuoUfzMteEr2GDYoR99J9eMjzfaH0TicXlb-E_yGnsj3McxBZXCs0tbYOkLOdKIlZsQ3FDTEtRavvxWXAItg8_91I68rM0a3GagW3yvYxiR6mhKUo1YKhVLVJjDHRl52lfgO1bbEyS32T-TLLgC1fJ1LnzUGjA5PkXn-C1E36oeV1NhLXbOnn6QsYjfHQALYNSjA.qvdEx3YjADz32zgb.iWfYVfmTMosMtqxny6jWann0uH3eiyZ2hiI8uhllga3LPJGqIuZXxhn9t-vIjraQLwI6Rp6AKunaOMuZNNl5xXpa8f2Lnv3-Ee1QsG8QL0tIKRabsODqIRXNq7ZnQQv8xrLEw7ZtamKxl8L_dHEcu-2GzUXDIdQtosxTPqJ0RkhOPxvNfIFLZgpY8nwexzraQzT_EFH0UFwjxsuvxsX2PpLuhV7XPSzIG6UzCtdYdulTu7TcVnQUO1OFJ6YNHNY5Z01cJ7LL4yxpmqYg9WemDl92N0AuCcMUsPXC0EFcKCkYtCqnciYtgZQRdJdccZqI9uPNXzdhf3HIa7RDhgnaqLuz22b1thCb4mXnJPBk6v5fulZrbvzPZUGfO6g9kn60ybaBekBLoL_zmDfyKABh8rxrOKbO_rQNvTQ0facXYe01c1Q91CnF1k5ss_Mnf3kYw4ylpZsVk887nIEyE3CgB7S82GEm36oVBr9jm93yIsJwARQ_r04BrcfTq7eDlWbeylrqSQFfJ9ElVCoGJEUuReuQXAKfRUxjArdU1dOt51xGrKnSoL7krGoN-3AJPmvxkqn2qa9ZywTbys7raY7Ie47i4bUA_ae4VhjNl9WP6520uP_4H9YGLgLbTO4Mvazme3GYCabsx2G_FBD3LqHpXA.udp9A-KR05FTON-Nidzh0g"
-								},
-								{
-									"key": "scope",
-									"value": "openid"
-								},
-								{
-									"key": "nonce",
-									"value": "n-0S6_WzA2Mj"
-								},
-								{
-									"key": "max_age",
-									"value": "120000"
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
+									"type": "text"
 								}
 							]
+						},
+						"url": {
+							"raw": "{{action}}",
+							"host": [
+								"{{action}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect after login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9742b0c1-eedb-47ec-b37c-132389cc2a99",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "24391784-c272-4115-878e-fcf7e5cfd1a1",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
 						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect to consent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b02c229b-1822-421a-8dcc-caa2eca8925a",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
+									"    ",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio.load(pm.response.text());",
+									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    const action = responseHTML('form').attr('action');",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"    pm.environment.set('action', action);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "f928dbc6-31bb-4cbc-9efe-1b9ff12a749e",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post consent form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d06b4cd-44e0-4551-bf38-06d675b14d26",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "1d3cdd73-555b-410d-90e1-1237853ee1e8",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "X-XSRF-TOKEN",
+									"value": "{{xsrf}}",
+									"type": "text"
+								},
+								{
+									"key": "scope.openid",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "user_oauth_approval",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{action}}",
+							"host": [
+								"{{action}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect after consent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "292db809-c656-45d0-b6cc-9340582a1a75",
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected to client app\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"   const location = postman.getResponseHeader(\"Location\");",
+									"",
+									"    // State must come from request params",
+									"    tests['Contains the request object state'] = location.includes('state=1234-5678-9876');",
+									"    ",
+									"    // Redirect uri must match the one specified in request object.",
+									"    tests['Redirect to query param redirect_uri'] = location.includes('https://op-test:60001/authz_cb');",
+									"",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Contains a code'] = location.includes('code=');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "728a883f-de41-470f-943e-7745c829412b",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
 					},
 					"response": []
 				},
@@ -2146,7 +2700,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "bd4e2241-da9e-424d-a91a-76946e4f7d16",
+								"id": "82d7aa17-6ffb-459d-a813-12ee5cc370b0",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -2157,18 +2711,21 @@
 									"    pm.response.to.have.header('Location');",
 									"});",
 									"",
-									"pm.test(\"Should be a location error\", function() {",
-									"    var location = postman.getResponseHeader('Location');",
-									"    let domain = pm.environment.get(\"domain\");",
+									"",
+									"pm.test(\"Should be redirected to client app\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"",
+									"   const location = postman.getResponseHeader(\"Location\");",
+									"",
+									"    // State must come from request object",
+									"    tests['Contains the request object state'] = location.includes('state=1234-5678-9876');",
 									"    ",
-									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('ro_client_id'));",
-									"    ",
-									"    // Non overridable field",
-									"    tests['Contains the state'] = location.includes('state=1234-5678-9876');",
-									"    tests['Contains the nonce'] = location.includes('nonce=n-0S6_WzA2Mj');",
-									"    ",
-									"    // Fiels which can be overriden ",
-									"    tests['Contains the overriden redirect_uri'] = location.includes('redirect_uri=https%3A%2F%2Fop-test%3A60001%2Fauthz_cb');",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Redirect to query param redirect_uri'] = location.includes('https://op-test:60001/authz_cb');",
+									"",
+									"    // Redirect uri must match the one specified in query params.",
+									"    tests['Contains a code'] = location.includes('code=');",
 									"});"
 								],
 								"type": "text/javascript"

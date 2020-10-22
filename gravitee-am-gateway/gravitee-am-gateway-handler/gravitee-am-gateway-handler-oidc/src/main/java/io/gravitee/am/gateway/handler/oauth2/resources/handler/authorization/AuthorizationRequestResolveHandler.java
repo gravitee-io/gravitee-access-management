@@ -18,13 +18,15 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequestResolver;
-import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,7 +36,6 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
 
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver();
-    private static final String CLIENT_CONTEXT_KEY = "client";
 
     @Override
     public void handle(RoutingContext routingContext) {
@@ -55,7 +56,7 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
                 return;
             }
             // prepare context for the next handlers
-            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+            routingContext.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
             // continue
             routingContext.next();
         });
@@ -69,7 +70,7 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
     }
 
     private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
-        AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        AuthorizationRequest authorizationRequest = routingContext.get(AUTHORIZATION_REQUEST_CONTEXT_KEY);
         // we have the authorization request in session if we come from the approval user page
         if (authorizationRequest != null) {
             return authorizationRequest;

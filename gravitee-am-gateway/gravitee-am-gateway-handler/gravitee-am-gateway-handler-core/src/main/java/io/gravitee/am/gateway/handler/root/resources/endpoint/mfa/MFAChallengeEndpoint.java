@@ -15,16 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
@@ -41,25 +44,24 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class MFAChallengeEndpoint implements Handler<RoutingContext> {
+
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String STRONG_AUTH_COMPLETED  = "strongAuthCompleted";
-    private static final String ENROLLED_FACTOR_KEY = "enrolledFactor";
-    private static final String ERROR_PARAM = "error";
-    private static final String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
-    private FactorManager factorManager;
-    private UserService userService;
-    private ThymeleafTemplateEngine engine;
+
+    private final FactorManager factorManager;
+    private final UserService userService;
+    private final ThymeleafTemplateEngine engine;
 
     public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, ThymeleafTemplateEngine engine) {
         this.factorManager = factorManager;
@@ -84,14 +86,16 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
 
     private void renderMFAPage(RoutingContext routingContext) {
         try {
-            final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+            final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Factor factor = getFactor(routingContext, client, endUser);
-            final String error = routingContext.request().getParam(ERROR_PARAM);
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().uri(), null);
-            routingContext.put("factor", factor);
-            routingContext.put("action", action);
-            routingContext.put(ERROR_PARAM, error);
+            final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
+
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams);
+            routingContext.put(ConstantKeys.FACTOR_KEY, factor);
+            routingContext.put(ConstantKeys.ACTION_KEY, action);
+            routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
 
             // render the mfa challenge page
             engine.render(routingContext.data(), getTemplateFileName(client), res -> {
@@ -133,9 +137,10 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
                 return;
             }
             // save enrolled factor if needed and redirect to the original url
-            final String returnURL = routingContext.session().get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
-            routingContext.session().put(MFA_FACTOR_ID_CONTEXT_KEY, factorId);
-            if (routingContext.session().get(ENROLLED_FACTOR_KEY) != null) {
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+            final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
+            routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
+            if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null) {
                 saveFactor(endUser.getId(), enrolledFactor, fh -> {
                     if (fh.failed()) {
                         logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
@@ -143,14 +148,16 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
                         return;
                     }
                     // clean session
-                    routingContext.session().remove(ENROLLED_FACTOR_KEY);
+                    routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
+                    routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);
+
                     // update user strong auth status
-                    routingContext.session().put(STRONG_AUTH_COMPLETED, true);
+                    routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
                     doRedirect(routingContext.request().response(), returnURL);
                 });
             } else {
                 // update user strong auth status
-                routingContext.session().put(STRONG_AUTH_COMPLETED, true);
+                routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
                 doRedirect(routingContext.request().response(), returnURL);
             }
         });
@@ -174,9 +181,9 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     private Factor getFactor(RoutingContext routingContext, Client client, User endUser) {
         // factor can be either in session (if user come from mfa/enroll page)
         // or from the user enrolled factor list
-        if (routingContext.session().get(ENROLLED_FACTOR_KEY) != null) {
-            EnrolledFactor enrolledFactor = routingContext.session().get(ENROLLED_FACTOR_KEY);
-            return factorManager.getFactor(enrolledFactor.getFactorId());
+        final String savedFactorId = routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
+        if (savedFactorId != null) {
+            return factorManager.getFactor(savedFactorId);
         }
         return endUser.getFactors()
                 .stream()
@@ -184,14 +191,18 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
                 .findFirst()
                 .map(enrolledFactor -> factorManager.getFactor(enrolledFactor.getFactorId()))
                 .orElseThrow(() -> new FactorNotFoundException("No factor found for the end user"));
-
     }
 
     private EnrolledFactor getEnrolledFactor(RoutingContext routingContext, String factorId, User endUser) {
         // enrolled factor can be either in session (if user come from mfa/enroll page)
         // or from the user enrolled factor list
-        if (routingContext.session().get(ENROLLED_FACTOR_KEY) != null) {
-            EnrolledFactor enrolledFactor = routingContext.session().get(ENROLLED_FACTOR_KEY);
+        final String savedFactorId = routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
+        if (factorId.equals(savedFactorId)) {
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId(factorId);
+            enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
+            enrolledFactor.setCreatedAt(new Date());
+            enrolledFactor.setUpdatedAt(enrolledFactor.getCreatedAt());
             return enrolledFactor;
         }
 

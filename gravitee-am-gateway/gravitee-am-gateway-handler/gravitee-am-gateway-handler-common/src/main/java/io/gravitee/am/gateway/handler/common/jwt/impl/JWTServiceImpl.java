@@ -95,7 +95,12 @@ public class JWTServiceImpl implements JWTService {
     public Single<JWT> decodeAndVerify(String jwt, Client client) {
         return certificateManager.get(client.getCertificate())
                 .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMapSingle(certificateProvider -> decode(certificateProvider, jwt))
+                .flatMapSingle(certificateProvider -> decodeAndVerify(jwt, certificateProvider));
+    }
+
+    @Override
+    public Single<JWT> decodeAndVerify(String jwt, CertificateProvider certificateProvider) {
+        return decode(certificateProvider, jwt)
                 .map(JWT::new);
     }
 

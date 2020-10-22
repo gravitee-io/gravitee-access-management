@@ -16,11 +16,16 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
 import com.google.common.net.HttpHeaders;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.RedirectAuthHandler;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
+
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ID_TOKEN_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,23 +33,18 @@ import io.vertx.reactivex.ext.web.Session;
  */
 public class LoginCallbackEndpoint implements Handler<RoutingContext> {
 
-    private static final String ID_TOKEN_CONTEXT_KEY = "id_token";
-
     @Override
     public void handle(RoutingContext routingContext) {
-        Session session = routingContext.session();
-        if (session != null && session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM) != null) {
-            // if we have an id_token, put in the session context for post step (mainly the user consent step)
-            if (routingContext.data().containsKey(ID_TOKEN_CONTEXT_KEY)) {
-                session.put(ID_TOKEN_CONTEXT_KEY, routingContext.get(ID_TOKEN_CONTEXT_KEY));
-            }
 
-            final String redirectUrl = session.get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM);
-            doRedirect(routingContext.response(), redirectUrl);
-        } else {
-            routingContext.fail(503);
+        Session session = routingContext.session();
+        final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", (MultiMap) routingContext.get(PARAM_CONTEXT_KEY));
+
+        // if we have an id_token, put in the session context for post step (mainly the user consent step)
+        if (session != null && routingContext.data().containsKey(ID_TOKEN_KEY)) {
+            session.put(ID_TOKEN_KEY, routingContext.get(ID_TOKEN_KEY));
         }
 
+        doRedirect(routingContext.response(), returnURL);
     }
 
     private void doRedirect(HttpServerResponse response, String url) {

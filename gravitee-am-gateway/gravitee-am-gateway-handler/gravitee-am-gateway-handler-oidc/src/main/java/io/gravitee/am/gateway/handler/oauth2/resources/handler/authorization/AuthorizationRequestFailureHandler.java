@@ -19,15 +19,14 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.JWTOAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -35,7 +34,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
-import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,20 +66,13 @@ import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
 public class AuthorizationRequestFailureHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestFailureHandler.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String USER_CONSENT_COMPLETED_CONTEXT_KEY = "userConsentCompleted";
-    private static final String REQUESTED_CONSENT_CONTEXT_KEY = "requestedConsent";
-    private static final String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
-    private static final String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
     private static final String ERROR_ENDPOINT = "/oauth/error";
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
-    private String defaultErrorPath;
-    private JWTService jwtService;
-    private JWEService jweService;
-    private OpenIDDiscoveryService openIDDiscoveryService;
+    private final JWTService jwtService;
+    private final JWEService jweService;
+    private final OpenIDDiscoveryService openIDDiscoveryService;
 
-    public AuthorizationRequestFailureHandler(final Domain domain,
-                                              final OpenIDDiscoveryService openIDDiscoveryService,
+    public AuthorizationRequestFailureHandler(final OpenIDDiscoveryService openIDDiscoveryService,
                                               final JWTService jwtService,
                                               final JWEService jweService) {
         this.openIDDiscoveryService = openIDDiscoveryService;
@@ -95,28 +86,29 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
 
             try {
                 AuthorizationRequest request = resolveInitialAuthorizeRequest(routingContext);
-                Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-                String defaultErrorURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + ERROR_ENDPOINT, null);
+                Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+                String defaultErrorURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + ERROR_ENDPOINT);
                 Throwable throwable = routingContext.failure();
                 if (throwable instanceof OAuth2Exception) {
                     OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
                     // Manage exception
                     processOAuth2Exception(request, oAuth2Exception, client, defaultErrorURL, routingContext, h -> {
                         if (h.failed()) {
-                            logger.error("An errors has occurred while handling authorization error response", h.cause());
+                            logger.error("An error has occurred while handling authorization error response", h.cause());
                             routingContext.response().setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
                             return;
                         }
                         // redirect user to the error page with error code and description
-                        doRedirect(routingContext.response(), h.result());
+                        doRedirect(routingContext, h.result());
                     });
                 } else if (throwable instanceof HttpStatusException) {
                     // in case of http status exception, go to the default error page
                     request.setRedirectUri(defaultErrorURL);
                     HttpStatusException httpStatusException = (HttpStatusException) throwable;
-                    doRedirect(routingContext.response(), buildRedirectUri(httpStatusException.getMessage(), httpStatusException.getPayload(), request, routingContext));
+                    doRedirect(routingContext, buildRedirectUri(httpStatusException.getMessage(), httpStatusException.getPayload(), request, routingContext));
                 } else {
                     logger.error("An exception has occurred while handling authorization request", throwable);
+                    cleanSession(routingContext);
                     if (routingContext.statusCode() != -1) {
                         routingContext
                                 .response()
@@ -131,10 +123,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                 }
             } catch (Exception e) {
                 logger.error("Unable to handle authorization error response", e);
-                doRedirect(routingContext.response(), routingContext.get(CONTEXT_PATH) + ERROR_ENDPOINT);
-            } finally {
-                // clean session
-                cleanSession(routingContext);
+                doRedirect(routingContext, routingContext.get(CONTEXT_PATH) + ERROR_ENDPOINT);
             }
         }
     }
@@ -234,7 +223,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     }
 
     private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {
-        AuthorizationRequest authorizationRequest = routingContext.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        AuthorizationRequest authorizationRequest = routingContext.get(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY);
         // we have the authorization request in session if we come from the approval user page
         if (authorizationRequest != null) {
             return authorizationRequest;
@@ -249,14 +238,14 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     }
 
     private void cleanSession(RoutingContext context) {
-        context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
-        context.session().remove(USER_CONSENT_COMPLETED_CONTEXT_KEY);
-        context.session().remove(REQUESTED_CONSENT_CONTEXT_KEY);
-        context.session().remove(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
-        context.session().remove(MFA_FACTOR_ID_CONTEXT_KEY);
+        context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
+        context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
+        context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
+        context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
     }
 
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    private void doRedirect(RoutingContext context, String url) {
+        cleanSession(context);
+        context.response().putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 }

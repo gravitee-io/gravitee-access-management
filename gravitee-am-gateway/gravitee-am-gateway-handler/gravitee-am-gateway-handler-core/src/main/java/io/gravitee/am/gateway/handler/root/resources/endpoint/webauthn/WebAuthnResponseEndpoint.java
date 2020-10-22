@@ -18,9 +18,10 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -32,11 +33,14 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>
@@ -45,11 +49,10 @@ import org.slf4j.LoggerFactory;
  * @author GraviteeSource Team
  */
 public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
+
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnResponseEndpoint.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String PASSWORDLESS_AUTH_COMPLETED  = "passwordlessAuthCompleted";
-    private static final String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
-    private WebAuthn webAuthn;
+
+    private final WebAuthn webAuthn;
 
     public WebAuthnResponseEndpoint(UserAuthenticationManager userAuthenticationManager,
                                     WebAuthn webAuthn) {
@@ -81,21 +84,22 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                 return;
             }
 
-            final Client client = ctx.get(CLIENT_CONTEXT_KEY);
-            final String userId = session.get("userId");
-            final String username = session.get("username");
-            webauthnResp.put("userId", userId);
+            final Client client = ctx.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+            final String userId = session.get(ConstantKeys.USER_ID_KEY);
+            final String username = session.get(ConstantKeys.USERNAME_KEY);
+            webauthnResp.put(ConstantKeys.USER_ID_KEY, userId);
 
             // authenticate the user
             webAuthn.authenticate(
                     // authInfo
                     new WebAuthnCredentials()
-                            .setChallenge(session.get("challenge"))
-                            .setUsername(session.get("username"))
+                            .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
+                            .setUsername(session.get(ConstantKeys.USERNAME_KEY))
                             .setWebauthn(webauthnResp), authenticate -> {
 
                         // invalidate the challenge
-                        session.remove("challenge");
+                        session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
+                        session.remove(ConstantKeys.USERNAME_KEY);
 
                         if (authenticate.succeeded()) {
                             authenticateUser(ctx, client, username, h -> {
@@ -108,12 +112,11 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                                 // save the user into the context
                                 ctx.getDelegate().setUser(user);
                                 // the user has upgraded from unauthenticated to authenticated
-                                // session should be upgraded as recommended by owasp
-                                session.regenerateId();
-                                ctx.session().put(PASSWORDLESS_AUTH_COMPLETED, true);
-                                ctx.session().put(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, webauthnResp.getString("id"));
-                                // Now redirect back to the original url
-                                String returnURL = session.get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
+                                ctx.session().put(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY, true);
+                                ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, webauthnResp.getString("id"));
+                                // Now redirect back to authorization endpoint.
+                                final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
+                                final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
                                 ctx.response().putHeader(HttpHeaders.LOCATION, returnURL).end();
                             });
                         } else {

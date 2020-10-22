@@ -19,16 +19,16 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.UserBodyReques
 
 import java.util.Arrays;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ResetPasswordSubmissionRequestParseHandler extends UserBodyRequestParseHandler {
 
-    private static final String tokenParam = "token";
-    private static final String passwordParam = "password";
-
     public ResetPasswordSubmissionRequestParseHandler() {
-        super(Arrays.asList(tokenParam, passwordParam));
+        super(Arrays.asList(TOKEN_PARAM_KEY, PASSWORD_PARAM_KEY));
     }
 }

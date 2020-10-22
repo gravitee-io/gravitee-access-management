@@ -24,9 +24,9 @@ import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -82,7 +82,9 @@ public class SocialAuthenticationProviderTest {
         when(routingContext.get("client")).thenReturn(client);
         when(routingContext.get("provider")).thenReturn(authenticationProvider);
         when(routingContext.request()).thenReturn(httpServerRequest);
-        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
@@ -109,7 +111,9 @@ public class SocialAuthenticationProviderTest {
         when(routingContext.get("client")).thenReturn(client);
         when(routingContext.get("provider")).thenReturn(authenticationProvider);
         when(routingContext.request()).thenReturn(httpServerRequest);
-        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
@@ -136,7 +140,9 @@ public class SocialAuthenticationProviderTest {
         when(routingContext.get("client")).thenReturn(client);
         when(routingContext.get("provider")).thenReturn(authenticationProvider);
         when(routingContext.request()).thenReturn(httpServerRequest);
-        when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {

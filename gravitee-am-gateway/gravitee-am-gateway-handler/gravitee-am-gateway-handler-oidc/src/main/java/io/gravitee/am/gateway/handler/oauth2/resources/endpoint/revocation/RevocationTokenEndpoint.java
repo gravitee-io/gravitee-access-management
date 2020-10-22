@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
@@ -37,9 +38,6 @@ import org.slf4j.LoggerFactory;
 public class RevocationTokenEndpoint implements Handler<RoutingContext> {
 
     private final static Logger logger = LoggerFactory.getLogger(RevocationTokenEndpoint.class);
-    private final static String TOKEN_PARAM = "token";
-    private final static String TOKEN_TYPE_HINT_PARAM = "token_type_hint";
-    private static final String CLIENT_CONTEXT_KEY = "client";
     private RevocationTokenService revocationTokenService;
 
     public RevocationTokenEndpoint() {
@@ -56,20 +54,19 @@ public class RevocationTokenEndpoint implements Handler<RoutingContext> {
         // was issued to the client making the revocation request.  If this
         // validation fails, the request is refused and the client is informed
         // of the error by the authorization server as described below.
-        Client client = context.get(CLIENT_CONTEXT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         if (client == null) {
             throw new InvalidClientException();
         }
 
         revocationTokenService
                 .revoke(createRequest(context), client)
-                .subscribe(() -> context.response().setStatusCode(200).end(), error -> context.fail(error));
-
+                .subscribe(() -> context.response().setStatusCode(200).end(), context::fail);
     }
 
     private static RevocationTokenRequest createRequest(RoutingContext context) {
-        String token = context.request().getParam(TOKEN_PARAM);
-        String tokenTypeHint = context.request().getParam(TOKEN_TYPE_HINT_PARAM);
+        String token = context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY);
+        String tokenTypeHint = context.request().getParam(ConstantKeys.TOKEN_TYPE_HINT_PARAM_KEY);
 
         if (token == null) {
             throw new InvalidRequestException();

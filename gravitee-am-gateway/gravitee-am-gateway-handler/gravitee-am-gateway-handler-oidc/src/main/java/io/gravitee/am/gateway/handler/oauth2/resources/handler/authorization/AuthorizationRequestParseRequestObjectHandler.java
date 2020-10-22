@@ -28,12 +28,11 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.net.URI;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
  * The request Authorization Request parameter enables OpenID Connect requests to be passed in a single,
@@ -46,8 +45,6 @@ import java.util.stream.Stream;
  * @author GraviteeSource Team
  */
 public class AuthorizationRequestParseRequestObjectHandler implements Handler<RoutingContext> {
-
-    private static final String CLIENT_CONTEXT_KEY = "client";
 
     private static final String HTTPS_SCHEME  = "https";
 
@@ -63,9 +60,9 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
                             io.gravitee.am.common.oauth2.Parameters.SCOPE,
                             io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE,
                             io.gravitee.am.common.oauth2.Parameters.STATE
-                            )).flatMap(p -> p.stream()).collect(Collectors.toList());
+                            )).flatMap(Collection::stream).collect(Collectors.toList());
 
-    private RequestObjectService requestObjectService;
+    private final RequestObjectService requestObjectService;
 
     public AuthorizationRequestParseRequestObjectHandler(RequestObjectService requestObjectService) {
         this.requestObjectService = requestObjectService;
@@ -115,7 +112,7 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
                             }
                         },
                         context::fail,
-                        () -> context.next());
+                        context::next);
     }
 
     private void checkRequestObjectParameters(RoutingContext context) {

@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.twitter.authentication;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.web.UriBuilder;
@@ -37,6 +38,7 @@ import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -111,13 +113,19 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
             .build();
 
     @Override
-    public Request signInUrl(String redirectUri) {
+    public Request signInUrl(String redirectUri, String state) {
         throw new IllegalStateException("signInUrl isn't implemented for Twitter IdP");
     }
 
     @Override
-    public Maybe<Request> asyncSignInUrl(String redirectUri) {
+    public Maybe<Request> asyncSignInUrl(String redirectUri, String state) {
         try {
+            if(!StringUtils.isEmpty(state)) {
+                // Add state to redirect uri if specified. Note: Twitter is not oidc compliant and does not allow to specify a 'state' query parameter on its own authorization url.
+                final UriBuilder uriBuilder = UriBuilder.fromURIString(redirectUri).addParameter(Parameters.STATE, state);
+                redirectUri = uriBuilder.buildString();
+            }
+
             Map<String, String> parameters = Maps.<String, String>builder()
                     .put(OAUTH_CALLBACK, redirectUri)
                     .put(OAUTH_CONSUMER_KEY, configuration.getClientId())

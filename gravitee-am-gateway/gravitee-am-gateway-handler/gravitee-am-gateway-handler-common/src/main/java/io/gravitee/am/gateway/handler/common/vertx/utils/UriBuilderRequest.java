@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.utils;
 
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -39,7 +40,7 @@ public class UriBuilderRequest {
 
     public static String resolveProxyRequest(final RoutingContext context) {
 
-        return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH), null);
+        return resolveProxyRequest(context.request(), context.get(CONTEXT_PATH));
     }
 
     /**
@@ -50,7 +51,11 @@ public class UriBuilderRequest {
      * @return request uri representation
      */
     public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters) {
-        return resolve(request, path, parameters, false);
+        return resolveProxyRequest(request, path, parameters, false);
+    }
+
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path) {
+        return resolveProxyRequest(request, path, (MultiMap) null, false);
     }
 
     /**
@@ -60,13 +65,30 @@ public class UriBuilderRequest {
      * @param parameters request query params
      * @param encoded if request query params should be encoded
      * @return request uri representation
-     * @throws URISyntaxException
      */
     public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded){
+
+        final MultiMap queryParameters;
+
+        if(parameters != null) {
+            queryParameters = MultiMap.caseInsensitiveMultiMap();
+            queryParameters.addAll(parameters);
+        } else {
+            queryParameters = null;
+        }
+
+        return resolveProxyRequest(request, path, queryParameters, encoded);
+    }
+
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters){
+        return resolveProxyRequest(request, path, parameters, false);
+    }
+
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters, boolean encoded){
         return resolve(request, path, parameters, encoded);
     }
 
-    private static String resolve(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) {
+    private static String resolve(final HttpServerRequest request, final String path, final MultiMap parameters, boolean encoded) {
         UriBuilder builder = UriBuilder.newInstance();
 
         // scheme
@@ -99,9 +121,9 @@ public class UriBuilderRequest {
             builder.parameters(parameters);
         } else {
             if (parameters != null) {
-                parameters.forEach((k, v) -> {
+                parameters.forEach(entry -> {
                     // some parameters can be already URL encoded, decode first
-                    builder.addParameter(k, UriBuilder.encodeURIComponent(UriBuilder.decodeURIComponent(v)));
+                    builder.addParameter(entry.getKey(), UriBuilder.encodeURIComponent(UriBuilder.decodeURIComponent(entry.getValue())));
                 });
             }
         }

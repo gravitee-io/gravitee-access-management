@@ -40,7 +40,7 @@ import java.util.HashSet;
  * @author GraviteeSource Team
  */
 @Import(GoogleAuthenticationProviderConfiguration.class)
-public class GoogleAuthenticationProvider extends AbstractOpenIDConnectAuthenticationProvider<GoogleIdentityProviderConfiguration> {
+public class GoogleAuthenticationProvider extends AbstractOpenIDConnectAuthenticationProvider {
 
     @Autowired
     @Qualifier("googleWebClient")

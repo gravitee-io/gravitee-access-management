@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -26,10 +28,6 @@ import io.vertx.reactivex.ext.web.Session;
  * @author GraviteeSource Team
  */
 public class MFAEnrollStep extends AuthenticationFlowStep {
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
-    private static final String STRONG_AUTH_COMPLETED  = "strongAuthCompleted";
-    private static final String ENROLLED_FACTOR_KEY = "enrolledFactor";
 
     public MFAEnrollStep(Handler<RoutingContext> wrapper) {
         super(wrapper);
@@ -37,7 +35,7 @@ public class MFAEnrollStep extends AuthenticationFlowStep {
 
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Session session = routingContext.session();
         final io.gravitee.am.model.User endUser = ((User) routingContext.user().getDelegate()).getUser();
 
@@ -51,12 +49,12 @@ public class MFAEnrollStep extends AuthenticationFlowStep {
             return;
         }
         // check if user is already authenticated with strong auth
-        if (session.get(STRONG_AUTH_COMPLETED) != null && session.get(STRONG_AUTH_COMPLETED).equals(true)) {
+        if (session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY) != null && session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY).equals(true)) {
             flow.doNext(routingContext);
             return;
         }
         // check if user has skipped enrollment step
-        if (session.get(MFA_SKIPPED_KEY) != null && session.get(MFA_SKIPPED_KEY).equals(true)) {
+        if (session.get(ConstantKeys.MFA_SKIPPED_KEY) != null && session.get(ConstantKeys.MFA_SKIPPED_KEY).equals(true)) {
             flow.doNext(routingContext);
             return;
         }
@@ -70,7 +68,7 @@ public class MFAEnrollStep extends AuthenticationFlowStep {
     }
 
     private boolean isUserEnrolled(RoutingContext routingContext, io.gravitee.am.model.User user, Client client) {
-        if (routingContext.session().get(ENROLLED_FACTOR_KEY) != null) {
+        if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null) {
             return true;
         }
 
@@ -80,7 +78,7 @@ public class MFAEnrollStep extends AuthenticationFlowStep {
 
         return user.getFactors()
                 .stream()
-                .map(enrolledFactor -> enrolledFactor.getFactorId())
+                .map(EnrolledFactor::getFactorId)
                 .anyMatch(f -> client.getFactors().contains(f));
     }
 }

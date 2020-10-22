@@ -15,11 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -27,11 +28,7 @@ import java.util.Map;
  */
 public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
 
-    public static final String PASSWORD_PARAM = "password";
-    public static final String TOKEN_PARAM = "token";
-    public static final String WARNING_PARAM = "warning";
-    public static final String CLIENT_ID_PARAM = "client_id";
-    private PasswordValidator passwordValidator;
+    private final PasswordValidator passwordValidator;
 
     public PasswordPolicyRequestParseHandler(PasswordValidator passwordValidator) {
         this.passwordValidator = passwordValidator;
@@ -39,16 +36,16 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
 
     @Override
     public void handle(RoutingContext context) {
-        if (!passwordValidator.validate(context.request().getParam(PASSWORD_PARAM))) {
-            Map<String, String> parameters = new HashMap<>();
-            if (context.request().getParam(CLIENT_ID_PARAM) != null) {
-                parameters.put(CLIENT_ID_PARAM, context.request().getParam(CLIENT_ID_PARAM));
+        if (!passwordValidator.validate(context.request().getParam(ConstantKeys.PASSWORD_PARAM_KEY))) {
+            MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
+            if (context.request().getParam(Parameters.CLIENT_ID) != null) {
+                queryParams.set(Parameters.CLIENT_ID, context.request().getParam(Parameters.CLIENT_ID));
             }
-            if (context.request().getParam(TOKEN_PARAM) != null) {
-                parameters.put(TOKEN_PARAM, context.request().getParam(TOKEN_PARAM));
+            if (context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY) != null) {
+                queryParams.set(ConstantKeys.TOKEN_PARAM_KEY, context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY));
             }
-            parameters.put(WARNING_PARAM, "invalid_password_value");
-            redirectToPage(context, parameters);
+            queryParams.set(ConstantKeys.WARNING_PARAM_KEY, "invalid_password_value");
+            redirectToPage(context, queryParams);
         } else {
             context.next();
         }

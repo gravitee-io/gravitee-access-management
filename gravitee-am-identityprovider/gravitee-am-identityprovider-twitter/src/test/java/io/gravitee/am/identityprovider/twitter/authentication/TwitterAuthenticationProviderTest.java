@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.twitter.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.twitter.TwitterIdentityProviderConfiguration;
@@ -97,7 +98,7 @@ public class TwitterAuthenticationProviderTest {
                         "&oauth_token_secret=veNRnAWe6inFuo8o2u8SLLZLjolYDmDP7SzL0YfYI" +
                         "&oauth_callback_confirmed=true");
 
-        Request request = provider.asyncSignInUrl("https://gravitee.io").blockingGet();
+        Request request = provider.asyncSignInUrl("https://gravitee.io", RandomString.generate()).blockingGet();
 
         assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
@@ -111,14 +112,14 @@ public class TwitterAuthenticationProviderTest {
         when(httpResponse.statusCode())
                 .thenReturn(HttpStatusCode.BAD_REQUEST_400);
 
-        provider.asyncSignInUrl("https://gravitee.io").blockingGet();
+        provider.asyncSignInUrl("https://gravitee.io", RandomString.generate()).blockingGet();
     }
 
     @Test(expected = IllegalStateException.class)
     public void shouldThrowIllegalStateException() {
         // An authentication request is required on Twitter before
         // generating the signIn Url, so synchronous method is forbidden.
-        provider.signInUrl("https://gravitee.io");
+        provider.signInUrl("https://gravitee.io", RandomString.generate());
     }
 
     @Test
@@ -161,7 +162,7 @@ public class TwitterAuthenticationProviderTest {
                 );
 
         // init token secret
-        provider.asyncSignInUrl("https://gravitee.io").blockingGet();
+        provider.asyncSignInUrl("https://gravitee.io", RandomString.generate()).blockingGet();
 
         TestObserver<User> obs = provider.loadUserByUsername(authentication).test();
 
@@ -207,7 +208,7 @@ public class TwitterAuthenticationProviderTest {
                 .thenReturn("[ { code: 89, message: 'Invalid or expired token.' } ]");
 
         // init token secret
-        provider.asyncSignInUrl("https://gravitee.io").blockingGet();
+        provider.asyncSignInUrl("https://gravitee.io", RandomString.generate()).blockingGet();
 
         TestObserver<User> obs = provider.loadUserByUsername(authentication).test();
 

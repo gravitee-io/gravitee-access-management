@@ -15,14 +15,20 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent;
 
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,20 +36,17 @@ import org.slf4j.LoggerFactory;
  */
 public class UserConsentPostEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserConsentPostEndpoint.class);
-    private static final String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorizationRequest";
+    private static final Logger logger = LoggerFactory.getLogger(UserConsentPostEndpoint.class);
 
     @Override
     public void handle(RoutingContext routingContext) {
-        // retrieve authorization request
-        AuthorizationRequest authorizationRequest = routingContext.get(AUTHORIZATION_REQUEST_CONTEXT_KEY);
-
         // consent has been processed, replay authorization request
         try {
-            final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(), authorizationRequest.path(), authorizationRequest.parameters().toSingleValueMap());
+            final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
+                    routingContext.get(CONTEXT_PATH) + "/oauth/authorize", RequestUtils.getCleanedQueryParams(routingContext.request()));
             doRedirect(routingContext.response(), authorizationRequestUrl);
         } catch (Exception e) {
-            LOGGER.error("An error occurs while handling authorization approval request", e);
+            logger.error("An error occurs while handling authorization approval request", e);
             routingContext.fail(503);
         }
     }

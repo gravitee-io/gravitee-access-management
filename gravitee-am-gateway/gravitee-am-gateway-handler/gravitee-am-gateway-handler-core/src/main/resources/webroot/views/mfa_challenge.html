@@ -44,10 +44,10 @@
                     </div>
 
                     <div th:if="${error}" class="mfa-challenge-error-info">
-                        <span>
-                            <span class="error">mfa_challenge_failed</span>
-                             <small class="error_description">Invalid code</small>
-                        </span>
+                            <span>
+                                <span class="error" th:text="${error}"></span>
+                                <small class="error_description" th:text="*{error_description}?: 'Invalid code'"></small>
+                            </span>
                     </div>
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" th:name="factorId" th:value="${factor.id}"/>

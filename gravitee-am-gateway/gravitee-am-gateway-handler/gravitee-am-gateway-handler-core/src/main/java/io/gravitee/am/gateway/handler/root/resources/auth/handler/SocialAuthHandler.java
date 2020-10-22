@@ -17,13 +17,14 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler;
 
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.impl.SocialAuthHandlerImpl;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
-import io.vertx.reactivex.ext.web.handler.AuthHandler;
+import io.vertx.core.Handler;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SocialAuthHandler {
+public interface SocialAuthHandler extends Handler<RoutingContext> {
 
     /**
      * Create authentication handler for social/oauth2 authentication
@@ -31,7 +32,7 @@ public interface SocialAuthHandler {
      * @param authProvider  the auth provider to use
      * @return the auth handler
      */
-    static AuthHandler create(SocialAuthenticationProvider authProvider) {
-        return AuthHandler.newInstance(new SocialAuthHandlerImpl(authProvider));
+    static SocialAuthHandler create(SocialAuthenticationProvider authProvider) {
+        return new SocialAuthHandlerImpl(authProvider);
     }
 }

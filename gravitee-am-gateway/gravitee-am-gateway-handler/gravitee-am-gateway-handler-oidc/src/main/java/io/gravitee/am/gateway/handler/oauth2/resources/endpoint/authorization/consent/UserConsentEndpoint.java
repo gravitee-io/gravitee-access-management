@@ -15,23 +15,29 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
+import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -39,11 +45,9 @@ import java.util.Set;
  */
 public class UserConsentEndpoint implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(UserConsentEndpoint.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String SCOPES_CONTEXT_KEY = "scopes";
-    private static final String REQUESTED_CONSENT_CONTEXT_KEY = "requestedConsent";
-    private UserConsentService userConsentService;
-    private ThymeleafTemplateEngine engine;
+
+    private final UserConsentService userConsentService;
+    private final ThymeleafTemplateEngine engine;
 
     public UserConsentEndpoint(UserConsentService userConsentService, ThymeleafTemplateEngine engine) {
         this.userConsentService = userConsentService;
@@ -52,18 +56,21 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
-        final Session session = routingContext.session();
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-        final Set<String> requiredConsent = session.get(REQUESTED_CONSENT_CONTEXT_KEY);
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        final io.gravitee.am.model.User user = routingContext.user() != null ? ((User) routingContext.user().getDelegate()).getUser() : null;
+        final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().uri());
+        final AuthorizationRequest authorizationRequest = routingContext.get(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY);
+        final boolean prompt = authorizationRequest.getPrompts().contains("consent");
 
         // fetch scope information (name + description)
-        fetchConsentInformation(requiredConsent, h -> {
+        fetchConsentInformation(authorizationRequest.getScopes(), prompt, client, user, h -> {
             if (h.failed()) {
                 routingContext.fail(h.cause());
                 return;
             }
             List<Scope> requestedScopes = h.result();
-            routingContext.put(SCOPES_CONTEXT_KEY, requestedScopes);
+            routingContext.put(ConstantKeys.SCOPES_CONTEXT_KEY, requestedScopes);
+            routingContext.put(ConstantKeys.ACTION_KEY, action);
             engine.render(routingContext.data(), getTemplateFileName(client), res -> {
                 if (res.succeeded()) {
                     routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
@@ -76,11 +83,30 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
         });
     }
 
-    private void fetchConsentInformation(Set<String> requiredConsent, Handler<AsyncResult<List<Scope>>> handler) {
-        userConsentService.getConsentInformation(requiredConsent)
-                .subscribe(
-                        scopes -> handler.handle(Future.succeededFuture(scopes)),
-                        error -> handler.handle(Future.failedFuture(error)));
+    private void fetchConsentInformation(Set<String> requestedConsents, boolean prompt, Client client, io.gravitee.am.model.User user, Handler<AsyncResult<List<Scope>>> handler) {
+
+        final Single<List<Scope>> consentInformation;
+
+        if (prompt) {
+            consentInformation = userConsentService.getConsentInformation(requestedConsents);
+        } else {
+            consentInformation = userConsentService.checkConsent(client, user)
+                    .flatMap(approvedConsent -> {
+                        // user approved consent, continue
+                        if (approvedConsent.containsAll(requestedConsents)) {
+                            //redirectToAuthorize
+                            return Single.just(Collections.<Scope>emptyList());
+                        }
+                        // else go to the user consent page
+                        Set<String> requiredConsent = requestedConsents.stream().filter(requestedScope -> !approvedConsent.contains(requestedScope)).collect(Collectors.toSet());
+
+                        return userConsentService.getConsentInformation(requiredConsent);
+                    });
+        }
+
+        consentInformation.subscribe(
+                scopes -> handler.handle(Future.succeededFuture(scopes)),
+                error -> handler.handle(Future.failedFuture(error)));
     }
 
     private String getTemplateFileName(Client client) {

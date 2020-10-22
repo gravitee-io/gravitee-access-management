@@ -22,8 +22,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.utils;
  */
 public interface OAuth2Constants {
 
-    String AUTHORIZATION_REQUEST = "authorization_request";
-
     String USER_OAUTH_APPROVAL = "user_oauth_approval";
 
     String SCOPE_PREFIX = "scope.";

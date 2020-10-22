@@ -1398,7 +1398,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopes\": [\"openid\"]\n\t}\n  }\n}"
+									"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"tokenEndpointAuthMethod\": \"client_secret_post\",\n\t\t\"scopes\": [\"openid\"]\n\t}\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -1589,7 +1589,7 @@
 										"id": "63f66ecb-5772-48df-a656-b1c33cdc4d71",
 										"exec": [
 											"// wait for sync process",
-											"setTimeout(function(){}, 3000);"
+											"setTimeout(function(){}, 10000);"
 										],
 										"type": "text/javascript"
 									}
@@ -1831,9 +1831,11 @@
 											"    pm.response.to.be.ok;",
 											"    ",
 											"    // Extract the XSRF token to send it with the next request.",
-											"    var responseHTML = cheerio(pm.response.text());",
-											"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    var responseHTML = cheerio.load(pm.response.text());",
+											"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    const action = responseHTML('form').attr('action');",
 											"    pm.environment.set('xsrf', xsrfToken);",
+											"    pm.environment.set('action', action);",
 											"});"
 										],
 										"type": "text/javascript"
@@ -1931,13 +1933,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/login",
+									"raw": "{{action}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"login"
+										"{{action}}"
 									]
 								},
 								"description": "The client does not have a redirect_uri define"
@@ -2006,9 +2004,11 @@
 											"    pm.response.to.be.ok;",
 											"    ",
 											"    // Extract the XSRF token to send it with the next request.",
-											"    var responseHTML = cheerio(pm.response.text());",
-											"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    var responseHTML = cheerio.load(pm.response.text());",
+											"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    const action = responseHTML('form').attr('action');",
 											"    pm.environment.set('xsrf', xsrfToken);",
+											"    pm.environment.set('action', action);",
 											"});"
 										],
 										"type": "text/javascript"
@@ -2100,14 +2100,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/oauth/consent",
+									"raw": "{{action}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"oauth",
-										"consent"
+										"{{action}}"
 									]
 								},
 								"description": "The client does not have a redirect_uri define"
@@ -2672,9 +2667,11 @@
 											"    pm.response.to.be.ok;",
 											"    ",
 											"    // Extract the XSRF token to send it with the next request.",
-											"    var responseHTML = cheerio(pm.response.text());",
-											"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    var responseHTML = cheerio.load(pm.response.text());",
+											"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+											"    const action = responseHTML('form').attr('action');",
 											"    pm.environment.set('xsrf', xsrfToken);",
+											"    pm.environment.set('action', action);",
 											"});"
 										],
 										"type": "text/javascript"
@@ -2772,13 +2769,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/login",
+									"raw": "{{action}}",
 									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domain}}",
-										"login"
+										"{{action}}"
 									]
 								},
 								"description": "The client does not have a redirect_uri define"

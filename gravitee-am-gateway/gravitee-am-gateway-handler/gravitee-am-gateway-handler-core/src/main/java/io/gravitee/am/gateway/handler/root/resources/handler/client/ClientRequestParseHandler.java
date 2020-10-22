@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.client;
 
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
@@ -25,14 +25,15 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ClientRequestParseHandler implements Handler<RoutingContext> {
 
-    public static final String CLIENT_CONTEXT_KEY = "client";
-    private ClientSyncService clientSyncService;
+    private final ClientSyncService clientSyncService;
     private boolean required;
 
     public ClientRequestParseHandler(ClientSyncService clientSyncService) {

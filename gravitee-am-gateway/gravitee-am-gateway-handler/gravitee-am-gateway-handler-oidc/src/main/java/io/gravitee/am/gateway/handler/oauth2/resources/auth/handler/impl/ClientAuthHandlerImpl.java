@@ -31,12 +31,13 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import java.util.Base64;
 import java.util.List;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
-    private static final String CLIENT_CONTEXT_KEY = "client";
     private final ClientSyncService clientSyncService;
     private final List<ClientAuthProvider> clientAuthProviders;
 
@@ -78,7 +79,6 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
             });
 
         });
-
     }
 
     private void authenticateClient(Client client, RoutingContext context, Handler<AsyncResult<Client>> handler) {
@@ -152,7 +152,7 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 }
                 handler.handle(Future.succeededFuture(clientId));
             }
-        }  catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method")));
         }
     }

@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
-import io.netty.handler.codec.http.cookie.Cookie;
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.CookieHandler;
-import io.vertx.ext.web.impl.CookieImpl;
+import io.vertx.core.Handler;
+import io.vertx.core.http.Cookie;
+import io.vertx.core.http.impl.ServerCookie;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
+import java.util.Map;
 import java.util.Set;
 
-import static io.vertx.core.http.HttpHeaders.COOKIE;
-import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * Override default Vert.x Cookie Handler to set proxy cookie path
@@ -32,28 +31,24 @@ import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CookieHandlerImpl implements CookieHandler {
+public class CookieHandler implements Handler<RoutingContext> {
 
     private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
+    private final boolean cookieSecure;
+
+    public CookieHandler(boolean cookieSecure) {
+        this.cookieSecure = cookieSecure;
+    }
 
     @Override
     public void handle(RoutingContext context) {
-        String cookieHeader = context.request().headers().get(COOKIE);
-
-        if (cookieHeader != null) {
-            Set<Cookie> nettyCookies = ServerCookieDecoder.STRICT.decode(cookieHeader);
-            for (io.netty.handler.codec.http.cookie.Cookie cookie : nettyCookies) {
-                io.vertx.ext.web.Cookie ourCookie = new CookieImpl(cookie);
-                context.addCookie(ourCookie);
-            }
-        }
 
         context.addHeadersEndHandler(v -> {
             // save the cookies
-            Set<io.vertx.ext.web.Cookie> cookies = context.cookies();
-            for (io.vertx.ext.web.Cookie cookie: cookies) {
-                if (cookie.isChanged()) {
-                    proxy(context, cookie);
+            Map<String, Cookie> cookies = context.getDelegate().cookieMap();
+            for (Cookie cookie: cookies.values()) {
+                if (cookie instanceof ServerCookie && ((ServerCookie) cookie).isChanged()) {
+                    finalizeCookie(context, (ServerCookie) cookie);
                 }
             }
         });
@@ -61,16 +56,30 @@ public class CookieHandlerImpl implements CookieHandler {
         context.next();
     }
 
-    private void proxy(RoutingContext context, io.vertx.ext.web.Cookie cookie) {
-        final String cookiePath = cookie.getPath();
+    /**
+     * Juste finalize the cookie to make sure that attributes are well defined (path, secure flag, ...).
+     *
+     * @param context the current routing context.
+     * @param cookie the cookie to rewrite.
+     */
+    private void finalizeCookie(RoutingContext context, ServerCookie cookie) {
+        final String cookiePath = context.get(CONTEXT_PATH);
         String forwardedPath = context.request().getHeader(X_FORWARDED_PREFIX);
         if (forwardedPath != null && !forwardedPath.isEmpty()) {
-            // remove trailing slash
+            // Remove trailing slash.
             forwardedPath = forwardedPath.substring(0, forwardedPath.length() - (forwardedPath.endsWith("/") ? 1 : 0));
             forwardedPath += cookiePath;
         } else {
             forwardedPath = cookiePath;
         }
+
+        // Rewrite the cookie path (depends on domain path and possible X-Forwarded-Prefix request header).
         cookie.setPath(forwardedPath);
+
+        // Make sure the cookie secure attribute is set as expected.
+        cookie.setSecure(cookieSecure);
+
+        // There is no reason to allow javascript to access gateway's cookie.
+        cookie.setHttpOnly(true);
     }
 }

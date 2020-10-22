@@ -15,18 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
-import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
-import io.gravitee.am.gateway.handler.oauth2.exception.JWTOAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.response.jwt.JWTAuthorizationResponse;
-import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
-import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
-import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
@@ -35,8 +28,6 @@ import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.
@@ -51,12 +42,8 @@ import java.time.Instant;
 public class AuthorizationEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationEndpoint.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String USER_CONSENT_COMPLETED_CONTEXT_KEY = "userConsentCompleted";
-    private static final String REQUESTED_CONSENT_CONTEXT_KEY = "requestedConsent";
-    private static final String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
-    private static final String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
-    private Flow flow;
+
+    private final Flow flow;
 
     public AuthorizationEndpoint(Flow flow) {
         this.flow = flow;
@@ -72,10 +59,10 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         }
 
         // get authorization request
-        AuthorizationRequest request = context.session().get(OAuth2Constants.AUTHORIZATION_REQUEST);
+        AuthorizationRequest request = context.get(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY);
 
         // get client
-        Client client = context.get(CLIENT_CONTEXT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         // get resource owner
         io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
@@ -91,8 +78,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
                                 logger.error("Unable to redirect to client redirect_uri", e);
                                 context.fail(new ServerErrorException());
                             }
-                        },
-                        error -> context.fail(error));
+                        }, context::fail);
 
     }
 
@@ -101,10 +87,9 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     }
 
     private void cleanSession(RoutingContext context) {
-        context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
-        context.session().remove(USER_CONSENT_COMPLETED_CONTEXT_KEY);
-        context.session().remove(REQUESTED_CONSENT_CONTEXT_KEY);
-        context.session().remove(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
-        context.session().remove(MFA_FACTOR_ID_CONTEXT_KEY);
+        context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
+        context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
+        context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
+        context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
     }
 }

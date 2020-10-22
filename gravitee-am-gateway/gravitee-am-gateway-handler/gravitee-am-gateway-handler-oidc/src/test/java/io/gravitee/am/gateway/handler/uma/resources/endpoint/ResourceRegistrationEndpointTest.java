@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.Resource;
@@ -94,8 +94,8 @@ public class ResourceRegistrationEndpointTest {
         when(domain.getId()).thenReturn(DOMAIN_ID);
         when(jwt.getSub()).thenReturn(USER_ID);
         when(client.getId()).thenReturn(CLIENT_ID);
-        when(context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY)).thenReturn(jwt);
-        when(context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        when(context.get(ConstantKeys.TOKEN_CONTEXT_KEY)).thenReturn(jwt);
+        when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(context.response()).thenReturn(response);
         when(response.putHeader(anyString(),anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);

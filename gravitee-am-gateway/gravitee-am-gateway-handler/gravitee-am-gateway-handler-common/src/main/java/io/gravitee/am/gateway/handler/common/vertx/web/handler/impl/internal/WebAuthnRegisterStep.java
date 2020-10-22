@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
@@ -28,10 +29,8 @@ import io.vertx.reactivex.ext.web.Session;
  * @author GraviteeSource Team
  */
 public class WebAuthnRegisterStep extends AuthenticationFlowStep {
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";
-    private static final String PASSWORDLESS_AUTH_COMPLETED  = "passwordlessAuthCompleted";
-    private Domain domain;
+
+    private final Domain domain;
 
     public WebAuthnRegisterStep(Domain domain, Handler<RoutingContext> wrapper) {
         super(wrapper);
@@ -40,7 +39,7 @@ public class WebAuthnRegisterStep extends AuthenticationFlowStep {
 
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Session session = routingContext.session();
         final io.gravitee.am.model.User endUser = ((User) routingContext.user().getDelegate()).getUser();
 
@@ -51,12 +50,12 @@ public class WebAuthnRegisterStep extends AuthenticationFlowStep {
             return;
         }
         // check if user is already authenticated with passwordless
-        if (session.get(PASSWORDLESS_AUTH_COMPLETED) != null && session.get(PASSWORDLESS_AUTH_COMPLETED).equals(true)) {
+        if (Boolean.TRUE.equals(session.get(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY))) {
             flow.doNext(routingContext);
             return;
         }
         // check if user has skipped registration step
-        if (session.get(WEBAUTHN_SKIPPED_KEY) != null && session.get(WEBAUTHN_SKIPPED_KEY).equals(true)) {
+        if (Boolean.TRUE.equals(session.get(ConstantKeys.WEBAUTHN_SKIPPED_KEY))) {
             flow.doNext(routingContext);
             return;
         }

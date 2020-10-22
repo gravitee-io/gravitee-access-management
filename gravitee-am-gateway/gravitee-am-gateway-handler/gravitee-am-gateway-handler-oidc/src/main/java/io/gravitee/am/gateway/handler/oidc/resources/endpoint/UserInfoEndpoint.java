@@ -21,10 +21,10 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.model.oidc.Client;
@@ -87,8 +87,8 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         String subject = accessToken.getSub();
         userService.findById(subject)
                 .switchIfEmpty(Maybe.error(new InvalidTokenException("No user found for this token")))

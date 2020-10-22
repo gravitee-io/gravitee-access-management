@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.error;
 
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,8 +44,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 public class ErrorHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(ErrorHandler.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private String errorPage;
+    private final String errorPage;
 
     public ErrorHandler(String errorPage) {
         this.errorPage = errorPage;
@@ -106,11 +106,11 @@ public class ErrorHandler implements Handler<RoutingContext> {
                 parameters.put("error_description", errorDetail);
             }
             // redirect
-            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request,  errorPageURL, parameters, true);
+            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPageURL, parameters, true);
             doRedirect(routingContext.response(), proxiedErrorPage);
         } catch (Exception e) {
             logger.error("Unable to handle root error response", e);
-            doRedirect(routingContext.response(),  errorPageURL);
+            doRedirect(routingContext.response(), errorPageURL);
         }
     }
 

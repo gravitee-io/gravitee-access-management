@@ -155,7 +155,7 @@ public class TokenServiceTest {
         jwt.setAud(clientId);
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000l);
 
-        when(jwtService.decodeAndVerify(any(), any())).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(any(), any(Client.class))).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
 
@@ -190,7 +190,7 @@ public class TokenServiceTest {
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000l);
         jwt.put("permissions", Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("A"))));
 
-        when(jwtService.decodeAndVerify(any(), any())).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(any(), any(Client.class))).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
         when(refreshTokenRepository.delete(anyString())).thenReturn(Completable.complete());
 
@@ -227,10 +227,10 @@ public class TokenServiceTest {
         jwt.setAud(clientId);
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000l);
 
-        when(jwtService.decodeAndVerify(any(), any())).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq("encoded"), any(Client.class))).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.empty());
 
-        TestObserver<Token> testObserver = tokenService.refresh(any(), tokenRequest, any()).test();
+        TestObserver<Token> testObserver = tokenService.refresh("encoded", tokenRequest, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
@@ -259,10 +259,10 @@ public class TokenServiceTest {
         jwt.setAud(clientId);
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000l);
 
-        when(jwtService.decodeAndVerify(any(), any())).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(eq(refreshToken.getToken()), any(Client.class))).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
 
-        TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), any(), any()).test();
+        TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidGrantException.class);
 
@@ -291,7 +291,7 @@ public class TokenServiceTest {
         jwt.setAud(clientId);
         jwt.setExp(refreshToken.getExpireAt().getTime() / 1000l);
 
-        when(jwtService.decodeAndVerify(any(), any())).thenReturn(Single.just(jwt));
+        when(jwtService.decodeAndVerify(any(), any(Client.class))).thenReturn(Single.just(jwt));
         when(refreshTokenRepository.findByToken(any())).thenReturn(Maybe.just(refreshToken));
 
         TestObserver<Token> testObserver = tokenService.refresh(refreshToken.getToken(), tokenRequest, client).test();

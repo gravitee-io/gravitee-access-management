@@ -69,6 +69,14 @@ public interface JWTService {
     Single<JWT> decodeAndVerify(String jwt, Client client);
 
     /**
+     * Decode JWT signed string representation to JWT using the specified certificate provider.
+     * @param jwt JWT to decode
+     * @param certificateProvider the certificate provider to use to verify jwt signature.
+     * @return JWT object
+     */
+    Single<JWT> decodeAndVerify(String jwt, CertificateProvider certificateProvider);
+
+    /**
      * Decode JWT signed string representation to JWT without signature verification
      * @param jwt JWT to decode
      * @return JWT object

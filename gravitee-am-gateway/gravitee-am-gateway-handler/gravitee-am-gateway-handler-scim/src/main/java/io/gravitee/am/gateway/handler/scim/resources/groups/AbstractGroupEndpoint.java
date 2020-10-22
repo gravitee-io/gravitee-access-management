@@ -46,7 +46,7 @@ public class AbstractGroupEndpoint {
     }
 
     protected String location(HttpServerRequest request) {
-        return UriBuilderRequest.resolveProxyRequest(request, request.path(), null);
+        return UriBuilderRequest.resolveProxyRequest(request, request.path());
     }
 
     protected void checkSchemas(List<String> schemas) throws Exception {

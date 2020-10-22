@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.uma.resources.request.PermissionTicketRequest;
 import io.gravitee.am.gateway.handler.uma.resources.response.PermissionTicketResponse;
 import io.gravitee.am.model.Domain;
@@ -63,8 +63,8 @@ public class PermissionEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         this.extractRequest(context)
                 .flatMap(this::bodyValidation)

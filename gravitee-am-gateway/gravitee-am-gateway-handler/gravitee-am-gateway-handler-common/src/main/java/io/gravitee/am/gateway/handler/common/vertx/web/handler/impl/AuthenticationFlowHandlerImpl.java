@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.RedirectAuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
@@ -43,8 +42,7 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
-        steps.add(new AutoLoginStep());
-        steps.add(new FormLoginStep(RedirectAuthHandler.create(authProvider, "/login")));
+        steps.add(new FormLoginStep(RedirectHandler.create("/login")));
         steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register")));
         steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll")));
         steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge")));

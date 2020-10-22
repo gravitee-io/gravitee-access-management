@@ -16,13 +16,14 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import com.google.common.net.HttpHeaders;
-import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.common.exception.authentication.AuthenticationException;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerResponse;
@@ -42,7 +43,6 @@ import java.util.Map;
 public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCallbackFailureHandler.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
 
     @Override
     public void handle(RoutingContext routingContext) {
@@ -71,16 +71,20 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
 
     private void redirectToLoginPage(RoutingContext context, Throwable throwable) {
         try {
-            Client client = context.get(CLIENT_CONTEXT_KEY);
+            Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             Map<String, String> params = new HashMap<>();
             params.put(Parameters.CLIENT_ID, client.getClientId());
-            params.put("error", "social_authentication_failed");
-            params.put("error_description", UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
+            params.put(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
+            params.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
             String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path().replaceFirst("/callback", ""), params);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to the login page", ex);
-            context.fail(503);
+            // Note: we can't invoke context.fail cause it'll lead to infinite failure handling.
+            context
+                    .response()
+                    .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
+                    .end();
         }
     }
 

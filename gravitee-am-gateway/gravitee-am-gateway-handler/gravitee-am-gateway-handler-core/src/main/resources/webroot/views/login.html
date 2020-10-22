@@ -25,7 +25,7 @@
                     <label>Sign in</label>
                     <span>to continue to <span th:text="${domain.name}"></span></span>
                 </div>
-                <form role="form" th:action="@{login}" method="post">
+                <form role="form" th:action="${action}" method="post">
                     <div class="login-form-content">
                         <div class="input-textfield">
                             <label for="username">Username</label>
@@ -35,10 +35,10 @@
                             <label for="password">Password</label>
                             <input type="password" id="password" name="password" required />
                         </div>
-                        <div th:if="${param.error}" class="login-error-info">
+                        <div th:if="${error}" class="login-error-info">
                             <span>
-                                <span class="error">login_failed</span>
-                                 <small class="error_description">Wrong user or password</small>
+                                <span class="error" th:text="${error}"></span>
+                                <small class="error_description" th:text="*{error_description}?: 'Wrong user or password'"></small>
                             </span>
                         </div>
                     </div>
@@ -50,13 +50,13 @@
                     </div>
                     <div class="login-form-additional-actions">
                         <div th:if="${allowForgotPassword}">
-                            <a th:href="@{forgotPassword(client_id=${param.client_id})}">Forgot Password ?</a>
+                            <a th:href="${forgotPasswordAction}">Forgot Password ?</a>
                         </div>
                         <div th:if="${allowRegister}">
-                            <a th:href="@{register(client_id=${param.client_id})}">No account ? Register</a>
+                            <a th:href="${registerAction}">No account ? Register</a>
                         </div>
                         <div  th:if="${allowPasswordless}">
-                            <a th:href="@{webauthn/login(client_id=${param.client_id})}">Sign in with fingerprint, device or security key</a>
+                            <a th:href="${passwordlessAction}">Sign in with fingerprint, device or security key</a>
                         </div>
                     </div>
                 </form>

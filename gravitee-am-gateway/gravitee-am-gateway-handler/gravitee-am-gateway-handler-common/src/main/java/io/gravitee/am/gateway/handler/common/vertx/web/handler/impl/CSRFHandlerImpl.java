@@ -15,13 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.vertx.core.http.Cookie;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.web.Cookie;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.CSRFHandler;
 import io.vertx.ext.web.handler.SessionHandler;
+import io.vertx.reactivex.core.MultiMap;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -32,8 +37,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * Override default Vert.x CSRFHandler to enhance routing context with CSRF values to fill in the right value for the form fields.
@@ -126,7 +129,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
         String saltPlusToken = tokens[0] + "." + tokens[1];
         String signature = BASE64.encodeToString(mac.doFinal(saltPlusToken.getBytes()));
 
-        if(!signature.equals(tokens[2])) {
+        if (!signature.equals(tokens[2])) {
             return false;
         }
 
@@ -138,15 +141,20 @@ public class CSRFHandlerImpl implements CSRFHandler {
         }
     }
 
-    protected void forbidden(RoutingContext ctx) {
-        final int statusCode = 403;
-        if (responseBody != null) {
-            ctx.response()
-                    .setStatusCode(statusCode)
-                    .end(responseBody);
-        } else {
-            ctx.fail(statusCode);
-        }
+    protected void redirect(RoutingContext ctx) {
+        final int statusCode = 302;
+
+        final HttpServerRequest httpServerRequest = new HttpServerRequest(ctx.request());
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(httpServerRequest);
+        queryParams.set("error", "session_expired");
+        queryParams.set("error_description", "Your session expired, please try again.");
+
+        final String uri = UriBuilderRequest.resolveProxyRequest(httpServerRequest, ctx.request().path(), queryParams);
+
+        ctx.response()
+                .putHeader(HttpHeaders.LOCATION, uri)
+                .setStatusCode(statusCode)
+                .end();
     }
 
     @Override
@@ -166,8 +174,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
                 final String token = generateToken();
                 // put the token in the context for users who prefer to render the token directly on the HTML
                 ctx.put(headerName, token);
-                String cookiePath = ctx.get(CONTEXT_PATH) != null ? ctx.get(CONTEXT_PATH) : this.cookiePath;
-                ctx.addCookie(io.vertx.core.http.Cookie.cookie(cookieName, token).setPath(cookiePath));
+                ctx.addCookie(Cookie.cookie(cookieName, token));
                 enhanceContext(ctx);
                 ctx.next();
                 break;
@@ -180,7 +187,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
                 if (validateToken(header == null ? ctx.request().getFormAttribute(headerName) : header, cookie)) {
                     ctx.next();
                 } else {
-                    forbidden(ctx);
+                    redirect(ctx);
                 }
                 break;
             default:

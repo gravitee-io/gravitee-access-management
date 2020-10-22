@@ -18,8 +18,8 @@ package io.gravitee.am.gateway.handler.users.resources.consents;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -47,7 +47,7 @@ public class AbstractUserConsentEndpointHandler {
     }
 
     protected Single<User> getPrincipal(RoutingContext context) {
-        JWT token = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
+        JWT token = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
 
         if (token.getSub() == null) {
             return Single.just(defaultPrincipal(context, token));
