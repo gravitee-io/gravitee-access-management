@@ -16,11 +16,15 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpMethod;
@@ -29,15 +33,16 @@ import io.reactivex.Observable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -53,13 +58,16 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
     private static final String OAUTH2_PROVIDER_CONTEXT_KEY = "oauth2Providers";
     private static final String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
     private static final String SOCIAL_AUTHORIZE_URL_CONTEXT_KEY = "authorizeUrls";
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private IdentityProviderManager identityProviderManager;
-    private Domain domain;
+    private final IdentityProviderManager identityProviderManager;
+    private final JWTService jwtService;
+    private final CertificateManager certificateManager;
 
-    public LoginSocialAuthenticationHandler(IdentityProviderManager identityProviderManager, Domain domain) {
+    public LoginSocialAuthenticationHandler(IdentityProviderManager identityProviderManager,
+                                            JWTService jwtService,
+                                            CertificateManager certificateManager) {
         this.identityProviderManager = identityProviderManager;
-        this.domain = domain;
+        this.jwtService = jwtService;
+        this.certificateManager = certificateManager;
     }
 
     @Override
@@ -94,7 +102,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                 if (socialProviderData != null) {
                     List<SocialProviderData> filteredSocialProviderData = socialProviderData.stream().filter(providerData -> providerData.getIdentityProvider() != null && providerData.getAuthorizeUrl() != null).collect(Collectors.toList());
                     List<IdentityProvider> providers = filteredSocialProviderData.stream().map(SocialProviderData::getIdentityProvider).collect(Collectors.toList());
-                    Map<String, String> authorizeUrls = filteredSocialProviderData.stream().collect(Collectors.toMap(o -> o.getIdentityProvider().getId(), o -> o.getAuthorizeUrl()));
+                    Map<String, String> authorizeUrls = filteredSocialProviderData.stream().collect(Collectors.toMap(o -> o.getIdentityProvider().getId(), SocialProviderData::getAuthorizeUrl));
 
                     // backwards compatibility
                     routingContext.put(OAUTH2_PROVIDER_CONTEXT_KEY, providers);
@@ -114,7 +122,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
             resultHandler.handle(Future.succeededFuture(Collections.emptyList()));
         } else {
             resultHandler.handle(Future.succeededFuture(identities.stream()
-                    .map(identity -> identityProviderManager.getIdentityProvider(identity))
+                    .map(identityProviderManager::getIdentityProvider)
                     .filter(identityProvider -> identityProvider != null && identityProvider.isExternal())
                     .collect(Collectors.toList())));
         }
@@ -126,13 +134,12 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                     // get social identity provider type (currently use for display purpose (logo, description, ...)
                     String identityProviderType = identityProvider.getType();
                     Optional<String> identityProviderSocialType = socialProviders.stream().filter(socialProvider -> identityProviderType.toLowerCase().contains(socialProvider)).findFirst();
-                    if (identityProviderSocialType.isPresent()) {
-                        identityProvider.setType(identityProviderSocialType.get());
-                    }
+                    identityProviderSocialType.ifPresent(identityProvider::setType);
+
                     // get social sign in url
                     return getAuthorizeUrl(identityProvider.getId(), context)
                             .map(authorizeUrl -> new SocialProviderData(identityProvider, authorizeUrl))
-                            .defaultIfEmpty(new SocialProviderData(identityProvider,null));
+                            .defaultIfEmpty(new SocialProviderData(identityProvider, null));
                 })
                 .toList()
                 .subscribe(socialProviderData -> resultHandler.handle(Future.succeededFuture(socialProviderData)),
@@ -142,18 +149,31 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
     private Maybe<String> getAuthorizeUrl(String identityProviderId, RoutingContext context) {
         return identityProviderManager.get(identityProviderId)
                 .flatMap(authenticationProvider -> {
-                    Map<String, String> parameters = Collections.singletonMap("provider", identityProviderId);
-                    String redirectUri = buildUri(context.request(), context.get(CONTEXT_PATH) + "/login/callback", parameters);
-                    Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri);
-                    return signInURL.map(request -> HttpMethod.GET.equals(request.getMethod()) ? request.getUri() : buildUri(context.request(), context.get(CONTEXT_PATH) + "/login/SSO/POST", parameters));
+                    // Generate a state containing provider id and current query parameter string. This state will be sent back to AM after social authentication.
+                    final JWT stateJwt = new JWT();
+                    stateJwt.put("p", identityProviderId);
+                    stateJwt.put("q", context.request().query());
+
+                    return jwtService.encode(stateJwt, certificateManager.defaultCertificateProvider())
+                            .flatMapMaybe(state -> {
+                                String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/callback");
+                                Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri, state);
+
+                                return signInURL.map(request -> {
+                                    if(HttpMethod.GET.equals(request.getMethod())) {
+                                        return request.getUri();
+                                    }else {
+                                        // Extract body to convert it to query parameters and use POST form.
+                                        final Map<String, String> queryParams = getParams(request.getBody());
+                                        queryParams.put(ACTION_KEY, request.getUri());
+                                        return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login/SSO/POST", queryParams);
+                                    }
+                                });
+                            });
                 });
     }
 
-    private String buildUri(HttpServerRequest request, String path, Map<String, String> parameters) throws URISyntaxException {
-        return UriBuilderRequest.resolveProxyRequest(request, path, parameters);
-    }
-
-    private class SocialProviderData {
+    private static class SocialProviderData {
         private IdentityProvider identityProvider;
         private String authorizeUrl;
 
@@ -177,5 +197,19 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         public void setAuthorizeUrl(String authorizeUrl) {
             this.authorizeUrl = authorizeUrl;
         }
+    }
+
+    private Map<String, String> getParams(String query) {
+        Map<String, String> query_pairs = new LinkedHashMap<>();
+        if (query != null) {
+            String[] pairs = query.split("&");
+            for (String pair : pairs) {
+                if (!pair.isEmpty()) {
+                    int idx = pair.indexOf("=");
+                    query_pairs.put(pair.substring(0, idx), UriBuilder.encodeURIComponent(pair.substring(idx + 1)));
+                }
+            }
+        }
+        return query_pairs;
     }
 }

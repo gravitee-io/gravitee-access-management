@@ -32,6 +32,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_ID_PARAM_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_CONTEXT_KEY;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -39,9 +42,8 @@ import java.util.Map;
 public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCallbackOpenIDConnectFlowHandler.class);
-    private static final String PROVIDER_PARAMETER = "provider";
     private static final String HASH_VALUE_PARAMETER = "urlHash";
-    private ThymeleafTemplateEngine engine;
+    private final ThymeleafTemplateEngine engine;
 
     public LoginCallbackOpenIDConnectFlowHandler(ThymeleafTemplateEngine engine) {
         this.engine = engine;
@@ -49,8 +51,8 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
 
     @Override
     public void handle(RoutingContext context) {
-        final String providerId = context.request().getParam(PROVIDER_PARAMETER);
-        final AuthenticationProvider authenticationProvider = context.get(PROVIDER_PARAMETER);
+        final String providerId = context.request().getParam(PROVIDER_ID_PARAM_KEY);
+        final AuthenticationProvider authenticationProvider = context.get(PROVIDER_CONTEXT_KEY);
 
         // identity provider type is not OpenID Connect or the implicit flow is not used, continue
         if (!canHandle(authenticationProvider)) {
@@ -67,7 +69,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
             }
             // decode hash value and put data in the execution context
             Map<String, String> hashValues = getParams(hashValue.substring(1)); // remove # symbol
-            hashValues.forEach((k, v) -> context.put(k, v));
+            hashValues.forEach(context::put);
             context.next();
             return;
         }

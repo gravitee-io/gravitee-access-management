@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
@@ -63,8 +63,8 @@ public class ResourceAccessPoliciesEndpoint {
     }
 
     public void list(RoutingContext context) {
-        final JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        final Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String resource = context.request().getParam(RESOURCE_ID);
 
         resourceService.findAccessPolicies(domain.getId(), client.getId(), accessToken.getSub(), resource)
@@ -81,8 +81,8 @@ public class ResourceAccessPoliciesEndpoint {
     }
 
     public void create(RoutingContext context) {
-        final JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        final Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String resource = context.request().getParam(RESOURCE_ID);
         final String basePath = UriBuilderRequest.resolveProxyRequest(context);
 
@@ -105,8 +105,8 @@ public class ResourceAccessPoliciesEndpoint {
     }
 
     public void get(RoutingContext context) {
-        final JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        final Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String resource = context.request().getParam(RESOURCE_ID);
         final String accessPolicyId = context.request().getParam(POLICY_ID);
 
@@ -123,8 +123,8 @@ public class ResourceAccessPoliciesEndpoint {
     }
 
     public void update(RoutingContext context) {
-        final JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        final Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String resource = context.request().getParam(RESOURCE_ID);
         final String accessPolicyId = context.request().getParam(POLICY_ID);
 
@@ -144,8 +144,8 @@ public class ResourceAccessPoliciesEndpoint {
     }
 
     public void delete(RoutingContext context) {
-        final JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
-        final Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
+        final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String resource = context.request().getParam(RESOURCE_ID);
         final String accessPolicy = context.request().getParam(POLICY_ID);
 

@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.azure.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.azure.AzureADIdentityProviderConfiguration;
@@ -118,11 +119,12 @@ public class AzureADAuthenticationProviderTest {
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getTenantId()).thenReturn(TEST_TENANT_ID);
 
-        Request request = provider.signInUrl("https://gravitee.io");
+        final String state = RandomString.generate();
+        Request request = provider.signInUrl("https://gravitee.io", state);
 
         Assert.assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=openid profile email&redirect_uri=https://gravitee.io", request.getUri());
+        assertEquals("https://login.microsoftonline.com/" + TEST_TENANT_ID + "/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=openid profile email&state=" + state + "&redirect_uri=https://gravitee.io", request.getUri());
         assertNull(request.getHeaders());
     }
 
@@ -134,11 +136,12 @@ public class AzureADAuthenticationProviderTest {
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getTenantId()).thenReturn(TEST_TENANT_ID);
 
-        Request request = (Request) provider.asyncSignInUrl("https://gravitee.io").blockingGet();
+        final String state = RandomString.generate();
+        Request request = provider.asyncSignInUrl("https://gravitee.io", state).blockingGet();
 
         Assert.assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=openid profile email&redirect_uri=https://gravitee.io", request.getUri());
+        assertEquals("https://login.microsoftonline.com/" + TEST_TENANT_ID + "/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=openid profile email&state=" + state + "&redirect_uri=https://gravitee.io", request.getUri());
         assertNull(request.getHeaders());
     }
 
@@ -155,11 +158,12 @@ public class AzureADAuthenticationProviderTest {
 
         forceProviderInfoForTest();
 
-        Request request = provider.signInUrl("https://gravitee.io");
+        final String state = RandomString.generate();
+        Request request = provider.signInUrl("https://gravitee.io", state);
 
         Assert.assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=other_scope other_scope2 openid profile email&redirect_uri=https://gravitee.io", request.getUri());
+        assertEquals("https://login.microsoftonline.com/" + TEST_TENANT_ID + "/oauth2/v2.0/authorize?client_id=testClientId&response_type=code&scope=other_scope other_scope2 openid profile email&state=" + state + "&redirect_uri=https://gravitee.io", request.getUri());
         assertNull(request.getHeaders());
     }
 
@@ -210,13 +214,14 @@ public class AzureADAuthenticationProviderTest {
         });
 
         verify(authenticationContext, times(1)).set("id_token", jwt);
-        verify(client, times(1)).postAbs("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/token");
+        verify(client, times(1)).postAbs("https://login.microsoftonline.com/" + TEST_TENANT_ID + "/oauth2/v2.0/token");
     }
+
     @Test
     public void shouldAuthenticate_RoleMapping() throws Exception {
         forceProviderInfoForTest();
         Map<String, String[]> roles = new HashMap<>();
-        roles.put("admin", new String[] { "preferred_username=john.doe@graviteesource.com"});
+        roles.put("admin", new String[]{"preferred_username=john.doe@graviteesource.com"});
         when(roleMapper.getRoles()).thenReturn(roles);
 
         Authentication authentication = mock(Authentication.class);
@@ -260,7 +265,7 @@ public class AzureADAuthenticationProviderTest {
             return true;
         });
         verify(authenticationContext, times(1)).set("id_token", jwt);
-        verify(client, times(1)).postAbs("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/token");
+        verify(client, times(1)).postAbs("https://login.microsoftonline.com/" + TEST_TENANT_ID + "/oauth2/v2.0/token");
     }
 
     @Test
@@ -302,7 +307,7 @@ public class AzureADAuthenticationProviderTest {
         obs.assertError(BadCredentialsException.class);
 
         verify(authenticationContext, times(1)).set("id_token", badJwt);
-        verify(client, times(1)).postAbs("https://login.microsoftonline.com/"+ TEST_TENANT_ID +"/oauth2/v2.0/token");
+        verify(client, times(1)).postAbs("https://login.microsoftonline.com/" + TEST_TENANT_ID + "/oauth2/v2.0/token");
     }
 
     // this method is call inside each test method to avoid override of init value by mock/spy

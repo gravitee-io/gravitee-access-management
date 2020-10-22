@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.users.resources.consents;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
@@ -127,7 +128,7 @@ public class UserConsentsEndpointHandlerTest extends RxWebTestBase {
                 .handler(rc -> {
                     JWT token = new JWT();
                     token.setSub("sub");
-                    rc.put(OAuth2AuthHandler.TOKEN_CONTEXT_KEY, token);
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
                     rc.next();
                 })
                 .handler(userConsentsEndpointHandler::revoke)

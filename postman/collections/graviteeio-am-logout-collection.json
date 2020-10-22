@@ -528,7 +528,6 @@
               "listen": "test",
               "script": {
                 "id": "67df9bf8-89a2-4c95-9728-097aad6d2be4",
-                "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -538,21 +537,24 @@
                   "    pm.response.to.be.ok;",
                   "    ",
                   "    // Extract the XSRF token to send it with the next request.",
-                  "    var responseHTML = cheerio(pm.response.text());",
-                  "    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+                  "    var responseHTML = cheerio.load(pm.response.text());",
+                  "    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+                  "    const action = responseHTML('form').attr('action');",
                   "    pm.environment.set('xsrf', xsrfToken);",
+                  "    pm.environment.set('action', action);",
                   "});"
-                ]
+                ],
+                "type": "text/javascript"
               }
             },
             {
               "listen": "prerequest",
               "script": {
                 "id": "904f0113-b2b9-4645-9511-48bb10791506",
-                "type": "text/javascript",
                 "exec": [
                   ""
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ],
@@ -636,13 +638,9 @@
               ]
             },
             "url": {
-              "raw": "{{gateway_url}}/{{domain}}/login",
+              "raw": "{{action}}",
               "host": [
-                "{{gateway_url}}"
-              ],
-              "path": [
-                "{{domain}}",
-                "login"
+                "{{action}}"
               ]
             },
             "description": "The client does not have a redirect_uri define"
@@ -971,7 +969,6 @@
               "listen": "test",
               "script": {
                 "id": "67df9bf8-89a2-4c95-9728-097aad6d2be4",
-                "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -981,21 +978,24 @@
                   "    pm.response.to.be.ok;",
                   "    ",
                   "    // Extract the XSRF token to send it with the next request.",
-                  "    var responseHTML = cheerio(pm.response.text());",
-                  "    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+                  "    var responseHTML = cheerio.load(pm.response.text());",
+                  "    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+                  "    const action = responseHTML('form').attr('action');",
                   "    pm.environment.set('xsrf', xsrfToken);",
+                  "    pm.environment.set('action', action);",
                   "});"
-                ]
+                ],
+                "type": "text/javascript"
               }
             },
             {
               "listen": "prerequest",
               "script": {
                 "id": "904f0113-b2b9-4645-9511-48bb10791506",
-                "type": "text/javascript",
                 "exec": [
                   ""
-                ]
+                ],
+                "type": "text/javascript"
               }
             }
           ],
@@ -1079,13 +1079,9 @@
               ]
             },
             "url": {
-              "raw": "{{gateway_url}}/{{domain}}/login",
+              "raw": "{{action}}",
               "host": [
-                "{{gateway_url}}"
-              ],
-              "path": [
-                "{{domain}}",
-                "login"
+                "{{action}}"
               ]
             },
             "description": "The client does not have a redirect_uri define"

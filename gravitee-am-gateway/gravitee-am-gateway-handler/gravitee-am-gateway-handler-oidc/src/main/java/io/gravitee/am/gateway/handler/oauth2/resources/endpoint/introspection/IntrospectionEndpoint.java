@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedTokenType;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionRequest;
@@ -37,9 +38,6 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class IntrospectionEndpoint implements Handler<RoutingContext> {
-    private final static String CONTEXT_CLIENT_KEY = "client";
-    private final static String TOKEN_PARAM = "token";
-    private final static String TOKEN_TYPE_HINT_PARAM = "token_type_hint";
 
     private IntrospectionService introspectionService;
 
@@ -55,7 +53,7 @@ public class IntrospectionEndpoint implements Handler<RoutingContext> {
         // If the protected resource uses OAuth 2.0 client credentials to
         // authenticate to the introspection endpoint and its credentials are
         // invalid, the authorization server responds with an HTTP 401
-        Client client = context.get(CONTEXT_CLIENT_KEY);
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         if (client == null) {
             throw new InvalidClientException();
         }
@@ -71,8 +69,8 @@ public class IntrospectionEndpoint implements Handler<RoutingContext> {
     }
 
     private static IntrospectionRequest createRequest(RoutingContext context) {
-        String token = context.request().getParam(TOKEN_PARAM);
-        String tokenTypeHint = context.request().getParam(TOKEN_TYPE_HINT_PARAM);
+        String token = context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY);
+        String tokenTypeHint = context.request().getParam(ConstantKeys.TOKEN_TYPE_HINT_PARAM_KEY);
 
         if (token == null) {
             throw new InvalidRequestException();

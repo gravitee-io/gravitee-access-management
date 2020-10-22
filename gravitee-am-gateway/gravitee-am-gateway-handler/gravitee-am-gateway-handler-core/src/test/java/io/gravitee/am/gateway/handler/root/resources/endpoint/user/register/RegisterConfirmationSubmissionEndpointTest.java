@@ -24,8 +24,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.reactivex.ext.web.handler.SessionHandler;
-import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
+import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -33,6 +33,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Collections;
 
+import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -53,7 +55,7 @@ public class RegisterConfirmationSubmissionEndpointTest extends RxWebTestBase {
 
         RegisterConfirmationSubmissionEndpoint registerConfirmationSubmissionEndpoint = new RegisterConfirmationSubmissionEndpoint(userService);
         router.route(HttpMethod.POST, "/confirmRegistration")
-                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+                .handler(BodyHandler.create())
                 .handler(registerConfirmationSubmissionEndpoint)
                 .failureHandler(new ErrorHandler());
     }
@@ -76,12 +78,12 @@ public class RegisterConfirmationSubmissionEndpointTest extends RxWebTestBase {
         when(userService.confirmRegistration(eq(client), eq(user), any())).thenReturn(Single.just(new RegistrationResponse()));
 
         testRequest(
-                HttpMethod.POST, "/confirmRegistration?password=toto",
-                null,
+                HttpMethod.POST, "/confirmRegistration?client_id=client-id",
+                this::postPassword,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/confirmRegistration?success=registration_completed&client_id=client-id"));
+                    assertTrue(location.endsWith("/confirmRegistration?client_id=client-id&success=registration_completed"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -109,13 +111,19 @@ public class RegisterConfirmationSubmissionEndpointTest extends RxWebTestBase {
         when(userService.confirmRegistration(eq(client), eq(user), any())).thenReturn(Single.just(registrationResponse));
 
         testRequest(
-                HttpMethod.POST, "/confirmRegistration?password=toto",
-                null,
+                HttpMethod.POST, "/confirmRegistration?client_id=client-id",
+                this::postPassword,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertEquals("http://custom_uri", location);
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    private void postPassword(io.vertx.reactivex.core.http.HttpClientRequest httpClientRequest) {
+        httpClientRequest.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+        httpClientRequest.setChunked(true);
+        httpClientRequest.write(Buffer.buffer("password=toto"));
     }
 }

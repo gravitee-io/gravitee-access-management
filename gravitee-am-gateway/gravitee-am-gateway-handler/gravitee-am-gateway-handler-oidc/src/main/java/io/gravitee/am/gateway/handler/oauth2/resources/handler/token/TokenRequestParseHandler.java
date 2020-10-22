@@ -62,7 +62,7 @@ public class TokenRequestParseHandler implements Handler<RoutingContext> {
         String grantType = context.request().getParam(Parameters.GRANT_TYPE);
 
         if (grantType == null) {
-            throw new InvalidRequestException("Missing parameter: grant_type");
+            throw new InvalidRequestException("Missing parameter: " + Parameters.GRANT_TYPE);
         }
     }
 }

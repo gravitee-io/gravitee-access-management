@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -30,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -42,12 +45,12 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
     @Override
     public abstract void handle(RoutingContext event);
 
-    protected void redirectToPage(RoutingContext context, Map<String, String> params, Throwable... exceptions) {
+    protected void redirectToPage(RoutingContext context, MultiMap queryParams, Throwable... exceptions) {
         try {
             if (exceptions != null && exceptions.length > 0) {
-                logger.debug("Error user actions : " + params.get("error"), exceptions[0]);
+                logger.debug("Error user actions : " + queryParams.get(ERROR_PARAM_KEY), exceptions[0]);
             }
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), params);
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);
@@ -58,8 +61,8 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
     protected User getAuthenticatedUser(RoutingContext routingContext) {
         io.gravitee.am.model.User user = routingContext.get("user");
         if (user != null) {
-            User authenticatedUser = new DefaultUser(user.getUsername());
-            ((DefaultUser) authenticatedUser).setId(user.getId());
+            DefaultUser authenticatedUser = new DefaultUser(user.getUsername());
+            authenticatedUser.setId(user.getId());
             Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
             // add ip address and user agent
             additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
@@ -69,7 +72,7 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
                 additionalInformation.put(Claims.domain, user.getReferenceId());
             }
 
-            ((DefaultUser) authenticatedUser).setAdditionalInformation(additionalInformation);
+            authenticatedUser.setAdditionalInformation(additionalInformation);
             return authenticatedUser;
         }
         return null;

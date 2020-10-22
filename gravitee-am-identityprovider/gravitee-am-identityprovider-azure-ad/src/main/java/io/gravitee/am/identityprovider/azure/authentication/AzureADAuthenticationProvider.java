@@ -40,7 +40,7 @@ import java.util.HashSet;
  * @author GraviteeSource Team
  */
 @Import(AzureADAuthenticationProviderConfiguration.class)
-public class AzureADAuthenticationProvider extends AbstractOpenIDConnectAuthenticationProvider<AzureADIdentityProviderConfiguration> {
+public class AzureADAuthenticationProvider extends AbstractOpenIDConnectAuthenticationProvider {
 
     @Autowired
     @Qualifier("azureAdWebClient")

@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn;
@@ -27,6 +29,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
@@ -36,19 +39,20 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.LOGIN_ACTION_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
+
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginEndpoint.class);
-    private static final String DOMAIN_CONTEXT_KEY = "domain";
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String ACTION_CONTEXT_KEY = "action";
-    private static final String PARAM_CONTEXT_KEY = "param";
-    private Domain domain;
-    private WebAuthn webAuthn;
-    private ThymeleafTemplateEngine engine;
+
+    private final Domain domain;
+    private final WebAuthn webAuthn;
+    private final ThymeleafTemplateEngine engine;
 
     public WebAuthnLoginEndpoint(Domain domain,
                                  UserAuthenticationManager userAuthenticationManager,
@@ -78,11 +82,13 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
     private void renderPage(RoutingContext routingContext) {
         try {
             // prepare the context
-            final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().uri(), null);
-            routingContext.put(ACTION_CONTEXT_KEY, action);
-            routingContext.put(DOMAIN_CONTEXT_KEY, domain);
-            routingContext.put(PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
+            final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+            routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams));
+            routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams));
+            routingContext.put(ConstantKeys.DOMAIN_CONTEXT_KEY, domain);
+            routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
 
             // render the webauthn login page
             engine.render(routingContext.data(), getTemplateFileName(client), res -> {
@@ -123,7 +129,7 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                 return;
             }
 
-            final Client client = ctx.get(CLIENT_CONTEXT_KEY);
+            final Client client = ctx.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final String username = webauthnLogin.getString("name");
             // check if user exists in AM
             checkUser(client, username, h -> {
@@ -144,9 +150,9 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                     final JsonObject getAssertion = generateServerGetAssertion.result();
 
                     session
-                            .put("challenge", getAssertion.getString("challenge"))
-                            .put("username", username)
-                            .put("userId", h.result().getId());
+                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
+                            .put(ConstantKeys.USERNAME_KEY, username)
+                            .put(ConstantKeys.USER_ID_KEY, h.result().getId());
 
                     ctx.response()
                             .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")

@@ -15,9 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.utils;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.common.http.HttpHeaders;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import io.vertx.core.net.SocketAddress;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,7 +42,7 @@ public class RequestUtils {
         String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;
@@ -55,5 +60,59 @@ public class RequestUtils {
 
     public static String userAgent(io.vertx.core.http.HttpServerRequest httpServerRequest) {
         return httpServerRequest.getHeader(HttpHeaders.USER_AGENT);
+    }
+
+    /**
+     * Extract query parameters from request as a {@link MultiMap}
+     *
+     * @param httpServerRequest the request from which extract the query parameters.
+     * @return all query parameters as a {@link MultiMap}.
+     */
+    public static MultiMap getQueryParams(HttpServerRequest httpServerRequest) {
+
+        return getQueryParams(httpServerRequest.uri());
+    }
+
+    /**
+     * Same as {@link #getQueryParams(HttpServerRequest)} but removes some query parameters used internally (eg: error, error_description, success, ...).
+     *
+     * @param httpServerRequest the request from which extract the query parameters.
+     * @return all cleaned query parameters as a {@link MultiMap}.
+     */
+    public static MultiMap getCleanedQueryParams(HttpServerRequest httpServerRequest) {
+
+        final MultiMap queryParams = getQueryParams(httpServerRequest.uri());
+        queryParams.remove(ConstantKeys.ERROR_PARAM_KEY);
+        queryParams.remove(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
+        queryParams.remove(ConstantKeys.WARNING_PARAM_KEY);
+        queryParams.remove(SUCCESS_PARAM_KEY);
+        return queryParams;
+    }
+
+    /**
+     * Same as {@link #getQueryParams(HttpServerRequest)} but taking a complete url.
+     *
+     * @param url the url from which extract the query parameters.
+     * @return all query parameters as a {@link MultiMap}.
+     */
+    public static MultiMap getQueryParams(String url) {
+
+        return getQueryParams(url, true);
+    }
+
+    /**
+     * Same as {@link #getQueryParams(HttpServerRequest)} but taking an url or only the query string part (eg: <code>hasPath</code>).
+     *
+     * @param queryString the url from which extract the query parameters.
+     * @param hasPath flag indicating if the <code>queryString</code> is a complete url or is just the query string part.
+     * @return all query parameters as a {@link MultiMap}.
+     */
+    public static MultiMap getQueryParams(String queryString, boolean hasPath) {
+
+        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(queryString, hasPath);
+        MultiMap queryParams = MultiMap.caseInsensitiveMultiMap();
+        queryStringDecoder.parameters().forEach(queryParams::add);
+
+        return queryParams;
     }
 }

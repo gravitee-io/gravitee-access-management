@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -42,22 +44,24 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
     }
 
     @Override
-    public void handle(RoutingContext routingContext) {
+    public void handle(RoutingContext context) {
 
-        String contextPath = routingContext.get(CONTEXT_PATH) + path;
+        String redirectUrl = context.get(CONTEXT_PATH) + path;
 
         try {
-            final HttpServerRequest request = routingContext.request();
-            final Map<String, String> requestParameters = request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(routingContext.request(), contextPath, requestParameters, true);
-            routingContext.response()
-                    .putHeader(HttpHeaders.LOCATION, proxiedRedirectURI)
+            final HttpServerRequest request = context.request();
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
+
+            // Now redirect the user.
+            String uri = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
+            context.response()
+                    .putHeader(HttpHeaders.LOCATION, uri)
                     .setStatusCode(302)
                     .end();
         } catch (Exception e) {
             logger.warn("Failed to decode redirect url", e);
-            routingContext.response()
-                    .putHeader(HttpHeaders.LOCATION, contextPath)
+            context.response()
+                    .putHeader(HttpHeaders.LOCATION, redirectUrl)
                     .setStatusCode(302)
                     .end();
         }

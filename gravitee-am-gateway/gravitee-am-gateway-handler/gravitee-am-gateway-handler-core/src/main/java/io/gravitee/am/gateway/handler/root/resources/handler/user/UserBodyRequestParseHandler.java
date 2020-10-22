@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
@@ -22,9 +23,10 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -33,8 +35,8 @@ import java.util.Optional;
 public class UserBodyRequestParseHandler extends UserRequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(UserBodyRequestParseHandler.class);
-    public static final String ERROR_PARAM = "error";
-    private List<String> requiredParams;
+
+    private final List<String> requiredParams;
 
     public UserBodyRequestParseHandler(List<String> params) {
         this.requiredParams = params;
@@ -61,7 +63,9 @@ public class UserBodyRequestParseHandler extends UserRequestHandler {
             }).findFirst();
 
             if (missingParameter.isPresent()) {
-                redirectToPage(context, Collections.singletonMap(ERROR_PARAM, "missing_required_parameters"));
+                MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
+                queryParams.set(ERROR_PARAM_KEY, "missing_required_parameters");
+                redirectToPage(context, queryParams);
             } else {
                 context.next();
             }

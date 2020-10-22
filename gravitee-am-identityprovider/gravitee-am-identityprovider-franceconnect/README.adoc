@@ -9,5 +9,5 @@ Look at [FranceConnect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseu
 Your security domain must listen on /callback to make it work
 
 ```
-> docker run --name proxy-france-connect -p 4242:4242 -v /path/to/graviteeio-access-management/gravitee-am-identityprovider/gravitee-am-identityprovider-franceconnect/nginx-franceconnect.conf:/etc/nginx/conf.d/default.conf:ro -d nginx
+> docker run --name proxy-france-connect -p 4242:4242 -v $(pwd)/gravitee-am-identityprovider-franceconnect/nginx-franceconnect.conf:/etc/nginx/conf.d/default.conf:ro -d nginx
 ```

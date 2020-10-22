@@ -40,12 +40,12 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
     @Mock
     private PasswordValidator passwordValidator;
 
-    @InjectMocks
-    private PasswordPolicyRequestParseHandler passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator);
+    private PasswordPolicyRequestParseHandler passwordPolicyRequestParseHandler;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator);
 
         router.route()
                 .handler(BodyHandler.create())

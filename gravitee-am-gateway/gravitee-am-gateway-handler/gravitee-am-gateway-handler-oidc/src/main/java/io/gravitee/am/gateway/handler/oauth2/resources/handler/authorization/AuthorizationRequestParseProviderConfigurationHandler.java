@@ -20,6 +20,8 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+
 /**
  * Fetch OpenID Provider configuration
  *
@@ -28,7 +30,6 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class AuthorizationRequestParseProviderConfigurationHandler implements Handler<RoutingContext> {
 
-    private static final String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
     private final OpenIDDiscoveryService openIDDiscoveryService;
 
     public AuthorizationRequestParseProviderConfigurationHandler(OpenIDDiscoveryService openIDDiscoveryService) {
@@ -38,7 +39,7 @@ public class AuthorizationRequestParseProviderConfigurationHandler implements Ha
     @Override
     public void handle(RoutingContext context) {
         String basePath = UriBuilderRequest.resolveProxyRequest(context);
-        context.put(PROVIDER_METADATA_CONTEXT_KEY ,openIDDiscoveryService.getConfiguration(basePath));
+        context.put(PROVIDER_METADATA_CONTEXT_KEY, openIDDiscoveryService.getConfiguration(basePath));
         context.next();
     }
 }

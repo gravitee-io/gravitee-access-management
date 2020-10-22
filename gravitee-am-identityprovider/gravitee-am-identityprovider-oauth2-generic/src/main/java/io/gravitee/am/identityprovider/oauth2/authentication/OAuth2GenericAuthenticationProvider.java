@@ -36,7 +36,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 @Import(OAuth2GenericAuthenticationProviderConfiguration.class)
-public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAuthenticationProvider<OAuth2GenericIdentityProviderConfiguration> {
+public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAuthenticationProvider {
 
     private static final String AUTHORIZATION_ENDPOINT = "authorization_endpoint";
     private static final String TOKEN_ENDPOINT = "token_endpoint";

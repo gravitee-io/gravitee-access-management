@@ -30,6 +30,7 @@ import io.reactivex.Maybe;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -49,7 +50,7 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
     protected abstract WebClient getClient();
 
     @Override
-    public Request signInUrl(String redirectUri) {
+    public Request signInUrl(String redirectUri, String state) {
         try {
             UriBuilder builder = UriBuilder.fromHttpUrl(getConfiguration().getUserAuthorizationUri());
             builder.addParameter(Parameters.CLIENT_ID, getConfiguration().getClientId());
@@ -57,6 +58,10 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
             builder.addParameter(Parameters.RESPONSE_TYPE, getConfiguration().getResponseType());
             if (getConfiguration().getScopes() != null && !getConfiguration().getScopes().isEmpty()) {
                 builder.addParameter(Parameters.SCOPE, String.join(SCOPE_DELIMITER, getConfiguration().getScopes()));
+            }
+
+            if(!StringUtils.isEmpty(state)) {
+                builder.addParameter(Parameters.STATE, state);
             }
 
             Request request = new Request();

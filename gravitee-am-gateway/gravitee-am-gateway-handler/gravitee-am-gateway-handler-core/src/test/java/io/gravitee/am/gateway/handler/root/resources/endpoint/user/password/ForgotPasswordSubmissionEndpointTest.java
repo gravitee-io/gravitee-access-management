@@ -18,28 +18,23 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.common.http.HttpHeader;
 import io.gravitee.common.http.HttpStatusCode;
-import io.netty.handler.codec.Headers;
 import io.reactivex.Completable;
-import io.reactivex.Single;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.Json;
-import io.vertx.reactivex.ext.web.multipart.FormDataPart;
+import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Collections;
-
+import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -63,6 +58,7 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
 
         ForgotPasswordSubmissionEndpoint forgotPasswordSubmissionEndpoint = new ForgotPasswordSubmissionEndpoint(userService, domain);
         router.route(HttpMethod.POST, "/forgotPassword")
+                .handler(BodyHandler.create())
                 .handler(forgotPasswordSubmissionEndpoint)
                 .failureHandler(new ErrorHandler());
     }
@@ -81,12 +77,12 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
         when(userService.forgotPassword(eq("email@test.com"), eq(client), any(User.class))).thenReturn(Completable.complete());
 
         testRequest(
-                HttpMethod.POST, "/forgotPassword?email=email@test.com",
-                null,
+                HttpMethod.POST, "/forgotPassword?client_id=client-id",
+                req -> postEmail(req, "email@test.com"),
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/forgotPassword?success=forgot_password_completed&client_id=client-id"));
+                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -106,12 +102,12 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
         when(userService.forgotPassword(eq("email@test.com"), eq(client), any(User.class))).thenReturn(Completable.error(new UserNotFoundException("email@test.com")));
 
         testRequest(
-                HttpMethod.POST, "/forgotPassword?email=email@test.com",
-                null,
+                HttpMethod.POST, "/forgotPassword?client_id=client-id",
+                req -> postEmail(req, "email@test.com"),
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/forgotPassword?success=forgot_password_completed&client_id=client-id"));
+                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -130,13 +126,19 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
         when(userService.forgotPassword(eq("email.test.com"), eq(client), any(User.class))).thenReturn(Completable.error(new EmailFormatInvalidException("email.test.com")));
 
         testRequest(
-                HttpMethod.POST, "/forgotPassword?email=email.test.com",
-                null,
+                HttpMethod.POST, "/forgotPassword?client_id=client-id",
+                req -> postEmail(req, "email.test.com"),
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/forgotPassword?error=forgot_password_failed&client_id=client-id"));
+                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&error=forgot_password_failed"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    private void postEmail(io.vertx.reactivex.core.http.HttpClientRequest httpClientRequest, String email) {
+        httpClientRequest.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+        httpClientRequest.setChunked(true);
+        httpClientRequest.write(Buffer.buffer("email=" + email));
     }
 }

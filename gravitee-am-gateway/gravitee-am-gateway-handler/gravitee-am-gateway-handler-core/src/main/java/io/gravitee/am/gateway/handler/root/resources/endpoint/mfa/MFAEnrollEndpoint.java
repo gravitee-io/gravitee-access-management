@@ -15,18 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
-import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
-import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -42,23 +39,22 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
+
     private static final Logger logger = LoggerFactory.getLogger(MFAEnrollEndpoint.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
-    private static final String ENROLLED_FACTOR_KEY = "enrolledFactor";
-    private Domain domain;
-    private FactorManager factorManager;
-    private ThymeleafTemplateEngine engine;
+
+    private final FactorManager factorManager;
+    private final ThymeleafTemplateEngine engine;
 
     public MFAEnrollEndpoint(FactorManager factorManager, ThymeleafTemplateEngine engine) {
         this.factorManager = factorManager;
@@ -83,9 +79,12 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
     private void renderPage(RoutingContext routingContext) {
         try {
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-            final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+            final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().uri(), null);
+
+            // Create post action url.
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams);
 
             // load factor providers
             load(factors, endUser, h -> {
@@ -96,7 +95,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
                 }
                 // put factors in context
                 routingContext.put("factors", h.result());
-                routingContext.put("action", action);
+                routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
                 engine.render(routingContext.data(), getTemplateFileName(client), res -> {
                     if (res.succeeded()) {
@@ -131,19 +130,16 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
         }
         // manage enrolled factors
         // if user has skipped the enrollment process, continue
-        final String returnURL = routingContext.session().get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
         if (!acceptEnrollment) {
-            routingContext.session().put(MFA_SKIPPED_KEY, true);
-            doRedirect(routingContext.response(), returnURL);
-            return;
+            routingContext.session().put(ConstantKeys.MFA_SKIPPED_KEY, true);
+        }else {
+            // save enrolled factor for the current user and continue
+            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, factorId);
+            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
         }
-        // save enrolled factor for the current user and continue
-        EnrolledFactor enrolledFactor = new EnrolledFactor();
-        enrolledFactor.setFactorId(factorId);
-        enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, sharedSecret));
-        enrolledFactor.setCreatedAt(new Date());
-        enrolledFactor.setUpdatedAt(enrolledFactor.getCreatedAt());
-        routingContext.session().put(ENROLLED_FACTOR_KEY, enrolledFactor);
+
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+        final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
         doRedirect(routingContext.response(), returnURL);
     }
 
@@ -162,7 +158,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
         return client.getFactors()
                 .stream()
                 .filter(f -> factorManager.get(f) != null)
-                .collect(Collectors.toMap(f -> factorManager.getFactor(f), f -> factorManager.get(f)));
+                .collect(Collectors.toMap(factorManager::getFactor, factorManager::get));
     }
 
     private String getTemplateFileName(Client client) {
@@ -173,7 +169,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
     }
 
-    private class Factor {
+    private static class Factor {
         private String id;
         private String factorType;
         private Enrollment enrollment;

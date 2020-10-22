@@ -73,7 +73,7 @@ export class ProviderSettingsComponent implements OnInit {
       this.domain = this.route.snapshot.parent.parent.data['domain'];
       this.domainService.getEntrypoint(this.domainId).subscribe(data => {
         this.entrypoint = data;
-        this.redirectUri = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain) + '/login/callback?provider=' + this.provider.id;
+        this.redirectUri = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain) + '/login/callback';
       });
     }
     this.providerConfiguration = JSON.parse(this.provider.configuration);

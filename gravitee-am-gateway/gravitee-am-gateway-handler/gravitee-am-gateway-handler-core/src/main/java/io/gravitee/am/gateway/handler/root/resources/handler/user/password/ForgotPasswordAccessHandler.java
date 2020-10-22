@@ -21,13 +21,14 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ForgotPasswordAccessHandler implements Handler<RoutingContext> {
 
-    private static final String CLIENT_CONTEXT_KEY = "client";
     private final Domain domain;
 
     public ForgotPasswordAccessHandler(Domain domain) {

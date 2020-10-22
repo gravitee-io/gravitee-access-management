@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.gateway.handler.form.FormManager;
@@ -25,6 +28,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
@@ -33,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -40,17 +46,16 @@ import java.util.Map;
 public class LoginEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginEndpoint.class);
-    private static final String DOMAIN_CONTEXT_KEY = "domain";
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String PARAM_CONTEXT_KEY = "param";
-    private static final String ERROR_PARAM_KEY = "error";
-    private static final String ERROR_DESCRIPTION_PARAM_KEY = "error_description";
     private static final String ALLOW_FORGOT_PASSWORD_CONTEXT_KEY = "allowForgotPassword";
     private static final String ALLOW_REGISTER_CONTEXT_KEY = "allowRegister";
     private static final String ALLOW_PASSWORDLESS_CONTEXT_KEY = "allowPasswordless";
     private static final String REQUEST_CONTEXT_KEY = "request";
-    private ThymeleafTemplateEngine engine;
-    private Domain domain;
+    private static final String FORGOT_ACTION_KEY = "forgotPasswordAction";
+    private static final String REGISTER_ACTION_KEY = "registerAction";
+    private static final String WEBAUTHN_ACTION_KEY = "passwordlessAction";
+
+    private final ThymeleafTemplateEngine engine;
+    private final Domain domain;
 
     public LoginEndpoint(ThymeleafTemplateEngine thymeleafTemplateEngine, Domain domain) {
         this.engine = thymeleafTemplateEngine;
@@ -59,7 +64,7 @@ public class LoginEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         // prepare context
         prepareContext(routingContext, client);
@@ -70,9 +75,9 @@ public class LoginEndpoint implements Handler<RoutingContext> {
 
     private void prepareContext(RoutingContext routingContext, Client client) {
         // remove sensible client data
-        routingContext.put(CLIENT_CONTEXT_KEY, new ClientProperties(client));
+        routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
         // put domain in context data
-        routingContext.put(DOMAIN_CONTEXT_KEY, domain);
+        routingContext.put(ConstantKeys.DOMAIN_CONTEXT_KEY, domain);
         // put login settings in context data
         LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
         routingContext.put(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, loginSettings != null && loginSettings.isForgotPasswordEnabled());
@@ -84,17 +89,23 @@ public class LoginEndpoint implements Handler<RoutingContext> {
         routingContext.put(REQUEST_CONTEXT_KEY, evaluableRequest);
 
         // put error in context
-        final String error = routingContext.request().getParam(ERROR_PARAM_KEY);
-        final String errorDescription = routingContext.request().getParam(ERROR_DESCRIPTION_PARAM_KEY);
-        routingContext.put(ERROR_PARAM_KEY, error);
-        routingContext.put(ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+        final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
+        final String errorDescription = routingContext.request().getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
+        routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
+        routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
 
         // put parameters in context (backward compatibility)
-        Map<String, String> params = new HashMap<>();
-        params.putAll(evaluableRequest.getParams().toSingleValueMap());
-        params.put(ERROR_PARAM_KEY, error);
-        params.put(ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
-        routingContext.put(PARAM_CONTEXT_KEY, params);
+        Map<String, String> params = new HashMap<>(evaluableRequest.getParams().toSingleValueMap());
+        params.put(ConstantKeys.ERROR_PARAM_KEY, error);
+        params.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+        routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
+
+        // create post action url.
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams));
+        routingContext.put(FORGOT_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams));
+        routingContext.put(REGISTER_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams));
+        routingContext.put(WEBAUTHN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams));
     }
 
     private void renderLoginPage(RoutingContext routingContext, Client client) {

@@ -58,6 +58,13 @@
                     </div>
                     <input type="hidden" th:name="sharedSecret" th:value="${factor.enrollment.key}" />
                 </div>
+                <div th:if="${error}" class="mfa-enroll-error-info">
+                    <span>
+                        <span class="error" th:text="${error}"></span>
+                        <small class="error_description" th:text="*{error_description}?: 'Error during enrollment'"></small>
+                    </span>
+                </div>
+
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="factorId" th:value="${factor.id}" />
                 <div class="mfa-enroll-form-actions">

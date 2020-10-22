@@ -56,14 +56,14 @@
                             </ul>
                         </div>
                         <div id="webauthn-error" class="webauthn-register-error-info" style="display: none;">
-                                <span>
-                                    <span class="error">webauthn-register_failed</span>
-                                     <small class="error_description">Invalid user</small>
-                                </span>
+                            <span>
+                                <span class="error">webauthn-register_failed</span>
+                                 <small class="error_description">Invalid user</small>
+                            </span>
                         </div>
                     </div>
                     <div class="webauthn-register-form-actions">
-                        <a th:href="@{register(client_id=${param.client_id}, prompt='none')}">Skip for now</a>
+                        <a th:href="${skipAction}">Skip for now</a>
                         <span style="flex: 1 1 0%;"></span>
                         <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Register</button>
                     </div>

@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.facebook.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderConfiguration;
@@ -96,11 +97,12 @@ public class FacebookAuthenticationProviderTest {
         when(configuration.getResponseType()).thenReturn("code");
         when(configuration.getScopes()).thenReturn(Collections.emptySet());
 
-        Request request = cut.signInUrl("https://gravitee.io");
+        final String state = RandomString.generate();
+        Request request = cut.signInUrl("https://gravitee.io", state);
 
         assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code", request.getUri());
+        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&state=" + state, request.getUri());
         assertNull(request.getHeaders());
     }
 
@@ -112,11 +114,12 @@ public class FacebookAuthenticationProviderTest {
         when(configuration.getResponseType()).thenReturn("code");
         when(configuration.getScopes()).thenReturn(Collections.emptySet());
 
-        Request request = (Request)cut.asyncSignInUrl("https://gravitee.io").blockingGet();
+        final String state = RandomString.generate();
+        Request request = (Request)cut.asyncSignInUrl("https://gravitee.io", state).blockingGet();
 
         assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code", request.getUri());
+        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&state=" + state, request.getUri());
         assertNull(request.getHeaders());
     }
 
@@ -128,11 +131,12 @@ public class FacebookAuthenticationProviderTest {
         when(configuration.getResponseType()).thenReturn("code");
         when(configuration.getScopes()).thenReturn(new HashSet<>(Arrays.asList("scope1", "scope2", "scope3")));
 
-        Request request = cut.signInUrl("https://gravitee.io");
+        final String state = RandomString.generate();
+        Request request = cut.signInUrl("https://gravitee.io", state);
 
         assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&scope=scope1%20scope2%20scope3", request.getUri());
+        assertEquals("https://www.facebook.com/v7.0/dialog/oauth?client_id=testClientId&redirect_uri=https://gravitee.io&response_type=code&scope=scope1%20scope2%20scope3&state=" + state, request.getUri());
         assertNull(request.getHeaders());
     }
 

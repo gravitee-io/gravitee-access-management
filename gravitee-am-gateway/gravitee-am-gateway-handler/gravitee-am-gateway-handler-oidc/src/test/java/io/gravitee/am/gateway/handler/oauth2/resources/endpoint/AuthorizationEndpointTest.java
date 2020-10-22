@@ -48,7 +48,6 @@ import io.vertx.reactivex.ext.web.handler.SessionHandler;
 import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -89,12 +88,11 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     @Mock
     private JWEService jweService;
 
-    @InjectMocks
-    private AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow);
-
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow);
 
         // set openid provider service
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
@@ -128,7 +126,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestResolveHandler())
                 .handler(authorizationEndpointHandler);
         router.route()
-                .failureHandler(new AuthorizationRequestFailureHandler(domain,openIDDiscoveryService, jwtService, jweService));
+                .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CONTEXT_PATH, "/test");

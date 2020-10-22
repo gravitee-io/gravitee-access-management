@@ -15,32 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.auth.handler;
 
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.impl.FormLoginHandlerImpl;
+import io.vertx.core.Handler;
 import io.vertx.ext.auth.AuthProvider;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FormLoginHandler {
+public interface FormLoginHandler extends Handler<RoutingContext> {
 
-    /**
-     * The default value of the form attribute which will contain the username
-     */
-    String DEFAULT_USERNAME_PARAM = "username";
-
-    /**
-     * The default value of the form attribute which will contain the password
-     */
-    String DEFAULT_PASSWORD_PARAM = "password";
-
-    /**
-     * The default value of the form attribute which will contain the return url
-     */
-    String DEFAULT_RETURN_URL_PARAM = "return_url";
-
-
-    static io.vertx.reactivex.ext.web.handler.FormLoginHandler create(AuthProvider authProvider) {
-        return io.vertx.reactivex.ext.web.handler.FormLoginHandler.newInstance(new FormLoginHandlerImpl(authProvider, DEFAULT_USERNAME_PARAM, DEFAULT_PASSWORD_PARAM, DEFAULT_RETURN_URL_PARAM, null));
+    static FormLoginHandler create(UserAuthProvider authProvider) {
+        return new FormLoginHandlerImpl(authProvider);
     }
 }

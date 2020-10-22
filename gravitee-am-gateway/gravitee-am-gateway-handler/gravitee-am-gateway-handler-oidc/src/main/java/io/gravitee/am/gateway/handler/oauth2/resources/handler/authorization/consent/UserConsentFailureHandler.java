@@ -15,21 +15,17 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
-import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -39,12 +35,6 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  */
 public class UserConsentFailureHandler implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(UserConsentFailureHandler.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private Domain domain;
-
-    public UserConsentFailureHandler(Domain domain) {
-        this.domain = domain;
-    }
 
     @Override
     public void handle(RoutingContext context) {
@@ -66,25 +56,19 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
 
     private void handleException(RoutingContext context, String errorCode, String errorDescription) {
         try {
-            Map<String, String> params = new LinkedHashMap<>();
-
-            // retrieve client
-            Client client = context.get(CLIENT_CONTEXT_KEY);
-            if (client != null) {
-                params.put(Parameters.CLIENT_ID, client.getClientId());
-            }
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
 
             // add error messages
-            params.put("error", "user_consent_failed");
+            queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "user_consent_failed");
             if (errorCode != null) {
-                params.put("error_code", errorCode);
+                queryParams.set(ConstantKeys.ERROR_CODE_PARAM_KEY, errorCode);
             }
             if (errorDescription != null) {
-                params.put("error_description", errorDescription);
+                queryParams.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
             }
 
             // go back to login page
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", params);
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);

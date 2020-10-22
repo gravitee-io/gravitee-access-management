@@ -21,6 +21,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.Session;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -66,6 +67,7 @@ public class AuthorizationRequestFactoryTest {
         RoutingContext routingContext = mock(RoutingContext.class);
         when(routingContext.request()).thenReturn(rxHttpServerRequest);
         when(routingContext.get(CONTEXT_PATH)).thenReturn("/test");
+        when(routingContext.session()).thenReturn(mock(Session.class));
 
         AuthorizationRequest authorizationRequest = authorizationRequestFactory.create(routingContext);
 

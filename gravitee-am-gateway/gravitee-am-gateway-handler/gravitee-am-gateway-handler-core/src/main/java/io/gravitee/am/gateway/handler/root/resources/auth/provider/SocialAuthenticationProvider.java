@@ -19,8 +19,10 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -30,8 +32,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +46,7 @@ import java.util.Map;
 public class SocialAuthenticationProvider implements UserAuthProvider {
 
     private final Logger logger = LoggerFactory.getLogger(SocialAuthenticationProvider.class);
-    private static final String USERNAME_PARAMETER = "username";
-    private static final String PASSWORD_PARAMETER = "password";
-    private static final String PROVIDER_PARAMETER = "provider";
-    private static final String CLIENT_PARAMETER = "client";
+
     private UserAuthenticationManager userAuthenticationManager;
 
     public SocialAuthenticationProvider() {
@@ -59,21 +57,17 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
     }
 
     @Override
-    public void authenticate(JsonObject authInfo, Handler<AsyncResult<User>> resultHandler) {
-        authenticate(null, authInfo, resultHandler);
-    }
-
     public void authenticate(RoutingContext context, JsonObject authInfo, Handler<AsyncResult<User>> resultHandler) {
-        final Client client = context.get(CLIENT_PARAMETER);
-        final AuthenticationProvider authenticationProvider = context.get(PROVIDER_PARAMETER);
-        final String authProvider = context.request().getParam(PROVIDER_PARAMETER);
-        final String username = authInfo.getString(USERNAME_PARAMETER);
-        final String password = authInfo.getString(PASSWORD_PARAMETER);
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        final AuthenticationProvider authenticationProvider = context.get(ConstantKeys.PROVIDER_CONTEXT_KEY);
+        final String authProvider = context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY);
+        final String username = authInfo.getString(ConstantKeys.USERNAME_PARAM_KEY);
+        final String password = authInfo.getString(ConstantKeys.PASSWORD_PARAM_KEY);
 
         logger.debug("Authentication attempt using social identity provider {}", authProvider);
 
         // create authentication context
-        SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request()));
+        SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
         authenticationContext.attributes().putAll(context.data());
         authenticationContext.set(Parameters.REDIRECT_URI, authInfo.getString(Parameters.REDIRECT_URI));
 

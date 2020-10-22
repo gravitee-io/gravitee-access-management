@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.google.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.hmac.MACJWKSourceResolver;
@@ -53,7 +54,6 @@ import static org.mockito.Mockito.*;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-
 @RunWith(MockitoJUnitRunner.class)
 public class GoogleAuthenticationProviderTest {
 
@@ -114,11 +114,12 @@ public class GoogleAuthenticationProviderTest {
         // openid scope will be added by default
         when(configuration.getClientId()).thenReturn("testClientId");
 
-        Request request = provider.signInUrl("https://gravitee.io");
+        final String state = RandomString.generate();
+        Request request = provider.signInUrl("https://gravitee.io", state);
 
         Assert.assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=openid profile email&redirect_uri=https://gravitee.io", request.getUri());
+        assertEquals(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=openid profile email&state=" + state + "&redirect_uri=https://gravitee.io", request.getUri());
         assertNull(request.getHeaders());
     }
 
@@ -129,11 +130,12 @@ public class GoogleAuthenticationProviderTest {
         // openid scope will be added by default
         when(configuration.getClientId()).thenReturn("testClientId");
 
-        Request request = (Request) provider.asyncSignInUrl("https://gravitee.io").blockingGet();
+        final String state = RandomString.generate();
+        Request request = (Request) provider.asyncSignInUrl("https://gravitee.io", state).blockingGet();
 
         Assert.assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=openid profile email&redirect_uri=https://gravitee.io", request.getUri());
+        assertEquals(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=openid profile email&state=" + state + "&redirect_uri=https://gravitee.io", request.getUri());
         assertNull(request.getHeaders());
     }
 
@@ -149,11 +151,12 @@ public class GoogleAuthenticationProviderTest {
 
         forceProviderInfoForTest();
 
-        Request request = provider.signInUrl("https://gravitee.io");
+        final String state = RandomString.generate();
+        Request request = provider.signInUrl("https://gravitee.io", state);
 
         Assert.assertNotNull(request);
         assertEquals(HttpMethod.GET, request.getMethod());
-        assertEquals(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=other_scope other_scope2 openid profile email&redirect_uri=https://gravitee.io", request.getUri());
+        assertEquals(GoogleIdentityProviderConfiguration.AUTHORIZATION_URL + "?client_id=testClientId&response_type=code&scope=other_scope other_scope2 openid profile email&state=" + state + "&redirect_uri=https://gravitee.io", request.getUri());
         assertNull(request.getHeaders());
     }
 
@@ -180,7 +183,6 @@ public class GoogleAuthenticationProviderTest {
 
         when(httpResponse.statusCode())
                 .thenReturn(HttpStatusCode.OK_200);
-        //:"eyJ0eXAiOiJKV1QiLCJub25jZSI6IkVKRG5GakxSd3FvYVBMdmJwV2FqWkdWNGZSTkh6eXpoMkU4YzdueHJLWVEiLCJhbGciOiJSUzI1NiIsIng1dCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9iNzM4OTY2NS01OGRmLTRmNGMtYTNhMy1lZDVhZGYwYWFmZDgvIiwiaWF0IjoxNTk0OTEyMjUzLCJuYmYiOjE1OTQ5MTIyNTMsImV4cCI6MTU5NDkxNjE1MywiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFTUUEyLzhRQUFBQTMxUE85ODNVUkpZVTQwS0ZWWjJYVWhSa0RWdkdUTGZLcTczV21oeVpZdlE9IiwiYW1yIjpbInB3ZCJdLCJhcHBfZGlzcGxheW5hbWUiOiJUZXN0LUVMRS1JRFAtQVpVUkUiLCJhcHBpZCI6ImU0YmQwNmJkLTBhOGItNGFlOS05ZjYzLWNmNWZiODgwMDdhMSIsImFwcGlkYWNyIjoiMSIsImZhbWlseV9uYW1lIjoiTGVsZXUiLCJnaXZlbl9uYW1lIjoiRXJpYyIsImlwYWRkciI6IjgyLjIzOC4yNTUuMTQzIiwibmFtZSI6IkVyaWMgTGVsZXUiLCJvaWQiOiI0YWUwMjM1My0yOWJlLTQyZDMtODQ5OS1kOGMzNTUyYTVjOTIiLCJwbGF0ZiI6IjE0IiwicHVpZCI6IjEwMDMyMDAwQ0Y0MDg0MDUiLCJzY3AiOiJEaXJlY3RvcnkuUmVhZC5BbGwgZW1haWwgb3BlbmlkIHByb2ZpbGUgVXNlci5SZWFkIiwic3ViIjoidmNzdmFfb1Q5M1Z0TnloZngtQXFtT1RwUG9EdzZ0ZFFkVzV1M1N5N1EtZyIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJFVSIsInRpZCI6ImI3Mzg5NjY1LTU4ZGYtNGY0Yy1hM2EzLWVkNWFkZjBhYWZkOCIsInVuaXF1ZV9uYW1lIjoiZXJpYy5sZWxldUBncmF2aXRlZXNvdXJjZS5jb20iLCJ1cG4iOiJlcmljLmxlbGV1QGdyYXZpdGVlc291cmNlLmNvbSIsInV0aSI6Inl5bUdwZF9ZU0VHMklOTEVBaGZzQVEiLCJ2ZXIiOiIxLjAiLCJ4bXNfc3QiOnsic3ViIjoiQmowM3BnWUx1V3MxOXVXVUJpOXhxU21IN1JvS1A3bWpRUURtZHVWUEdoWSJ9LCJ4bXNfdGNkdCI6MTU0MDU1Njc0NH0.BsDjR_rYQAc0NjdgQLtCNc3cAsflhlOZnNdrnbEeIBrDO-VWsasrcIYACzyES611NQmPG3NTj1LR1bs5OYe8IYpgoRoVdLLirE788lpLMGudlMVi7CNuUntPZn6ca5iqlRs2PSpxrdp56BpdQcnYvTru3KEC-IKN5BLgykwo_pmMxSnsgQRyQL_38Z20ClA3IZwLW-TFQ93hLSCZxcZmpZIKhTKsseDobuif2Eq2U-uEPqYINbF38QUcW6QsCDzs3PUN6aeWV-Gr6KhxLjghTKi30EOmsY7QGU-342QFu-iq45_WC3_zU-sceFGT0ZL-97jpoXaqERWIbJVRbTeuXQ","id_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJhdWQiOiJlNGJkMDZiZC0wYThiLTRhZTktOWY2My1jZjVmYjg4MDA3YTEiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vYjczODk2NjUtNThkZi00ZjRjLWEzYTMtZWQ1YWRmMGFhZmQ4L3YyLjAiLCJpYXQiOjE1OTQ5MTIyNTMsIm5iZiI6MTU5NDkxMjI1MywiZXhwIjoxNTk0OTE2MTUzLCJmYW1pbHlfbmFtZSI6IkxlbGV1IiwiZ2l2ZW5fbmFtZSI6IkVyaWMiLCJuYW1lIjoiRXJpYyBMZWxldSIsIm9pZCI6IjRhZTAyMzUzLTI5YmUtNDJkMy04NDk5LWQ4YzM1NTJhNWM5MiIsInByZWZlcnJlZF91c2VybmFtZSI6ImVyaWMubGVsZXVAZ3Jhdml0ZWVzb3VyY2UuY29tIiwic3ViIjoiQmowM3BnWUx1V3MxOXVXVUJpOXhxU21IN1JvS1A3bWpRUURtZHVWUEdoWSIsInRpZCI6ImI3Mzg5NjY1LTU4ZGYtNGY0Yy1hM2EzLWVkNWFkZjBhYWZkOCIsInV0aSI6Inl5bUdwZF9ZU0VHMklOTEVBaGZzQVEiLCJ2ZXIiOiIyLjAifQ.c3u2k8L9fE4eQ8uM5UON1BRkqsTCEIF8jULtNC4mjN7eqncOKxtodFMsPZQeHm8P5aBYWL_LxHJfndQt9XOIReQmD57KHpdzJP4ZKacdDml5uJh30_sOx09Vm5uaEc7zos52Y8xfpyRXWLIDo-oQBwBEVnQQhFN6zgI1uvMP6Gl3y0hu-iGEwZYFkRShoaljA-k18mHbLBmllyxHvf4K2oNvftK0z9sWAwpw4beHcM2k9v2fBrQv9Ygwga1w0PsrD9U62cQnQ43f9EOIugChRRdReyTI2zoJvOeyKjo9nvxDbsz47WgpzTR7YzLhE931lF2aj6gih_4IRqBBsukpjQ"}
         when(httpResponse.bodyAsJsonObject())
                 .thenReturn(new JsonObject().put("token_type", "Bearer")
                         .put("scope", "openid")
@@ -230,7 +232,6 @@ public class GoogleAuthenticationProviderTest {
         when(authentication.getContext().get("redirect_uri")).thenReturn("https://gravitee.io");
         when(httpResponse.statusCode())
                 .thenReturn(HttpStatusCode.OK_200);
-        //:"eyJ0eXAiOiJKV1QiLCJub25jZSI6IkVKRG5GakxSd3FvYVBMdmJwV2FqWkdWNGZSTkh6eXpoMkU4YzdueHJLWVEiLCJhbGciOiJSUzI1NiIsIng1dCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9iNzM4OTY2NS01OGRmLTRmNGMtYTNhMy1lZDVhZGYwYWFmZDgvIiwiaWF0IjoxNTk0OTEyMjUzLCJuYmYiOjE1OTQ5MTIyNTMsImV4cCI6MTU5NDkxNjE1MywiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFTUUEyLzhRQUFBQTMxUE85ODNVUkpZVTQwS0ZWWjJYVWhSa0RWdkdUTGZLcTczV21oeVpZdlE9IiwiYW1yIjpbInB3ZCJdLCJhcHBfZGlzcGxheW5hbWUiOiJUZXN0LUVMRS1JRFAtQVpVUkUiLCJhcHBpZCI6ImU0YmQwNmJkLTBhOGItNGFlOS05ZjYzLWNmNWZiODgwMDdhMSIsImFwcGlkYWNyIjoiMSIsImZhbWlseV9uYW1lIjoiTGVsZXUiLCJnaXZlbl9uYW1lIjoiRXJpYyIsImlwYWRkciI6IjgyLjIzOC4yNTUuMTQzIiwibmFtZSI6IkVyaWMgTGVsZXUiLCJvaWQiOiI0YWUwMjM1My0yOWJlLTQyZDMtODQ5OS1kOGMzNTUyYTVjOTIiLCJwbGF0ZiI6IjE0IiwicHVpZCI6IjEwMDMyMDAwQ0Y0MDg0MDUiLCJzY3AiOiJEaXJlY3RvcnkuUmVhZC5BbGwgZW1haWwgb3BlbmlkIHByb2ZpbGUgVXNlci5SZWFkIiwic3ViIjoidmNzdmFfb1Q5M1Z0TnloZngtQXFtT1RwUG9EdzZ0ZFFkVzV1M1N5N1EtZyIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJFVSIsInRpZCI6ImI3Mzg5NjY1LTU4ZGYtNGY0Yy1hM2EzLWVkNWFkZjBhYWZkOCIsInVuaXF1ZV9uYW1lIjoiZXJpYy5sZWxldUBncmF2aXRlZXNvdXJjZS5jb20iLCJ1cG4iOiJlcmljLmxlbGV1QGdyYXZpdGVlc291cmNlLmNvbSIsInV0aSI6Inl5bUdwZF9ZU0VHMklOTEVBaGZzQVEiLCJ2ZXIiOiIxLjAiLCJ4bXNfc3QiOnsic3ViIjoiQmowM3BnWUx1V3MxOXVXVUJpOXhxU21IN1JvS1A3bWpRUURtZHVWUEdoWSJ9LCJ4bXNfdGNkdCI6MTU0MDU1Njc0NH0.BsDjR_rYQAc0NjdgQLtCNc3cAsflhlOZnNdrnbEeIBrDO-VWsasrcIYACzyES611NQmPG3NTj1LR1bs5OYe8IYpgoRoVdLLirE788lpLMGudlMVi7CNuUntPZn6ca5iqlRs2PSpxrdp56BpdQcnYvTru3KEC-IKN5BLgykwo_pmMxSnsgQRyQL_38Z20ClA3IZwLW-TFQ93hLSCZxcZmpZIKhTKsseDobuif2Eq2U-uEPqYINbF38QUcW6QsCDzs3PUN6aeWV-Gr6KhxLjghTKi30EOmsY7QGU-342QFu-iq45_WC3_zU-sceFGT0ZL-97jpoXaqERWIbJVRbTeuXQ","id_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJhdWQiOiJlNGJkMDZiZC0wYThiLTRhZTktOWY2My1jZjVmYjg4MDA3YTEiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vYjczODk2NjUtNThkZi00ZjRjLWEzYTMtZWQ1YWRmMGFhZmQ4L3YyLjAiLCJpYXQiOjE1OTQ5MTIyNTMsIm5iZiI6MTU5NDkxMjI1MywiZXhwIjoxNTk0OTE2MTUzLCJmYW1pbHlfbmFtZSI6IkxlbGV1IiwiZ2l2ZW5fbmFtZSI6IkVyaWMiLCJuYW1lIjoiRXJpYyBMZWxldSIsIm9pZCI6IjRhZTAyMzUzLTI5YmUtNDJkMy04NDk5LWQ4YzM1NTJhNWM5MiIsInByZWZlcnJlZF91c2VybmFtZSI6ImVyaWMubGVsZXVAZ3Jhdml0ZWVzb3VyY2UuY29tIiwic3ViIjoiQmowM3BnWUx1V3MxOXVXVUJpOXhxU21IN1JvS1A3bWpRUURtZHVWUEdoWSIsInRpZCI6ImI3Mzg5NjY1LTU4ZGYtNGY0Yy1hM2EzLWVkNWFkZjBhYWZkOCIsInV0aSI6Inl5bUdwZF9ZU0VHMklOTEVBaGZzQVEiLCJ2ZXIiOiIyLjAifQ.c3u2k8L9fE4eQ8uM5UON1BRkqsTCEIF8jULtNC4mjN7eqncOKxtodFMsPZQeHm8P5aBYWL_LxHJfndQt9XOIReQmD57KHpdzJP4ZKacdDml5uJh30_sOx09Vm5uaEc7zos52Y8xfpyRXWLIDo-oQBwBEVnQQhFN6zgI1uvMP6Gl3y0hu-iGEwZYFkRShoaljA-k18mHbLBmllyxHvf4K2oNvftK0z9sWAwpw4beHcM2k9v2fBrQv9Ygwga1w0PsrD9U62cQnQ43f9EOIugChRRdReyTI2zoJvOeyKjo9nvxDbsz47WgpzTR7YzLhE931lF2aj6gih_4IRqBBsukpjQ"}
         when(httpResponse.bodyAsJsonObject())
                 .thenReturn(new JsonObject().put("token_type", "Bearer")
                         .put("scope", "openid")
@@ -279,7 +280,6 @@ public class GoogleAuthenticationProviderTest {
         when(authentication.getContext().get("redirect_uri")).thenReturn("https://gravitee.io");
         when(httpResponse.statusCode())
                 .thenReturn(HttpStatusCode.OK_200);
-        //:"eyJ0eXAiOiJKV1QiLCJub25jZSI6IkVKRG5GakxSd3FvYVBMdmJwV2FqWkdWNGZSTkh6eXpoMkU4YzdueHJLWVEiLCJhbGciOiJSUzI1NiIsIng1dCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9iNzM4OTY2NS01OGRmLTRmNGMtYTNhMy1lZDVhZGYwYWFmZDgvIiwiaWF0IjoxNTk0OTEyMjUzLCJuYmYiOjE1OTQ5MTIyNTMsImV4cCI6MTU5NDkxNjE1MywiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFTUUEyLzhRQUFBQTMxUE85ODNVUkpZVTQwS0ZWWjJYVWhSa0RWdkdUTGZLcTczV21oeVpZdlE9IiwiYW1yIjpbInB3ZCJdLCJhcHBfZGlzcGxheW5hbWUiOiJUZXN0LUVMRS1JRFAtQVpVUkUiLCJhcHBpZCI6ImU0YmQwNmJkLTBhOGItNGFlOS05ZjYzLWNmNWZiODgwMDdhMSIsImFwcGlkYWNyIjoiMSIsImZhbWlseV9uYW1lIjoiTGVsZXUiLCJnaXZlbl9uYW1lIjoiRXJpYyIsImlwYWRkciI6IjgyLjIzOC4yNTUuMTQzIiwibmFtZSI6IkVyaWMgTGVsZXUiLCJvaWQiOiI0YWUwMjM1My0yOWJlLTQyZDMtODQ5OS1kOGMzNTUyYTVjOTIiLCJwbGF0ZiI6IjE0IiwicHVpZCI6IjEwMDMyMDAwQ0Y0MDg0MDUiLCJzY3AiOiJEaXJlY3RvcnkuUmVhZC5BbGwgZW1haWwgb3BlbmlkIHByb2ZpbGUgVXNlci5SZWFkIiwic3ViIjoidmNzdmFfb1Q5M1Z0TnloZngtQXFtT1RwUG9EdzZ0ZFFkVzV1M1N5N1EtZyIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJFVSIsInRpZCI6ImI3Mzg5NjY1LTU4ZGYtNGY0Yy1hM2EzLWVkNWFkZjBhYWZkOCIsInVuaXF1ZV9uYW1lIjoiZXJpYy5sZWxldUBncmF2aXRlZXNvdXJjZS5jb20iLCJ1cG4iOiJlcmljLmxlbGV1QGdyYXZpdGVlc291cmNlLmNvbSIsInV0aSI6Inl5bUdwZF9ZU0VHMklOTEVBaGZzQVEiLCJ2ZXIiOiIxLjAiLCJ4bXNfc3QiOnsic3ViIjoiQmowM3BnWUx1V3MxOXVXVUJpOXhxU21IN1JvS1A3bWpRUURtZHVWUEdoWSJ9LCJ4bXNfdGNkdCI6MTU0MDU1Njc0NH0.BsDjR_rYQAc0NjdgQLtCNc3cAsflhlOZnNdrnbEeIBrDO-VWsasrcIYACzyES611NQmPG3NTj1LR1bs5OYe8IYpgoRoVdLLirE788lpLMGudlMVi7CNuUntPZn6ca5iqlRs2PSpxrdp56BpdQcnYvTru3KEC-IKN5BLgykwo_pmMxSnsgQRyQL_38Z20ClA3IZwLW-TFQ93hLSCZxcZmpZIKhTKsseDobuif2Eq2U-uEPqYINbF38QUcW6QsCDzs3PUN6aeWV-Gr6KhxLjghTKi30EOmsY7QGU-342QFu-iq45_WC3_zU-sceFGT0ZL-97jpoXaqERWIbJVRbTeuXQ","id_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJhdWQiOiJlNGJkMDZiZC0wYThiLTRhZTktOWY2My1jZjVmYjg4MDA3YTEiLCJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vYjczODk2NjUtNThkZi00ZjRjLWEzYTMtZWQ1YWRmMGFhZmQ4L3YyLjAiLCJpYXQiOjE1OTQ5MTIyNTMsIm5iZiI6MTU5NDkxMjI1MywiZXhwIjoxNTk0OTE2MTUzLCJmYW1pbHlfbmFtZSI6IkxlbGV1IiwiZ2l2ZW5fbmFtZSI6IkVyaWMiLCJuYW1lIjoiRXJpYyBMZWxldSIsIm9pZCI6IjRhZTAyMzUzLTI5YmUtNDJkMy04NDk5LWQ4YzM1NTJhNWM5MiIsInByZWZlcnJlZF91c2VybmFtZSI6ImVyaWMubGVsZXVAZ3Jhdml0ZWVzb3VyY2UuY29tIiwic3ViIjoiQmowM3BnWUx1V3MxOXVXVUJpOXhxU21IN1JvS1A3bWpRUURtZHVWUEdoWSIsInRpZCI6ImI3Mzg5NjY1LTU4ZGYtNGY0Yy1hM2EzLWVkNWFkZjBhYWZkOCIsInV0aSI6Inl5bUdwZF9ZU0VHMklOTEVBaGZzQVEiLCJ2ZXIiOiIyLjAifQ.c3u2k8L9fE4eQ8uM5UON1BRkqsTCEIF8jULtNC4mjN7eqncOKxtodFMsPZQeHm8P5aBYWL_LxHJfndQt9XOIReQmD57KHpdzJP4ZKacdDml5uJh30_sOx09Vm5uaEc7zos52Y8xfpyRXWLIDo-oQBwBEVnQQhFN6zgI1uvMP6Gl3y0hu-iGEwZYFkRShoaljA-k18mHbLBmllyxHvf4K2oNvftK0z9sWAwpw4beHcM2k9v2fBrQv9Ygwga1w0PsrD9U62cQnQ43f9EOIugChRRdReyTI2zoJvOeyKjo9nvxDbsz47WgpzTR7YzLhE931lF2aj6gih_4IRqBBsukpjQ"}
         when(httpResponse.bodyAsJsonObject())
                 .thenReturn(new JsonObject().put("token_type", "Bearer")
                         .put("scope", "openid")

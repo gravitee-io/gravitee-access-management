@@ -26,6 +26,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+
 /**
  * The token endpoint is used by the client to obtain an access token by presenting its authorization grant or refresh token.
  * The token endpoint is used with every authorization grant except for the implicit grant type (since an access token is issued directly).
@@ -37,7 +39,6 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class TokenEndpoint implements Handler<RoutingContext> {
-    private static final String CLIENT_CONTEXT_KEY = "client";
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
     private TokenGranter tokenGranter;
 
@@ -79,6 +80,6 @@ public class TokenEndpoint implements Handler<RoutingContext> {
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
                         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                         .end(Json.encodePrettily(accessToken))
-                        , error -> context.fail(error));
+                        , context::fail);
     }
 }

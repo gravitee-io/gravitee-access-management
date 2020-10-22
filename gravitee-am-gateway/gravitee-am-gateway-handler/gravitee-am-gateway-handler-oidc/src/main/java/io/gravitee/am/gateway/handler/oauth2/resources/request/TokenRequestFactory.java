@@ -111,7 +111,7 @@ public final class TokenRequestFactory {
     private String extractOrigin(RoutingContext context) {
         String basePath = "/";
         try {
-            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH), null);
+            basePath = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH));
         } catch (Exception e) {
             logger.error("Unable to resolve OAuth 2.0 Token Request origin uri", e);
         }

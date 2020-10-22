@@ -18,10 +18,11 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.provider.UserProperties;
 import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
@@ -32,6 +33,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -42,22 +44,20 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
+
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterEndpoint.class);
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String DOMAIN_CONTEXT_KEY = "domain";
-    private static final String USER_CONTEXT_KEY = "user";
-    private static final String ACTION_CONTEXT_KEY = "action";
-    private static final String PARAM_CONTEXT_KEY = "param";
-    private static final String PARAM_AUTHENTICATOR_ATTACHMENT_KEY = "authenticatorAttachment";
-    private static final String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";
-    private Domain domain;
-    private WebAuthn webAuthn;
-    private ThymeleafTemplateEngine engine;
+    private static final String SKIP_WEBAUTHN_PARAM_KEY = "skipWebAuthN";
+
+    private final Domain domain;
+    private final WebAuthn webAuthn;
+    private final ThymeleafTemplateEngine engine;
 
     public WebAuthnRegisterEndpoint(Domain domain,
                                     UserAuthenticationManager userAuthenticationManager,
@@ -99,28 +99,35 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
                 return;
             }
 
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+
             // check if user has skipped this step
             final HttpServerRequest request = routingContext.request();
-            final String prompt = request.getParam(io.gravitee.am.common.oidc.Parameters.PROMPT);
-            if ("none".equals(prompt)) {
-                final String returnURL = routingContext.session().get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
-                routingContext.session().put(WEBAUTHN_SKIPPED_KEY, true);
+            if (Boolean.parseBoolean(request.getParam(SKIP_WEBAUTHN_PARAM_KEY))) {
+                queryParams.remove(SKIP_WEBAUTHN_PARAM_KEY);
+                String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
+                routingContext.session().put(ConstantKeys.WEBAUTHN_SKIPPED_KEY, true);
                 // Now redirect back to the original url
                 doRedirect(routingContext.response(), returnURL);
+                return;
             }
 
             // prepare the context
-            final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+            final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final UserProperties userProperties = new UserProperties(user);
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().uri(), null);
-            routingContext.put(ACTION_CONTEXT_KEY, action);
-            routingContext.put(DOMAIN_CONTEXT_KEY, domain);
-            routingContext.put(USER_CONTEXT_KEY, userProperties);
-            routingContext.put(PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
+
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams);
+            final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set("skipWebAuthN", "true"));
+
+            routingContext.put(ConstantKeys.ACTION_KEY, action);
+            routingContext.put(ConstantKeys.SKIP_ACTION_KEY, skipAction);
+            routingContext.put(ConstantKeys.DOMAIN_CONTEXT_KEY, domain);
+            routingContext.put(ConstantKeys.USER_CONTEXT_KEY, userProperties);
+            routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
 
             if(domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().getAuthenticatorAttachment() != null) {
-                routingContext.put(PARAM_AUTHENTICATOR_ATTACHMENT_KEY, domain.getWebAuthnSettings().getAuthenticatorAttachment().getValue());
+                routingContext.put(ConstantKeys.PARAM_AUTHENTICATOR_ATTACHMENT_KEY, domain.getWebAuthnSettings().getAuthenticatorAttachment().getValue());
             }
 
             // render the webauthn register page
@@ -161,10 +168,11 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
                 return;
             }
 
-            final String returnURL = ctx.session().get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
+            final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
             final Boolean skipEnrollment = webauthnRegister.getBoolean("skip_user_webauthn_registration", false);
             if (skipEnrollment) {
-                ctx.session().put(WEBAUTHN_SKIPPED_KEY, true);
+                ctx.session().put(ConstantKeys.WEBAUTHN_SKIPPED_KEY, true);
                 // Now redirect back to the original url
                 ctx.response()
                         .putHeader(HttpHeaders.LOCATION, returnURL)
@@ -195,9 +203,9 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
 
                 // save challenge to the session
                 ctx.session()
-                        .put("challenge", credentialsOptions.getString("challenge"))
-                        .put("username", webauthnRegister.getString("name"))
-                        .put("userId", user.getId());
+                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, credentialsOptions.getString("challenge"))
+                        .put(ConstantKeys.USERNAME_KEY, webauthnRegister.getString("name"))
+                        .put(ConstantKeys.USER_ID_KEY, user.getId());
 
                 ctx.response()
                         .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")

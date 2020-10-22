@@ -19,10 +19,14 @@ import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
@@ -112,7 +116,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private ClientSyncService clientSyncService;
 
     @Autowired
-    private SessionHandler sessionHandler;
+    private CookieSessionHandler sessionHandler;
 
     @Autowired
     private CookieHandler cookieHandler;
@@ -135,6 +139,12 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private WebAuthn webAuthn;
+
+    @Autowired
+    private JWTService jwtService;
+
+    @Autowired
+    private CertificateManager certificateManager;
 
     @Override
     protected void doStart() throws Exception {
@@ -167,9 +177,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // login route
         rootRouter.get("/login")
-                .handler(new LoginRequestParseHandler())
                 .handler(clientRequestParseHandler)
-                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, domain))
+                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(new LoginEndpoint(thymeleafTemplateEngine, domain));
         rootRouter.post("/login")
                 .handler(FormLoginHandler.create(userAuthProvider));
@@ -179,11 +188,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager));
-        Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager);
+        Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
         Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler();
         Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
-        Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine, domain);
+        Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
         rootRouter.get("/login/callback")
                 .handler(loginCallbackParseHandler)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
@@ -197,9 +206,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.get("/login/SSO/POST")
-                .handler(loginCallbackParseHandler)
-                .handler(loginSSOPOSTEndpoint)
-                .failureHandler(loginCallbackFailureHandler);
+                .handler(loginSSOPOSTEndpoint);
 
         // MFA route
         rootRouter.route("/mfa/enroll")

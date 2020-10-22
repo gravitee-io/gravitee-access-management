@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -26,17 +27,13 @@ import io.vertx.reactivex.ext.web.Session;
  */
 public class MFAChallengeStep extends AuthenticationFlowStep {
 
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
-    private static final String STRONG_AUTH_COMPLETED  = "strongAuthCompleted";
-
     public MFAChallengeStep(Handler<RoutingContext> wrapper) {
         super(wrapper);
     }
 
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Session session = routingContext.session();
         // check if application has enabled MFA
         if (client == null) {
@@ -48,12 +45,12 @@ public class MFAChallengeStep extends AuthenticationFlowStep {
             return;
         }
         // check if user is already authenticated with strong auth
-        if (session.get(STRONG_AUTH_COMPLETED) != null && session.get(STRONG_AUTH_COMPLETED).equals(true)) {
+        if (session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY) != null && session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY).equals(true)) {
             flow.doNext(routingContext);
             return;
         }
         // check if user has skipped enrollment step
-        if (session.get(MFA_SKIPPED_KEY) != null && session.get(MFA_SKIPPED_KEY).equals(true)) {
+        if (session.get(ConstantKeys.MFA_SKIPPED_KEY) != null && session.get(ConstantKeys.MFA_SKIPPED_KEY).equals(true)) {
             flow.doNext(routingContext);
             return;
         }

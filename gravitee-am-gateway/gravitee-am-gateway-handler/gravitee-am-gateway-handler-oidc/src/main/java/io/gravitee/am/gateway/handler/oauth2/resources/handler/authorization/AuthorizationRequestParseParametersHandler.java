@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.List;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 
 /**
@@ -58,7 +59,6 @@ import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 public class AuthorizationRequestParseParametersHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseParametersHandler.class);
-    private static final String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
     private final static String LOGIN_ENDPOINT = "/login";
     private final static String MFA_ENDPOINT = "/mfa/challenge";
     private final static String USER_CONSENT_ENDPOINT = "/oauth/consent";

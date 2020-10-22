@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
@@ -45,12 +45,10 @@ import java.util.Map;
  */
 public class RegisterSubmissionEndpoint extends UserRequestHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RegisterSubmissionEndpoint.class);
-    private static final String ERROR_PARAM = "error";
-    private static final String SUCCESS_PARAM = "success";
-    private static final String WARNING_PARAM = "warning";
-    private UserService userService;
-    private Domain domain;
+    private static final Logger logger = LoggerFactory.getLogger(RegisterSubmissionEndpoint.class);
+
+    private final UserService userService;
+    private final Domain domain;
 
     public RegisterSubmissionEndpoint(UserService userService, Domain domain) {
         this.userService = userService;
@@ -60,7 +58,7 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
     @Override
     public void handle(RoutingContext context) {
         // retrieve the client in context
-        Client client = context.get("client");
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         // create the user
         MultiMap params = context.request().formAttributes();
@@ -69,21 +67,17 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
         // register the user
         register(client, user, getAuthenticatedUser(context), h -> {
             // prepare response
-            Map<String, String> queryParams = new HashMap<>();
-            // add client_id parameter for future use
-            if (client != null) {
-                queryParams.put(Parameters.CLIENT_ID, client.getClientId());
-            }
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
 
             // if failure, return to the register page with an error
             if (h.failed()) {
                 if (h.cause() instanceof InvalidUserException) {
-                    queryParams.put(WARNING_PARAM, "invalid_user_information");
+                    queryParams.set(ConstantKeys.WARNING_PARAM_KEY, "invalid_user_information");
                 } else if (h.cause() instanceof EmailFormatInvalidException) {
-                    queryParams.put(WARNING_PARAM, "invalid_email");
+                    queryParams.set(ConstantKeys.WARNING_PARAM_KEY, "invalid_email");
                 } else {
-                    LOGGER.error("An error occurs while ending user registration", h.cause());
-                    queryParams.put(ERROR_PARAM, "registration_failed");
+                    logger.error("An error occurs while ending user registration", h.cause());
+                    queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "registration_failed");
                 }
                 redirectToPage(context, queryParams, h.cause());
                 return;
@@ -94,13 +88,10 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
             // if auto login option is enabled add the user to the session
             if (registrationResponse.isAutoLogin()) {
                 context.setUser(io.vertx.reactivex.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser())));
-                // the user has upgraded from unauthenticated to authenticated
-                // session should be upgraded as recommended by owasp
-                context.session().regenerateId();
             }
             // no redirect uri has been set, redirect to the default page
             if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
-                queryParams.put(SUCCESS_PARAM, "registration_succeed");
+                queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "registration_succeed");
                 redirectToPage(context, queryParams);
                 return;
             }
@@ -122,12 +113,12 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
     @Override
     protected io.gravitee.am.identityprovider.api.User getAuthenticatedUser(RoutingContext routingContext) {
         // override principal user
-        io.gravitee.am.identityprovider.api.User principal = new DefaultUser(routingContext.request().getParam("username"));
+        DefaultUser principal = new DefaultUser(routingContext.request().getParam("username"));
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
         additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
         additionalInformation.put(Claims.domain, domain.getId());
-        ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
+        principal.setAdditionalInformation(additionalInformation);
         return principal;
     }
 
@@ -141,7 +132,5 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
         user.setClient(params.get("client_id"));
 
         return user;
-
-
     }
 }

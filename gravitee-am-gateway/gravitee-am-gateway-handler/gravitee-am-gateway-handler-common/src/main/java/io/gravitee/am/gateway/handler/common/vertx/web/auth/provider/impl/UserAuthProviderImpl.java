@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.oidc.Client;
@@ -31,8 +32,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +72,7 @@ public class UserAuthProviderImpl implements UserAuthProvider {
             final Client client = parseClientHandler.result();
 
             // end user authentication
-            SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request()));
+            SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
             final Authentication authentication = new EndUserAuthentication(username, password, authenticationContext);
 
             authenticationContext.set(Claims.ip_address, ipAddress);
@@ -85,11 +85,6 @@ public class UserAuthProviderImpl implements UserAuthProvider {
                             error -> handler.handle(Future.failedFuture(error))
                     );
         });
-    }
-
-    @Override
-    public void authenticate(JsonObject authInfo, Handler<AsyncResult<User>> handler) {
-        authenticate(null, authInfo, handler);
     }
 
     private void parseClient(String clientId, Handler<AsyncResult<Client>> authHandler) {

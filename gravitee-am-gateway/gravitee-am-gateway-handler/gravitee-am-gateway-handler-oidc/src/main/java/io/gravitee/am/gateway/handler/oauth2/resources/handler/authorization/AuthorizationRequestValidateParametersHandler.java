@@ -30,6 +30,8 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+
 
 /**
  * The authorization server must ensure that the client is using grant flow, redirect_uri which are defined
@@ -41,8 +43,7 @@ import java.util.List;
  */
 public class AuthorizationRequestValidateParametersHandler implements Handler<RoutingContext> {
 
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private Domain domain;
+    private final Domain domain;
 
     public AuthorizationRequestValidateParametersHandler(Domain domain) {
         this.domain = domain;

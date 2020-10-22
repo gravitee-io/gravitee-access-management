@@ -487,7 +487,6 @@
 							"listen": "test",
 							"script": {
 								"id": "c70c0f55-08a7-43bd-8841-f6a4b3461bcd",
-								"type": "text/javascript",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -497,21 +496,24 @@
 									"    pm.response.to.be.ok;",
 									"    ",
 									"    // Extract the XSRF token to send it with the next request.",
-									"    var responseHTML = cheerio(pm.response.text());",
-									"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    var responseHTML = cheerio.load(pm.response.text());",
+									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    const action = responseHTML('form').attr('action');",
 									"    pm.environment.set('xsrf', xsrfToken);",
+									"    pm.environment.set('action', action);",
 									"});"
-								]
+								],
+								"type": "text/javascript"
 							}
 						},
 						{
 							"listen": "prerequest",
 							"script": {
 								"id": "7329898a-89ab-4454-8dc2-285c2d551f4c",
-								"type": "text/javascript",
 								"exec": [
 									""
-								]
+								],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -598,13 +600,9 @@
 							]
 						},
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/login",
+							"raw": "{{action}}",
 							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domain}}",
-								"login"
+								"{{action}}"
 							]
 						},
 						"description": "The client does not have a redirect_uri define"
@@ -677,7 +675,8 @@
 									"",
 									"    var location = postman.getResponseHeader(\"Location\");",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to User Consent'] = location.includes('/login?client_id='+ pm.environment.get('clientId') + '&error=user_consent_failed&error_code=CALLOUT_EXIT_ON_ERROR&error_description=pre-consent-failed');",
+									"",
+									"    tests['Redirect to login'] = location.includes('/login?response_type=code&client_id='+ pm.environment.get('clientId') + '&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid&error=user_consent_failed&error_code=CALLOUT_EXIT_ON_ERROR&error_description=pre-consent-failed');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -902,7 +901,6 @@
 							"listen": "test",
 							"script": {
 								"id": "6263e041-5153-4460-b1a8-0cd91e69f2d3",
-								"type": "text/javascript",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -912,21 +910,24 @@
 									"    pm.response.to.be.ok;",
 									"    ",
 									"    // Extract the XSRF token to send it with the next request.",
-									"    var responseHTML = cheerio(pm.response.text());",
-									"    var xsrfToken = responseHTML.find('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    var responseHTML = cheerio.load(pm.response.text());",
+									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    const action = responseHTML('form').attr('action');",
 									"    pm.environment.set('xsrf', xsrfToken);",
+									"    pm.environment.set('action', action);",
 									"});"
-								]
+								],
+								"type": "text/javascript"
 							}
 						},
 						{
 							"listen": "prerequest",
 							"script": {
 								"id": "ff751108-dc89-4f05-af64-26fab0160981",
-								"type": "text/javascript",
 								"exec": [
 									""
-								]
+								],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -961,7 +962,7 @@
 									"",
 									"    var location = postman.getResponseHeader(\"Location\");",
 									"    pm.environment.set('redirection', location);",
-									"    tests['Redirect to login page'] = location.includes('/oauth/authorize');",
+									"    tests['Redirect to authorize page'] = location.includes('/oauth/authorize');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1012,13 +1013,9 @@
 							]
 						},
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/login",
+							"raw": "{{action}}",
 							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domain}}",
-								"login"
+								"{{action}}"
 							]
 						},
 						"description": "The client does not have a redirect_uri define"
@@ -1026,7 +1023,7 @@
 					"response": []
 				},
 				{
-					"name": "Redirect to user consent page",
+					"name": "Redirect to user authorize",
 					"event": [
 						{
 							"listen": "test",

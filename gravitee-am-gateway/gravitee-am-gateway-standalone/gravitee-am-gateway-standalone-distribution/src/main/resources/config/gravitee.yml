@@ -48,7 +48,7 @@
 #      path: ${gravitee.home}/security/truststore.jks
 #      password: secret
 #  cookie:
-#    secure: false
+#    secure: false # Default is false for demonstration purpose but we highly recommend you to enable cookie secure.
 #    session:
 #      name: session-name
 #      timeout: 1800000 # (in milliseconds)

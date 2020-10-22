@@ -25,6 +25,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+
 
 /**
  * The authorization server must ensure that the client used for the Authorization Request is registered and
@@ -35,8 +37,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class AuthorizationRequestParseClientHandler implements Handler<RoutingContext> {
 
-    private static final String CLIENT_CONTEXT_KEY = "client";
-    private ClientSyncService clientSyncService;
+    private final ClientSyncService clientSyncService;
 
     public AuthorizationRequestParseClientHandler(ClientSyncService clientSyncService) {
         this.clientSyncService = clientSyncService;
@@ -46,7 +47,7 @@ public class AuthorizationRequestParseClientHandler implements Handler<RoutingCo
     public void handle(RoutingContext context) {
         final String clientId = context.request().getParam(Parameters.CLIENT_ID);
 
-        authenticate(clientId, resultHandler -> {
+        fetchClient(clientId, resultHandler -> {
             if (resultHandler.failed()) {
                 context.fail(resultHandler.cause());
                 return;
@@ -59,7 +60,7 @@ public class AuthorizationRequestParseClientHandler implements Handler<RoutingCo
         });
     }
 
-    private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
+    private void fetchClient(String clientId, Handler<AsyncResult<Client>> authHandler) {
         clientSyncService
                 .findByClientId(clientId)
                 .subscribe(

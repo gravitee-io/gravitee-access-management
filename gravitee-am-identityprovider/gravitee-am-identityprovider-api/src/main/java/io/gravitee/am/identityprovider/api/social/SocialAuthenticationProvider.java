@@ -23,7 +23,7 @@ import io.reactivex.Maybe;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SocialAuthenticationProvider <T extends SocialIdentityProviderConfiguration> extends AuthenticationProvider {
+public interface SocialAuthenticationProvider extends AuthenticationProvider {
 
     /**
      * Generate the signIn Url.
@@ -33,7 +33,7 @@ public interface SocialAuthenticationProvider <T extends SocialIdentityProviderC
      * @Deprecated use the asyncSignInUrl instead
      */
     @Deprecated
-    Request signInUrl(String redirectUri);
+    Request signInUrl(String redirectUri, String state);
 
     /**
      * Generate the signIn Url in asynchronous way
@@ -43,8 +43,8 @@ public interface SocialAuthenticationProvider <T extends SocialIdentityProviderC
      * @param redirectUri
      * @return
      */
-    default Maybe<Request> asyncSignInUrl(String redirectUri) {
-        Request request = signInUrl(redirectUri);
+    default Maybe<Request> asyncSignInUrl(String redirectUri, String state) {
+        Request request = signInUrl(redirectUri, state);
         if (request != null) {
             return Maybe.just(request);
         } else {

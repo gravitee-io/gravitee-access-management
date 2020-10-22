@@ -19,15 +19,15 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.UserBodyReques
 
 import java.util.Arrays;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.EMAIL_PARAM_KEY;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ForgotPasswordSubmissionRequestParseHandler extends UserBodyRequestParseHandler {
 
-    private static final String emailParam = "email";
-
     public ForgotPasswordSubmissionRequestParseHandler() {
-        super(Arrays.asList(emailParam));
+        super(Arrays.asList(EMAIL_PARAM_KEY));
     }
 }

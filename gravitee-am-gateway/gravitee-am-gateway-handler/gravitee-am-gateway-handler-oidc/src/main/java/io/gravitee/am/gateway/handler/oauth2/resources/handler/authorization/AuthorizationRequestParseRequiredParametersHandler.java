@@ -26,6 +26,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import java.util.List;
 import java.util.Set;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+
 /**
  * The authorization server validates the request to ensure that all required parameters are present and valid.
  *
@@ -43,8 +45,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public class AuthorizationRequestParseRequiredParametersHandler implements Handler<RoutingContext> {
-
-    private static final String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
 
     @Override
     public void handle(RoutingContext context) {
@@ -78,7 +78,7 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
         OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
 
         if (responseType == null) {
-            throw new InvalidRequestException("Missing parameter: response_type");
+            throw new InvalidRequestException("Missing parameter: " + Parameters.RESPONSE_TYPE);
         }
 
         // get supported response types
@@ -92,7 +92,7 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
         String clientId = context.request().getParam(Parameters.CLIENT_ID);
 
         if (clientId == null) {
-            throw new InvalidRequestException("Missing parameter: client_id");
+            throw new InvalidRequestException("Missing parameter: " + Parameters.CLIENT_ID);
         }
     }
 }

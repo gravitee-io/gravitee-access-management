@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentEndpoint;
@@ -61,6 +62,7 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -69,6 +71,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class OAuth2Provider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(OAuth2Provider.class);
+
+    @Value("${handlers.request.transaction.header:X-Gravitee-Transaction-Id}")
+    private String transactionHeader;
 
     @Autowired
     private Domain domain;
@@ -107,13 +112,10 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private ThymeleafTemplateEngine thymeleafTemplateEngine;
 
     @Autowired
-    private SessionHandler sessionHandler;
+    private CookieSessionHandler sessionHandler;
 
     @Autowired
     private SSOSessionHandler ssoSessionHandler;
-
-    @Autowired
-    private CookieHandler cookieHandler;
 
     @Autowired
     private CSRFHandler csrfHandler;
@@ -179,6 +181,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
         // Authorization endpoint
         oauth2Router.route(HttpMethod.GET,"/authorize")
+                .handler(new AuthorizationRequestTransactionHandler(transactionHeader))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
@@ -187,23 +190,27 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestValidateParametersHandler(domain))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler())
-                .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService, domain))
+                .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationEndpoint(flow))
-                .failureHandler(new AuthorizationRequestFailureHandler(domain, openIDDiscoveryService, jwtService, jweService));
+                .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService));
 
         // Authorization consent endpoint
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler(clientSyncService);
         oauth2Router.route(HttpMethod.GET, "/consent")
+                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestResolveHandler())
                 .handler(userConsentPrepareContextHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
                 .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine));
         oauth2Router.route(HttpMethod.POST, "/consent")
+                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestResolveHandler())
                 .handler(userConsentPrepareContextHandler)
                 .handler(new UserConsentProcessHandler(userConsentService, domain))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
                 .handler(new UserConsentPostEndpoint());
         oauth2Router.route("/consent")
-                .failureHandler(new UserConsentFailureHandler(domain));
+                .failureHandler(new UserConsentFailureHandler());
 
         // Token endpoint
         oauth2Router.route(HttpMethod.OPTIONS, "/token")
