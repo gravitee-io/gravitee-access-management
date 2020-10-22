@@ -21,6 +21,7 @@ import io.vertx.core.json.JsonObject;
  * Converter and mapper for {@link PubSecKeyOptions}.
  * NOTE: This class has been automatically generated from the {@link PubSecKeyOptions} original class using Vert.x codegen.
  */
+// TODO to remove when updating to vert.x 4
 public class PubSecKeyOptionsConverter {
 
 

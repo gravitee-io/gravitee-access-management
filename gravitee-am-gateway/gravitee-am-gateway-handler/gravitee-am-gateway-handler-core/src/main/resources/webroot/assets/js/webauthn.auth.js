@@ -1,121 +1,5 @@
 'use strict';
 
-/**
- * Converts PublicKeyCredential into serialised JSON
- * @param  {Object} pubKeyCred
- * @return {Object}            - JSON encoded publicKeyCredential
- */
-let publicKeyCredentialToJSON = (pubKeyCred) => {
-    if (pubKeyCred instanceof Array) {
-        let arr = [];
-        for (let i of pubKeyCred) { arr.push(publicKeyCredentialToJSON(i)) }
-
-        return arr
-    }
-
-    if (pubKeyCred instanceof ArrayBuffer) {
-        return base64url.encode(pubKeyCred)
-    }
-
-    if (pubKeyCred instanceof Object) {
-        let obj = {};
-
-        for (let key in pubKeyCred) {
-            obj[key] = publicKeyCredentialToJSON(pubKeyCred[key])
-        }
-
-        return obj
-    }
-
-    return pubKeyCred
-};
-
-/**
- * Generate secure random buffer
- * @param  {Number} len - Length of the buffer (default 32 bytes)
- * @return {Uint8Array} - random string
- */
-let generateRandomBuffer = (len) => {
-    len = len || 32;
-
-    let randomBuffer = new Uint8Array(len);
-    window.crypto.getRandomValues(randomBuffer);
-
-    return randomBuffer
-};
-
-/**
- * Decodes arrayBuffer required fields.
- */
-let preformatMakeCredReq = (makeCredReq) => {
-    makeCredReq.challenge = base64url.decode(makeCredReq.challenge);
-    makeCredReq.user.id = base64url.decode(makeCredReq.user.id);
-
-    return makeCredReq
-};
-
-/**
- * Decodes arrayBuffer required fields.
- */
-let preformatGetAssertReq = (getAssert) => {
-    getAssert.challenge = base64url.decode(getAssert.challenge);
-
-    for (let allowCred of getAssert.allowCredentials) {
-        allowCred.id = base64url.decode(allowCred.id)
-    }
-
-    return getAssert
-};
-
-let httpCall = (url, formBody) => {
-    return fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formBody)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Server responded with error: ${response.statusText}`);
-        }
-        return response;
-    });
-}
-
-let getMakeCredentialsChallenge = (url, formBody) => {
-    return httpCall(url, formBody)
-        .then((response) => response.json())
-};
-
-let sendWebAuthnResponse = (url, formBody) => {
-    return httpCall(url, formBody);
-};
-
-let getGetAssertionChallenge = (url, formBody) => {
-    return httpCall(url, formBody)
-        .then((response) => response.json())
-};
-
-let register = (url, formBody) => {
-    return getMakeCredentialsChallenge(url, formBody)
-        .then((response) => {
-            let publicKey = preformatMakeCredReq(response);
-            clearAlert();
-            return navigator.credentials.create({publicKey})
-        });
-};
-
-let login = (url, formBody) => {
-    return getGetAssertionChallenge(url, formBody)
-        .then((response) => {
-            let publicKey = preformatGetAssertReq(response);
-            clearAlert();
-            return navigator.credentials.get({publicKey})
-        })
-};
-
 let clearAlert = () => {
     if (document.getElementById('webauthn-error')) {
         document.getElementById('webauthn-error').style.display = 'none';
@@ -126,24 +10,67 @@ let clearAlert = () => {
 if (document.getElementById('register')) {
     document.getElementById('register').addEventListener('submit', function (event) {
         event.preventDefault();
-
-        let registerURL = this.action;
-        let responseURL = registerURL.replace('/webauthn/register', '/webauthn/response');
-        let name = this.username.value;
-        let displayName = this.username.value;
+        const registerURL = this.action;
+        const responseURL = registerURL.replace('/webauthn/register', '/webauthn/response');
+        const name = this.username.value;
+        const displayName = this.username.value;
 
         if (!name || !displayName) {
             window.alert('DisplayName or username is missing!');
             return
         }
 
-        register(registerURL, {name, displayName})
-            .then((response) => {
-                let makeCredResponse = publicKeyCredentialToJSON(response);
-                return sendWebAuthnResponse(responseURL, makeCredResponse)
+        return fetch(registerURL, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({name, displayName})
+        })
+            .then(res => {
+                if (res.status === 200) {
+                    return res;
+                }
+                throw new Error(res.statusText);
             })
-            .then((response) => {
-                window.location.replace(response.headers.get('Location'));
+            .then(res => res.json())
+            .then(res => {
+                res.challenge = base64url.decode(res.challenge);
+                res.user.id = base64url.decode(res.user.id);
+                if (res.excludeCredentials) {
+                    for (let i = 0; i < res.excludeCredentials.length; i++) {
+                        res.excludeCredentials[i].id = base64url.decode(res.excludeCredentials[i].id);
+                    }
+                }
+                clearAlert();
+                return res;
+            })
+            .then(res => navigator.credentials.create({publicKey: res}))
+            .then(credential => {
+                return fetch(responseURL, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: credential.id,
+                        rawId: base64url.encode(credential.rawId),
+                        response: {
+                            attestationObject: base64url.encode(credential.response.attestationObject),
+                            clientDataJSON: base64url.encode(credential.response.clientDataJSON)
+                        },
+                        type: credential.type
+                    }),
+                })
+            })
+            .then(res => {
+                if (res.status >= 200 && res.status < 300) {
+                    window.location.replace(res.headers.get('Location'));
+                } else {
+                    throw new Error(res.statusText);
+                }
             })
             .catch((error) => {
                 if (document.getElementById('webauthn-error')) {
@@ -157,23 +84,67 @@ if (document.getElementById('register')) {
 if (document.getElementById('login')) {
     document.getElementById('login').addEventListener('submit', function (event) {
         event.preventDefault();
-
-        let loginURL = this.action;
-        let responseURL = loginURL.replace('/webauthn/login', '/webauthn/response');
-        let name = this.username.value;
+        const loginURL = this.action;
+        const responseURL = loginURL.replace('/webauthn/login', '/webauthn/response');
+        const name = this.username.value;
 
         if (!name) {
             window.alert('Username is missing!');
             return
         }
 
-        login(loginURL, {name})
-            .then((response) => {
-                let getAssertionResponse = publicKeyCredentialToJSON(response);
-                return sendWebAuthnResponse(responseURL, getAssertionResponse)
+        return fetch(loginURL, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({name})
+        })
+            .then(res => {
+                if (res.status === 200) {
+                    return res;
+                }
+                throw new Error(res.statusText);
             })
-            .then((response) => {
-                window.location.replace(response.headers.get('Location'));
+            .then(res => res.json())
+            .then(res => {
+                res.challenge = base64url.decode(res.challenge);
+                if (res.allowCredentials) {
+                    for (let i = 0; i < res.allowCredentials.length; i++) {
+                        res.allowCredentials[i].id = base64url.decode(res.allowCredentials[i].id);
+                    }
+                }
+                clearAlert();
+                return res;
+            })
+            .then(res => navigator.credentials.get({publicKey: res}))
+            .then(credential => {
+                return fetch(responseURL, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: credential.id,
+                        rawId: base64url.encode(credential.rawId),
+                        response: {
+                            clientDataJSON: base64url.encode(credential.response.clientDataJSON),
+                            authenticatorData: base64url.encode(credential.response.authenticatorData),
+                            signature: base64url.encode(credential.response.signature),
+                            userHandle: base64url.encode(credential.response.userHandle),
+                        },
+                        type: credential.type
+                    }),
+                })
+            })
+            .then(res => {
+                if (res.status >= 200 && res.status < 300) {
+                    window.location.replace(res.headers.get('Location'));
+                } else {
+                    throw new Error(res.statusText);
+                }
             })
             .catch((error) => {
                 if (document.getElementById('webauthn-error')) {
@@ -212,56 +183,66 @@ document.addEventListener('DOMContentLoaded', async function () {
 (function () {
     'use strict'
 
-    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
-
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
     // Use a lookup table to find the index.
-    let lookup = new Uint8Array(256)
+    const lookup = new Uint8Array(256);
+
     for (let i = 0; i < chars.length; i++) {
-        lookup[chars.charCodeAt(i)] = i
+        lookup[chars.charCodeAt(i)] = i;
     }
 
-    let encode = function (arraybuffer) {
-        let bytes = new Uint8Array(arraybuffer)
+    const encode = function (arraybuffer) {
+        const bytes = new Uint8Array(arraybuffer);
 
-        let i; let len = bytes.length; let base64url = ''
+        let i;
+        let len = bytes.length;
+        let base64url = '';
 
         for (i = 0; i < len; i += 3) {
-            base64url += chars[bytes[i] >> 2]
-            base64url += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)]
-            base64url += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)]
-            base64url += chars[bytes[i + 2] & 63]
+            base64url += chars[bytes[i] >> 2];
+            base64url += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
+            base64url += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
+            base64url += chars[bytes[i + 2] & 63];
         }
 
         if ((len % 3) === 2) {
-            base64url = base64url.substring(0, base64url.length - 1)
+            base64url = base64url.substring(0, base64url.length - 1);
         } else if (len % 3 === 1) {
-            base64url = base64url.substring(0, base64url.length - 2)
+            base64url = base64url.substring(0, base64url.length - 2);
         }
 
-        return base64url
+        return base64url;
     }
 
-    let decode = function (base64string) {
-        let bufferLength = base64string.length * 0.75
+    const decode = function (base64string) {
+        if (base64string) {
 
-        let len = base64string.length; let i; let p = 0
+            let bufferLength = base64string.length * 0.75;
 
-        let encoded1; let encoded2; let encoded3; let encoded4
+            let len = base64string.length;
+            let i;
+            let p = 0;
 
-        let bytes = new Uint8Array(bufferLength)
+            let encoded1;
+            let encoded2;
+            let encoded3;
+            let encoded4;
 
-        for (i = 0; i < len; i += 4) {
-            encoded1 = lookup[base64string.charCodeAt(i)]
-            encoded2 = lookup[base64string.charCodeAt(i + 1)]
-            encoded3 = lookup[base64string.charCodeAt(i + 2)]
-            encoded4 = lookup[base64string.charCodeAt(i + 3)]
+            let bytes = new Uint8Array(bufferLength);
 
-            bytes[p++] = (encoded1 << 2) | (encoded2 >> 4)
-            bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2)
-            bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63)
+            for (i = 0; i < len; i += 4) {
+                encoded1 = lookup[base64string.charCodeAt(i)];
+                encoded2 = lookup[base64string.charCodeAt(i + 1)];
+                encoded3 = lookup[base64string.charCodeAt(i + 2)];
+                encoded4 = lookup[base64string.charCodeAt(i + 3)];
+
+                bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
+                bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
+                bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
+            }
+
+            return bytes.buffer;
         }
-
-        return bytes.buffer
     }
 
     let methods = {

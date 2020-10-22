@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.jose;
 /**
  * Helper functions to convert from DER to JWS and vice versa.
  */
+// TODO to remove when updating to vert.x 4
 public final class SignatureHelper {
 
     private SignatureHelper() {

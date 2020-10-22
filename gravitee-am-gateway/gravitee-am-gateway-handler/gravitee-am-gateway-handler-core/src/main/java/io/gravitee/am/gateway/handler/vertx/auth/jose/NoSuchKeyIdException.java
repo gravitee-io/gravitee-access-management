@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.jose;
  * No such KeyId exception is thrown when a JWT with a well known "kid" does not find a matching "kid" in the crypto
  * list.
  */
+// TODO to remove when updating to vert.x 4
 public final class NoSuchKeyIdException extends RuntimeException {
 
     private final String id;

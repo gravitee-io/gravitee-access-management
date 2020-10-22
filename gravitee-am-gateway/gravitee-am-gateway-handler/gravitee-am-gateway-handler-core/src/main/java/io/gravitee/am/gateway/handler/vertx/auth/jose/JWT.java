@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.jose;
 
+import io.gravitee.am.gateway.handler.vertx.auth.CertificateHelper;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -22,7 +24,9 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -43,8 +47,11 @@ public final class JWT {
     private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     // as described in the terminology section: https://tools.ietf.org/html/rfc7515#section-2
-    private static final Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
-    private static final Base64.Decoder decoder = Base64.getUrlDecoder();
+    private static final Base64.Encoder urlEncoder = Base64.getUrlEncoder().withoutPadding();
+    private static final Base64.Decoder urlDecoder = Base64.getUrlDecoder();
+    private static final Base64.Decoder decoder = Base64.getDecoder();
+
+    private boolean allowEmbeddedKey = false;
 
     // keep 2 maps (1 for encode, 1 for decode)
     private final Map<String, List<Crypto>> SIGN = new ConcurrentHashMap<>();
@@ -54,21 +61,6 @@ public final class JWT {
         // Spec requires "none" to always be available
         SIGN.put("none", Collections.singletonList(new CryptoNone()));
         VERIFY.put("none", Collections.singletonList(new CryptoNone()));
-    }
-
-    /**
-     * Loads all keys from a keystore.
-     * @deprecated Use {@link JWK#load(KeyStore, String, Map)} instead.
-     * @param keyStore the keystore to load
-     * @param keyStorePassword the keystore password
-     */
-    @Deprecated
-    public JWT(final KeyStore keyStore, final char[] keyStorePassword) {
-        this();
-        // delegate to the JWK loader
-        for (JWK key : JWK.load(keyStore, new String(keyStorePassword), null)) {
-            addJWK(key);
-        }
     }
 
     /**
@@ -98,6 +90,24 @@ public final class JWT {
         return this;
     }
 
+    /**
+     * Enable/Disable support for embedded keys. Default {@code false}.
+     *
+     * By default this is disabled as it could be used as an attack vector to the application. A malicious user could
+     * generate a self signed certificate and embed the public certificate on the token, which would always pass the
+     * validation.
+     *
+     * Users of this feature should regardless of the validation status, ensure that the chain is valid by adding a
+     * well known root certificate (that has been previously agreed with the server).
+     *
+     * @param allowEmbeddedKey when true embedded keys are used to check the signature.
+     * @return fluent self.
+     */
+    public JWT allowEmbeddedKey(boolean allowEmbeddedKey) {
+        this.allowEmbeddedKey = allowEmbeddedKey;
+        return this;
+    }
+
     private void addJWK(List<Crypto> current, JWK jwk) {
         boolean replaced = false;
         for (int i = 0; i < current.size(); i++) {
@@ -122,7 +132,7 @@ public final class JWT {
     public static JsonObject parse(final String token) {
         String[] segments = token.split("\\.");
         if (segments.length < 2 || segments.length > 3) {
-            throw new RuntimeException("Not enough or too many segments");
+            throw new RuntimeException("Not enough or too many segments [" + segments.length + "]");
         }
 
         // All segment should be base64
@@ -142,34 +152,90 @@ public final class JWT {
     }
 
     public JsonObject decode(final String token) {
+        return decode(token, false);
+    }
+
+    public JsonObject decode(final String token, boolean full) {
         // lock the secure state
-        final boolean unsecure = isUnsecure();
         String[] segments = token.split("\\.");
 
-        if (unsecure) {
-            if (segments.length != 2) {
-                throw new IllegalStateException("JWT is in unsecured mode but token is signed.");
-            }
-        } else {
-            if (segments.length != 3) {
-                throw new IllegalStateException("JWT is in secure mode but token is not signed.");
-            }
+        if (segments.length < 2) {
+            throw new IllegalStateException("Invalid format for JWT");
         }
 
         // All segment should be base64
         String headerSeg = segments[0];
         String payloadSeg = segments[1];
-        String signatureSeg = unsecure ? null : segments[2];
+        String signatureSeg = segments.length == 3 ? segments[2] : null;
 
+        // empty signature is never allowed
         if ("".equals(signatureSeg)) {
             throw new IllegalStateException("Signature is required");
         }
 
         // base64 decode and parse JSON
-        JsonObject header = new JsonObject(new String(base64urlDecode(headerSeg), UTF8));
-        JsonObject payload = new JsonObject(new String(base64urlDecode(payloadSeg), UTF8));
+        JsonObject header = new JsonObject(Buffer.buffer(base64urlDecode(headerSeg)));
+
+        final boolean unsecure = isUnsecure();
+        if (unsecure) {
+            // if there isn't a certificate chain in the header, we are dealing with a strictly
+            // unsecure mode validation. In this case the number of segments must be 2
+            // if there is a certificate chain, we allow it to proceed and later we will assert
+            // against this chain
+            if (!allowEmbeddedKey && segments.length != 2) {
+                throw new IllegalStateException("JWT is in unsecured mode but token is signed.");
+            }
+        } else {
+            if (!allowEmbeddedKey && segments.length != 3) {
+                throw new IllegalStateException("JWT is in secure mode but token is not signed.");
+            }
+        }
+
+        JsonObject payload = new JsonObject(Buffer.buffer(base64urlDecode(payloadSeg)));
 
         String alg = header.getString("alg");
+
+        // if we only allow secure alg, then none is not a valid option
+        if (!unsecure && "none".equals(alg)) {
+            throw new IllegalStateException("Algorithm \"none\" not allowed");
+        }
+
+        // handle the x5c case, only in allowEmbeddedKey mode
+        if (allowEmbeddedKey && header.containsKey("x5c")) {
+            // if signatureSeg is null fail
+            if (signatureSeg == null) {
+                throw new IllegalStateException("missing signature segment");
+            }
+
+            try {
+                JsonArray chain = header.getJsonArray("x5c");
+                List<X509Certificate> certChain = new ArrayList<>();
+
+                if (chain == null || chain.size() == 0) {
+                    throw new IllegalStateException("x5c chain is null or empty");
+                }
+
+                for (int i = 0; i < chain.size(); i++) {
+                    // "x5c" (X.509 Certificate Chain) Header Parameter
+                    // https://tools.ietf.org/html/rfc7515#section-4.1.6
+                    // states:
+                    // Each string in the array is a base64-encoded (Section 4 of [RFC4648] -- not base64url-encoded) DER
+                    // [ITU.X690.2008] PKIX certificate value.
+                    certChain.add(JWS.parseX5c(decoder.decode(chain.getString(i).getBytes(UTF8))));
+                }
+
+                CertificateHelper.checkValidity(certChain, false, null);
+
+                if (JWS.verifySignature(alg, certChain.get(0), base64urlDecode(signatureSeg), (headerSeg + "." + payloadSeg).getBytes(UTF8))) {
+                    // ok
+                    return full ? new JsonObject().put("header", header).put("payload", payload) : payload;
+                } else {
+                    throw new RuntimeException("Signature verification failed");
+                }
+            } catch (CertificateException | NoSuchAlgorithmException | InvalidKeyException | SignatureException | InvalidAlgorithmParameterException | NoSuchProviderException e) {
+                throw new RuntimeException("Signature verification failed", e);
+            }
+        }
 
         List<Crypto> cryptos = VERIFY.get(alg);
 
@@ -177,13 +243,12 @@ public final class JWT {
             throw new NoSuchKeyIdException(alg);
         }
 
-        // if we only allow secure alg, then none is not a valid option
-        if (!unsecure && "none".equals(alg)) {
-            throw new IllegalStateException("Algorithm \"none\" not allowed");
-        }
-
         // verify signature. `sign` will return base64 string.
         if (!unsecure) {
+            // if signatureSeg is null fail
+            if (signatureSeg == null) {
+                throw new IllegalStateException("missing signature segment");
+            }
             byte[] payloadInput = base64urlDecode(signatureSeg);
             byte[] signingInput = (headerSeg + "." + payloadSeg).getBytes(UTF8);
 
@@ -198,7 +263,7 @@ public final class JWT {
                 // signal that this object crypto's list has the required key
                 hasKey = true;
                 if (c.verify(payloadInput, signingInput)) {
-                    return payload;
+                    return full ? new JsonObject().put("header", header).put("payload", payload) : payload;
                 }
             }
 
@@ -209,52 +274,7 @@ public final class JWT {
             }
         }
 
-        return payload;
-    }
-
-    public boolean isExpired(JsonObject jwt, JWTOptions options) {
-
-        if (jwt == null) {
-            return false;
-        }
-
-        // All dates in JWT are of type NumericDate
-        // a NumericDate is: numeric value representing the number of seconds from 1970-01-01T00:00:00Z UTC until
-        // the specified UTC date/time, ignoring leap seconds
-        final long now = (System.currentTimeMillis() / 1000);
-
-        if (jwt.containsKey("exp") && !options.isIgnoreExpiration()) {
-            if (now - options.getLeeway() >= jwt.getLong("exp")) {
-                if (logger.isTraceEnabled()) {
-                    logger.trace(String.format("Expired JWT token: exp[%d] <= (now[%d] - leeway[%d])", jwt.getLong("exp"), now, options.getLeeway()));
-                }
-                return true;
-            }
-        }
-
-        if (jwt.containsKey("iat")) {
-            Long iat = jwt.getLong("iat");
-            // issue at must be in the past
-            if (iat > now + options.getLeeway()) {
-                if (logger.isTraceEnabled()) {
-                    logger.trace(String.format("Invalid JWT token: iat[%d] > now[%d] + leeway[%d]", iat, now, options.getLeeway()));
-                }
-                return true;
-            }
-        }
-
-        if (jwt.containsKey("nbf")) {
-            Long nbf = jwt.getLong("nbf");
-            // not before must be after now
-            if (nbf > now + options.getLeeway()) {
-                if (logger.isTraceEnabled()) {
-                    logger.trace(String.format("Invalid JWT token: nbf[%d] > now[%d] + leeway[%d]", nbf, now, options.getLeeway()));
-                }
-                return true;
-            }
-        }
-
-        return false;
+        return full ? new JsonObject().put("header", header).put("payload", payload) : payload;
     }
 
     /**
@@ -371,7 +391,7 @@ public final class JWT {
     }
 
     private static byte[] base64urlDecode(String str) {
-        return decoder.decode(str.getBytes(UTF8));
+        return urlDecoder.decode(str.getBytes(UTF8));
     }
 
     private static String base64urlEncode(String str) {
@@ -379,7 +399,7 @@ public final class JWT {
     }
 
     private static String base64urlEncode(byte[] bytes) {
-        return encoder.encodeToString(bytes);
+        return urlEncoder.encodeToString(bytes);
     }
 
     public boolean isUnsecure() {

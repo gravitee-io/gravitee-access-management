@@ -27,6 +27,7 @@ import java.util.UUID;
  *
  * @author Paulo Lopes
  */
+// TODO to remove when updating to vert.x 4
 public interface Crypto {
 
     String[] ECDSA_ALGORITHMS = {

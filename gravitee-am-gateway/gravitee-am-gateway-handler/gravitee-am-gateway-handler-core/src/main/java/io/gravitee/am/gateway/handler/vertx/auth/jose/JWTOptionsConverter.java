@@ -22,6 +22,7 @@ import io.vertx.core.json.JsonObject;
  * Converter and mapper for {@link JWTOptions}.
  * NOTE: This class has been automatically generated from the {@link JWTOptions} original class using Vert.x codegen.
  */
+// TODO to remove when updating to vert.x 4
 public class JWTOptionsConverter {
 
 

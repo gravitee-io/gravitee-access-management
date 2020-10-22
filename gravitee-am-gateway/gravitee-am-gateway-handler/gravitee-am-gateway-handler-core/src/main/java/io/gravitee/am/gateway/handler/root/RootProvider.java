@@ -66,6 +66,7 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.common.service.AbstractService;
@@ -145,6 +146,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private CertificateManager certificateManager;
+
+    @Autowired
+    private CredentialService credentialService;
 
     @Override
     protected void doStart() throws Exception {
@@ -229,7 +233,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.post("/webauthn/response")
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnResponseEndpoint(userAuthenticationManager, webAuthn));
+                .handler(new WebAuthnResponseEndpoint(userAuthenticationManager, webAuthn, credentialService, domain));
 
         // Registration route
         Handler<RoutingContext> registerAccessHandler = new RegisterAccessHandler(domain);

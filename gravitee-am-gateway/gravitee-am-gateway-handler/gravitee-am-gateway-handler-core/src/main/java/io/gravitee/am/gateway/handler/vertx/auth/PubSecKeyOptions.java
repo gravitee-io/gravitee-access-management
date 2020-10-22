@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth;
 
-import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -23,7 +22,7 @@ import io.vertx.core.json.JsonObject;
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-@DataObject(generateConverter = true)
+// TODO to remove when updating to vert.x 4
 public class PubSecKeyOptions {
 
     private String algorithm;
