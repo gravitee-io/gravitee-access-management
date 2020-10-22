@@ -17,11 +17,10 @@ package io.gravitee.am.gateway.handler.vertx.auth.webauthn;
 
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
-import io.vertx.ext.auth.webauthn.CredentialStore;
-import io.vertx.ext.auth.webauthn.RelayParty;
-import io.vertx.ext.auth.webauthn.WebAuthnOptions;
+import io.vertx.ext.auth.webauthn.RelyingParty;
 import io.vertx.reactivex.core.Vertx;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class WebAuthnFactory implements FactoryBean<WebAuthn> {
 
-    private static final String DEFAULT_ORIGIN = "http://localhost:8092";
     private static final String DEFAULT_RELYING_PARTY_NAME = "Gravitee.io Access Management";
 
     @Autowired
@@ -42,10 +40,10 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
     private Domain domain;
 
     @Autowired
-    private CredentialStore credentialStore;
+    private RepositoryCredentialStore credentialStore;
 
     @Override
-    public WebAuthn getObject() throws Exception {
+    public WebAuthn getObject() {
         WebAuthnSettings webAuthnSettings = domain.getWebAuthnSettings();
         if (webAuthnSettings == null) {
             return defaultWebAuthn();
@@ -54,14 +52,12 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
         return WebAuthn.create(
                 vertx.getDelegate(),
                 new WebAuthnOptions()
-                        .setOrigin(webAuthnSettings.getOrigin() != null ? webAuthnSettings.getOrigin() : DEFAULT_ORIGIN)
-                        .setRelayParty(
-                                new RelayParty()
-                                        .setName(webAuthnSettings.getRelyingPartyName() != null ? webAuthnSettings.getRelyingPartyName() : DEFAULT_RELYING_PARTY_NAME))
-                .setAuthenticatorAttachment(getAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment()))
-                .setRequireResidentKey(webAuthnSettings.isRequireResidentKey())
-                .setUserVerification(getUserVerification(webAuthnSettings.getUserVerification()))
-                , credentialStore);
+                        .setRelyingParty(new RelyingParty().setName(DEFAULT_RELYING_PARTY_NAME))
+                        .setAuthenticatorAttachment(getAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment()))
+                        .setUserVerification(getUserVerification(webAuthnSettings.getUserVerification()))
+                        .setRequireResidentKey(webAuthnSettings.isRequireResidentKey()))
+                .authenticatorFetcher(credentialStore::fetch)
+                .authenticatorUpdater(credentialStore::store);
     }
 
     @Override
@@ -80,8 +76,8 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
     private WebAuthn defaultWebAuthn() {
         return WebAuthn.create(
                 vertx.getDelegate(),
-                new WebAuthnOptions()
-                        .setOrigin(DEFAULT_ORIGIN)
-                        .setRelayParty(new RelayParty().setName(DEFAULT_RELYING_PARTY_NAME)), credentialStore);
+                new WebAuthnOptions().setRelyingParty(new RelyingParty().setName(DEFAULT_RELYING_PARTY_NAME)))
+                .authenticatorFetcher(credentialStore::fetch)
+                .authenticatorUpdater(credentialStore::store);
     }
 }

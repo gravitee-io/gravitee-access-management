@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.CredentialRepository;
@@ -25,6 +24,7 @@ import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -117,6 +118,19 @@ public class CredentialServiceImpl implements CredentialService {
                     LOGGER.error("An error occurs while trying to update a credential", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a credential", ex));
                 });
+    }
+
+    @Override
+    public Completable update(ReferenceType referenceType, String referenceId, String credentialId, String userId) {
+        LOGGER.debug("Update a credential {}", credentialId);
+        return credentialRepository.findByCredentialId(referenceType, referenceId, credentialId)
+                .flatMapObservable(credentials -> Observable.fromIterable(credentials))
+                .flatMapSingle(credential -> {
+                    credential.setUserId(userId);
+                    credential.setUpdatedAt(new Date());
+                    return credentialRepository.update(credential);
+                })
+                .ignoreElements();
     }
 
     @Override

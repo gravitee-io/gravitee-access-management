@@ -21,12 +21,10 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.CredentialService;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.vertx.core.AsyncResult;
+import io.reactivex.Single;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.webauthn.CredentialStore;
-import io.vertx.reactivex.core.ObservableHelper;
+import io.vertx.core.Promise;
+import io.vertx.ext.auth.webauthn.Authenticator;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
@@ -37,7 +35,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RepositoryCredentialStore implements CredentialStore {
+public class RepositoryCredentialStore {
 
     @Autowired
     private CredentialService credentialService;
@@ -45,37 +43,30 @@ public class RepositoryCredentialStore implements CredentialStore {
     @Autowired
     private Domain domain;
 
-    @Override
-    public CredentialStore getUserCredentialsByName(String username, Handler<AsyncResult<List<JsonObject>>> handler) {
-        credentialService
-                .findByUsername(ReferenceType.DOMAIN, domain.getId(), username)
-                .map(credentials -> credentials.stream().map(this::toJson).collect(Collectors.toList()))
+    public Future<List<Authenticator>> fetch(Authenticator query) {
+        Promise<List<Authenticator>> promise = Promise.promise();
+
+        Single<List<Credential>> fetchCredentials = query.getUserName() != null ?
+                credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName()) :
+                credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), query.getCredID());
+
+        fetchCredentials
+                .map(credentials -> credentials.stream().map(this::convert).collect(Collectors.toList()))
                 .subscribe(
-                        credentials -> handler.handle(Future.succeededFuture(credentials)),
-                        error -> handler.handle(Future.failedFuture(error))
+                        authenticators -> promise.complete(authenticators),
+                        error -> promise.fail(error)
                 );
-        return this;
+
+        return promise.future();
     }
 
-    @Override
-    public CredentialStore getUserCredentialsById(String id, Handler<AsyncResult<List<JsonObject>>> handler) {
-        credentialService
-                .findByCredentialId(ReferenceType.DOMAIN, domain.getId(), id)
-                .map(credentials -> credentials.stream().map(this::toJson).collect(Collectors.toList()))
-                .subscribe(
-                        credentials -> handler.handle(Future.succeededFuture(credentials)),
-                        error -> handler.handle(Future.failedFuture(error))
-                );
-        return this;
-    }
+    public Future<Void> store(Authenticator authenticator) {
+        Promise<Void> promise = Promise.promise();
 
-    @Override
-    public CredentialStore updateUserCredential(String id, JsonObject data, boolean upsert, Handler<AsyncResult<Void>> handler) {
-        credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), id)
+        credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), authenticator.getCredID())
                 .flatMapObservable(credentials -> Observable.fromIterable(credentials))
                 .flatMapSingle(credential -> {
-                    credential.setPublicKey(data.getString("publicKey"));
-                    credential.setCounter(data.getLong("counter", 0L));
+                    credential.setCounter(authenticator.getCounter());
                     credential.setUpdatedAt(new Date());
                     return credentialService.update(credential);
                 })
@@ -84,33 +75,35 @@ public class RepositoryCredentialStore implements CredentialStore {
                     if (!credentials.isEmpty()) {
                         return Completable.complete();
                     }
-                    if (!upsert) {
-                        return Completable.error(new IllegalStateException("Nothing updated!"));
-                    }
                     // no credential found, create it
                     Credential credential = new Credential();
                     credential.setReferenceType(ReferenceType.DOMAIN);
                     credential.setReferenceId(domain.getId());
-                    credential.setUserId(data.getString("userId"));
-                    credential.setUsername(data.getString("username"));
-                    credential.setCredentialId(data.getString("credID"));
-                    credential.setPublicKey(data.getString("publicKey"));
-                    credential.setCounter(data.getLong("counter", 0L));
+                    credential.setUsername(authenticator.getUserName());
+                    credential.setCredentialId(authenticator.getCredID());
+                    credential.setPublicKey(authenticator.getPublicKey());
+                    credential.setCounter(authenticator.getCounter());
                     credential.setCreatedAt(new Date());
                     credential.setUpdatedAt(credential.getCreatedAt());
                     return credentialService.create(credential).ignoreElement();
                 })
                 .subscribe(
-                        () ->  handler.handle(Future.succeededFuture()),
-                        error -> handler.handle(Future.failedFuture(error.getMessage()))
+                        () ->  promise.complete(),
+                        error -> promise.fail(error.getMessage())
                 );
-        return this;
+        return promise.future();
     }
 
-    private JsonObject toJson(Credential credential) {
-        return new JsonObject()
-                .put("credID", credential.getCredentialId())
-                .put("publicKey", credential.getPublicKey())
-                .put("counter", credential.getCounter());
+    private Authenticator convert(Credential credential) {
+        if (credential == null) {
+            return null;
+        }
+        Authenticator authenticator = new Authenticator();
+        authenticator.setUserName(credential.getUsername());
+        authenticator.setCredID(credential.getCredentialId());
+        authenticator.setCounter(credential.getCounter());
+        authenticator.setPublicKey(credential.getPublicKey());
+
+        return authenticator;
     }
 }
