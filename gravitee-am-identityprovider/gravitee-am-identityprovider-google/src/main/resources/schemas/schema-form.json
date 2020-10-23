@@ -1,0 +1,48 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:google:GoogleIdentityProvider",
+  "description": "Google identity provider, let you register and set up permissions and authorization options for OpenID Connect protocol.\n\nhttps://developers.google.com/identity/protocols/oauth2/openid-connect \n\n (openid, email and profile scopes are added by default)",
+  "properties" : {
+    "clientId" : {
+      "type" : "string",
+      "title": "Client ID",
+      "description": "OAuth 2.0 client id"
+    },
+    "clientSecret" : {
+      "type" : "string",
+      "title": "Client Secret",
+      "description": "OAuth 2.0 client secret"
+    },
+    "encodeRedirectUri": {
+      "type": "boolean",
+      "title": "Should the redirect_uri parameter be url-encoded ?"
+    },
+    "scopes": {
+      "type": "array",
+      "title": "Scopes",
+      "description": "Scopes let you specify exactly what type of access you need. Scopes limit access for OAuth tokens. (openid, email and profile scopes are added by default)",
+      "items":
+      {
+        "type": "string"
+      }
+    },
+    "connectTimeout" : {
+      "type" : "integer",
+      "default": 10000,
+      "minimum": 1,
+      "title": "HTTP Client connect timeout",
+      "description": "Duration of time in milliseconds that connects will block. (default 10000 ms)"
+    },
+    "maxPoolSize" : {
+      "type" : "integer",
+      "default": 200,
+      "minimum": 1,
+      "title": "HTTP Client max pool size",
+      "description": "Maximum pool of connections can grow to. (default 200)"
+    }
+  },
+  "required": [
+    "clientId",
+    "clientSecret"
+  ]
+}
