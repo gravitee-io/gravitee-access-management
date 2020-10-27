@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.utils.RandomString;
@@ -81,16 +82,16 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     public void init() {
         usersCollection = mongoOperations.getCollection("users", UserMongo.class);
 
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL_CLAIM, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_DISPLAY_NAME, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_FIRST_NAME, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_LAST_NAME, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("ref"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL, 1), new IndexOptions().name("ref_email"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL_CLAIM, 1), new IndexOptions().name("ref_eclaim"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("ref_username"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_DISPLAY_NAME, 1), new IndexOptions().name("ref_display"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_FIRST_NAME, 1), new IndexOptions().name("ref_first"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_LAST_NAME, 1), new IndexOptions().name("ref_last"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1), new IndexOptions().name("ref_extId"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1), new IndexOptions().name("ref_username_src"));
+        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1), new IndexOptions().name("ref_extId_src"));
     }
 
     @Override

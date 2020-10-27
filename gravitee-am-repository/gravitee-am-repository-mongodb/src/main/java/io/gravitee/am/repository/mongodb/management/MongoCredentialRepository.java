@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Credential;
@@ -50,9 +51,9 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
     @PostConstruct
     public void init() {
         credentialsCollection = mongoOperations.getCollection("webauthn_credentials", CredentialMongo.class);
-        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1));
-        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1));
-        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CREDENTIAL_ID, 1));
+        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("ref_user"));
+        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("ref_username"));
+        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CREDENTIAL_ID, 1), new IndexOptions().name("ref_cred"));
     }
 
     @Override
