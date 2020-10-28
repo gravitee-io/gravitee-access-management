@@ -493,7 +493,7 @@
 									"    pm.response.to.be.header('Content-Type', 'application/json');",
 									"    var body = pm.response.json();",
 									"",
-									"    pm.expect(body.message).to.eql('[description: must not be null]');",
+									"    pm.expect(body.message).to.be.oneOf(['[description: must not be null]', '[description: ne doit pas être nul]']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -666,7 +666,7 @@
 									"pm.test(\"Check scope properties\", function () {",
 									"    pm.response.to.be.header('Content-Type', 'application/json');",
 									"    var body = pm.response.json();",
-									"    pm.expect(body.message).to.eql('[name: must not be null]');",
+									"    pm.expect(body.message).to.be.oneOf(['[name: must not be null]', '[name: ne doit pas être nul]']);",
 									"});"
 								],
 								"type": "text/javascript"

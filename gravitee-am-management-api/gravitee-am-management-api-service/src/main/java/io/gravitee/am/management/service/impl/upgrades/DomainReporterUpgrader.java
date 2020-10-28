@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class DomainReporterUpgrader implements Upgrader, Ordered {
+public class DomainReporterUpgrader extends AbstractDomainUpgrader implements Upgrader, Ordered {
 
     private static final Logger logger = LoggerFactory.getLogger(DomainReporterUpgrader.class);
 
@@ -56,7 +56,7 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
     private Completable updateDefaultReporter(Domain domain) {
         return reporterService.findByDomain(domain.getId())
                 .flatMapCompletable(reporters -> {
-                    if (reporters == null || reporters.isEmpty()) {
+                    if (useMongoRepositories() && (reporters == null || reporters.isEmpty())) {
                         logger.info("No default reporter found for domain {}, update domain", domain.getName());
                         return reporterService.createDefault(domain.getId())
                                 .ignoreElement();
@@ -68,4 +68,5 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
     public int getOrder() {
         return 8;
     }
+
 }

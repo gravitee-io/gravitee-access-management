@@ -26,8 +26,10 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -61,6 +63,9 @@ public class DomainsResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
+
+    @Autowired
+    private Environment environment;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,12 +120,17 @@ public class DomainsResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
                 .andThen(domainService.create(organizationId, environmentId, newDomain, authenticatedUser)
-                        // create default idp
-                        .flatMap(domain -> identityProviderManager.create(domain.getId()).map(__ -> domain))
-                        // create default reporter
-                        .flatMap(domain -> reporterService.createDefault(domain.getId()).map(__ -> domain)))
+                        // create default idp (ignore if mongodb isn't the repositories backend)
+                        .flatMap(domain -> useMongoRepositories() ? identityProviderManager.create(domain.getId()).map(__ -> domain) : Single.just(domain))
+                        // create default reporter (ignore if mongodb isn't the repositories backend)
+                        .flatMap(domain -> useMongoRepositories() ? reporterService.createDefault(domain.getId()).map(__ -> domain) : Single.just(domain)))
                 .subscribe(domain -> response.resume(Response.created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain.getId()))
                         .entity(domain).build()), response::resume);
+    }
+
+    protected boolean useMongoRepositories() {
+        String managementBackend = this.environment.getProperty("management.type", "mongodb");
+        return "mongodb".equalsIgnoreCase(managementBackend);
     }
 
     @Path("{domain}")
