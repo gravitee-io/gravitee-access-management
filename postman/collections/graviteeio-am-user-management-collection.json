@@ -294,7 +294,7 @@
 													"",
 													"pm.test(\"UM - create role - name field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[name: must not be null]\");",
+													"    pm.expect(jsonData.message).to.be.oneOf([\"[name: must not be null]\", \"[name: ne doit pas être nul]\"]);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -902,7 +902,7 @@
 													"",
 													"pm.test(\"UM - create user - username field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[username: must not be blank]\");",
+													"    pm.expect(jsonData.message).to.be.oneOf([\"[username: must not be blank]\", \"[username: ne doit pas être vide]\"]);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -961,7 +961,7 @@
 													"",
 													"pm.test(\"UM - create user - email field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[email: must not be blank]\");",
+													"    pm.expect(jsonData.message).to.be.oneOf([\"[email: must not be blank]\", \"[email: ne doit pas être vide]\"]);",
 													"});"
 												],
 												"type": "text/javascript"
@@ -2640,7 +2640,7 @@
 													"",
 													"pm.test(\"UM - create group - name field required\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[name: must not be null]\");",
+													"    pm.expect(jsonData.message).to.be.oneOf([\"[name: must not be null]\", \"[name: ne doit pas être nul]\"]);",
 													"});"
 												],
 												"type": "text/javascript"

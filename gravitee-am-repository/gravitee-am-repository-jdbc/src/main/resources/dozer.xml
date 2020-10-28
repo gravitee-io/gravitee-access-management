@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mappings xmlns="http://dozermapper.github.io/schema/bean-mapping"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://dozermapper.github.io/schema/bean-mapping http://dozermapper.github.io/schema/bean-mapping.xsd">
+    <configuration>
+        <custom-converters>
+            <converter type="io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter">
+                <class-a>java.util.Date</class-a>
+                <class-b>java.time.LocalDateTime</class-b>
+            </converter>
+            <converter type="io.gravitee.am.repository.jdbc.management.api.model.mapper.EventConverter">
+                <class-a>io.gravitee.am.model.common.event.Event</class-a>
+                <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcEvent</class-b>
+            </converter>
+        </custom-converters>
+    </configuration>
+
+    <mapping>
+        <class-a>io.gravitee.am.model.Domain</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcDomain</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.OIDCSettingsConverter">
+            <a>oidc</a>
+            <b>oidc</b>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.UMASettingsConverter">
+            <a>uma</a>
+            <b>uma</b>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.LoginSettingsConverter">
+            <a>loginSettings</a>
+            <b>loginSettings</b>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.WebAuthnSettingsConverter">
+            <a>webAuthnSettings</a>
+            <b>webAuthnSettings</b>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.SCIMSettingsConverter">
+            <a>scim</a>
+            <b>scim</b>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.AccountSettingsConverter">
+            <a>accountSettings</a>
+            <b>accountSettings</b>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.Certificate</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcCertificate</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
+            <a>metadata</a>
+            <b>metadata</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.Map</a-hint>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.IdentityProvider</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcIdentityProvider</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
+            <a>mappers</a>
+            <b>mappers</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.Map</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
+            <a>roleMapper</a>
+            <b>roleMapper</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.Map</a-hint>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.uma.PermissionTicket</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcPermissionTicket</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.PermissionRequestConverter">
+            <a>permissionRequest</a>
+            <b>permissionRequest</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.List</a-hint>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.Role</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcRole</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.PermissionAclsConverter">
+            <a>permissionAcls</a>
+            <b>permissionAcls</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.Map</a-hint>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.Application</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
+            <a>metadata</a>
+            <b>metadata</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.Map</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.ApplicationSettingsConverter">
+            <a>settings</a>
+            <b>settings</b>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.User</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcUser</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
+            <a>additionalInformation</a>
+            <b>additionalInformation</b>
+            <a-hint>java.util.Map</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.X509Converter">
+            <a>x509Certificates</a>
+            <b>x509Certificates</b>
+            <a-hint>java.util.List</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.EnrolledFactorsConverter">
+            <a>factors</a>
+            <b>factors</b>
+            <a-hint>java.util.List</a-hint>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.repository.oauth2.model.AuthorizationCode</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAuthorizationCode</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.oauth2.api.model.mapper.MultiValueMapToStringConverter">
+            <a>requestParameters</a>
+            <b>requestParameters</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>io.gravitee.common.http.HttpHeaders</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.oauth2.api.model.mapper.SetToStringConverter">
+            <a>scopes</a>
+            <b>scopes</b>
+            <a-hint>java.util.Set</a-hint>
+        </field>
+    </mapping>
+</mappings>
