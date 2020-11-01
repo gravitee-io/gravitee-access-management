@@ -43,6 +43,7 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
+        steps.add(new AutoLoginStep());
         steps.add(new FormLoginStep(RedirectAuthHandler.create(authProvider, "/" + domain.getPath() + "/login")));
         steps.add(new MFAEnrollStep(RedirectHandler.create("/" + domain.getPath() + "/mfa/enroll")));
         steps.add(new MFAChallengeStep(RedirectHandler.create("/" + domain.getPath() + "/mfa/challenge")));
