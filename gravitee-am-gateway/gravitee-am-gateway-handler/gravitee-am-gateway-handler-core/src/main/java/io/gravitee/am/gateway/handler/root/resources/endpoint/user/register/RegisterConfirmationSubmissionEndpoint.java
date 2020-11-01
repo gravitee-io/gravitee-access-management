@@ -80,6 +80,9 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
             // if auto login option is enabled add the user to the session
             if (registrationResponse.isAutoLogin()) {
                 context.setUser(io.vertx.reactivex.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser())));
+                // the user has upgraded from unauthenticated to authenticated
+                // session should be upgraded as recommended by owasp
+                context.session().regenerateId();
             }
             // no redirect uri has been set, redirect to the default page
             if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
