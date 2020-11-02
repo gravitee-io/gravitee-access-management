@@ -87,6 +87,13 @@
       "title": "Max pool size",
       "description": "Maximum pool of connections can grow to"
     },
+    "maxPoolRetries" : {
+      "type" : "integer",
+      "default": 3,
+      "minimum": 0,
+      "title": "Max retries on pool initialization",
+      "description": "The maximum number of retries each pool initialization should attempt"
+    },
     "passwordAlgorithm" : {
       "type" : "string",
       "title": "Password encoder algorithm",

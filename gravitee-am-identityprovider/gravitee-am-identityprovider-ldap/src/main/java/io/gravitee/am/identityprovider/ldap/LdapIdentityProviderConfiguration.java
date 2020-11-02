@@ -55,6 +55,8 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     private Integer maxPoolSize = 15;
 
+    private Integer maxPoolRetries = 3;
+
     private String passwordEncoding;
 
     private boolean hashEncodedByThirdParty;
@@ -177,6 +179,14 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setMaxPoolSize(Integer maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
+    }
+
+    public Integer getMaxPoolRetries() {
+        return maxPoolRetries;
+    }
+
+    public void setMaxPoolRetries(Integer maxPoolRetries) {
+        this.maxPoolRetries = maxPoolRetries;
     }
 
     public String getPasswordAlgorithm() {
