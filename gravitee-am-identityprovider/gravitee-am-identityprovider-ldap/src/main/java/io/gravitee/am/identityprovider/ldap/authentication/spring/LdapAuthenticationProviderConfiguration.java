@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.authentication.CompareAuthenticationHandler;
 import io.gravitee.am.identityprovider.ldap.authentication.GroupSearchEntryHandler;
 import io.gravitee.am.identityprovider.ldap.authentication.encoding.*;
+import io.gravitee.am.identityprovider.ldap.pool.CustomBlockingConnectionPool;
 import org.ldaptive.*;
 import org.ldaptive.auth.*;
 import org.ldaptive.handler.SearchEntryHandler;
@@ -56,7 +57,8 @@ public class LdapAuthenticationProviderConfiguration {
         poolConfig.setMinPoolSize(configuration.getMinPoolSize());
         poolConfig.setMaxPoolSize(configuration.getMaxPoolSize());
         poolConfig.setValidatePeriodically(true);
-        BlockingConnectionPool connectionPool = new BlockingConnectionPool(poolConfig, (DefaultConnectionFactory) bindConnectionFactory());
+        BlockingConnectionPool connectionPool =
+                new CustomBlockingConnectionPool(poolConfig, (DefaultConnectionFactory) bindConnectionFactory(), configuration.getMaxPoolRetries());
         connectionPool.setValidator(new SearchValidator());
         return connectionPool;
     }
@@ -87,7 +89,8 @@ public class LdapAuthenticationProviderConfiguration {
         poolConfig.setMinPoolSize(configuration.getMinPoolSize());
         poolConfig.setMaxPoolSize(configuration.getMaxPoolSize());
         poolConfig.setValidatePeriodically(true);
-        BlockingConnectionPool connectionPool = new BlockingConnectionPool(poolConfig, (DefaultConnectionFactory) searchConnectionFactory());
+        BlockingConnectionPool connectionPool =
+                new CustomBlockingConnectionPool(poolConfig, (DefaultConnectionFactory) searchConnectionFactory(), configuration.getMaxPoolRetries());
         connectionPool.setValidator(new SearchValidator());
         return connectionPool;
     }

@@ -48,7 +48,6 @@ import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.buffer.Buffer;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
@@ -150,7 +149,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider < T extends Op
         List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_ID, getConfiguration().getClientId()));
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_SECRET, getConfiguration().getClientSecret()));
-        urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, (String) authentication.getContext().get(Parameters.REDIRECT_URI)));
+        urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, String.valueOf(authentication.getContext().get(Parameters.REDIRECT_URI))));
         urlParameters.add(new BasicNameValuePair(Parameters.CODE, authorizationCode));
         urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, "authorization_code"));
         String bodyRequest = URLEncodedUtils.format(urlParameters);
@@ -186,7 +185,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider < T extends Op
         // if it's an access token but user ask for id token verification, try to decode it and create the end-user
         if (TokenTypeHint.ACCESS_TOKEN.equals(token.getTypeHint()) && getConfiguration().isUseIdTokenForUserInfo()) {
             if (authentication.getContext().get(ID_TOKEN_PARAMETER) != null) {
-                String idToken = (String) authentication.getContext().get(ID_TOKEN_PARAMETER);
+                String idToken = String.valueOf(authentication.getContext().get(ID_TOKEN_PARAMETER));
                 return retrieveUserFromIdToken(idToken);
             } else {
                 // no suitable value to retrieve user
@@ -209,9 +208,9 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider < T extends Op
     }
 
     protected User createUser(Map<String, Object> attributes) {
-        String username = (String) attributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.SUB));
-        User user = new DefaultUser(username);
-        ((DefaultUser) user).setId((String) attributes.get(StandardClaims.SUB));
+        String username = String.valueOf(attributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.SUB)));
+        DefaultUser user = new DefaultUser(username);
+        user.setId(String.valueOf(attributes.get(StandardClaims.SUB)));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, attributes.get(StandardClaims.SUB));
@@ -220,11 +219,11 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider < T extends Op
         additionalInformation.putAll(applyUserMapping(attributes));
         // update username if user mapping has been changed
         if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
-            ((DefaultUser) user).setUsername((String) additionalInformation.get(StandardClaims.PREFERRED_USERNAME));
+            user.setUsername(String.valueOf(additionalInformation.get(StandardClaims.PREFERRED_USERNAME)));
         }
-        ((DefaultUser) user).setAdditionalInformation(additionalInformation);
+        user.setAdditionalInformation(additionalInformation);
         // set user roles
-        ((DefaultUser) user).setRoles(applyRoleMapping(attributes));
+        user.setRoles(applyRoleMapping(attributes));
         return user;
     }
 

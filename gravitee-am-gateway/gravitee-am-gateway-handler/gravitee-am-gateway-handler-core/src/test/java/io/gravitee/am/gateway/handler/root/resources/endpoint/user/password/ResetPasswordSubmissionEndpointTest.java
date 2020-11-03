@@ -24,6 +24,8 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.ext.web.handler.SessionHandler;
+import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -51,6 +53,7 @@ public class ResetPasswordSubmissionEndpointTest extends RxWebTestBase {
 
         ResetPasswordSubmissionEndpoint resetPasswordSubmissionEndpoint = new ResetPasswordSubmissionEndpoint(userService);
         router.route(HttpMethod.POST, "/resetPassword")
+                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
                 .handler(resetPasswordSubmissionEndpoint)
                 .failureHandler(new ErrorHandler());
     }

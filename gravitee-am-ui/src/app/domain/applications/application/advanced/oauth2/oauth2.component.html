@@ -55,7 +55,7 @@
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Type</mat-label>
               <mat-select placeholder="Change the token auth method" name="tokenAuthMethod" [(ngModel)]="applicationOauthSettings.tokenEndpointAuthMethod" (ngModelChange)="tokenEndpointAuthMethodChanged($event)" [disabled]="readonly">
-                <mat-option><em>Based on incoming request</em></mat-option>
+                <mat-option [value]="null"><em>Based on incoming request</em></mat-option>
                 <mat-option *ngFor="let tokenEndpointAuthMethod of tokenEndpointAuthMethods" [value]="tokenEndpointAuthMethod.value" [disabled]="tokenEndpointAuthMethod.disabled">{{ tokenEndpointAuthMethod.name }}</mat-option>
               </mat-select>
               <mat-hint>Requested Client Authentication method for the Token, Introspection and Revoke endpoints.</mat-hint>
