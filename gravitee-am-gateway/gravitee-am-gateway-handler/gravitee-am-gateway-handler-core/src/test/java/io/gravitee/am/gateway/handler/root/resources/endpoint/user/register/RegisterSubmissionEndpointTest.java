@@ -27,6 +27,8 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.ext.web.handler.SessionHandler;
+import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -57,6 +59,7 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
 
         RegisterSubmissionEndpoint registerSubmissionEndpoint = new RegisterSubmissionEndpoint(userService, domain);
         router.route(HttpMethod.POST, "/register")
+                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
                 .handler(registerSubmissionEndpoint)
                 .failureHandler(new ErrorHandler());
     }

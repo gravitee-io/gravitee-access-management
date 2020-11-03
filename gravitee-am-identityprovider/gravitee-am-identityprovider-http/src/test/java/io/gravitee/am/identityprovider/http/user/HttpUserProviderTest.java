@@ -68,6 +68,23 @@ public class HttpUserProviderTest {
     }
 
     @Test
+    public void shouldCreateUser_id_number_type() {
+        DefaultUser user = new DefaultUser("johndoe");
+
+        stubFor(post(urlPathEqualTo("/api/users"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
+                .withRequestBody(matching(".*"))
+                .willReturn(okJson("{\"id\" : 80100, \"username\" : \"johndoe\"}")));
+
+        TestObserver<User> testObserver = userProvider.create(user).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "80100".equals(u.getId()));
+        testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldCreateUser_userAlreadyExists() {
         DefaultUser user = new DefaultUser("johndoe");
 

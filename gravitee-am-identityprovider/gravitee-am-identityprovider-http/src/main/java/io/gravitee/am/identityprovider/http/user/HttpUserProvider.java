@@ -242,8 +242,8 @@ public class HttpUserProvider implements UserProvider {
     private User convert(String username, Map<String, Object> userAttributes) {
         final String identifierAttribute = configuration.getUsersResource().getIdentifierAttribute();
         final String usernameAttribute = configuration.getUsersResource().getUsernameAttribute();
-        final String id = (String) userAttributes.get(identifierAttribute);
-        final String usernameValue = (username != null) ? username : (userAttributes.get(usernameAttribute) != null) ? (String) userAttributes.get(usernameAttribute) : id;
+        final String id = String.valueOf(userAttributes.get(identifierAttribute));
+        final String usernameValue = (username != null) ? username : (userAttributes.get(usernameAttribute) != null) ? String.valueOf(userAttributes.get(usernameAttribute)) : id;
         DefaultUser user = new DefaultUser(usernameValue);
         // set external id
         user.setId(id);
