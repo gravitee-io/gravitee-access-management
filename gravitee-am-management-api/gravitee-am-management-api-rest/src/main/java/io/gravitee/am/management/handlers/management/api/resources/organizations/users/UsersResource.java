@@ -82,7 +82,7 @@ public class UsersResource extends AbstractUsersResource {
         permissionService.findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
                 .flatMap(organizationPermissions ->
                         checkPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.LIST)
-                                .andThen(searchUsers(ReferenceType.DOMAIN, organizationId, query, filter, page, size)
+                                .andThen(searchUsers(ReferenceType.ORGANIZATION, organizationId, query, filter, page, size)
                                         .flatMap(pagedUsers ->
                                                 Observable.fromIterable(pagedUsers.getData())
                                                 .flatMapSingle(user -> filterUserInfos(organizationPermissions, user))
