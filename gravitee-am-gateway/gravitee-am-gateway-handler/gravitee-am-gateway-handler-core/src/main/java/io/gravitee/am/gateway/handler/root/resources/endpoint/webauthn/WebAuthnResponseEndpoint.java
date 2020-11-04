@@ -48,6 +48,7 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnResponseEndpoint.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String PASSWORDLESS_AUTH_COMPLETED  = "passwordlessAuthCompleted";
+    private static final String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
     private WebAuthn webAuthn;
 
     public WebAuthnResponseEndpoint(UserAuthenticationManager userAuthenticationManager,
@@ -110,6 +111,7 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                                 // session should be upgraded as recommended by owasp
                                 session.regenerateId();
                                 ctx.session().put(PASSWORDLESS_AUTH_COMPLETED, true);
+                                ctx.session().put(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, webauthnResp.getString("id"));
                                 // Now redirect back to the original url
                                 String returnURL = session.get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
                                 ctx.response().putHeader(HttpHeaders.LOCATION, returnURL).end();
