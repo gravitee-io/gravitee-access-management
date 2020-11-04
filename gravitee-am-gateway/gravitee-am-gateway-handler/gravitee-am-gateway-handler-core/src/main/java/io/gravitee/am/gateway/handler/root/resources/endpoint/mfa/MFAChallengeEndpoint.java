@@ -56,6 +56,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     private static final String STRONG_AUTH_COMPLETED  = "strongAuthCompleted";
     private static final String ENROLLED_FACTOR_KEY = "enrolledFactor";
     private static final String ERROR_PARAM = "error";
+    private static final String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
     private FactorManager factorManager;
     private UserService userService;
     private ThymeleafTemplateEngine engine;
@@ -133,6 +134,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             }
             // save enrolled factor if needed and redirect to the original url
             final String returnURL = routingContext.session().get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
+            routingContext.session().put(MFA_FACTOR_ID_CONTEXT_KEY, factorId);
             if (routingContext.session().get(ENROLLED_FACTOR_KEY) != null) {
                 saveFactor(endUser.getId(), enrolledFactor, fh -> {
                     if (fh.failed()) {

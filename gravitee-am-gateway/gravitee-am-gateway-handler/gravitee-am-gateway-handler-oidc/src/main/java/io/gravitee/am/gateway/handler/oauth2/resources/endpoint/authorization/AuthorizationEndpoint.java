@@ -54,6 +54,8 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String USER_CONSENT_COMPLETED_CONTEXT_KEY = "userConsentCompleted";
     private static final String REQUESTED_CONSENT_CONTEXT_KEY = "requestedConsent";
+    private static final String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
+    private static final String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
     private Flow flow;
 
     public AuthorizationEndpoint(Flow flow) {
@@ -102,5 +104,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
         context.session().remove(USER_CONSENT_COMPLETED_CONTEXT_KEY);
         context.session().remove(REQUESTED_CONSENT_CONTEXT_KEY);
+        context.session().remove(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
+        context.session().remove(MFA_FACTOR_ID_CONTEXT_KEY);
     }
 }

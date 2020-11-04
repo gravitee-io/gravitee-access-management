@@ -71,6 +71,8 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String USER_CONSENT_COMPLETED_CONTEXT_KEY = "userConsentCompleted";
     private static final String REQUESTED_CONSENT_CONTEXT_KEY = "requestedConsent";
+    private static final String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
+    private static final String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
     private static final String ERROR_ENDPOINT = "/oauth/error";
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private String defaultErrorPath;
@@ -250,6 +252,8 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         context.session().remove(OAuth2Constants.AUTHORIZATION_REQUEST);
         context.session().remove(USER_CONSENT_COMPLETED_CONTEXT_KEY);
         context.session().remove(REQUESTED_CONSENT_CONTEXT_KEY);
+        context.session().remove(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
+        context.session().remove(MFA_FACTOR_ID_CONTEXT_KEY);
     }
 
     private void doRedirect(HttpServerResponse response, String url) {

@@ -45,6 +45,8 @@
       {#context.attributes['user']} : Authenticated User (if available) with username, firstName, lastName, email, roles, ...
       {#context.attributes['authorizationRequest']} : OAuth 2.0 Authorization Request (if available) with scopes, redirect_uri, ...
       {#context.attributes['idToken']} : OpenID Connect ID Token (if the User has been authenticated with an OIDC Identity Provider)
+      {#context.attributes['webAuthnCredentialId']} : WebAuthn credential ID (if the User has been authenticated via passwordless)
+      {#context.attributes['mfaFactorId']} : MFA factor ID (if the User has used multi-factor authentication)
       ]]>
     </pre>
 
