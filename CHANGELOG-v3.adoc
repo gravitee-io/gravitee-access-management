@@ -1,5 +1,28 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/297?closed=1[AM - 3.0.8 (2020-11-03)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Return url is not set when autologin feature is used https://github.com/gravitee-io/issues/issues/4525[#4525]
+
+*_General_*
+
+- Merge 2.10.21 https://github.com/gravitee-io/issues/issues/4490[#4490]
+
+*_Management-ui_*
+
+- Unable to force tokenEndpointAuthMethod to "Based on incoming request"  https://github.com/gravitee-io/issues/issues/4509[#4509]
+
+=== Improvements
+
+*_Identity-provider_*
+
+- [ldap] add a retry limit during pool initialization  https://github.com/gravitee-io/issues/issues/4531[#4531]
+
+
 == https://github.com/gravitee-io/issues/milestone/245?closed=1[AM - 3.3.0 (2020-10-20)]
 
 === Bug fixes
@@ -18,6 +41,7 @@
 
 - Add FranceConnect identity provider https://github.com/gravitee-io/issues/issues/4075[#4075]
 - Add Twitter identity provider  https://github.com/gravitee-io/issues/issues/4324[#4324]
+- Add JDBC identity provider https://github.com/gravitee-io/issues/issues/4354[#4354]
 
 *_Management_*
 
