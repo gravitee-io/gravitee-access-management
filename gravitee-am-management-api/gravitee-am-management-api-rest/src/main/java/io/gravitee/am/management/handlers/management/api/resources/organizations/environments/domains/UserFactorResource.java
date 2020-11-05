@@ -83,14 +83,12 @@ public class UserFactorResource extends AbstractResource {
                         .flatMap(__ -> userService.findById(user))
                         .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
                         .flatMapSingle(user1 -> {
-                            List<EnrolledFactor> enrolledFactorList = user1.getFactors();
-                            if (enrolledFactorList != null) {
-                                enrolledFactorList
+                            if (user1.getFactors() != null) {
+                                List<EnrolledFactor> enrolledFactors = user1.getFactors()
                                         .stream()
                                         .filter(enrolledFactor -> !factor.equals(enrolledFactor.getFactorId()))
                                         .collect(Collectors.toList());
-                                user1.setFactors(enrolledFactorList);
-                                return userService.enrollFactors(user, enrolledFactorList, authenticatedUser);
+                                return userService.enrollFactors(user, enrolledFactors, authenticatedUser);
                             }
                             return Single.just(user1);
                         }))

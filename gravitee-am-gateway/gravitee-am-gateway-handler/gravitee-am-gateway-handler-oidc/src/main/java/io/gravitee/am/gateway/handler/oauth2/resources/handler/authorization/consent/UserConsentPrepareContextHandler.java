@@ -39,6 +39,8 @@ public class UserConsentPrepareContextHandler implements Handler<RoutingContext>
     private static final String AUTHORIZATION_REQUEST_CONTEXT_KEY = "authorizationRequest";
     private static final String ID_TOKEN_SESSION_CONTEXT_KEY = "id_token";
     private static final String ID_TOKEN_CONTEXT_KEY = "idToken";
+    private static final String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
+    private static final String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
     private ClientSyncService clientSyncService;
 
     public UserConsentPrepareContextHandler(ClientSyncService clientSyncService) {
@@ -98,6 +100,18 @@ public class UserConsentPrepareContextHandler implements Handler<RoutingContext>
         String idToken = context.session().get(ID_TOKEN_SESSION_CONTEXT_KEY);
         if (idToken != null) {
             context.put(ID_TOKEN_CONTEXT_KEY, idToken);
+        }
+
+        // add webAuthn credential id if exists
+        String webAuthnCredentialId = context.session().get(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
+        if (webAuthnCredentialId != null) {
+            context.put(WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, webAuthnCredentialId);
+        }
+
+        // add mfa factor id if exists
+        String mfaFactorId = context.session().get(MFA_FACTOR_ID_CONTEXT_KEY);
+        if (mfaFactorId != null) {
+            context.put(MFA_FACTOR_ID_CONTEXT_KEY, mfaFactorId);
         }
     }
 }
