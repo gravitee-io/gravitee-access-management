@@ -1,5 +1,24 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/302?closed=1[AM - 3.3.1 (2020-11-05)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.2.2 https://github.com/gravitee-io/issues/issues/4548[#4548]
+
+*_Management_*
+
+- Cannot list users at organization level https://github.com/gravitee-io/issues/issues/4553[#4553]
+
+=== Features
+
+*_Gateway_*
+
+- Make webauthn credential id and MFA factor id available in the login context so that we can use it in extension points https://github.com/gravitee-io/issues/issues/4495[#4495]
+
+
 == https://github.com/gravitee-io/issues/milestone/300?closed=1[AM - 3.2.2 (2020-11-03)]
 
 === Bug fixes
