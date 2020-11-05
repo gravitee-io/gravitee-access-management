@@ -51,7 +51,17 @@ public class LoginController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
     private static final String LOGIN_VIEW = "login";
-    private static final List<String> socialProviderTypes = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket", "franceconnect");
+    private static final Map<String, String> socialProviderTypes;
+    static {
+        Map<String, String> sMap = new HashMap<>();
+        sMap.put("github-am-idp", "github");
+        sMap.put("google-am-idp", "google");
+        sMap.put("twitter-am-idp", "twitter");
+        sMap.put("facebook-am-idp", "facebook");
+        sMap.put("franceconnect-am-idp", "franceconnect");
+        sMap.put("azure-ad-am-idp", "microsoft");
+        socialProviderTypes = Collections.unmodifiableMap(sMap);
+    }
 
     @Autowired
     private OrganizationService organizationService;
@@ -82,11 +92,8 @@ public class LoginController {
         // enhance social providers data
         if (socialProviders != null && !socialProviders.isEmpty()) {
             Set<IdentityProvider> enhancedSocialProviders = socialProviders.stream().map(identityProvider -> {
-                String identityProviderType = identityProvider.getType();
-                Optional<String> identityProviderSocialType = socialProviderTypes.stream().filter(socialProviderType -> identityProviderType.toLowerCase().contains(socialProviderType)).findFirst();
-                if (identityProviderSocialType.isPresent()) {
-                    identityProvider.setType(identityProviderSocialType.get());
-                }
+                // get social identity provider type (currently use for display purpose (logo, description, ...)
+                identityProvider.setType(socialProviderTypes.getOrDefault(identityProvider.getType(), identityProvider.getType()));
                 return identityProvider;
             }).collect(Collectors.toSet());
 

@@ -136,16 +136,14 @@ a, a:hover, a:focus {
 * Social Buttons
 *********************/
 
-.btn-google-plus {
-    color: #fff;
-    background-color: #dd4b39;
-    border: 1px solid #d54331;
+.btn-google {
+    color: #444;
+    background-color: #ffffff;
 }
 
-.btn-google-plus:hover,
-.btn-google-plus:focus {
-    color: #fff;
-    background-color: #cb3927;
+.btn-microsoft {
+    color: #444;
+    background-color: #ffffff;
 }
 
 .btn-facebook {
