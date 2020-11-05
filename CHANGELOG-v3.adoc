@@ -1,5 +1,18 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/300?closed=1[AM - 3.2.2 (2020-11-03)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.0.8 https://github.com/gravitee-io/issues/issues/4542[#4542]
+
+*_Management_*
+
+- Unable to delete user's MFA https://github.com/gravitee-io/issues/issues/4503[#4503]
+
+
 == https://github.com/gravitee-io/issues/milestone/297?closed=1[AM - 3.0.8 (2020-11-03)]
 
 === Bug fixes
