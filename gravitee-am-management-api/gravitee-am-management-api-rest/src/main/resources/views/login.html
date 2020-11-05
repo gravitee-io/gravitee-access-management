@@ -65,7 +65,7 @@
                        th:each="socialProvider : ${socialProviders}">
                         <img th:if="${socialProvider.getType()} == 'franceconnect'" th:src="@{assets/images/FCboutons-10.svg}" height="70">
                         <span th:if="${socialProvider.getType()} != 'franceconnect'">
-                                <i th:class="'fa fa-' + ${socialProvider.getType()}"></i> <span th:text="${socialProvider.getName()}"></span>
+                                <i th:class="'fab fa-' + ${socialProvider.getType()}"></i> <span th:text="${socialProvider.getName()}"></span>
                             </span>
                     </a>
                 </div>

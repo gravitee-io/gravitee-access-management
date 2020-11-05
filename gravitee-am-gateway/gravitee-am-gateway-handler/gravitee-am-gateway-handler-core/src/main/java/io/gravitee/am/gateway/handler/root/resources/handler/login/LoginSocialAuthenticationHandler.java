@@ -54,7 +54,17 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 public class LoginSocialAuthenticationHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginSocialAuthenticationHandler.class);
-    private static final List<String> socialProviders = Arrays.asList("github", "google", "twitter", "facebook", "bitbucket", "franceconnect");
+    private static final Map<String, String> socialProviders;
+    static {
+        Map<String, String> sMap = new HashMap<>();
+        sMap.put("github-am-idp", "github");
+        sMap.put("google-am-idp", "google");
+        sMap.put("twitter-am-idp", "twitter");
+        sMap.put("facebook-am-idp", "facebook");
+        sMap.put("franceconnect-am-idp", "franceconnect");
+        sMap.put("azure-ad-am-idp", "microsoft");
+        socialProviders = Collections.unmodifiableMap(sMap);
+    }
     private static final String OAUTH2_PROVIDER_CONTEXT_KEY = "oauth2Providers";
     private static final String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
     private static final String SOCIAL_AUTHORIZE_URL_CONTEXT_KEY = "authorizeUrls";
@@ -132,10 +142,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         Observable.fromIterable(identityProviders)
                 .flatMapMaybe(identityProvider -> {
                     // get social identity provider type (currently use for display purpose (logo, description, ...)
-                    String identityProviderType = identityProvider.getType();
-                    Optional<String> identityProviderSocialType = socialProviders.stream().filter(socialProvider -> identityProviderType.toLowerCase().contains(socialProvider)).findFirst();
-                    identityProviderSocialType.ifPresent(identityProvider::setType);
-
+                    identityProvider.setType(socialProviders.getOrDefault(identityProvider.getType(), identityProvider.getType()));
                     // get social sign in url
                     return getAuthorizeUrl(identityProvider.getId(), context)
                             .map(authorizeUrl -> new SocialProviderData(identityProvider, authorizeUrl))
