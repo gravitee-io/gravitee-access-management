@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
@@ -57,6 +58,9 @@ public class UserServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private CredentialService credentialService;
 
     private final static String DOMAIN = "domain1";
 
@@ -344,12 +348,14 @@ public class UserServiceTest {
     @Test
     public void shouldDelete() {
         User user = new User();
+        user.setId("my-user");
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(DOMAIN);
 
         when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = userService.delete("my-user").test();
         testObserver.awaitTerminalEvent();
@@ -359,12 +365,39 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).delete("my-user");
         verify(eventService, times(1)).create(any());
+        verify(credentialService, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldDelete_with_webauthn_credentials() {
+        User user = new User();
+        user.setId("my-user");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+
+        Credential credential = new Credential();
+        credential.setId("credential-id");
+
+        when(userRepository.findById("my-user")).thenReturn(Maybe.just(user));
+        when(userRepository.delete("my-user")).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Single.just(Collections.singletonList(credential)));
+        when(credentialService.delete(credential.getId())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.delete("my-user").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userRepository, times(1)).delete("my-user");
+        verify(eventService, times(1)).create(any());
+        verify(credentialService, times(1)).delete("credential-id");
     }
 
     @Test
     public void shouldDelete_technicalException() {
-        when(userRepository.findById("my-user")).thenReturn(Maybe.just(new User()));
-        when(userRepository.delete("my-user")).thenReturn(Completable.error(TechnicalException::new));
+        when(userRepository.findById("my-user")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
         userService.delete("my-user").subscribe(testObserver);

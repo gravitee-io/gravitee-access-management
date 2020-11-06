@@ -385,7 +385,14 @@ public class UserServiceImpl implements UserService {
                 .flatMapCompletable(user -> {
                     // create event for sync process
                     Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.DELETE));
-                    return userRepository.delete(userId).andThen(eventService.create(event)).toCompletable();
+                    /// delete WebAuthn credentials
+                    return credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())
+                            .flatMapCompletable(credentials -> {
+                                List<Completable> deleteCredentialsCompletable = credentials.stream().map(c -> credentialService.delete(c.getId())).collect(Collectors.toList());
+                                return Completable.concat(deleteCredentialsCompletable);
+                            })
+                            .andThen(userRepository.delete(userId))
+                            .andThen(eventService.create(event).ignoreElement());
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
