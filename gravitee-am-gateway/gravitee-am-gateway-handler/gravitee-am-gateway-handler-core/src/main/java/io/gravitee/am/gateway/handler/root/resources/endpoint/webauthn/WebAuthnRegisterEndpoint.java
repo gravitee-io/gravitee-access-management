@@ -107,6 +107,7 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
                 routingContext.session().put(WEBAUTHN_SKIPPED_KEY, true);
                 // Now redirect back to the original url
                 doRedirect(routingContext.response(), returnURL);
+                return;
             }
 
             // prepare the context
@@ -129,12 +130,12 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
                     routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                     routingContext.response().end(res.result());
                 } else {
-                    logger.error("Unable to render WebAuthn login page", res.cause());
+                    logger.error("Unable to render WebAuthn register page", res.cause());
                     routingContext.fail(res.cause());
                 }
             });
         } catch (Exception ex) {
-            logger.error("An error occurs while rendering WebAuthn login page", ex);
+            logger.error("An error has occurred while rendering WebAuthn register page", ex);
             routingContext.fail(503);
         }
     }
