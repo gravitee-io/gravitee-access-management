@@ -42,16 +42,14 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoAccessPolicyRepository extends AbstractManagementMongoRepository implements AccessPolicyRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_RESOURCE = "resource";
-    private static final String FIELD_UPDATED_AT = "updatedAt";
     public static final String COLLECTION_NAME = "uma_access_policies";
     private MongoCollection<AccessPolicyMongo> accessPoliciesCollection;
 
     @PostConstruct
     public void init() {
         accessPoliciesCollection = mongoOperations.getCollection(COLLECTION_NAME, AccessPolicyMongo.class);
+        super.init(accessPoliciesCollection);
         super.createIndex(accessPoliciesCollection, new Document(FIELD_DOMAIN, 1));
         super.createIndex(accessPoliciesCollection, new Document(FIELD_RESOURCE, 1));
         super.createIndex(accessPoliciesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_RESOURCE, 1));

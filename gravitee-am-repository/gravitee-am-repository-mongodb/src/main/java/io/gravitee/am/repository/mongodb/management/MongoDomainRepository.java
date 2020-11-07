@@ -51,13 +51,12 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoDomainRepository extends AbstractManagementMongoRepository implements DomainRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_MASTER = "master";
     private MongoCollection<DomainMongo> domainsCollection;
 
     @PostConstruct
     public void init() {
         domainsCollection = mongoOperations.getCollection("domains", DomainMongo.class);
+        super.init(domainsCollection);
     }
 
     @Override
@@ -79,11 +78,6 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     public Flowable<Domain> findAllByEnvironment(String environmentId) {
 
         return Flowable.fromPublisher(domainsCollection.find(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()), eq(FIELD_REFERENCE_ID, environmentId)))).map(this::convert);
-    }
-
-    @Override
-    public Maybe<Domain> findMaster() {
-        return Observable.fromPublisher(domainsCollection.find(eq(FIELD_MASTER, true)).first()).firstElement().map(this::convert);
     }
 
     @Override

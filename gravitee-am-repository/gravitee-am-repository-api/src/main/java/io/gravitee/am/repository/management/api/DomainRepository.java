@@ -17,14 +17,10 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.Flowable;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
-import io.reactivex.SingleSource;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -32,8 +28,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface DomainRepository extends CrudRepository<Domain, String> {
-
-    Maybe<Domain> findMaster();
 
     Single<Set<Domain>> findAll();
 

@@ -36,14 +36,12 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoEnvironmentRepository extends AbstractManagementMongoRepository implements EnvironmentRepository {
 
-    public static final String FIELD_ID = "_id";
-    public static final String FIELD_ORGANIZATION_ID = "organizationId";
     private MongoCollection<EnvironmentMongo> collection;
 
     @PostConstruct
     public void init() {
         collection = mongoOperations.getCollection("environments", EnvironmentMongo.class);
-        super.createIndex(collection, new Document(FIELD_ID, 1));
+        super.init(collection);
         super.createIndex(collection, new Document(FIELD_ID, 1).append(FIELD_ORGANIZATION_ID, 1));
     }
 

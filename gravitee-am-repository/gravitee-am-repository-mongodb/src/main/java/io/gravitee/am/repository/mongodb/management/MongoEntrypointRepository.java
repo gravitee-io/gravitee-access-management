@@ -21,6 +21,7 @@ import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.EntrypointMongo;
 import io.reactivex.*;
+import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -35,18 +36,18 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoEntrypointRepository extends AbstractManagementMongoRepository implements EntrypointRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_ORGANIZATION_ID = "organizationId";
     private MongoCollection<EntrypointMongo> collection;
 
     @PostConstruct
     public void init() {
         collection = mongoOperations.getCollection("entrypoints", EntrypointMongo.class);
+        super.init(collection);
+        super.createIndex(collection, new Document(FIELD_ID, 1).append(FIELD_ORGANIZATION_ID, 1));
     }
 
     @Override
     public Maybe<Entrypoint> findById(String id, String organizationId) {
-        return Observable.fromPublisher(collection.find(and(eq(FIELD_ORGANIZATION_ID, organizationId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(collection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first()).firstElement().map(this::convert);
     }
 
     @Override

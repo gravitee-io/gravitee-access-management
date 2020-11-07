@@ -45,14 +45,13 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 @Component
 public class MongoGroupRepository extends AbstractManagementMongoRepository implements GroupRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_NAME = "name";
     private static final String FIELD_MEMBERS = "members";
     private MongoCollection<GroupMongo> groupsCollection;
 
     @PostConstruct
     public void init() {
         groupsCollection = mongoOperations.getCollection("groups", GroupMongo.class);
+        super.init(groupsCollection);
         super.createIndex(groupsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
         super.createIndex(groupsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1));
     }

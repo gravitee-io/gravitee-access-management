@@ -43,13 +43,12 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoCertificateRepository extends AbstractManagementMongoRepository implements CertificateRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private MongoCollection<CertificateMongo> certificatesCollection;
 
     @PostConstruct
     public void init() {
         certificatesCollection = mongoOperations.getCollection("certificates", CertificateMongo.class);
+        super.init(certificatesCollection);
         super.createIndex(certificatesCollection, new Document(FIELD_DOMAIN, 1));
     }
 

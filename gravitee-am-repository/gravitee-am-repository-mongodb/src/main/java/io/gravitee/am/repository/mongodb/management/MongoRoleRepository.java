@@ -42,16 +42,14 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 @Component
 public class MongoRoleRepository extends AbstractManagementMongoRepository implements RoleRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_NAME = "name";
     private static final String FIELD_SCOPE = "scope";
     private static final String FIELD_ASSIGNABLE_TYPE = "assignableType";
-    public static final String FIELD_SYSTEM = "system";
     private MongoCollection<RoleMongo> rolesCollection;
 
     @PostConstruct
     public void init() {
         rolesCollection = mongoOperations.getCollection("roles", RoleMongo.class);
+        super.init(rolesCollection);
         super.createIndex(rolesCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
         super.createIndex(rolesCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1).append(FIELD_SCOPE, 1));
     }

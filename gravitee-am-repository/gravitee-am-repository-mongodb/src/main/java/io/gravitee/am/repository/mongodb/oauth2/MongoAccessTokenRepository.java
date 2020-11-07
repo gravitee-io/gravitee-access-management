@@ -43,26 +43,20 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
 
     private MongoCollection<AccessTokenMongo> accessTokenCollection;
 
-    private static final String FIELD_ID = "_id";
     private static final String FIELD_TOKEN = "token";
     private static final String FIELD_RESET_TIME = "expire_at";
-    private static final String FIELD_DOMAIN_ID = "domain";
-    private static final String FIELD_CLIENT_ID = "client";
     private static final String FIELD_SUBJECT = "subject";
     private static final String FIELD_AUTHORIZATION_CODE = "authorization_code";
 
     @PostConstruct
     public void init() {
         accessTokenCollection = mongoOperations.getCollection("access_tokens", AccessTokenMongo.class);
-
-        // one field index
+        super.init(accessTokenCollection);
         super.createIndex(accessTokenCollection, new Document(FIELD_TOKEN, 1));
-        super.createIndex(accessTokenCollection, new Document(FIELD_CLIENT_ID, 1));
+        super.createIndex(accessTokenCollection, new Document(FIELD_CLIENT, 1));
         super.createIndex(accessTokenCollection, new Document(FIELD_AUTHORIZATION_CODE, 1));
         super.createIndex(accessTokenCollection, new Document(FIELD_SUBJECT, 1));
-
-        // three fields index
-        super.createIndex(accessTokenCollection, new Document(FIELD_DOMAIN_ID, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_SUBJECT, 1));
+        super.createIndex(accessTokenCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_SUBJECT, 1));
 
         // expire after index
         super.createIndex(accessTokenCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
@@ -103,14 +97,14 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     @Override
     public Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject) {
         return Observable
-                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT_ID, clientId), eq(FIELD_SUBJECT, subject))))
+                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, subject))))
                 .map(this::convert);
     }
 
     @Override
     public Observable<AccessToken> findByClientId(String clientId) {
         return Observable
-                .fromPublisher(accessTokenCollection.find(eq(FIELD_CLIENT_ID, clientId)))
+                .fromPublisher(accessTokenCollection.find(eq(FIELD_CLIENT, clientId)))
                 .map(this::convert);
     }
 
@@ -123,7 +117,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
 
     @Override
     public Single<Long> countByClientId(String clientId) {
-        return Single.fromPublisher(accessTokenCollection.count(eq(FIELD_CLIENT_ID, clientId)));
+        return Single.fromPublisher(accessTokenCollection.countDocuments(eq(FIELD_CLIENT, clientId)));
     }
 
     @Override
@@ -133,12 +127,12 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
 
     @Override
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, String userId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN_ID, domainId), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_SUBJECT, userId))));
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId))));
     }
 
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, String userId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN_ID, domainId), eq(FIELD_SUBJECT, userId))));
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId))));
     }
 
     private List<WriteModel<AccessTokenMongo>> convert(List<AccessToken> accessTokens) {

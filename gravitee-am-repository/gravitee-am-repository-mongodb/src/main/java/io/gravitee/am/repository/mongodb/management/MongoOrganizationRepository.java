@@ -38,13 +38,12 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoOrganizationRepository extends AbstractManagementMongoRepository implements OrganizationRepository {
 
-    public static final String FIELD_ID = "_id";
     private MongoCollection<OrganizationMongo> collection;
 
     @PostConstruct
     public void init() {
         collection = mongoOperations.getCollection("organizations", OrganizationMongo.class);
-        super.createIndex(collection, new Document(FIELD_ID, 1));
+        super.init(collection);
     }
 
     @Override

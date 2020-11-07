@@ -40,13 +40,12 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoReporterRepository extends AbstractManagementMongoRepository implements ReporterRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private MongoCollection<ReporterMongo> reportersCollection;
 
     @PostConstruct
     public void init() {
         reportersCollection = mongoOperations.getCollection("reporters", ReporterMongo.class);
+        super.init(reportersCollection);
         super.createIndex(reportersCollection, new Document(FIELD_DOMAIN, 1));
     }
 

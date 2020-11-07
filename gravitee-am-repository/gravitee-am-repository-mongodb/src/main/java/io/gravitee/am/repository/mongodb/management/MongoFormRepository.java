@@ -42,14 +42,13 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 @Component
 public class MongoFormRepository extends AbstractManagementMongoRepository implements FormRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_CLIENT = "client";
     private static final String FIELD_TEMPLATE = "template";
     private MongoCollection<FormMongo> formsCollection;
 
     @PostConstruct
     public void init() {
         formsCollection = mongoOperations.getCollection("forms", FormMongo.class);
+        super.init(formsCollection);
         super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
         super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1));
         super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));

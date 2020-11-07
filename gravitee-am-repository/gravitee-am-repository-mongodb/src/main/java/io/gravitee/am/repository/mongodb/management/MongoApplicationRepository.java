@@ -54,20 +54,17 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoApplicationRepository extends AbstractManagementMongoRepository implements ApplicationRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_CLIENT_ID = "settings.oauth.clientId";
-    private static final String FIELD_NAME = "name";
     private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
     private static final String FIELD_GRANT_TYPES= "settings.oauth.grantTypes";
-    private static final String FIELD_UPDATED_AT = "updatedAt";
     private MongoCollection<ApplicationMongo> applicationsCollection;
 
     @PostConstruct
     public void init() {
         applicationsCollection = mongoOperations.getCollection("applications", ApplicationMongo.class);
+        super.init(applicationsCollection);
         super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1));
         super.createIndex(applicationsCollection, new Document(FIELD_UPDATED_AT, -1));
         super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1));

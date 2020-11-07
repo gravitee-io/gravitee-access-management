@@ -41,18 +41,15 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoMembershipRepository extends AbstractManagementMongoRepository implements MembershipRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_REFERENCE_ID = "referenceId";
-    private static final String FIELD_REFERENCE_TYPE = "referenceType";
     private static final String FIELD_MEMBER_ID = "memberId";
-    public static final String FIELD_MEMBER_TYPE = "memberType";
-    public static final String FIELD_ROLE = "role";
-
+    private static final String FIELD_MEMBER_TYPE = "memberType";
+    private static final String FIELD_ROLE = "role";
     private MongoCollection<MembershipMongo> membershipsCollection;
 
     @PostConstruct
     public void init() {
         membershipsCollection = mongoOperations.getCollection("memberships", MembershipMongo.class);
+        super.init(membershipsCollection);
         super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
         super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1));
     }

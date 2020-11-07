@@ -15,12 +15,17 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,13 +42,21 @@ import static com.mongodb.client.model.Filters.*;
  */
 public abstract class AbstractManagementMongoRepository extends AbstractMongoRepository {
 
-    protected static final String FIELD_REFERENCE_TYPE = "referenceType";
-    protected static final String FIELD_REFERENCE_ID = "referenceId";
-
     @Autowired
     @Qualifier("managementMongoTemplate")
     protected MongoDatabase mongoOperations;
 
+    @Value("${management.mongodb.ensureIndexOnStart:true}")
+    private boolean ensureIndexOnStart;
+
+    protected void createIndex(MongoCollection<?> collection, Document document) {
+        super.createIndex(collection, document, new IndexOptions(), ensureIndexOnStart);
+    }
+
+    protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
+        // if we set an index options it means that we want to force the index creation
+        super.createIndex(collection, document, indexOptions, true);
+    }
 
     protected Bson toBsonFilter(String name, Optional<?> optional) {
 

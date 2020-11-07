@@ -42,12 +42,12 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoIdentityProviderRepository extends AbstractManagementMongoRepository implements IdentityProviderRepository {
 
-    private static final String FIELD_ID = "_id";
     private MongoCollection<IdentityProviderMongo> identitiesCollection;
 
     @PostConstruct
     public void init() {
         identitiesCollection = mongoOperations.getCollection("identities", IdentityProviderMongo.class);
+        super.init(identitiesCollection);
         super.createIndex(identitiesCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
     }
 
