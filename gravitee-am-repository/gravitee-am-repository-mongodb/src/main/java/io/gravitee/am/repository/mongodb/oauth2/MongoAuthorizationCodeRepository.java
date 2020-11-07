@@ -42,7 +42,6 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoRepository implements AuthorizationCodeRepository {
 
-    private static final String FIELD_ID = "_id";
     private static final String FIELD_TRANSACTION_ID = "transactionId";
     private static final String FIELD_CODE = "code";
     private static final String FIELD_RESET_TIME = "expire_at";
@@ -51,8 +50,11 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
     @PostConstruct
     public void init() {
         authorizationCodeCollection = mongoOperations.getCollection("authorization_codes", AuthorizationCodeMongo.class);
+        super.init(authorizationCodeCollection);
         super.createIndex(authorizationCodeCollection, new Document(FIELD_CODE, 1));
         super.createIndex(authorizationCodeCollection, new Document(FIELD_TRANSACTION_ID, 1));
+
+        // expire after index
         super.createIndex(authorizationCodeCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
     }
 

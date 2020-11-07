@@ -40,14 +40,13 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoFactorRepository extends AbstractManagementMongoRepository implements FactorRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_FACTOR_TYPE = "factorType";
     private MongoCollection<FactorMongo> factorsCollection;
 
     @PostConstruct
     public void init() {
         factorsCollection = mongoOperations.getCollection("factors", FactorMongo.class);
+        super.init(factorsCollection);
         super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1));
         super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_FACTOR_TYPE, 1));
     }

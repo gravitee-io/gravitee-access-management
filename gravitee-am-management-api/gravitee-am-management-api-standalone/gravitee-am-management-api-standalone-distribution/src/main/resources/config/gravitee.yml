@@ -108,6 +108,7 @@ management:
 #    sslEnabled: false
 #    threadsAllowedToBlockForConnectionMultiplier: 5
 #    cursorFinalizerEnabled: true
+#    ensureIndexOnStart: true
 
 # OAuth2 repository is used to store OAuth2 tokens: access_token, refresh_token
 oauth2:
@@ -116,6 +117,7 @@ oauth2:
     dbname: ${ds.mongodb.dbname}
     host: ${ds.mongodb.host}
     port: ${ds.mongodb.port}
+#    ensureIndexOnStart: true
 
 # Management API AM service configurations. Provided values are default values.
 # All services are enabled by default. To stop one of them, you have to add the property 'enabled: false' (See the

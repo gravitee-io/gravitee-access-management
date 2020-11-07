@@ -41,16 +41,13 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoEmailRepository extends AbstractManagementMongoRepository implements EmailRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
-    private static final String FIELD_CLIENT = "client";
     private static final String FIELD_TEMPLATE = "template";
     private MongoCollection<EmailMongo> emailsCollection;
 
     @PostConstruct
     public void init() {
         emailsCollection = mongoOperations.getCollection("emails", EmailMongo.class);
-        super.createIndex(emailsCollection, new Document(FIELD_ID, 1));
+        super.init(emailsCollection);
         super.createIndex(emailsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
         super.createIndex(emailsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1));
         super.createIndex(emailsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));

@@ -43,25 +43,23 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoResourceRepository extends AbstractManagementMongoRepository implements ResourceRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
-    private static final String FIELD_CLIENT = "clientId";
-    private static final String FIELD_USER = "userId";
-    private static final String FIELD_UPDATED_AT = "updatedAt";
-    public static final String COLLECTION_NAME = "uma_resource_set";
+    private static final String FIELD_CLIENT_ID = "clientId";
+    private static final String FIELD_USER_ID = "userId";
+    private static final String COLLECTION_NAME = "uma_resource_set";
     private MongoCollection<ResourceMongo> resourceCollection;
 
     @PostConstruct
     public void init() {
         resourceCollection = mongoOperations.getCollection(COLLECTION_NAME, ResourceMongo.class);
-        super.createIndex(resourceCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1));
-        super.createIndex(resourceCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USER, 1));
+        super.init(resourceCollection);
+        super.createIndex(resourceCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1));
+        super.createIndex(resourceCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1));
     }
 
     @Override
     public Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(resourceCollection.countDocuments(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client)))).first(0l);
-        Single<List<Resource>> resourcesOperation = Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).toList();
+        Single<Long> countOperation = Observable.fromPublisher(resourceCollection.countDocuments(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client)))).first(0l);
+        Single<List<Resource>> resourcesOperation = Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).toList();
         return Single.zip(countOperation, resourcesOperation, (count, resourceSets) -> new Page<>(resourceSets, page, count));
     }
 
@@ -90,7 +88,7 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
 
     @Override
     public Single<List<Resource>> findByDomainAndClientAndUser(String domain, String client, String user) {
-        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client), eq(FIELD_USER, user)))).map(this::convert).toList();
+        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), eq(FIELD_USER_ID, user)))).map(this::convert).toList();
     }
 
     @Override
@@ -107,12 +105,12 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
 
     @Override
     public Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resources) {
-        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client), in(FIELD_ID, resources)))).map(this::convert).toList();
+        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), in(FIELD_ID, resources)))).map(this::convert).toList();
     }
 
     @Override
     public Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String user, String resource) {
-        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT, client), eq(FIELD_USER, user), eq(FIELD_ID, resource))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), eq(FIELD_USER_ID, user), eq(FIELD_ID, resource))).first()).firstElement().map(this::convert);
     }
 
     private Resource convert(ResourceMongo resourceMongo) {

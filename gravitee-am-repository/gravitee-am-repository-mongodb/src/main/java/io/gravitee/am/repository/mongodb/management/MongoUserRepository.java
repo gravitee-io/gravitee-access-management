@@ -64,7 +64,6 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 public class MongoUserRepository extends AbstractManagementMongoRepository implements UserRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoUserRepository.class);
-    private static final String FIELD_ID = "_id";
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_DISPLAY_NAME = "displayName";
     private static final String FIELD_FIRST_NAME = "firstName";
@@ -80,7 +79,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @PostConstruct
     public void init() {
         usersCollection = mongoOperations.getCollection("users", UserMongo.class);
-
+        super.init(usersCollection);
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL, 1));
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL_CLAIM, 1));

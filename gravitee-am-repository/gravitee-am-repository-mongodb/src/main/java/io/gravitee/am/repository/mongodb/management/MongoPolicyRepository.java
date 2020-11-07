@@ -41,13 +41,12 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoPolicyRepository extends AbstractManagementMongoRepository implements PolicyRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private MongoCollection<PolicyMongo> policiesCollection;
 
     @PostConstruct
     public void init() {
         policiesCollection = mongoOperations.getCollection("policies", PolicyMongo.class);
+        super.init(policiesCollection);
         super.createIndex(policiesCollection, new Document(FIELD_DOMAIN, 1));
     }
 

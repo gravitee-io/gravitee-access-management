@@ -42,14 +42,13 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoScopeRepository extends AbstractManagementMongoRepository implements ScopeRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_KEY = "key";
     private MongoCollection<ScopeMongo> scopesCollection;
 
     @PostConstruct
     public void init() {
         scopesCollection = mongoOperations.getCollection("scopes", ScopeMongo.class);
+        super.init(scopesCollection);
         super.createIndex(scopesCollection, new Document(FIELD_DOMAIN, 1));
         super.createIndex(scopesCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_KEY, 1));
     }

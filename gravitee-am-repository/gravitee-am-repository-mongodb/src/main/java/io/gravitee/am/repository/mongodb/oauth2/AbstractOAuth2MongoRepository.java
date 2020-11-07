@@ -15,10 +15,14 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -29,4 +33,16 @@ public abstract class AbstractOAuth2MongoRepository extends AbstractMongoReposit
     @Autowired
     @Qualifier("oauth2MongoTemplate")
     protected MongoDatabase mongoOperations;
+
+    @Value("${oauth2.mongodb.ensureIndexOnStart:true}")
+    private boolean ensureIndexOnStart;
+
+    protected void createIndex(MongoCollection<?> collection, Document document) {
+        super.createIndex(collection, document, new IndexOptions(), ensureIndexOnStart);
+    }
+
+    protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
+        // if we set an index options it means that we want to force the index creation
+        super.createIndex(collection, document, indexOptions, true);
+    }
 }

@@ -46,9 +46,6 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoLoginAttemptRepository extends AbstractManagementMongoRepository implements LoginAttemptRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
-    private static final String FIELD_CLIENT = "client";
     private static final String FIELD_IDP = "identityProvider";
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_RESET_TIME = "expireAt";
@@ -57,6 +54,7 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
     @PostConstruct
     public void init() {
         loginAttemptsCollection = mongoOperations.getCollection("login_attempts", LoginAttemptMongo.class);
+        super.init(loginAttemptsCollection);
         super.createIndex(loginAttemptsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT, 1).append(FIELD_USERNAME, 1));
 
         // expire after index

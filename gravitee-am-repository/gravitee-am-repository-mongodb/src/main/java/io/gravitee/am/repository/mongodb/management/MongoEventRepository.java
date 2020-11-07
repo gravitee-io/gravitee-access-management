@@ -43,13 +43,12 @@ import static com.mongodb.client.model.Filters.*;
 @Component
 public class MongoEventRepository extends AbstractManagementMongoRepository implements EventRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_UPDATED_AT = "updatedAt";
     private MongoCollection<EventMongo> eventsCollection;
 
     @PostConstruct
     public void init() {
         eventsCollection = mongoOperations.getCollection("events", EventMongo.class);
+        super.init(eventsCollection);
         super.createIndex(eventsCollection, new Document(FIELD_UPDATED_AT, 1));
     }
 

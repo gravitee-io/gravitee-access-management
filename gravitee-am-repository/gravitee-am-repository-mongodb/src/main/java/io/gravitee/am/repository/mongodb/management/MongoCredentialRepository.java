@@ -41,7 +41,6 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoCredentialRepository extends AbstractManagementMongoRepository implements CredentialRepository {
 
-    private static final String FIELD_ID = "_id";
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_CREDENTIAL_ID = "credentialId";
@@ -50,6 +49,7 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
     @PostConstruct
     public void init() {
         credentialsCollection = mongoOperations.getCollection("webauthn_credentials", CredentialMongo.class);
+        super.init(credentialsCollection);
         super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1));
         super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1));
         super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CREDENTIAL_ID, 1));

@@ -21,6 +21,7 @@ import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.management.api.TagRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.TagMongo;
 import io.reactivex.*;
+import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -37,19 +38,19 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoTagRepository extends AbstractManagementMongoRepository implements TagRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_ORGANIZATION_ID = "organizationId";
     private MongoCollection<TagMongo> tagsCollection;
 
     @PostConstruct
     public void init() {
         tagsCollection = mongoOperations.getCollection("tags", TagMongo.class);
+        super.init(tagsCollection);
+        super.createIndex(tagsCollection, new Document(FIELD_ID, 1).append(FIELD_ORGANIZATION_ID, 1));
     }
 
 
     @Override
     public Maybe<Tag> findById(String id, String organizationId) {
-        return Observable.fromPublisher(tagsCollection.find(and(eq(FIELD_ORGANIZATION_ID, organizationId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(tagsCollection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -59,7 +60,7 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
 
     @Override
     public Flowable<Tag> findAll(String organizationId) {
-        return Flowable.fromPublisher(tagsCollection.find(eq("organizationId", organizationId))).map(this::convert);
+        return Flowable.fromPublisher(tagsCollection.find(eq(FIELD_ORGANIZATION_ID, organizationId))).map(this::convert);
     }
 
     @Override

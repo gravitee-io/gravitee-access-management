@@ -46,9 +46,7 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository implements ScopeApprovalRepository {
 
-    private static final String FIELD_ID = "_id";
     private static final String FIELD_TRANSACTION_ID = "transactionId";
-    private static final String FIELD_DOMAIN = "domain";
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_CLIENT_ID = "clientId";
     private static final String FIELD_EXPIRES_AT = "expiresAt";
@@ -58,11 +56,14 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     @PostConstruct
     public void init() {
         scopeApprovalsCollection = mongoOperations.getCollection("scope_approvals", ScopeApprovalMongo.class);
-        super.createIndex(scopeApprovalsCollection, new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
+        super.init(scopeApprovalsCollection);
         super.createIndex(scopeApprovalsCollection, new Document(FIELD_TRANSACTION_ID, 1));
         super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1));
         super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1));
         super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1));
+
+        // expire after index
+        super.createIndex(scopeApprovalsCollection, new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
     }
 
     @Override

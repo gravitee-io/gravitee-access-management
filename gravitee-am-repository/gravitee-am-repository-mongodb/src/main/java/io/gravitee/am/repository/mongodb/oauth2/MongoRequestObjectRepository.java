@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.oidc;
+package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.oauth2.AbstractOAuth2MongoRepository;
-import io.gravitee.am.repository.mongodb.oidc.iinternal.model.RequestObjectMongo;
+import io.gravitee.am.repository.mongodb.oauth2.internal.model.RequestObjectMongo;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
 import io.gravitee.am.repository.oidc.model.RequestObject;
 import io.reactivex.Completable;
@@ -42,18 +42,12 @@ public class MongoRequestObjectRepository extends AbstractOAuth2MongoRepository 
 
     private MongoCollection<RequestObjectMongo> requestObjectCollection;
 
-    private static final String FIELD_ID = "_id";
     private static final String FIELD_EXPIRE_AT = "expire_at";
-    private static final String FIELD_CLIENT = "client";
-    private static final String FIELD_DOMAIN = "domain";
 
     @PostConstruct
     public void init() {
         requestObjectCollection = mongoOperations.getCollection("request_objects", RequestObjectMongo.class);
-
-        // one field index
-        super.createIndex(requestObjectCollection, new Document(FIELD_CLIENT, 1));
-        super.createIndex(requestObjectCollection, new Document(FIELD_DOMAIN, 1));
+        super.init(requestObjectCollection);
 
         // expire after index
         super.createIndex(requestObjectCollection, new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));

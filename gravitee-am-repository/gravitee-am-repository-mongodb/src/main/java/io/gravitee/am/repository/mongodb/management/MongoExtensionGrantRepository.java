@@ -41,14 +41,12 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoExtensionGrantRepository extends AbstractManagementMongoRepository implements ExtensionGrantRepository {
 
-    private static final String FIELD_ID = "_id";
-    private static final String FIELD_DOMAIN = "domain";
-    private static final String FIELD_NAME = "name";
     private MongoCollection<ExtensionGrantMongo> extensionGrantsCollection;
 
     @PostConstruct
     public void init() {
         extensionGrantsCollection = mongoOperations.getCollection("extension_grants", ExtensionGrantMongo.class);
+        super.init(extensionGrantsCollection);
         super.createIndex(extensionGrantsCollection, new Document(FIELD_DOMAIN, 1));
         super.createIndex(extensionGrantsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1));
     }
