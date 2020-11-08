@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -41,7 +40,6 @@ public class WebAuthnRegisterStep extends AuthenticationFlowStep {
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Session session = routingContext.session();
-        final io.gravitee.am.model.User endUser = ((User) routingContext.user().getDelegate()).getUser();
 
         // check if WebAuthn is enabled
         LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
@@ -59,16 +57,7 @@ public class WebAuthnRegisterStep extends AuthenticationFlowStep {
             flow.doNext(routingContext);
             return;
         }
-        // check if user is already registered for WebAuthn
-        if (isUserEnrolled(endUser)) {
-            flow.doNext(routingContext);
-            return;
-        }
         // else go to the WebAuthn registration page
         flow.exit(this);
-    }
-
-    private boolean isUserEnrolled(io.gravitee.am.model.User user) {
-        return user.isWebAuthnRegistrationCompleted();
     }
 }
