@@ -121,14 +121,18 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public Completable update(ReferenceType referenceType, String referenceId, String credentialId, String userId) {
+    public Completable update(ReferenceType referenceType, String referenceId, String credentialId, Credential credential) {
         LOGGER.debug("Update a credential {}", credentialId);
         return credentialRepository.findByCredentialId(referenceType, referenceId, credentialId)
                 .flatMapObservable(credentials -> Observable.fromIterable(credentials))
-                .flatMapSingle(credential -> {
-                    credential.setUserId(userId);
-                    credential.setUpdatedAt(new Date());
-                    return credentialRepository.update(credential);
+                .flatMapSingle(credentialToUpdate -> {
+                    // update only business values (i.e not set via the vert.x authenticator object)
+                    credentialToUpdate.setUserId(credential.getUserId());
+                    credentialToUpdate.setIpAddress(credential.getIpAddress());
+                    credentialToUpdate.setUserAgent(credential.getUserAgent());
+                    credentialToUpdate.setUpdatedAt(new Date());
+                    credentialToUpdate.setAccessedAt(credentialToUpdate.getUpdatedAt());
+                    return credentialRepository.update(credentialToUpdate);
                 })
                 .ignoreElements();
     }

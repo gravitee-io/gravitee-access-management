@@ -81,7 +81,9 @@ import {UserRolesComponent} from './domain/settings/users/user/roles/roles.compo
 import {UserRolesResolver} from './resolvers/user-roles.resolver';
 import {UserFactorsComponent} from './domain/settings/users/user/factors/factors.component';
 import {UserCredentialsResolver} from './resolvers/user-credentials.resolver';
+import {UserCredentialResolver} from './resolvers/user-credential.resolver';
 import {UserCredentialsComponent} from'./domain/settings/users/user/credentials/credentials.component';
+import {UserCredentialComponent} from'./domain/settings/users/user/credentials/credential/credential.component';
 import {ExtensionGrantCreationComponent} from './domain/settings/extension-grants/creation/extension-grant-creation.component';
 import {ExtensionGrantComponent} from './domain/settings/extension-grants/extension-grant/extension-grant.component';
 import {ExtensionGrantsResolver} from './resolvers/extension-grants.resolver';
@@ -164,7 +166,7 @@ import {ApplicationResourcePolicyComponent} from './domain/applications/applicat
 import {ApplicationResourcePolicyResolver} from './resolvers/application-resource-policy.resolver';
 import {DomainSettingsEntrypointsComponent} from './domain/settings/entrypoints/entrypoints.component';
 import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
-import {ApplicationLoginSettingsComponent} from "./domain/applications/application/advanced/login/login.component";
+import {ApplicationLoginSettingsComponent} from './domain/applications/application/advanced/login/login.component';
 import {IdentitiesResolver} from "./resolvers/identities.resolver";
 
 const routes: Routes = [
@@ -1219,6 +1221,7 @@ const routes: Routes = [
               { path: 'applications/:appId', component: UserApplicationComponent, resolve: {application: ApplicationResolver, consents: ConsentsResolver}},
               { path: 'factors', component: UserFactorsComponent, resolve: {factors: EnrolledFactorsResolver}},
               { path: 'credentials', component: UserCredentialsComponent, resolve: { credentials : UserCredentialsResolver}},
+              { path: 'credentials/:credentialId', component: UserCredentialComponent, resolve: { credential : UserCredentialResolver}},
               { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
             ]
           },

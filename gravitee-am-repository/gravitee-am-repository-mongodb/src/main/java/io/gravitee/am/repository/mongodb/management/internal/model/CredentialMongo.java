@@ -18,6 +18,8 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 
+import java.util.Date;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -32,6 +34,9 @@ public class CredentialMongo extends Auditable {
     private String credentialId;
     private String publicKey;
     private long counter;
+    private String ipAddress;
+    private String userAgent;
+    private Date accessedAt;
 
     public String getId() {
         return id;
@@ -95,5 +100,29 @@ public class CredentialMongo extends Auditable {
 
     public void setCounter(long counter) {
         this.counter = counter;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
+    }
+
+    public Date getAccessedAt() {
+        return accessedAt;
+    }
+
+    public void setAccessedAt(Date accessedAt) {
+        this.accessedAt = accessedAt;
     }
 }

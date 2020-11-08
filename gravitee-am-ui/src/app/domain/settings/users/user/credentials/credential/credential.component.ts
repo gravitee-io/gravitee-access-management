@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TestBed, inject } from '@angular/core/testing';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
 
-import {UserCredentialsResolver} from './user-credentials.resolver';
+@Component({
+  selector: 'app-user-credential',
+  templateUrl: './credential.component.html',
+  styleUrls: ['./credential.component.scss']
+})
+export class UserCredentialComponent implements OnInit {
+  credential: any;
 
-describe('UserCredentialsResolver', () => {
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [UserCredentialsResolver]
-    });
-  });
+  constructor(private route: ActivatedRoute) {
+  }
 
-  it('should ...', inject([UserCredentialsResolver], (service: UserCredentialsResolver) => {
-    expect(service).toBeTruthy();
-  }));
-});
+  ngOnInit() {
+    this.credential = this.route.snapshot.data['credential'];
+  }
+}

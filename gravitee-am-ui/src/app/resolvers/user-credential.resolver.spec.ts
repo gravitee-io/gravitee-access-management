@@ -15,16 +15,16 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import {UserCredentialsResolver} from './user-credentials.resolver';
+import {UserCredentialResolver} from './user-credential.resolver';
 
-describe('UserCredentialsResolver', () => {
+describe('UserCredentialResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [UserCredentialsResolver]
+      providers: [UserCredentialResolver]
     });
   });
 
-  it('should ...', inject([UserCredentialsResolver], (service: UserCredentialsResolver) => {
+  it('should ...', inject([UserCredentialResolver], (service: UserCredentialResolver) => {
     expect(service).toBeTruthy();
   }));
 });
