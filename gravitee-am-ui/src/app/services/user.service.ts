@@ -122,6 +122,10 @@ export class UserService {
     return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/credentials');
   }
 
+  credential(domainId, userId, credentialId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/credentials/' + credentialId);
+  }
+
   removeCredential(domainId, userId, credentialId): Observable<any> {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/credentials/' + credentialId);
   }

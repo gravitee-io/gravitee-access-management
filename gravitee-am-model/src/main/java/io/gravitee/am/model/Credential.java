@@ -33,8 +33,11 @@ public class Credential {
     private String credentialId;
     private String publicKey;
     private long counter;
+    private String ipAddress;
+    private String userAgent;
     private Date createdAt;
     private Date updatedAt;
+    private Date accessedAt;
 
     public String getId() {
         return id;
@@ -100,6 +103,22 @@ public class Credential {
         this.counter = counter;
     }
 
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -114,5 +133,13 @@ public class Credential {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Date getAccessedAt() {
+        return accessedAt;
+    }
+
+    public void setAccessedAt(Date accessedAt) {
+        this.accessedAt = accessedAt;
     }
 }

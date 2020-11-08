@@ -13,18 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TestBed, inject } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {UserCredentialsResolver} from './user-credentials.resolver';
+import { UserCredentialComponent } from './credential.component';
 
-describe('UserCredentialsResolver', () => {
-  beforeEach(() => {
+describe('UserCredentialComponent', () => {
+  let component: UserCredentialComponent;
+  let fixture: ComponentFixture<UserCredentialComponent>;
+
+  beforeEach(async(() => {
     TestBed.configureTestingModule({
-      providers: [UserCredentialsResolver]
-    });
+      declarations: [ UserCredentialComponent ]
+    })
+      .compileComponents();
+  }));
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(UserCredentialComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
-  it('should ...', inject([UserCredentialsResolver], (service: UserCredentialsResolver) => {
-    expect(service).toBeTruthy();
-  }));
+  it('should be created', () => {
+    expect(component).toBeTruthy();
+  });
 });
