@@ -362,11 +362,6 @@ public class UserServiceImpl implements UserService {
                     }
                     return Single.just(user);
                 })
-                // fetch user credentials
-                .zipWith(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId()).map(c -> !c.isEmpty()), (u, c) -> {
-                    u.setWebAuthnRegistrationCompleted(c);
-                    return u;
-                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
