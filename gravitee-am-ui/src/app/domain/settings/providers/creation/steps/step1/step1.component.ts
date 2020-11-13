@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationService } from "../../../../../../services/organization.service";
+import {Component, OnInit, Input} from '@angular/core';
+import {OrganizationService} from "../../../../../../services/organization.service";
+import {ActivatedRoute} from "@angular/router";
 
 @Component({
   selector: 'provider-creation-step1',
@@ -22,43 +23,54 @@ import { OrganizationService } from "../../../../../../services/organization.ser
   styleUrls: ['./step1.component.scss']
 })
 export class ProviderCreationStep1Component implements OnInit {
-  private identityProviderTypes: any = {
-    'ldap-am-idp' : 'Generic LDAP / AD',
-    'mongo-am-idp' : 'MongoDB',
-    'inline-am-idp': 'Inline',
-    'oauth2-generic-am-idp': 'OpenID Connect',
-    'google-am-idp': 'Google',
-    'azure-ad-am-idp': 'Azure AD',
-    'twitter-am-idp': 'Twitter',
-    'github-am-idp': 'GitHub',
-    'facebook-am-idp': 'Facebook',
-    'http-am-idp': 'HTTP',
-    'saml2-generic-am-idp': 'SAML 2.0',
-    'franceconnect-am-idp': 'FranceConnect',
-    'jdbc-am-idp': 'JDBC'
-  };
+  identities: any[];
   @Input() provider;
-  providers: any[];
-  socialProviders: any[];
-  selectedProviderTypeId: string;
+  filter: string;
 
-  constructor(private organizationService: OrganizationService) {
+  constructor(private organizationService: OrganizationService, private route: ActivatedRoute) {
   }
 
   ngOnInit() {
-    this.organizationService.identities().subscribe(data => this.providers = data);
-    this.organizationService.socialIdentities().subscribe(data => this.socialProviders = data);
+    this.filter = '';
+    this.identities = this.route.snapshot.data['identities'];
   }
 
-  selectProviderType(isExternal: boolean) {
-    this.provider.external = isExternal;
-    this.provider.type = this.selectedProviderTypeId;
+  selectProviderType({id, external}) {
+    this.provider.external = external === true;
+    this.provider.type = id;
   }
 
-  displayName(idp) {
-    if (this.identityProviderTypes[idp.id]) {
-      return this.identityProviderTypes[idp.id];
+  displayName(identityProvider) {
+    return identityProvider.displayName ? identityProvider.displayName : identityProvider.name;
+  }
+
+  getIcon(identityProvider) {
+    if (identityProvider && identityProvider.icon) {
+      const title = identityProvider.displayName ? identityProvider.displayName : identityProvider.name;
+      return `<img mat-card-avatar src="${identityProvider.icon}" alt="${title} image" title="${title}"/>`;
     }
-    return idp.name;
+    return `<i class="material-icons">storage</i>`;
   }
+
+  getFilteredIdentities() {
+    const identities = Object.values(this.identities);
+    if (this.filter != null && this.filter.trim().length > 0) {
+      return identities.filter((identity) => {
+        let fields = [identity.name.toLowerCase()];
+        if (identity.displayName != null) {
+          fields.push(identity.displayName.toLowerCase())
+        }
+        if (identity.tags != null) {
+          fields = [...fields, ...identity.tags.map((t) => t.toLowerCase().toLowerCase())];
+        }
+        return JSON.stringify(fields).includes(this.filter.toLowerCase());
+      });
+    }
+    return identities;
+  }
+
+  clear() {
+    this.filter = '';
+  }
+
 }

@@ -43,7 +43,7 @@ public class IdentityProviderPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return plugin.type() == PluginType.IDENTITY_PROVIDER;
+        return PluginType.IDENTITY_PROVIDER.name().equalsIgnoreCase(plugin.type());
     }
 
     @Override

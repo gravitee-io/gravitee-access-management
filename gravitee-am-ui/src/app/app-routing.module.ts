@@ -165,6 +165,7 @@ import {ApplicationResourcePolicyResolver} from './resolvers/application-resourc
 import {DomainSettingsEntrypointsComponent} from './domain/settings/entrypoints/entrypoints.component';
 import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
 import {ApplicationLoginSettingsComponent} from "./domain/applications/application/advanced/login/login.component";
+import {IdentitiesResolver} from "./resolvers/identities.resolver";
 
 const routes: Routes = [
   {
@@ -271,7 +272,8 @@ const routes: Routes = [
             component: DomainSettingsProvidersComponent,
             canActivate: [AuthGuard],
             resolve: {
-              providers: ProvidersResolver
+              providers: ProvidersResolver,
+              identities: IdentitiesResolver
             },
             data: {
               menu: {
@@ -286,6 +288,9 @@ const routes: Routes = [
           { path: 'providers/new',
             component: ProviderCreationComponent,
             canActivate: [AuthGuard],
+            resolve: {
+              identities: IdentitiesResolver
+            },
             data: {
               perms: {
                 only: ['organization_identity_provider_create']
@@ -613,6 +618,9 @@ const routes: Routes = [
           { path: 'idp',
             component: ApplicationIdPComponent,
             canActivate: [AuthGuard],
+            resolve: {
+              identities: IdentitiesResolver
+            },
             data: {
               perms: {
                 only: ['application_identity_provider_list']
@@ -986,7 +994,8 @@ const routes: Routes = [
             component: DomainSettingsProvidersComponent,
             canActivate: [AuthGuard],
             resolve: {
-              providers: ProvidersResolver
+              providers: ProvidersResolver,
+              identities: IdentitiesResolver
             },
             data: {
               menu: {
@@ -1001,7 +1010,8 @@ const routes: Routes = [
           { path: 'providers/new',
             component: ProviderCreationComponent,
             resolve: {
-              certificates: CertificatesResolver
+              certificates: CertificatesResolver,
+              identities: IdentitiesResolver
             }
           },
           { path: 'providers/:providerId',

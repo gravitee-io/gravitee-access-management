@@ -21,6 +21,7 @@ import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginHandler;
+import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,6 @@ import org.springframework.util.Assert;
  */
 public class ProtocolPluginHandler implements PluginHandler {
 
-    private static final String PROTOCOL = "PROTOCOL";
     private static final Logger LOGGER = LoggerFactory.getLogger(ProtocolPluginHandler.class);
 
     @Autowired
@@ -43,7 +43,7 @@ public class ProtocolPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PROTOCOL.equalsIgnoreCase(plugin.type().name());
+        return PluginType.PROTOCOL.name().equalsIgnoreCase(plugin.type());
     }
 
     @Override

@@ -43,7 +43,7 @@ public class FactorPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return plugin.type() == PluginType.FACTOR;
+        return PluginType.FACTOR.name().equalsIgnoreCase(plugin.type());
     }
 
     @Override

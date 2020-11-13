@@ -43,7 +43,7 @@ public class ExtensionGrantPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return plugin.type() == PluginType.EXTENSION_GRANT;
+        return PluginType.EXTENSION_GRANT.name().equalsIgnoreCase(plugin.type());
     }
 
     @Override

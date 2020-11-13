@@ -21,6 +21,7 @@ import io.gravitee.am.plugins.idp.core.*;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import io.gravitee.plugin.core.internal.PluginManifestProperties;
 import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -152,6 +154,37 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
 
             if (schemaDir.listFiles().length > 0) {
                 return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
+            }
+        }
+
+        return null;
+    }
+
+    private String getMimeType(final Path file) throws IOException {
+        if (file.getFileName().toString().toLowerCase().endsWith(".svg")) {
+            return "image/svg+xml";
+        }
+        // https://docs.oracle.com/javase/tutorial/essential/io/misc.html
+        // The implementation of this method is highly platform specific and is not infallible...
+        String mimeType = Files.probeContentType(file);
+        if (mimeType == null) {
+            logger.error("Cannot determine mimeType for {}, return 'application/octet-stream'", file);
+            return "application/octet-stream";
+        }
+        return mimeType;
+    }
+
+    @Override
+    public String getIcon(String identityProviderId) throws IOException {
+        IdentityProvider identityProvider = identityProviders.get(identityProviderId);
+
+        Plugin plugin = identityProviderPlugins.get(identityProvider);
+        Map<String, String> properties = plugin.manifest().properties();
+        if (properties != null) {
+            String icon = properties.get(PluginManifestProperties.MANIFEST_ICON_PROPERTY);
+            if (icon != null) {
+                Path iconFile = Paths.get(plugin.path().toString(), icon);
+                return "data:" + getMimeType(iconFile) + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(iconFile));
             }
         }
 

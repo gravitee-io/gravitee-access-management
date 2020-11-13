@@ -20,6 +20,7 @@ import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.internal.PluginManifestProperties;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -47,16 +48,26 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
     private IdentityProviderPluginManager identityProviderPluginManager;
 
     @Override
+    public Single<List<IdentityProviderPlugin>> findAll(List<String> expand) {
+        return this.findAll(false, null);
+    }
+
+    @Override
     public Single<List<IdentityProviderPlugin>> findAll(Boolean external) {
+        return this.findAll(external, null);
+    }
+
+    @Override
+    public Single<List<IdentityProviderPlugin>> findAll(Boolean external, List<String> expand) {
         LOGGER.debug("List all identity provider plugins");
         return Observable.fromIterable(identityProviderPluginManager.getAll().entrySet())
-                .filter(entry -> (external != null && external) ? entry.getKey().external() : !entry.getKey().external())
-                .map(entry -> convert(entry.getValue()))
-                .toList()
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to list all identity provider plugins", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to list all identity provider plugins", ex));
-                });
+            .filter(entry -> (external != null && external) ? entry.getKey().external() : !entry.getKey().external())
+            .map(entry -> convert(entry.getValue(), expand))
+            .toList()
+            .onErrorResumeNext(ex -> {
+                LOGGER.error("An error occurs while trying to list all identity provider plugins", ex);
+                return Single.error(new TechnicalManagementException("An error occurs while trying to list all identity provider plugins", ex));
+            });
     }
 
     @Override
@@ -95,12 +106,49 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
         });
     }
 
+    @Override
+    public Maybe<String> getIcon(String identityProviderId) {
+        LOGGER.debug("Find identity provider plugin schema by ID: {}", identityProviderId);
+        return Maybe.create(emitter -> {
+            try {
+                String icon = identityProviderPluginManager.getIcon(identityProviderId);
+                if (icon != null) {
+                    emitter.onSuccess(icon);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                LOGGER.error("An error occurs while trying to get icon for identity provider plugin {}", identityProviderId, e);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get icon for identity provider plugin " + identityProviderId, e));
+            }
+        });
+    }
+
     private IdentityProviderPlugin convert(Plugin identityProviderPlugin) {
+        return this.convert(identityProviderPlugin, null);
+    }
+
+    private IdentityProviderPlugin convert(Plugin identityProviderPlugin, List<String> expand) {
         IdentityProviderPlugin plugin = new IdentityProviderPlugin();
         plugin.setId(identityProviderPlugin.manifest().id());
         plugin.setName(identityProviderPlugin.manifest().name());
+
         plugin.setDescription(identityProviderPlugin.manifest().description());
         plugin.setVersion(identityProviderPlugin.manifest().version());
+        if (expand != null) {
+            if (expand.contains(IdentityProviderPluginService.EXPAND_ICON)) {
+                this.getIcon(plugin.getId()).subscribe(plugin::setIcon);
+            }
+            if (expand.contains(IdentityProviderPluginService.EXPAND_DISPLAY_NAME)) {
+                plugin.setDisplayName(identityProviderPlugin.manifest().properties().get(IdentityProviderPluginService.EXPAND_DISPLAY_NAME));
+            }
+            if (expand.contains(IdentityProviderPluginService.EXPAND_TAGS)) {
+                String tags = identityProviderPlugin.manifest().properties().get(IdentityProviderPluginService.EXPAND_TAGS);
+                if (tags != null) {
+                    plugin.setTags(tags.split(","));
+                }
+            }
+        }
         return plugin;
     }
 }

@@ -27,32 +27,7 @@ import {AuthService} from "../../../../services/auth.service";
 })
 export class ApplicationIdPComponent implements OnInit {
   private domainId: string;
-  private identityProviderTypes: any = {
-    'ldap-am-idp' : 'LDAP / AD',
-    'mongo-am-idp' : 'MongoDB',
-    'inline-am-idp': 'Inline',
-    'oauth2-generic-am-idp': 'OpenID Connect',
-    'github-am-idp': 'GitHub',
-    'google-am-idp': 'Google',
-    'azure-ad-am-idp': 'Azure AD',
-    'twitter-am-idp': 'Twitter',
-    'facebook-am-idp': 'Facebook',
-    'franceconnect-am-idp': 'FranceConnect',
-    'jdbc-am-idp': 'JDBC'
-  };
-  private identityProviderIcons: any = {
-    'ldap-am-idp' : 'device_hub',
-    'mongo-am-idp' : 'storage',
-    'inline-am-idp': 'insert_drive_file',
-    'oauth2-generic-am-idp': 'cloud_queue',
-    'github-am-idp': 'cloud_queue',
-    'google-am-idp': 'cloud_queue',
-    'azure-ad-am-idp': 'cloud_queue',
-    'twitter-am-idp': 'cloud_queue',
-    'facebook-am-idp': 'cloud_queue',
-    'franceconnect-am-idp': 'cloud_queue',
-    'jdbc-am-idp': 'storage'
-  };
+  private identities: any;
   loadIdentities = true;
   application: any;
   identityProviders: any[];
@@ -69,6 +44,7 @@ export class ApplicationIdPComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.application = this.route.snapshot.parent.data['application'];
+    this.identities = this.route.snapshot.data['identities'];
     this.application.identities = this.application.identities || [];
     this.readonly = !this.authService.hasPermissions(['application_identity_provider_update']);
     this.providerService.findByDomain(this.domainId).subscribe(data => {
@@ -107,16 +83,26 @@ export class ApplicationIdPComponent implements OnInit {
     return this.socialIdentityProviders && this.socialIdentityProviders.length > 0;
   }
 
-  getIdentityProviderTypeIcon(type) {
-    if (this.identityProviderIcons[type]) {
-      return this.identityProviderIcons[type];
+  getIdentityProvider(type) {
+    if (this.identities && this.identities[type]) {
+      return this.identities[type];
     }
-    return 'storage';
+    return null;
+  }
+
+  getIdentityProviderTypeIcon(type) {
+    const provider = this.getIdentityProvider(type);
+    if (provider && provider.icon) {
+      const name = provider.displayName ? provider.displayName : provider.name;
+      return `<img width="24" height="24" src="${provider.icon}" alt="${name} image" title="${name}"/>`;
+    }
+    return `<span class="material-icons">storage</span>`;
   }
 
   displayType(type) {
-    if (this.identityProviderTypes[type]) {
-      return this.identityProviderTypes[type];
+    const provider = this.getIdentityProvider(type);
+    if (provider) {
+      return provider.displayName ? provider.displayName : provider.name;
     }
     return 'Custom';
   }

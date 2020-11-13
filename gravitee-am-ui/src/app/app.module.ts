@@ -133,6 +133,7 @@ import { DashboardService} from './services/dashboard.service';
 import { SettingsComponent } from './settings/settings.component';
 import { HumanDatePipe } from './pipes/human-date.pipe';
 import { MapToIterablePipe } from './pipes/map-to-iterable.pipe';
+import { SafePipe } from './pipes/safe.pipe';
 import { DummyComponent } from './components/dummy/dummy.component';
 import {UsersComponent, UsersSearchInfoDialog} from './domain/settings/users/users.component';
 import { UserComponent } from './domain/settings/users/user/user.component';
@@ -285,6 +286,7 @@ import { ApplicationResourcePolicyComponent } from './domain/applications/applic
 import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
 import { LoginSettingsComponent } from './domain/components/login/login-settings.component';
 import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
+import {IdentitiesResolver} from "./resolvers/identities.resolver";
 
 @NgModule({
   declarations: [
@@ -360,6 +362,7 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
     SettingsComponent,
     HumanDatePipe,
     MapToIterablePipe,
+    SafePipe,
     DummyComponent,
     UsersComponent,
     UserComponent,
@@ -549,6 +552,7 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
     ApplicationResourcesResolver,
     ApplicationResourceResolver,
     ApplicationResourcePolicyResolver,
+    IdentitiesResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

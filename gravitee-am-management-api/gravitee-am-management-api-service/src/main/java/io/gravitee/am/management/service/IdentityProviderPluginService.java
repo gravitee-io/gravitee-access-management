@@ -28,9 +28,19 @@ import java.util.List;
  */
 public interface IdentityProviderPluginService {
 
+    String EXPAND_DISPLAY_NAME = "displayName";
+    String EXPAND_ICON = "icon";
+    String EXPAND_TAGS = "tags";
+
+    Single<List<IdentityProviderPlugin>> findAll(List<String> expand);
+
     Single<List<IdentityProviderPlugin>> findAll(Boolean external);
+
+    Single<List<IdentityProviderPlugin>> findAll(Boolean external, List<String> expand);
 
     Maybe<IdentityProviderPlugin> findById(String identityProviderPlugin);
 
     Maybe<String> getSchema(String identityProviderPlugin);
+
+    Maybe<String> getIcon(String identityProviderPlugin);
 }
