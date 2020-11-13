@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.identityprovider.api.User;
@@ -23,6 +24,8 @@ import io.gravitee.am.management.handlers.management.api.authentication.manager.
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,9 +89,10 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         // get oauth2 provider
         String providerId = request.getParameter(PROVIDER_PARAMETER);
-        AuthenticationProvider authenticationProvider = identityProviderManager.get(providerId);
+        final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(providerId);
+        final AuthenticationProvider authenticationProvider = identityProviderManager.get(providerId);
 
-        if (authenticationProvider == null) {
+        if (authenticationProvider == null || identityProvider == null || identityProvider.getReferenceType() != ReferenceType.ORGANIZATION) {
             throw new ProviderNotFoundException("Social Provider " + providerId + " not found");
         }
 
@@ -106,6 +110,7 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
             // set user identity provider source
             Map<String, String> details = new LinkedHashMap<>();
             details.put(SOURCE, providerId);
+            details.put(Claims.organization, identityProvider.getReferenceId());
             UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user, provAuthentication.getCredentials(), AuthorityUtils.NO_AUTHORITIES);
             usernamePasswordAuthenticationToken.setDetails(details);
             return usernamePasswordAuthenticationToken;

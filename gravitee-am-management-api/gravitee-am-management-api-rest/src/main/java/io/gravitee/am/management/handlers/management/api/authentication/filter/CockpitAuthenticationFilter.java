@@ -93,9 +93,6 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
     @Autowired
     private AuthenticationService authenticationService;
 
-    @Autowired
-    private RoleService roleService;
-
     private JWTParser jwtParser;
 
     @Override
@@ -157,35 +154,6 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
         details.put(Claims.organization, organizationId);
         authentication.setDetails(details);
         return authentication;
-    }
-
-    private List<String> convertToRoleIds(List<String> jwtRoles, String organizationId) {
-
-        List<String> roleIds = new ArrayList<>();
-        if (jwtRoles != null && !jwtRoles.isEmpty()) {
-
-            for (String roleName : jwtRoles) {
-                Role role = null;
-                SystemRole systemRole = SystemRole.fromName(roleName);
-
-                // First try to map to a system role.
-                if (systemRole != null) {
-                    role = roleService.findSystemRole(systemRole, ReferenceType.ORGANIZATION).blockingGet();
-                } else {
-                    // Then try to find a default role.
-                    DefaultRole defaultRole = DefaultRole.fromName(roleName);
-
-                    if (defaultRole != null) {
-                        role = roleService.findDefaultRole(organizationId, defaultRole, ReferenceType.ORGANIZATION).blockingGet();
-                    }
-                }
-
-                if (role != null) {
-                    roleIds.add(role.getId());
-                }
-            }
-        }
-        return roleIds;
     }
 
     private Key getPublicKey() throws Exception {
