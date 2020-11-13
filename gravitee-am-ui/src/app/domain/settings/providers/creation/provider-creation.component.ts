@@ -25,6 +25,7 @@ import {SnackbarService} from '../../../../services/snackbar.service';
   styleUrls: ['./provider-creation.component.scss']
 })
 export class ProviderCreationComponent implements OnInit {
+  private identities: any[];
   public provider: any = {};
   private domainId: string;
   private organizationContext: boolean;
@@ -41,6 +42,7 @@ export class ProviderCreationComponent implements OnInit {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
+    this.identities = this.route.snapshot.data['identities'];
   }
 
   create() {

@@ -32,8 +32,8 @@
         <ngx-datatable-column name="" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
              <span style="display: flex; align-items: center;">
-              <mat-icon>{{getIdentityProviderTypeIcon(row.type)}}</mat-icon>
-              <small style="margin-left: 5px;">{{displayType(row.type)}}</small>
+               <div [innerHTML]="getIdentityProviderTypeIcon(row.type) | safe:'html' "></div>
+               <small style="margin-left: 5px;">{{displayType(row.type)}}</small>
             </span>
           </ng-template>
         </ngx-datatable-column>

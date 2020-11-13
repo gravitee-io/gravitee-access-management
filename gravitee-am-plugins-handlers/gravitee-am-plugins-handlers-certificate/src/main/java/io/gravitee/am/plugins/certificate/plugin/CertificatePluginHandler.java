@@ -43,7 +43,7 @@ public class CertificatePluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return plugin.type() == PluginType.CERTIFICATE;
+        return PluginType.CERTIFICATE.name().equalsIgnoreCase(plugin.type());
     }
 
     @Override

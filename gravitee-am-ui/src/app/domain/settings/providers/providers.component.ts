@@ -18,7 +18,6 @@ import { ProviderService } from "../../../services/provider.service";
 import { SnackbarService } from "../../../services/snackbar.service";
 import { DialogService } from "../../../services/dialog.service";
 import {ActivatedRoute, Router} from "@angular/router";
-import { AppConfig } from "../../../../config/app.config";
 import {OrganizationService} from "../../../services/organization.service";
 
 @Component({
@@ -28,32 +27,8 @@ import {OrganizationService} from "../../../services/organization.service";
 })
 export class DomainSettingsProvidersComponent implements OnInit {
   private providers: any[];
+  private identities: any[];
   private organizationContext = false;
-  private identityProviderTypes: any = {
-    'ldap-am-idp' : 'LDAP / AD',
-    'mongo-am-idp' : 'MongoDB',
-    'inline-am-idp': 'Inline',
-    'oauth2-generic-am-idp': 'OpenID Connect',
-    'github-am-idp': 'GitHub',
-    'google-am-idp': 'Google',
-    'azure-ad-am-idp': 'Azure AD',
-    'twitter-am-idp': 'Twitter',
-    'facebook-am-idp': 'Facebook',
-    'franceconnect-am-idp': 'FranceConnect',
-    'jdbc-am-idp': 'JDBC'
-  };
-  private identityProviderIcons: any = {
-    'ldap-am-idp' : 'device_hub',
-    'mongo-am-idp' : 'storage',
-    'inline-am-idp': 'insert_drive_file',
-    'oauth2-generic-am-idp': 'cloud_queue',
-    'github-am-idp': 'cloud_queue',
-    'google-am-idp': 'cloud_queue',
-    'azure-ad-am-idp': 'cloud_queue',
-    'twitter-am-idp': 'cloud_queue',
-    'facebook-am-idp': 'cloud_queue',
-    'franceconnect-am-idp': 'cloud_queue'
-  };
   domainId: string;
 
   constructor(private providerService: ProviderService,
@@ -70,6 +45,7 @@ export class DomainSettingsProvidersComponent implements OnInit {
       this.organizationContext = true;
     }
     this.providers = this.route.snapshot.data['providers'];
+    this.identities = this.route.snapshot.data['identities'];
   }
 
   loadProviders() {
@@ -84,16 +60,26 @@ export class DomainSettingsProvidersComponent implements OnInit {
     return !this.providers || this.providers.length === 0;
   }
 
-  getIdentityProviderTypeIcon(type) {
-    if (this.identityProviderIcons[type]) {
-      return this.identityProviderIcons[type];
+  getIdentityProvider(type) {
+    if (this.identities && this.identities[type]) {
+      return this.identities[type];
     }
-    return 'storage';
+    return null;
+  }
+
+  getIdentityProviderTypeIcon(type) {
+    const provider = this.getIdentityProvider(type);
+    if (provider && provider.icon) {
+      const name = provider.displayName ? provider.displayName : provider.name;
+      return `<img width="24" height="24" src="${provider.icon}" alt="${name} image" title="${name}"/>`;
+    }
+    return `<span class="material-icons">storage</span>`;
   }
 
   displayType(type) {
-    if (this.identityProviderTypes[type]) {
-      return this.identityProviderTypes[type];
+    const provider = this.getIdentityProvider(type);
+    if (provider) {
+      return provider.displayName ? provider.displayName : provider.name;
     }
     return 'Custom';
   }

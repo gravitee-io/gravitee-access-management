@@ -37,6 +37,12 @@
 			<outputDirectory>schemas</outputDirectory>
 		</fileSet>
 
+		<fileSet>
+			<directory>${basedir}</directory>
+			<includes>
+				<include>${icon}</include>
+			</includes>
+		</fileSet>
 		<!-- Create the empty lib directory in case of no libraries is required -->
 		<!-- As there is no maven-assembly-plugin's method do to that, we hack it ourself -->
 		<fileSet>

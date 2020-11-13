@@ -43,7 +43,7 @@ public class ReporterPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return plugin.type() == PluginType.REPORTER;
+        return PluginType.REPORTER.name().equalsIgnoreCase(plugin.type());
     }
 
     @Override

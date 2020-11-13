@@ -20,26 +20,27 @@
     Choose how your users will connect to the authorization server.
     That could be an Active Directory or a corporate authentication service.
   </p>
-  <div fxLayout="row wrap" fxFlex fxLayoutGap="10px">
-    <mat-card *ngFor="let provider of providers" fxFlex="30">
-      <mat-card-header fxLayoutAlign="end end" fxLayout="row">
-        <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType(false)">
-          <mat-radio-button [value]="provider.id"></mat-radio-button>
-        </mat-radio-group>
-      </mat-card-header>
+
+  <div fxLayout="row" fxFlex>
+    <mat-form-field class="identities-search__input">
+      <input matInput type="search" placeholder="Filter providers..." [(ngModel)]="filter" autocomplete="off">
+      <button mat-button mat-icon-button matSuffix (click)="clear()" *ngIf="filter">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+
+  <div fxLayout="row wrap" fxFlex fxLayoutGap="10px" fxLayoutAlign="center">
+
+    <mat-card *ngFor="let idp of getFilteredIdentities()" fxFlex="30" [class.selected]="provider.type === idp.id"
+              (click)="selectProviderType(idp)"
+              (keyup.enter)="selectProviderType(idp)"
+              tabIndex="0">
       <mat-card-content>
-        {{displayName(provider)}}
+        <div class="identity-provider__icon" [innerHTML]="getIcon(idp) | safe:'html'"></div>
+        {{displayName(idp)}}
       </mat-card-content>
     </mat-card>
-    <mat-card *ngFor="let provider of socialProviders" fxFlex="30">
-      <mat-card-header fxLayoutAlign="end end" fxLayout="row">
-        <mat-radio-group [(ngModel)]="selectedProviderTypeId" (ngModelChange)="selectProviderType(true)">
-          <mat-radio-button [value]="provider.id"></mat-radio-button>
-        </mat-radio-group>
-      </mat-card-header>
-      <mat-card-content>
-        {{displayName(provider)}}
-      </mat-card-content>
-    </mat-card>
+
   </div>
 </div>

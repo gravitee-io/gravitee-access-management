@@ -22,4 +22,43 @@ package io.gravitee.am.service.model.plugin;
  */
 public class IdentityProviderPlugin extends AbstractPlugin {
 
+    /**
+     * The plugin display name
+     */
+    private String displayName;
+
+    /**
+     * The plugin icon
+     */
+    private String icon;
+
+    /**
+     * The plugin tags, useful for search
+     */
+    private String[] tags;
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
+    public String[] getTags() {
+        return tags;
+    }
+
+    public void setTags(String[] tags) {
+        this.tags = tags;
+    }
+
 }

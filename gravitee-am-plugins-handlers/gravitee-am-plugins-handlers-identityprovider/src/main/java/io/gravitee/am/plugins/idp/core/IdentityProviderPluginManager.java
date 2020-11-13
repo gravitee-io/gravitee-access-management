@@ -46,4 +46,6 @@ public interface IdentityProviderPluginManager {
     default AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper) {
         return create(type, configuration, mappers, roleMapper, null);
     }
+
+    String getIcon(String identityProviderId) throws IOException;
 }
