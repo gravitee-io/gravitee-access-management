@@ -160,18 +160,21 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
         return null;
     }
 
-    private String getMimeType(final Path file) throws IOException {
-        if (file.getFileName().toString().toLowerCase().endsWith(".svg")) {
-            return "image/svg+xml";
+    private String getMimeType(final Path file) {
+        if (file == null || file.getFileName() == null) {
+            return null;
         }
-        // https://docs.oracle.com/javase/tutorial/essential/io/misc.html
-        // The implementation of this method is highly platform specific and is not infallible...
-        String mimeType = Files.probeContentType(file);
-        if (mimeType == null) {
-            logger.error("Cannot determine mimeType for {}, return 'application/octet-stream'", file);
+
+        final String fileName = file.getFileName().toString().toLowerCase();
+        if (fileName.endsWith(".svg")) {
+            return "image/svg+xml";
+        } else if (fileName.endsWith(".png")) {
+            return "image/png";
+        } else if (fileName.endsWith(".jpeg") || fileName.endsWith(".jpg")) {
+            return "image/jpeg";
+        } else {
             return "application/octet-stream";
         }
-        return mimeType;
     }
 
     @Override
