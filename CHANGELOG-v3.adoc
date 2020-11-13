@@ -1,5 +1,18 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/308?closed=1[AM - 3.3.2 (2020-11-10)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [webauthn] register flow is not well ended if we skip the step https://github.com/gravitee-io/issues/issues/4575[#4575]
+
+*_Management_*
+
+- Delete attached webauthn credentials when deleting a user https://github.com/gravitee-io/issues/issues/4574[#4574]
+
+
 == https://github.com/gravitee-io/issues/milestone/302?closed=1[AM - 3.3.1 (2020-11-05)]
 
 === Bug fixes
