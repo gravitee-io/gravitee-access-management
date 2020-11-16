@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.impl;
 
-import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ExtensionGrantEvent;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranter;
@@ -148,8 +148,10 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         extensionGrants.remove(extensionGrantId);
         extensionGrantGranters.remove(extensionGrantId);
         // backward compatibility, update remaining granters for the min date
-        minDate = Collections.min(extensionGrants.values().stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
-        extensionGrantGranters.values().forEach(extensionGrantGranter -> extensionGrantGranter.setMinDate(minDate));
+        if (!extensionGrants.isEmpty()) {
+            minDate = Collections.min(extensionGrants.values().stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
+            extensionGrantGranters.values().forEach(extensionGrantGranter -> extensionGrantGranter.setMinDate(minDate));
+        }
     }
 
     private void updateExtensionGrantProvider(ExtensionGrant extensionGrant) {
