@@ -18,11 +18,7 @@ package io.gravitee.am.management.service;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Role;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.model.account.AccountSettings;
@@ -38,6 +34,7 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.jsonwebtoken.JwtBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -90,6 +87,9 @@ public class UserServiceTest {
 
     @Mock
     private JwtBuilder jwtBuilder;
+
+    @Mock
+    private MembershipService membershipService;
 
     @Before
     public void setUp() {
@@ -475,4 +475,51 @@ public class UserServiceTest {
         }
     }
 
+    @Test
+    public void shouldDeleteUser_without_membership() {
+        final String organization = "DEFAULT";
+        final String userId = "user-id";
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(userId);
+        when(user.getSource()).thenReturn("source-idp");
+        when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
+        when(commonUserService.delete(anyString())).thenReturn(Completable.complete());
+        when(membershipService.findByMember(any(), any())).thenReturn(Single.just(Collections.emptyList()));
+
+        TestObserver<Void> testObserver = userService.delete(ReferenceType.ORGANIZATION, organization, userId).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(commonUserService, times(1)).delete(any());
+        verify(membershipService, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldDeleteUser_with_memberships() {
+        final String organization = "DEFAULT";
+        final String userId = "user-id";
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(userId);
+        when(user.getSource()).thenReturn("source-idp");
+
+        Membership m1 = mock(Membership.class);
+        when(m1.getId()).thenReturn("m1");
+        Membership m2 = mock(Membership.class);
+        when(m2.getId()).thenReturn("m2");
+        Membership m3 = mock(Membership.class);
+        when(m3.getId()).thenReturn("m3");
+
+        when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
+        when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
+        when(commonUserService.delete(anyString())).thenReturn(Completable.complete());
+        when(membershipService.findByMember(any(), any())).thenReturn(Single.just(Arrays.asList(m1, m2, m3)));
+        when(membershipService.delete(anyString())).thenReturn(Completable.complete());
+
+        TestObserver<Void> testObserver = userService.delete(ReferenceType.ORGANIZATION, organization, userId).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(commonUserService, times(1)).delete(any());
+        verify(membershipService, times(3)).delete(anyString());
+    }
 }

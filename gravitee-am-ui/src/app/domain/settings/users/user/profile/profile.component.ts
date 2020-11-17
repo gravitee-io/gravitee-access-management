@@ -73,15 +73,18 @@ export class UserProfileComponent implements OnInit {
   }
 
   delete(event) {
-    // TODO we should be able to delete platform users
     event.preventDefault();
     this.dialogService
       .confirm('Delete User', 'Are you sure you want to delete this user ?')
       .subscribe(res => {
         if (res) {
-          this.userService.delete(this.domainId, this.user.id).subscribe(response => {
+          this.userService.delete(this.domainId, this.user.id, this.organizationContext).subscribe(response => {
             this.snackbarService.open('User ' + this.user.username + ' deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'users']);
+            if (this.organizationContext) {
+              this.router.navigate(['/settings', 'management', 'users']);
+            } else {
+              this.router.navigate(['/domains', this.domainId, 'settings', 'users']);
+            }
           });
         }
       });
