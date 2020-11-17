@@ -28,7 +28,6 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.Member;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
@@ -40,7 +39,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import io.reactivex.internal.operators.maybe.MaybeError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,12 +74,6 @@ public class MembershipServiceImpl implements MembershipService {
     private RoleService roleService;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
-    private OrganizationService organizationService;
-
-    @Autowired
     private EventService eventService;
 
     @Override
@@ -110,6 +102,17 @@ public class MembershipServiceImpl implements MembershipService {
                     LOGGER.error("An error occurs while trying to find memberships by reference id {} and reference type {}", referenceId, referenceType, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find memberships by reference id %s and reference type %s", referenceId, referenceType), ex));
+                });
+    }
+
+    @Override
+    public Single<List<Membership>> findByMember(String memberId, MemberType memberType) {
+        LOGGER.debug("Find memberships by member id {} and member type {}", memberId, memberType);
+        return membershipRepository.findByMember(memberId, memberType)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find memberships by member id {} and member type {}", memberId, memberType, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find memberships by member id %s and member type %s", memberId, memberType), ex));
                 });
     }
 

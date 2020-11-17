@@ -55,11 +55,18 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         membershipsCollection = mongoOperations.getCollection("memberships", MembershipMongo.class);
         super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
         super.createIndex(membershipsCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1));
+        super.createIndex(membershipsCollection, new Document(FIELD_MEMBER_ID, 1).append(FIELD_MEMBER_TYPE, 1));
     }
 
     @Override
     public Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType) {
         return Observable.fromPublisher(membershipsCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))
+                .map(this::convert).collect(ArrayList::new, List::add);
+    }
+
+    @Override
+    public Single<List<Membership>> findByMember(String memberId, MemberType memberType) {
+        return Observable.fromPublisher(membershipsCollection.find(and(eq(FIELD_MEMBER_ID, memberId), eq(FIELD_MEMBER_TYPE, memberType.name()))))
                 .map(this::convert).collect(ArrayList::new, List::add);
     }
 

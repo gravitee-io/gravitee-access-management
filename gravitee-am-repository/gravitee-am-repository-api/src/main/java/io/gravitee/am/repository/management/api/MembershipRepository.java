@@ -34,6 +34,8 @@ public interface MembershipRepository extends CrudRepository<Membership, String>
 
     Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType);
 
+    Single<List<Membership>> findByMember(String memberId, MemberType memberType);
+
     Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria);
 
     Maybe<Membership> findByReferenceAndMember(ReferenceType referenceType, String referenceId, MemberType memberType, String memberId);

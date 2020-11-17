@@ -30,6 +30,7 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
@@ -96,6 +97,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private MembershipService membershipService;
 
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
@@ -330,6 +334,13 @@ public class UserServiceImpl implements UserService {
                                     });
                         })
                         .andThen(userService.delete(userId))
+                        // remove from memberships if user is an administrative user
+                        .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
+                                membershipService.findByMember(userId, MemberType.USER)
+                                    .flatMapCompletable(memberships -> {
+                                        List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
+                                        return Completable.concat(deleteMembershipsCompletable);
+                                    }))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
                 );

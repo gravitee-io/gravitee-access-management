@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { UserService} from "../../../services/user.service";
-import { SnackbarService } from "../../../services/snackbar.service";
-import { DialogService } from "../../../services/dialog.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { OrganizationService } from "../../../services/organization.service";
-import {AuthService} from "../../../services/auth.service";
+import { ActivatedRoute, Router } from '@angular/router';
+import { UserService} from '../../../services/user.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
+import { OrganizationService } from '../../../services/organization.service';
+import {AuthService} from '../../../services/auth.service';
 
 @Component({
   selector: 'app-users',
@@ -67,7 +67,7 @@ export class UsersComponent implements OnInit {
   }
 
   loadUsers() {
-    let findUsers = (this.searchValue) ?
+    const findUsers = (this.searchValue) ?
       this.userService.search(this.domainId, this.searchValue + '*', this.page.pageNumber, this.page.size, this.organizationContext) :
       (this.organizationContext ? this.organizationService.users(this.page.pageNumber, this.page.size) : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size));
 
@@ -83,8 +83,8 @@ export class UsersComponent implements OnInit {
       .confirm('Delete User', 'Are you sure you want to delete this user ?')
       .subscribe(res => {
         if (res) {
-          this.userService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("User deleted");
+          this.userService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
+            this.snackbarService.open('User deleted');
             this.page.pageNumber = 0;
             this.loadUsers();
           });
