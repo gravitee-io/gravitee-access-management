@@ -101,7 +101,7 @@ help: ## Print this message
 
 gravitee: ## Stop and delete containers if exists, then install and run new ones
 ifneq ($(wildcard .working/compose),)
-	@echo "Stoping gravitee and cleaning containers and images"
+	@echo "Stopping gravitee and cleaning containers and images"
 	@make stop
 	@make prune
 else
@@ -238,7 +238,7 @@ oidctest-stop: ## Stop openid-certificatoin test containers
 oidctest-status: ## See OIDC containers status
 	@cd $(OIDC_TEST_FOLDER)/docker ; docker-compose ps
 
-startAll: start oidctest-start ## Stop all running containers
+startAll: start oidctest-start ## Start all running containers
 
 stopAll: stop oidctest-stop ## Stop all running containers
 
