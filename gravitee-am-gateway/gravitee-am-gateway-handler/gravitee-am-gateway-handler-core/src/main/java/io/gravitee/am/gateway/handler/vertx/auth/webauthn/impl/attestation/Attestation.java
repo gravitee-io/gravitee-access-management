@@ -43,6 +43,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 // TODO to remove when updating to vert.x 4
@@ -102,7 +103,7 @@ public interface Attestation {
      * @param x5c the json array
      * @return list of X509Certificates
      */
-    static List<X509Certificate> parseX5c(JsonArray x5c) throws CertificateException {
+    static List<X509Certificate> parseX5c(JsonArray x5c, Base64.Decoder b64dec) throws CertificateException {
         List<X509Certificate> certChain = new ArrayList<>();
 
         if (x5c == null || x5c.size() == 0) {
@@ -110,7 +111,7 @@ public interface Attestation {
         }
 
         for (int i = 0; i < x5c.size(); i++) {
-            certChain.add(JWS.parseX5c(x5c.getBinary(i)));
+            certChain.add(JWS.parseX5c(b64dec.decode(x5c.getString(i))));
         }
 
         return certChain;

@@ -59,6 +59,9 @@ import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.impl.attestatio
 // TODO to remove when updating to vert.x 4
 public class AppleAttestation implements Attestation {
 
+    // codecs
+    private static final Base64.Decoder b64dec = Base64.getUrlDecoder();
+
     @Override
     public String fmt() {
         return "apple";
@@ -76,7 +79,7 @@ public class AppleAttestation implements Attestation {
                 throw new AttestationException("No attestation x5c");
             }
 
-            List<X509Certificate> certChain = parseX5c(attStmt.getJsonArray("x5c"));
+            List<X509Certificate> certChain = parseX5c(attStmt.getJsonArray("x5c"), b64dec);
 
             if (certChain.size() == 0) {
                 throw new AttestationException("no certificates in x5c field");

@@ -48,6 +48,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 
 import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.impl.ASN1.*;
@@ -100,6 +101,8 @@ public class TPMAttestation implements Attestation {
 
     public static final int TPM_ST_ATTEST_CERTIFY = 0x8017;
 
+    // codecs
+    private static final Base64.Decoder b64dec = Base64.getUrlDecoder();
     private static final List<String> TPM_MANUFACTURERS = Arrays.asList(
             "id:414D4400", // AMD
             "id:41544D4C", // Atmel
@@ -157,14 +160,14 @@ public class TPMAttestation implements Attestation {
             }
 
             // 2. Parse "pubArea".
-            PubArea pubArea = new PubArea(attStmt.getBinary("pubArea"));
+            PubArea pubArea = new PubArea(b64dec.decode(attStmt.getString("pubArea")));
             // 3. Verify that the public key specified by the parameters and unique fields of pubArea is
             //    identical to the credentialPublicKey in the attestedCredentialData in authenticatorData.
             JsonObject cosePublicKey = authData.getCredentialPublicKeyJson();
             if (pubArea.getType() == TPM_ALG_RSA) {
                 // extract the RSA parameters from the COSE CBOR
-                byte[] n = cosePublicKey.getBinary("-1");
-                byte[] e = cosePublicKey.getBinary("-2");
+                byte[] n = b64dec.decode(cosePublicKey.getString("-1"));
+                byte[] e = b64dec.decode(cosePublicKey.getString("-2"));
                 long exponent = pubArea.getExponent();
                 // If `exponent` is equal to 0x00, then exponent is the default RSA exponent of 2^16+1 (65537)
                 if (exponent == 0x00) {
@@ -181,9 +184,9 @@ public class TPMAttestation implements Attestation {
                 }
             } else if (pubArea.getType() == TPM_ALG_ECC) {
                 // extract the RSA parameters from the COSE CBOR
-                byte[] crv = cosePublicKey.getBinary("-1");
-                byte[] x = cosePublicKey.getBinary("-2");
-                byte[] y = cosePublicKey.getBinary("-3");
+                byte[] crv = b64dec.decode(cosePublicKey.getString("-1"));
+                byte[] x = b64dec.decode(cosePublicKey.getString("-2"));
+                byte[] y = b64dec.decode(cosePublicKey.getString("-3"));
                 // Do some bit shifting to get to an integer
                 if (pubArea.getCurveID() != crv[0] + (crv[1] << 8)) {
                     throw new AttestationException("Unexpected public key crv");
@@ -198,7 +201,7 @@ public class TPMAttestation implements Attestation {
             }
 
             // 5. Parse “certInfo”.
-            CertInfo certInfo = new CertInfo(attStmt.getBinary("certInfo"));
+            CertInfo certInfo = new CertInfo(b64dec.decode(attStmt.getString("certInfo")));
             // 6. Check that certInfo.magic is set to TPM_GENERATED(0xFF544347).
             if (certInfo.getMagic() != CertInfo.TPM_GENERATED) {
                 throw new AttestationException("certInfo had bad magic number");
@@ -225,7 +228,7 @@ public class TPMAttestation implements Attestation {
                 default:
                     throw new AttestationException("Unsupported algorithm: " + pubArea.getNameAlg());
             }
-            byte[] pubAreaHash = hash(alg, attStmt.getBinary("pubArea"));
+            byte[] pubAreaHash = hash(alg, b64dec.decode(attStmt.getString("pubArea")));
             // 9. Concatenate attested.nameAlg and pubAreaHash to create attestedName.
             byte[] attestedName = Buffer.buffer()
                     .appendByte(certInfo.getAttestedName()[0])
@@ -276,7 +279,7 @@ public class TPMAttestation implements Attestation {
             // Verify the signature
 
             // 1. Pick a leaf AIK certificate of the x5c array and parse it.
-            List<X509Certificate> x5c = parseX5c(attStmt.getJsonArray("x5c"));
+            List<X509Certificate> x5c = parseX5c(attStmt.getJsonArray("x5c"), b64dec);
             if (x5c.size() == 0) {
                 throw new AttestationException("no certificates in x5c field");
             }
@@ -404,8 +407,8 @@ public class TPMAttestation implements Attestation {
             verifySignature(
                     PublicKeyCredential.valueOf(attStmt.getInteger("alg")),
                     leafCert,
-                    attStmt.getBinary("sig"),
-                    attStmt.getBinary("certInfo"));
+                    b64dec.decode(attStmt.getString("sig")),
+                    b64dec.decode(attStmt.getString("certInfo")));
 
         } catch (MetaDataException | NoSuchAlgorithmException | CertificateException | InvalidKeyException | SignatureException | InvalidAlgorithmParameterException | NoSuchProviderException e) {
             throw new AttestationException(e);

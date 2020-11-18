@@ -60,6 +60,8 @@ import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.impl.attestatio
 // TODO to remove when updating to vert.x 4
 public class PackedAttestation implements Attestation {
 
+    // codecs
+    private static final Base64.Decoder b64dec = Base64.getUrlDecoder();
     private final Set<String> ISO3166 = new HashSet<>();
 
     public PackedAttestation() {
@@ -79,14 +81,14 @@ public class PackedAttestation implements Attestation {
 
             // Check attStmt and it contains “x5c” then its a FULL attestation.
             JsonObject attStmt = attestation.getJsonObject("attStmt");
-            byte[] signature = attStmt.getBinary("sig");
+            byte[] signature = b64dec.decode(attStmt.getString("sig"));
 
             if (attStmt.containsKey("x5c")) {
                 // FULL basically means that it’s an attestation that chains to the manufacturer.
                 // It is signed by batch private key, who’s public key is in a batch certificate,
                 // that is chained to some attestation root certificate.
 
-                List<X509Certificate> certChain = parseX5c(attStmt.getJsonArray("x5c"));
+                List<X509Certificate> certChain = parseX5c(attStmt.getJsonArray("x5c"), b64dec);
 
                 if (certChain.size() == 0) {
                     throw new AttestationException("no certificates in x5c field");

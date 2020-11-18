@@ -87,7 +87,7 @@ public class MetaDataEntry implements Shareable {
             // verify the hash
             MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
             byte[] digest = sha256.digest(rawStatement);
-            if (MessageDigest.isEqual(digest, entry.getBinary("hash"))) {
+            if (MessageDigest.isEqual(digest, BASE64DEC.decode(entry.getString("hash")))) {
                 this.error = null;
             } else {
                 this.error = "MDS entry hash did not match corresponding hash in MDS TOC";

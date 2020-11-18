@@ -32,6 +32,7 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
   readonly = false;
   userVerifications: string[] = ['required', 'preferred', 'discouraged'];
   authenticatorAttachments: string[] = ['cross_platform', 'platform'];
+  attestationConveyancePreferences: string[] = ['none', 'indirect', 'direct'];
 
   constructor(private domainService: DomainService,
               private snackbarService: SnackbarService,

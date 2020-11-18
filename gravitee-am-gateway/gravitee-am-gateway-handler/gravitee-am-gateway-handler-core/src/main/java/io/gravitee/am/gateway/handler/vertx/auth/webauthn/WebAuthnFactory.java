@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn;
 
+import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
@@ -55,7 +56,8 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
                         .setRelyingParty(new RelyingParty().setName(DEFAULT_RELYING_PARTY_NAME))
                         .setAuthenticatorAttachment(getAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment()))
                         .setUserVerification(getUserVerification(webAuthnSettings.getUserVerification()))
-                        .setRequireResidentKey(webAuthnSettings.isRequireResidentKey()))
+                        .setRequireResidentKey(webAuthnSettings.isRequireResidentKey())
+                        .setAttestation(getAttestation(webAuthnSettings.getAttestationConveyancePreference())))
                 .authenticatorFetcher(credentialStore::fetch)
                 .authenticatorUpdater(credentialStore::store);
     }
@@ -71,6 +73,10 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
 
     private static io.vertx.ext.auth.webauthn.UserVerification getUserVerification(UserVerification userVerification) {
         return userVerification != null ? io.vertx.ext.auth.webauthn.UserVerification.valueOf(userVerification.name()) : null;
+    }
+
+    private static io.vertx.ext.auth.webauthn.Attestation getAttestation(AttestationConveyancePreference attestationConveyancePreference) {
+        return attestationConveyancePreference != null ? io.vertx.ext.auth.webauthn.Attestation.valueOf(attestationConveyancePreference.name()) : null;
     }
 
     private WebAuthn defaultWebAuthn() {
