@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
 import io.gravitee.am.model.Domain;
@@ -278,6 +279,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
                 UserVerification.fromString(webAuthnSettingsMongo.getUserVerification()) : null);
         webAuthnSettings.setAuthenticatorAttachment(webAuthnSettingsMongo.getAuthenticatorAttachment() != null ?
                 AuthenticatorAttachment.fromString(webAuthnSettingsMongo.getAuthenticatorAttachment()) : null);
+        webAuthnSettings.setAttestationConveyancePreference(webAuthnSettingsMongo.getAttestationConveyancePreference() != null ?
+                AttestationConveyancePreference.fromString(webAuthnSettingsMongo.getAttestationConveyancePreference()) : null);
         return webAuthnSettings;
     }
 
@@ -293,6 +296,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         webAuthnSettingsMongo.setRequireResidentKey(webAuthnSettings.isRequireResidentKey());
         webAuthnSettingsMongo.setUserVerification(webAuthnSettings.getUserVerification() != null ? webAuthnSettings.getUserVerification().getValue() : null);
         webAuthnSettingsMongo.setAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment() != null ? webAuthnSettings.getAuthenticatorAttachment().getValue() : null);
+        webAuthnSettingsMongo.setAttestationConveyancePreference(webAuthnSettings.getAttestationConveyancePreference() != null ? webAuthnSettings.getAttestationConveyancePreference().getValue() : null);
         return webAuthnSettingsMongo;
     }
 

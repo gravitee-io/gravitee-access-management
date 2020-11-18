@@ -27,6 +27,7 @@ public class WebAuthnSettingsMongo {
     private boolean requireResidentKey;
     private String userVerification;
     private String authenticatorAttachment;
+    private String attestationConveyancePreference;
 
     public String getOrigin() {
         return origin;
@@ -74,5 +75,13 @@ public class WebAuthnSettingsMongo {
 
     public void setAuthenticatorAttachment(String authenticatorAttachment) {
         this.authenticatorAttachment = authenticatorAttachment;
+    }
+
+    public String getAttestationConveyancePreference() {
+        return attestationConveyancePreference;
+    }
+
+    public void setAttestationConveyancePreference(String attestationConveyancePreference) {
+        this.attestationConveyancePreference = attestationConveyancePreference;
     }
 }

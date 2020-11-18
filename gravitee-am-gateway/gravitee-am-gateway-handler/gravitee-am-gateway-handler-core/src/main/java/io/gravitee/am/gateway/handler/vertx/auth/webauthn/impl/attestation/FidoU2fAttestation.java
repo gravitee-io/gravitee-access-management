@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -62,6 +63,9 @@ import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.impl.attestatio
  */
 // TODO to remove when updating to vert.x 4
 public class FidoU2fAttestation implements Attestation {
+
+    // codecs
+    private static final Base64.Decoder b64dec = Base64.getUrlDecoder();
 
     @Override
     public String fmt() {
@@ -104,7 +108,7 @@ public class FidoU2fAttestation implements Attestation {
 
             JsonObject attStmt = attestation.getJsonObject("attStmt");
 
-            List<X509Certificate> certChain = parseX5c(attStmt.getJsonArray("x5c"));
+            List<X509Certificate> certChain = parseX5c(attStmt.getJsonArray("x5c"), b64dec);
             if (certChain.size() == 0) {
                 throw new AttestationException("no certificates in x5c field");
             }
@@ -114,7 +118,7 @@ public class FidoU2fAttestation implements Attestation {
             verifySignature(
                     PublicKeyCredential.ES256,
                     certChain.get(0),
-                    attStmt.getBinary("sig"),
+                    b64dec.decode(attStmt.getString("sig")),
                     signatureBase.getBytes());
 
         } catch (CertificateException | InvalidKeyException | SignatureException | NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
@@ -150,8 +154,8 @@ public class FidoU2fAttestation implements Attestation {
 
             return Buffer.buffer()
                     .appendByte((byte) 0x04)
-                    .appendBytes(key.getBinary("-2"))
-                    .appendBytes(key.getBinary("-3"))
+                    .appendBytes(b64dec.decode(key.getString("-2")))
+                    .appendBytes(b64dec.decode(key.getString("-3")))
                     .getBytes();
         } catch (IOException e) {
             throw new DecodeException(e.getMessage());

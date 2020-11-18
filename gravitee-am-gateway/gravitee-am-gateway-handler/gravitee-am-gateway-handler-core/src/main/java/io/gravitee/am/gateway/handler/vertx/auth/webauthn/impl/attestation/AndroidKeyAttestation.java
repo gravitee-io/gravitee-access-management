@@ -46,6 +46,7 @@ import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -68,6 +69,8 @@ import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.impl.attestatio
 // TODO to remove when updating to vert.x 4
 public class AndroidKeyAttestation implements Attestation {
 
+    // codecs
+    private static final Base64.Decoder b64dec = Base64.getUrlDecoder();
     private static final JsonArray EMPTY = new JsonArray(Collections.emptyList());
 
     @Override
@@ -104,8 +107,8 @@ public class AndroidKeyAttestation implements Attestation {
             // 2. Verify signature sig over the signatureBase using
             //    public key extracted from leaf certificate in x5c
             JsonObject attStmt = attestation.getJsonObject("attStmt");
-            byte[] signature = attStmt.getBinary("sig");
-            List<X509Certificate> certChain = parseX5c(attStmt.getJsonArray("x5c"));
+            byte[] signature = b64dec.decode(attStmt.getString("sig"));
+            List<X509Certificate> certChain = parseX5c(attStmt.getJsonArray("x5c"), b64dec);
             if (certChain.size() == 0) {
                 throw new AttestationException("Invalid certificate chain");
             }
@@ -176,7 +179,7 @@ public class AndroidKeyAttestation implements Attestation {
                 // 5. Check that root certificate(last in the chain) is set to the root certificate
                 // Google does not publish this certificate, so this was extracted from one of the attestations.
                 final JsonArray x5c = attStmt.getJsonArray("x5c");
-                if (!MessageDigest.isEqual(options.getRootCertificate(fmt()).getEncoded(), x5c.getBinary(x5c.size() - 1))) {
+                if (!MessageDigest.isEqual(options.getRootCertificate(fmt()).getEncoded(), b64dec.decode(x5c.getString(x5c.size() - 1)))) {
                     throw new AttestationException("Root certificate is invalid!");
                 }
             }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.login;
 
+import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
 
@@ -64,6 +65,11 @@ public class WebAuthnSettings {
      */
     private AuthenticatorAttachment authenticatorAttachment;
 
+    /**
+     * WebAuthn Relying Parties may use AttestationConveyancePreference to specify their preference regarding attestation conveyance during credential generation.
+     */
+    private AttestationConveyancePreference attestationConveyancePreference = AttestationConveyancePreference.NONE;
+
     public String getOrigin() {
         return origin;
     }
@@ -110,5 +116,13 @@ public class WebAuthnSettings {
 
     public void setAuthenticatorAttachment(AuthenticatorAttachment authenticatorAttachment) {
         this.authenticatorAttachment = authenticatorAttachment;
+    }
+
+    public AttestationConveyancePreference getAttestationConveyancePreference() {
+        return attestationConveyancePreference;
+    }
+
+    public void setAttestationConveyancePreference(AttestationConveyancePreference attestationConveyancePreference) {
+        this.attestationConveyancePreference = attestationConveyancePreference;
     }
 }
