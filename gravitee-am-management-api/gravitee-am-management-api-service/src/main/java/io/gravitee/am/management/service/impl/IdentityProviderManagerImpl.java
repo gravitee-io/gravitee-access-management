@@ -119,6 +119,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         newIdentityProvider.setId(DEFAULT_IDP_PREFIX + lowerCaseId);
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
         newIdentityProvider.setType(DEFAULT_IDP_TYPE);
+        // TODO test jdbc here
         newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
 
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null);

@@ -122,8 +122,8 @@ public class DomainsResource extends AbstractResource {
                 .andThen(domainService.create(organizationId, environmentId, newDomain, authenticatedUser)
                         // create default idp (ignore if mongodb isn't the repositories backend)
                         .flatMap(domain -> useMongoRepositories() ? identityProviderManager.create(domain.getId()).map(__ -> domain) : Single.just(domain))
-                        // create default reporter (ignore if mongodb isn't the repositories backend)
-                        .flatMap(domain -> useMongoRepositories() ? reporterService.createDefault(domain.getId()).map(__ -> domain) : Single.just(domain)))
+                        // create default reporter
+                        .flatMap(domain -> reporterService.createDefault(domain.getId()).map(__ -> domain)))
                 .subscribe(domain -> response.resume(Response.created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain.getId()))
                         .entity(domain).build()), response::resume);
     }

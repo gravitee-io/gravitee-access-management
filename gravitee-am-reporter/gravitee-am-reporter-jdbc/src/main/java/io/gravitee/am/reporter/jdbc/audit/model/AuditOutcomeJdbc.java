@@ -13,27 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.upgrades;
+package io.gravitee.am.reporter.jdbc.audit.model;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AbstractDomainUpgrader {
+@Table
+public class AuditOutcomeJdbc {
+    @Column("audit_id")
+    private String auditId;
+    private String status;
+    private String message;
 
-    @Autowired
-    private Environment environment;
-
-    protected boolean useMongoRepositories() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "mongodb".equalsIgnoreCase(managementBackend);
+    public String getAuditId() {
+        return auditId;
     }
 
-    protected boolean useJdbcRepositories() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "jdbc".equalsIgnoreCase(managementBackend);
+    public void setAuditId(String auditId) {
+        this.auditId = auditId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

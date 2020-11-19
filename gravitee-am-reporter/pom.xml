@@ -37,5 +37,6 @@
     <modules>
         <module>gravitee-am-reporter-api</module>
         <module>gravitee-am-reporter-mongodb</module>
+        <module>gravitee-am-reporter-jdbc</module>
     </modules>
 </project>

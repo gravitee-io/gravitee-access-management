@@ -86,11 +86,6 @@ public class JdbcUser {
     private String factors;
     @Column("additional_information")
     private String additionalInformation;
-    /**
-     * Copy of additionalInformation.email to allow efficient search
-     */
-    @Column("additional_information_email")
-    private String additionalInformationEmail;
 
     public String getId() {
         return id;
@@ -98,14 +93,6 @@ public class JdbcUser {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getAdditionalInformationEmail() {
-        return additionalInformationEmail;
-    }
-
-    public void setAdditionalInformationEmail(String additionalInformationEmail) {
-        this.additionalInformationEmail = additionalInformationEmail;
     }
 
     public String getExternalId() {

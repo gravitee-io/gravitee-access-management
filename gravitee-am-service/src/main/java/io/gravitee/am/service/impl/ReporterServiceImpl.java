@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import com.google.common.io.BaseEncoding;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
@@ -45,6 +46,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.List;
 
@@ -53,8 +56,10 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Component
-public class    ReporterServiceImpl implements ReporterService {
+public class ReporterServiceImpl implements ReporterService {
 
+    public static final int TABLE_SUFFIX_MAX_LENGTH = 30;
+    public static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
     private final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
     public static final String ADMIN_DOMAIN = "admin";
 
@@ -101,9 +106,33 @@ public class    ReporterServiceImpl implements ReporterService {
                 });
     }
 
+    protected boolean useMongoReporter() {
+        String managementBackend = this.environment.getProperty("management.type", "mongodb");
+        return "mongodb".equalsIgnoreCase(managementBackend);
+    }
+
+    protected boolean useJdbcReporter() {
+        String managementBackend = this.environment.getProperty("management.type", "mongodb");
+        return "jdbc".equalsIgnoreCase(managementBackend);
+    }
+
     @Override
     public Single<Reporter> createDefault(String domain) {
         // get env configuration
+        NewReporter newReporter = null;
+        if (useMongoReporter()) {
+            newReporter = createMongoReporter(domain);
+        } else if (useJdbcReporter()) {
+            // jdbc
+            newReporter = createJdbcReporter(domain);
+        } else {
+            return Single.error(new ReporterNotFoundException("Reporter type " + this.environment.getProperty("management.type") + " not found"));
+        }
+        LOGGER.debug("Create default reporter for domain {}", domain);
+        return create(domain, newReporter);
+    }
+
+    protected NewReporter createMongoReporter(String domain) {
         String mongoHost = environment.getProperty("management.mongodb.host", "localhost");
         String mongoPort = environment.getProperty("management.mongodb.port", "27017");
         String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
@@ -116,8 +145,48 @@ public class    ReporterServiceImpl implements ReporterService {
         newReporter.setType("mongodb");
         newReporter.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits_" + domain + "\",\"bulkActions\":1000,\"flushInterval\":5}");
 
-        LOGGER.debug("Create default reporter for domain {}", domain);
-        return create(domain, newReporter);
+        return newReporter;
+    }
+
+    protected NewReporter createJdbcReporter(String domain) {
+        String jdbcHost = environment.getProperty("management.jdbc.host");
+        String jdbcPort = environment.getProperty("management.jdbc.port");
+        String jdbcDatabase = environment.getProperty("management.jdbc.database");
+        String jdbcDriver = environment.getProperty("management.jdbc.driver");
+        String jdbcUser = environment.getProperty("management.jdbc.username");
+        String jdbcPwd = environment.getProperty("management.jdbc.password");
+
+        // dash are forbidden in table name, replace them in domainName by underscore
+        String tableSuffix = domain.replaceAll("-", "_");
+        if (tableSuffix.length() > TABLE_SUFFIX_MAX_LENGTH) {
+            try {
+                LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
+                byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
+                tableSuffix = BaseEncoding.base16().encode(hash).substring(0, 30).toLowerCase();
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException("Unable to compute digest of '" + domain + "' due to unknown sha-256 algorithm", e);
+            }
+        }
+
+        NewReporter newReporter = new NewReporter();
+        newReporter.setId(RandomString.generate());
+        newReporter.setEnabled(true);
+        newReporter.setName("JDBC Reporter");
+        newReporter.setType(REPORTER_AM_JDBC);
+        newReporter.setConfiguration("{\"host\":\"" + jdbcHost + "\"," +
+                "\"port\":" + jdbcPort + "," +
+                "\"database\":\"" + jdbcDatabase + "\"," +
+                "\"driver\":\"" + jdbcDriver + "\"," +
+                "\"username\":\"" + jdbcUser+ "\"," +
+                "\"password\":\"" + jdbcPwd + "\"," +
+                "\"tableSuffix\":\"" + tableSuffix + "\"," +
+                "\"initialSize\":5," +
+                "\"maxSize\":10," +
+                "\"maxIdleTime\":180000," +
+                "\"bulkActions\":1000," +
+                "\"flushInterval\":5}");
+
+        return newReporter;
     }
 
     @Override

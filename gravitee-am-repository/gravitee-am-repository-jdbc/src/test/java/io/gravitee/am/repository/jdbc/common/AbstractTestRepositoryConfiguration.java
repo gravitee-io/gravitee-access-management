@@ -84,7 +84,7 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
             return instantiateDialectHelper("MariadbHelper", dialect, "utf8mb4_bin");
         }
         if (provider.getDatabaseType().equals("sqlserver")) {
-            return instantiateDialectHelper("MsSqlHelper", dialect, "Latin1_General_100_CS_AS");
+            return instantiateDialectHelper("MsSqlHelper", dialect, "Latin1_General_BIN2");
         }
         throw new RepositoryInitializationException("Unsupported driver " + provider.getDatabaseType());
     }
