@@ -10,7 +10,7 @@ databaseChangeLog:
             tableName: organizations
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
               - column: {name: description, type: clob, constraints: { nullable: true } }
               - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
               - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
@@ -54,7 +54,7 @@ databaseChangeLog:
             tableName: environments
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
               - column: {name: organization_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: description, type: clob, constraints: { nullable: true } }
               - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
@@ -85,14 +85,14 @@ databaseChangeLog:
             tableName: domains
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
               - column: {name: reference_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: description, type: clob, constraints: { nullable: true } }
               - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
               - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
               - column: {name: enabled, type: boolean, constraints: { nullable: true }}
-              - column: {name: path, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: path, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: vhost_mode, type: boolean, constraints: { nullable: true }}
               - column: {name: oidc, type: clob, constraints: { nullable: true } }
               - column: {name: uma, type: clob, constraints: { nullable: true } }
@@ -139,7 +139,7 @@ databaseChangeLog:
             columns:
               - column: {name: domain_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: host, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: path, type: nvarchar(256), constraints: { nullable: false } }
+              - column: {name: path, type: nvarchar(255), constraints: { nullable: false } }
               - column: {name: override_endpoints, type: boolean, constraints: { nullable: true } }
 
         - createIndex:
@@ -156,7 +156,7 @@ databaseChangeLog:
             tableName: uma_access_policies
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
               - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: enabled, type: boolean, constraints: { nullable: true } }
               - column: {name: description, type: clob, constraints: { nullable: true } }
@@ -212,7 +212,7 @@ databaseChangeLog:
             tableName: certificates
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
               - column: {name: type, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: domain, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: metadata, type: clob, constraints: { nullable: true } }
@@ -250,9 +250,9 @@ databaseChangeLog:
               - column: {name: reference_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: user_id, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: username, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: user_agent, type: nvarchar(256), constraints: { nullable: true } }
-              - column: {name: ip_address, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: username, type: nvarchar(320), constraints: { nullable: true } }
+              - column: {name: user_agent, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: ip_address, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: credential_id, type: nvarchar(128), constraints: { nullable: true } }
               - column: {name: public_key, type: clob, constraints: { nullable: true } }
               - column: {name: counter, type: bigint, constraints: { nullable: true } }
@@ -313,9 +313,9 @@ databaseChangeLog:
               - column: {name: enabled, type: boolean, constraints: { nullable: true } }
               - column: {name: client, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: template, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: from, type: nvarchar(128), constraints: { nullable: true } }
-              - column: {name: from_name, type: nvarchar(256), constraints: { nullable: true } }
-              - column: {name: subject, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: from, type: nvarchar(320), constraints: { nullable: true } }
+              - column: {name: from_name, type: nvarchar(320), constraints: { nullable: true } }
+              - column: {name: subject, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: content, type: clob, constraints: { nullable: true } }
               - column: {name: expires_after, type: integer, constraints: { nullable: true } }
               - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
@@ -368,7 +368,7 @@ databaseChangeLog:
             tableName: entrypoints
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
               - column: {name: organization_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: description, type: clob, constraints: { nullable: true } }
               - column: {name: url, type: nvarchar(512), constraints: { nullable: true } }
@@ -443,10 +443,10 @@ databaseChangeLog:
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: configuration, type: clob, constraints: { nullable: true } }
               - column: {name: domain, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: grant_type, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: grant_type, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: identity_provider, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: create_user, type: boolean, constraints: { nullable: true } }
               - column: {name: user_exists, type: boolean, constraints: { nullable: true } }
@@ -483,7 +483,7 @@ databaseChangeLog:
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: configuration, type: clob, constraints: { nullable: true } }
               - column: {name: domain, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: factor_type, type: nvarchar(64), constraints: { nullable: true } }
@@ -578,7 +578,7 @@ databaseChangeLog:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: reference_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: description, type: clob, constraints: { nullable: true } }
               - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
               - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
@@ -642,7 +642,7 @@ databaseChangeLog:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: reference_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: configuration, type: clob, constraints: { nullable: true } }
               - column: {name: mappers, type: clob, constraints: { nullable: true } }
@@ -691,7 +691,7 @@ databaseChangeLog:
               - column: {name: domain, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: client, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: identity_provider, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: username, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: username, type: nvarchar(320), constraints: { nullable: true } }
               - column: {name: attempts, type: integer, constraints: { nullable: true } }
               - column: {name: expire_at, type: timestamp(6), constraints: { nullable: true } }
               - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
@@ -804,7 +804,7 @@ databaseChangeLog:
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: enabled, type: boolean, constraints: { nullable: true } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: extension_point, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: order, type: integer, constraints: { nullable: true } }
@@ -834,7 +834,7 @@ databaseChangeLog:
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: {name: enabled, type: boolean, constraints: { nullable: true } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: configuration, type: clob, constraints: { nullable: true } }
               - column: {name: domain, type: nvarchar(64), constraints: { nullable: true } }
@@ -862,7 +862,7 @@ databaseChangeLog:
             tableName: uma_resource_set
             columns:
               - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: {name: description, type: clob, constraints: { nullable: true } }
               - column: {name: icon_uri, type: nvarchar(512), constraints: { nullable: true } }
               - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
@@ -909,7 +909,7 @@ databaseChangeLog:
             tableName: roles
             columns:
               - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: { name: description, type: clob, constraints: { nullable: true } }
               - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: true } }
               - column: { name: reference_id, type: nvarchar(64), constraints: { nullable: true } }
@@ -965,8 +965,8 @@ databaseChangeLog:
             tableName: scopes
             columns:
               - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: name, type: nvarchar(256), constraints: { nullable: true } }
-              - column: { name: key, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: key, type: nvarchar(255), constraints: { nullable: true } }
               - column: { name: domain, type: nvarchar(64), constraints: { nullable: true } }
               - column: { name: description, type: clob, constraints: { nullable: true } }
               - column: { name: icon_uri, type: nvarchar(512), constraints: { nullable: true } }
@@ -1011,7 +1011,7 @@ databaseChangeLog:
             tableName: tags
             columns:
               - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: { name: organization_id, type: nvarchar(64), constraints: { nullable: true } }
               - column: { name: description, type: clob, constraints: { nullable: true } }
               - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
@@ -1036,7 +1036,7 @@ databaseChangeLog:
             tableName: applications
             columns:
               - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: name, type: nvarchar(256), constraints: { nullable: true } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: true } }
               - column: { name: type, type: nvarchar(64), constraints: { nullable: true } }
               - column: { name: description, type: clob, constraints: { nullable: true } }
               - column: { name: domain, type: nvarchar(64), constraints: { nullable: true } }
@@ -1119,7 +1119,7 @@ databaseChangeLog:
             tableName: application_grants
             columns:
               - column: { name: application_id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: grant_type, type: nvarchar(256), constraints: { nullable: false } }
+              - column: { name: grant_type, type: nvarchar(255), constraints: { nullable: false } }
 
         - createIndex:
             columns:
@@ -1188,13 +1188,13 @@ databaseChangeLog:
             columns:
               - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: external_id, type: nvarchar(64), constraints: { nullable: true } }
-              - column: { name: username, type: nvarchar(64), constraints: { nullable: true } }
-              - column: { name: email, type: nvarchar(256), constraints: { nullable: true } }
-              - column: { name: display_name, type: nvarchar(256), constraints: { nullable: true } }
-              - column: { name: nick_name, type: nvarchar(256), constraints: { nullable: true } }
-              - column: { name: first_name, type: nvarchar(256), constraints: { nullable: true } }
-              - column: { name: last_name, type: nvarchar(256), constraints: { nullable: true } }
-              - column: { name: title, type: nvarchar(256), constraints: { nullable: true } }
+              - column: { name: username, type: nvarchar(320), constraints: { nullable: true } }
+              - column: { name: email, type: nvarchar(320), constraints: { nullable: true } }
+              - column: { name: display_name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: nick_name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: first_name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: last_name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: title, type: nvarchar(255), constraints: { nullable: true } }
               - column: { name: type, type: nvarchar(64), constraints: { nullable: true } }
               - column: { name: preferred_language, type: nvarchar(10), constraints: { nullable: true } }
               - column: { name: account_non_expired, type: boolean, constraints: { nullable: true } }
@@ -1520,10 +1520,10 @@ databaseChangeLog:
             columns:
               - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: type, type: nvarchar(64), constraints: { nullable: true } }
-              - column: { name: formatted, type: nvarchar(256), constraints: { nullable: true } }
-              - column: { name: street_address, type: nvarchar(256), constraints: { nullable: true } }
-              - column: { name: locality, type: nvarchar(256), constraints: { nullable: true } }
-              - column: { name: region, type: nvarchar(256), constraints: { nullable: true } }
+              - column: { name: formatted, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: street_address, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: locality, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: region, type: nvarchar(255), constraints: { nullable: true } }
               - column: { name: postal_code, type: nvarchar(64), constraints: { nullable: true } }
               - column: { name: country, type: nvarchar(64), constraints: { nullable: true } }
               - column: { name: primary, type: boolean, constraints: { nullable: true } }
