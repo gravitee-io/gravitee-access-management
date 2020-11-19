@@ -71,6 +71,24 @@ public class JdbcUserRepositoryTest extends AbstractManagementJdbcTest {
     }
 
     @Test
+    public void testFindAll() throws TechnicalException {
+        // create user
+        User user = new User();
+        user.setUsername("testsUsername");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("testFindByAll");
+        userRepository.create(user).blockingGet();
+
+        // fetch users
+        TestObserver<Page<User>> testObserver = userRepository.findAll(ReferenceType.DOMAIN, user.getReferenceId(), 0, 10).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(users -> users.getData().size() == 1);
+    }
+
+    @Test
     public void testFindById() throws TechnicalException {
         // create user
         User user = buildUser();

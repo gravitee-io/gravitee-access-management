@@ -104,4 +104,5 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
         return reporterRepository.deleteById(id)
                 .doOnError(error -> LOGGER.error("Unable to delete the reporter with id {}", id, error));
     }
+
 }

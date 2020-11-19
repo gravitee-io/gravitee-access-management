@@ -1,0 +1,9 @@
+--
+-- Script to create SQLServer schema
+-- Table & index names are suffixed by 3 underscores to define a
+-- pattern to replace with the reporter name
+--
+IF NOT EXISTS( SELECT 1 FROM sysobjects WHERE name = 'reporter_audits___' AND xtype = 'U' ) CREATE TABLE reporter_audits___ (id nvarchar(64) NOT NULL, transaction_id nvarchar(64), type nvarchar(255), reference_type nvarchar(64), reference_id nvarchar(64), timestamp datetime, PRIMARY KEY (id), INDEX idx_audits_ref___ NONCLUSTERED (reference_id, reference_type), INDEX idx_audits_type___ NONCLUSTERED (type), INDEX idx_audits_timestamp___ NONCLUSTERED (timestamp))
+IF NOT EXISTS( SELECT 1 FROM sysobjects WHERE name = 'reporter_audits_outcomes___' AND xtype = 'U' ) CREATE TABLE reporter_audits_outcomes___ (audit_id nvarchar(64) NOT NULL, status nvarchar(64), message varchar(MAX), INDEX idx_audit_outcomes_id___ NONCLUSTERED (audit_id), INDEX idx_audit_outcomes_status___ NONCLUSTERED (status))
+IF NOT EXISTS( SELECT 1 FROM sysobjects WHERE name = 'reporter_audits_access_points___' AND xtype = 'U' ) CREATE TABLE reporter_audits_access_points___ (audit_id nvarchar(64) NOT NULL, id VARCHAR(255), alternative_id nvarchar(64), display_name nvarchar(255), ip_address nvarchar(255), user_agent nvarchar(255), INDEX idx_audit_access_points_id___ NONCLUSTERED (audit_id), INDEX idx_audit_access_points_alternative_id___ NONCLUSTERED (alternative_id))
+IF NOT EXISTS( SELECT 1 FROM sysobjects WHERE name = 'reporter_audits_entities___' AND xtype = 'U' ) CREATE TABLE reporter_audits_entities___ (audit_id nvarchar(64) NOT NULL, audit_field NVARCHAR(64) NOT NULL, id VARCHAR(64), alternative_id nvarchar(320), display_name nvarchar(255), type nvarchar(64), display_ame nvarchar(255), reference_type nvarchar(64), reference_id nvarchar(64), attributes varchar(MAX), INDEX idx_audit_entities_id___ NONCLUSTERED (audit_id), INDEX idx_audit_entities_alternative_id___ NONCLUSTERED (alternative_id))

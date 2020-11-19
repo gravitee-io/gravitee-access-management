@@ -13,27 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.upgrades;
+package io.gravitee.am.reporter.jdbc.dialect;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AbstractDomainUpgrader {
+public class SearchQuery {
+    private String query;
+    private String count;
+    private Map<String, Object> bindings;
 
-    @Autowired
-    private Environment environment;
-
-    protected boolean useMongoRepositories() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "mongodb".equalsIgnoreCase(managementBackend);
+    public SearchQuery(String query, String count, Map<String, Object> bindings) {
+        this.query = query;
+        this.count = count;
+        this.bindings = bindings;
     }
 
-    protected boolean useJdbcRepositories() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "jdbc".equalsIgnoreCase(managementBackend);
+    public String getQuery() {
+        return query;
+    }
+
+    public String getCount() {
+        return count;
+    }
+
+    public Map<String, Object> getBindings() {
+        return bindings;
     }
 }

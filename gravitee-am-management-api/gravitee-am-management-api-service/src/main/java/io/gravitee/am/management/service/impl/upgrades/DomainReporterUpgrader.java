@@ -56,7 +56,7 @@ public class DomainReporterUpgrader extends AbstractDomainUpgrader implements Up
     private Completable updateDefaultReporter(Domain domain) {
         return reporterService.findByDomain(domain.getId())
                 .flatMapCompletable(reporters -> {
-                    if (useMongoRepositories() && (reporters == null || reporters.isEmpty())) {
+                    if (reporters == null || reporters.isEmpty()) {
                         logger.info("No default reporter found for domain {}, update domain", domain.getName());
                         return reporterService.createDefault(domain.getId())
                                 .ignoreElement();

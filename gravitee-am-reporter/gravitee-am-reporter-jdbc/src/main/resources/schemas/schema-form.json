@@ -1,0 +1,117 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:reporter:jdbc:JdbcReporterConfiguration",
+  "properties" : {
+    "driver" : {
+      "type" : "string",
+      "title": "Driver",
+      "description": "Driver used to connect to the Database."
+    },
+    "host" : {
+      "type": "string",
+      "title": "Hostname",
+      "description": "Hostname or IP address used to connect to the Database."
+    },
+    "port" : {
+      "type": "number",
+      "minimum": 1,
+      "title": "Port",
+      "description": "Not required if the MongoDB connection URI is set."
+    },
+    "database" : {
+      "type": "string",
+      "title": "Database Name",
+      "description": "Database name on which data will be stored."
+    },
+    "username" : {
+      "type": "string",
+      "title": "Username",
+      "description": "User to access database."
+    },
+    "password" : {
+      "type": "string",
+      "title": "Password",
+      "description": "User password",
+      "widget": "password"
+    },
+    "acquireRetry" : {
+      "type": "number",
+      "minimum": 1,
+      "default": 1,
+      "title": "Connection Acquiry Attempts",
+      "description": "Number of retries if the first connection acquiry attempt fails (default: 1)"
+    },
+    "initialSize" : {
+      "type": "number",
+      "minimum": 1,
+      "default": 5,
+      "title": "Initial Pool Size",
+      "description": "Initial pool size (default: 5)"
+    },
+    "maxSize" : {
+      "type": "number",
+      "minimum": 1,
+      "default": 10,
+      "title": "Maximum Pool Size",
+      "description": "Maximum pool size (default: 10)"
+    },
+    "maxIdleTime" : {
+      "type": "number",
+      "minimum": 1,
+      "default": 1800000,
+      "title": "Maximum Idle Time",
+      "description": "Maximum idle time of the connection in the pool in millis (default: 1800000)"
+    },
+    "maxLifeTime" : {
+      "type": "number",
+      "minimum": 0,
+      "default": 0,
+      "title": "Maximum Life Time",
+      "description": "Maximum life time of the connection in the pool in millis (default: 0)"
+    },
+    "maxAcquireTime" : {
+      "type": "number",
+      "minimum": 0,
+      "default": 0,
+      "title": "Maximum Acquiring Time",
+      "description": "Maximum time to acquire connection from pool in millis (default: 0)"
+    },
+    "maxCreateConnectionTime" : {
+      "type": "number",
+      "minimum": 1,
+      "title": "Maximum Creation Time",
+      "description": "Maximum time to create a new connection in millis (default: 0)"
+    },
+    "validationQuery" : {
+      "type": "string",
+      "title": "Validation Query",
+      "description": "Query that will be executed to validate that a connection to the database is still alive."
+    },
+    "tableSuffix" : {
+      "type" : "string",
+      "title": "Table Suffix",
+      "maxLength": 30,
+      "description": "The table name which is containing all the reports start with 'report_audits' and finish with this suffix (max length : 30)."
+    },
+    "bulkActions" : {
+      "type": "number",
+      "title": "Bulk actions",
+      "description": "Number of requests action before flush",
+      "default": 1000
+    },
+    "flushInterval" : {
+      "type": "number",
+      "title": "Bulk flush interval",
+      "description": "Flush interval for bulk actions in seconds",
+      "default": 5
+    }
+  },
+  "required": [
+    "driver",
+    "host",
+    "port",
+    "database",
+    "username",
+    "tableSuffix"
+  ]
+}

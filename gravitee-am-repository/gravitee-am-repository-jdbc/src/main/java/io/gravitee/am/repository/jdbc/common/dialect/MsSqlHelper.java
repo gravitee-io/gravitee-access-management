@@ -25,7 +25,7 @@ import org.springframework.data.r2dbc.dialect.R2dbcDialect;
  */
 public class MsSqlHelper extends AbstractDialectHelper {
     public MsSqlHelper(R2dbcDialect dialect, String collation) {
-        super(dialect, collation == null ? "Latin1_General_100_CI_AS" : collation);
+        super(dialect, collation == null ? "Latin1_General_BIN2" : collation);
     }
 
     @Override

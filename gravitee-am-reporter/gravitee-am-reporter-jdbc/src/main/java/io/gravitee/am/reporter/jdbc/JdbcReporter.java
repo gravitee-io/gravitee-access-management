@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.upgrades;
+package io.gravitee.am.reporter.jdbc;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import io.gravitee.am.reporter.api.Reporter;
+import io.gravitee.am.reporter.api.ReporterConfiguration;
+import io.gravitee.am.reporter.api.audit.AuditReporter;
+import io.gravitee.am.reporter.jdbc.audit.JdbcAuditReporter;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AbstractDomainUpgrader {
+public class JdbcReporter implements Reporter {
 
-    @Autowired
-    private Environment environment;
-
-    protected boolean useMongoRepositories() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "mongodb".equalsIgnoreCase(managementBackend);
+    @Override
+    public Class<? extends ReporterConfiguration> configuration() {
+        return JdbcReporterConfiguration.class;
     }
 
-    protected boolean useJdbcRepositories() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "jdbc".equalsIgnoreCase(managementBackend);
+    @Override
+    public Class<? extends AuditReporter> auditReporter() {
+        return JdbcAuditReporter.class;
     }
 }

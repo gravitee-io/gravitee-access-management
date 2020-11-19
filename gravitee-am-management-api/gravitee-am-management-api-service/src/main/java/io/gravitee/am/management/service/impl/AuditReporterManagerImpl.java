@@ -23,6 +23,7 @@ import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.ReporterNotFoundForDomainException;
+import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -86,17 +87,39 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         logger.info("Register event listener for reporter events for the management API");
         eventManager.subscribeForEvents(this, ReporterEvent.class);
 
-        if (useMongoRepositories()) {
-            logger.info("Initializing internal audit reporter");
+        if (useMongoReporter()) {
+            logger.info("Initializing internal audit mongodb reporter");
             String mongoHost = environment.getProperty("management.mongodb.host", "localhost");
             String mongoPort = environment.getProperty("management.mongodb.port", "27017");
             String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
             String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://" + mongoHost + ":" + mongoPort + "/" + mongoDBName);
             String configuration = "{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + "\",\"bulkActions\":1000,\"flushInterval\":5}";
             internalReporter = reporterPluginManager.create("mongodb", configuration);
-            logger.info("Internal audit reporter initialized");
-        } else {
-            logger.debug("MongoDB isn't configured, skip internal audit reporter initialization");
+            logger.info("Internal audit mongodb reporter initialized");
+        } else if (useJdbcReporter()) {
+            logger.info("Initializing internal audit jdbc reporter");
+            String jdbcHost = environment.getProperty("management.jdbc.host");
+            String jdbcPort = environment.getProperty("management.jdbc.port");
+            String jdbcDatabase = environment.getProperty("management.jdbc.database");
+            String jdbcDriver = environment.getProperty("management.jdbc.driver");
+            String jdbcUser = environment.getProperty("management.jdbc.username");
+            String jdbcPwd = environment.getProperty("management.jdbc.password");
+
+            String configuration = "{\"host\":\"" + jdbcHost + "\"," +
+                    "\"port\":" + jdbcPort + "," +
+                    "\"database\":\"" + jdbcDatabase + "\"," +
+                    "\"driver\":\"" + jdbcDriver + "\"," +
+                    "\"username\":\"" + jdbcUser+ "\"," +
+                    "\"password\":\"" + jdbcPwd + "\"," +
+                    "\"tableSuffix\":\"\"," + // empty domain
+                    "\"initialSize\":5," +
+                    "\"maxSize\":10," +
+                    "\"maxIdleTime\":180000," +
+                    "\"bulkActions\":1000," +
+                    "\"flushInterval\":5}";
+
+            internalReporter = reporterPluginManager.create(ReporterServiceImpl.REPORTER_AM_JDBC, configuration);
+            logger.info("Internal audit jdbc reporter initialized");
         }
 
         logger.info("Initializing audit reporters");
@@ -123,9 +146,14 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         deployReporterVerticle(allReporters);
     }
 
-    protected boolean useMongoRepositories() {
+    protected boolean useMongoReporter() {
         String managementBackend = this.environment.getProperty("management.type", "mongodb");
         return "mongodb".equalsIgnoreCase(managementBackend);
+    }
+
+    protected boolean useJdbcReporter() {
+        String managementBackend = this.environment.getProperty("management.type", "mongodb");
+        return "jdbc".equalsIgnoreCase(managementBackend);
     }
 
     @Override
