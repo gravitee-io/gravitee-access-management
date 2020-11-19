@@ -23,6 +23,22 @@ function createUUID() {
     });
 }
 
+// Set 'default' hrid on the default organization.
+organization = db.getCollection('organizations').findOne({"_id": "DEFAULT"});
+
+if (!organization.hrids || organization.hrids.length === 0) {
+    organization.hrids = ['default'];
+    db.getCollection('organizations').update({"_id": "DEFAULT"}, organization);
+}
+
+// Set 'default' hrid on the default environment.
+environment = db.getCollection('environments').findOne({"_id": "DEFAULT"});
+
+if (!environment.hrids || environment.hrids.length === 0) {
+    environment.hrids = ['default'];
+    db.getCollection('environments').update({"_id": "DEFAULT"}, environment);
+}
+
 // Update ORGANIZATION_USER role adding the ENVIRONMENT['LIST'] permission.
 organizationUserRole = db.getCollection("roles")
     .findOne({"name": "ORGANIZATION_USER", "referenceType": "ORGANIZATION", "referenceId": "DEFAULT"});
