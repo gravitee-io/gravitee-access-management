@@ -18,19 +18,24 @@ package io.gravitee.am.identityprovider.jdbc.user;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.jdbc.configuration.JdbcAuthenticationProviderConfigurationTest;
+import io.gravitee.am.identityprovider.jdbc.user.spring.JdbcUserProviderConfiguration;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-public abstract class JdbcUserProvider_Test {
+@ContextConfiguration(classes = { JdbcAuthenticationProviderConfigurationTest.class, JdbcUserProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+public class JdbcUserProvider_Test {
 
     @Autowired
     private UserProvider userProvider;

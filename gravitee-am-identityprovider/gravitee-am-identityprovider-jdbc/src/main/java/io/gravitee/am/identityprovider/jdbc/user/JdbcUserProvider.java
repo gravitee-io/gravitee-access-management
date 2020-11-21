@@ -15,102 +15,31 @@
  */
 package io.gravitee.am.identityprovider.jdbc.user;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
-import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.jdbc.JdbcAbstractProvider;
 import io.gravitee.am.identityprovider.jdbc.user.spring.JdbcUserProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
-import io.gravitee.am.identityprovider.jdbc.utils.ObjectUtils;
-import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
-import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.common.service.AbstractService;
-import io.r2dbc.pool.ConnectionPool;
-import io.r2dbc.pool.ConnectionPoolConfiguration;
-import io.r2dbc.spi.*;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(JdbcUserProviderConfiguration.class)
-public class JdbcUserProvider extends AbstractService<UserProvider> implements UserProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JdbcUserProvider.class);
-
-    @Autowired
-    private JdbcIdentityProviderConfiguration configuration;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    private ConnectionPool connectionPool;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Override
-    protected void doStart() throws Exception {
-        super.doStart();
-
-        LOGGER.info("Initializing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-        Builder builder = ConnectionFactoryOptions.builder()
-                .option(DRIVER, "pool")
-                .option(PROTOCOL, configuration.getProtocol())
-                .option(HOST, configuration.getHost())
-                .option(PORT, configuration.getPort())
-                .option(USER, configuration.getUser())
-                .option(DATABASE, configuration.getDatabase());
-
-        if (configuration.getPassword() != null) {
-            builder.option(PASSWORD, configuration.getPassword());
-        }
-
-        List<Map<String, String>> options = configuration.getOptions();
-        if (options != null && !options.isEmpty()) {
-            options.forEach(claimMapper -> {
-                String option = claimMapper.get("option");
-                String value = claimMapper.get("value");
-                builder.option(Option.valueOf(option), ObjectUtils.stringToValue(value));
-            });
-        }
-
-        connectionPool = (ConnectionPool) ConnectionFactories.get(builder.build());
-        LOGGER.info("Connection pool created for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-    }
-
-    @Override
-    protected void doStop() throws Exception {
-        super.doStop();
-
-        try {
-            LOGGER.info("Disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-            if (!connectionPool.isDisposed()) {
-                connectionPool.dispose();
-                LOGGER.info("Connection pool disposed for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-            }
-        } catch (Exception ex) {
-            LOGGER.error("An error has occurred while disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost(), ex);
-        }
-    }
+public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> implements UserProvider {
 
     @Override
     public Maybe<User> findByUsername(String username) {
@@ -129,18 +58,13 @@ public class JdbcUserProvider extends AbstractService<UserProvider> implements U
                     if (!isEmpty) {
                         return Single.error(new UserAlreadyExistsException(user.getUsername()));
                     } else {
-                        final String sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (%s, %s, %s, %s, %s)",
+                        final String sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?)",
                                 configuration.getUsersTable(),
                                 configuration.getIdentifierAttribute(),
                                 configuration.getUsernameAttribute(),
                                 configuration.getPasswordAttribute(),
                                 configuration.getEmailAttribute(),
-                                configuration.getMetadataAttribute(),
-                                getIndexParameter(1, "id"),
-                                getIndexParameter(2, "username"),
-                                getIndexParameter(3, "password"),
-                                getIndexParameter(4, "email"),
-                                getIndexParameter(5, "metadata"));
+                                configuration.getMetadataAttribute());
 
                         Object[] args = new Object[5];
                         args[0] = user.getId();
@@ -150,7 +74,6 @@ public class JdbcUserProvider extends AbstractService<UserProvider> implements U
                         args[4] = user.getAdditionalInformation() != null ? objectMapper.writeValueAsString(user.getAdditionalInformation()) : null;
 
                         return query(sql, args)
-                                .flatMap(Result::getRowsUpdated)
                                 .first(0)
                                 .map(result -> user);
                     }
@@ -165,29 +88,23 @@ public class JdbcUserProvider extends AbstractService<UserProvider> implements U
 
         if (updateUser.getCredentials() != null) {
             args = new Object[3];
-            sql = String.format("UPDATE %s SET %s = %s, %s = %s WHERE id = %s",
+            sql = String.format("UPDATE %s SET %s = ?, %s = ? WHERE id = ?",
                     configuration.getUsersTable(),
                     configuration.getPasswordAttribute(),
-                    getIndexParameter(1, "password"),
-                    configuration.getMetadataAttribute(),
-                    getIndexParameter(2, "metadata"),
-                    getIndexParameter(3, "id"));
+                    configuration.getMetadataAttribute());
             args[0] = passwordEncoder.encode(updateUser.getCredentials());
             args[1] = metadata;
             args[2] = id;
         } else {
             args = new Object[2];
-            sql = String.format("UPDATE %s SET %s = %s WHERE id = %s",
+            sql = String.format("UPDATE %s SET %s = ? WHERE id = ?",
                     configuration.getUsersTable(),
-                    configuration.getMetadataAttribute(),
-                    getIndexParameter(1, "metadata"),
-                    getIndexParameter(2, "id"));
+                    configuration.getMetadataAttribute());
             args[0] = metadata;
             args[1] = id;
         }
 
         return query(sql, args)
-                .flatMap(Result::getRowsUpdated)
                 .first(0)
                 .flatMap(rowsUpdated -> {
                     if (rowsUpdated == 0) {
@@ -199,12 +116,9 @@ public class JdbcUserProvider extends AbstractService<UserProvider> implements U
 
     @Override
     public Completable delete(String id) {
-        final String sql = String.format("DELETE FROM %s where id = %s",
-                configuration.getUsersTable(),
-                getIndexParameter(1, "id"));
+        final String sql = String.format("DELETE FROM %s where id = ?", configuration.getUsersTable());
 
         return query(sql, id)
-                .flatMap(Result::getRowsUpdated)
                 .flatMapCompletable(rowsUpdated -> {
                     if (rowsUpdated == 0) {
                         return Completable.error(new UserNotFoundException(id));
@@ -213,29 +127,19 @@ public class JdbcUserProvider extends AbstractService<UserProvider> implements U
                 });
     }
 
-    public void setConnectionPool(ConnectionPool connectionPool) {
-        this.connectionPool = connectionPool;
-    }
-
     private Maybe<Map<String, Object>> selectUserByUsername(String username) {
-        final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter(1, "username"));
-        return query(sql, username)
-                .flatMap(result -> result.map(ColumnMapRowMapper::mapRow))
+        final String sql = String.format(configuration.getSelectUserByUsernameQuery(), "?");
+
+        return db.select(sql)
+                .parameter(username)
+                .get(ColumnMapRowMapper::mapRow)
                 .firstElement();
     }
 
-    private Flowable<Result> query(String sql, Object... args) {
-        return Single.fromPublisher(connectionPool.create())
-                .toFlowable()
-                .flatMap(connection -> {
-                    Statement statement = connection.createStatement(sql);
-                    for (int i = 0; i < args.length; i++) {
-                        Object arg = args[i];
-                        bind(statement, i, arg, arg != null ? arg.getClass() : String.class);
-                    }
-                    return Flowable.fromPublisher(statement.execute())
-                            .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe());
-                });
+    private Flowable<Integer> query(String sql, Object... args) {
+        return db.update(sql)
+                .parameters(args)
+                .counts();
     }
 
     private User createUser(Map<String, Object> claims) {
@@ -264,29 +168,6 @@ public class JdbcUserProvider extends AbstractService<UserProvider> implements U
         user.setAdditionalInformation(additionalInformation);
 
         return user;
-    }
-
-    private void bind(Statement statement, int index, Object value, Class type) {
-        if (value != null) {
-            statement.bind(index, value);
-        } else {
-            statement.bindNull(index, type);
-        }
-    }
-
-    private String getIndexParameter(int index, String field) {
-        return ParametersUtils.getIndexParameter(configuration.getProtocol(), index, field);
-    }
-
-    private void computeMetadata(Map<String, Object> claims) {
-        Object metadata = claims.get(configuration.getMetadataAttribute());
-        if (metadata == null) {
-            return;
-        }
-        try {
-            claims.putAll(objectMapper.readValue(claims.get(configuration.getMetadataAttribute()).toString(), Map.class));
-        } catch (Exception e) {
-        }
     }
 
     private String convert(Map<String, Object> claims) {

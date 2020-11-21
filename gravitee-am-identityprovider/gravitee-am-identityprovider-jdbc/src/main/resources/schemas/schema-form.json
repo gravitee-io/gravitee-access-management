@@ -80,12 +80,12 @@
         "properties": {
           "option": {
             "title": "Option",
-            "description": "Connection option name (https://r2dbc.io/ for more information)",
+            "description": "Connection option name",
             "type": "string"
           },
           "value": {
             "title": "Value",
-            "description": "Connection option value (https://r2dbc.io/ for more information)",
+            "description": "Connection option value",
             "type": "string"
           }
         }

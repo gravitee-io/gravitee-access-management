@@ -20,16 +20,9 @@ import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.jdbc.JdbcIdentityProviderMapper;
 import io.gravitee.am.identityprovider.jdbc.JdbcIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.jdbc.authentication.JdbcAuthenticationProvider;
-import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.user.JdbcUserProvider;
 import io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder;
-import io.r2dbc.pool.ConnectionPool;
-import io.r2dbc.pool.ConnectionPoolConfiguration;
-import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.ConnectionFactories;
-import io.r2dbc.spi.ConnectionFactory;
-import io.reactivex.Completable;
-import io.reactivex.Single;
+import org.davidmoten.rx.jdbc.Database;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -39,54 +32,51 @@ import org.springframework.context.annotation.Configuration;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class JdbcAuthenticationProviderConfigurationTest implements InitializingBean {
+@Configuration
+public class JdbcAuthenticationProviderConfigurationTest implements InitializingBean {
 
     @Autowired
-    private ConnectionPool connectionPool;
-
-    public abstract String url();
-
-    public abstract String protocol();
+    private Database db;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         // create table users and insert values
-        Connection connection = connectionPool.create().block();
-        Single.fromPublisher(connection.createStatement("create table users(id varchar(256), username varchar(256), password varchar(256), email varchar(256), metadata text)").execute()).subscribe();
-        Single.fromPublisher(connection.createStatement("insert into users values('1', 'bob', 'bobspassword', null, null)").execute()).subscribe();
-        Completable.fromPublisher(connection.close()).subscribe();
+        db.update("create table users(id varchar(256), username varchar(256), password varchar(256), email varchar(256), metadata varchar(256))")
+                .counts()
+                .ignoreElements()
+                .blockingGet();
+        db.update("insert into users values('1', 'bob', 'bobspassword', null, null)")
+                .counts()
+                .ignoreElements()
+                .blockingGet();
     }
 
     @Bean
-    public ConnectionPool connectionPool() {
-        ConnectionFactory connectionFactory = ConnectionFactories.get(url());
-
-        ConnectionPoolConfiguration connectionPoolConfiguration = ConnectionPoolConfiguration
-                .builder(connectionFactory)
-                .build();
-
-        return new ConnectionPool(connectionPoolConfiguration);
+    public Database database() {
+        return Database.test();
     }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
         JdbcAuthenticationProvider jdbcAuthenticationProvider = new JdbcAuthenticationProvider();
-        jdbcAuthenticationProvider.setConnectionPool(connectionPool);
+        jdbcAuthenticationProvider.setDb(db);
         return jdbcAuthenticationProvider;
     }
 
     @Bean
     public UserProvider userProvider() {
         JdbcUserProvider jdbcUserProvider = new JdbcUserProvider();
-        jdbcUserProvider.setConnectionPool(connectionPool);
+        jdbcUserProvider.setDb(db);
         return jdbcUserProvider;
     }
 
     @Bean
     public JdbcIdentityProviderConfiguration configuration() {
         JdbcIdentityProviderConfiguration configuration = new JdbcIdentityProviderConfiguration();
-        configuration.setProtocol(protocol());
         configuration.setUsersTable("users");
+        configuration.setIdentifierAttribute("ID");
+        configuration.setUsernameAttribute("USERNAME");
+        configuration.setPasswordAttribute("PASSWORD");
         configuration.setSelectUserByUsernameQuery("select * from users where username = %s");
         configuration.setPasswordEncoder(PasswordEncoder.NONE.getValue());
 

@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.identityprovider.jdbc.utils;
 
-import io.r2dbc.spi.Row;
-import io.r2dbc.spi.RowMetadata;
-
+import javax.annotation.Nonnull;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,11 +28,13 @@ import java.util.stream.Collectors;
  */
 public final class ColumnMapRowMapper {
 
-    public static Map<String, Object> mapRow(Row row, RowMetadata rowMetadata) {
-        Map<String, Object> claims = new HashMap(rowMetadata.getColumnNames()
-                .stream()
-                .filter(c -> row.get(c) != null)
-                .collect(Collectors.toMap(c -> c, c -> row.get(c))));
-        return claims;
+    public static Map<String, Object> mapRow(@Nonnull ResultSet rs) throws SQLException {
+        ResultSetMetaData resultSetMetaData = rs.getMetaData();
+        int count = resultSetMetaData.getColumnCount();
+        Map<String, Object> result = new HashMap<>();
+        for (int i = 1; i <= count; i++) {
+            result.put(resultSetMetaData.getColumnName(i), rs.getObject(i));
+        }
+        return result;
     }
 }
