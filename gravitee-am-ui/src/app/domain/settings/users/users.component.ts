@@ -96,7 +96,7 @@ export class UsersComponent implements OnInit {
       .confirm('Delete User', 'Are you sure you want to delete this user ?')
       .subscribe(res => {
         if (res) {
-          this.userService.delete(this.domainId, id).subscribe(response => {
+          this.userService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
             this.snackbarService.open('User deleted');
             this.page.pageNumber = 0;
             this.loadUsers();

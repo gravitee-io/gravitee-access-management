@@ -82,6 +82,25 @@ public class JdbcMembershipRepositoryTest extends AbstractManagementJdbcTest {
     }
 
     @Test
+    public void testFindByMember() {
+
+        Membership membership = new Membership();
+        membership.setRoleId("role#1");
+        membership.setReferenceType(ReferenceType.ORGANIZATION);
+        membership.setReferenceId(ORGANIZATION_ID);
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId("user#1");
+
+        Membership createdMembership = membershipRepository.create(membership).blockingGet();
+
+        TestObserver<List<Membership>> obs = membershipRepository.findByMember("user#1", MemberType.USER).test();
+        obs.awaitTerminalEvent();
+
+        obs.assertComplete();
+        obs.assertValue(m -> m.size() == 1 && m.get(0).getMemberId().equals(createdMembership.getMemberId()));
+    }
+
+    @Test
     public void testFindByReferenceAndMember() {
 
         Membership membership = new Membership();

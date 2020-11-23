@@ -759,7 +759,17 @@ databaseChangeLog:
                   name: reference_id
               - column:
                   name: member_id
-            indexName:  idx_memberships_refid_memeberid
+            indexName:  idx_memberships_refid_memberid
+            tableName:  memberships
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: member_id
+              - column:
+                  name: member_type
+            indexName:  idx_memberships_memberid_membertype
             tableName:  memberships
             unique:  false
 

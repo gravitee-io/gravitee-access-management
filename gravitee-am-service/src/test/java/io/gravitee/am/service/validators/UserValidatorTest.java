@@ -50,6 +50,17 @@ public class UserValidatorTest {
     }
 
     @Test
+    public void validate_displayNameEmail() {
+
+        User user = getValidUser();
+        user.setDisplayName("user.valid+1-test@gravitee.io");
+
+        Throwable throwable = UserValidator.validate(user).blockingGet();
+
+        assertNull(throwable);
+    }
+
+    @Test
     public void validate_usernameHashtag() {
 
         User user = getValidUser();
@@ -112,7 +123,7 @@ public class UserValidatorTest {
     public void validate_invalidDisplayName() {
 
         User user = getValidUser();
-        user.setNickName("$¨¨^invalid");
+        user.setDisplayName("$¨¨^invalid");
 
         Throwable throwable = UserValidator.validate(user).blockingGet();
 

@@ -15,11 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.reactivex.observers.TestObserver;
@@ -88,6 +86,34 @@ public class MongoMembershipRepositoryTest extends AbstractManagementRepositoryT
         obs.assertComplete();
         obs.assertValue(m -> m.size() == 1 && m.get(0).getId().equals(createdMembership.getId()));
     }
+
+    @Test
+    public void testFindByMember() {
+
+        Membership membership = new Membership();
+        membership.setRoleId("role#1");
+        membership.setReferenceType(ReferenceType.ORGANIZATION);
+        membership.setReferenceId(ORGANIZATION_ID);
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId("user#1");
+
+        Membership membership2 = new Membership();
+        membership2.setRoleId("role#1");
+        membership2.setReferenceType(ReferenceType.DOMAIN);
+        membership2.setReferenceId("DOMAIN_ID");
+        membership2.setMemberType(MemberType.USER);
+        membership2.setMemberId("user#1");
+
+        membershipRepository.create(membership).blockingGet();
+        membershipRepository.create(membership2).blockingGet();
+
+        TestObserver<List<Membership>> obs = membershipRepository.findByMember("user#1", MemberType.USER).test();
+        obs.awaitTerminalEvent();
+
+        obs.assertComplete();
+        obs.assertValue(m -> m.size() == 2);
+    }
+
 
     @Test
     public void testFindByReferenceAndMember() {

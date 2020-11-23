@@ -31,10 +31,13 @@ import org.springframework.stereotype.Repository;
 public interface SpringMembershipRepository extends RxJava2CrudRepository<JdbcMembership, String> {
 
     @Query("select * from memberships m where m.reference_id = :refId and m.reference_type = :refType")
-    Flowable<JdbcMembership> findByReference(@Param("refId") String referenceId,@Param("refType") String referenceType);
+    Flowable<JdbcMembership> findByReference(@Param("refId") String referenceId, @Param("refType") String referenceType);
+
+    @Query("select * from memberships m where m.member_id = :mid and m.member_type = :mtype")
+    Flowable<JdbcMembership> findByMember(@Param("mid") String memberId, @Param("mtype") String memberType);
 
     @Query("select * from memberships m where m.reference_id = :refId and m.reference_type = :refType" +
             " and m.member_id = :mid and m.member_type = :mtype")
     Maybe<JdbcMembership> findByReferenceAndMember(@Param("refId") String referenceId, @Param("refType") String referenceType,
-                                                   @Param("mid") String memberId, @Param("mtype") String memeberType);
+                                                   @Param("mid") String memberId, @Param("mtype") String memberType);
 }

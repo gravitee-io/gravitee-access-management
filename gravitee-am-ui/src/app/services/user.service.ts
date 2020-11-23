@@ -55,7 +55,10 @@ export class UserService {
     });
   }
 
-  delete(domainId, id): Observable<any> {
+  delete(domainId, id, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.deleteUser(id);
+    }
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + id);
   }
 

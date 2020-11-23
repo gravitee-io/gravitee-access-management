@@ -17,7 +17,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AppConfig } from '../../config/app.config';
-import {map} from "rxjs/operators";
+import {map} from 'rxjs/operators';
 
 @Injectable()
 export class OrganizationService {
@@ -253,6 +253,10 @@ export class OrganizationService {
 
   user(userId): Observable<any>  {
     return this.http.get<any>(this.organizationURL + '/users/' + userId);
+  }
+
+  deleteUser(userId): Observable<any> {
+    return this.http.delete<any>(this.organizationURL + '/users/' + userId);
   }
 
   userRoles(userId): Observable<any>  {

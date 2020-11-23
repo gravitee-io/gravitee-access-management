@@ -67,6 +67,15 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     }
 
     @Override
+    public Single<List<Membership>> findByMember(String memberId, MemberType memberType) {
+        LOGGER.debug("findByMember({},{})", memberId, memberType);
+        return this.membershipRepository.findByMember(memberId, memberType.name())
+                .map(this::toEntity)
+                .toList()
+                .doOnError(error -> LOGGER.error("unable to retrieve Membership with memberId {} and memberType {}", memberId, memberType, error));
+    }
+
+    @Override
     public Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria) {
         LOGGER.debug("findByCriteria({},{},{}", referenceType, referenceId, criteria);
         Criteria whereClause = Criteria.empty();

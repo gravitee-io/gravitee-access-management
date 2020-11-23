@@ -79,7 +79,7 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
             String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path().replaceFirst("/callback", ""), params);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
-            logger.error("An error occurs while redirecting to the login page", ex);
+            logger.error("An error has occurred while redirecting to the login page", ex);
             // Note: we can't invoke context.fail cause it'll lead to infinite failure handling.
             context
                     .response()
