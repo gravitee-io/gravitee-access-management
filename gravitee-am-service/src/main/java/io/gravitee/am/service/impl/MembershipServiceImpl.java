@@ -106,6 +106,17 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
+    public Single<List<Membership>> findByMember(String memberId, MemberType memberType) {
+        LOGGER.debug("Find memberships by member id {} and member type {}", memberId, memberType);
+        return membershipRepository.findByMember(memberId, memberType)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find memberships by member id {} and member type {}", memberId, memberType, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find memberships by member id %s and member type %s", memberId, memberType), ex));
+                });
+    }
+
+    @Override
     public Single<Membership> addOrUpdate(String organizationId, Membership membership, User principal) {
         LOGGER.debug("Add or update membership {}", membership);
 

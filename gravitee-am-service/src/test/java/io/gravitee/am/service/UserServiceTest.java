@@ -219,7 +219,7 @@ public class UserServiceTest {
         user.setReferenceId(DOMAIN);
 
         NewUser newUser = new NewUser();
-        newUser.setUsername("#####");
+        newUser.setUsername("##&##");
         when(userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, DOMAIN, newUser.getUsername(), newUser.getSource())).thenReturn(Maybe.empty());
         when(userRepository.create(any(User.class))).thenReturn(Single.just(user));
 
