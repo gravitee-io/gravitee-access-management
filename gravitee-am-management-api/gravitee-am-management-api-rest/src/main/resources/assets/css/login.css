@@ -103,12 +103,12 @@ a, a:hover, a:focus {
 
 .social-login-buttons a {
     margin-bottom: 10px;
-    width: 100%;
 }
 
 .mdl-social-button {
     display: flex;
     justify-content: center;
+    flex-direction: column;
 }
 
 .mdl-button {
