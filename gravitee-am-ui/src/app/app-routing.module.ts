@@ -40,6 +40,7 @@ import {DomainSettingsExtensionGrantsComponent} from './domain/settings/extensio
 import {DomainSettingsAccountComponent} from './domain/settings/account/account.component';
 import {DomainSettingsPoliciesComponent} from './domain/settings/policies/policies.component';
 import {DomainSettingsMembershipsComponent} from './domain/settings/memberships/memberships.component';
+import {DomainSettingsFlowsComponent} from './domain/settings/flows/flows.component';
 import {DomainCreationComponent} from './domain/creation/domain-creation.component';
 import {ProviderCreationComponent} from './domain/settings/providers/creation/provider-creation.component';
 import {ProviderComponent} from './domain/settings/providers/provider/provider.component';
@@ -48,6 +49,7 @@ import {LogoutComponent} from './logout/logout.component';
 import {DomainsResolver} from './resolvers/domains.resolver';
 import {DomainResolver} from './resolvers/domain.resolver';
 import {DomainEntrypointResolver} from './resolvers/domain-entrypoint.resolver';
+import {DomainFlowsResolver} from './resolvers/domain-flows.resolver';
 import {DomainPermissionsResolver} from './resolvers/domain-permissions.resolver';
 import {ProvidersResolver} from './resolvers/providers.resolver';
 import {ProviderResolver} from './resolvers/provider.resolver';
@@ -167,7 +169,9 @@ import {ApplicationResourcePolicyResolver} from './resolvers/application-resourc
 import {DomainSettingsEntrypointsComponent} from './domain/settings/entrypoints/entrypoints.component';
 import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
 import {ApplicationLoginSettingsComponent} from './domain/applications/application/advanced/login/login.component';
-import {IdentitiesResolver} from "./resolvers/identities.resolver";
+import {IdentitiesResolver} from './resolvers/identities.resolver';
+import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
+import {PlatformFlowSchemaResolver} from './resolvers/platform-flow-schema.resolver';
 
 const routes: Routes = [
   {
@@ -989,6 +993,24 @@ const routes: Routes = [
               },
               perms: {
                 only: ['domain_extension_point_list']
+              }
+            }
+          },
+          { path: 'flows',
+            component: DomainSettingsFlowsComponent,
+            canActivate: [AuthGuard],
+            resolve: {
+              flows: DomainFlowsResolver,
+              policies: PluginPoliciesResolver,
+              flowSettingsForm: PlatformFlowSchemaResolver
+            },
+            data: {
+              menu: {
+                label: 'Flows',
+                section: 'Design'
+              },
+              perms: {
+                only: ['domain_flow_list']
               }
             }
           },

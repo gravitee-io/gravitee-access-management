@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,29 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.event;
+import {inject, TestBed} from '@angular/core/testing';
+import {DomainFlowsResolver} from './domain-flows.resolver';
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum Type {
+describe('DomainFlowsResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [DomainFlowsResolver]
+    });
+  });
 
-    DOMAIN,
-    CLIENT,
-    APPLICATION,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER,
-    MEMBERSHIP,
-    GROUP,
-    FACTOR,
-    FLOW
-}
+  it('should ...', inject([DomainFlowsResolver], (service: DomainFlowsResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});

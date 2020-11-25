@@ -24,6 +24,10 @@ package io.gravitee.am.common.policy;
 public enum ExtensionPoint {
 
     ROOT,
+    PRE_LOGIN,
+    POST_LOGIN,
     PRE_CONSENT,
-    POST_CONSENT
+    POST_CONSENT,
+    PRE_REGISTER,
+    POST_REGISTER
 }

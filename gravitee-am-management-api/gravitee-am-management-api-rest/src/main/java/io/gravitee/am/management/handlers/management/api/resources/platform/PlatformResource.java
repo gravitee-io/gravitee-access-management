@@ -16,9 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.resources.platform;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.management.handlers.management.api.resources.platform.configuration.ConfigurationResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.plugins.PluginsResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.roles.SystemRoleResource;
-import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -48,7 +48,6 @@ public class PlatformResource {
     @ApiOperation(value = "List audit event types",
             notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
-
         response.resume(EventType.types());
     }
 
@@ -60,5 +59,10 @@ public class PlatformResource {
     @Path("roles")
     public SystemRoleResource getSystemRoleResource() {
         return resourceContext.getResource(SystemRoleResource.class);
+    }
+
+    @Path("configuration")
+    public ConfigurationResource getConfigurationResource() {
+        return resourceContext.getResource(ConfigurationResource.class);
     }
 }

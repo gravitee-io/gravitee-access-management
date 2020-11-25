@@ -13,22 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.exception;
+package io.gravitee.am.service.reporter.builder.management;
+
+import io.gravitee.am.common.audit.EntityType;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.model.flow.Flow;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ApplicationNotFoundException extends AbstractNotFoundException {
+public class FlowAuditBuilder extends ManagementAuditBuilder<FlowAuditBuilder> {
 
-    private final String flow;
-
-    public ApplicationNotFoundException(String flow) {
-        this.flow = flow;
+    public FlowAuditBuilder() {
+        super();
     }
 
-    @Override
-    public String getMessage() {
-        return "Flow [" + flow + "] can not be found.";
+    public FlowAuditBuilder flow(Flow flow) {
+        if (EventType.FLOW_CREATED.equals(getType()) || EventType.FLOW_UPDATED.equals(getType())) {
+            setNewValue(flow);
+        }
+
+        referenceType(flow.getReferenceType());
+        referenceId(flow.getReferenceId());
+
+        setTarget(flow.getId(), EntityType.FLOW, null, flow.getName(), flow.getReferenceType(), flow.getReferenceId());
+        return this;
     }
 }

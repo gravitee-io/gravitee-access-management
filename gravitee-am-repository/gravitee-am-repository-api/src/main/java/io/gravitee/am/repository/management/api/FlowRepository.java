@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.event;
+package io.gravitee.am.repository.management.api;
+
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.flow.Flow;
+import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public interface FlowRepository extends CrudRepository<Flow, String> {
 
-    DOMAIN,
-    CLIENT,
-    APPLICATION,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER,
-    MEMBERSHIP,
-    GROUP,
-    FACTOR,
-    FLOW
+    Maybe<Flow> findById(ReferenceType referenceType, String referenceId, String id);
+
+    Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId);
 }

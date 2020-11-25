@@ -259,6 +259,11 @@ public class DomainResource extends AbstractResource {
         return resourceContext.getResource(FactorsResource.class);
     }
 
+    @Path("flows")
+    public FlowsResource getFlowsResource() {
+        return resourceContext.getResource(FlowsResource.class);
+    }
+
     private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain patchDomain, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();

@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "id": "am",
+  "properties": {
+    "name": {
+      "title": "Name",
+      "description": "The name of flow. If empty, the name will be generated with the path and methods",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "description": "The description of flow",
+      "type": "string"
+    },
+    "type": {
+      "title": "Type",
+      "description": "The type of flow",
+      "type": "string",
+      "enum": [
+        "ROOT",
+        "LOGIN",
+        "CONSENT",
+        "REGISTER"
+      ]
+    },
+    "condition": {
+      "title": "Condition",
+      "description": "The condition of flow",
+      "type": "string"
+    }
+  },
+  "required": [],
+  "disabled": [
+    "type",
+    "condition"
+  ]
+}

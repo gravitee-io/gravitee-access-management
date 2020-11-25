@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
-import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
+import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
@@ -48,16 +48,16 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(PolicyChainHandlerImpl.class);
     private static final List<String> BLACKLIST_CONTEXT_ATTRIBUTES = Arrays.asList("X-XSRF-TOKEN", "_csrf", "__body-handled");
-    private PolicyManager policyManager;
+    private FlowManager flowManager;
     private PolicyChainProcessorFactory policyChainProcessorFactory;
     private ExecutionContextFactory executionContextFactory;
     private ExtensionPoint extensionPoint;
 
-    public PolicyChainHandlerImpl(PolicyManager policyManager,
+    public PolicyChainHandlerImpl(FlowManager flowManager,
                                   PolicyChainProcessorFactory policyChainProcessorFactory,
                                   ExecutionContextFactory executionContextFactory,
                                   ExtensionPoint extensionPoint) {
-        this.policyManager = policyManager;
+        this.flowManager = flowManager;
         this.policyChainProcessorFactory = policyChainProcessorFactory;
         this.executionContextFactory = executionContextFactory;
         this.extensionPoint = extensionPoint;
@@ -106,7 +106,7 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
     }
 
     private void resolve(ExtensionPoint extensionPoint, Handler<AsyncResult<List<Policy>>> handler) {
-        policyManager.findByExtensionPoint(extensionPoint)
+        flowManager.findByExtensionPoint(extensionPoint)
                 .subscribe(
                         policies -> handler.handle(Future.succeededFuture(policies)),
                         error -> handler.handle(Future.failedFuture(error)));
