@@ -16,7 +16,7 @@
 import 'polyfills';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import {
@@ -77,6 +77,7 @@ import { LogoutCallbackComponent } from './logout/callback/callback.component';
 import { DomainsResolver } from './resolvers/domains.resolver';
 import { DomainResolver } from './resolvers/domain.resolver';
 import { DomainEntrypointResolver } from './resolvers/domain-entrypoint.resolver';
+import { DomainFlowsResolver } from './resolvers/domain-flows.resolver';
 import { DomainDashboardComponent } from './domain/dashboard/dashboard.component';
 import { DomainSettingsComponent } from './domain/settings/settings.component';
 import { DomainSettingsGeneralComponent } from './domain/settings/general/general.component';
@@ -104,6 +105,7 @@ import {
 } from './domain/settings/memberships/memberships.component';
 import { DomainSettingsFactorsComponent } from './domain/settings/factors/factors.component';
 import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/webauthn.component';
+import { DomainSettingsFlowsComponent } from './domain/settings/flows/flows.component';
 import { ProvidersResolver } from './resolvers/providers.resolver';
 import { ProviderResolver } from './resolvers/provider.resolver';
 import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
@@ -288,7 +290,9 @@ import { ApplicationResourcePolicyComponent } from './domain/applications/applic
 import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
 import { LoginSettingsComponent } from './domain/components/login/login-settings.component';
 import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
-import {IdentitiesResolver} from "./resolvers/identities.resolver";
+import { IdentitiesResolver } from './resolvers/identities.resolver';
+import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
+import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
 
 @NgModule({
   declarations: [
@@ -324,6 +328,7 @@ import {IdentitiesResolver} from "./resolvers/identities.resolver";
     DomainSettingsMembershipsComponent,
     DomainSettingsFactorsComponent,
     DomainSettingsWebAuthnComponent,
+    DomainSettingsFlowsComponent,
     ConfirmComponent,
     EmptystateComponent,
     DomainCreationComponent,
@@ -500,6 +505,7 @@ import {IdentitiesResolver} from "./resolvers/identities.resolver";
     DomainsResolver,
     DomainResolver,
     DomainEntrypointResolver,
+    DomainFlowsResolver,
     ProvidersResolver,
     ProviderResolver,
     CertificatesResolver,
@@ -557,6 +563,8 @@ import {IdentitiesResolver} from "./resolvers/identities.resolver";
     ApplicationResourceResolver,
     ApplicationResourcePolicyResolver,
     IdentitiesResolver,
+    PluginPoliciesResolver,
+    PlatformFlowSchemaResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,
@@ -583,6 +591,7 @@ import {IdentitiesResolver} from "./resolvers/identities.resolver";
     ApplicationMembershipsDialog,
     UsersSearchInfoDialog
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

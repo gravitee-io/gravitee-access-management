@@ -32,6 +32,8 @@ import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.email.impl.EmailManagerImpl;
 import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
+import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
@@ -141,6 +143,11 @@ public class CommonConfiguration {
     @Bean
     public PolicyManager policyManager() {
         return new PolicyManagerImpl();
+    }
+
+    @Bean
+    public FlowManager flowManager() {
+        return new FlowManagerImpl();
     }
 
     @Bean

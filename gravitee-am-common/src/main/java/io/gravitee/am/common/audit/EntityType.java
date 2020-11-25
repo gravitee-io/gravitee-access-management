@@ -42,4 +42,5 @@ public interface EntityType {
     String ORGANIZATION = "ORGANIZATION";
     String ENVIRONMENT = "ENVIRONMENT";
     String ENTRYPOINT = "ENTRYPOINT";
+    String FLOW = "FLOW";
 }

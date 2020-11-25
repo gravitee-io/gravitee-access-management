@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.listener.AuthenticationEventListener;
+import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
@@ -152,6 +153,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         components.add(EmailManager.class);
         components.add(AuditReporterManager.class);
         components.add(PolicyManager.class);
+        components.add(FlowManager.class);
         components.add(AuthenticationEventListener.class);
         components.add(UserManager.class);
         components.add(FactorManager.class);

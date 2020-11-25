@@ -69,6 +69,9 @@ public abstract class Event {
             case FACTOR:
                 event1 =  FactorEvent.actionOf(action);
                 break;
+            case FLOW:
+                event1 =  FlowEvent.actionOf(action);
+                break;
         }
 
         return event1;

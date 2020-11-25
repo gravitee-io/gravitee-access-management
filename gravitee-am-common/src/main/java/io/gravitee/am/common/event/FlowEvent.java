@@ -19,23 +19,28 @@ package io.gravitee.am.common.event;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public enum FlowEvent {
 
-    DOMAIN,
-    CLIENT,
-    APPLICATION,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER,
-    MEMBERSHIP,
-    GROUP,
-    FACTOR,
-    FLOW
+    DEPLOY,
+    UPDATE,
+    UNDEPLOY;
+
+    public static FlowEvent actionOf(Action action) {
+        FlowEvent flowEvent = null;
+        switch (action) {
+            case CREATE:
+                flowEvent = FlowEvent.DEPLOY;
+                break;
+            case UPDATE:
+                flowEvent = FlowEvent.UPDATE;
+                break;
+            case DELETE:
+                flowEvent = FlowEvent.UNDEPLOY;
+                break;
+            case BULK_UPDATE:
+                flowEvent = FlowEvent.UPDATE;
+                break;
+        }
+        return flowEvent;
+    }
 }

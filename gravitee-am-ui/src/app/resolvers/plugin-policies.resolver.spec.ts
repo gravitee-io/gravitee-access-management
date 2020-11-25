@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.event;
+import { TestBed, inject } from '@angular/core/testing';
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum Type {
+import { PluginPoliciesResolver } from './plugin-policies.resolver';
 
-    DOMAIN,
-    CLIENT,
-    APPLICATION,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER,
-    MEMBERSHIP,
-    GROUP,
-    FACTOR,
-    FLOW
-}
+describe('PluginPoliciesResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [PluginPoliciesResolver]
+    });
+  });
+
+  it('should ...', inject([PluginPoliciesResolver], (service: PluginPoliciesResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});

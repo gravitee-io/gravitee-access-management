@@ -306,4 +306,8 @@ export class OrganizationService {
   factorSchema(id): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/plugins/factors/' + id + '/schema');
   }
+
+  flowSchema(): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/configuration/flow/schema');
+  }
 }

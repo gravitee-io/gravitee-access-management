@@ -13,29 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.event;
+package io.gravitee.am.gateway.handler.common.flow;
+
+import io.gravitee.am.common.policy.ExtensionPoint;
+import io.gravitee.am.gateway.policy.Policy;
+import io.gravitee.common.service.Service;
+import io.reactivex.Single;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public interface FlowManager extends Service {
 
-    DOMAIN,
-    CLIENT,
-    APPLICATION,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER,
-    MEMBERSHIP,
-    GROUP,
-    FACTOR,
-    FLOW
+    Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint);
 }

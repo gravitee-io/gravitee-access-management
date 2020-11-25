@@ -165,4 +165,8 @@ export class DomainService {
         return perms;
       }));
   }
+
+  flows(id) {
+    return this.http.get<any>(this.domainsURL + id + '/flows');
+  }
 }
