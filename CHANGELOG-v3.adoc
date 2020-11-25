@@ -1,5 +1,49 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/246?closed=1[AM - 3.4.0 (2020-11-25)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Exception on when extensionGrant is empty https://github.com/gravitee-io/issues/issues/4613[#4613]
+
+*_General_*
+
+- Merge 3.3.1 https://github.com/gravitee-io/issues/issues/4572[#4572]
+- Merge 3.3.2 https://github.com/gravitee-io/issues/issues/4582[#4582]
+- Merge 3.3.3 https://github.com/gravitee-io/issues/issues/4651[#4651]
+
+=== Features
+
+*_Gateway_*
+
+- Cookie web sessions https://github.com/gravitee-io/issues/issues/2523[#2523]
+- [webauthn] Greater control over when the webauthn setup prompt is shown https://github.com/gravitee-io/issues/issues/4497[#4497]
+- [webauthn] support attestation convey https://github.com/gravitee-io/issues/issues/4625[#4625]
+
+*_Identity-provider_*
+
+- Add Google identity provider  https://github.com/gravitee-io/issues/issues/4323[#4323]
+
+*_Management_*
+
+- Add logo to Identity Provider https://github.com/gravitee-io/issues/issues/4494[#4494]
+
+=== Improvements
+
+*_Gateway_*
+
+- [webauthn] Need to confirm that "user verification -- required" is being applied https://github.com/gravitee-io/issues/issues/4496[#4496]
+
+*_Management_*
+
+- [webauthn] Update to list credentials endpoint to provide more information https://github.com/gravitee-io/issues/issues/4498[#4498]
+
+*_Repository_*
+
+- [mongodb] manage indexes creation  https://github.com/gravitee-io/issues/issues/4568[#4568]
+
 == https://github.com/gravitee-io/issues/milestone/315?closed=1[AM - 3.3.3 (2020-11-23)]
 
 === Bug fixes
