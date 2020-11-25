@@ -117,7 +117,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
         // deploy verticle
         List<Reporter> allReporters = new ArrayList<>(auditReporters.values());
-        if (useMongoRepositories()) {
+        if (internalReporter != null) {
             allReporters.add(new EventBusReporterWrapper(vertx, internalReporter));
         }
         deployReporterVerticle(allReporters);

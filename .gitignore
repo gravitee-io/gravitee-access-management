@@ -23,3 +23,5 @@ gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-man
 
 # vert.x
 .vertx
+
+dependency-reduced-pom.xml

@@ -1,0 +1,1841 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.5.0
+      author: GraviteeSource Team
+      changes:
+
+        # Organizations
+        ###############
+        - createTable:
+            tableName: organizations
+            columns:
+              - column: {name: id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: description, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_organizations
+            columnNames: id
+            tableName: organizations
+
+        - createTable:
+            tableName: organization_identities
+            columns:
+              - column: {name: organization_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: identity_id, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  organization_id
+            indexName:  idx_organization_identities
+            tableName:  organization_identities
+            unique:  false
+
+        - createTable:
+            tableName: organization_domain_restrictions
+            columns:
+              - column: {name: organization_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: domain_restriction, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  organization_id
+            indexName:  idx_organization_domain_restrictions
+            tableName:  organization_domain_restrictions
+            unique:  false
+
+        # Environments
+        ##############
+        - createTable:
+            tableName: environments
+            columns:
+              - column: {name: id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: organization_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: description, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_environments
+            columnNames: id
+            tableName: environments
+
+        - createTable:
+            tableName: environment_domain_restrictions
+            columns:
+              - column: {name: environment_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: domain_restriction, type: nvarchar(255), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  environment_id
+            indexName:  idx_environment_domain_restrictions
+            tableName:  environment_domain_restrictions
+            unique:  false
+
+        # Domain
+        ##############
+        - createTable:
+            tableName: domains
+            columns:
+              - column: {name: id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: description, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: enabled, type: boolean, constraints: { nullable: true }}
+              - column: {name: path, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: vhost_mode, type: boolean, constraints: { nullable: true }}
+              - column: {name: oidc, type: clob, constraints: { nullable: true } }
+              - column: {name: uma, type: clob, constraints: { nullable: true } }
+              - column: {name: login_settings, type: clob, constraints: { nullable: true } }
+              - column: {name: web_authn_settings, type: clob, constraints: { nullable: true } }
+              - column: {name: scim, type: clob, constraints: { nullable: true } }
+              - column: {name: account_settings, type: clob, constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_domain
+            columnNames: id
+            tableName: domains
+
+        - createTable:
+            tableName: domain_identities
+            columns:
+              - column: {name: domain_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: identity_id, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  domain_id
+            indexName:  idx_domain_identities
+            tableName:  domain_identities
+            unique:  false
+
+        - createTable:
+            tableName: domain_tags
+            columns:
+              - column: {name: domain_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: tag, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  domain_id
+            indexName:  idx_domain_tags
+            tableName:  domain_tags
+            unique:  false
+
+        - createTable:
+            tableName: domain_vhosts
+            columns:
+              - column: {name: domain_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: host, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: path, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: override_endpoints, type: boolean, constraints: { nullable: true } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  domain_id
+            indexName:  idx_domain_vhosts
+            tableName:  domain_vhosts
+            unique:  false
+
+            # AccessPolicy
+            ##############
+        - createTable:
+            tableName: uma_access_policies
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: enabled, type: boolean, constraints: { nullable: true } }
+              - column: {name: description, type: clob, constraints: { nullable: true } }
+              - column: {name: order, type: integer, constraints: { nullable: true } }
+              - column: {name: condition, type: clob, constraints: { nullable: true } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: resource, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_uma_access_policies
+            columnNames: id
+            tableName: uma_access_policies
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  domain
+            indexName:  idx_uma_access_policies_doman
+            tableName:  uma_access_policies
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  resource
+            indexName:  idx_uma_access_policies_resource
+            tableName:  uma_access_policies
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: resource
+            indexName:  idx_uma_access_policies_domain_resource
+            tableName:  uma_access_policies
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  updated_at
+            indexName:  idx_uma_access_policies_updated_at
+            tableName:  uma_access_policies
+            unique:  false
+
+        # Certificates
+        ##############
+        - createTable:
+            tableName: certificates
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: metadata, type: clob, constraints: { nullable: true } }
+              - column: {name: configuration, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE certificates ALTER metadata TYPE JSON USING metadata::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE certificates MODIFY metadata JSON;
+
+        - addPrimaryKey:
+            constraintName: pk_certificates
+            columnNames: id
+            tableName: certificates
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+            indexName:  idx_certificates_domain
+            tableName:  certificates
+            unique:  false
+
+        # Credentials
+        ##############
+        - createTable:
+            tableName: webauthn_credentials
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: user_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: username, type: nvarchar(320), constraints: { nullable: true } }
+              - column: {name: user_agent, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: ip_address, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: credential_id, type: nvarchar(128), constraints: { nullable: true } }
+              - column: {name: public_key, type: clob, constraints: { nullable: true } }
+              - column: {name: counter, type: bigint, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: accessed_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_webauthn_credentials
+            columnNames: id
+            tableName: webauthn_credentials
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: user_id
+            indexName:  idx_webauthn_credentials_ref_userid
+            tableName:  webauthn_credentials
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: credential_id
+            indexName:  idx_webauthn_credentials_ref_credential
+            tableName:  webauthn_credentials
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: username
+            indexName:  idx_webauthn_credentials_ref_username
+            tableName:  webauthn_credentials
+            unique:  false
+
+
+        # Emails
+        ##############
+        - createTable:
+            tableName: emails
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: enabled, type: boolean, constraints: { nullable: true } }
+              - column: {name: client, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: template, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: from, type: nvarchar(320), constraints: { nullable: true } }
+              - column: {name: from_name, type: nvarchar(320), constraints: { nullable: true } }
+              - column: {name: subject, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: content, type: clob, constraints: { nullable: true } }
+              - column: {name: expires_after, type: integer, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_emails
+            columnNames: id
+            tableName: emails
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName:  idx_emails_ref
+            tableName:  emails
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: template
+            indexName:  idx_emails_ref_tpl
+            tableName:  emails
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: client
+              - column:
+                  name: template
+            indexName:  idx_emails_ref_client_tpl
+            tableName:  emails
+            unique:  false
+
+        # Entrypoints
+        ##############
+        - createTable:
+            tableName: entrypoints
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: organization_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: description, type: clob, constraints: { nullable: true } }
+              - column: {name: url, type: nvarchar(512), constraints: { nullable: true } }
+              - column: {name: default_entrypoint, type: boolean, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_entrypoints
+            columnNames: id
+            tableName: entrypoints
+
+        - createIndex:
+            columns:
+              - column:
+                  name: organization_id
+            indexName:  idx_entrypoint_organization_id
+            tableName:  entrypoints
+            unique:  false
+
+        - createTable:
+            tableName: entrypoint_tags
+            columns:
+              - column: {name: entrypoint_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: tag, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  entrypoint_id
+            indexName:  idx_entrypoint_tags_entrypoint_id
+            tableName:  entrypoint_tags
+            unique:  false
+
+
+        # Events
+        ##############
+        - createTable:
+            tableName: events
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: payload, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE events ALTER payload TYPE JSONB USING payload::jsonb
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE events MODIFY payload JSON;
+
+        - addPrimaryKey:
+            constraintName: pk_events
+            columnNames: id
+            tableName: events
+
+        - createIndex:
+            columns:
+              - column:
+                  name: updated_at
+            indexName:  idx_events_updated_at
+            tableName:  events
+            unique:  false
+
+        # ExtensionGrants
+        ##############
+        - createTable:
+            tableName: extension_grants
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: configuration, type: clob, constraints: { nullable: true } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: grant_type, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: identity_provider, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: create_user, type: boolean, constraints: { nullable: true } }
+              - column: {name: user_exists, type: boolean, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_extension_grants
+            columnNames: id
+            tableName: extension_grants
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+            indexName:  idx_extension_grants_domain
+            tableName:  extension_grants
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: name
+            indexName:  idx_extension_grants_domain_name
+            tableName:  extension_grants
+            unique:  false
+
+        # Factor
+        ##############
+        - createTable:
+            tableName: factors
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: configuration, type: clob, constraints: { nullable: true } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: factor_type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_factors
+            columnNames: id
+            tableName: factors
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+            indexName:  idx_factors_domain
+            tableName:  factors
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: factor_type
+            indexName:  idx_factors_domain_factor_type
+            tableName:  factors
+            unique:  false
+
+        # Form
+        ##############
+        - createTable:
+            tableName: forms
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: enabled, type: boolean, constraints: { nullable: true } }
+              - column: {name: client, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: template, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: content, type: clob, constraints: { nullable: true } }
+              - column: {name: assets, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_forms
+            columnNames: id
+            tableName: forms
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName:  idx_forms_ref
+            tableName:  forms
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: template
+            indexName:  idx_forms_ref_tpl
+            tableName:  forms
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: client
+              - column:
+                  name: template
+            indexName:  idx_forms_ref_client_tpl
+            tableName:  forms
+            unique:  false
+
+        # Groups
+        ##############
+        - createTable:
+            tableName: groups
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: description, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_groups
+            columnNames: id
+            tableName: groups
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName:  idx_groups_ref
+            tableName:  groups
+            unique:  false
+
+        - createTable:
+            tableName: group_members
+            columns:
+              - column: {name: group_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: member, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: group_id
+            indexName: idx_group_members_group
+            tableName: group_members
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: member
+            indexName: idx_group_members_member
+            tableName: group_members
+            unique: false
+
+        - createTable:
+            tableName: group_roles
+            columns:
+              - column: {name: group_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: role, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: group_id
+            indexName: idx_group_roles_group
+            tableName: group_roles
+            unique: false
+
+        # identities
+        ##############
+        - createTable:
+            tableName: identities
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: configuration, type: clob, constraints: { nullable: true } }
+              - column: {name: mappers, type: clob, constraints: { nullable: true } }
+              - column: {name: role_mapper, type: clob, constraints: { nullable: true } }
+              - column: {name: external, type: boolean, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE identities ALTER role_mapper TYPE JSON USING role_mapper::json
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE identities ALTER mappers TYPE JSON USING mappers::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE identities MODIFY role_mapper JSON;
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE identities MODIFY mappers JSON;
+
+        - addPrimaryKey:
+            constraintName: pk_identities
+            columnNames: id
+            tableName: identities
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName:  idx_identities_ref
+            tableName:  identities
+            unique:  false
+
+        # LoginAttempts
+        ##############
+        - createTable:
+            tableName: login_attempts
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: client, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: identity_provider, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: username, type: nvarchar(320), constraints: { nullable: true } }
+              - column: {name: attempts, type: integer, constraints: { nullable: true } }
+              - column: {name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_login_attempts
+            columnNames: id
+            tableName: login_attempts
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_login_attempts_expire
+            tableName: login_attempts
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client
+              - column:
+                  name: username
+            indexName:  idx_login_attempts_domain_client_username
+            tableName:  login_attempts
+            unique:  false
+
+
+        # Memberships
+        ##############
+        - createTable:
+            tableName: memberships
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: member_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: member_type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: role_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_memberships
+            columnNames: id
+            tableName: memberships
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName:  idx_memberships_refid_reftype
+            tableName:  memberships
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: member_id
+            indexName:  idx_memberships_refid_memberid
+            tableName:  memberships
+            unique:  false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: member_id
+              - column:
+                  name: member_type
+            indexName:  idx_memberships_memberid_membertype
+            tableName:  memberships
+            unique:  false
+
+        # PermissionRequest
+        ##############
+        - createTable:
+            tableName: uma_permission_ticket
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: user_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: client_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: permission_request, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_uma_permission_ticket
+            columnNames: id
+            tableName: uma_permission_ticket
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE uma_permission_ticket ALTER permission_request TYPE JSON USING permission_request::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE uma_permission_ticket MODIFY permission_request JSON;
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_uma_permission_ticket_expire
+            tableName: uma_permission_ticket
+            unique: false
+
+        # Policy
+        ##############
+        - createTable:
+            tableName: policies
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: enabled, type: boolean, constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: extension_point, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: order, type: integer, constraints: { nullable: true } }
+              - column: {name: configuration, type: clob, constraints: { nullable: true } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: client, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_policies
+            columnNames: id
+            tableName: policies
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+            indexName:  idx_policies_domain
+            tableName:  policies
+            unique:  false
+
+        # Reporter
+        ##############
+        - createTable:
+            tableName: reporters
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: enabled, type: boolean, constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: configuration, type: clob, constraints: { nullable: true } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: data_type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_reporter
+            columnNames: id
+            tableName: reporters
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+            indexName:  idx_reporter_domain
+            tableName:  reporters
+            unique:  false
+
+
+        # Resource
+        ##############
+        - createTable:
+            tableName: uma_resource_set
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: description, type: clob, constraints: { nullable: true } }
+              - column: {name: icon_uri, type: nvarchar(512), constraints: { nullable: true } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: user_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: client_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_uma_resources
+            columnNames: id
+            tableName: uma_resource_set
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_id
+            indexName:  idx_uma_resource_set_domain_client_user
+            tableName:  uma_resource_set
+            unique:  false
+
+        - createTable:
+            tableName: uma_resource_scopes
+            columns:
+              - column: {name: resource_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: scope, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: resource_id
+            indexName: idx_uma_resource_scopes_resource
+            tableName: uma_resource_scopes
+            unique: false
+
+        # Roles
+        ##############
+        - createTable:
+            tableName: roles
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: description, type: clob, constraints: { nullable: true } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: assignable_type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: system, type: boolean, constraints: { nullable: true } }
+              - column: { name: default_role, type: boolean, constraints: { nullable: true } }
+              - column: { name: permission_acls, type: clob, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_roles
+            columnNames: id
+            tableName: roles
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE roles ALTER permission_acls TYPE JSON USING permission_acls::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE roles MODIFY permission_acls JSON;
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: name
+            indexName: idx_roles_reference_name
+            tableName: roles
+            unique: false
+
+        - createTable:
+            tableName: role_oauth_scopes
+            columns:
+              - column: { name: role_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: scope, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: role_id
+            indexName: idx_role_oauth_scopes_role
+            tableName: role_oauth_scopes
+            unique: false
+
+        # Scope
+        ##############
+        - createTable:
+            tableName: scopes
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: key, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: description, type: clob, constraints: { nullable: true } }
+              - column: { name: icon_uri, type: nvarchar(512), constraints: { nullable: true } }
+              - column: { name: system, type: boolean, constraints: { nullable: true } }
+              - column: { name: discovery, type: boolean, constraints: { nullable: true } }
+              - column: { name: expires_in, type: integer, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_scopes
+            columnNames: id
+            tableName: scopes
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: key
+            indexName: idx_scopes_domain_key
+            tableName: scopes
+            unique: false
+
+        - createTable:
+            tableName: scope_claims
+            columns:
+              - column: { name: scope_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: claim, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: scope_id
+            indexName: idx_scope_claim_scope
+            tableName: scope_claims
+            unique: false
+
+        # Tags
+        ##############
+        - createTable:
+            tableName: tags
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: organization_id, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: description, type: clob, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_tags
+            columnNames: id
+            tableName: tags
+
+        - createIndex:
+            columns:
+              - column:
+                  name: organization_id
+            indexName: idx_tags_organization
+            tableName: tags
+            unique: false
+
+        # Applications
+        ##############
+        - createTable:
+            tableName: applications
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: description, type: clob, constraints: { nullable: true } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: certificate, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: enabled, type: boolean, constraints: { nullable: true } }
+              - column: { name: template, type: boolean, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: metadata, type: clob, constraints: { nullable: true } }
+              - column: { name: settings, type: clob, constraints: { nullable: true } }
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE applications ALTER metadata TYPE JSONB USING metadata::jsonb
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE applications ALTER settings TYPE JSONB USING settings::jsonb
+
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_application_domain_client ON applications USING BTREE (domain, ((settings->'oauth'->>'clientId')))
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE applications MODIFY metadata JSON;
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE applications MODIFY settings JSON;
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE applications ADD settings_client_id VARCHAR(64) AS (JSON_UNQUOTE(settings->"$.oauth.clientId"));
+
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE applications ADD settings_client_id VARCHAR(64) AS (JSON_VALUE(settings, "$.oauth.clientId"));
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_application_domain_client ON applications(domain, settings_client_id);
+
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE applications ADD settings_client_id AS JSON_VALUE(settings, '$.oauth.clientId');
+
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_application_domain_client ON applications(domain, settings_client_id);
+
+        - addPrimaryKey:
+            constraintName: pk_applications
+            columnNames: id
+            tableName: applications
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+            indexName: idx_application_domain
+            tableName: applications
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: updated_at
+                  descending: true
+            indexName: idx_application_updated_at
+            tableName: applications
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: certificate
+            indexName: idx_application_certificate
+            tableName: applications
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: name
+            indexName: idx_application_domain_name
+            tableName: applications
+            unique: false
+
+        - createTable:
+            tableName: application_grants
+            columns:
+              - column: { name: application_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: grant_type, type: nvarchar(255), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: application_id
+            indexName: idx_application_grants_app
+            tableName: application_grants
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: grant_type
+            indexName: idx_application_grants_grant
+            tableName: application_grants
+            unique: false
+
+        - createTable:
+            tableName: application_identities
+            columns:
+              - column: { name: application_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: identity, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: application_id
+            indexName: idx_application_identities_app
+            tableName: application_identities
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: identity
+            indexName: idx_application_identities_identity
+            tableName: application_identities
+            unique: false
+
+        - createTable:
+            tableName: application_factors
+            columns:
+              - column: { name: application_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: factor, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: application_id
+            indexName: idx_application_factor_app
+            tableName: application_factors
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: factor
+            indexName: idx_application_factor_factor
+            tableName: application_factors
+            unique: false
+
+        # Users
+        ##############
+        - createTable:
+            tableName: users
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: external_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: username, type: nvarchar(320), constraints: { nullable: true } }
+              - column: { name: email, type: nvarchar(320), constraints: { nullable: true } }
+              - column: { name: display_name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: nick_name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: first_name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: last_name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: title, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: preferred_language, type: nvarchar(10), constraints: { nullable: true } }
+              - column: { name: account_non_expired, type: boolean, constraints: { nullable: true } }
+              - column: { name: account_locked_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: account_locked_until, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: account_non_locked, type: boolean, constraints: { nullable: true } }
+              - column: { name: credentials_non_expired, type: boolean, constraints: { nullable: true } }
+              - column: { name: enabled, type: boolean, constraints: { nullable: true } }
+              - column: { name: internal, type: boolean, constraints: { nullable: true } }
+              - column: { name: pre_registration, type: boolean, constraints: { nullable: true } }
+              - column: { name: registration_completed, type: boolean, constraints: { nullable: true } }
+              - column: { name: newsletter, type: boolean, constraints: { nullable: true } }
+              - column: { name: registration_user_uri, type: nvarchar(1024), constraints: { nullable: true } }
+              - column: { name: registration_access_token, type: clob, constraints: { nullable: true } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: source, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: client, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: logins_count, type: integer, constraints: { nullable: true } }
+              - column: { name: logged_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: x509_certificates, type: clob, constraints: { nullable: true } }
+              - column: { name: factors, type: clob, constraints: { nullable: true } }
+              - column: { name: additional_information, type: clob, constraints: { nullable: true } }
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE users ALTER x509_certificates TYPE JSON USING x509_certificates::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users MODIFY x509_certificates JSON;
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE users ALTER factors TYPE JSON USING factors::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users MODIFY factors JSON;
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE users ALTER additional_information TYPE JSONB USING additional_information::jsonb
+
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_email ON users USING BTREE (reference_id, reference_type, ((additional_information->>'email')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_family_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'family_name')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_given_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'given_name')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_middle_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'middle_name')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_locale ON users USING BTREE (reference_id, reference_type, ((additional_information->>'locale')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_zoneinfo ON users USING BTREE (reference_id, reference_type, ((additional_information->>'zoneinfo')))
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users MODIFY additional_information JSON;
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_email VARCHAR(320) AS (JSON_UNQUOTE(additional_information->"$.email"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_family_name VARCHAR(128) AS (JSON_UNQUOTE(additional_information->"$.family_name"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_given_name VARCHAR(128) AS (JSON_UNQUOTE(additional_information->"$.given_name")) ;
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_middle_name VARCHAR(128) AS (JSON_UNQUOTE(additional_information->"$.middle_name"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_profile VARCHAR(1024) AS (JSON_UNQUOTE(additional_information->"$.profile"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_locale VARCHAR(35) AS (JSON_UNQUOTE(additional_information->"$.locale"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_zoneinfo VARCHAR(256) AS (JSON_UNQUOTE(additional_information->"$.zoneinfo"));
+
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_email VARCHAR(320) AS (JSON_VALUE(additional_information, "$.email"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_family_name VARCHAR(128) AS (JSON_VALUE(additional_information, "$.family_name"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_given_name VARCHAR(128) AS (JSON_VALUE(additional_information, "$.given_name"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_middle_name VARCHAR(128) AS (JSON_VALUE(additional_information, "$.middle_name"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_profile VARCHAR(1024) AS (JSON_VALUE(additional_information, "$.profile"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_locale VARCHAR(35) AS (JSON_VALUE(additional_information, "$.locale"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_zoneinfo VARCHAR(256) AS (JSON_VALUE(additional_information, "$.zoneinfo"));
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_email ON users(reference_id, reference_type, additional_information_email);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_family_name ON users(reference_id, reference_type, additional_information_family_name);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_given_name ON users(reference_id, reference_type, additional_information_given_name);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_middle_name ON users(reference_id, reference_type, additional_information_middle_name);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_locale ON users(reference_id, reference_type, additional_information_locale);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_zoneinfo ON users(reference_id, reference_type, additional_information_zoneinfo);
+
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_email AS JSON_VALUE(additional_information, '$.email');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_family_name AS JSON_VALUE(additional_information, '$.family_name');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_given_name AS JSON_VALUE(additional_information, '$.given_name');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_middle_name AS JSON_VALUE(additional_information, '$.middle_name');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_profile AS JSON_VALUE(additional_information, '$.profile');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_locale AS JSON_VALUE(additional_information, '$.locale');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_zoneinfo AS JSON_VALUE(additional_information, '$.zoneinfo');
+
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_email ON users(reference_id, reference_type, additional_information_email);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_family_name ON users(reference_id, reference_type, additional_information_family_name);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_given_name ON users(reference_id, reference_type, additional_information_given_name);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_middle_name ON users(reference_id, reference_type, additional_information_middle_name);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_locale ON users(reference_id, reference_type, additional_information_locale);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_zoneinfo ON users(reference_id, reference_type, additional_information_zoneinfo);
+
+        - addPrimaryKey:
+            constraintName: pk_users
+            columnNames: id
+            tableName: users
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName: idx_users_reference
+            tableName: users
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: email
+            indexName: idx_users_reference_email
+            tableName: users
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: username
+            indexName: idx_users_reference_username
+            tableName: users
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: display_name
+            indexName: idx_users_reference_displayname
+            tableName: users
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: first_name
+            indexName: idx_users_reference_firstname
+            tableName: users
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: last_name
+            indexName: idx_users_reference_lastname
+            tableName: users
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: external_id
+            indexName: idx_users_reference_external
+            tableName: users
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: username
+              - column:
+                  name: source
+            indexName: idx_users_reference_username_source
+            tableName: users
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: external_id
+              - column:
+                  name: source
+            indexName: idx_users_reference_externalid_source
+            tableName: users
+            unique: false
+
+        - createTable:
+            tableName: user_entitlements
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: entitlement, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_entitlements_user
+            tableName: user_entitlements
+            unique: false
+
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: role, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_roles_user
+            tableName: user_roles
+            unique: false
+
+        - createTable:
+            tableName: user_addresses
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: formatted, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: street_address, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: locality, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: region, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: postal_code, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: country, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: primary, type: boolean, constraints: { nullable: true } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_addresses_user
+            tableName: user_addresses
+            unique: false
+
+        - createTable:
+            tableName: user_attributes
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: user_field, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: value, type: clob, constraints: { nullable: true } }
+              - column: { name: type, type: nvarchar(128), constraints: { nullable: true } }
+              - column: { name: primary, type: boolean, constraints: { nullable: true } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_attributes_user
+            tableName: user_attributes
+            unique: false
+
+        ## request_objects
+        ###################
+        - createTable:
+            tableName: request_objects
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: client, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: payload, type: clob, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_request_objects
+            columnNames: id
+            tableName: request_objects
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_request_objects_expire
+            tableName: request_objects
+            unique: false
+
+        ## access token
+      ###################
+        - createTable:
+            tableName: access_tokens
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: client, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: subject, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: token, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: authorization_code, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: refresh_token, type: clob, constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_access_tokens
+            columnNames: id
+            tableName: access_tokens
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_access_tokens_expire
+            tableName: access_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: token
+            indexName: idx_access_tokens_token
+            tableName: access_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: client
+            indexName: idx_access_tokens_client
+            tableName: access_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: authorization_code
+            indexName: idx_access_tokens_auth_code
+            tableName: access_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: subject
+            indexName: idx_access_tokens_subject
+            tableName: access_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client
+              - column:
+                  name: subject
+            indexName: idx_access_tokens_domain_client_subject
+            tableName: access_tokens
+            unique: false
+
+
+        ## auhtorization code
+        ###################
+        - createTable:
+            tableName: authorization_codes
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: transaction_id, type: nvarchar(128), constraints: { nullable: true } }
+              - column: { name: code, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: client_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: subject, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: redirect_uri, type: clob, constraints: { nullable: true } }
+              - column: { name: scopes, type: clob, constraints: { nullable: true } }
+              - column: { name: request_parameters, type: clob, constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_codes
+            columnNames: id
+            tableName: authorization_codes
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_authorization_codes_expire
+            tableName: authorization_codes
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: code
+            indexName: idx_authorization_codes_code
+            tableName: authorization_codes
+            unique: false
+
+        ## refresh token
+        ###################
+        - createTable:
+            tableName: refresh_tokens
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: client, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: subject, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: token, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_refresh_tokens
+            columnNames: id
+            tableName: refresh_tokens
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_refresh_token_expire
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: token
+            indexName: idx_refresh_tokens_token
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: client
+            indexName: idx_refresh_tokens_client
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: subject
+            indexName: idx_refresh_tokens_subject
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client
+              - column:
+                  name: subject
+            indexName: idx_refresh_tokens_domain_client_subject
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: subject
+            indexName: idx_refresh_tokens_domain_subject
+            tableName: refresh_tokens
+            unique: false
+
+        ## scope approval
+        ###################
+        - createTable:
+            tableName: scope_approvals
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: client_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: transaction_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: scope, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: status, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expires_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_scope_approvals
+            columnNames: id
+            tableName: scope_approvals
+
+        - createIndex:
+            columns:
+              - column:
+                  name: transaction_id
+            indexName: idx_scope_approvals_transaction_id
+            tableName: scope_approvals
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: user_id
+            indexName: idx_scope_approvals_domain_user
+            tableName: scope_approvals
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_id
+              - column:
+                  name: scope
+            indexName: idx_scope_approvals_domain_client_user_scope
+            tableName: scope_approvals
+            unique: true
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expires_at
+            indexName: idx_scope_approvals_expire
+            tableName: scope_approvals
+            unique: false
