@@ -33,9 +33,9 @@ public class IdentityProviderPlugin extends AbstractPlugin {
     private String icon;
 
     /**
-     * The plugin tags, useful for search
+     * The plugin labels, useful for search
      */
-    private String[] tags;
+    private String[] labels;
 
     public String getDisplayName() {
         return displayName;
@@ -53,12 +53,11 @@ public class IdentityProviderPlugin extends AbstractPlugin {
         this.icon = icon;
     }
 
-    public String[] getTags() {
-        return tags;
+    public String[] getLabels() {
+        return labels;
     }
 
-    public void setTags(String[] tags) {
-        this.tags = tags;
+    public void setLabels(String[] labels) {
+        this.labels = labels;
     }
-
 }

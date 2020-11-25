@@ -60,8 +60,8 @@ export class ProviderCreationStep1Component implements OnInit {
         if (identity.displayName != null) {
           fields.push(identity.displayName.toLowerCase())
         }
-        if (identity.tags != null) {
-          fields = [...fields, ...identity.tags.map((t) => t.toLowerCase().toLowerCase())];
+        if (identity.labels != null) {
+          fields = [...fields, ...identity.labels.map((t) => t.toLowerCase().toLowerCase())];
         }
         return JSON.stringify(fields).includes(this.filter.toLowerCase());
       });

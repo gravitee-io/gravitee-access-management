@@ -27,7 +27,7 @@ export class OrganizationService {
   constructor(private http: HttpClient) {
   }
 
-  private computeIdentitiesParameters(external, expandIcon: boolean = false, expandDisplayName: boolean = false, expandTags: boolean = false) {
+  private computeIdentitiesParameters(external, expandIcon: boolean = false, expandDisplayName: boolean = false, expandLabels: boolean = false) {
     const params = [];
     if (external) {
       params.push('external=true');
@@ -38,18 +38,18 @@ export class OrganizationService {
     if (expandDisplayName) {
       params.push('expand=displayName');
     }
-    if (expandTags) {
-      params.push('expand=tags');
+    if (expandLabels) {
+      params.push('expand=labels');
     }
     return params.length > 0 ? `?${params.join('&')}` : params;
   }
 
-  identities(expandIcon: boolean = false, expandDisplayName: boolean = false, expandTags: boolean = false): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/identities' + this.computeIdentitiesParameters(false, expandIcon, expandDisplayName, expandTags));
+  identities(expandIcon: boolean = false, expandDisplayName: boolean = false, expandLabels: boolean = false): Observable<any> {
+    return this.http.get<any>(this.organizationURL + '/plugins/identities' + this.computeIdentitiesParameters(false, expandIcon, expandDisplayName, expandLabels));
   }
 
-  socialIdentities(expandIcon: boolean = false, expandDisplayName: boolean = false, expandTags: boolean = false): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/identities' + this.computeIdentitiesParameters(true, expandIcon, expandDisplayName, expandTags));
+  socialIdentities(expandIcon: boolean = false, expandDisplayName: boolean = false, expandLabels: boolean = false): Observable<any> {
+    return this.http.get<any>(this.organizationURL + '/plugins/identities' + this.computeIdentitiesParameters(true, expandIcon, expandDisplayName, expandLabels));
   }
 
   identitySchema(id): Observable<any> {

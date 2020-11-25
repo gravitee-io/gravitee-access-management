@@ -142,10 +142,10 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
             if (expand.contains(IdentityProviderPluginService.EXPAND_DISPLAY_NAME)) {
                 plugin.setDisplayName(identityProviderPlugin.manifest().properties().get(IdentityProviderPluginService.EXPAND_DISPLAY_NAME));
             }
-            if (expand.contains(IdentityProviderPluginService.EXPAND_TAGS)) {
-                String tags = identityProviderPlugin.manifest().properties().get(IdentityProviderPluginService.EXPAND_TAGS);
+            if (expand.contains(IdentityProviderPluginService.EXPAND_LABELS)) {
+                String tags = identityProviderPlugin.manifest().properties().get(IdentityProviderPluginService.EXPAND_LABELS);
                 if (tags != null) {
-                    plugin.setTags(tags.split(","));
+                    plugin.setLabels(tags.split(","));
                 }
             }
         }

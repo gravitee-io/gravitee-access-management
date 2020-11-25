@@ -30,7 +30,7 @@ public interface IdentityProviderPluginService {
 
     String EXPAND_DISPLAY_NAME = "displayName";
     String EXPAND_ICON = "icon";
-    String EXPAND_TAGS = "tags";
+    String EXPAND_LABELS = "labels";
 
     Single<List<IdentityProviderPlugin>> findAll(List<String> expand);
 
