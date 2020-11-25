@@ -1,5 +1,19 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/312?closed=1[AM - 3.0.9 (2020-11-23)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Social login infinite failure handling https://github.com/gravitee-io/issues/issues/4621[#4621]
+
+*_Management_*
+
+- Cannot delete an organization user https://github.com/gravitee-io/issues/issues/4622[#4622]
+- Use the same user validator for the username and displayName https://github.com/gravitee-io/issues/issues/4623[#4623]
+
+
 == https://github.com/gravitee-io/issues/milestone/308?closed=1[AM - 3.3.2 (2020-11-10)]
 
 === Bug fixes
