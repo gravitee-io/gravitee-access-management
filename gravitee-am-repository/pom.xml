@@ -36,6 +36,5 @@
     <modules>
         <module>gravitee-am-repository-api</module>
         <module>gravitee-am-repository-mongodb</module>
-        <module>gravitee-am-repository-jdbc</module>
     </modules>
 </project>
