@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.spring.web;
 
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.*;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.AuthenticationFlowHandlerImpl;
@@ -45,8 +46,8 @@ public class WebConfiguration {
     }
 
     @Bean
-    public SSOSessionHandlerFactory ssoSessionHandler() {
-        return new SSOSessionHandlerFactory();
+    public SSOSessionHandler ssoSessionHandler(ClientSyncService clientSyncService) {
+        return new SSOSessionHandler(clientSyncService);
     }
 
     @Bean

@@ -23,6 +23,7 @@ import io.vertx.ext.web.Session;
 import io.vertx.ext.web.sstore.AbstractSession;
 import org.springframework.util.StringUtils;
 
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -35,11 +36,13 @@ public class CookieSession extends AbstractSession {
 
     private final JWTService jwtService;
     private final CertificateProvider certificateProvider;
+    private Date lastLogin;
 
     public CookieSession(JWTService jwtService, CertificateProvider certificateProvider, long timeout) {
         this.jwtService = jwtService;
         this.certificateProvider = certificateProvider;
         this.setTimeout(timeout);
+        this.lastLogin = new Date();
     }
 
     @Override
@@ -54,6 +57,10 @@ public class CookieSession extends AbstractSession {
         return this;
     }
 
+    public Date lastLogin() {
+        return lastLogin;
+    }
+
     protected Single<CookieSession> setValue(String payload) {
 
         if (StringUtils.isEmpty(payload)) {
@@ -61,7 +68,10 @@ public class CookieSession extends AbstractSession {
         }
 
         return this.jwtService.decodeAndVerify(payload, certificateProvider)
-                .doOnSuccess(this::setData)
+                .doOnSuccess(jwt -> {
+                    this.lastLogin = new Date(jwt.getExp() * 1000 - this.timeout());
+                    this.setData(jwt);
+                })
                 .map(jwt -> this);
     }
 }
