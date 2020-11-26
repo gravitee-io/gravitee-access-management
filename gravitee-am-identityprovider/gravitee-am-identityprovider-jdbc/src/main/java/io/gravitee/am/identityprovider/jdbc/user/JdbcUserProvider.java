@@ -15,100 +15,100 @@
  */
 package io.gravitee.am.identityprovider.jdbc.user;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
-import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.jdbc.JdbcAbstractProvider;
 import io.gravitee.am.identityprovider.jdbc.user.spring.JdbcUserProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
-import io.gravitee.am.identityprovider.jdbc.utils.ObjectUtils;
 import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
-import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.common.service.AbstractService;
-import io.r2dbc.pool.ConnectionPool;
-import io.r2dbc.pool.ConnectionPoolConfiguration;
-import io.r2dbc.spi.*;
+import io.r2dbc.spi.Result;
+import io.r2dbc.spi.Statement;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(JdbcUserProviderConfiguration.class)
-public class JdbcUserProvider extends AbstractService<UserProvider> implements UserProvider {
+public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> implements UserProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JdbcUserProvider.class);
-
-    @Autowired
-    private JdbcIdentityProviderConfiguration configuration;
+    private final Pattern pattern = Pattern.compile("idp_users___");
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    private ConnectionPool connectionPool;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private Environment environment;
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
-        LOGGER.info("Initializing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-        Builder builder = ConnectionFactoryOptions.builder()
-                .option(DRIVER, "pool")
-                .option(PROTOCOL, configuration.getProtocol())
-                .option(HOST, configuration.getHost())
-                .option(PORT, configuration.getPort())
-                .option(USER, configuration.getUser())
-                .option(DATABASE, configuration.getDatabase());
+        if (configuration.getAutoProvisioning()) {
+            LOGGER.debug("Auto provisioning of identity provider table enabled");
+            // for now simply get the file named <driver>.schema, more complex stuffs will be done if schema updates have to be done in the future
+            final String sqlScript = "database/" + configuration.getProtocol() + ".schema";
+            try (InputStream input = this.getClass().getClassLoader().getResourceAsStream(sqlScript);
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(input))) {
 
-        if (configuration.getPassword() != null) {
-            builder.option(PASSWORD, configuration.getPassword());
+                List<String> sqlStatements = reader.lines()
+                        // remove empty line and comment
+                        .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("--"))
+                        .map(line -> {
+                            // update table & index names
+                            String finalLine = pattern.matcher(line).replaceAll(configuration.getUsersTable());
+                            LOGGER.debug("Statement to execute: {}", finalLine);
+                            return finalLine;
+                        })
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                LOGGER.debug("Found {} statements to execute", sqlStatements.size());
+
+                Flowable.just(tableExists(configuration.getProtocol(), configuration.getUsersTable()))
+                        .flatMapSingle(statement -> query(statement, new Object[0])
+                                .flatMap(Result::getRowsUpdated)
+                                .first(0)).flatMap(total -> {
+                                    if (total == 0) {
+                                        return Flowable.fromIterable(sqlStatements)
+                                                .flatMapSingle(statement -> query(statement, new Object[0])
+                                                        .flatMap(Result::getRowsUpdated)
+                                                        .first(0));
+                                    } else {
+                                        return Flowable.empty();
+                                    }
+                                })
+                        .doOnError(error -> LOGGER.error("Unable to initialize Database", error))
+                        .subscribe();
+
+            } catch (Exception e) {
+                LOGGER.error("Unable to initialize the identity provider schema", e);
+            }
         }
-
-        List<Map<String, String>> options = configuration.getOptions();
-        if (options != null && !options.isEmpty()) {
-            options.forEach(claimMapper -> {
-                String option = claimMapper.get("option");
-                String value = claimMapper.get("value");
-                builder.option(Option.valueOf(option), ObjectUtils.stringToValue(value));
-            });
-        }
-
-        connectionPool = (ConnectionPool) ConnectionFactories.get(builder.build());
-        LOGGER.info("Connection pool created for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
     }
 
-    @Override
-    protected void doStop() throws Exception {
-        super.doStop();
-
-        try {
-            LOGGER.info("Disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-            if (!connectionPool.isDisposed()) {
-                connectionPool.dispose();
-                LOGGER.info("Connection pool disposed for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-            }
-        } catch (Exception ex) {
-            LOGGER.error("An error has occurred while disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost(), ex);
+    private String tableExists(String protocol, String table) {
+        if ("sqlserver".equalsIgnoreCase(protocol)) {
+            return "SELECT 1 FROM sysobjects WHERE name = '"+table+"' AND xtype = 'U'";
+        } else {
+            return "SELECT 1 FROM information_schema.tables WHERE table_name = '"+table+"'";
         }
     }
 
@@ -213,10 +213,6 @@ public class JdbcUserProvider extends AbstractService<UserProvider> implements U
                 });
     }
 
-    public void setConnectionPool(ConnectionPool connectionPool) {
-        this.connectionPool = connectionPool;
-    }
-
     private Maybe<Map<String, Object>> selectUserByUsername(String username) {
         final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter(1, "username"));
         return query(sql, username)
@@ -276,17 +272,6 @@ public class JdbcUserProvider extends AbstractService<UserProvider> implements U
 
     private String getIndexParameter(int index, String field) {
         return ParametersUtils.getIndexParameter(configuration.getProtocol(), index, field);
-    }
-
-    private void computeMetadata(Map<String, Object> claims) {
-        Object metadata = claims.get(configuration.getMetadataAttribute());
-        if (metadata == null) {
-            return;
-        }
-        try {
-            claims.putAll(objectMapper.readValue(claims.get(configuration.getMetadataAttribute()).toString(), Map.class));
-        } catch (Exception e) {
-        }
     }
 
     private String convert(Map<String, Object> claims) {

@@ -555,7 +555,7 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
                 }
             }
         } catch (Exception ex) {
-            LOGGER.error("Failed to close mongoDB client", ex);
+            LOGGER.error("Failed to close JDBC client", ex);
         }
     }
 }

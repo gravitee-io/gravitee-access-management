@@ -1,0 +1,7 @@
+--
+-- Script to create MariaDB schema
+-- Table & index names are suffixed by 3 underscores to define a
+-- pattern to replace with the domain name
+--
+CREATE TABLE IF NOT EXISTS idp_users___ (id VARCHAR(64) NOT NULL, username VARCHAR(320) NOT NULL, password VARCHAR(255), email VARCHAR(320), metadata LONGTEXT, PRIMARY KEY (id))
+CREATE INDEX IF NOT EXISTS idp_users____username_idx ON idp_users___(username)

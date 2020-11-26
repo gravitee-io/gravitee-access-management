@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import com.google.common.io.BaseEncoding;
 import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.IdentityProviderManager;
@@ -36,6 +37,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -50,7 +53,11 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
     private static final String DEFAULT_IDP_NAME = "Default Identity Provider";
-    private static final String DEFAULT_IDP_TYPE = "mongo-am-idp";
+    private static final String DEFAULT_MONGO_IDP_TYPE = "mongo-am-idp";
+    private static final String DEFAULT_JDBC_IDP_TYPE = "jdbc-am-idp";
+    // For postgres table name length is 63 (MySQL : 64 / SQL Server : 128) but the domain is prefixed by 'idp_users_' of length 10
+    // set to 50 in order to also check the length of the ID field (max 64 with prefix of 12)
+    public static final int TABLE_NAME_MAX_LENGTH = 50;
     private ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
 
     @Value("${management.mongodb.uri:mongodb://localhost:27017}")
@@ -64,6 +71,30 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
     @Value("${management.mongodb.dbname:gravitee-am}")
     private String mongoDBName;
+
+    @Value("${management.type:mongodb}")
+    private String managementBackend;
+
+    @Value("${management.jdbc.host:localhost}")
+    private String jdbcHost;
+
+    @Value("${management.jdbc.port}")
+    private Integer jdbcPort;
+
+    @Value("${management.jdbc.driver}")
+    private String jdbcDriver;
+
+    @Value("${management.jdbc.database}")
+    private String jdbcDatabase;
+
+    @Value("${management.jdbc.username}")
+    private String jdbcUser;
+
+    @Value("${management.jdbc.password}")
+    private String jdbcPassword;
+
+    @Value("${management.jdbc.identityProvider.provisioning:true}")
+    private boolean idpProvisioning;
 
     @Autowired
     private IdentityProviderPluginManager identityProviderPluginManager;
@@ -118,11 +149,49 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         String lowerCaseId = referenceId.toLowerCase();
         newIdentityProvider.setId(DEFAULT_IDP_PREFIX + lowerCaseId);
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
-        newIdentityProvider.setType(DEFAULT_IDP_TYPE);
-        // TODO test jdbc here
-        newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
-
+        if (useMongoRepositories()) {
+            newIdentityProvider.setType(DEFAULT_MONGO_IDP_TYPE);
+            newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
+        } else if (useJdbcRepositories()) {
+            newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
+            String tableSuffix = lowerCaseId.replaceAll("-", "_");
+            if ((tableSuffix).length() > TABLE_NAME_MAX_LENGTH) {
+                try {
+                    logger.info("Table name 'idp_users_{}' will be too long, compute shortest unique name", tableSuffix);
+                    byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
+                    tableSuffix = BaseEncoding.base16().encode(hash).substring(0, 40).toLowerCase();
+                    newIdentityProvider.setId(DEFAULT_IDP_PREFIX + tableSuffix);
+                } catch (NoSuchAlgorithmException e) {
+                    throw new IllegalStateException("Unable to compute digest of '" + lowerCaseId + "' due to unknown sha-256 algorithm", e);
+                }
+            }
+            String providerConfig = "{\"host\":\""+jdbcHost+"\"," +
+                    "\"port\":"+jdbcPort+"," +
+                    "\"protocol\":\""+jdbcDriver+"\"," +
+                    "\"database\":\""+jdbcDatabase+"\"," +
+                    // dash are forbidden in table name, replace them in domainName by underscore
+                    "\"usersTable\":\"idp_users_"+ tableSuffix +"\"," +
+                    "\"user\":\""+ jdbcUser +"\"," +
+                    "\"password\":\""+ jdbcPassword +"\"," +
+                    "\"autoProvisioning\":"+ idpProvisioning +"," +
+                    "\"selectUserByUsernameQuery\":\"SELECT * FROM idp_users_"+ tableSuffix +" WHERE username = %s\"," +
+                    "\"identifierAttribute\":\"id\"," +
+                    "\"usernameAttribute\":\"username\"," +
+                    "\"passwordAttribute\":\"password\"," +
+                    "\"passwordEncoder\":\"BCrypt\"}";
+            newIdentityProvider.setConfiguration(providerConfig);
+        } else {
+            return Single.error(new IllegalStateException("Unable to create Default IdentityProvider with " + managementBackend + " backend"));
+        }
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null);
+    }
+
+    protected boolean useMongoRepositories() {
+        return "mongodb".equalsIgnoreCase(managementBackend);
+    }
+
+    protected boolean useJdbcRepositories() {
+        return "jdbc".equalsIgnoreCase(managementBackend);
     }
 
     @Override
