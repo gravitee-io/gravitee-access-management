@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class DomainReporterUpgrader extends AbstractDomainUpgrader implements Upgrader, Ordered {
+public class DomainReporterUpgrader implements Upgrader, Ordered {
 
     private static final Logger logger = LoggerFactory.getLogger(DomainReporterUpgrader.class);
 

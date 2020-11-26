@@ -121,16 +121,11 @@ public class DomainsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
                 .andThen(domainService.create(organizationId, environmentId, newDomain, authenticatedUser)
                         // create default idp (ignore if mongodb isn't the repositories backend)
-                        .flatMap(domain -> useMongoRepositories() ? identityProviderManager.create(domain.getId()).map(__ -> domain) : Single.just(domain))
+                        .flatMap(domain -> identityProviderManager.create(domain.getId()).map(__ -> domain))
                         // create default reporter
                         .flatMap(domain -> reporterService.createDefault(domain.getId()).map(__ -> domain)))
                 .subscribe(domain -> response.resume(Response.created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain.getId()))
                         .entity(domain).build()), response::resume);
-    }
-
-    protected boolean useMongoRepositories() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "mongodb".equalsIgnoreCase(managementBackend);
     }
 
     @Path("{domain}")

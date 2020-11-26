@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.identityprovider.jdbc.authentication;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -23,103 +22,32 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.jdbc.JdbcAbstractProvider;
 import io.gravitee.am.identityprovider.jdbc.JdbcIdentityProviderMapper;
 import io.gravitee.am.identityprovider.jdbc.JdbcIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.jdbc.authentication.spring.JdbcAuthenticationProviderConfiguration;
-import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
-import io.gravitee.am.identityprovider.jdbc.utils.ObjectUtils;
 import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
-import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.gravitee.common.service.AbstractService;
-import io.r2dbc.pool.ConnectionPool;
-import io.r2dbc.pool.ConnectionPoolConfiguration;
-import io.r2dbc.spi.ConnectionFactories;
-import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.ConnectionFactoryOptions;
-import io.r2dbc.spi.Option;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
 import java.util.*;
-
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(JdbcAuthenticationProviderConfiguration.class)
-public class JdbcAuthenticationProvider extends AbstractService<AuthenticationProvider> implements AuthenticationProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JdbcAuthenticationProvider.class);
-
-    @Autowired
-    private JdbcIdentityProviderConfiguration configuration;
+public class JdbcAuthenticationProvider extends JdbcAbstractProvider<AuthenticationProvider> implements AuthenticationProvider {
 
     @Autowired
     private JdbcIdentityProviderMapper mapper;
 
     @Autowired
     private JdbcIdentityProviderRoleMapper roleMapper;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    private ConnectionPool connectionPool;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Override
-    protected void doStart() throws Exception {
-        super.doStart();
-
-        LOGGER.info("Initializing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-
-        Builder builder = ConnectionFactoryOptions.builder()
-                .option(DRIVER, "pool")
-                .option(PROTOCOL, configuration.getProtocol())
-                .option(HOST, configuration.getHost())
-                .option(PORT, configuration.getPort())
-                .option(USER, configuration.getUser())
-                .option(DATABASE, configuration.getDatabase());
-
-        if (configuration.getPassword() != null) {
-            builder.option(PASSWORD, configuration.getPassword());
-        }
-
-        List<Map<String, String>> options = configuration.getOptions();
-        if (options != null && !options.isEmpty()) {
-            options.forEach(claimMapper -> {
-                String option = claimMapper.get("option");
-                String value = claimMapper.get("value");
-                builder.option(Option.valueOf(option), ObjectUtils.stringToValue(value));
-            });
-        }
-
-        connectionPool = (ConnectionPool) ConnectionFactories.get(builder.build());
-        LOGGER.info("Connection pool created for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-    }
-
-    @Override
-    protected void doStop() throws Exception {
-        super.doStop();
-
-        try {
-            LOGGER.info("Disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-            if (!connectionPool.isDisposed()) {
-                connectionPool.dispose();
-                LOGGER.info("Connection pool disposed for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-            }
-        } catch (Exception ex) {
-            LOGGER.error("An error has occurred while disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost(), ex);
-        }
-    }
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
@@ -149,10 +77,6 @@ public class JdbcAuthenticationProvider extends AbstractService<AuthenticationPr
     public Maybe<User> loadUserByUsername(String username) {
         return selectUserByUsername(username)
                 .map(this::createUser);
-    }
-
-    public void setConnectionPool(ConnectionPool connectionPool) {
-        this.connectionPool = connectionPool;
     }
 
     private Maybe<Map<String, Object>> selectUserByUsername(String username) {
@@ -255,14 +179,4 @@ public class JdbcAuthenticationProvider extends AbstractService<AuthenticationPr
         return ParametersUtils.getIndexParameter(configuration.getProtocol(), 1, field);
     }
 
-    private void computeMetadata(Map<String, Object> claims) {
-        Object metadata = claims.get(configuration.getMetadataAttribute());
-        if (metadata == null) {
-            return;
-        }
-        try {
-            claims.putAll(objectMapper.readValue(claims.get(configuration.getMetadataAttribute()).toString(), Map.class));
-        } catch (Exception e) {
-        }
-    }
 }

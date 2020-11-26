@@ -38,6 +38,7 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -166,8 +167,13 @@ public class UserServiceImpl implements UserService {
                                                                 newUser.setEnabled(true);
                                                                 newUser.setDomain(referenceId);
                                                             }
-                                                            // store user in its identity provider
-                                                            return userProvider.create(convert(newUser))
+
+                                                            // store user in its identity provider:
+                                                            // - perform first validation of user to avoid error status 500 when the IDP is based on relational databases
+                                                            // - in case of error, trace the event otherwise continue the creation process
+                                                            return UserValidator.validate(transform(newUser))
+                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
+                                                                    .andThen(userProvider.create(convert(newUser)))
                                                                     .map(idpUser -> {
                                                                         // AM 'users' collection is not made for authentication (but only management stuff)
                                                                         // clear password

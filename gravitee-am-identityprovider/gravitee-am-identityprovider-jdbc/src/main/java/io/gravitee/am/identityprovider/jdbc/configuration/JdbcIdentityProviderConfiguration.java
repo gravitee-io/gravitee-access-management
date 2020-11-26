@@ -45,6 +45,7 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     private String passwordAttribute = FIELD_PASSWORD;
     private String passwordEncoder = PasswordEncoder.BCRYPT.getValue();
     private List<Map<String, String>> options;
+    private boolean autoProvisioning = false;
 
     @Override
     public boolean userProvider() {
@@ -161,5 +162,13 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
 
     public String getMetadataAttribute() {
         return FIELD_METADATA;
+    }
+
+    public boolean getAutoProvisioning() {
+        return autoProvisioning;
+    }
+
+    public void setAutoProvisioning(boolean autoProvisioning) {
+        this.autoProvisioning = autoProvisioning;
     }
 }

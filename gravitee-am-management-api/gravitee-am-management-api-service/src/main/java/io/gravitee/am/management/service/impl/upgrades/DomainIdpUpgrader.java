@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
-public class DomainIdpUpgrader extends AbstractDomainUpgrader implements Upgrader, Ordered {
+public class DomainIdpUpgrader implements Upgrader, Ordered {
 
     private static final Logger logger = LoggerFactory.getLogger(DomainIdpUpgrader.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
@@ -63,7 +63,7 @@ public class DomainIdpUpgrader extends AbstractDomainUpgrader implements Upgrade
         return identityProviderService.findById(DEFAULT_IDP_PREFIX + domain.getId())
                 .isEmpty()
                 .flatMap(isEmpty -> {
-                    if (useMongoRepositories() && isEmpty) {
+                    if (isEmpty) {
                         logger.info("No default idp found for domain {}, update domain", domain.getName());
                         return identityProviderManager.create(domain.getId());
                     }

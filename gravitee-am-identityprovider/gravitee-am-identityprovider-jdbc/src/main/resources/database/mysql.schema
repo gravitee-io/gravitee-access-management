@@ -1,0 +1,6 @@
+--
+-- Script to create MySQL schema
+-- Table & index names are suffixed by 3 underscores to define a
+-- pattern to replace with the domain name
+--
+CREATE TABLE IF NOT EXISTS idp_users___ (id NVARCHAR(64) NOT NULL, username NVARCHAR(320) NOT NULL, password NVARCHAR(255) NULL, email NVARCHAR(320) NULL, metadata LONGTEXT NULL, PRIMARY KEY (id), INDEX (username))
