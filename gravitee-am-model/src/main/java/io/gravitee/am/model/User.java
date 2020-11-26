@@ -112,11 +112,11 @@ public class User {
 
     private List<EnrolledFactor> factors;
 
-    private boolean webAuthnRegistrationCompleted;
-
     private Map<String, Object> additionalInformation;
 
     private Date loggedAt;
+
+    private Date lastPasswordReset;
 
     private Date createdAt;
 
@@ -183,6 +183,7 @@ public class User {
         this.factors = other.factors != null ? new ArrayList<>(other.factors) : null;
         this.additionalInformation = other.additionalInformation != null ? new HashMap<>(other.additionalInformation) : null;
         this.loggedAt = other.loggedAt;
+        this.lastPasswordReset = other.lastPasswordReset;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -580,6 +581,14 @@ public class User {
         this.additionalInformation = additionalInformation;
     }
 
+    public Date getLastPasswordReset() {
+        return lastPasswordReset;
+    }
+
+    public void setLastPasswordReset(Date lastPasswordReset) {
+        this.lastPasswordReset = lastPasswordReset;
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -598,13 +607,5 @@ public class User {
 
     public Boolean isInactive() {
         return isPreRegistration() && !isRegistrationCompleted();
-    }
-
-    public boolean isWebAuthnRegistrationCompleted() {
-        return webAuthnRegistrationCompleted;
-    }
-
-    public void setWebAuthnRegistrationCompleted(boolean webAuthnRegistrationCompleted) {
-        this.webAuthnRegistrationCompleted = webAuthnRegistrationCompleted;
     }
 }

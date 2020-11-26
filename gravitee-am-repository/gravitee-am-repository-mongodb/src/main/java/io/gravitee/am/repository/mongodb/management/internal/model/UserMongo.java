@@ -62,6 +62,7 @@ public class UserMongo extends Auditable {
     private String client;
     private long loginsCount;
     private Date loggedAt;
+    private Date lastPasswordReset;
     private List<AttributeMongo> emails;
     private List<AttributeMongo> phoneNumbers;
     private List<AttributeMongo> ims;
@@ -298,6 +299,14 @@ public class UserMongo extends Auditable {
 
     public void setLoginsCount(long loginsCount) {
         this.loginsCount = loginsCount;
+    }
+
+    public Date getLastPasswordReset() {
+        return lastPasswordReset;
+    }
+
+    public void setLastPasswordReset(Date lastPasswordReset) {
+        this.lastPasswordReset = lastPasswordReset;
     }
 
     public Date getLoggedAt() {

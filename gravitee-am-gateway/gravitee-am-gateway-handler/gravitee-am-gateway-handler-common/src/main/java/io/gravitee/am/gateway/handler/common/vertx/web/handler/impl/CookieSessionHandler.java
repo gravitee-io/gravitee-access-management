@@ -56,10 +56,22 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     @Value("${http.cookie.session.timeout:" + DEFAULT_SESSION_TIMEOUT + "}")
     private long timeout;
 
-    public CookieSessionHandler(JWTService jwtService, CertificateManager certificateManager, UserService userService) {
+    public CookieSessionHandler(JWTService jwtService,
+                                CertificateManager certificateManager,
+                                UserService userService) {
         this.jwtService = jwtService;
         this.certificateManager = certificateManager;
         this.userService = userService;
+    }
+
+    public CookieSessionHandler(JWTService jwtService,
+                                CertificateManager certificateManager,
+                                UserService userService,
+                                String cookieName,
+                                long timeout) {
+        this(jwtService, certificateManager, userService);
+        this.cookieName = cookieName;
+        this.timeout = timeout;
     }
 
     @Override

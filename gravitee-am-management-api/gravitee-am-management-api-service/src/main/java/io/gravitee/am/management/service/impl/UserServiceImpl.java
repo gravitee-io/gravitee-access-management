@@ -370,6 +370,7 @@ public class UserServiceImpl implements UserService {
                                     }
                                     user.setPassword(null);
                                     user.setExternalId(idpUser.getId());
+                                    user.setLastPasswordReset(new Date());
                                     user.setUpdatedAt(new Date());
                                     return userService.update(user);
                                 })
