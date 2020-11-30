@@ -52,6 +52,8 @@
         <liquibase-slf4j.version>2.0.0</liquibase-slf4j.version>
 
         <skip-repositories-tests>true</skip-repositories-tests>
+
+        <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
     </properties>
 
     <dependencies>
@@ -282,6 +284,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-tests</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -454,6 +463,26 @@
                             <systemPropertyVariables>
                                 <jdbcType>mssql-tc~2019-CU8-ubuntu-18.04</jdbcType>
                             </systemPropertyVariables>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${maven-dependency-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>unpack-repository-tests</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeGroupIds>io.gravitee.am.repository</includeGroupIds>
+                            <includeArtifactIds>gravitee-am-repository-tests</includeArtifactIds>
+                            <includeClassifiers>tests</includeClassifiers>
+                            <outputDirectory>${project.build.directory}/test-classes</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

@@ -101,13 +101,13 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
 
         FlowMongo flowMongo = new FlowMongo();
         flowMongo.setId(flow.getId());
-        flowMongo.setReferenceType(flow.getReferenceType().toString());
+        flowMongo.setReferenceType(flow.getReferenceType() == null ? null : flow.getReferenceType().toString());
         flowMongo.setReferenceId(flow.getReferenceId());
         flowMongo.setName(flow.getName());
         flowMongo.setPre(flow.getPre());
         flowMongo.setPost(flow.getPost());
         flowMongo.setEnabled(flow.isEnabled());
-        flowMongo.setType(flow.getType().toString());
+        flowMongo.setType(flow.getType() == null ? null : flow.getType().toString());
         flowMongo.setCondition(flow.getCondition());
         flowMongo.setCreatedAt(flow.getCreatedAt());
         flowMongo.setUpdatedAt(flow.getUpdatedAt());
@@ -121,13 +121,13 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
 
         Flow flow = new Flow();
         flow.setId(flowMongo.getId());
-        flow.setReferenceType(ReferenceType.valueOf(flowMongo.getReferenceType()));
+        flow.setReferenceType(flowMongo.getReferenceType() == null ? null : ReferenceType.valueOf(flowMongo.getReferenceType()));
         flow.setReferenceId(flowMongo.getReferenceId());
         flow.setName(flowMongo.getName());
         flow.setPre(flowMongo.getPre());
         flow.setPost(flowMongo.getPost());
         flow.setEnabled(flowMongo.isEnabled());
-        flow.setType(Type.valueOf(flowMongo.getType()));
+        flow.setType(flowMongo.getType() == null ? null : Type.valueOf(flowMongo.getType()));
         flow.setCondition(flowMongo.getCondition());
         flow.setCreatedAt(flowMongo.getCreatedAt());
         flow.setUpdatedAt(flowMongo.getUpdatedAt());
