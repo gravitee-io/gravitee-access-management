@@ -136,7 +136,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
-        return Observable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId)))
+                .first()).firstElement().map(this::convert);
     }
 
     @Override

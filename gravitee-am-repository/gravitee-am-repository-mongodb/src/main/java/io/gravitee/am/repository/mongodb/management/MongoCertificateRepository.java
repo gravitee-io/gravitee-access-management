@@ -99,7 +99,7 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
             // convert bson binary type back to byte array
             Map<String, Object> metadata = certificateMongo.getMetadata().entrySet()
                     .stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() instanceof Binary ? ((Binary) e.getValue()).getData() : e));
+                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() instanceof Binary ? ((Binary) e.getValue()).getData() : e.getValue()));
             certificate.setMetadata(metadata);
         }
         certificate.setCreatedAt(certificateMongo.getCreatedAt());
