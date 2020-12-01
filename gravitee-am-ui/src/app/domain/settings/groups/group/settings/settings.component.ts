@@ -27,7 +27,7 @@ import {AuthService} from '../../../../../services/auth.service';
   styleUrls: ['./settings.component.scss']
 })
 export class GroupSettingsComponent implements OnInit {
-  @ViewChild('groupForm') form: any;
+  @ViewChild('groupForm', { static: true }) form: any;
   private domainId: string;
   private organizationContext = false;
   group: any;

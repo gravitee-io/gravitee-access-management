@@ -28,7 +28,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   @Input() accountSettings: any;
   @Input() inheritMode = false;
   @Input() readonly = false;
-  @ViewChild('accountForm') form: any;
+  @ViewChild('accountForm', { static: true }) form: any;
   formChanged = false;
   userProviders: any[];
   private domainId: string;

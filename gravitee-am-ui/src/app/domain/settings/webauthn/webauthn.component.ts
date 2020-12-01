@@ -25,7 +25,7 @@ import {AuthService} from '../../../services/auth.service';
   styleUrls: ['./webauthn.component.scss']
 })
 export class DomainSettingsWebAuthnComponent implements OnInit {
-  @ViewChild('webAuthnForm') form: any;
+  @ViewChild('webAuthnForm', { static: true }) form: any;
   domainId: string;
   domain: any = {};
   formChanged = false;

@@ -29,8 +29,8 @@ export class RoleSelectionComponent implements OnInit, OnChanges {
   @Output() onRoleSelection = new EventEmitter();
   @Input('roles') domainRoles: any[] = [];
   @Input() initialSelectedRoles: any[];
-  @ViewChild('roleInput') roleInput: ElementRef<HTMLInputElement>;
-  @ViewChild(MatAutocompleteTrigger) trigger;
+  @ViewChild('roleInput', { static: true }) roleInput: ElementRef<HTMLInputElement>;
+  @ViewChild(MatAutocompleteTrigger, { static: true }) trigger;
   filteredRoles: any[] = [];
   assignedRoles: string[] = [];
   removable = true;

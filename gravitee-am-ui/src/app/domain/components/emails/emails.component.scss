@@ -1,5 +1,5 @@
 :host {
-  /deep/ .row-disabled {
+  ::ng-deep.row-disabled {
     background: #f1f1f1;
     border: 1px solid #fafafa;
     datatable-body-cell {
@@ -8,11 +8,11 @@
       font-style: italic !important;
     }
   }
-  /deep/ .ngx-datatable.material .datatable-footer {
+  ::ng-deep.ngx-datatable.material .datatable-footer {
     display: none;
   }
 
-  /deep/ .email-template-name-cell {
+  ::ng-deep.email-template-name-cell {
     padding: 0 !important;
   }
 }

@@ -52,10 +52,10 @@
 }
 
 :host {
-  /deep/ .ngx-datatable.material .datatable-footer {
+  ::ng-deep.ngx-datatable.material .datatable-footer {
     display: none;
   }
-  /deep/ .membership-name-cell {
+  ::ng-deep.membership-name-cell {
     padding: 0 !important;
   }
 }

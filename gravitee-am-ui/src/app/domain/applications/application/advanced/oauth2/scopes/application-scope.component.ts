@@ -26,7 +26,7 @@ export class ApplicationScopeComponent {
   selectScopes = new FormControl();
   @Output() addScopeChange = new EventEmitter();
   @Input() scopes: any[] = [];
-  @ViewChild('applicationScopeForm') form: NgForm;
+  @ViewChild('applicationScopeForm', { static: true }) form: NgForm;
 
   constructor() {}
 

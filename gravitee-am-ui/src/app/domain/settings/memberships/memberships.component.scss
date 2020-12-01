@@ -36,7 +36,7 @@ ngx-datatable {
 }
 
 :host {
-  /deep/ .membership-name-cell {
+  ::ng-deep.membership-name-cell {
     padding: 0 !important;
   }
 }

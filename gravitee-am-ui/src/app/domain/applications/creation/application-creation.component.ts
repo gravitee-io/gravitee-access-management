@@ -27,7 +27,7 @@ import {SnackbarService} from '../../../services/snackbar.service';
 export class ApplicationCreationComponent implements OnInit {
   public application: any = {};
   private domainId: string;
-  @ViewChild ('stepper') stepper: MatStepper;
+  @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
   constructor(private applicationService: ApplicationService,
               private snackbarService: SnackbarService,

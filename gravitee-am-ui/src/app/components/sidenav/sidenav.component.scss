@@ -16,7 +16,7 @@ $sidenavHeaderHeight: 64px;
 }
 
 :host {
-  /deep/ .mat-toolbar {
+  ::ng-deep.mat-toolbar {
     padding: 0 16px 0 7px;
     background: transparent;
   }

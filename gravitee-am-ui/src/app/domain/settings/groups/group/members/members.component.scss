@@ -18,38 +18,38 @@ ngx-datatable {
   }
 }
 
-:host /deep/ .member-name-cell {
+:host ::ng-deep.member-name-cell {
   padding: 0 !important;
   a {
     text-decoration: none;
   }
 }
 
-:host /deep/ .mat-badge-small .mat-badge-content {
+:host ::ng-deep.mat-badge-small .mat-badge-content {
   width: 12px;
   height: 12px;
   line-height: 12px;
 }
 
-:host /deep/ .mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
+:host ::ng-deep.mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
   right: 1px;
 }
 
-:host /deep/ .mat-badge-small.mat-badge-above .mat-badge-content {
+:host ::ng-deep.mat-badge-small.mat-badge-above .mat-badge-content {
   top: -2px;
 }
 
-:host /deep/ .user-enabled .mat-badge-content {
+:host ::ng-deep.user-enabled .mat-badge-content {
   color: white;
   background: limegreen;
 }
 
-:host /deep/ .user-disabled .mat-badge-content {
+:host ::ng-deep.user-disabled .mat-badge-content {
   color: white;
   background: orange;
 }
 
-:host /deep/ .user-locked .mat-badge-content {
+:host ::ng-deep.user-locked .mat-badge-content {
   color: white;
   background: red;
 }

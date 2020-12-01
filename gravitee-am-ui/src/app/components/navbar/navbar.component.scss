@@ -65,14 +65,14 @@ mat-toolbar {
   }
 }
 
-/deep/ .mat-toolbar-row {
+::ng-deep.mat-toolbar-row {
   height: 60px !important;
 }
 
-/deep/ .mat-menu-panel {
+::ng-deep.mat-menu-panel {
   max-width: 380px !important;
 }
 
-/deep/ .mat-menu-content {
+::ng-deep.mat-menu-content {
   padding-bottom: 2px !important;
 }

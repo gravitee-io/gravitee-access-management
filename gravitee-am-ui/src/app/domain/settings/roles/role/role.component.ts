@@ -35,7 +35,7 @@ export interface Scope {
   styleUrls: ['./role.component.scss']
 })
 export class RoleComponent implements OnInit {
-  @ViewChild('chipInput') chipInput: MatInput;
+  @ViewChild('chipInput', { static: true }) chipInput: MatInput;
   private domainId: string;
   scopes: Scope[];
   selectedPermissions: Scope[];

@@ -28,7 +28,7 @@ export class FactorCreationComponent implements OnInit {
   private domainId: string;
   factor: any = {};
   configurationIsValid = true;
-  @ViewChild ('stepper') stepper: MatStepper;
+  @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
   constructor(private factorService: FactorService,
               private snackbarService: SnackbarService,

@@ -19,7 +19,7 @@ ngx-datatable {
 }
 
 :host {
-  /deep/ .role-name-cell {
+  ::ng-deep.role-name-cell {
     padding: 0 !important;
   }
 }

@@ -1,5 +1,5 @@
 :host {
-  /deep/ .ngx-datatable.material .datatable-footer {
+  ::ng-deep.ngx-datatable.material .datatable-footer {
     display: none;
   }
 }

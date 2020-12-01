@@ -1,4 +1,4 @@
-/deep/ ul.checkbox-list {
+::ng-deepul.checkbox-list {
   display: flex;
   flex-direction: column;
   li:after {
@@ -6,6 +6,6 @@
   }
 }
 
-:host /deep/ mat-hint ul {
+:host ::ng-deepmat-hint ul {
   display: none;
 }

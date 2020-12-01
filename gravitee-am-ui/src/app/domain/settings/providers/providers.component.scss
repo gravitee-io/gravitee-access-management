@@ -27,7 +27,7 @@
 }
 
 :host {
-  /deep/ .idp-name-cell {
+  ::ng-deep.idp-name-cell {
     padding: 0 !important;
   }
 }

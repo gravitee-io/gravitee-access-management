@@ -30,38 +30,38 @@
   }
 }
 
-:host /deep/ .app-name-cell {
+:host ::ng-deep.app-name-cell {
   padding: 0 !important;
   a {
     text-decoration: none;
   }
 }
 
-:host /deep/ .mat-badge-small .mat-badge-content {
+:host ::ng-deep.mat-badge-small .mat-badge-content {
   width: 12px;
   height: 12px;
   line-height: 12px;
 }
 
-:host /deep/ .mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
+:host ::ng-deep.mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
   right: 1px;
 }
 
-:host /deep/ .mat-badge-small.mat-badge-above .mat-badge-content {
+:host ::ng-deep.mat-badge-small.mat-badge-above .mat-badge-content {
   top: -2px;
 }
 
-:host /deep/ .app-enabled .mat-badge-content {
+:host ::ng-deep.app-enabled .mat-badge-content {
   color: white;
   background: limegreen;
 }
 
-:host /deep/ .app-is-template .mat-badge-content {
+:host ::ng-deep.app-is-template .mat-badge-content {
   color: white;
   background: orange;
 }
 
-:host /deep/ .app-disabled .mat-badge-content {
+:host ::ng-deep.app-disabled .mat-badge-content {
   color: white;
   background: red;
 }

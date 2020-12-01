@@ -136,8 +136,8 @@ export class GroupMembersComponent implements OnInit {
   templateUrl: './add/add-member.component.html',
 })
 export class AddMemberComponent {
-  @ViewChild('memberInput') memberInput: ElementRef<HTMLInputElement>;
-  @ViewChild(MatAutocompleteTrigger) trigger;
+  @ViewChild('memberInput', { static: true }) memberInput: ElementRef<HTMLInputElement>;
+  @ViewChild(MatAutocompleteTrigger, { static: true }) trigger;
   memberCtrl = new FormControl();
   filteredUsers: any[];
   selectedMembers: any[] = [];

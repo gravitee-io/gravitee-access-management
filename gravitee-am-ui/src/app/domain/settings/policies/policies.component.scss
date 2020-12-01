@@ -126,26 +126,26 @@
   }
 }
 
-:host /deep/ .mat-slide-toggle-bar {
+:host ::ng-deep.mat-slide-toggle-bar {
   height: 9px !important;
   width: 28px !important;
 }
 
-:host /deep/ .mat-slide-toggle-thumb {
+:host ::ng-deep.mat-slide-toggle-thumb {
   height: 12px !important;
   width: 12px !important;
 }
 
-:host /deep/ .mat-slide-toggle.mat-checked .mat-slide-toggle-thumb-container {
+:host ::ng-deep.mat-slide-toggle.mat-checked .mat-slide-toggle-thumb-container {
   transform: translate3d(18px,0,0) !important;
 }
 
-:host /deep/ .mat-slide-toggle-thumb-container {
+:host ::ng-deep.mat-slide-toggle-thumb-container {
   width: 14px !important;
   height: 14px !important;
   top: -2px !important;
 }
 
-/deep/ .mat-list-base[dense] .mat-list-item {
+::ng-deep.mat-list-base[dense] .mat-list-item {
   font-size: 13px;
 }

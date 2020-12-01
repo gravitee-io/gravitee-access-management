@@ -30,7 +30,7 @@ export class ProviderCreationComponent implements OnInit {
   private domainId: string;
   private organizationContext: boolean;
   configurationIsValid = false;
-  @ViewChild ('stepper') stepper: MatStepper;
+  @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
   constructor(private providerService: ProviderService,
               private snackbarService: SnackbarService,

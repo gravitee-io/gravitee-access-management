@@ -36,7 +36,7 @@ export class ScopeComponent implements OnInit {
   unitTime: any;
   editMode: boolean;
   deleteMode: boolean;
-  @ViewChild('scopeForm') public scopeForm: NgForm;
+  @ViewChild('scopeForm', { static: true }) public scopeForm: NgForm;
 
   constructor(private scopeService: ScopeService,
               private snackbarService: SnackbarService,

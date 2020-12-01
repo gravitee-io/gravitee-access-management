@@ -16,13 +16,20 @@ import {tap} from 'rxjs/operators';
  * limitations under the License.
  */
 
-import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse} from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  HttpEvent,
+  HttpHandler,
+  HttpInterceptor,
+  HttpRequest,
+  HttpResponse,
+  HttpResponseBase
+} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
 import {Observable} from 'rxjs';
 import {SnackbarService} from '../services/snackbar.service';
 import {AuthService} from '../services/auth.service';
-import {HttpResponseBase} from "@angular/common/http/src/response";
 
 @Injectable()
 export class HttpRequestInterceptor implements HttpInterceptor {

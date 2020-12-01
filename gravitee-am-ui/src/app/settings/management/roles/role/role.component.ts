@@ -29,7 +29,7 @@ import {AuthService} from '../../../../services/auth.service';
   styleUrls: ['./role.component.scss']
 })
 export class ManagementRoleComponent implements OnInit {
-  @ViewChild('roleForm') form: NgForm;
+  @ViewChild('roleForm', { static: true }) form: NgForm;
   private deleteMode: boolean;
   allPermissions: MatTableDataSource<any>;
   role: any;

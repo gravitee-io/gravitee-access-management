@@ -5,10 +5,10 @@
   mat-sidenav-content {
     width: 100%;
   }
-  /deep/ .settings-sidenav {
+  ::ng-deep.settings-sidenav {
     margin: 0 !important;
   }
-  /deep/ .mat-list-base {
+  ::ng-deep.mat-list-base {
     padding-top: 0;
   }
   .application-design-main-content {

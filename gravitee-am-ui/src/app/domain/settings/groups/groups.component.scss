@@ -19,7 +19,7 @@ ngx-datatable {
 }
 
 :host {
-  /deep/ .group-name-cell {
+  ::ng-deep.group-name-cell {
     padding: 0 !important;
   }
 }

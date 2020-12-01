@@ -44,9 +44,9 @@ export class EmailComponent implements OnInit, AfterViewInit {
   emailFound = false;
   formChanged = false;
   config: any = { lineNumbers: true, readOnly: true};
-  @ViewChild('editor') editor: any;
-  @ViewChild('preview') preview: ElementRef;
-  @ViewChild('emailForm') public emailForm: NgForm;
+  @ViewChild('editor', { static: true }) editor: any;
+  @ViewChild('preview', { static: true }) preview: ElementRef;
+  @ViewChild('emailForm', { static: true }) public emailForm: NgForm;
   @Input('createMode') createMode: boolean;
   @Input('editMode') editMode: boolean;
   @Input('deleteMode') deleteMode: boolean;

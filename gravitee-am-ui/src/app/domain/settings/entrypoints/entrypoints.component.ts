@@ -28,7 +28,7 @@ import {AuthService} from '../../../services/auth.service';
   styleUrls: ['./entrypoints.component.scss']
 })
 export class DomainSettingsEntrypointsComponent implements OnInit {
-  @ViewChild('chipInput') chipInput: MatInput;
+  @ViewChild('chipInput', { static: false }) chipInput: MatInput;
   formChanged = false;
   domain: any = {};
   entrypoint: any;

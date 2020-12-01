@@ -26,7 +26,7 @@ import {NgForm} from "@angular/forms";
   styleUrls: ['./metadata.component.scss']
 })
 export class ApplicationMetadataComponent implements OnInit {
-  @ViewChild('metadataForm') public form: NgForm;
+  @ViewChild('metadataForm', { static: true }) public form: NgForm;
   private domainId: string;
   application: any;
   metadata: any = {};

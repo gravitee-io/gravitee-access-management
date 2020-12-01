@@ -28,7 +28,7 @@ export class CertificateCreationComponent {
   public certificate: any = {};
   private domainId: string;
   configurationIsValid = false;
-  @ViewChild ('stepper') stepper: MatStepper;
+  @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
   constructor(private certificateService: CertificateService,
               private snackbarService: SnackbarService,
