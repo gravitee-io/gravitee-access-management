@@ -38,7 +38,7 @@ export class ApplicationOverviewComponent implements OnInit {
   entrypoint: any;
   baseUrl: string;
   tokenEndpointAuthMethod: string;
-  @ViewChild('copyText', {read: ElementRef}) copyText: ElementRef;
+  @ViewChild('copyText', { read: ElementRef, static: true }) copyText: ElementRef;
 
   constructor(private route: ActivatedRoute,
               private authService: AuthService,

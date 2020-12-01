@@ -32,7 +32,7 @@ import * as _ from 'lodash';
   styleUrls: ['./settings.component.scss']
 })
 export class ProviderSettingsComponent implements OnInit {
-  @ViewChild('providerForm') public form: NgForm;
+  @ViewChild('providerForm', { static: true }) public form: NgForm;
   private domainId: string;
   private certificates: any[];
   organizationContext = false;

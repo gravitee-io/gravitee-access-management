@@ -26,7 +26,7 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
   @Input() loginSettings: any;
   @Input() inheritMode = false;
   @Input() readonly = false;
-  @ViewChild('loginForm') form: any;
+  @ViewChild('loginForm', { static: true }) form: any;
   formChanged = false;
   private domainId: string;
 

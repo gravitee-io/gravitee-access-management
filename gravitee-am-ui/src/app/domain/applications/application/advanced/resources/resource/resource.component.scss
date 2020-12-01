@@ -19,7 +19,7 @@ ngx-datatable {
 }
 
 :host {
-  /deep/ .policy-name-cell {
+  ::ng-deep.policy-name-cell {
     padding: 0 !important;
   }
 }

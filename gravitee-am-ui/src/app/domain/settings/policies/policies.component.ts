@@ -30,7 +30,7 @@ import {AuthService} from "../../../services/auth.service";
   styleUrls: ['./policies.component.scss']
 })
 export class DomainSettingsPoliciesComponent implements OnInit {
-  @ViewChild('policyForm') form: NgForm;
+  @ViewChild('policyForm', { static: false }) form: NgForm;
   private domainId: string;
   isLoading: boolean = false;
   policies: any[];

@@ -29,7 +29,7 @@ import {AuthService} from '../../../../services/auth.service';
 })
 export class TagComponent implements OnInit {
   tag: any;
-  @ViewChild('tagForm') public tagForm: NgForm;
+  @ViewChild('tagForm', { static: true }) public tagForm: NgForm;
   readonly: boolean;
 
   constructor(private tagService: TagService,

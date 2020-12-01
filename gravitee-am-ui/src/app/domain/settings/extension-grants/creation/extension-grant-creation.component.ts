@@ -28,7 +28,7 @@ export class ExtensionGrantCreationComponent implements OnInit {
   private domainId: string;
   extensionGrant: any = {};
   configurationIsValid = false;
-  @ViewChild ('stepper') stepper: MatStepper;
+  @ViewChild('stepper', { static: true }) stepper: MatStepper;
 
   constructor(private extensionGrantService: ExtensionGrantService,
               private snackbarService: SnackbarService,

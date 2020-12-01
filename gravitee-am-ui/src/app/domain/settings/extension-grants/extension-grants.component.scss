@@ -19,7 +19,7 @@ ngx-datatable {
 }
 
 :host {
-  /deep/ .extension-grant-name-cell {
+  ::ng-deep.extension-grant-name-cell {
     padding: 0 !important;
   }
 }

@@ -2,7 +2,7 @@ ngx-datatable {
   box-shadow: none !important;
 }
 
-:host /deep/ {
+:host ::ng-deep{
   a {
     text-decoration: none;
   }

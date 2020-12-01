@@ -9,10 +9,10 @@ form {
   }
 }
 
-:host /deep/ .ngx-datatable.material .datatable-footer {
+:host ::ng-deep.ngx-datatable.material .datatable-footer {
   display: none;
 }
 
-/deep/ datatable-scroller {
+::ng-deepdatatable-scroller {
   width: 100% !important;
 }

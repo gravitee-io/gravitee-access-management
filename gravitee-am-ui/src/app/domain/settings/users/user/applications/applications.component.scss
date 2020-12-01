@@ -1,11 +1,11 @@
 :host {
-  /deep/ .ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
+  ::ng-deep.ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
     &:first-child {
       padding-left: 42px;
     }
   }
 
-  /deep/ .row-disabled {
+  ::ng-deep.row-disabled {
     background: #f1f1f1;
     border: 1px solid #fafafa;
     datatable-body-cell {

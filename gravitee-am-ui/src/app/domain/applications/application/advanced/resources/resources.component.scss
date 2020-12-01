@@ -24,7 +24,7 @@ ngx-datatable {
 }
 
 :host {
-  /deep/ .resource-name-cell {
+  ::ng-deep.resource-name-cell {
     padding: 0 !important;
   }
 }

@@ -3,10 +3,10 @@ mat-sidenav-content.gs-sidenav-content-min {
 }
 
 :host {
-  /deep/ .mat-drawer-inner-container {
+  ::ng-deep.mat-drawer-inner-container {
     overflow: initial;
   }
-  /deep/ .mat-drawer-side.main-sidenav {
+  ::ng-deep.mat-drawer-side.main-sidenav {
     border-right: none;
   }
 }

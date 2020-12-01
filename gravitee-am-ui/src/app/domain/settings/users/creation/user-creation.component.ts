@@ -44,7 +44,7 @@ export class UserCreationComponent implements OnInit {
   user: any = {};
   userClaims: any = {};
   userProviders: any[];
-  @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
+  @ViewChild('dynamic', { read: ViewContainerRef, static: true }) viewContainerRef: ViewContainerRef;
 
   constructor(private userService: UserService,
               private router: Router,

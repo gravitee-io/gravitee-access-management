@@ -29,7 +29,7 @@ export class ApplicationEndpointsComponent implements OnInit {
   entrypoint: any;
   private baseUrl: string;
   private domain: any;
-  @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
+  @ViewChild('copyText', { read: ElementRef, static: false }) copyText: ElementRef;
 
   constructor(private route: ActivatedRoute,
               private snackbarService: SnackbarService,

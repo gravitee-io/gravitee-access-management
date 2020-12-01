@@ -35,7 +35,7 @@ export interface Tag {
   styleUrls: ['./general.component.scss']
 })
 export class DomainSettingsGeneralComponent implements OnInit {
-  @ViewChild('chipInput') chipInput: MatInput;
+  @ViewChild('chipInput', { static: true }) chipInput: MatInput;
   formChanged = false;
   domain: any = {};
   tags: Tag[];

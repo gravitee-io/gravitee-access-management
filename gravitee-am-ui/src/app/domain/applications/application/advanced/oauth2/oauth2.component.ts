@@ -30,8 +30,8 @@ import * as moment from 'moment';
   styleUrls: ['./oauth2.component.scss']
 })
 export class ApplicationOAuth2Component implements OnInit {
-  @ViewChild('claimsTable') table: any;
-  @ViewChild('clientOAuth2Form') form: any;
+  @ViewChild('claimsTable', { static: false }) table: any;
+  @ViewChild('clientOAuth2Form', { static: true }) form: any;
   private domainId: string;
   application: any;
   formChanged = false;
@@ -323,7 +323,7 @@ export class CreateClaimComponent {
   claim: any = {};
   tokenTypes: any[] = ['ID_TOKEN', 'ACCESS_TOKEN'];
   @Output() addClaimChange = new EventEmitter();
-  @ViewChild('claimForm') form: NgForm;
+  @ViewChild('claimForm', { static: true }) form: NgForm;
 
   constructor() {}
 

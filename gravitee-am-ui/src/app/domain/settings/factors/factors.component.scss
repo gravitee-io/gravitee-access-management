@@ -23,11 +23,11 @@
 }
 
 :host {
-  /deep/ .ngx-datatable.material .datatable-footer {
+  ::ng-deep.ngx-datatable.material .datatable-footer {
     display: none;
   }
 
-  /deep/ .factor-name-cell {
+  ::ng-deep.factor-name-cell {
     padding: 0 !important;
   }
 }

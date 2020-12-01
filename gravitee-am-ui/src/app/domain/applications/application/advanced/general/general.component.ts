@@ -27,7 +27,7 @@ import * as _ from 'lodash';
   styleUrls: ['./general.component.scss']
 })
 export class ApplicationGeneralComponent implements OnInit {
-  @ViewChild('applicationForm') form: any;
+  @ViewChild('applicationForm', { static: true }) form: any;
   private domainId: string;
   domain: any;
   application: any;

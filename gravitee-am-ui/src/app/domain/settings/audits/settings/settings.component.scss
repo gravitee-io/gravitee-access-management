@@ -1,13 +1,13 @@
 :host {
-  /deep/ .ngx-datatable.material .datatable-footer {
+  ::ng-deep.ngx-datatable.material .datatable-footer {
     display: none;
   }
 
-  /deep/ .ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
+  ::ng-deep.ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
     font-size: 12px;
   }
 
-  /deep/ .ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
+  ::ng-deep.ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
     &:first-child {
       padding-left: 42px;
     }

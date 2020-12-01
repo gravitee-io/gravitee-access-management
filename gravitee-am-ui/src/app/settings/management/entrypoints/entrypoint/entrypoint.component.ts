@@ -32,8 +32,8 @@ import {MatInput} from "@angular/material/input";
 })
 export class EntrypointComponent implements OnInit {
   entrypoint: any;
-  @ViewChild('entrypointForm') public entrypointForm: NgForm;
-  @ViewChild('chipInput') chipInput: MatInput;
+  @ViewChild('entrypointForm', { static: true }) public entrypointForm: NgForm;
+  @ViewChild('chipInput', { static: true }) chipInput: MatInput;
   formChanged = false;
   readonly: boolean;
   tags: Tag[];

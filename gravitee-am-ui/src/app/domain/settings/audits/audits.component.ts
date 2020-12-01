@@ -34,7 +34,7 @@ export class AuditsComponent implements OnInit {
   private endDateChanged = false;
   organizationContext = false;
   requiredReadPermission: string;
-  @ViewChild('auditsTable') table: any;
+  @ViewChild('auditsTable', { static: true }) table: any;
   userCtrl = new FormControl();
   audits: any[];
   pagedAudits: any;

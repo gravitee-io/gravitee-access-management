@@ -155,7 +155,7 @@ export class ProviderRolesComponent implements OnInit {
   templateUrl: './create/create.component.html',
 })
 export class CreateRoleMapperComponent {
-  @ViewChild('userRoleForm') form: NgForm;
+  @ViewChild('userRoleForm', { static: true }) form: NgForm;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
               public dialogRef: MatDialogRef<CreateRoleMapperComponent>) {

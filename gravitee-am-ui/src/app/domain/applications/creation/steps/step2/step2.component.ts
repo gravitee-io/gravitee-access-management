@@ -24,7 +24,7 @@ import * as _ from 'lodash';
 })
 export class ApplicationCreationStep2Component implements OnInit {
   @Input('application') application: any;
-  @ViewChild('appForm') form: any;
+  @ViewChild('appForm', { static: false }) form: any;
   domain: any;
   applicationTypes: any[] = [
     {

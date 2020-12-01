@@ -3,7 +3,7 @@
   padding: 20px 0px 0px 30px;
 }
 
-:host /deep/ {
+:host ::ng-deep{
   h1 {
     max-width: 600px;
     margin: 0px 0px 32px 0px;

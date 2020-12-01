@@ -5,6 +5,6 @@
     border: 1px solid rgb(226, 229, 231);
 }
 
-:host /deep/ .ngx-datatable.material .datatable-footer {
+:host ::ng-deep.ngx-datatable.material .datatable-footer {
   display: none;
 }
