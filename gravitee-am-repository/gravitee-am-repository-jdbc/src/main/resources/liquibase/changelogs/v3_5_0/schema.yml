@@ -1572,6 +1572,56 @@ databaseChangeLog:
             tableName: user_attributes
             unique: false
 
+        # Flows
+        ##############
+        - createTable:
+            tableName: flows
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: enabled, type: boolean, constraints: { nullable: true } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: condition, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_flows
+            columnNames: id
+            tableName: flows
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  reference_id
+              - column:
+                  name:  reference_type
+            indexName:  idx_flow_by_reference
+            tableName:  flows
+            unique:  false
+
+        - createTable:
+            tableName: flow_steps
+            columns:
+              - column: {name: flow_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: stage, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: stage_order, type: integer, constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: policy, type: nvarchar(128), constraints: { nullable: false } }
+              - column: {name: description, type: clob, constraints: { nullable: false } }
+              - column: {name: configuration, type: clob, constraints: { nullable: false } }
+              - column: {name: enabled, type: boolean, constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name:  flow_id
+            indexName:  idx_flow_step_flowid
+            tableName:  flow_steps
+            unique:  false
+
         ## request_objects
         ###################
         - createTable:
@@ -1598,7 +1648,7 @@ databaseChangeLog:
             unique: false
 
         ## access token
-      ###################
+        ###################
         - createTable:
             tableName: access_tokens
             columns:
