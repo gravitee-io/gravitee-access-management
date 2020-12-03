@@ -77,6 +77,7 @@ public class PolicyChainHandlerTest {
 
         PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT);
 
+        when(routingContext.request()).thenReturn(request);
         policyChainHandler.handle(routingContext);
 
         verify(flowManager, times(1)).findByExtensionPoint(ExtensionPoint.PRE_CONSENT);

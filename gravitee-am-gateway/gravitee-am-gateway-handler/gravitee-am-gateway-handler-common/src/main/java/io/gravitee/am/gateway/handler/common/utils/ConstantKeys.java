@@ -71,4 +71,7 @@ public interface ConstantKeys {
     // Consent keys.
     String USER_CONSENT_COMPLETED_KEY = "userConsentCompleted";
     String USER_CONSENT_APPROVED_KEY = "userConsentApproved";
+
+    // Register keys.
+    String REGISTRATION_RESPONSE_KEY = "registrationResponse";
 }

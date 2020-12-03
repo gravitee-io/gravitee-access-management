@@ -103,13 +103,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:
-                    String flowId = event.content().getId();
-                    if (flowId != null) {
-                        updateFlow(flowId, event.type());
-                    } else {
-                        logger.info("Domain {} has received bulk_update flows event", domain.getName());
-                        loadFlows();
-                    }
+                    updateFlow(event.content().getId(), event.type());
                     break;
                 case UNDEPLOY:
                     removeFlow(event.content().getId());
@@ -151,8 +145,11 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
                 .subscribe(
                         flows1 -> {
                             flows1.forEach(flow -> {
-                                flows.put(flow.getId(), flow);
-                                loadFlow(flow);
+                                // flow id can be null if it comes from the default_flows method
+                                if (flow != null && flow.getId() != null) {
+                                    loadFlow(flow);
+                                    flows.put(flow.getId(), flow);
+                                }
                             });
                             logger.info("Flows loaded for domain {}", domain.getName());
                         },

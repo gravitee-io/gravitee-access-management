@@ -38,8 +38,6 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
-import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
-import io.gravitee.am.gateway.handler.common.policy.impl.PolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
@@ -134,11 +132,6 @@ public class CommonConfiguration {
     @Bean
     public AuthenticationEventListener authenticationEventListener() {
         return new AuthenticationEventListener();
-    }
-
-    @Bean
-    public PolicyManager policyManager() {
-        return new PolicyManagerImpl();
     }
 
     @Bean

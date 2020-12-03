@@ -21,14 +21,14 @@ package io.gravitee.am.service.exception;
  */
 public class FlowNotFoundException extends AbstractNotFoundException {
 
-    private final String application;
+    private final String flow;
 
-    public FlowNotFoundException(String application) {
-        this.application = application;
+    public FlowNotFoundException(String flow) {
+        this.flow = flow;
     }
 
     @Override
     public String getMessage() {
-        return "Application [" + application + "] can not be found.";
+        return "Flow [" + flow + "] can not be found.";
     }
 }

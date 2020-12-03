@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
@@ -30,7 +31,7 @@ import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpServerRequest;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +66,17 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
+        // do not call the policy chain if there is error, success or warning parameters
+        // it means that the policy chain has been already executed
+        final HttpServerRequest request = context.request();
+        if (request.params() != null &&
+                (request.params().contains(ConstantKeys.ERROR_PARAM_KEY) ||
+                        request.params().contains(ConstantKeys.WARNING_PARAM_KEY) ||
+                        request.params().contains(ConstantKeys.SUCCESS_PARAM_KEY))) {
+            context.next();
+            return;
+        }
+
         // resolve policies
         resolve(extensionPoint, handler -> {
             if (handler.failed()) {
@@ -114,7 +126,7 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
 
     private void prepareContext(RoutingContext routingContext, Handler<AsyncResult<ExecutionContext>> handler) {
         try {
-            HttpServerRequest request = routingContext.request().getDelegate();
+            io.vertx.core.http.HttpServerRequest request = routingContext.request().getDelegate();
             Request serverRequest = new VertxHttpServerRequest(request);
             Response serverResponse = new VertxHttpServerResponse(request, serverRequest.metrics());
             ExecutionContext simpleExecutionContext = new SimpleExecutionContext(serverRequest, serverResponse);

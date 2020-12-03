@@ -396,15 +396,15 @@ public class DomainServiceImpl implements DomainService {
                             )
                             // delete email templates
                             .andThen(emailTemplateService.findAll(ReferenceType.DOMAIN, domainId)
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteEmailsCompletable = scopes.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
+                                    .flatMapCompletable(emailTemplates -> {
+                                        List<Completable> deleteEmailsCompletable = emailTemplates.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteEmailsCompletable);
                                     })
                             )
                             // delete form templates
                             .andThen(formService.findByDomain(domainId)
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteFormsCompletable = scopes.stream().map(f -> formService.delete(domainId, f.getId())).collect(Collectors.toList());
+                                    .flatMapCompletable(formTemplates -> {
+                                        List<Completable> deleteFormsCompletable = formTemplates.stream().map(f -> formService.delete(domainId, f.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteFormsCompletable);
                                     })
                             )
@@ -418,7 +418,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete flows
                             .andThen(flowService.findAll(ReferenceType.DOMAIN, domainId)
                                     .flatMapCompletable(flows -> {
-                                        List<Completable> deletePoliciesCompletable = flows.stream().map(f -> flowService.delete(f.getId())).collect(Collectors.toList());
+                                        List<Completable> deletePoliciesCompletable = flows.stream().filter(f -> f.getId() != null).map(f -> flowService.delete(f.getId())).collect(Collectors.toList());
                                         return Completable.concat(deletePoliciesCompletable);
                                     })
                             )
@@ -438,9 +438,9 @@ public class DomainServiceImpl implements DomainService {
                             )
                             // delete uma resources
                             .andThen(resourceService.findByDomain(domainId)
-                                    .flatMapCompletable(resourceSet -> {
-                                        List<Completable> deletedResourceSet = resourceSet.stream().map(resourceService::delete).collect(Collectors.toList());
-                                        return Completable.concat(deletedResourceSet);
+                                    .flatMapCompletable(resources -> {
+                                        List<Completable> deletedResourceCompletable = resources.stream().map(resourceService::delete).collect(Collectors.toList());
+                                        return Completable.concat(deletedResourceCompletable);
                                     })
                             )
                             .andThen(domainRepository.delete(domainId))
