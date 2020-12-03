@@ -16,7 +16,8 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
@@ -56,11 +57,11 @@ public class RegisterSubmissionEndpointTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        RegisterSubmissionEndpoint registerSubmissionEndpoint = new RegisterSubmissionEndpoint(userService, domain);
         router.route(HttpMethod.POST, "/register")
                 .handler(BodyHandler.create())
-                .handler(registerSubmissionEndpoint)
-                .failureHandler(new ErrorHandler());
+                .handler(new RegisterProcessHandler(userService, domain))
+                .handler(new RegisterSubmissionEndpoint())
+                .failureHandler(new RegisterFailureHandler());
     }
 
     @Test

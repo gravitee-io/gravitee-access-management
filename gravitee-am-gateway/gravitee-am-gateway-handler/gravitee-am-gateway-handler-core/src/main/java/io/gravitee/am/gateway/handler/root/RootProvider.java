@@ -28,11 +28,11 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandle
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.factor.FactorManager;
-import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbackEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginSSOPOSTEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
@@ -57,10 +57,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.password.Forgo
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn;
@@ -75,7 +72,9 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.handler.*;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.handler.CSRFHandler;
+import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -183,9 +182,15 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.get("/login")
                 .handler(clientRequestParseHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
                 .handler(new LoginEndpoint(thymeleafTemplateEngine, domain));
         rootRouter.post("/login")
-                .handler(FormLoginHandler.create(userAuthProvider));
+                .handler(clientRequestParseHandler)
+                .handler(new LoginFormHandler(userAuthProvider))
+                .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
+                .handler(new LoginPostEndpoint());
+        rootRouter.route("/login")
+                .failureHandler(new LoginFailureHandler());
 
         // logout route
         rootRouter.route("/logout").handler(new LogoutEndpoint(domain, tokenService, auditService));
@@ -201,12 +206,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(loginCallbackParseHandler)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(socialAuthHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.post("/login/callback")
                 .handler(loginCallbackParseHandler)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(socialAuthHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.get("/login/SSO/POST")
@@ -240,13 +247,19 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.GET, "/register")
                 .handler(clientRequestParseHandler)
                 .handler(registerAccessHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
                 .handler(new RegisterEndpoint(thymeleafTemplateEngine));
         rootRouter.route(HttpMethod.POST, "/register")
                 .handler(new RegisterSubmissionRequestParseHandler())
                 .handler(clientRequestParseHandlerOptional)
                 .handler(registerAccessHandler)
                 .handler(passwordPolicyRequestParseHandler)
-                .handler(new RegisterSubmissionEndpoint(userService, domain));
+                .handler(new RegisterProcessHandler(userService, domain))
+                .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTER))
+                .handler(new RegisterSubmissionEndpoint());
+        rootRouter.route("/register")
+                .failureHandler(new RegisterFailureHandler());
+
         rootRouter.route(HttpMethod.GET,"/confirmRegistration")
                 .handler(new RegisterConfirmationRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
@@ -368,7 +381,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     private void errorHandler(Router router) {
         Handler<RoutingContext> errorHandler = new ErrorHandler( "/error");
-        router.route("/login").failureHandler(errorHandler);
         router.route("/forgotPassword").failureHandler(errorHandler);
     }
 }

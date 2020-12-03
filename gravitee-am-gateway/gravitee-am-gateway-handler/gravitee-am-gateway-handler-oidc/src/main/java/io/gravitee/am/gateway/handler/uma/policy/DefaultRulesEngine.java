@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.uma.policy;
 
-import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
+import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Completable;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ public class DefaultRulesEngine implements RulesEngine {
     private PolicyChainProcessorFactory policyChainProcessorFactory;
 
     @Autowired
-    private PolicyManager policyManager;
+    private PolicyPluginManager policyPluginManager;
 
     @Override
     public Completable fire(List<Rule> rules, ExecutionContext executionContext) {
@@ -65,7 +65,7 @@ public class DefaultRulesEngine implements RulesEngine {
             return rules.stream()
                     .filter(rule -> rule.enabled())
                     .map(rule -> {
-                        Policy policy = policyManager.create(rule.type(), rule.condition());
+                        Policy policy = policyPluginManager.create(rule.type(), rule.condition());
                         policy.setMetadata(rule.metadata());
                         return policy;
                     })

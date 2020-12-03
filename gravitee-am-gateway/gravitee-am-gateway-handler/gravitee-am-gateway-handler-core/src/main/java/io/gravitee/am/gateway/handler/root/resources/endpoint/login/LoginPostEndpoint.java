@@ -13,44 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
+package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RegisterSubmissionEndpoint implements Handler<RoutingContext> {
+public class LoginPostEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        // prepare response
-        final RegistrationResponse registrationResponse = context.get(ConstantKeys.REGISTRATION_RESPONSE_KEY);
+        // the login process is done
+        // redirect the user to the original request
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
-
-        // no redirect uri has been set, redirect to the default page
-        if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
-            queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "registration_succeed");
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams);
-            doRedirect(context.response(), uri);
-            return;
-        }
-        // else, redirect to the custom redirect_uri
-        doRedirect(context.response(), registrationResponse.getRedirectUri());
+        final String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
+        doRedirect(context.response(), redirectUri);
     }
 
     private void doRedirect(HttpServerResponse response, String url) {
-        response
-                .putHeader(HttpHeaders.LOCATION, url)
+        response.putHeader(HttpHeaders.LOCATION, url)
                 .setStatusCode(302)
                 .end();
     }

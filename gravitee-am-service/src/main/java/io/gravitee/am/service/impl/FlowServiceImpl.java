@@ -45,7 +45,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
 
 import static java.nio.charset.Charset.defaultCharset;
 
@@ -112,6 +115,10 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public Maybe<Flow> findById(ReferenceType referenceType, String referenceId, String id) {
         LOGGER.debug("Find flow by referenceType {}, referenceId {} and id {}", referenceType, referenceId, id);
+        if (id == null) {
+            // flow id may be null for default flows
+            return Maybe.empty();
+        }
         return flowRepository.findById(referenceType, referenceId, id)
             .onErrorResumeNext(ex -> {
                 LOGGER.error("An error has occurred while trying to find a flow using its referenceType {}, referenceId {} and id {}", referenceType, referenceId, id, ex);
@@ -123,6 +130,10 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public Maybe<Flow> findById(String id) {
         LOGGER.debug("Find flow by id {}", id);
+        if (id == null) {
+            // flow id may be null for default flows
+            return Maybe.empty();
+        }
         return flowRepository.findById(id)
             .onErrorResumeNext(ex -> {
                 LOGGER.error("An error has occurred while trying to find a flow using its id {}", id, ex);
@@ -196,11 +207,6 @@ public class FlowServiceImpl implements FlowService {
             .flatMapSingle(flow -> flow.getId() == null ? create(referenceType, referenceId, flow) : update(referenceType, referenceId, flow.getId(), flow))
             .sorted(getFlowComparator())
             .toList()
-            .flatMap(flows1 -> {
-                // create event for sync process
-                Event event = new Event(io.gravitee.am.common.event.Type.FLOW, new Payload(null, referenceType, referenceId, Action.BULK_UPDATE));
-                return eventService.create(event).flatMap(__ -> Single.just(flows1));
-            })
             .onErrorResumeNext(ex -> {
                 if (ex instanceof AbstractManagementException) {
                     return Single.error(ex);
@@ -225,6 +231,10 @@ public class FlowServiceImpl implements FlowService {
     @Override
     public Completable delete(String id, User principal) {
         LOGGER.debug("Delete flow {}", id);
+        if (id == null) {
+            // flow id may be null for default flows
+            return Completable.complete();
+        }
         return flowRepository.findById(id)
             .switchIfEmpty(Maybe.error(new FlowNotFoundException(id)))
             .flatMapCompletable(flow -> {

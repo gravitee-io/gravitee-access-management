@@ -22,6 +22,7 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpStatusCode;
@@ -50,7 +51,8 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
             Throwable throwable = routingContext.failure();
             if (throwable instanceof OAuth2Exception
                     || throwable instanceof AbstractManagementException
-                    || throwable instanceof AuthenticationException) {
+                    || throwable instanceof AuthenticationException
+                    || throwable instanceof PolicyChainException) {
                 redirectToLoginPage(routingContext, throwable);
             } else {
                 logger.error(throwable.getMessage(), throwable);
@@ -71,6 +73,11 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
 
     private void redirectToLoginPage(RoutingContext context, Throwable throwable) {
         try {
+            // logout user if exists
+            if (context.user() != null) {
+                context.clearUser();
+                context.session().destroy();
+            }
             Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             Map<String, String> params = new HashMap<>();
             params.put(Parameters.CLIENT_ID, client.getClientId());

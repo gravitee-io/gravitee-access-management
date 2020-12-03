@@ -13,42 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
+package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
-import io.gravitee.am.gateway.handler.root.resources.auth.handler.FormLoginHandler;
-import io.gravitee.common.http.HttpHeaders;
+import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 
 /**
- * Extends default {@link io.vertx.ext.web.handler.FormLoginHandler} and appends
- * client_id to the AuthInfo to retrieve client identity providers
- *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FormLoginHandlerImpl implements FormLoginHandler {
+public class LoginFormHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(FormLoginHandlerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(LoginFormHandler.class);
 
     private final UserAuthProvider authProvider;
 
-    public FormLoginHandlerImpl(UserAuthProvider authProvider) {
+    public LoginFormHandler(UserAuthProvider authProvider) {
         this.authProvider = authProvider;
     }
 
@@ -81,35 +76,19 @@ public class FormLoginHandlerImpl implements FormLoginHandler {
                         .put(Parameters.CLIENT_ID, clientId);
 
                 authProvider.authenticate(context, authInfo, res -> {
-                    if (res.succeeded()) {
-                        final User result = res.result();
-                        context.getDelegate().setUser(result);
-                        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
-                        final String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
-                        doRedirect(context.response(), redirectUri);
-                    } else {
-                        handleException(context);
+                    if (res.failed()) {
+                        logger.debug("An error has occurred during the authentication process", res.cause());
+                        context.fail(res.cause());
+                        return;
                     }
+                    // authentication success
+                    // set user into the context and continue
+                    final User result = res.result();
+                    context.getDelegate().setUser(result);
+                    context.put(ConstantKeys.USER_CONTEXT_KEY, result.getUser());
+                    context.next();
                 });
             }
         }
-    }
-
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url)
-                .setStatusCode(302)
-                .end();
-    }
-
-    private void handleException(RoutingContext context) {
-        final HttpServerRequest req = context.request();
-        final HttpServerResponse resp = context.response();
-
-        // build login url with error message
-        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(req);
-        queryParams.set(ERROR_PARAM_KEY, "login_failed");
-
-        String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), queryParams, true);
-        doRedirect(resp, uri);
     }
 }

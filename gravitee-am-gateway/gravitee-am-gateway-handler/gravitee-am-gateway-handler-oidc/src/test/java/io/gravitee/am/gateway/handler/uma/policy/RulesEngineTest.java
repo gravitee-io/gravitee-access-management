@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.uma.policy;
 
-import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
+import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
@@ -44,8 +44,7 @@ public class RulesEngineTest {
     private PolicyChainProcessorFactory policyChainProcessorFactory;
 
     @Mock
-    private PolicyManager policyManager;
-
+    private PolicyPluginManager policyPluginManager;
     @Mock
     private ExecutionContext executionContext;
 
@@ -54,7 +53,7 @@ public class RulesEngineTest {
         TestObserver testObserver = rulesEngine.fire(Collections.emptyList(), executionContext).test();
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete().assertNoErrors();
-        verify(policyManager, never()).create(anyString(), anyString());
+        verify(policyPluginManager, never()).create(anyString(), anyString());
         verify(policyChainProcessorFactory, never()).create(any(), any());
     }
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
 
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
@@ -71,6 +72,7 @@ public class SocialAuthHandlerImpl implements SocialAuthHandler {
             if (authN.succeeded()) {
                 final User authenticated = authN.result();
                 ctx.getDelegate().setUser(authenticated);
+                ctx.put(ConstantKeys.USER_CONTEXT_KEY, authenticated.getUser());
                 ctx.next();
             } else {
                 // to allow further processing if needed

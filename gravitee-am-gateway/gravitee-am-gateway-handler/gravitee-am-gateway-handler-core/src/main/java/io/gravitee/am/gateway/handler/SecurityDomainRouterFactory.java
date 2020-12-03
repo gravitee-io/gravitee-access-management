@@ -20,7 +20,6 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.listener.AuthenticationEventListener;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
-import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
@@ -96,7 +95,6 @@ public class SecurityDomainRouterFactory {
         components.add(FormManager.class);
         components.add(EmailManager.class);
         components.add(AuditReporterManager.class);
-        components.add(PolicyManager.class);
         components.add(FlowManager.class);
         components.add(AuthenticationEventListener.class);
         components.add(FactorManager.class);
