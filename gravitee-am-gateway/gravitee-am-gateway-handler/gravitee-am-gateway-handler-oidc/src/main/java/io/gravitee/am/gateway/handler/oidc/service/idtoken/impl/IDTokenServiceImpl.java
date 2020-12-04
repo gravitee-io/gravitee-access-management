@@ -255,7 +255,7 @@ public class IDTokenServiceImpl implements IDTokenService {
                             String claimExpression = tokenClaim.getClaimValue();
                             Object extValue = (claimExpression != null) ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class) : null;
                             if (extValue != null) {
-                                jwt.putIfAbsent(claimName, extValue);
+                                jwt.put(claimName, extValue);
                             }
                         } catch (Exception ex) {
                             logger.debug("An error occurs while parsing expression language : {}", tokenClaim.getClaimValue(), ex);
