@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.idtoken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -27,10 +28,12 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.impl.IDTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
+import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -45,6 +48,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -174,6 +178,49 @@ public class IDTokenServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
+        verify(certificateManager, times(1)).findByAlgorithm(any());
+        verify(certificateManager, times(1)).get(anyString());
+        verify(certificateManager, times(1)).defaultCertificateProvider();
+        verify(jwtService, times(1)).encode(any(), eq(defaultCert));
+    }
+
+    @Test
+    public void shouldCreateIDToken_customClaims() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.setClientId("client-id");
+        oAuth2Request.setScopes(Collections.singleton("openid"));
+
+        TokenClaim customClaim = new TokenClaim();
+        customClaim.setTokenType(TokenTypeHint.ID_TOKEN);
+        customClaim.setClaimName("iss");
+        customClaim.setClaimValue("https://custom-iss");
+
+        Client client = new Client();
+        client.setCertificate("certificate-client");
+        client.setClientId("my-client-id");
+        client.setTokenCustomClaims(Arrays.asList(customClaim));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        TemplateEngine templateEngine = mock(TemplateEngine.class);
+        when(templateEngine.getValue("https://custom-iss", Object.class)).thenReturn("https://custom-iss");
+        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+
+        String idTokenPayload = "payload";
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCert = new io.gravitee.am.gateway.certificate.CertificateProvider(defaultCertificateProvider);
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just(idTokenPayload));
+        when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
+        when(certificateManager.get(any())).thenReturn(Maybe.empty());
+        when(certificateManager.defaultCertificateProvider()).thenReturn(defaultCert);
+
+        TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, null, executionContext).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        JWT jwt = jwtCaptor.getValue();
+        assertNotNull(jwt);
+        assertTrue(jwt.get("iss") != null && "https://custom-iss".equals(jwt.get("iss")));
         verify(certificateManager, times(1)).findByAlgorithm(any());
         verify(certificateManager, times(1)).get(anyString());
         verify(certificateManager, times(1)).defaultCertificateProvider();

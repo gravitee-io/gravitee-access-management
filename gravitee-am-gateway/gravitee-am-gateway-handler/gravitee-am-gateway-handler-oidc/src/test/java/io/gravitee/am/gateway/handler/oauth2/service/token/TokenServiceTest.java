@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
@@ -25,11 +26,13 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
+import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -128,6 +131,48 @@ public class TokenServiceTest {
 
         JWT jwt = jwtCaptor.getValue();
         assertTrue(jwt!=null && jwt.get("permissions")!=null);
+        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldCreateWithCustomClaims() {
+        OAuth2Request oAuth2Request = new OAuth2Request();
+
+        TokenClaim customClaim = new TokenClaim();
+        customClaim.setTokenType(TokenTypeHint.ACCESS_TOKEN);
+        customClaim.setClaimName("iss");
+        customClaim.setClaimValue("https://custom-iss");
+
+        TokenClaim customClaim2 = new TokenClaim();
+        customClaim2.setTokenType(TokenTypeHint.ACCESS_TOKEN);
+        customClaim2.setClaimName("aud");
+        customClaim2.setClaimValue("my-api");
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+        client.setTokenCustomClaims(Arrays.asList(customClaim, customClaim2));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        TemplateEngine templateEngine = mock(TemplateEngine.class);
+        when(templateEngine.getValue("https://custom-iss", Object.class)).thenReturn("https://custom-iss");
+        when(templateEngine.getValue("my-api", Object.class)).thenReturn("my-api");
+        when(executionContext.getTemplateEngine()).thenReturn(templateEngine);
+
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        when(jwtService.encode(jwtCaptor.capture(), any(Client.class))).thenReturn(Single.just(""));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doNothing().when(tokenManager).storeAccessToken(any());
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        JWT jwt = jwtCaptor.getValue();
+        assertNotNull(jwt);
+        assertTrue(jwt.get("iss") != null && "https://custom-iss".equals(jwt.get("iss")));
+        assertTrue(jwt.get("aud") != null && "my-api".equals(jwt.get("aud")));
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
