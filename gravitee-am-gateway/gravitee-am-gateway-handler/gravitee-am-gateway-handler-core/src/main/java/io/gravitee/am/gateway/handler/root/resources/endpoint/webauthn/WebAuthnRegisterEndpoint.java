@@ -202,8 +202,8 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
                 // save challenge to the session
                 ctx.session()
                         .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, credentialsOptions.getString("challenge"))
-                        .put(ConstantKeys.USERNAME_KEY, webauthnRegister.getString("name"))
-                        .put(ConstantKeys.USER_ID_KEY, user.getId());
+                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"))
+                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, user.getId());
 
                 ctx.response()
                         .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")

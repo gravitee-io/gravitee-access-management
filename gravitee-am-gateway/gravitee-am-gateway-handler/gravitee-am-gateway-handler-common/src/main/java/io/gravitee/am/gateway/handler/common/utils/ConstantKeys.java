@@ -33,8 +33,6 @@ public interface ConstantKeys {
     String PROVIDER_METADATA_CONTEXT_KEY = "openIDProviderMetadata";
     String RAW_TOKEN_CONTEXT_KEY = "raw_token";
     String TOKEN_CONTEXT_KEY = "token";
-    String USER_ID_KEY = "userId";
-    String USERNAME_KEY = "username";
     String RETURN_URL_KEY = "return_url";
     String ID_TOKEN_KEY = "id_token";
     String EMAIL_PARAM_KEY = "email";
@@ -67,6 +65,8 @@ public interface ConstantKeys {
     String PARAM_AUTHENTICATOR_ATTACHMENT_KEY = "authenticatorAttachment";
     String PASSWORDLESS_AUTH_COMPLETED_KEY = "passwordlessAuthCompleted";
     String PASSWORDLESS_CHALLENGE_KEY = "challenge";
+    String PASSWORDLESS_CHALLENGE_USER_ID = "passwordlessUserId";
+    String PASSWORDLESS_CHALLENGE_USERNAME_KEY = "passwordlessUsername";
 
     // Consent keys.
     String USER_CONSENT_COMPLETED_KEY = "userConsentCompleted";
