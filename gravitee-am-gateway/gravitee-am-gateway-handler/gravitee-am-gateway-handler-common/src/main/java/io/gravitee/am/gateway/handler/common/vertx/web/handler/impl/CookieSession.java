@@ -61,6 +61,21 @@ public class CookieSession extends AbstractSession {
         return lastLogin;
     }
 
+    Session putUserId(Object obj) {
+        super.put(CookieSessionHandler.USER_ID_KEY, obj);
+        return this;
+    }
+
+    @Override
+    public Session put(String key, Object obj) {
+        // Do not allow to push a userId key to avoid session compromise
+        if (key.equalsIgnoreCase(CookieSessionHandler.USER_ID_KEY)) {
+            throw new IllegalArgumentException(CookieSessionHandler.USER_ID_KEY + " can not be used as a session key!");
+        }
+
+        return super.put(key, obj);
+    }
+
     protected Single<CookieSession> setValue(String payload) {
 
         if (StringUtils.isEmpty(payload)) {

@@ -151,8 +151,8 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
 
                     session
                             .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
-                            .put(ConstantKeys.USERNAME_KEY, username)
-                            .put(ConstantKeys.USER_ID_KEY, h.result().getId());
+                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username)
+                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, h.result().getId());
 
                     ctx.response()
                             .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")

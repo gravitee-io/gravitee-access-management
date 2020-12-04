@@ -30,7 +30,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.USER_ID_KEY;
 import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
 
 /**
@@ -45,6 +44,8 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
 
     private static final String DEFAULT_SESSION_COOKIE_NAME = "GRAVITEE_IO_AM_SESSION";
     private static final Logger logger = LoggerFactory.getLogger(CookieSessionHandler.class);
+
+    final static String USER_ID_KEY = "userId";
 
     private final JWTService jwtService;
     private final CertificateManager certificateManager;
@@ -147,10 +148,9 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     }
 
     private void writeSessionCookie(final RoutingContext context, final CookieSession session) {
-
         io.vertx.ext.auth.User user = context.getDelegate().user();
         if (user instanceof User) {
-            session.put(USER_ID_KEY, ((User) user).getUser().getId());
+            session.putUserId(((User) user).getUser().getId());
         }
 
         Cookie cookie = Cookie.cookie(cookieName, session.value());
