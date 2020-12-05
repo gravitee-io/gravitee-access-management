@@ -38,6 +38,10 @@ export class ApplicationOverviewComponent implements OnInit {
   entrypoint: any;
   baseUrl: string;
   tokenEndpointAuthMethod: string;
+  codeVerifier: string;
+  codeChallenge: string;
+  private forcePKCE: boolean;
+  private CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   @ViewChild('copyText', { read: ElementRef, static: true }) copyText: ElementRef;
 
   constructor(private route: ActivatedRoute,
@@ -61,14 +65,18 @@ export class ApplicationOverviewComponent implements OnInit {
       this.redirectUri = applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined ? applicationOAuthSettings.redirectUris[0] : 'Not defined';
       this.authorizationHeader = btoa(this.clientId + ':' + this.clientSecret);
       this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
+      this.forcePKCE = applicationOAuthSettings.forcePKCE;
     } else {
       this.clientId = 'Insufficient permission';
       this.clientSecret = 'Insufficient permission';
       this.redirectUri = 'Insufficient permission';
       this.authorizationHeader = 'Insufficient permission';
     }
-
     this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain);
+    if (this.forcePKCE) {
+      this.codeVerifier = this.generateCodeVerifier();
+      this.generateCodeChallenge(this.codeVerifier).then(data => this.codeChallenge = data);
+    }
   }
 
   isServiceApp(): boolean {
@@ -100,6 +108,50 @@ export class ApplicationOverviewComponent implements OnInit {
     } else {
       return 'token';
     }
+  }
+
+  getCodeVerifier(): string {
+    if (!this.forcePKCE) {
+      return '';
+    }
+    return '&code_verifier=' + this.codeVerifier;
+  }
+
+  getCodeChallenge(): string {
+    if (!this.forcePKCE) {
+      return '';
+    }
+    return '&code_challenge=' + this.codeChallenge + '&code_challenge_method=S256';
+  }
+
+  private generateCodeVerifier(): string {
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    return this.base64URLEncode(this.bufferToString(array));
+  }
+
+  private generateCodeChallenge(codeVerifier): PromiseLike<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(codeVerifier);
+    return window.crypto.subtle.digest('SHA-256', data).then(buffer => {
+      return this.base64URLEncode(String.fromCharCode.apply(null, new Uint8Array(buffer)));
+    });
+  }
+
+  private base64URLEncode(str) {
+    return btoa(str)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  }
+
+  private bufferToString(buffer: Uint8Array) {
+    const state = [];
+    for (let i = 0; i < buffer.byteLength; i += 1) {
+      const index = buffer[i] % this.CHARSET.length;
+      state.push(this.CHARSET[index]);
+    }
+    return state.join('');
   }
 
   displayAuthBasicExample(): boolean {

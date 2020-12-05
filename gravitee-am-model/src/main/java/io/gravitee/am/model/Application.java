@@ -292,6 +292,7 @@ public class Application implements Resource {
                 client.setAuthorizationSignedResponseAlg(oAuthSettings.getAuthorizationSignedResponseAlg());
                 client.setAuthorizationEncryptedResponseAlg(oAuthSettings.getAuthorizationEncryptedResponseAlg());
                 client.setAuthorizationEncryptedResponseEnc(oAuthSettings.getAuthorizationEncryptedResponseEnc());
+                client.setForcePKCE(oAuthSettings.isForcePKCE());
             }
 
             if (applicationSettings.getAdvanced() != null) {

@@ -17,10 +17,14 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
+import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
+import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseModeException;
 import io.gravitee.am.gateway.handler.oauth2.service.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oidc.exception.ClaimsRequestSyntaxException;
@@ -28,6 +32,8 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetad
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequestResolver;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
@@ -36,14 +42,16 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 
 /**
@@ -63,14 +71,21 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     private final static String MFA_ENDPOINT = "/mfa/challenge";
     private final static String USER_CONSENT_ENDPOINT = "/oauth/consent";
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
+    private final Domain domain;
+
+    public AuthorizationRequestParseParametersHandler(Domain domain) {
+        this.domain = domain;
+    }
 
     @Override
     public void handle(RoutingContext context) {
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+
         // proceed prompt parameter
         parsePromptParameter(context);
 
         // proceed pkce parameter
-        parsePKCEParameter(context);
+        parsePKCEParameter(context, client);
 
         // proceed max_age parameter
         parseMaxAgeParameter(context);
@@ -83,6 +98,15 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
 
         // proceed nonce parameter
         parseNonceParameter(context);
+
+        // proceed grant_type parameter
+        parseGrantTypeParameter(client);
+
+        // proceed response_type parameter
+        parseResponseTypeParameter(context, client);
+
+        // proceed redirect_uri parameter
+        parseRedirectUriParameter(context, client);
 
         context.next();
     }
@@ -111,7 +135,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
         }
     }
 
-    private void parsePKCEParameter(RoutingContext context) {
+    private void parsePKCEParameter(RoutingContext context, Client client) {
         String codeChallenge = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE);
         String codeChallengeMethod = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD);
 
@@ -119,27 +143,28 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
             throw new InvalidRequestException("Missing parameter: code_challenge");
         }
 
-        if (codeChallenge == null) {
-            // No code challenge provided by client
-            return;
+        if (codeChallenge == null && client.isForcePKCE()) {
+            throw new InvalidRequestException("Missing parameter: code_challenge");
         }
 
-        if (codeChallengeMethod != null) {
-            // https://tools.ietf.org/html/rfc7636#section-4.2
-            // It must be plain or S256
-            if (!CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod) &&
-                    !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod)) {
-                throw new InvalidRequestException("Invalid parameter: code_challenge_method");
+        if (codeChallenge != null) {
+            if (codeChallengeMethod != null) {
+                // https://tools.ietf.org/html/rfc7636#section-4.2
+                // It must be plain or S256
+                if (!CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod) &&
+                        !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod)) {
+                    throw new InvalidRequestException("Invalid parameter: code_challenge_method");
+                }
+            } else {
+                // https://tools.ietf.org/html/rfc7636#section-4.3
+                // Default code challenge is plain
+                context.request().params().set(io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD, CodeChallengeMethod.PLAIN);
             }
-        } else {
-            // https://tools.ietf.org/html/rfc7636#section-4.3
-            // Default code challenge is plain
-            context.request().params().set(io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD, CodeChallengeMethod.PLAIN);
-        }
 
-        // Check that code challenge is valid
-        if (!PKCEUtils.validCodeChallenge(codeChallenge)) {
-            throw new InvalidRequestException("Invalid parameter: code_challenge");
+            // Check that code challenge is valid
+            if (!PKCEUtils.validCodeChallenge(codeChallenge)) {
+                throw new InvalidRequestException("Invalid parameter: code_challenge");
+            }
         }
     }
 
@@ -229,6 +254,53 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
         }
     }
 
+    private void parseGrantTypeParameter(Client client) {
+        // Authorization endpoint implies that the client should at least have authorization_code ou implicit grant types.
+        List<String> authorizedGrantTypes = client.getAuthorizedGrantTypes();
+        if (authorizedGrantTypes == null || authorizedGrantTypes.isEmpty()) {
+            throw new UnauthorizedClientException("Client should at least have one authorized grant type");
+        }
+        if (!containsGrantType(authorizedGrantTypes)) {
+            throw new UnauthorizedClientException("Client must at least have authorization_code or implicit grant type enable");
+        }
+    }
+
+    private void parseResponseTypeParameter(RoutingContext context, Client client) {
+        String responseType = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE);
+        // Authorization endpoint implies that the client should have response_type
+        if (client.getResponseTypes() == null) {
+            throw new UnauthorizedClientException("Client should have response_type.");
+        }
+        if(!Arrays.stream(responseType.split("\\s")).allMatch(type -> client.getResponseTypes().contains(type))) {
+            throw new UnauthorizedClientException("Client should have all requested response_type");
+        }
+    }
+
+    private void parseRedirectUriParameter(RoutingContext context, Client client) {
+        String requestedRedirectUri = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
+        final List<String> registeredClientRedirectUris = client.getRedirectUris();
+        final boolean hasRegisteredClientRedirectUris = registeredClientRedirectUris != null && !registeredClientRedirectUris.isEmpty();
+        final boolean hasRequestedRedirectUri = requestedRedirectUri != null && !requestedRedirectUri.isEmpty();
+
+        // if no requested redirect_uri and no registered client redirect_uris
+        // throw invalid request exception
+        if (!hasRegisteredClientRedirectUris && !hasRequestedRedirectUri) {
+            throw new InvalidRequestException("A redirect_uri must be supplied");
+        }
+
+        // if no requested redirect_uri and more than one registered client redirect_uris
+        // throw invalid request exception
+        if (!hasRequestedRedirectUri && (registeredClientRedirectUris != null && registeredClientRedirectUris.size() > 1)) {
+            throw new InvalidRequestException("Unable to find suitable redirect_uri, a redirect_uri must be supplied");
+        }
+
+        // if requested redirect_uri doesn't match registered client redirect_uris
+        // throw redirect mismatch exception
+        if (hasRequestedRedirectUri && hasRegisteredClientRedirectUris) {
+            checkMatchingRedirectUri(requestedRedirectUri, registeredClientRedirectUris);
+        }
+    }
+
     private boolean returnFromLoginPage(RoutingContext context) {
         String referer = context.request().headers().get(HttpHeaders.REFERER);
         try {
@@ -244,5 +316,47 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
             logger.debug("Unable to calculate referer url : {}", referer, e);
             return false;
         }
+    }
+
+    private boolean containsGrantType(List<String> authorizedGrantTypes) {
+        return authorizedGrantTypes.stream()
+                .anyMatch(authorizedGrantType -> GrantType.AUTHORIZATION_CODE.equals(authorizedGrantType)
+                        || GrantType.IMPLICIT.equals(authorizedGrantType));
+    }
+
+    private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
+        if (registeredClientRedirectUris
+                .stream()
+                .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri))) {
+            throw new RedirectMismatchException("The redirect_uri MUST match the registered callback URL for this application");
+        }
+    }
+
+    private boolean redirectMatches(String requestedRedirect, String registeredClientUri) {
+        // if redirect_uri strict matching mode is enabled, do string matching
+        if (this.domain.isRedirectUriStrictMatching()) {
+            return requestedRedirect.equals(registeredClientUri);
+        }
+
+        // nominal case
+        try {
+            URL req = new URL(requestedRedirect);
+            URL reg = new URL(registeredClientUri);
+
+            int requestedPort = req.getPort() != -1 ? req.getPort() : req.getDefaultPort();
+            int registeredPort = reg.getPort() != -1 ? reg.getPort() : reg.getDefaultPort();
+
+            boolean portsMatch = registeredPort == requestedPort;
+
+            if (reg.getProtocol().equals(req.getProtocol()) &&
+                    reg.getHost().equals(req.getHost()) &&
+                    portsMatch) {
+                return req.getPath().startsWith(reg.getPath());
+            }
+        } catch (MalformedURLException e) {
+
+        }
+
+        return requestedRedirect.equals(registeredClientUri);
     }
 }

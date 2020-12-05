@@ -221,6 +221,15 @@ export class ApplicationOAuth2Component implements OnInit {
     return this.applicationOauthSettings.enhanceScopesWithUserPermissions;
   }
 
+  forcePKCE(event) {
+    this.applicationOauthSettings.forcePKCE = event.checked;
+    this.formChanged = true;
+  }
+
+  isPKCEForced() {
+    return this.applicationOauthSettings.forcePKCE;
+  }
+
   getScopeApproval(scopeKey) {
     const scopeApproval = this.selectedScopeApprovals[scopeKey];
     return this.getScopeExpiry(scopeApproval);

@@ -54,7 +54,7 @@
             <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorize);">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_authorize>{{baseUrl}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{redirectUri}}</pre>
+            <pre #pre_authorize>{{baseUrl}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{redirectUri}}{{getCodeChallenge()}}</pre>
           </div>
 
           <p>Users will be redirected to the login page and will start the Authentication Flow.</p>
@@ -97,7 +97,82 @@
   {{baseUrl}}/oauth/token \
   -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUri}}&client_id={{clientId}}'</pre>
+  -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUri}}&client_id={{clientId}}{{getCodeVerifier()}}'</pre>
+          </div>
+
+          <h2>Proof Key for Code Exchange (PKCE)</h2>
+          <p>If the application requires the use of the PKCE,  you will need to generate : </p>
+          <ul>
+            <li>a <b>code_verifier</b> that will be sent to the Token Endpoint (oauth/token)</li>
+            <li>a <b>code_challenge</b> that will be sent to the Authorization Endpoint (oauth/authorize)</li>
+          </ul>
+          <blockquote>
+            <p>
+              These codes are cryptographically-random values that your application has to create.
+            </p>
+          </blockquote>
+
+          <h4>JavaScript sample</h4>
+          <div class="code">
+            <pre class="multiline">
+// utils
+function base64URLEncode(str) {{ "{" }}
+  btoa(str)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+{{ "}" }}
+
+function bufferToString(buffer: Uint8Array) {{ "{" }}
+  const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const state = [];
+  for (let i = 0; i < buffer.byteLength; i += 1) {{ "{" }}
+    const index = buffer[i] % this.CHARSET.length;
+    state.push(this.CHARSET[index]);
+  {{ "}" }}
+  return state.join('');
+{{ "}" }}</pre>
+          </div>
+
+          <div class="code">
+            <pre class="multiline">
+// generate the code_verifier
+const array = new Uint8Array(32);
+window.crypto.getRandomValues(array);
+const codeVerifier = base64URLEncode(bufferToString(array));</pre>
+          </div>
+
+          <div class="code">
+            <pre class="multiline">
+// generate the code_challenge
+const encoder = new TextEncoder();
+const data = encoder.encode(codeVerifier);
+window.crypto.subtle.digest('SHA-256', data)
+  .then(buffer => {{ "{" }}
+      const bufferToString = String.fromCharCode.apply(null, new Uint8Array(buffer));
+      return base64URLEncode(bufferToString);
+  {{ "}" }})
+  .then(str => {{ "{" }}
+      const codeChallenge = str;
+  {{ "}" }});</pre>
+          </div>
+
+          <h4>Java sample</h4>
+          <div class="code">
+            <pre class="multiline">
+// generate the code_verifier
+SecureRandom secureRandom = new SecureRandom();
+byte[] code = new byte[32];
+secureRandom.nextBytes(codeVerifier);
+String codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(code);</pre>
+          </div>
+
+          <div class="code">
+            <pre class="multiline">
+// generate the code_challenge
+byte[] bytes = codeVerifier.getBytes("US-ASCII");
+MessageDigest md = MessageDigest.getInstance("SHA-256");
+String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(md.digest(bytes));</pre>
           </div>
 
           <h2>Get user information</h2>

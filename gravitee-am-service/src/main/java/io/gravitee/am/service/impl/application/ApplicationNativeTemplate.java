@@ -17,6 +17,7 @@ package io.gravitee.am.service.impl.application;
 
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.model.Application;
@@ -28,10 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import static io.gravitee.am.common.oauth2.ResponseType.CODE;
-import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
-import static io.gravitee.am.common.oidc.ResponseType.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,9 +72,12 @@ public class ApplicationNativeTemplate extends ApplicationAbstractTemplate {
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.NATIVE);
 
         if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
-            // set grant types and response types
-            oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT, GrantType.PASSWORD));
-            oAuthSettings.setResponseTypes(Arrays.asList(CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN, ID_TOKEN, ID_TOKEN_TOKEN, CODE, TOKEN));
+            // native applications should have code flow with PKCE enable
+            oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE));
+            oAuthSettings.setResponseTypes(new ArrayList<>(defaultAuthorizationCodeResponseTypes()));
+            oAuthSettings.setForcePKCE(true);
+            // native applications cannot securely store a Client Secret, set client authentication method to none
+            oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
         } else {
             Set<String> defaultResponseTypes = oAuthSettings.getResponseTypes() == null ? new HashSet<>() : new HashSet<>(oAuthSettings.getResponseTypes());
             if (oAuthSettings.getGrantTypes().contains(GrantType.AUTHORIZATION_CODE)) {

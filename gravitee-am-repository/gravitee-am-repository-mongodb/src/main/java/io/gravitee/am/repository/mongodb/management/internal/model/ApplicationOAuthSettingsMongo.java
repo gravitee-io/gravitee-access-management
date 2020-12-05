@@ -81,6 +81,7 @@ public class ApplicationOAuthSettingsMongo {
     private String authorizationSignedResponseAlg;
     private String authorizationEncryptedResponseAlg;
     private String authorizationEncryptedResponseEnc;
+    private boolean forcePKCE;
 
     public String getClientId() {
         return clientId;
@@ -520,5 +521,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
         this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
+    }
+
+    public boolean isForcePKCE() {
+        return forcePKCE;
+    }
+
+    public void setForcePKCE(boolean forcePKCE) {
+        this.forcePKCE = forcePKCE;
     }
 }

@@ -17,7 +17,7 @@ package io.gravitee.am.service.impl.application;
 
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
-import io.gravitee.am.common.oidc.ResponseType;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.model.Application;
@@ -71,11 +71,12 @@ public class ApplicationBrowserTemplate extends ApplicationAbstractTemplate {
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);
 
         if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
-            // browser applications should have implicit, code flow
-            oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT));
-            oAuthSettings.setResponseTypes(
-                    Arrays.asList(ResponseType.CODE_TOKEN, ResponseType.CODE_ID_TOKEN, ResponseType.CODE_ID_TOKEN_TOKEN,
-                            ResponseType.ID_TOKEN, ResponseType.ID_TOKEN_TOKEN, io.gravitee.am.common.oauth2.ResponseType.CODE, io.gravitee.am.common.oauth2.ResponseType.TOKEN));
+            // browser applications should have code flow with PKCE enable
+            oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE));
+            oAuthSettings.setResponseTypes(new ArrayList<>(defaultAuthorizationCodeResponseTypes()));
+            oAuthSettings.setForcePKCE(true);
+            // browser applications cannot securely store a Client Secret, set client authentication method to none
+            oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
         } else {
             Set<String> defaultResponseTypes = oAuthSettings.getResponseTypes() == null ? new HashSet<>() : new HashSet<>(oAuthSettings.getResponseTypes());
             if (oAuthSettings.getGrantTypes().contains(GrantType.AUTHORIZATION_CODE)) {

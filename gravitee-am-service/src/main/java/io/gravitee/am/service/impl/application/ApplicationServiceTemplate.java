@@ -17,6 +17,7 @@ package io.gravitee.am.service.impl.application;
 
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.model.Application;
@@ -76,6 +77,7 @@ public class ApplicationServiceTemplate implements ApplicationTemplate {
             // service applications must have client_credentials
             oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
             oAuthSettings.setResponseTypes(Collections.emptyList());
+            oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         }
     }
 }
