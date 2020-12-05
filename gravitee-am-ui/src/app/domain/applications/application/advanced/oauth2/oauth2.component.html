@@ -46,6 +46,22 @@
 
         <div class="gv-form-section">
           <div class="gv-form-section-title">
+            <h5>Proof Key for Code Exchange (PKCE)</h5>
+            <small>PKCE is an extension to the Authorization Code flow to prevent interception attack for public clients.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <mat-slide-toggle
+              (change)="forcePKCE($event)"
+              [checked]="isPKCEForced()" [disabled]="readonly">
+              Force PKCE
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">Force PKCE for public clients who cannot securely store their Client Secret</mat-hint>
+          </div>
+        </div>
+
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Public / Confidential</h5>
             <small>Clients capability of maintaining the confidentiality of their credentials.</small>
             <small>Native application or a web browser-based application are incapable of secure their credentials and should set Token Endpoint Auth Method to "none".</small>
@@ -272,9 +288,9 @@
           You should select the grant_type according to your application type.
         </p>
         <small>
-          <b><i>authorization_code</i></b> for server side applications (web) or native applications (then combined with PKCE).<br>
-          <b><i>implicit</i></b> must be used for Single Page Applications.<br>
-          <b><i>password</i></b> should only be used for trusted applications <i>(means application and authorization server are managed within the same organization.)</i><br>
+          <b><i>authorization_code</i></b> for server side applications (web) or browser and native applications (then combined with PKCE).<br>
+          <b><i>implicit</i></b> originally used for browser apps, deprecated in favor of authorization_code + PKCE.<br>
+          <b><i>password</i></b> should only be used for trusted applications <i>(means application and authorization server are managed within the same organization).</i><br>
           <b><i>client_credentials</i></b> should be used for server to server communications.<br><br>
           <b>It is not recommended to mix client and user authentication within the same application.</b> <i>(Aka client_credentials and authorization_code, implicit or password)</i><br>
         </small>

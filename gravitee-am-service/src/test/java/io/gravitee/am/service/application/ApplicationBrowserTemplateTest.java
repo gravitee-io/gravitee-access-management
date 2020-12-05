@@ -16,6 +16,7 @@
 package io.gravitee.am.service.application;
 
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -53,10 +54,10 @@ public class ApplicationBrowserTemplateTest {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
         Assert.assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
         Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
-        Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT)));
-        List<String> responseTypes = new ArrayList<>(defaultAuthorizationCodeResponseTypes());
-        responseTypes.addAll(defaultImplicitResponseTypes());
-        Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(responseTypes));
+        Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
+        Assert.assertTrue(oAuthSettings.isForcePKCE());
+        Assert.assertTrue(oAuthSettings.getTokenEndpointAuthMethod().equals(ClientAuthenticationMethod.NONE));
+        Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(new ArrayList<>(defaultAuthorizationCodeResponseTypes())));
     }
 
     @Test
@@ -105,10 +106,8 @@ public class ApplicationBrowserTemplateTest {
         Assert.assertNotNull(application.getSettings());
         Assert.assertNotNull(application.getSettings().getOauth());
         Assert.assertTrue(!oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS));
-        Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT)));
-        List<String> responseTypes = new ArrayList<>(defaultAuthorizationCodeResponseTypes());
-        responseTypes.addAll(defaultImplicitResponseTypes());
-        Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(responseTypes));
+        Assert.assertTrue(oAuthSettings.getGrantTypes().containsAll(Arrays.asList(GrantType.AUTHORIZATION_CODE)));
+        Assert.assertTrue(oAuthSettings.getResponseTypes().containsAll(new ArrayList<>(defaultAuthorizationCodeResponseTypes())));
     }
 
     private static Set<String> defaultAuthorizationCodeResponseTypes() {

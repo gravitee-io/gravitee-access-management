@@ -83,6 +83,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<String> authorizationSignedResponseAlg;
     private Optional<String> authorizationEncryptedResponseAlg;
     private Optional<String> authorizationEncryptedResponseEnc;
+    private Optional<Boolean> forcePKCE;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -500,6 +501,14 @@ public class PatchApplicationOAuthSettings {
         this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
     }
 
+    public Optional<Boolean> getForcePKCE() {
+        return forcePKCE;
+    }
+
+    public void setForcePKCE(Optional<Boolean> forcePKCE) {
+        this.forcePKCE = forcePKCE;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -558,6 +567,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setAuthorizationSignedResponseAlg, this.getAuthorizationSignedResponseAlg());
         SetterUtils.safeSet(toPatch::setAuthorizationEncryptedResponseAlg, this.getAuthorizationEncryptedResponseAlg());
         SetterUtils.safeSet(toPatch::setAuthorizationEncryptedResponseEnc, this.getAuthorizationEncryptedResponseEnc());
+        SetterUtils.safeSet(toPatch::setForcePKCE, this.getForcePKCE());
 
         return toPatch;
     }

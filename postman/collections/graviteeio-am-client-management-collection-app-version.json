@@ -1,1210 +1,1210 @@
 {
-  "info": {
-    "_postman_id": "b25d07d1-51e2-4031-9612-207050b989a7",
-    "name": "Gravitee.io - AM - Application Management",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "name": "Prepare",
-      "item": [
-        {
-          "name": "Generate admin token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "571e9b59-b9e7-452c-9469-9786ded290a6",
-                "exec": [
-                  "",
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "var token = JSON.parse(responseBody);",
-                  "pm.environment.set('token', token.access_token);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
-              }
-            ],
-            "body": {
-              "mode": "urlencoded",
-              "urlencoded": [
-                {
-                  "key": "grant_type",
-                  "value": "password",
-                  "type": "text"
-                },
-                {
-                  "key": "username",
-                  "value": "admin",
-                  "type": "text"
-                },
-                {
-                  "key": "password",
-                  "value": "adminadmin",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{management_url}}/management/auth/token",
-              "host": [
-                "{{management_url}}"
-              ],
-              "path": [
-                "management",
-                "auth",
-                "token"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create application management domain",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "",
-                  "var jsonData = pm.response.json();",
-                  "pm.environment.set('domain', jsonData.id);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n\t\"name\": \"applications-app-version\", \n\t\"description\": \"test application management through Access Management API\"\n}"
-            },
-            "url": {
-              "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
-              "host": [
-                "{{management_url}}"
-              ],
-              "path": [
-                "management",
-                "organizations",
-                "{{defaultOrganizationId}}",
-                "environments",
-                "{{defaultEnvironmentId}}",
-                "domains",
-                ""
-              ]
-            }
-          },
-          "response": []
-        }
-      ],
-      "protocolProfileBehavior": {}
-    },
-    {
-      "name": "Application Management",
-      "item": [
-        {
-          "name": "Invalid Case",
-          "item": [
-            {
-              "name": "Create application",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
-                    "exec": [
-                      "pm.test(\"Status code is 201\", function () {",
-                      "    pm.response.to.have.status(201);",
-                      "});",
-                      "",
-                      "pm.test(\"grant and response types are empty\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.environment.set('app', body.id);",
-                      "",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['client_credentials']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql([]);",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"my-app\",\n  \"type\": \"SERVICE\"\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "missing redirect_uris",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 400\", function () {",
-                      "    pm.response.to.have.status(400);",
-                      "});",
-                      "",
-                      "pm.test(\"missing redirect_uri\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('message');",
-                      "    pm.expect(body.message).to.eql('Missing or invalid redirect_uris.');",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"implicit\"],\n  \t\t\"responseTypes\": [\"token\"] \n  \t}\n  }\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "missing grant associated to refresh_token",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 400\", function () {",
-                      "    pm.response.to.have.status(400);",
-                      "});",
-                      "",
-                      "pm.test(\"missing redirect_uri\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('message');",
-                      "    pm.expect(body.message).to.contains('refresh_token grant type must be associated with one of');",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"refresh_token\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "client_credentials does not manage refresh_token",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 400\", function () {",
-                      "    pm.response.to.have.status(400);",
-                      "});",
-                      "",
-                      "pm.test(\"missing redirect_uri\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('message');",
-                      "    pm.expect(body.message).to.contains('refresh_token grant type must be associated with one of');",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"refresh_token\",\"client_credentials\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Delete application",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
-                    "exec": [
-                      "pm.test(\"Status code is 204\", function () {",
-                      "    pm.response.to.have.status(204);",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "DELETE",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ],
-          "protocolProfileBehavior": {},
-          "_postman_isSubFolder": true
-        },
-        {
-          "name": "Nominal Case",
-          "item": [
-            {
-              "name": "Create application",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
-                    "exec": [
-                      "pm.test(\"Status code is 201\", function () {",
-                      "    pm.response.to.have.status(201);",
-                      "});",
-                      "",
-                      "",
-                      "pm.test(\"default values\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.environment.set('app', body.id);",
-                      "",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
-                      "    ",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['client_credentials']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql([]);",
-                      "    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
-                      "    ",
-                      "    pm.expect(body.settings.oauth.clientName).to.eql('my-client');",
-                      "    pm.expect(body.settings.oauth.tokenEndpointAuthMethod).to.eql('client_secret_basic');",
-                      "    pm.expect(body.settings.oauth.requireAuthTime).to.eql(false);",
-                      "    pm.expect(body.settings.oauth.accessTokenValiditySeconds).to.eql(7200);",
-                      "    pm.expect(body.settings.oauth.refreshTokenValiditySeconds).to.eql(14400);",
-                      "    pm.expect(body.settings.oauth.idTokenValiditySeconds).to.eql(14400);",
-                      "    pm.expect(body.domain).to.eql(pm.environment.get('domain'));",
-                      "    pm.expect(body.enabled).to.eql(true);",
-                      "    pm.expect(body.settings.oauth.enhanceScopesWithUserPermissions).to.eql(false);",
-                      "});"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"SERVICE\"\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Set type Web application",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 200\", function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
-                      "pm.test(\"is webapp\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code', 'password']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql(['code','code id_token token','code id_token','code token']);",
-                      "    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n\t\"type\": \"WEB\"\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}",
-                    "type"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Web application - authorization_code",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 200\", function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
-                      "pm.test(\"is webapp\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
-                      "    ",
-                      "    pm.expect(body.settings.oauth.redirectUris).to.eql(['https://callback']);",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql(['code','code id_token token','code id_token','code token']);",
-                      "    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Set type Single Page Application",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 200\", function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
-                      "pm.test(\"is webapp\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code', 'implicit']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql(['code token', 'code id_token', 'code id_token token', 'id_token', 'id_token token', 'code', 'token']);",
-                      "    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n\t\"type\": \"BROWSER\"\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}",
-                    "type"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Single Page Application - Implicit",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 200\", function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
-                      "pm.test(\"is Single Page Application\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['implicit']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql(['token']);",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"implicit\"],\n\t\t\t\"responseTypes\": [\"token\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Set type Mobile application",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 200\", function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
-                      "pm.test(\"is webapp\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code', 'implicit', 'password']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql(['code token', 'code id_token', 'code id_token token', 'id_token', 'id_token token', 'code', 'token']);",
-                      "    pm.expect(body.settings.oauth.applicationType).to.eql('native');",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n\t\"type\": \"NATIVE\"\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}",
-                    "type"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Mobile application - authorization_code",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 200\", function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
-                      "pm.test(\"is mobile\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
-                      "    ",
-                      "    pm.expect(body.settings.oauth.redirectUris).to.eql(['com.gravitee.app://callback']);",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code','refresh_token']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql(['code','code id_token token','code id_token','code token']);",
-                      "    pm.expect(body.settings.oauth.applicationType).to.eql('native');",
-                      "    ",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"com.gravitee.app://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\",\"refresh_token\"],\n\t\t\t\"applicationType\": \"native\",\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Set type Server application",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 200\", function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
-                      "pm.test(\"is webapp\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['client_credentials']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql([]);",
-                      "    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n\t\"type\": \"SERVICE\"\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}",
-                    "type"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Server application - client_credentials",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 200\", function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
-                      "pm.test(\"is server\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('settings');",
-                      "    pm.expect(body.settings).to.have.property('oauth');",
-                      "    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
-                      "    pm.expect(body.settings.oauth).to.have.property('applicationType');",
-                      "    ",
-                      "    pm.expect(body.settings.oauth.redirectUris).to.eql([]);",
-                      "    pm.expect(body.settings.oauth.grantTypes).to.eql(['client_credentials']);",
-                      "    pm.expect(body.settings.oauth.responseTypes).to.eql([]);",
-                      "    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
-                      "    ",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t \"redirectUris\": [],\n\t\t\t  \"grantTypes\": [\"client_credentials\"],\n\t\t\t  \"responseTypes\": [],\n\t\t\t  \"applicationType\": \"web\",\n\t\t\t  \"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Template - client_credentials",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "c37cba72-91c2-4850-80cd-6fd3908e406e",
-                    "exec": [
-                      "pm.test(\"Status code is 200\", function () {",
-                      "    pm.response.to.have.status(200);",
-                      "});",
-                      "",
-                      "pm.test(\"is server\", function () {",
-                      "    var body = JSON.parse(responseBody);",
-                      "    pm.expect(body).to.have.property('template');",
-                      "    pm.expect(body.template).to.eql(true);",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"template\": true\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Delete application",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
-                    "exec": [
-                      "pm.test(\"Status code is 204\", function () {",
-                      "    pm.response.to.have.status(204);",
-                      "});",
-                      ""
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "DELETE",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"clientId\": \"my-client\",\n  \"clientSecret\": \"my-client-secret\"\n}"
-                },
-                "url": {
-                  "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
-                  "host": [
-                    "{{management_url}}"
-                  ],
-                  "path": [
-                    "management",
-                    "organizations",
-                    "{{defaultOrganizationId}}",
-                    "environments",
-                    "{{defaultEnvironmentId}}",
-                    "domains",
-                    "{{domain}}",
-                    "applications",
-                    "{{app}}"
-                  ]
-                }
-              },
-              "response": []
-            }
-          ],
-          "protocolProfileBehavior": {},
-          "_postman_isSubFolder": true
-        }
-      ],
-      "protocolProfileBehavior": {}
-    },
-    {
-      "name": "Delete domain",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
-            "exec": [
-              "pm.test(\"Status code is 204\", function () {",
-              "    pm.response.to.have.status(204);",
-              "});"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "method": "DELETE",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          },
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": ""
-        },
-        "url": {
-          "raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
-          "host": [
-            "{{management_url}}"
-          ],
-          "path": [
-            "management",
-            "organizations",
-            "{{defaultOrganizationId}}",
-            "environments",
-            "{{defaultEnvironmentId}}",
-            "domains",
-            "{{domain}}"
-          ]
-        }
-      },
-      "response": []
-    }
-  ],
-  "protocolProfileBehavior": {}
+	"info": {
+		"_postman_id": "f4218895-bd5f-49f3-9922-f28d4d68da84",
+		"name": "Gravitee.io - AM - Application Management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Prepare",
+			"item": [
+				{
+					"name": "Generate admin token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "450d08b7-6a1f-4f86-8264-5671bb4e42c6",
+								"exec": [
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var token = JSON.parse(responseBody);",
+									"pm.environment.set('token', token.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "adminadmin",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{management_url}}/management/auth/token",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create application management domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4eca35c1-ddaa-4435-a9f1-b943785cd093",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set('domain', jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"applications-app-version\", \n\t\"description\": \"test application management through Access Management API\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Application Management",
+			"item": [
+				{
+					"name": "Invalid Case",
+					"item": [
+						{
+							"name": "Create application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "9ffde25c-c153-4d61-9436-f52330de7474",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"grant and response types are empty\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.environment.set('app', body.id);",
+											"",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['client_credentials']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql([]);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"my-app\",\n  \"type\": \"SERVICE\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "missing redirect_uris",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "94ead822-dbd7-4b44-8734-581ca695b4a0",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"missing redirect_uri\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('message');",
+											"    pm.expect(body.message).to.eql('Missing or invalid redirect_uris.');",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"implicit\"],\n  \t\t\"responseTypes\": [\"token\"] \n  \t}\n  }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "missing grant associated to refresh_token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "bde7de91-a6a2-470e-ab5f-d255bf29425d",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"missing redirect_uri\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('message');",
+											"    pm.expect(body.message).to.contains('refresh_token grant type must be associated with one of');",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"refresh_token\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "client_credentials does not manage refresh_token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "e3be55e0-7aea-445b-878b-8b87259627de",
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"missing redirect_uri\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('message');",
+											"    pm.expect(body.message).to.contains('refresh_token grant type must be associated with one of');",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"refresh_token\",\"client_credentials\"],\n  \t\t\"responseTypes\": [\"\"] \n  \t}\n  }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "b2eb2eb5-9432-4572-b083-9c905d2743ec",
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Nominal Case",
+					"item": [
+						{
+							"name": "Create application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "d8d2df6a-b432-4e28-9395-463ef5ee677b",
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"",
+											"pm.test(\"default values\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.environment.set('app', body.id);",
+											"",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+											"    ",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['client_credentials']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql([]);",
+											"    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+											"    ",
+											"    pm.expect(body.settings.oauth.clientName).to.eql('my-client');",
+											"    pm.expect(body.settings.oauth.tokenEndpointAuthMethod).to.eql('client_secret_basic');",
+											"    pm.expect(body.settings.oauth.requireAuthTime).to.eql(false);",
+											"    pm.expect(body.settings.oauth.accessTokenValiditySeconds).to.eql(7200);",
+											"    pm.expect(body.settings.oauth.refreshTokenValiditySeconds).to.eql(14400);",
+											"    pm.expect(body.settings.oauth.idTokenValiditySeconds).to.eql(14400);",
+											"    pm.expect(body.domain).to.eql(pm.environment.get('domain'));",
+											"    pm.expect(body.enabled).to.eql(true);",
+											"    pm.expect(body.settings.oauth.enhanceScopesWithUserPermissions).to.eql(false);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"SERVICE\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set type Web application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "9b373174-52ba-44c1-990e-3803c4ecf2cd",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is webapp\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code', 'password']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql(['code','code id_token token','code id_token','code token']);",
+											"    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"type\": \"WEB\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}",
+										"type"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Web application - authorization_code",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "a0a16528-e37a-440a-b62e-fb44055c198d",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is webapp\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+											"    ",
+											"    pm.expect(body.settings.oauth.redirectUris).to.eql(['https://callback']);",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql(['code','code id_token token','code id_token','code token']);",
+											"    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set type Single Page Application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "8418b7b7-9bfd-4005-acec-629ba4e71f40",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is webapp\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql(['code', 'code id_token token', 'code id_token', 'code token']);",
+											"    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"type\": \"BROWSER\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}",
+										"type"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Single Page Application - Implicit",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "beb4ccb1-1d67-4631-8306-ecbd1976190b",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is Single Page Application\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['implicit']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql(['token']);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"implicit\"],\n\t\t\t\"responseTypes\": [\"token\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set type Mobile application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "dbca6407-b027-4875-b72b-a25df609ce12",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is webapp\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql(['code', 'code id_token token', 'code id_token', 'code token']);",
+											"    pm.expect(body.settings.oauth.applicationType).to.eql('native');",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"type\": \"NATIVE\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}",
+										"type"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Mobile application - authorization_code",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "692c2d5b-b66c-410a-a038-9b1c2aa15530",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is mobile\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+											"    ",
+											"    pm.expect(body.settings.oauth.redirectUris).to.eql(['com.gravitee.app://callback']);",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['authorization_code','refresh_token']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql(['code','code id_token token','code id_token','code token']);",
+											"    pm.expect(body.settings.oauth.applicationType).to.eql('native');",
+											"    ",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"com.gravitee.app://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\",\"refresh_token\"],\n\t\t\t\"applicationType\": \"native\",\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Set type Server application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "fd7447fe-9e75-4970-94fb-04a107060b67",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is webapp\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['client_credentials']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql([]);",
+											"    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"type\": \"SERVICE\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}/type",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}",
+										"type"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Server application - client_credentials",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "f6ee6bb2-ced6-4bf4-989c-2c87da939d65",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is server\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('settings');",
+											"    pm.expect(body.settings).to.have.property('oauth');",
+											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('responseTypes');",
+											"    pm.expect(body.settings.oauth).to.have.property('applicationType');",
+											"    ",
+											"    pm.expect(body.settings.oauth.redirectUris).to.eql([]);",
+											"    pm.expect(body.settings.oauth.grantTypes).to.eql(['client_credentials']);",
+											"    pm.expect(body.settings.oauth.responseTypes).to.eql([]);",
+											"    pm.expect(body.settings.oauth.applicationType).to.eql('web');",
+											"    ",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t \"redirectUris\": [],\n\t\t\t  \"grantTypes\": [\"client_credentials\"],\n\t\t\t  \"responseTypes\": [],\n\t\t\t  \"applicationType\": \"web\",\n\t\t\t  \"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Template - client_credentials",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "9a9f6d5e-dd41-45b5-a722-3db5f7552d2e",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"is server\", function () {",
+											"    var body = JSON.parse(responseBody);",
+											"    pm.expect(body).to.have.property('template');",
+											"    pm.expect(body.template).to.eql(true);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"template\": true\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete application",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "e3f6af51-b06c-4a95-9224-57048c3679ec",
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"clientId\": \"my-client\",\n  \"clientSecret\": \"my-client-secret\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{app}}"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Delete domain",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "fe70e410-8bb2-4ffb-a4e9-8d4999613337",
+						"exec": [
+							"pm.test(\"Status code is 204\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+					"host": [
+						"{{management_url}}"
+					],
+					"path": [
+						"management",
+						"organizations",
+						"{{defaultOrganizationId}}",
+						"environments",
+						"{{defaultEnvironmentId}}",
+						"domains",
+						"{{domain}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
 }

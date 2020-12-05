@@ -120,7 +120,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
     @Override
     public Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint) {
-        return Single.just(policies.get(extensionPoint));
+        return Single.just(policies.getOrDefault(extensionPoint, Collections.emptyList()));
     }
 
     private void updateFlow(String flowId, FlowEvent flowEvent) {

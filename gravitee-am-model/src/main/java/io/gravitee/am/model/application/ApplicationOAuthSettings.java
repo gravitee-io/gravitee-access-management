@@ -251,6 +251,12 @@ public class ApplicationOAuthSettings {
      */
     private String authorizationEncryptedResponseEnc;
 
+    /**
+     * Ensure usage of the Authorization Code Flow with Proof Key for Code Exchange (PKCE)
+     * especially for SPA and Native apps
+     */
+    private boolean forcePKCE;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -310,6 +316,7 @@ public class ApplicationOAuthSettings {
         this.authorizationSignedResponseAlg = other.authorizationSignedResponseAlg;
         this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
+        this.forcePKCE = other.forcePKCE;
     }
 
     public String getClientId() {
@@ -750,5 +757,13 @@ public class ApplicationOAuthSettings {
 
     public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
         this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
+    }
+
+    public boolean isForcePKCE() {
+        return forcePKCE;
+    }
+
+    public void setForcePKCE(boolean forcePKCE) {
+        this.forcePKCE = forcePKCE;
     }
 }

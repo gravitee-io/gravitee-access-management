@@ -189,6 +189,8 @@ public class Client implements Cloneable, Resource {
 
     private Map<String, Object> metadata;
 
+    private boolean forcePKCE;
+
     public Client() { }
 
     public Client(Client other) {
@@ -254,6 +256,7 @@ public class Client implements Cloneable, Resource {
         this.authorizationSignedResponseAlg = other.authorizationSignedResponseAlg;
         this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
+        this.forcePKCE = other.forcePKCE;
     }
 
     public String getId() {
@@ -793,6 +796,14 @@ public class Client implements Cloneable, Resource {
 
     public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
         this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
+    }
+
+    public boolean isForcePKCE() {
+        return forcePKCE;
+    }
+
+    public void setForcePKCE(boolean forcePKCE) {
+        this.forcePKCE = forcePKCE;
     }
 
     @Override

@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler;
 
+import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.AcrValues;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
@@ -46,7 +50,7 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
         super.setUp();
 
         router.route(HttpMethod.GET, "/oauth/authorize")
-                .handler(new AuthorizationRequestParseParametersHandler())
+                .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(rc -> rc.response().end())
                 .failureHandler(rc -> rc.response().setStatusCode(400).end());
     }
@@ -55,13 +59,17 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
     public void shouldRejectRequest_unsupportedAcrValues() throws Exception {
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
         openIDProviderMetadata.setAcrValuesSupported(Collections.singletonList(AcrValues.IN_COMMON_BRONZE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
         router.route().order(-1).handler(routingContext -> {
-            routingContext.put("openIDProviderMetadata", openIDProviderMetadata);
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
             routingContext.next();
         });
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback&claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
                 null,
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
     }
@@ -70,13 +78,17 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
     public void shouldAcceptRequest_supportedAcrValues() throws Exception {
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
         openIDProviderMetadata.setAcrValuesSupported(Collections.singletonList(AcrValues.IN_COMMON_SILVER));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
         router.route().order(-1).handler(routingContext -> {
-            routingContext.put("openIDProviderMetadata", openIDProviderMetadata);
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
             routingContext.next();
         });
         testRequest(
                 HttpMethod.GET,
-                "/oauth/authorize?claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback&claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
                 null,
                 HttpStatusCode.OK_200, "OK", null);
     }
