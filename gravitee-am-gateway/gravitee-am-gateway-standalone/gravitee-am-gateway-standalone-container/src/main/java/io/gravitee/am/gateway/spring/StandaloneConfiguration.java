@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.gateway.configuration.ConfigurationChecker;
 import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
@@ -92,12 +93,16 @@ public class StandaloneConfiguration {
 
     @Bean
     public ExpressionLanguageInitializer expressionLanguageInitializer() {
-
         return new ExpressionLanguageInitializer();
     }
 
     @Bean
     public RepositoryScopeProvider repositoryScopeProvider() {
         return new io.gravitee.am.repository.RepositoryScopeProvider();
+    }
+
+    @Bean
+    public ConfigurationChecker configurationChecker() {
+        return new ConfigurationChecker();
     }
 }
