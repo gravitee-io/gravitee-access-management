@@ -52,6 +52,8 @@
 #    session:
 #      name: session-name
 #      timeout: 1800000 # (in milliseconds)
+#  csrf:
+#    secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y
 
 # Path to plugins repository
 #plugins:
