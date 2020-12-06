@@ -44,6 +44,12 @@
           "password"
         ]
       }
+    },
+    "passwordEncoder" : {
+      "type": "string",
+      "enum": ["BCrypt"],
+      "title": "Password encoder",
+      "description": "The encoding mechanism to store password value."
     }
   }
 }
