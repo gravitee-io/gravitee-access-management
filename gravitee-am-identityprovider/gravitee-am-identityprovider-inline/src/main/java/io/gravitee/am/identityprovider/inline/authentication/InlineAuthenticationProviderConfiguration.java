@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.identityprovider.inline.authentication;
 
+import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,8 +31,15 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class InlineAuthenticationProviderConfiguration {
 
+    @Autowired
+    private InlineIdentityProviderConfiguration configuration;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
+        if (configuration.getPasswordEncoder() != null
+                && "BCrypt".equals(configuration.getPasswordEncoder())) {
+            return new BCryptPasswordEncoder();
+        }
         return NoOpPasswordEncoder.getInstance();
     }
 

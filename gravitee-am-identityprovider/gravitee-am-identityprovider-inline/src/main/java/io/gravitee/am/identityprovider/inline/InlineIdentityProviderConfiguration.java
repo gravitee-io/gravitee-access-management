@@ -27,6 +27,7 @@ import java.util.List;
 public class InlineIdentityProviderConfiguration implements IdentityProviderConfiguration {
 
     private List<User> users;
+    private String passwordEncoder;
 
     public List<User> getUsers() {
         return users;
@@ -34,5 +35,13 @@ public class InlineIdentityProviderConfiguration implements IdentityProviderConf
 
     public void setUsers(List<User> users) {
         this.users = users;
+    }
+
+    public String getPasswordEncoder() {
+        return passwordEncoder;
+    }
+
+    public void setPasswordEncoder(String passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 }

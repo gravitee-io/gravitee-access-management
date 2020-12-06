@@ -22,9 +22,9 @@ import { OrganizationService } from '../../../../../services/organization.servic
 import { BreadcrumbService } from '../../../../../services/breadcrumb.service';
 import { DomainService } from '../../../../../services/domain.service';
 import { DialogService } from '../../../../../services/dialog.service';
+import {EntrypointService} from '../../../../../services/entrypoint.service';
+import {AppConfig} from '../../../../../../config/app.config';
 import * as _ from 'lodash';
-import {AppConfig} from "../../../../../../config/app.config";
-import {EntrypointService} from "../../../../../services/entrypoint.service";
 
 @Component({
   selector: 'provider-settings',
@@ -88,7 +88,7 @@ export class ProviderSettingsComponent implements OnInit {
       // enhance schema information
       if (this.providerSchema.properties.graviteeCertificate && this.certificates && this.certificates.length > 0) {
         this.providerSchema.properties.graviteeCertificate.enum = _.flatMap(this.certificates, 'id');
-        this.providerSchema.properties.graviteeCertificate['x-schema-form'] = { "type" : "select" };
+        this.providerSchema.properties.graviteeCertificate['x-schema-form'] = { 'type' : 'select' };
         this.providerSchema.properties.graviteeCertificate['x-schema-form'].titleMap = this.certificates.reduce(function(map, obj) {
           map[obj.id] = obj.name;
           return map;
@@ -98,7 +98,7 @@ export class ProviderSettingsComponent implements OnInit {
   }
 
   update() {
-    this.provider.configuration = JSON.stringify(this.updateProviderConfiguration);
+    this.provider.configuration = this.updateProviderConfiguration;
     this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
       if (this.organizationContext) {
         this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '$', this.provider.name);

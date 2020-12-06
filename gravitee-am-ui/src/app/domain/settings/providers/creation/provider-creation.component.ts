@@ -46,7 +46,6 @@ export class ProviderCreationComponent implements OnInit {
   }
 
   create() {
-    this.provider.configuration = JSON.stringify(this.provider.configuration);
     this.providerService.create(this.domainId, this.provider, this.organizationContext).subscribe(data => {
       this.snackbarService.open('Provider ' + data.name + ' created');
       if (this.organizationContext) {
