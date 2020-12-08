@@ -114,7 +114,9 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
         // if user has reset its password, check the last login date to make sure that the current session is not compromised
         CookieSession session = (CookieSession) context.session().getDelegate();
         if (user.getLastPasswordReset() != null &&
-                session.lastLogin().before(user.getLastPasswordReset())) {
+                // "exp" claim is stored in epoch seconds format in the cookie session
+                // we need to compare both dates without the milliseconds
+                user.getLastPasswordReset().getTime() - session.lastLogin().getTime() > 1000) {
             handler.handle(Future.failedFuture(new AccountIllegalStateException(user.getId())));
             return;
         }
@@ -175,6 +177,4 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
                 .defaultIfEmpty(Optional.empty())
                 .toSingle();
     }
-
-
 }
