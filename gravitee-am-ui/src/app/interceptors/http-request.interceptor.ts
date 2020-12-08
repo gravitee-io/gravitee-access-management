@@ -1,4 +1,3 @@
-
 import {tap} from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
@@ -38,12 +37,13 @@ export class HttpRequestInterceptor implements HttpInterceptor {
 
   constructor(private snackbarService: SnackbarService,
               private authService: AuthService,
-              private router: Router) {}
+              private router: Router) {
+  }
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     request = request.clone({
       withCredentials: true,
-      setHeaders: this.xsrfToken ? { 'X-Xsrf-Token': [ this.xsrfToken ]} : {}
+      setHeaders: this.xsrfToken ? {'X-Xsrf-Token': [this.xsrfToken]} : {}
     });
 
     return next.handle(request).pipe(tap((event: HttpEvent<any>) => {
@@ -56,7 +56,6 @@ export class HttpRequestInterceptor implements HttpInterceptor {
       }
       if (err instanceof HttpErrorResponse) {
         this.saveXsrfToken(err);
-
         if (err.status === 401) {
           this.snackbarService.open('The authentication session expires or the user is not authorized');
           this.authService.unauthorized();
@@ -73,7 +72,7 @@ export class HttpRequestInterceptor implements HttpInterceptor {
 
     let xsrfTokenHeader = response.headers.get('X-Xsrf-Token');
 
-    if(xsrfTokenHeader !== null) {
+    if (xsrfTokenHeader !== null) {
       this.xsrfToken = xsrfTokenHeader;
     }
   }

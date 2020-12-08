@@ -169,4 +169,9 @@ export class DomainService {
   flows(id) {
     return this.http.get<any>(this.domainsURL + id + '/flows');
   }
+
+  updateFlows(id, flows) {
+    return this.http.put<any>(this.domainsURL + id + '/flows', flows);
+  }
+
 }

@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { AppConfig } from '../../config/app.config';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {Observable} from 'rxjs';
+import {AppConfig} from '../../config/app.config';
 import {map} from 'rxjs/operators';
 
 @Injectable()
@@ -70,10 +70,10 @@ export class OrganizationService {
 
   updateIdentityProvider(id, idp) {
     return this.http.put<any>(this.organizationURL + '/identities/' + id, {
-      'name' : idp.name,
-      'configuration' : idp.configuration,
-      'mappers' : idp.mappers,
-      'roleMapper' : idp.roleMapper
+      'name': idp.name,
+      'configuration': idp.configuration,
+      'mappers': idp.mappers,
+      'roleMapper': idp.roleMapper
     });
   }
 
@@ -119,12 +119,31 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/audits/events');
   }
 
-  policies(): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/policies');
+  policies(expandSchema = false, expandIcon = false): Observable<any> {
+    let url = `${this.organizationURL}/plugins/policies`;
+    const expand = [];
+    if (expandSchema) {
+      expand.push('expand=schema');
+    }
+    if (expandIcon) {
+      expand.push('expand=icon');
+    }
+    if (expand.length > 0) {
+      url += `?${expand.join('&')}`;
+    }
+    return this.http.get<any>(url);
   }
 
   policySchema(id): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/plugins/policies/' + id + '/schema');
+  }
+
+  policyDocumentation(id): Observable<any> {
+    const headers = new HttpHeaders().set('Content-Type', 'text/plain; charset=utf-8');
+    return this.http.get<any>(this.organizationURL + '/plugins/policies/' + id + '/documentation', {
+      headers,
+      responseType: 'text' as 'json'
+    });
   }
 
   searchUsers(searchTerm, page, size): Observable<any> {
@@ -149,9 +168,9 @@ export class OrganizationService {
 
   updateRole(roleId, role): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/roles/' + roleId, {
-      'name' : role.name,
-      'description' : role.description,
-      'permissions' : role.permissions
+      'name': role.name,
+      'description': role.description,
+      'permissions': role.permissions
     });
   }
 
@@ -221,9 +240,9 @@ export class OrganizationService {
 
   updateGroup(groupId, group): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/groups/' + groupId, {
-      'name' : group.name,
-      'description' : group.description,
-      'members' : group.members
+      'name': group.name,
+      'description': group.description,
+      'members': group.members
     });
   }
 
@@ -231,7 +250,7 @@ export class OrganizationService {
     return this.http.delete<any>(this.organizationURL + '/groups/' + groupId);
   }
 
-  groupRoles(groupId): Observable<any>  {
+  groupRoles(groupId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/groups/' + groupId + '/roles');
   }
 
@@ -243,15 +262,15 @@ export class OrganizationService {
     return this.http.post<any>(this.organizationURL + '/groups/' + groupId + '/roles', roles);
   }
 
-  groupMembers(groupId): Observable<any>  {
+  groupMembers(groupId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/groups/' + groupId + '/members');
   }
 
-  users(page, size): Observable<any>  {
+  users(page, size): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/users?page=' + page + '&size=' + size);
   }
 
-  user(userId): Observable<any>  {
+  user(userId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/users/' + userId);
   }
 
@@ -259,7 +278,7 @@ export class OrganizationService {
     return this.http.delete<any>(this.organizationURL + '/users/' + userId);
   }
 
-  userRoles(userId): Observable<any>  {
+  userRoles(userId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/users/' + userId + '/roles');
   }
 
@@ -271,31 +290,31 @@ export class OrganizationService {
     return this.http.post<any>(this.organizationURL + '/users/' + userId + '/roles', roles);
   }
 
-  reporters(): Observable<any>  {
+  reporters(): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/reporters');
   }
 
-  reporter(reporterId): Observable<any>  {
+  reporter(reporterId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/reporters/' + reporterId);
   }
 
   updateReporter(reporterId, reporter): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/reporters/' + reporterId, {
-      'name' : reporter.name,
+      'name': reporter.name,
       'enabled': reporter.enabled,
-      'configuration' : reporter.configuration
+      'configuration': reporter.configuration
     });
   }
 
-  settings(): Observable<any>  {
+  settings(): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/settings');
   }
 
-  patchSettings(settings): Observable<any>  {
+  patchSettings(settings): Observable<any> {
     return this.http.patch<any>(this.organizationURL + '/settings', settings);
   }
 
-  forms(template): Observable<any>  {
+  forms(template): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/forms?template=' + template);
   }
 

@@ -7,20 +7,15 @@
       "description": "The name of flow. If empty, the name will be generated with the path and methods",
       "type": "string"
     },
-    "description": {
-      "title": "Description",
-      "description": "The description of flow",
-      "type": "string"
-    },
     "type": {
       "title": "Type",
       "description": "The type of flow",
       "type": "string",
       "enum": [
-        "ROOT",
-        "LOGIN",
-        "CONSENT",
-        "REGISTER"
+        "root",
+        "login",
+        "consent",
+        "register"
       ]
     },
     "condition": {

@@ -82,6 +82,16 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
     }
 
     @Override
+    public String getIcon(String policyId) throws IOException {
+        return pluginManager.getIcon(policyId);
+    }
+
+    @Override
+    public String getDocumentation(String policyId) throws IOException {
+        return pluginManager.getDocumentation(policyId);
+    }
+
+    @Override
     public Policy create(String type, String configuration) {
         logger.debug("Creating a policy for [{}]", type);
         PolicyPlugin policyPlugin = pluginManager.get(type);

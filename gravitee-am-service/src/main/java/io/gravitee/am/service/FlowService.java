@@ -40,7 +40,7 @@ public interface FlowService {
 
     Single<Flow> update(ReferenceType referenceType, String referenceId, String id, Flow flow, User principal);
 
-    Single<List<Flow>> update(ReferenceType referenceType, String referenceId, List<Flow> flows, User principal);
+    Single<List<Flow>> createOrUpdate(ReferenceType referenceType, String referenceId, List<Flow> flows, User principal);
 
     Completable delete(String id, User principal);
 
@@ -54,8 +54,8 @@ public interface FlowService {
         return update(referenceType, referenceId, id, flow, null);
     }
 
-    default Single<List<Flow>> update(ReferenceType referenceType, String referenceId, List<Flow> flows) {
-        return update(referenceType, referenceId, flows, null);
+    default Single<List<Flow>> createOrUpdate(ReferenceType referenceType, String referenceId, List<Flow> flows) {
+        return createOrUpdate(referenceType, referenceId, flows, null);
     }
 
     default Completable delete(String id) {
