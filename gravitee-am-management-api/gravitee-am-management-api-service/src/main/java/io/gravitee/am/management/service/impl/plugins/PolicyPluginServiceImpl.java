@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.service.impl.plugins;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -42,12 +45,20 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
     @Autowired
     private PolicyPluginManager policyPluginManager;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Override
     public Single<List<PolicyPlugin>> findAll() {
+        return findAll(null);
+    }
+
+    @Override
+    public Single<List<PolicyPlugin>> findAll(List<String> expand) {
         LOGGER.debug("List all policy plugins");
         return Observable.fromIterable(policyPluginManager.getAll())
-                .map(this::convert)
-                .toList();
+            .map(policyPlugin -> convert(policyPlugin, expand))
+            .toList();
     }
 
     @Override
@@ -75,7 +86,15 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
             try {
                 String schema = policyPluginManager.getSchema(policyId);
                 if (schema != null) {
-                    emitter.onSuccess(schema);
+                    JsonNode schemaNode = objectMapper.readTree(schema);
+                    if (schemaNode.has("properties")) {
+                        ObjectNode properties = (ObjectNode) schemaNode.get("properties");
+                        properties.remove("scope");
+                        properties.remove("onResponseScript");
+                        properties.remove("onRequestContentScript");
+                        properties.remove("onResponseContentScript");
+                    }
+                    emitter.onSuccess(objectMapper.writeValueAsString(schemaNode));
                 } else {
                     emitter.onComplete();
                 }
@@ -86,12 +105,64 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
         });
     }
 
+    @Override
+    public Maybe<String> getIcon(String policyId) {
+        LOGGER.debug("Find policy plugin icon by ID: {}", policyId);
+        return Maybe.create(emitter -> {
+            try {
+                String icon = policyPluginManager.getIcon(policyId);
+                if (icon != null) {
+                    emitter.onSuccess(icon);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                LOGGER.error("An error occurs while trying to get icon for policy plugin {}", policyId, e);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get icon for policy plugin " + policyId, e));
+            }
+        });
+    }
+
+    @Override
+    public Maybe<String> getDocumentation(String policyId) {
+        LOGGER.debug("Find policy plugin documentation by ID: {}", policyId);
+        return Maybe.create(emitter -> {
+            try {
+                String documentation = policyPluginManager.getDocumentation(policyId);
+                if (documentation != null) {
+                    emitter.onSuccess(documentation);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                LOGGER.error("An error occurs while trying to get documentation for policy plugin {}", policyId, e);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get documentation for policy plugin " + policyId, e));
+            }
+        });
+    }
+
     private PolicyPlugin convert(Plugin policyPlugin) {
+        return this.convert(policyPlugin, null);
+    }
+
+    private PolicyPlugin convert(Plugin policyPlugin, List<String> expand) {
         PolicyPlugin plugin = new PolicyPlugin();
         plugin.setId(policyPlugin.manifest().id());
         plugin.setName(policyPlugin.manifest().name());
         plugin.setDescription(policyPlugin.manifest().description());
         plugin.setVersion(policyPlugin.manifest().version());
+        if (expand != null && !expand.isEmpty()) {
+            for (String s : expand) {
+                switch (s) {
+                    case "schema":
+                        getSchema(plugin.getId()).subscribe(plugin::setSchema);
+                    case "icon":
+                        getIcon(plugin.getId()).subscribe(plugin::setIcon);
+                    default:
+                        break;
+                }
+            }
+        }
         return plugin;
     }
 }

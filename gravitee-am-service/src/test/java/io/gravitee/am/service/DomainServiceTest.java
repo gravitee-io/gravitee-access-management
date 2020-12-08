@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.uma.Resource;
@@ -67,7 +68,7 @@ public class DomainServiceTest {
     private static final String FORM_ID = "id-form";
     private static final String EMAIL_ID = "id-email";
     private static final String REPORTER_ID = "id-reporter";
-    private static final String POLICY_ID = "id-policy";
+    private static final String FLOW_ID = "id-flow";
     private static final String MEMBERSHIP_ID = "id-membership";
     private static final String FACTOR_ID = "id-factor";
     public static final String ORGANIZATION_ID = "orga#1";
@@ -110,7 +111,7 @@ public class DomainServiceTest {
     private Reporter reporter;
 
     @Mock
-    private Policy policy;
+    private Flow flow;
 
     @Mock
     private Membership membership;
@@ -161,7 +162,7 @@ public class DomainServiceTest {
     private ReporterService reporterService;
 
     @Mock
-    private PolicyService policyService;
+    private FlowService flowService;
 
     @Mock
     private EventService eventService;
@@ -490,9 +491,9 @@ public class DomainServiceTest {
         when(reporter.getId()).thenReturn(REPORTER_ID);
         when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(reporter)));
         when(reporterService.delete(anyString())).thenReturn(Completable.complete());
-        when(policy.getId()).thenReturn(POLICY_ID);
-        when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(policy)));
-        when(policyService.delete(anyString())).thenReturn(Completable.complete());
+        when(flow.getId()).thenReturn(FLOW_ID);
+        when(flowService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.delete(anyString())).thenReturn(Completable.complete());
         when(membership.getId()).thenReturn(MEMBERSHIP_ID);
         when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singletonList(membership)));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
@@ -520,7 +521,7 @@ public class DomainServiceTest {
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
-        verify(policyService, times(1)).delete(POLICY_ID);
+        verify(flowService, times(1)).delete(FLOW_ID);
         verify(membershipService, times(1)).delete(MEMBERSHIP_ID);
         verify(factorService, times(1)).delete(DOMAIN_ID, FACTOR_ID);
         verify(eventService, times(1)).create(any());
@@ -541,7 +542,7 @@ public class DomainServiceTest {
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
-        when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(flowService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
@@ -563,7 +564,7 @@ public class DomainServiceTest {
         verify(formService, never()).delete(anyString(), anyString());
         verify(emailTemplateService, never()).delete(anyString());
         verify(reporterService, never()).delete(anyString());
-        verify(policyService, never()).delete(anyString());
+        verify(flowService, never()).delete(anyString());
         verify(membershipService, never()).delete(anyString());
         verify(factorService, never()).delete(anyString(), anyString());
         verify(eventService, times(1)).create(any());

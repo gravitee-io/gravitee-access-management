@@ -34,4 +34,8 @@ public interface PolicyPluginManager {
     PolicyPlugin get(String policyId);
 
     String getSchema(String policyId) throws IOException;
+
+    String getIcon(String policyId) throws IOException;
+
+    String getDocumentation(String policyId) throws IOException;
 }

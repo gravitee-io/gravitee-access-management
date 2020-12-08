@@ -38,7 +38,6 @@ import {DomainSettingsEmailsComponent} from './domain/settings/emails/emails.com
 import {DomainSettingsEmailComponent} from './domain/settings/emails/email/email.component';
 import {DomainSettingsExtensionGrantsComponent} from './domain/settings/extension-grants/extension-grants.component';
 import {DomainSettingsAccountComponent} from './domain/settings/account/account.component';
-import {DomainSettingsPoliciesComponent} from './domain/settings/policies/policies.component';
 import {DomainSettingsMembershipsComponent} from './domain/settings/memberships/memberships.component';
 import {DomainSettingsFlowsComponent} from './domain/settings/flows/flows.component';
 import {DomainCreationComponent} from './domain/creation/domain-creation.component';
@@ -117,7 +116,6 @@ import {TagsComponent} from './settings/management/tags/tags.component';
 import {TagCreationComponent} from './settings/management/tags/creation/tag-creation.component';
 import {TagComponent} from './settings/management/tags/tag/tag.component';
 import {TagResolver} from './resolvers/tag.resolver';
-import {PoliciesResolver} from './resolvers/policies.resolver';
 import {GroupMembersResolver} from './resolvers/group-members.resolver';
 import {ApplicationsComponent} from './domain/applications/applications.component';
 import {ApplicationsResolver} from './resolvers/applications.resolver';
@@ -979,22 +977,6 @@ const routes: Routes = [
             resolve: {
               email: EmailResolver
             },
-          },
-          { path: 'policies',
-            component: DomainSettingsPoliciesComponent,
-            canActivate: [AuthGuard],
-            resolve: {
-              policies: PoliciesResolver
-            },
-            data: {
-              menu: {
-                label: 'Extension Points',
-                section: 'Design'
-              },
-              perms: {
-                only: ['domain_extension_point_list']
-              }
-            }
           },
           { path: 'flows',
             component: DomainSettingsFlowsComponent,

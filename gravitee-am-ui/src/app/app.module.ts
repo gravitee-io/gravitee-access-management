@@ -98,7 +98,6 @@ import { DomainSettingsLoginComponent } from './domain/settings/login/login.comp
 import { DomainSettingsEmailsComponent } from './domain/settings/emails/emails.component';
 import { DomainSettingsEmailComponent } from './domain/settings/emails/email/email.component';
 import { DomainSettingsAccountComponent } from './domain/settings/account/account.component';
-import { DomainSettingsPoliciesComponent, PoliciesInfoDialog } from './domain/settings/policies/policies.component';
 import {
   DomainMembershipsDialog,
   DomainSettingsMembershipsComponent
@@ -213,9 +212,7 @@ import { EntrypointCreationComponent } from './settings/management/entrypoints/c
 import { EntrypointComponent } from './settings/management/entrypoints/entrypoint/entrypoint.component';
 import { AccountSettingsComponent } from './domain/components/account/account-settings.component';
 import { HttpRequestInterceptor } from './interceptors/http-request.interceptor';
-import { PolicyFormComponent } from './domain/settings/policies/policy/form/form.component';
 import { PolicyService } from './services/policy.service';
-import { PoliciesResolver } from './resolvers/policies.resolver';
 import { ScopeSelectionComponent} from './domain/components/scope-selection/scope-selection.component';
 import { RoleSelectionComponent } from './domain/components/role-selection/role-selection.component';
 import { ApplicationsComponent } from './domain/applications/applications.component';
@@ -324,7 +321,6 @@ import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.res
     DomainSettingsEmailsComponent,
     DomainSettingsEmailComponent,
     DomainSettingsAccountComponent,
-    DomainSettingsPoliciesComponent,
     DomainSettingsMembershipsComponent,
     DomainSettingsFactorsComponent,
     DomainSettingsWebAuthnComponent,
@@ -417,8 +413,6 @@ import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.res
     EntrypointCreationComponent,
     EntrypointComponent,
     AccountSettingsComponent,
-    PolicyFormComponent,
-    PoliciesInfoDialog,
     ScopeSelectionComponent,
     ClaimsInfoDialog,
     RoleSelectionComponent,
@@ -545,7 +539,6 @@ import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.res
     EntrypointsResolver,
     EntrypointResolver,
     PolicyService,
-    PoliciesResolver,
     ApplicationService,
     ApplicationsResolver,
     ApplicationResolver,
@@ -583,7 +576,6 @@ import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.res
     FormInfoDialog,
     AddMemberComponent,
     EmailInfoDialog,
-    PoliciesInfoDialog,
     ClaimsInfoDialog,
     AddUserRolesComponent,
     AddGroupRolesComponent,

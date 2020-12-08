@@ -77,4 +77,21 @@ public class PolicyPluginResource {
                 .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
                 .subscribe(response::resume, response::resume);
     }
+
+    @GET
+    @Path("documentation")
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiOperation(value = "Get a policy plugin's documentation")
+    public void getDocumentation(
+        @PathParam("policy") String policyId,
+        @Suspended final AsyncResponse response) {
+
+        // Check that the policy exists
+        policyPluginService.findById(policyId)
+            .switchIfEmpty(Maybe.error(new PolicyPluginNotFoundException(policyId)))
+            .flatMap(irrelevant -> policyPluginService.getDocumentation(policyId))
+            .map(policyPluginDocumentation -> Response.ok(policyPluginDocumentation).build())
+            .subscribe(response::resume, response::resume);
+    }
+
 }

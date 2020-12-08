@@ -16,8 +16,9 @@
 
 -->
 <div class="gv-page-container">
-  <gv-policy-studio [policies]="policies"
-                    [flowSettingsForm]="flowSettingsForm"
-                    [definition]="definition">
-  </gv-policy-studio>
+    <gv-policy-studio #studio
+                      [policies]="policies"
+                      [flowSchema]="flowSchema"
+                      [definition]="definition">
+    </gv-policy-studio>
 </div>

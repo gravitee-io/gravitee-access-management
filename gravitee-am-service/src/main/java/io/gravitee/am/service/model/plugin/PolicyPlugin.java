@@ -19,4 +19,24 @@ package io.gravitee.am.service.model.plugin;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PolicyPlugin extends AbstractPlugin { }
+public class PolicyPlugin extends AbstractPlugin {
+
+    private String schema;
+    private String icon;
+
+    public String getSchema() {
+        return schema;
+    }
+
+    public void setSchema(String schema) {
+        this.schema = schema;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+}

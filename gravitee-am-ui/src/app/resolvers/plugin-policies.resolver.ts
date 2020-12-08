@@ -24,7 +24,7 @@ export class PluginPoliciesResolver implements Resolve<any> {
   constructor(private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    return this.organizationService.policies();
+    return this.organizationService.policies(true, true);
   }
 
 }

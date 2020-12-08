@@ -29,7 +29,13 @@ public interface PolicyPluginService {
 
     Single<List<PolicyPlugin>> findAll();
 
-    Maybe<PolicyPlugin> findById(String reporterId);
+    Single<List<PolicyPlugin>> findAll(List<String> expand);
 
-    Maybe<String> getSchema(String reporterId);
+    Maybe<PolicyPlugin> findById(String policyId);
+
+    Maybe<String> getSchema(String policyId);
+
+    Maybe<String> getIcon(String policyId);
+
+    Maybe<String> getDocumentation(String policyId);
 }

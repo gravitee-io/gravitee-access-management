@@ -86,7 +86,7 @@ public class FlowsResource extends AbstractResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update flows",
+    @ApiOperation(value = "Create or update list of flows",
             notes = "User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain " +
                     "or DOMAIN_FLOW[UPDATE] permission on the specified environment " +
                     "or DOMAIN_FLOW[UPDATE] permission on the specified organization")
@@ -105,7 +105,7 @@ public class FlowsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> flowService.update(ReferenceType.DOMAIN, domain, flows, authenticatedUser)))
+                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, flows, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

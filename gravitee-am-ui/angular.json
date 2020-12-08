@@ -28,6 +28,21 @@
                 "glob": "build.json",
                 "input": "",
                 "output": "/"
+              },
+              {
+                "glob": "**/*.js",
+                "input": "node_modules/@webcomponents/webcomponentsjs",
+                "output": "webcomponents/"
+              },
+              {
+                "glob": "**/*.css",
+                "input": "node_modules/@gravitee/ui-components/assets/css",
+                "output": "css/"
+              },
+              {
+                "glob": "**/*.json",
+                "input": "node_modules/@gravitee/ui-components/assets/i18n",
+                "output": "i18n/"
               }
             ],
             "styles": [
@@ -95,6 +110,21 @@
                 "glob": "build.json",
                 "input": "",
                 "output": "/"
+              },
+              {
+                "glob": "**/*.js",
+                "input": "node_modules/@webcomponents/webcomponentsjs",
+                "output": "webcomponents/"
+              },
+              {
+                "glob": "**/*.css",
+                "input": "node_modules/@gravitee/ui-components/assets/css",
+                "output": "css/"
+              },
+              {
+                "glob": "**/*.json",
+                "input": "node_modules/@gravitee/ui-components/assets/i18n",
+                "output": "i18n/"
               }
             ]
           }

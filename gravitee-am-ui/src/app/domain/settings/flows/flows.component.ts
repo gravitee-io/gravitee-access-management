@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import '@gravitee/ui-components/wc/gv-policy-studio';
+import {OrganizationService} from "../../../services/organization.service";
+import {DomainService} from "../../../services/domain.service";
+import {SnackbarService} from "../../../services/snackbar.service";
 
 @Component({
   selector: 'app-domain-flows',
@@ -26,15 +29,62 @@ export class DomainSettingsFlowsComponent implements OnInit {
   private domainId: string;
   policies: any[];
   definition: any = {};
-  flowSettingsForm: string;
+  flowSchema: string;
+  documentation: string;
 
-  constructor(private route: ActivatedRoute) {}
+  @ViewChild('studio', {static: true}) studio;
+
+  constructor(private route: ActivatedRoute,
+              private organizationService: OrganizationService,
+              private domainService: DomainService,
+              private snackbarService: SnackbarService
+  ) {
+  }
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.policies = this.route.snapshot.data['policies'] || [];
-    this.flowSettingsForm = this.route.snapshot.data['flowSettingsForm'];
+    this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
     this.definition.flows = this.route.snapshot.data['flows'] || [];
   }
+
+  @HostListener(':gv-policy-studio:fetch-documentation', ['$event.detail'])
+  onFetchDocumentation(detail) {
+    const policy = detail.policy;
+    this.organizationService.policyDocumentation(policy.id).subscribe((response) => {
+      this.studio.nativeElement.documentation = {
+        content: response,
+        image: policy.icon,
+        id: policy.id
+      };
+    }, () => {
+      this.studio.nativeElement.documentation = null;
+    });
+  }
+
+  _stringifyConfiguration(step) {
+    if (step.configuration != null) {
+      const configuration = typeof step.configuration === 'string' ? step.configuration : JSON.stringify(step.configuration);
+      return {...step, configuration};
+    }
+    return step;
+  }
+
+  @HostListener(':gv-policy-studio:save', ['$event.detail'])
+  onSave({definition}) {
+
+    const flows = definition.flows.map((flow) => {
+      flow.pre = flow.pre.map(this._stringifyConfiguration);
+      flow.post = flow.post.map(this._stringifyConfiguration);
+      return flow;
+    });
+
+    this.domainService.updateFlows(this.domainId, flows).subscribe(() => {
+      this.studio.nativeElement.saved();
+      this.snackbarService.open("Flows updated");
+    });
+
+  }
+
 }
 

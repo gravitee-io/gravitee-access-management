@@ -46,7 +46,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.text.Normalizer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -108,7 +107,7 @@ public class DomainServiceImpl implements DomainService {
     private ReporterService reporterService;
 
     @Autowired
-    private PolicyService policyService;
+    private FlowService flowService;
 
     @Autowired
     private AuditService auditService;
@@ -416,10 +415,10 @@ public class DomainServiceImpl implements DomainService {
                                         return Completable.concat(deleteReportersCompletable);
                                     })
                             )
-                            // delete policies
-                            .andThen(policyService.findByDomain(domainId)
-                                    .flatMapCompletable(policies -> {
-                                        List<Completable> deletePoliciesCompletable = policies.stream().map(p -> policyService.delete(p.getId())).collect(Collectors.toList());
+                            // delete flows
+                            .andThen(flowService.findAll(ReferenceType.DOMAIN, domainId)
+                                    .flatMapCompletable(flows -> {
+                                        List<Completable> deletePoliciesCompletable = flows.stream().map(f -> flowService.delete(f.getId())).collect(Collectors.toList());
                                         return Completable.concat(deletePoliciesCompletable);
                                     })
                             )
