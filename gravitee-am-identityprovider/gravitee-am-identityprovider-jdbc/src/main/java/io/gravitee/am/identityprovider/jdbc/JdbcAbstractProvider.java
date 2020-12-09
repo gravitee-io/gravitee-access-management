@@ -66,9 +66,12 @@ public class JdbcAbstractProvider<T extends LifecycleComponent> extends Abstract
                 .option(DRIVER, "pool")
                 .option(PROTOCOL, configuration.getProtocol())
                 .option(HOST, configuration.getHost())
-                .option(PORT, configuration.getPort())
                 .option(USER, configuration.getUser())
                 .option(DATABASE, configuration.getDatabase());
+
+        if (configuration.getPort() != null) {
+            builder.option(PORT, configuration.getPort());
+        }
 
         if (configuration.getPassword() != null) {
             builder.option(PASSWORD, configuration.getPassword());

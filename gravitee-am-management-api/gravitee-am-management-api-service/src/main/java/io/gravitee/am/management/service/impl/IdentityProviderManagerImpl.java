@@ -49,7 +49,6 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Component
 public class IdentityProviderManagerImpl extends AbstractService<IdentityProviderManager> implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload> {
-
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
     private static final String DEFAULT_IDP_NAME = "Default Identity Provider";
@@ -78,19 +77,19 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     @Value("${management.jdbc.host:localhost}")
     private String jdbcHost;
 
-    @Value("${management.jdbc.port}")
-    private Integer jdbcPort;
+    @Value("${management.jdbc.port:#{null}}")
+    private String jdbcPort;
 
-    @Value("${management.jdbc.driver}")
+    @Value("${management.jdbc.driver:postgresql}")
     private String jdbcDriver;
 
-    @Value("${management.jdbc.database}")
+    @Value("${management.jdbc.database:gravitee_am}")
     private String jdbcDatabase;
 
-    @Value("${management.jdbc.username}")
+    @Value("${management.jdbc.username:postgres}")
     private String jdbcUser;
 
-    @Value("${management.jdbc.password}")
+    @Value("${management.jdbc.password:#{null}}")
     private String jdbcPassword;
 
     @Value("${management.jdbc.identityProvider.provisioning:true}")
@@ -165,6 +164,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                     throw new IllegalStateException("Unable to compute digest of '" + lowerCaseId + "' due to unknown sha-256 algorithm", e);
                 }
             }
+
             String providerConfig = "{\"host\":\""+jdbcHost+"\"," +
                     "\"port\":"+jdbcPort+"," +
                     "\"protocol\":\""+jdbcDriver+"\"," +
@@ -172,7 +172,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                     // dash are forbidden in table name, replace them in domainName by underscore
                     "\"usersTable\":\"idp_users_"+ tableSuffix +"\"," +
                     "\"user\":\""+ jdbcUser +"\"," +
-                    "\"password\":\""+ jdbcPassword +"\"," +
+                    "\"password\":"+ (jdbcPassword == null ? null : "\"" + jdbcPassword + "\"") + "," +
                     "\"autoProvisioning\":"+ idpProvisioning +"," +
                     "\"selectUserByUsernameQuery\":\"SELECT * FROM idp_users_"+ tableSuffix +" WHERE username = %s\"," +
                     "\"identifierAttribute\":\"id\"," +
