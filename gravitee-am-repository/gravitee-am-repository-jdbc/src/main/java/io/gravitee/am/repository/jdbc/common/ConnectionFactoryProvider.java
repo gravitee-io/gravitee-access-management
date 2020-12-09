@@ -64,7 +64,7 @@ public class ConnectionFactoryProvider {
             String pwd = getJdbcPassword();
             String db = getJdbcDatabase();
 
-            if (driver == null || host == null || port == null) {
+            if (driver == null || host == null) {
                 LOGGER.error("Missing one of connection parameters 'driver', 'host' or 'port' for {} database", prefix);
                 throw new IllegalArgumentException("Missing properties for '" + prefix + "' database");
             }
@@ -73,7 +73,6 @@ public class ConnectionFactoryProvider {
                     .option(DRIVER, "pool") // force connection pool (https://github.com/r2dbc/r2dbc-pool#getting-started)
                     .option(PROTOCOL, driver) // set driver as protocol  (https://github.com/r2dbc/r2dbc-pool#getting-started)
                     .option(HOST, host)
-                    .option(PORT, Integer.parseInt(port))
                     .option(USER, user)
                     .option(DATABASE, db)
                     .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, Integer.parseInt(environment.getProperty(prefix+"acquireRetry", "1")))
@@ -84,6 +83,10 @@ public class ConnectionFactoryProvider {
                     .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", "0")), ChronoUnit.MILLIS))
                     .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", "0")), ChronoUnit.MILLIS))
                     .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.valueOf(environment.getProperty(prefix+"validationDepth", "LOCAL")));
+
+            if (port != null) {
+                builder.option(PORT, Integer.parseInt(port));
+            }
 
             final String validationQuery = environment.getProperty(prefix + "validationQuery");
             if (validationQuery != null) {

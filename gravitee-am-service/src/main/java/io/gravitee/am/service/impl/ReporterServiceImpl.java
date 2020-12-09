@@ -178,7 +178,7 @@ public class ReporterServiceImpl implements ReporterService {
                 "\"database\":\"" + jdbcDatabase + "\"," +
                 "\"driver\":\"" + jdbcDriver + "\"," +
                 "\"username\":\"" + jdbcUser+ "\"," +
-                "\"password\":\"" + jdbcPwd + "\"," +
+                "\"password\":"+ (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
                 "\"tableSuffix\":\"" + tableSuffix + "\"," +
                 "\"initialSize\":5," +
                 "\"maxSize\":10," +

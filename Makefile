@@ -269,10 +269,19 @@ prune: deleteData deleteContainer deleteImage deleteNetwork ## /!\ Erase all (re
 
 plugins: # Copy plugins to Gateway and Management API
 	@make version
+	@make commonPluginsManagement
+	@make commonPluginsGateway
 	@make pluginsGateway
 	@make pluginsManagement
 
-pluginsGateway: # Copy plugins to Gateway
+pluginsJdbc: # Copy plugins to Gateway and Management API
+	@make version
+	@make commonPluginsManagement
+	@make commonPluginsGateway
+	@make pluginsJdbcGateway
+	@make pluginsJdbcManagement
+
+commonPluginsGateway: # Copy plugins to Gateway
 	@rm -fr $(GIO_AM_GATEWAY_PLUGINS)/gravitee-am*.zip
 	@cp -fr gravitee-am-certificate/gravitee-am-certificate-javakeystore/target/gravitee-am-certificate-javakeystore-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-certificate/gravitee-am-certificate-pkcs12/target/gravitee-am-certificate-pkcs12-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
@@ -293,11 +302,11 @@ pluginsGateway: # Copy plugins to Gateway
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-google/target/gravitee-am-identityprovider-google-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-jdbc/target/gravitee-am-identityprovider-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-franceconnect/target/gravitee-am-identityprovider-franceconnect-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-linkedin/target/gravitee-am-identityprovider-linkedin-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-reporter/gravitee-am-reporter-mongodb/target/gravitee-am-reporter-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 
-pluginsManagement: # Copy plugins to Management API
+commonPluginsManagement: # Copy plugins to Management API
 	@rm -fr $(GIO_AM_MANAGEMENT_API_PLUGINS)/gravitee-am*.zip
 	@cp -fr gravitee-am-certificate/gravitee-am-certificate-javakeystore/target/gravitee-am-certificate-javakeystore-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-certificate/gravitee-am-certificate-pkcs12/target/gravitee-am-certificate-pkcs12-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
@@ -316,9 +325,49 @@ pluginsManagement: # Copy plugins to Management API
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-google/target/gravitee-am-identityprovider-google-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-jdbc/target/gravitee-am-identityprovider-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-franceconnect/target/gravitee-am-identityprovider-franceconnect-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-linkedin/target/gravitee-am-identityprovider-linkedin-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-reporter/gravitee-am-reporter-mongodb/target/gravitee-am-reporter-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+
+pluginsGateway: # Copy plugins to Gateway
+	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+
+pluginsManagement: # Copy plugins to Management API
+	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+
+pluginsJdbcGateway: # Copy plugins to Gateway with JDBC Repository
+	@cp -fr gravitee-am-repository/gravitee-am-repository-jdbc/target/gravitee-am-repository-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+
+pluginsJdbcManagement: # Copy plugins to Management API with JDBC Repository
+	@cp -fr gravitee-am-repository/gravitee-am-repository-jdbc/target/gravitee-am-repository-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+
+startPostgres: ## Start PostgresSQL 9.6 container
+	@docker-compose -f docker/compose/docker-compose-relational-databases.yml up --no-recreate --detach pgsql
+
+startPostgres13: ## Start PostgresSQL 13.1 container
+	@docker-compose -f docker/compose/docker-compose-relational-databases.yml up --no-recreate --detach pgsql_13
+
+startMySQL: ## Start MySQL 5.7 container
+	@docker-compose -f docker/compose/docker-compose-relational-databases.yml up --no-recreate --detach mysql
+
+startMySQL8: ## Start MySQL 8.0 container
+	@docker-compose -f docker/compose/docker-compose-relational-databases.yml up --no-recreate --detach mysql_8
+
+startMariaDB: ## Start MariaDB 10.2 container
+	@docker-compose -f docker/compose/docker-compose-relational-databases.yml up --no-recreate --detach mariadb
+
+startMariaDB_10_5: ## Start MariaDB 10.5 container
+	@docker-compose -f docker/compose/docker-compose-relational-databases.yml up --no-recreate --detach mariadb_10_5
+
+startSQLServer: ## Start SQLServer 2017 container
+	@docker-compose -f docker/compose/docker-compose-relational-databases.yml up --no-recreate --detach sqlserver
+
+startSQLServer_2019: ## Start SQLServer 2019 container
+	@docker-compose -f docker/compose/docker-compose-relational-databases.yml up --no-recreate --detach sqlserver_2019
+
+stopDatabase:
+	@docker-compose -f docker/compose/docker-compose-relational-databases.yml stop
+
 
 .DEFAULT_GOAL := help
 .PHONY: all test clean build version postman nvm npm

@@ -96,8 +96,8 @@ public class JdbcReporterSpringConfiguration extends AbstractR2dbcConfiguration 
         String pwd = configuration.getPassword();
         String db = configuration.getDatabase();
 
-        if (driver == null || host == null || port == null) {
-            LOGGER.error("Missing one of connection parameters 'driver', 'host' or 'port'");
+        if (driver == null || host == null) {
+            LOGGER.error("Missing one of connection parameters 'driver', 'host' ");
             throw new IllegalArgumentException("Missing connection property");
         }
 
@@ -105,7 +105,6 @@ public class JdbcReporterSpringConfiguration extends AbstractR2dbcConfiguration 
                 .option(DRIVER, "pool") // force connection pool (https://github.com/r2dbc/r2dbc-pool#getting-started)
                 .option(PROTOCOL, driver) // set driver as protocol  (https://github.com/r2dbc/r2dbc-pool#getting-started)
                 .option(HOST, host)
-                .option(PORT, port)
                 .option(USER, user)
                 .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, Optional.ofNullable(configuration.getAcquireRetry()).orElse(1))
                 .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, Optional.ofNullable(configuration.getInitialSize()).orElse(10))
@@ -119,6 +118,10 @@ public class JdbcReporterSpringConfiguration extends AbstractR2dbcConfiguration 
         final String validationQuery = configuration.getValidationQuery();
         if (validationQuery != null) {
             builder.option(PoolingConnectionFactoryProvider.VALIDATION_QUERY, validationQuery);
+        }
+
+        if (port != null) {
+            builder.option(PORT, port);
         }
 
         if (pwd != null) {
