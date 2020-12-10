@@ -15,12 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
-import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CSRFHandlerImpl;
-import io.gravitee.am.model.Domain;
 import io.vertx.reactivex.ext.web.handler.CSRFHandler;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,12 +26,12 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class CSRFHandlerFactory implements FactoryBean<CSRFHandler> {
 
-    @Autowired
-    private Domain domain;
+    @Value("${http.csrf.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
+    private String csrfSecret;
 
     @Override
     public CSRFHandler getObject() {
-        return CSRFHandler.newInstance(new CSRFHandlerImpl(SecureRandomString.generate()));
+        return CSRFHandler.newInstance(new CSRFHandlerImpl(csrfSecret));
     }
 
     @Override
