@@ -9,9 +9,21 @@ parameters:
     type: boolean
     default: true
     description: "Run in dry run mode?"
+  maven_profile_id:
+    type: string
+    default: "gravitee-dry-run"
+    description: "Maven ID of the Maven profile to use for a dry run ?"
+  secrethub_org:
+    type: string
+    default: "gravitee-lab"
+    description: "SecretHub Org to use to fetch secrets ?"
+  secrethub_repo:
+    type: string
+    default: "cicd"
+    description: "SecretHub Repo to use to fetch secrets ?"
 
 orbs:
-  gravitee: gravitee-io/gravitee@1.0
+  gravitee: gravitee-io/gravitee@dev:1.0.4
 
 workflows:
   version: 2.1
@@ -22,9 +34,30 @@ workflows:
       - gravitee/pr-build:
           context: cicd-orchestrator
   release:
+    # see https://circleci.com/docs/2.0/configuration-reference/#logic-statement-examples
     when:
-      equal: [ release, << pipeline.parameters.gio_action >> ]
+      and:
+        - equal: [ release, << pipeline.parameters.gio_action >> ]
+        - not: << pipeline.parameters.dry_run >>
     jobs:
+      # return to simple definition :
       - gravitee/release:
           context: cicd-orchestrator
           dry_run: << pipeline.parameters.dry_run >>
+          secrethub_org: << pipeline.parameters.secrethub_org >>
+          secrethub_repo: << pipeline.parameters.secrethub_repo >>
+          maven_profile_id: << pipeline.parameters.maven_profile_id >>
+  release_dry_run:
+    # see https://circleci.com/docs/2.0/configuration-reference/#logic-statement-examples
+    when:
+      and:
+        - equal: [ release, << pipeline.parameters.gio_action >> ]
+        - << pipeline.parameters.dry_run >>
+    jobs:
+      # return to simple definition :
+      - gravitee/release:
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          secrethub_org: << pipeline.parameters.secrethub_org >>
+          secrethub_repo: << pipeline.parameters.secrethub_repo >>
+          maven_profile_id: << pipeline.parameters.maven_profile_id >>
