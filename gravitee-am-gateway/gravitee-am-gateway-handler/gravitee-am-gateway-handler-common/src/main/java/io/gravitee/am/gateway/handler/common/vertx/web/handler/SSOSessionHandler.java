@@ -16,10 +16,12 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
+import io.gravitee.am.common.exception.authentication.AccountIllegalStateException;
+import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.user.UserManager;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -47,11 +49,9 @@ import java.util.Optional;
 public class SSOSessionHandler implements Handler<RoutingContext> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SSOSessionHandler.class);
-    private UserManager userManager;
     private ClientSyncService clientSyncService;
 
-    SSOSessionHandler(UserManager userManager, ClientSyncService clientSyncService) {
-        this.userManager = userManager;
+    public SSOSessionHandler(ClientSyncService clientSyncService) {
         this.clientSyncService = clientSyncService;
     }
 
@@ -67,7 +67,7 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
             if (h.failed()) {
                 Throwable cause = h.cause();
                 LOGGER.debug("An error occurs while checking SSO Session upon the current user : {}", context.user().principal(), cause);
-                if (cause instanceof AccountDisabledException) {
+                if (cause instanceof AccountStatusException) {
                     // user has been disabled, invalidate session
                     context.clearUser();
                     context.session().destroy();
@@ -87,7 +87,7 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
         io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
 
         // check account status
-        checkAccountStatus(endUser, accountHandler -> {
+        checkAccountStatus(context, endUser, accountHandler -> {
             if (accountHandler.failed()) {
                 handler.handle(Future.failedFuture(accountHandler.cause()));
                 return;
@@ -104,19 +104,23 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
         });
     }
 
-    private void checkAccountStatus(io.gravitee.am.model.User user, Handler<AsyncResult<Void>> handler) {
-        userManager.get(user.getId())
-                .subscribe(
-                        user1 -> {
-                            // if user is disabled, throw exception
-                            if (!user1.isEnabled()) {
-                                handler.handle(Future.failedFuture(new AccountDisabledException(user1.getId())));
-                                return;
-                            }
-                            handler.handle(Future.succeededFuture());
-                        },
-                        error -> handler.handle(Future.failedFuture(error)),
-                        () -> handler.handle(Future.succeededFuture()));
+    private void checkAccountStatus(RoutingContext context, io.gravitee.am.model.User user, Handler<AsyncResult<Void>> handler) {
+        // if user is disabled, sign out the user
+        if (!user.isEnabled()) {
+            handler.handle(Future.failedFuture(new AccountDisabledException(user.getId())));
+            return;
+        }
+
+        // if user has reset its password, check the last login date to make sure that the current session is not compromised
+        CookieSession session = (CookieSession) context.session().getDelegate();
+        if (user.getLastPasswordReset() != null &&
+                session.lastLogin().before(user.getLastPasswordReset())) {
+            handler.handle(Future.failedFuture(new AccountIllegalStateException(user.getId())));
+            return;
+        }
+
+        // continue
+        handler.handle(Future.succeededFuture());
     }
 
     private void checkClient(RoutingContext context, io.gravitee.am.model.User user, Handler<AsyncResult<Void>> handler) {

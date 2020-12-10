@@ -230,6 +230,7 @@ public class UserServiceImpl implements UserService {
                     user.setAccountLockedUntil(null);
                     user.setPassword(null);
                     user.setExternalId(idpUser.getId());
+                    user.setLastPasswordReset(new Date());
                     user.setUpdatedAt(new Date());
                     // additional information
                     extractAdditionalInformation(user, idpUser.getAdditionalInformation());

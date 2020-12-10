@@ -15,13 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.certificate.CertificateProvider;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.user.UserManager;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
-import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,8 +36,9 @@ import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.Date;
 
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 /**
@@ -42,18 +49,30 @@ import static org.mockito.Mockito.when;
 public class SSOSessionHandlerTest extends RxWebTestBase {
 
     @Mock
-    private UserManager userManager;
-
-    @Mock
     private ClientSyncService clientSyncService;
+    @Mock
+    private JWTService jwtService;
+    @Mock
+    private CertificateManager certificateManager;
+    @Mock
+    private UserService userService;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
+        when(jwtService.encode(any(JWT.class), (CertificateProvider) eq(null))).thenReturn(Single.just("token"));
+
         router.route("/login")
-                .handler(new SSOSessionHandler(userManager, clientSyncService))
-                .handler(rc -> rc.response().setStatusCode(200).end())
+                .handler(new CookieSessionHandler(jwtService, certificateManager, userService, "am-cookie", 30 * 60 * 60))
+                .handler(new SSOSessionHandler(clientSyncService))
+                .handler(rc -> {
+                    if (rc.session().isDestroyed()) {
+                        rc.response().setStatusCode(401).end();
+                    } else {
+                        rc.response().setStatusCode(200).end();
+                    }
+                })
                 .failureHandler(new ErrorHandler());
     }
 
@@ -66,6 +85,56 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldInvoke_userDisabled() throws Exception {
+        User user = new User();
+        user.setEnabled(false);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=test-client",
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+    }
+
+    @Test
+    public void shouldInvoke_user_password_reset() throws Exception {
+        User user = new User();
+        user.setId("user-id");
+        user.setLastPasswordReset(new Date(System.currentTimeMillis() - 1000 * 60));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=test-client",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldNotInvoke_user_password_reset() throws Exception {
+        User user = new User();
+        user.setId("user-id");
+        user.setLastPasswordReset(new Date(System.currentTimeMillis() + 1000 * 60));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login?client_id=test-client",
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+    }
+
+    @Test
     public void shouldInvoke_sameClient() throws Exception {
         User user = new User();
         user.setId("user-id");
@@ -75,7 +144,6 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("test-client");
 
-        when(userManager.get(user.getId())).thenReturn(Maybe.just(user));
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(client.getClientId())).thenReturn(Maybe.just(client));
 
@@ -106,7 +174,6 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         requestedClient.setClientId("requested-client");
         requestedClient.setIdentities(Collections.singleton("idp-1"));
 
-        when(userManager.get(user.getId())).thenReturn(Maybe.just(user));
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty()).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(
                 invocation -> {
@@ -149,7 +216,6 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         requestedClient.setClientId("requested-client");
         requestedClient.setIdentities(Collections.singleton("idp-2"));
 
-        when(userManager.get(user.getId())).thenReturn(Maybe.just(user));
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(
                 invocation -> {

@@ -101,8 +101,8 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
             }
 
             final Client client = ctx.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-            final String userId = session.get(ConstantKeys.USER_ID_KEY);
-            final String username = session.get(ConstantKeys.USERNAME_KEY);
+            final String userId = session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
+            final String username = session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
             final String credentialId = webauthnResp.getString("id");
 
             // authenticate the user
@@ -111,12 +111,13 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                     new WebAuthnCredentials()
                             .setOrigin(origin)
                             .setChallenge(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY))
-                            .setUsername(session.get(ConstantKeys.USERNAME_KEY))
+                            .setUsername(session.get(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY))
                             .setWebauthn(webauthnResp), authenticate -> {
 
                         // invalidate the challenge
                         session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
-                        session.remove(ConstantKeys.USERNAME_KEY);
+                        session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
+                        session.remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
 
                         if (authenticate.succeeded()) {
                             // create the authentication context

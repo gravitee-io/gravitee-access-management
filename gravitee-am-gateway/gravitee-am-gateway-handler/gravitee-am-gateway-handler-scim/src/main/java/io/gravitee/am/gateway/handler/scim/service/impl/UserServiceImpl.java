@@ -214,6 +214,10 @@ public class UserServiceImpl implements UserService {
                                             userToUpdate.setPassword(null);
                                             // set external id
                                             userToUpdate.setExternalId(idpUser.getId());
+                                            // if password has been changed, update last update date
+                                            if (user.getPassword() != null) {
+                                                userToUpdate.setLastPasswordReset(new Date());
+                                            }
                                             return userRepository.update(userToUpdate);
                                         })
                                         .onErrorResumeNext(ex -> {

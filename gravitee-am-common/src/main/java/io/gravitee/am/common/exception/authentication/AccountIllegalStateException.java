@@ -13,35 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.user.impl;
+package io.gravitee.am.common.exception.authentication;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-class User {
+public class AccountIllegalStateException extends AccountStatusException {
 
-    private io.gravitee.am.model.User user;
-    private long lastAccessed;
+    public AccountIllegalStateException() { }
 
-    public User(io.gravitee.am.model.User user, long lastAccessed) {
-        this.user = user;
-        this.lastAccessed = lastAccessed;
+    public AccountIllegalStateException(String msg) {
+        super(msg);
     }
 
-    public io.gravitee.am.model.User getUser() {
-        return user;
-    }
-
-    public void setUser(io.gravitee.am.model.User user) {
-        this.user = user;
-    }
-
-    public long getLastAccessed() {
-        return lastAccessed;
-    }
-
-    public void setLastAccessed(long lastAccessed) {
-        this.lastAccessed = lastAccessed;
+    @Override
+    public String getErrorCode() {
+        return "account_illegal_state";
     }
 }

@@ -242,6 +242,9 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
         context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
         context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
+        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
+        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
+        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
     }
 
     private void doRedirect(RoutingContext context, String url) {

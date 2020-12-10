@@ -23,6 +23,7 @@ import io.vertx.ext.web.Session;
 import io.vertx.ext.web.sstore.AbstractSession;
 import org.springframework.util.StringUtils;
 
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -35,11 +36,13 @@ public class CookieSession extends AbstractSession {
 
     private final JWTService jwtService;
     private final CertificateProvider certificateProvider;
+    private Date lastLogin;
 
     public CookieSession(JWTService jwtService, CertificateProvider certificateProvider, long timeout) {
         this.jwtService = jwtService;
         this.certificateProvider = certificateProvider;
         this.setTimeout(timeout);
+        this.lastLogin = new Date();
     }
 
     @Override
@@ -54,6 +57,25 @@ public class CookieSession extends AbstractSession {
         return this;
     }
 
+    public Date lastLogin() {
+        return lastLogin;
+    }
+
+    Session putUserId(Object obj) {
+        super.put(CookieSessionHandler.USER_ID_KEY, obj);
+        return this;
+    }
+
+    @Override
+    public Session put(String key, Object obj) {
+        // Do not allow to push a userId key to avoid session compromise
+        if (key.equalsIgnoreCase(CookieSessionHandler.USER_ID_KEY)) {
+            throw new IllegalArgumentException(CookieSessionHandler.USER_ID_KEY + " can not be used as a session key!");
+        }
+
+        return super.put(key, obj);
+    }
+
     protected Single<CookieSession> setValue(String payload) {
 
         if (StringUtils.isEmpty(payload)) {
@@ -61,7 +83,10 @@ public class CookieSession extends AbstractSession {
         }
 
         return this.jwtService.decodeAndVerify(payload, certificateProvider)
-                .doOnSuccess(this::setData)
+                .doOnSuccess(jwt -> {
+                    this.lastLogin = new Date(jwt.getExp() * 1000 - this.timeout());
+                    this.setData(jwt);
+                })
                 .map(jwt -> this);
     }
 }
