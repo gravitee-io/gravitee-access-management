@@ -20,6 +20,7 @@ import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
@@ -55,6 +56,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     private final ExtensionGrant extensionGrant;
     private final UserAuthenticationManager userAuthenticationManager;
     private final IdentityProviderManager identityProviderManager;
+    private final UserService userService;
     private Date minDate;
 
     public ExtensionGrantGranter(ExtensionGrantProvider extensionGrantProvider,
@@ -62,7 +64,8 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                  UserAuthenticationManager userAuthenticationManager,
                                  TokenService tokenService,
                                  TokenRequestResolver tokenRequestResolver,
-                                 IdentityProviderManager identityProviderManager) {
+                                 IdentityProviderManager identityProviderManager,
+                                 UserService userService) {
         super(extensionGrant.getGrantType());
         setTokenService(tokenService);
         setTokenRequestResolver(tokenRequestResolver);
@@ -71,6 +74,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         this.extensionGrant = extensionGrant;
         this.userAuthenticationManager = userAuthenticationManager;
         this.identityProviderManager = identityProviderManager;
+        this.userService = userService;
     }
 
     @Override
@@ -124,6 +128,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                         user.setRoles(idpUser.getRoles());
                                         return user;
                                     })
+                                    .flatMap(user -> userService.enhanceRolesPermissions(user).toMaybe())
                                     .switchIfEmpty(Maybe.error(new InvalidGrantException("Unknown user: " + endUser.getId())));
                         } else {
                             User user = new User();

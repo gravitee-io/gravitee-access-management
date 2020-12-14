@@ -85,4 +85,11 @@ public interface UserService {
     default Single<List<User>> findByDomainAndEmail(String domain, String email) {
         return findByDomainAndEmail(domain, email, true);
     }
+
+    /**
+     * Fetch roles information and add roles and permissions to user data
+     * @param user end user
+     * @return Enhanced user
+     */
+	Single<User> enhanceRolesPermissions(User user);
 }
