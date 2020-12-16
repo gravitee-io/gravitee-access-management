@@ -807,36 +807,6 @@ databaseChangeLog:
             tableName: uma_permission_ticket
             unique: false
 
-        # Policy
-        ##############
-        - createTable:
-            tableName: policies
-            columns:
-              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: {name: enabled, type: boolean, constraints: { nullable: true } }
-              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
-              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: extension_point, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: order, type: integer, constraints: { nullable: true } }
-              - column: {name: configuration, type: clob, constraints: { nullable: true } }
-              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
-              - column: {name: client, type: nvarchar(64), constraints: { nullable: true } }
-              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
-              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
-
-        - addPrimaryKey:
-            constraintName: pk_policies
-            columnNames: id
-            tableName: policies
-
-        - createIndex:
-            columns:
-              - column:
-                  name: domain
-            indexName:  idx_policies_domain
-            tableName:  policies
-            unique:  false
-
         # Reporter
         ##############
         - createTable:

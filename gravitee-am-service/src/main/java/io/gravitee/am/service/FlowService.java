@@ -32,6 +32,8 @@ public interface FlowService {
 
     Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId);
 
+    List<Flow> defaultFlows(ReferenceType referenceType, String referenceId);
+
     Maybe<Flow> findById(ReferenceType referenceType, String referenceId, String id);
 
     Maybe<Flow> findById(String id);

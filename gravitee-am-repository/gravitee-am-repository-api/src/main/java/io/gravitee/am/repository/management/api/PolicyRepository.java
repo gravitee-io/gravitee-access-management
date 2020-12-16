@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Policy;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -31,4 +32,7 @@ public interface PolicyRepository extends CrudRepository<Policy, String> {
 
     Single<List<Policy>> findByDomain(String domain);
 
+    Single<Boolean> collectionExists();
+
+    Completable deleteCollection();
 }

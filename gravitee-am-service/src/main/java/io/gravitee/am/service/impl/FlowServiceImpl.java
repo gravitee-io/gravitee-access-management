@@ -86,7 +86,7 @@ public class FlowServiceImpl implements FlowService {
             });
     }
 
-    private List<Flow> defaultFlows(ReferenceType referenceType, String referenceId) {
+    public List<Flow> defaultFlows(ReferenceType referenceType, String referenceId) {
         return Arrays.asList(
             buildFlow(Type.ROOT, referenceType, referenceId),
             buildFlow(Type.LOGIN, referenceType, referenceId),
