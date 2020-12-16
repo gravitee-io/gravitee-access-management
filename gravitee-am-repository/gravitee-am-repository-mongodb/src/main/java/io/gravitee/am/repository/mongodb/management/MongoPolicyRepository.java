@@ -41,6 +41,8 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoPolicyRepository extends AbstractManagementMongoRepository implements PolicyRepository {
 
+    public static final String COLLECTION_NAME = "policies";
+
     private MongoCollection<PolicyMongo> policiesCollection;
 
     @PostConstruct
@@ -81,6 +83,19 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(policiesCollection.deleteOne(eq(FIELD_ID, id)));
+    }
+
+    @Override
+    public Single<Boolean> collectionExists() {
+        return Observable.fromPublisher(mongoOperations.listCollectionNames())
+                .filter(collectionName -> collectionName.equalsIgnoreCase(COLLECTION_NAME))
+                .isEmpty()
+                .map(isEmpty -> !isEmpty);
+    }
+
+    @Override
+    public Completable deleteCollection() {
+        return Completable.fromPublisher(mongoOperations.getCollection(COLLECTION_NAME).drop());
     }
 
     private PolicyMongo convert(Policy policy) {

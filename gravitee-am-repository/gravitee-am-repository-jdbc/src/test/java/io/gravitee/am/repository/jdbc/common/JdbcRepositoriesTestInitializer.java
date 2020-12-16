@@ -70,7 +70,6 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         tables.add("uma_resource_scopes");
         tables.add("uma_resource_set");
         tables.add("reporters");
-        tables.add("policies");
         tables.add("memberships");
         tables.add("login_attempts");
         tables.add("identities");

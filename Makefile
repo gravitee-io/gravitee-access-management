@@ -303,7 +303,6 @@ commonPluginsGateway: # Copy plugins to Gateway
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-jdbc/target/gravitee-am-identityprovider-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-franceconnect/target/gravitee-am-identityprovider-franceconnect-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-linkedin/target/gravitee-am-identityprovider-linkedin-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-reporter/gravitee-am-reporter-mongodb/target/gravitee-am-reporter-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 
 commonPluginsManagement: # Copy plugins to Management API
@@ -326,20 +325,23 @@ commonPluginsManagement: # Copy plugins to Management API
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-jdbc/target/gravitee-am-identityprovider-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-franceconnect/target/gravitee-am-identityprovider-franceconnect-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-linkedin/target/gravitee-am-identityprovider-linkedin-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-reporter/gravitee-am-reporter-mongodb/target/gravitee-am-reporter-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 
 pluginsGateway: # Copy plugins to Gateway
 	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-reporter/gravitee-am-reporter-mongodb/target/gravitee-am-reporter-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 
 pluginsManagement: # Copy plugins to Management API
 	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-reporter/gravitee-am-reporter-mongodb/target/gravitee-am-reporter-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 
 pluginsJdbcGateway: # Copy plugins to Gateway with JDBC Repository
 	@cp -fr gravitee-am-repository/gravitee-am-repository-jdbc/target/gravitee-am-repository-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-reporter/gravitee-am-reporter-jdbc/target/gravitee-am-reporter-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 
 pluginsJdbcManagement: # Copy plugins to Management API with JDBC Repository
 	@cp -fr gravitee-am-repository/gravitee-am-repository-jdbc/target/gravitee-am-repository-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-reporter/gravitee-am-reporter-jdbc/target/gravitee-am-reporter-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 
 startPostgres: ## Start PostgresSQL 9.6 container
 	@docker-compose -f docker/compose/docker-compose-relational-databases.yml up --no-recreate --detach pgsql
