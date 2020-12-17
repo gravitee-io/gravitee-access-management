@@ -19,6 +19,7 @@ import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.DefaultRole;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
@@ -100,7 +101,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                     do {
                         userPage = userService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT, page, PAGE_SIZE).blockingGet();
                         // membership helper create membership only if
-                        userPage.getData().forEach(user -> membershipHelper.setRole(user, organizationOwnerRole));
+                        userPage.getData().forEach(user -> membershipHelper.setOrganizationRole(user, organizationOwnerRole));
                         page++;
                     } while (userPage.getData().size() == PAGE_SIZE);
 
@@ -145,6 +146,9 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                     }
                 }
             }
+
+            // The primary owner of the default organization must be considered as platform admin.
+            membershipHelper.setPlatformAdminRole();
         } catch (Exception e) {
             logger.error("An error occurred trying to initialize default organization", e);
             return false;

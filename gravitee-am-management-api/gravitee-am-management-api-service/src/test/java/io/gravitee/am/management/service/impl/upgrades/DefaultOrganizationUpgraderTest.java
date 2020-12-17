@@ -98,6 +98,7 @@ public class DefaultOrganizationUpgraderTest {
         doNothing().when(membershipHelper).setOrganizationPrimaryOwnerRole(argThat(user -> user.getId().equals(adminUser.getId())));
 
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -116,6 +117,7 @@ public class DefaultOrganizationUpgraderTest {
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -137,6 +139,7 @@ public class DefaultOrganizationUpgraderTest {
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -161,6 +164,7 @@ public class DefaultOrganizationUpgraderTest {
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -188,6 +192,7 @@ public class DefaultOrganizationUpgraderTest {
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -216,6 +221,7 @@ public class DefaultOrganizationUpgraderTest {
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
 
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -261,10 +267,11 @@ public class DefaultOrganizationUpgraderTest {
         when(userService.findAll(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), eq(2), anyInt()))
                 .thenReturn(Single.just(new Page<>(Arrays.asList(user, user), 2, totalUsers)));
 
-        doNothing().when(membershipHelper).setRole(eq(user), eq(adminRole));
+        doNothing().when(membershipHelper).setOrganizationRole(eq(user), eq(adminRole));
 
         cut.upgrade();
 
-        verify(membershipHelper, times(totalUsers)).setRole(eq(user), eq(adminRole));
+        verify(membershipHelper, times(totalUsers)).setOrganizationRole(eq(user), eq(adminRole));
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 }

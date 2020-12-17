@@ -61,4 +61,10 @@ public class PlatformResource {
     public SystemRoleResource getSystemRoleResource() {
         return resourceContext.getResource(SystemRoleResource.class);
     }
+
+
+    @Path("installation")
+    public InstallationResource getInstallationResource() {
+        return resourceContext.getResource(InstallationResource.class);
+    }
 }

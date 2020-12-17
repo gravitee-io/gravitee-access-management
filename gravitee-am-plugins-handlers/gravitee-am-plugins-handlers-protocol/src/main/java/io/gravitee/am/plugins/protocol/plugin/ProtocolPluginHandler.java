@@ -43,7 +43,7 @@ public class ProtocolPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PROTOCOL.equalsIgnoreCase(plugin.type().name());
+        return PROTOCOL.equalsIgnoreCase(plugin.type());
     }
 
     @Override

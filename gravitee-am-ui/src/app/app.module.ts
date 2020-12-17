@@ -287,6 +287,9 @@ import { ApplicationResourcePolicyResolver } from './resolvers/application-resou
 import { LoginSettingsComponent } from './domain/components/login/login-settings.component';
 import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
 import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolver";
+import {CockpitComponent} from "./settings/cockpit/cockpit.component";
+import {InstallationResolver} from "./resolvers/installation.resolver";
+import {InstallationService} from "./services/installation.service";
 
 @NgModule({
   declarations: [
@@ -297,6 +300,7 @@ import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolv
     LoginComponent,
     LoginCallbackComponent,
     DomainsComponent,
+    CockpitComponent,
     DomainComponent,
     DomainDashboardComponent,
     DomainSettingsComponent,
@@ -492,6 +496,7 @@ import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolv
     DashboardService,
     UserService,
     ExtensionGrantService,
+    InstallationService,
     AppConfig,
     DomainsResolver,
     DomainResolver,
@@ -552,6 +557,7 @@ import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolv
     ApplicationResourcesResolver,
     ApplicationResourceResolver,
     ApplicationResourcePolicyResolver,
+    InstallationResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

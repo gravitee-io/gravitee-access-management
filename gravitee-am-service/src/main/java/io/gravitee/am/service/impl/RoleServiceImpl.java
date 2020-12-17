@@ -378,9 +378,9 @@ public class RoleServiceImpl implements RoleService {
         List<Role> roles = new ArrayList<>();
 
         // Create PRIMARY_OWNER roles and PLATFORM_ADMIN role.
+        Map<Permission, Set<Acl>> platformAdminPermissions = Permission.allPermissionAcls(ReferenceType.PLATFORM);
         Map<Permission, Set<Acl>> organizationPrimaryOwnerPermissions = Permission.allPermissionAcls(ReferenceType.ORGANIZATION);
         Map<Permission, Set<Acl>> environmentPrimaryOwnerPermissions = Permission.allPermissionAcls(ReferenceType.ENVIRONMENT);
-        Map<Permission, Set<Acl>> platformPrimaryOwnerPermissions = Permission.allPermissionAcls(ReferenceType.PLATFORM);
         Map<Permission, Set<Acl>> domainPrimaryOwnerPermissions = Permission.allPermissionAcls(ReferenceType.DOMAIN);
         Map<Permission, Set<Acl>> applicationPrimaryOwnerPermissions = Permission.allPermissionAcls(ReferenceType.APPLICATION);
 
@@ -397,7 +397,7 @@ public class RoleServiceImpl implements RoleService {
 
         applicationPrimaryOwnerPermissions.put(Permission.APPLICATION, Acl.of(READ, UPDATE, DELETE));
 
-        roles.add(buildSystemRole(SystemRole.PLATFORM_ADMIN.name(), ReferenceType.PLATFORM, platformPrimaryOwnerPermissions));
+        roles.add(buildSystemRole(SystemRole.PLATFORM_ADMIN.name(), ReferenceType.PLATFORM, platformAdminPermissions));
         roles.add(buildSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER.name(), ReferenceType.ORGANIZATION, organizationPrimaryOwnerPermissions));
         roles.add(buildSystemRole(SystemRole.ENVIRONMENT_PRIMARY_OWNER.name(), ReferenceType.ENVIRONMENT, environmentPrimaryOwnerPermissions));
         roles.add(buildSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER.name(), ReferenceType.DOMAIN, domainPrimaryOwnerPermissions));

@@ -36,6 +36,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -544,6 +545,63 @@ public class MembershipServiceTest {
         completable.assertComplete();
 
         verify(membershipRepository, times(0)).create(any());
+        verifyZeroInteractions(auditService);
+    }
+
+    @Test
+    public void shouldSetPlatformAdmin() {
+
+        final String userId = "userId";
+        final Role platformAdminRole = new Role();
+        platformAdminRole.setId("platform-admin");
+        when(roleService.findSystemRole(SystemRole.PLATFORM_ADMIN, ReferenceType.PLATFORM)).thenReturn(Maybe.just(platformAdminRole));
+        when(membershipRepository.findByCriteria(eq(ReferenceType.PLATFORM), eq(Platform.DEFAULT), argThat(criteria -> criteria != null && criteria.getUserId().get().equals(userId)))).thenReturn(Flowable.empty());
+        when(membershipRepository.create(any(Membership.class))).thenAnswer((i->Single.just(i.getArgument(0))));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        final TestObserver<Membership> obs = membershipService.setPlatformAdmin(userId).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(membership -> {
+            assertEquals(MemberType.USER, membership.getMemberType());
+            assertEquals(userId, membership.getMemberId());
+            assertEquals(ReferenceType.PLATFORM, membership.getReferenceType());
+            assertEquals(Platform.DEFAULT, membership.getReferenceId());
+            return true;
+        });
+    }
+
+    @Test
+    public void shouldNotSetPlatformAdmin_roleNotFound() {
+
+        final String userId = "userId";
+        when(roleService.findSystemRole(SystemRole.PLATFORM_ADMIN, ReferenceType.PLATFORM)).thenReturn(Maybe.empty());
+
+        final TestObserver<Membership> obs = membershipService.setPlatformAdmin(userId).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertError(RoleNotFoundException.class);
+    }
+
+    @Test
+    public void shouldNotSetPlatformAdmin_alreadySet() {
+
+        final String userId = "userId";
+        final Membership alreadyExisting = new Membership();
+        final Role platformAdminRole = new Role();
+        platformAdminRole.setId("platform-admin");
+        when(roleService.findSystemRole(SystemRole.PLATFORM_ADMIN, ReferenceType.PLATFORM)).thenReturn(Maybe.just(platformAdminRole));
+        when(membershipRepository.findByCriteria(eq(ReferenceType.PLATFORM), eq(Platform.DEFAULT), argThat(criteria -> criteria != null && criteria.getUserId().get().equals(userId)))).thenReturn(Flowable.just(alreadyExisting));
+
+        final TestObserver<Membership> obs = membershipService.setPlatformAdmin(userId).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(alreadyExisting);
+
+        verify(membershipRepository, times(0)).create(any(Membership.class));
+        verifyZeroInteractions(eventService);
         verifyZeroInteractions(auditService);
     }
 }

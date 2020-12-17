@@ -166,6 +166,8 @@ import {DomainSettingsEntrypointsComponent} from './domain/settings/entrypoints/
 import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
 import {ApplicationLoginSettingsComponent} from "./domain/applications/application/advanced/login/login.component";
 import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolver";
+import {CockpitComponent} from "./settings/cockpit/cockpit.component";
+import {InstallationResolver} from "./resolvers/installation.resolver";
 
 const routes: Routes = [
   {
@@ -528,6 +530,23 @@ const routes: Routes = [
             }
           }
         ]
+      },
+      {
+        path: 'cockpit',
+        component: CockpitComponent,
+        canActivate: [AuthGuard],
+        resolve: {
+          installation: InstallationResolver
+        },
+        data: {
+          menu: {
+            label: 'Cockpit',
+            icon: 'explore'
+          },
+          perms: {
+            only: ['installation_read']
+          }
+        }
       }
     ]
   },

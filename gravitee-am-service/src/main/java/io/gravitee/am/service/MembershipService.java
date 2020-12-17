@@ -42,6 +42,8 @@ public interface MembershipService {
 
     Single<Membership> addOrUpdate(String organizationId, Membership membership, User principal);
 
+    Single<Membership> setPlatformAdmin(String userId);
+
     Single<Map<String, Map<String, Object>>> getMetadata(List<Membership> memberships);
 
     Completable delete(String membershipId, User principal);
