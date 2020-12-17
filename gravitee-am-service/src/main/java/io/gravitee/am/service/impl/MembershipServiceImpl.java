@@ -20,15 +20,13 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Group;
-import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.Member;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
@@ -167,6 +165,31 @@ public class MembershipServiceImpl implements MembershipService {
                         })
                 );
     }
+
+    @Override
+    public Single<Membership> setPlatformAdmin(String userId) {
+
+        MembershipCriteria criteria = new MembershipCriteria();
+        criteria.setUserId(userId);
+
+        return roleService.findSystemRole(SystemRole.PLATFORM_ADMIN, ReferenceType.PLATFORM)
+                .switchIfEmpty(Single.error(new RoleNotFoundException(SystemRole.PLATFORM_ADMIN.name())))
+                .flatMap(role -> findByCriteria(ReferenceType.PLATFORM, Platform.DEFAULT, criteria).firstElement()
+                        .switchIfEmpty(Single.defer(() -> {
+                            final Date now = new Date();
+                            Membership membership = new Membership();
+                            membership.setRoleId(role.getId());
+                            membership.setMemberType(MemberType.USER);
+                            membership.setMemberId(userId);
+                            membership.setReferenceType(ReferenceType.PLATFORM);
+                            membership.setReferenceId(Platform.DEFAULT);
+                            membership.setCreatedAt(now);
+                            membership.setUpdatedAt(now);
+
+                            return createInternal(membership, null);
+                        })));
+    }
+
 
     @Override
     public Single<Map<String, Map<String, Object>>> getMetadata(List<Membership> memberships) {

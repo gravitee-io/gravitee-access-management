@@ -63,8 +63,8 @@ public class EnvironmentCommandHandler implements CommandHandler<EnvironmentComm
 
         return environmentService.createOrUpdate(environmentPayload.getOrganizationId(), environmentPayload.getId(), newEnvironment, null)
                 .map(organization -> new EnvironmentReply(command.getId(), CommandStatus.SUCCEEDED))
-                .doOnSuccess(reply -> logger.info("Environment [{}] created with id [{}].", environmentPayload.getName(), environmentPayload.getId()))
-                .doOnError(error -> logger.error("Error occurred when creating environment [{}] with id [{}].", environmentPayload.getName(), environmentPayload.getId(), error))
+                .doOnSuccess(reply -> logger.info("Environment [{}] handled with id [{}].", environmentPayload.getName(), environmentPayload.getId()))
+                .doOnError(error -> logger.error("Error occurred when handling environment [{}] with id [{}].", environmentPayload.getName(), environmentPayload.getId(), error))
                 .onErrorReturn(throwable -> new EnvironmentReply(command.getId(), CommandStatus.ERROR));
     }
 }

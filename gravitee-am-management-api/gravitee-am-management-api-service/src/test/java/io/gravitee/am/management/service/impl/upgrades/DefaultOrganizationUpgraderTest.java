@@ -101,6 +101,7 @@ public class DefaultOrganizationUpgraderTest {
         when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.emptyList()));
 
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -119,6 +120,7 @@ public class DefaultOrganizationUpgraderTest {
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -140,6 +142,7 @@ public class DefaultOrganizationUpgraderTest {
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -164,6 +167,7 @@ public class DefaultOrganizationUpgraderTest {
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -191,6 +195,7 @@ public class DefaultOrganizationUpgraderTest {
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -219,6 +224,7 @@ public class DefaultOrganizationUpgraderTest {
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
 
         assertTrue(cut.upgrade());
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 
     @Test
@@ -263,13 +269,14 @@ public class DefaultOrganizationUpgraderTest {
         when(userService.findAll(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), eq(2), anyInt()))
                 .thenReturn(Single.just(new Page<>(Arrays.asList(user, user), 2, totalUsers)));
 
-        doNothing().when(membershipHelper).setRole(eq(user), eq(adminRole));
+        doNothing().when(membershipHelper).setOrganizationRole(eq(user), eq(adminRole));
 
         when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(organization));
         when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.emptyList()));
 
         cut.upgrade();
 
-        verify(membershipHelper, times(totalUsers)).setRole(eq(user), eq(adminRole));
+        verify(membershipHelper, times(totalUsers)).setOrganizationRole(eq(user), eq(adminRole));
+        verify(membershipHelper, times(1)).setPlatformAdminRole();
     }
 }

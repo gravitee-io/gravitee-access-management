@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -35,9 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -57,7 +54,6 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CockpitAuthenticationFilter extends GenericFilterBean {
 
@@ -194,13 +190,13 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
 
     private Key getPublicKey() throws Exception {
 
-        final KeyStore trustStore = loadTrustStore();
+        final KeyStore trustStore = loadKeyStore();
         final Certificate cert = trustStore.getCertificate(keyAlias);
 
         return cert.getPublicKey();
     }
 
-    private KeyStore loadTrustStore() throws Exception {
+    private KeyStore loadKeyStore() throws Exception {
 
         final KeyStore keystore = KeyStore.getInstance(keyStoreType);
 

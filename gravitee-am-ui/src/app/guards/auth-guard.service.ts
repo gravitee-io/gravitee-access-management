@@ -38,7 +38,7 @@ export class AuthGuard implements CanActivate {
     const requiredPerms = route.data.perms.only;
     const userResult: Observable<any> = !this.authService.isAuthenticated() ? this.authService.userInfo() : of(this.authService.user());
     let resourceResult: Observable<any> = of([]);
-    if (!requiredPerms[0].startsWith('organization') && requiredPerms[0] !== 'domain_create') {
+    if ((requiredPerms[0].startsWith('domain') || requiredPerms[0].startsWith('application')) && requiredPerms[0] !== 'domain_create') {
       // check if the authenticated user can navigate to the next route (domain settings or application settings)
       const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
       const appId = route.parent.paramMap.get('appId') ? route.parent.paramMap.get('appId') : route.parent.parent.paramMap.get('appId');

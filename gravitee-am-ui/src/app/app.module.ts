@@ -296,6 +296,9 @@ import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.res
 import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
 import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
 import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolver";
+import {CockpitComponent} from "./settings/cockpit/cockpit.component";
+import {InstallationResolver} from "./resolvers/installation.resolver";
+import {InstallationService} from "./services/installation.service";
 
 @NgModule({
   declarations: [
@@ -306,6 +309,7 @@ import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolv
     LoginComponent,
     LoginCallbackComponent,
     DomainsComponent,
+    CockpitComponent,
     DomainComponent,
     DomainDashboardComponent,
     DomainSettingsComponent,
@@ -505,6 +509,7 @@ import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolv
     DashboardService,
     UserService,
     ExtensionGrantService,
+    InstallationService,
     AppConfig,
     DomainsResolver,
     DomainResolver,
@@ -570,6 +575,7 @@ import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolv
     PluginPoliciesResolver,
     PlatformFlowSchemaResolver,
     ApplicationFlowsResolver,
+    InstallationResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,
