@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcLoginAttempt;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAccessToken;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringAccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -163,5 +164,11 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                 .then())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with domain {} and subject {}",
                         domainId, userId, error));
+    }
+
+    public Completable purgeExpiredData() {
+        LOGGER.debug("purgeExpiredData()");
+        LocalDateTime now = LocalDateTime.now(UTC);
+        return monoToCompletable(dbClient.delete().from(JdbcAccessToken.class).matching(where("expire_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge access tokens", error));
     }
 }

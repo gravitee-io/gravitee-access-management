@@ -70,6 +70,25 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByUserAndSource() throws TechnicalException {
+        // create user
+        User user = new User();
+        user.setUsername("testsUsername");
+        user.setSource("sourceid");
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId("testDomain");
+        userRepository.create(user).blockingGet();
+
+        // fetch users
+        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, user.getDisplayName(), user.getUsername(), user.getSource()).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> u.getUsername().equals(user.getUsername()));
+    }
+
+    @Test
     public void testFindAll() throws TechnicalException {
         // create user
         User user = new User();

@@ -25,8 +25,9 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
  * @author GraviteeSource Team
  */
 @Configuration
-@EnableR2dbcRepositories(basePackages = "io.gravitee.am.repository.jdbc.oauth2")
+@EnableR2dbcRepositories(basePackages ={ "io.gravitee.am.repository.jdbc.oauth2", "io.gravitee.am.repository.jdbc.oauth2.oidc" })
 @ComponentScan({
+        "io.gravitee.am.repository.jdbc.oauth2.oidc",
         "io.gravitee.am.repository.jdbc.oauth2.api",
         "io.gravitee.am.repository.jdbc.common"})
 public class OAuthTestConfigurationLoader extends AbstractTestRepositoryConfiguration {

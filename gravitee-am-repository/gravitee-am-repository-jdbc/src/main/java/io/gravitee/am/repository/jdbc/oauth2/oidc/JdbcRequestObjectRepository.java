@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.oauth2.oidc;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcLoginAttempt;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.model.JdbcRequestObject;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.spring.SpringRequestObjectRepository;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
@@ -31,6 +32,8 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 
 import static java.time.ZoneOffset.UTC;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -80,5 +83,11 @@ public class JdbcRequestObjectRepository extends AbstractJdbcRepository implemen
         LOGGER.debug("delete({})", id);
         return requestObjectRepository.deleteById(id)
                 .doOnError(error -> LOGGER.error("Unable to delete RequestObject with id {}", id, error));
+    }
+
+    public Completable purgeExpiredData() {
+        LOGGER.debug("purgeExpiredData()");
+        LocalDateTime now = LocalDateTime.now(UTC);
+        return monoToCompletable(dbClient.delete().from(JdbcRequestObject.class).matching(where("expire_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge RequestObjects", error));
     }
 }

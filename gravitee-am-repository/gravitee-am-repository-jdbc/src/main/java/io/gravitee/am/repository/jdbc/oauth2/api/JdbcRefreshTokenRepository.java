@@ -131,4 +131,10 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
                 .doOnError(error -> LOGGER.error("Unable to delete refresh token with domain {} and subject {}",
                         domainId, userId, error));
     }
+
+    public Completable purgeExpiredData() {
+        LOGGER.debug("purgeExpiredData()");
+        LocalDateTime now = LocalDateTime.now(UTC);
+        return monoToCompletable(dbClient.delete().from(JdbcRefreshToken.class).matching(where("expire_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge refresh tokens", error));
+    }
 }

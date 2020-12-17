@@ -78,6 +78,7 @@ public class ScopeUpgrader implements Upgrader, Ordered {
                         return createClientScopes(domain)
                                 .flatMap(irrelevant -> createRoleScopes(domain));
                     }
+                    logger.info("No scope to update, skip upgrade");
                     return Single.just(new ArrayList<>(scopes));
                 });
     }

@@ -30,4 +30,8 @@ public interface LoginAttemptRepository extends CrudRepository<LoginAttempt, Str
     Maybe<LoginAttempt> findByCriteria(LoginAttemptCriteria criteria);
 
     Completable delete(LoginAttemptCriteria criteria);
+
+    default Completable purgeExpiredData() {
+        return Completable.complete();
+    }
 }

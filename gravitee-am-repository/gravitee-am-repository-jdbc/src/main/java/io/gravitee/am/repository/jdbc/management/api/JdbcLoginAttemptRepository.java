@@ -152,4 +152,10 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         return loginAttemptRepository.deleteById(id)
                 .doOnError(error -> LOGGER.error("Unable to delete loginAttempt with id '{}'", id, error));
     }
+
+    public Completable purgeExpiredData() {
+        LOGGER.debug("purgeExpiredData()");
+        LocalDateTime now = LocalDateTime.now(UTC);
+        return monoToCompletable(dbClient.delete().from(JdbcLoginAttempt.class).matching(where("expire_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge loginAttempts", error));
+    }
 }

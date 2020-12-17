@@ -27,6 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gravitee-am-identityprovider-common</artifactId>
+    <name>Gravitee IO - Access Management - Identity Provider - Common</name>
 
     <dependencies>
         <!-- Gravitee.io -->

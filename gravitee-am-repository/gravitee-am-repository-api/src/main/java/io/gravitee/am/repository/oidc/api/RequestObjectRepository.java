@@ -31,4 +31,8 @@ public interface RequestObjectRepository {
     Single<RequestObject> create(RequestObject requestObject);
 
     Completable delete(String id);
+
+    default Completable purgeExpiredData() {
+        return Completable.complete();
+    }
 }

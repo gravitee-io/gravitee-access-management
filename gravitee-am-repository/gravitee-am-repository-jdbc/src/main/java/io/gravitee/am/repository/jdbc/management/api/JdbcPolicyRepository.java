@@ -23,6 +23,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,7 +40,7 @@ public class JdbcPolicyRepository extends AbstractJdbcRepository implements Poli
 
     @Override
     public Single<List<Policy>> findByDomain(String domain) {
-        throw new IllegalStateException("Method not implemented");
+        return Single.just(Collections.emptyList());
     }
 
     @Override

@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.oauth2.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcLoginAttempt;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcScopeApproval;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringScopeApprovalRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
@@ -176,5 +177,11 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
         LOGGER.debug("Delete ScopeApproval with id {}", id);
         return scopeApprovalRepository.deleteById(id)
                 .doOnError((error) -> LOGGER.error("Unable to delete ScopeApproval with id {}", id, error));
+    }
+
+    public Completable purgeExpiredData() {
+        LOGGER.debug("purgeExpiredData()");
+        LocalDateTime now = LocalDateTime.now(UTC);
+        return monoToCompletable(dbClient.delete().from(JdbcScopeApproval.class).matching(where("expires_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge ScopeApproval", error));
     }
 }

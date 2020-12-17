@@ -17,10 +17,12 @@ package io.gravitee.am.repository.jdbc.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcLoginAttempt;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAuthorizationCode;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringAuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +36,7 @@ import java.util.Map;
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.from;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToMaybe;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -96,5 +97,11 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         return authorizationCodeRepository.findByCode(code, LocalDateTime.now(UTC))
                 .map(this::toEntity)
                 .doOnError(error -> LOGGER.error("Unable to retrieve AuthorizationCode with code {}", code));
+    }
+
+    public Completable purgeExpiredData() {
+        LOGGER.debug("purgeExpiredData()");
+        LocalDateTime now = LocalDateTime.now(UTC);
+        return monoToCompletable(dbClient.delete().from(JdbcAuthorizationCode.class).matching(where("expire_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge authorization tokens", error));
     }
 }
