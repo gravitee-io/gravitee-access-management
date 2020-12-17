@@ -43,10 +43,10 @@ public interface SpringUserRepository extends RxJava2CrudRepository<JdbcUser, St
     @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and u.external_id = :id and u.source = :src")
     Maybe<JdbcUser> findByExternalIdAndSource(@Param("refType")String refType, @Param("refId") String refId, @Param("id") String externalId, @Param("src") String source);
 
-    @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and u.username = :name and u.source = :src")
+    @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and UPPER(u.username) = UPPER(:name) and u.source = :src")
     Maybe<JdbcUser> findByUsernameAndSource(@Param("refType")String refType, @Param("refId") String refId, @Param("name") String username, @Param("src") String source);
 
-    @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and u.username = :name")
+    @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and UPPER(u.username) = UPPER(:name)")
     Maybe<JdbcUser> findByUsername(@Param("refType")String refType, @Param("refId") String refId, @Param("name") String username);
 
     @Query("select * from users u where u.id in (:ids)")

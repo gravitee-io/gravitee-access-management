@@ -41,4 +41,5 @@ public interface SpringScopeApprovalRepository extends RxJava2CrudRepository<Jdb
     Maybe<JdbcScopeApproval> findByDomainAndUserAndClientAndScope(@Param("domain") String domain, @Param("user") String user,
                                                                   @Param("client") String client, @Param("scope") String scope);
 
+
 }

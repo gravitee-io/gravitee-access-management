@@ -33,7 +33,6 @@
 
     <modules>
         <module>gravitee-am-management-api-services-sync</module>
+        <module>gravitee-am-management-api-services-purge</module>
     </modules>
-
-
 </project>

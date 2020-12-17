@@ -178,6 +178,14 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-jdbc</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.extensiongrant</groupId>
             <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
             <version>${project.version}</version>
@@ -212,6 +220,14 @@
         <dependency>
             <groupId>io.gravitee.am.reporter</groupId>
             <artifactId>gravitee-am-reporter-mongodb</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.reporter</groupId>
+            <artifactId>gravitee-am-reporter-jdbc</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
@@ -407,6 +423,13 @@
                                     <type>zip</type>
                                 </artifactItem>
 
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.repository</groupId>
+                                    <artifactId>gravitee-am-repository-jdbc</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
                                 <!-- Extension Grants -->
                                 <artifactItem>
                                     <groupId>io.gravitee.am.extensiongrant</groupId>
@@ -441,6 +464,13 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.reporter</groupId>
                                     <artifactId>gravitee-am-reporter-mongodb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.reporter</groupId>
+                                    <artifactId>gravitee-am-reporter-jdbc</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

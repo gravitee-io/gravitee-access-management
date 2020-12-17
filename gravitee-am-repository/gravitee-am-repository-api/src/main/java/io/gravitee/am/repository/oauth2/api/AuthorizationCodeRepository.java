@@ -48,4 +48,8 @@ public interface AuthorizationCodeRepository {
      * @return
      */
     Maybe<AuthorizationCode> findByCode(String code);
+
+    default Completable purgeExpiredData() {
+        return Completable.complete();
+    }
 }

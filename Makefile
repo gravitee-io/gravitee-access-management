@@ -311,6 +311,7 @@ commonPluginsManagement: # Copy plugins to Management API
 	@cp -fr gravitee-am-certificate/gravitee-am-certificate-pkcs12/target/gravitee-am-certificate-pkcs12-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-extensiongrant/gravitee-am-extensiongrant-jwtbearer/target/gravitee-am-extensiongrant-jwtbearer-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-management-api/gravitee-am-management-api-services/gravitee-am-management-api-services-sync/target/gravitee-am-management-api-services-sync-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-management-api/gravitee-am-management-api-services/gravitee-am-management-api-services-purge/target/gravitee-am-management-api-services-purge-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-github/target/gravitee-am-identityprovider-github-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-facebook/target/gravitee-am-identityprovider-facebook-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-twitter/target/gravitee-am-identityprovider-twitter-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)

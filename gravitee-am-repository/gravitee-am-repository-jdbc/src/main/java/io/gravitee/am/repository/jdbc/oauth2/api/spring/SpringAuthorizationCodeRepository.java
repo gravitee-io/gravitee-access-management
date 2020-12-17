@@ -32,4 +32,5 @@ import java.time.LocalDateTime;
 public interface SpringAuthorizationCodeRepository extends RxJava2CrudRepository<JdbcAuthorizationCode, String> {
     @Query("select * from authorization_codes c where c.code = :code and (c.expire_at > :now or c.expire_at is null)")
     Maybe<JdbcAuthorizationCode> findByCode(@Param("code") String code, @Param("now")LocalDateTime now);
+
 }
