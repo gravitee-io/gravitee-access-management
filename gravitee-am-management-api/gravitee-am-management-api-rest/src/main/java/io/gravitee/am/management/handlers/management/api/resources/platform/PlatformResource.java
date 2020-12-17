@@ -65,4 +65,9 @@ public class PlatformResource {
     public ConfigurationResource getConfigurationResource() {
         return resourceContext.getResource(ConfigurationResource.class);
     }
+
+    @Path("installation")
+    public InstallationResource getInstallationResource() {
+        return resourceContext.getResource(InstallationResource.class);
+    }
 }

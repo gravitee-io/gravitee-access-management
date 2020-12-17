@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.upgrades.helpers;
 
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
@@ -82,5 +83,46 @@ public class MembershipHelperTest {
         when(roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(adminRole));
 
         cut.setOrganizationPrimaryOwnerRole(user);
+    }
+
+    @Test
+    public void shouldSetPlatformAdminToOrganizationPrimaryOwner() {
+
+        final Role organizationPrimaryOwner = new Role();
+        organizationPrimaryOwner.setId("organization-primary-owner");
+
+        final Membership membership = new Membership();
+        final String userId = "user-id";
+
+        membership.setMemberId(userId);
+        membership.setMemberType(MemberType.USER);
+
+        when(roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(organizationPrimaryOwner));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class))).thenReturn(Flowable.just(membership));
+        when(membershipService.setPlatformAdmin(userId)).thenReturn(Single.just(new Membership()));
+
+        cut.setPlatformAdminRole();
+
+        verify(membershipService).setPlatformAdmin(userId);
+    }
+
+    @Test
+    public void shouldNotSetPlatformAdminNoOrganizationPrimaryOwner() {
+
+        final Role organizationPrimaryOwner = new Role();
+        organizationPrimaryOwner.setId("organization-primary-owner");
+
+        final Membership membership = new Membership();
+        final String userId = "user-id";
+
+        membership.setMemberId(userId);
+        membership.setMemberType(MemberType.USER);
+
+        when(roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(organizationPrimaryOwner));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
+
+        cut.setPlatformAdminRole();
+
+        verify(membershipService, times(0)).setPlatformAdmin(anyString());
     }
 }

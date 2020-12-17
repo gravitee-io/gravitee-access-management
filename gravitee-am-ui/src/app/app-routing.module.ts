@@ -175,6 +175,8 @@ import {PlatformFlowSchemaResolver} from './resolvers/platform-flow-schema.resol
 import {ApplicationAnalyticsComponent} from "./domain/applications/application/analytics/analytics.component";
 import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
 import {CurrentEnvironmentResolver} from "./resolvers/current-environment.resolver";
+import {CockpitComponent} from "./settings/cockpit/cockpit.component";
+import {InstallationResolver} from "./resolvers/installation.resolver";
 
 const routes: Routes = [
   {
@@ -541,6 +543,23 @@ const routes: Routes = [
             }
           }
         ]
+      },
+      {
+        path: 'cockpit',
+        component: CockpitComponent,
+        canActivate: [AuthGuard],
+        resolve: {
+          installation: InstallationResolver
+        },
+        data: {
+          menu: {
+            label: 'Cockpit',
+            icon: 'explore'
+          },
+          perms: {
+            only: ['installation_read']
+          }
+        }
       }
     ]
   },
