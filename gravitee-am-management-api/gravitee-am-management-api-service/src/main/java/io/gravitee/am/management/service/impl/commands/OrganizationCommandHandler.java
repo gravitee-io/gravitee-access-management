@@ -60,8 +60,8 @@ public class OrganizationCommandHandler implements CommandHandler<OrganizationCo
 
         return organizationService.createOrUpdate(organizationPayload.getId(), newOrganization, null)
                 .map(organization -> new OrganizationReply(command.getId(), CommandStatus.SUCCEEDED))
-                .doOnSuccess(reply -> logger.info("Organization [{}] created with id [{}].", organizationPayload.getName(), organizationPayload.getId()))
-                .doOnError(error -> logger.error("Error occurred when creating organization [{}] with id [{}].", organizationPayload.getName(), organizationPayload.getId(), error))
+                .doOnSuccess(reply -> logger.info("Organization [{}] handled with id [{}].", organizationPayload.getName(), organizationPayload.getId()))
+                .doOnError(error -> logger.error("Error occurred when handling organization [{}] with id [{}].", organizationPayload.getName(), organizationPayload.getId(), error))
                 .onErrorReturn(throwable -> new OrganizationReply(command.getId(), CommandStatus.ERROR));
     }
 }

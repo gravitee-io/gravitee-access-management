@@ -20,21 +20,23 @@ import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Organization;
+import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,8 +58,19 @@ public class CurrentUserResource extends AbstractResource {
         // Get the organization the current user is logged on.
         String organizationId = (String) authenticatedUser.getAdditionalInformation().getOrDefault(Claims.organization, Organization.DEFAULT);
 
-        permissionService.findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
-                .map(Permission::flatten)
+        final Single<List<String>> organizationPermissions = permissionService.findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
+                .map(Permission::flatten);
+
+        final Single<List<String>> platformPermissions = permissionService.findAllPermissions(authenticatedUser, ReferenceType.PLATFORM, Platform.DEFAULT)
+                .map(Permission::flatten);
+
+        Single.zip(platformPermissions, organizationPermissions, Pair::of)
+                .map(p -> {
+                    Set<String> allPermissions = new HashSet<>();
+                    allPermissions.addAll(p.getLeft());
+                    allPermissions.addAll(p.getRight());
+                    return allPermissions;
+                })
                 .map(permissions -> {
                     // prepare profile information with role permissions
                     Map<String, Object> profile = new HashMap<>(authenticatedUser.getAdditionalInformation());

@@ -21,7 +21,6 @@ import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginHandler;
-import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +34,8 @@ public class ExtensionGrantPluginHandler implements PluginHandler {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantPluginHandler.class);
 
+    private final static String PLUGIN_TYPE = "extension_grant";
+
     @Autowired
     private PluginClassLoaderFactory pluginClassLoaderFactory;
 
@@ -43,7 +44,7 @@ public class ExtensionGrantPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return plugin.type() == PluginType.EXTENSION_GRANT;
+        return PLUGIN_TYPE.equalsIgnoreCase(plugin.type());
     }
 
     @Override
