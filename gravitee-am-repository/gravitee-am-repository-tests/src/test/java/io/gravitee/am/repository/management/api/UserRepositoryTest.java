@@ -80,7 +80,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user).blockingGet();
 
         // fetch users
-        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, user.getDisplayName(), user.getUsername(), user.getSource()).test();
+        TestObserver<User> testObserver = userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, "testDomain", user.getUsername(), user.getSource()).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

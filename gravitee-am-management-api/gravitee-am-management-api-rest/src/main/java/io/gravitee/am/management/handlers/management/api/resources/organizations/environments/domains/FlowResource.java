@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.FlowEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
@@ -58,7 +59,7 @@ public class FlowResource extends AbstractResource {
                     "or DOMAIN_FLOW[READ] permission on the specified environment " +
                     "or DOMAIN_FLOW[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Flow", response = Flow.class),
+            @ApiResponse(code = 200, message = "Flow", response = FlowEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
@@ -68,8 +69,9 @@ public class FlowResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.READ)
-                .andThen(flowService.findById(ReferenceType.DOMAIN, domain, flow))
+                .andThen(flowService.findById(ReferenceType.DOMAIN, domain, flow)
                         .switchIfEmpty(Maybe.error(new FlowNotFoundException(flow)))
+                        .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -81,19 +83,30 @@ public class FlowResource extends AbstractResource {
                     "or DOMAIN_FLOW[UPDATE] permission on the specified environment " +
                     "or DOMAIN_FLOW[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Flow successfully updated", response = Flow.class),
+            @ApiResponse(code = 201, message = "Flow successfully updated", response = FlowEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("flow") String flow,
-            @ApiParam(name = "flow", required = true) @Valid @NotNull Flow updateFlow,
+            @ApiParam(name = "flow", required = true) @Valid @NotNull io.gravitee.am.service.model.Flow updateFlow,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.UPDATE)
-                .andThen(flowService.update(ReferenceType.DOMAIN, domain, flow, updateFlow, authenticatedUser))
+                .andThen(flowService.update(ReferenceType.DOMAIN, domain, flow, convert(updateFlow), authenticatedUser)
+                        .map(FlowEntity::new))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private static Flow convert(io.gravitee.am.service.model.Flow flow) {
+        Flow flowToUpdate = new Flow();
+        flowToUpdate.setName(flow.getName());
+        flowToUpdate.setEnabled(flow.isEnabled());
+        flowToUpdate.setCondition(flow.getCondition());
+        flowToUpdate.setPre(flow.getPre());
+        flowToUpdate.setPost(flow.getPost());
+        return flowToUpdate;
     }
 }
