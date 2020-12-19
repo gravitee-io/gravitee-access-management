@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.FlowEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
@@ -63,7 +64,7 @@ public class FlowsResource extends AbstractResource {
                     "or DOMAIN_FLOW[LIST] permission on the specified organization. " +
                     "Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered flows for a security domain", response = Flow.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "List registered flows for a security domain", response = FlowEntity.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -91,21 +92,22 @@ public class FlowsResource extends AbstractResource {
                     "or DOMAIN_FLOW[UPDATE] permission on the specified environment " +
                     "or DOMAIN_FLOW[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Flows successfully updated"),
+            @ApiResponse(code = 200, message = "Flows successfully updated", response = FlowEntity.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @ApiParam(name = "flows", required = true) @Valid @NotNull final List<Flow> flows,
+            @ApiParam(name = "flows", required = true) @Valid @NotNull final List<io.gravitee.am.service.model.Flow> flows,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.UPDATE)
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, flows, authenticatedUser)))
+                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, convert(flows), authenticatedUser))
+                        .map(updatedFlows -> updatedFlows.stream().map(FlowEntity::new).collect(Collectors.toList())))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -114,16 +116,34 @@ public class FlowsResource extends AbstractResource {
         return resourceContext.getResource(FlowResource.class);
     }
 
-    private Flow filterFlowInfos(Boolean hasPermission, Flow flow) {
+    private FlowEntity filterFlowInfos(Boolean hasPermission, Flow flow) {
         if (hasPermission) {
-            return flow;
+            return new FlowEntity(flow);
         }
 
-        Flow filteredFlow = new Flow();
+        FlowEntity filteredFlow = new FlowEntity();
         filteredFlow.setId(flow.getId());
         filteredFlow.setName(flow.getName());
         filteredFlow.setEnabled(flow.isEnabled());
 
         return filteredFlow;
+    }
+
+    private static List<Flow> convert(List<io.gravitee.am.service.model.Flow> flows) {
+        return flows.stream()
+                .map(FlowsResource::convert)
+                .collect(Collectors.toList());
+    }
+
+    private static Flow convert(io.gravitee.am.service.model.Flow flow) {
+        Flow flowToUpsert = new Flow();
+        flowToUpsert.setId(flow.getId());
+        flowToUpsert.setType(flow.getType());
+        flowToUpsert.setName(flow.getName());
+        flowToUpsert.setEnabled(flow.isEnabled());
+        flowToUpsert.setCondition(flow.getCondition());
+        flowToUpsert.setPre(flow.getPre());
+        flowToUpsert.setPost(flow.getPost());
+        return flowToUpsert;
     }
 }

@@ -17,8 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.model.FlowEntity;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
+import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
@@ -79,34 +81,40 @@ public class FlowResourceTest extends JerseySpringTest {
     @Test
     public void shouldUpdateFlow() {
 
-        Flow updateFlow = new Flow();
-        updateFlow.setName("updatedName");
+        io.gravitee.am.service.model.Flow flowToUpdate = new io.gravitee.am.service.model.Flow();
+        flowToUpdate.setName("updatedName");
+        flowToUpdate.setType(Type.LOGIN);
 
-        doReturn(Single.just(updateFlow)).when(flowService).update(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(FLOW_ID), any(Flow.class), any(User.class));
+        Flow updatedFlow = new Flow();
+        updatedFlow.setName(flowToUpdate.getName());
+        updatedFlow.setType(flowToUpdate.getType());
+
+        doReturn(Single.just(updatedFlow)).when(flowService).update(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(FLOW_ID), any(Flow.class), any(User.class));
 
         final Response response = put(target("domains")
                 .path(DOMAIN_ID)
                 .path("flows")
-                .path(FLOW_ID), updateFlow);
+                .path(FLOW_ID), flowToUpdate);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final Flow flow = readEntity(response, Flow.class);
-        assertEquals(updateFlow.getName(), flow.getName());
+        final FlowEntity flow = readEntity(response, FlowEntity.class);
+        assertEquals(flowToUpdate.getName(), flow.getName());
     }
 
     @Test
     public void shouldNotUpdateEntrypoint_notFound() {
 
-        Flow updateFlow = new Flow();
-        updateFlow.setName("updatedName");
+        io.gravitee.am.service.model.Flow flowToUpdate = new io.gravitee.am.service.model.Flow();
+        flowToUpdate.setName("updatedName");
+        flowToUpdate.setType(Type.LOGIN);
 
         doReturn(Single.error(new FlowNotFoundException(FLOW_ID))).when(flowService).update(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(FLOW_ID), any(Flow.class), any(User.class));
 
         final Response response = put(target("domains")
                 .path(DOMAIN_ID)
                 .path("flows")
-                .path(FLOW_ID), updateFlow);
+                .path(FLOW_ID), flowToUpdate);
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }

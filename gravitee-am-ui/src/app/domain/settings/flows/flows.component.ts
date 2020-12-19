@@ -16,9 +16,9 @@
 import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import '@gravitee/ui-components/wc/gv-policy-studio';
-import {OrganizationService} from "../../../services/organization.service";
-import {DomainService} from "../../../services/domain.service";
-import {SnackbarService} from "../../../services/snackbar.service";
+import {OrganizationService} from '../../../services/organization.service';
+import {DomainService} from '../../../services/domain.service';
+import {SnackbarService} from '../../../services/snackbar.service';
 
 @Component({
   selector: 'app-domain-flows',
@@ -74,6 +74,8 @@ export class DomainSettingsFlowsComponent implements OnInit {
   onSave({definition}) {
 
     const flows = definition.flows.map((flow) => {
+      delete flow.createdAt;
+      delete flow.updatedAt;
       flow.pre = flow.pre.map(this._stringifyConfiguration);
       flow.post = flow.post.map(this._stringifyConfiguration);
       return flow;
@@ -81,7 +83,7 @@ export class DomainSettingsFlowsComponent implements OnInit {
 
     this.domainService.updateFlows(this.domainId, flows).subscribe(() => {
       this.studio.nativeElement.saved();
-      this.snackbarService.open("Flows updated");
+      this.snackbarService.open('Flows updated');
     });
 
   }

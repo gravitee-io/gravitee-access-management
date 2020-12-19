@@ -147,6 +147,8 @@ public class FlowServiceImpl implements FlowService {
         LOGGER.debug("Create a new flow {} for referenceType {} and referenceId", referenceType, referenceId);
 
         flow.setId(flow.getId() == null ? RandomString.generate() : flow.getId());
+        flow.setReferenceType(referenceType);
+        flow.setReferenceId(referenceId);
         flow.setCreatedAt(new Date());
         flow.setUpdatedAt(flow.getCreatedAt());
 
@@ -168,12 +170,15 @@ public class FlowServiceImpl implements FlowService {
     public Single<Flow> update(ReferenceType referenceType, String referenceId, String id, Flow flow, User principal) {
         LOGGER.debug("Update a flow {} ", flow);
 
-        // update date
-
         return flowRepository.findById(referenceType, referenceId, id)
             .switchIfEmpty(Maybe.error(new FlowNotFoundException(id)))
             .flatMapSingle(oldFlow -> {
-                Flow flowToUpdate = new Flow(flow);
+                Flow flowToUpdate = new Flow(oldFlow);
+                flowToUpdate.setName(flow.getName());
+                flowToUpdate.setEnabled(flow.isEnabled());
+                flowToUpdate.setCondition(flow.getCondition());
+                flowToUpdate.setPre(flow.getPre());
+                flowToUpdate.setPost(flow.getPost());
                 flowToUpdate.setUpdatedAt(new Date());
                 if (Type.ROOT.equals(flowToUpdate.getType())) {
                     flowToUpdate.setPost(null);

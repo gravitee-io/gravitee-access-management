@@ -206,8 +206,8 @@ postman: ## Run postman non regression test (require newman npm module)
 	@newman run postman/collections/graviteeio-am-scope-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-client-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-client-management-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-policies-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-policies-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-flows-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+	@newman run postman/collections/graviteeio-am-flows-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-login-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-login-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-logout-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail

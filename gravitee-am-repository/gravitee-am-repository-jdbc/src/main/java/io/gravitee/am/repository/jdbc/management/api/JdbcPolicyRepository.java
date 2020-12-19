@@ -19,7 +19,6 @@ import io.gravitee.am.model.Policy;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.management.api.PolicyRepository;
 import io.reactivex.Completable;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Repository;
 
@@ -35,32 +34,7 @@ public class JdbcPolicyRepository extends AbstractJdbcRepository implements Poli
 
     @Override
     public Single<List<Policy>> findAll() {
-        throw new IllegalStateException("Method not implemented");
-    }
-
-    @Override
-    public Single<List<Policy>> findByDomain(String domain) {
         return Single.just(Collections.emptyList());
-    }
-
-    @Override
-    public Maybe<Policy> findById(String id) {
-        throw new IllegalStateException("Method not implemented");
-    }
-
-    @Override
-    public Single<Policy> create(Policy item) {
-        throw new IllegalStateException("Method not implemented");
-    }
-
-    @Override
-    public Single<Policy> update(Policy item) {
-        throw new IllegalStateException("Method not implemented");
-    }
-
-    @Override
-    public Completable delete(String id) {
-        throw new IllegalStateException("Method not implemented");
     }
 
     @Override

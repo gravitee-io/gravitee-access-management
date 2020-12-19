@@ -17,22 +17,16 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.policy.ExtensionPoint;
-import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Policy;
 import io.gravitee.am.repository.management.api.PolicyRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.PolicyMongo;
 import io.reactivex.Completable;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.mongodb.client.model.Filters.eq;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -43,46 +37,10 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
 
     public static final String COLLECTION_NAME = "policies";
 
-    private MongoCollection<PolicyMongo> policiesCollection;
-
-    @PostConstruct
-    public void init() {
-        policiesCollection = mongoOperations.getCollection("policies", PolicyMongo.class);
-        super.init(policiesCollection);
-        super.createIndex(policiesCollection, new Document(FIELD_DOMAIN, 1));
-    }
-
     @Override
     public Single<List<Policy>> findAll() {
+        MongoCollection<PolicyMongo> policiesCollection = mongoOperations.getCollection(COLLECTION_NAME, PolicyMongo.class);
         return Observable.fromPublisher(policiesCollection.find()).map(this::convert).collect(ArrayList::new, List::add);
-    }
-
-    @Override
-    public Single<List<Policy>> findByDomain(String domain) {
-        return Observable.fromPublisher(policiesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(ArrayList::new, List::add);
-    }
-
-    @Override
-    public Maybe<Policy> findById(String id) {
-        return Observable.fromPublisher(policiesCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
-    }
-
-    @Override
-    public Single<Policy> create(Policy item) {
-        PolicyMongo policy = convert(item);
-        policy.setId(policy.getId() == null ? RandomString.generate() : policy.getId());
-        return Single.fromPublisher(policiesCollection.insertOne(policy)).flatMap(success -> findById(policy.getId()).toSingle());
-    }
-
-    @Override
-    public Single<Policy> update(Policy item) {
-        PolicyMongo policy = convert(item);
-        return Single.fromPublisher(policiesCollection.replaceOne(eq(FIELD_ID, policy.getId()), policy)).flatMap(updateResult -> findById(policy.getId()).toSingle());
-    }
-
-    @Override
-    public Completable delete(String id) {
-        return Completable.fromPublisher(policiesCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
     @Override
@@ -96,26 +54,6 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
     @Override
     public Completable deleteCollection() {
         return Completable.fromPublisher(mongoOperations.getCollection(COLLECTION_NAME).drop());
-    }
-
-    private PolicyMongo convert(Policy policy) {
-        if (policy == null) {
-            return null;
-        }
-
-        PolicyMongo policyMongo = new PolicyMongo();
-        policyMongo.setId(policy.getId());
-        policyMongo.setEnabled(policy.isEnabled());
-        policyMongo.setName(policy.getName());
-        policyMongo.setType(policy.getType());
-        policyMongo.setExtensionPoint(policy.getExtensionPoint().toString());
-        policyMongo.setOrder(policy.getOrder());
-        policyMongo.setConfiguration(policy.getConfiguration());
-        policyMongo.setDomain(policy.getDomain());
-        policyMongo.setClient(policy.getClient());
-        policyMongo.setCreatedAt(policy.getCreatedAt());
-        policyMongo.setUpdatedAt(policy.getUpdatedAt());
-        return policyMongo;
     }
 
     private Policy convert(PolicyMongo policyMongo) {

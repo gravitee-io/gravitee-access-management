@@ -23,14 +23,15 @@ import io.reactivex.Single;
 import java.util.List;
 
 /**
+ * NOTE: only use for the PoliciesToFlowsUpgrader Upgrader
+ * Use the {@link io.gravitee.am.repository.management.api.FlowRepository} for the flow management
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PolicyRepository extends CrudRepository<Policy, String> {
+public interface PolicyRepository {
 
     Single<List<Policy>> findAll();
-
-    Single<List<Policy>> findByDomain(String domain);
 
     Single<Boolean> collectionExists();
 
