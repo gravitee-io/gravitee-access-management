@@ -25,7 +25,7 @@
     "@angular/platform-browser-dynamic": "^8.2.14",
     "@angular/platform-server": "^8.2.14",
     "@angular/router": "^8.2.14",
-    "@gravitee/ui-components": "1.0.14",
+    "@gravitee/ui-components": "^1.0.15",
     "@swimlane/ngx-datatable": "~15.0.2",
     "@types/hammerjs": "^2.0.36",
     "angular7-json-schema-form": "^1.0.4",
