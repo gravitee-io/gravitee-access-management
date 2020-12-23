@@ -1,5 +1,18 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/325?closed=1[AM - 3.4.2 (2020-12-10)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Handle CSRF in cluster environment https://github.com/gravitee-io/issues/issues/4736[#4736]
+- [sso] do not kill the current session when reset password https://github.com/gravitee-io/issues/issues/4754[#4754]
+
+*_Identity-provider_*
+
+- [inline] add encoding mechanism to store password value. https://github.com/gravitee-io/issues/issues/4695[#4695]
+
 == https://github.com/gravitee-io/issues/milestone/318?closed=1[AM - 3.4.1 (2020-12-06)]
 
 === Bug fixes
