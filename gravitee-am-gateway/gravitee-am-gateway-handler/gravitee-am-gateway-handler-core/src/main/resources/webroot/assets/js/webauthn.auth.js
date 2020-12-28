@@ -1,188 +1,30 @@
 'use strict';
 
-let clearAlert = () => {
-    if (document.getElementById('webauthn-error')) {
-        document.getElementById('webauthn-error').style.display = 'none';
-    }
-};
-
-/* Handle for register form submission */
-if (document.getElementById('register')) {
-    document.getElementById('register').addEventListener('submit', function (event) {
-        event.preventDefault();
-        const registerURL = this.action;
-        const responseURL = registerURL.replace('/webauthn/register', '/webauthn/response');
-        const name = this.username.value;
-        const displayName = this.username.value;
-
-        if (!name || !displayName) {
-            window.alert('DisplayName or username is missing!');
-            return
-        }
-
-        return fetch(registerURL, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({name, displayName})
-        })
-            .then(res => {
-                if (res.status === 200) {
-                    return res;
-                }
-                throw new Error(res.statusText);
-            })
-            .then(res => res.json())
-            .then(res => {
-                res.challenge = base64url.decode(res.challenge);
-                res.user.id = base64url.decode(res.user.id);
-                if (res.excludeCredentials) {
-                    for (let i = 0; i < res.excludeCredentials.length; i++) {
-                        res.excludeCredentials[i].id = base64url.decode(res.excludeCredentials[i].id);
-                    }
-                }
-                clearAlert();
-                return res;
-            })
-            .then(res => navigator.credentials.create({publicKey: res}))
-            .then(credential => {
-                return fetch(responseURL, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id: credential.id,
-                        rawId: base64url.encode(credential.rawId),
-                        response: {
-                            attestationObject: base64url.encode(credential.response.attestationObject),
-                            clientDataJSON: base64url.encode(credential.response.clientDataJSON)
-                        },
-                        type: credential.type
-                    }),
-                })
-            })
-            .then(res => {
-                if (res.status >= 200 && res.status < 300) {
-                    window.location.replace(res.headers.get('Location'));
-                } else {
-                    throw new Error(res.statusText);
-                }
-            })
-            .catch((error) => {
-                if (document.getElementById('webauthn-error')) {
-                    document.getElementById('webauthn-error').style.display = 'block'
-                }
-            });
-    });
-}
-
-/* Handle for login form submission */
-if (document.getElementById('login')) {
-    document.getElementById('login').addEventListener('submit', function (event) {
-        event.preventDefault();
-        const loginURL = this.action;
-        const responseURL = loginURL.replace('/webauthn/login', '/webauthn/response');
-        const name = this.username.value;
-
-        if (!name) {
-            window.alert('Username is missing!');
-            return
-        }
-
-        return fetch(loginURL, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({name})
-        })
-            .then(res => {
-                if (res.status === 200) {
-                    return res;
-                }
-                throw new Error(res.statusText);
-            })
-            .then(res => res.json())
-            .then(res => {
-                res.challenge = base64url.decode(res.challenge);
-                if (res.allowCredentials) {
-                    for (let i = 0; i < res.allowCredentials.length; i++) {
-                        res.allowCredentials[i].id = base64url.decode(res.allowCredentials[i].id);
-                    }
-                }
-                clearAlert();
-                return res;
-            })
-            .then(res => navigator.credentials.get({publicKey: res}))
-            .then(credential => {
-                return fetch(responseURL, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id: credential.id,
-                        rawId: base64url.encode(credential.rawId),
-                        response: {
-                            clientDataJSON: base64url.encode(credential.response.clientDataJSON),
-                            authenticatorData: base64url.encode(credential.response.authenticatorData),
-                            signature: base64url.encode(credential.response.signature),
-                            userHandle: base64url.encode(credential.response.userHandle),
-                        },
-                        type: credential.type
-                    }),
-                })
-            })
-            .then(res => {
-                if (res.status >= 200 && res.status < 300) {
-                    window.location.replace(res.headers.get('Location'));
-                } else {
-                    throw new Error(res.statusText);
-                }
-            })
-            .catch((error) => {
-                if (document.getElementById('webauthn-error')) {
-                    document.getElementById('webauthn-error').style.display = 'block'
-                }
-            });
-    });
-}
-
-/* Check if current browser supports WebAuthn */
-document.addEventListener('DOMContentLoaded', async function () {
-    if (window.PublicKeyCredential === undefined ||
-        typeof window.PublicKeyCredential !== "function") {
-        let errorMessage = "This browser doesn't currently support WebAuthn."
-        if (window.location.protocol === "http:" && (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1")){
-            errorMessage = "WebAuthn only supports secure connections. For testing over HTTP, you can use the origin \"localhost\"."
-        }
-        if (document.getElementById('webauthn-browser-error')
-            && document.getElementById('webauthn-browser-error-description')) {
-            document.getElementById('webauthn-browser-error').style.display = 'block';
-            document.getElementById('webauthn-browser-error-description').innerHTML = errorMessage;
-        }
-        return;
-    }
-});
-
-/*
- * Base64URL-ArrayBuffer
- * https://github.com/herrjemand/Base64URL-ArrayBuffer
- *
- * Copyright (c) 2017 Yuriy Ackermann <ackermann.yuriy@gmail.com>
- * Copyright (c) 2012 Niklas von Hertzen
- * Licensed under the MIT license.
- *
+/* Universial Module (UMD) design pattern
+ * https://github.com/umdjs/umd/blob/master/templates/returnExports.js
  */
-(function () {
-    'use strict'
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // register as an AMD anonymous module
+        define([], factory);
+    } else if (typeof module === 'object' && module.exports) {
+        // use a node.js style export
+        module.exports = factory();
+    } else {
+        // if this isn't running under Node or AMD, just set a global variable
+        root.WebAuthn = factory();
+    }
+    // the return value of this function is what becomes the AMD / CommonJS / Global export
+}(this, function () { // eslint-disable-line no-invalid-this
 
+    /*
+     * Base64URL-ArrayBuffer
+     * https://github.com/herrjemand/Base64URL-ArrayBuffer
+     *
+     * Copyright (c) 2017 Yuriy Ackermann <ackermann.yuriy@gmail.com>
+     * Copyright (c) 2012 Niklas von Hertzen
+     * Licensed under the MIT license.
+     */
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
     // Use a lookup table to find the index.
     const lookup = new Uint8Array(256);
@@ -191,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         lookup[chars.charCodeAt(i)] = i;
     }
 
-    const encode = function (arraybuffer) {
+    const bufferToBase64 = function (arraybuffer) {
         const bytes = new Uint8Array(arraybuffer);
 
         let i;
@@ -214,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         return base64url;
     }
 
-    const decode = function (base64string) {
+    const base64ToBuffer = function (base64string) {
         if (base64string) {
 
             let bufferLength = base64string.length * 0.75;
@@ -245,23 +87,140 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    let methods = {
-        'decode': decode,
-        'encode': encode
-    }
-
-    /**
-     * Exporting and stuff
+    /*
+     * WebAuthn
+     * https://github.com/vert-x3/vertx-auth/blob/master/vertx-auth-webauthn/src/main/js/vertx-auth-webauthn.js
+     *
+     * Copyright (c) 2020 Paulo Lopes <pmlopes@gmail.com>
+     * Licensed under the Apache 2 license.
      */
-    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-        module.exports = methods
-    } else {
-        if (typeof define === 'function' && define.amd) {
-            define([], function () {
-                return methods
-            })
-        } else {
-            window.base64url = methods
+
+    function WebAuthn(options) {
+        this.registerPath = options.registerPath;
+        this.loginPath = options.loginPath;
+        this.callbackPath = options.callbackPath;
+        // validation
+        if (!this.callbackPath) {
+            throw new Error('Callback path is missing!');
         }
     }
-})();
+
+    WebAuthn.constructor = WebAuthn;
+
+    WebAuthn.prototype.register = function (user) {
+        const self = this;
+        if (!self.registerPath) {
+            return Promise.reject('Register path missing form the initial configuration!');
+        }
+        return fetch(self.registerPath, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(user || {})
+        })
+            .then(res => {
+                if (res.status === 200) {
+                    return res;
+                }
+                throw new Error(res.statusText);
+            })
+            .then(res => res.json())
+            .then(res => {
+                res.challenge = base64ToBuffer(res.challenge);
+                res.user.id = base64ToBuffer(res.user.id);
+                if (res.excludeCredentials) {
+                    for (let i = 0; i < res.excludeCredentials.length; i++) {
+                        res.excludeCredentials[i].id = base64ToBuffer(res.excludeCredentials[i].id);
+                    }
+                }
+                return res;
+            })
+            .then(res => navigator.credentials.create({publicKey: res}))
+            .then(credential => {
+                return fetch(self.callbackPath, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: credential.id,
+                        rawId: bufferToBase64(credential.rawId),
+                        response: {
+                            attestationObject: bufferToBase64(credential.response.attestationObject),
+                            clientDataJSON: bufferToBase64(credential.response.clientDataJSON)
+                        },
+                        type: credential.type
+                    }),
+                })
+            })
+            .then(res => {
+                if (res.status >= 200 && res.status < 300) {
+                    return res;
+                }
+                throw new Error(res.statusText);
+            });
+    };
+
+    WebAuthn.prototype.login = function (user) {
+        const self = this;
+        if (!self.loginPath) {
+            return Promise.reject('Login path missing from the initial configuration!');
+        }
+        return fetch(self.loginPath, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(user)
+        })
+            .then(res => {
+                if (res.status === 200) {
+                    return res;
+                }
+                throw new Error(res.statusText);
+            })
+            .then(res => res.json())
+            .then(res => {
+                res.challenge = base64ToBuffer(res.challenge);
+                if (res.allowCredentials) {
+                    for (let i = 0; i < res.allowCredentials.length; i++) {
+                        res.allowCredentials[i].id = base64ToBuffer(res.allowCredentials[i].id);
+                    }
+                }
+                return res;
+            })
+            .then(res => navigator.credentials.get({publicKey: res}))
+            .then(credential => {
+                return fetch(self.callbackPath, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: credential.id,
+                        rawId: bufferToBase64(credential.rawId),
+                        response: {
+                            clientDataJSON: bufferToBase64(credential.response.clientDataJSON),
+                            authenticatorData: bufferToBase64(credential.response.authenticatorData),
+                            signature: bufferToBase64(credential.response.signature),
+                            userHandle: bufferToBase64(credential.response.userHandle),
+                        },
+                        type: credential.type
+                    }),
+                })
+            })
+            .then(res => {
+                if (res.status >= 200 && res.status < 300) {
+                    return res;
+                }
+                throw new Error(res.statusText);
+            });
+    };
+
+    return WebAuthn;
+}));
