@@ -396,6 +396,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         ApplicationAdvancedSettings applicationAdvancedSettings = new ApplicationAdvancedSettings();
         applicationAdvancedSettings.setSkipConsent(other.isSkipConsent());
+        applicationAdvancedSettings.setFlowsInherited(other.isFlowsInherited());
         return applicationAdvancedSettings;
     }
 
@@ -406,6 +407,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         ApplicationAdvancedSettingsMongo applicationAdvancedSettingsMongo = new ApplicationAdvancedSettingsMongo();
         applicationAdvancedSettingsMongo.setSkipConsent(other.isSkipConsent());
+        applicationAdvancedSettingsMongo.setFlowsInherited(other.isFlowsInherited());
         return applicationAdvancedSettingsMongo;
     }
 

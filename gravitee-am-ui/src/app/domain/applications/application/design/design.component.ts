@@ -53,6 +53,8 @@ export class ApplicationDesignComponent implements OnInit, OnDestroy {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'design', 'forms']);
     } else if (this.canNavigate(['application_email_template_list', 'application_email_template_read'])) {
       this.router.navigate(['/domains', domainId, 'applications', appId, 'design', 'emails']);
+    } else if (this.canNavigate(['application_flow_list', 'application_flow_read'])) {
+      this.router.navigate(['/domains', domainId, 'applications', appId, 'design', 'flows']);
     }
   }
 

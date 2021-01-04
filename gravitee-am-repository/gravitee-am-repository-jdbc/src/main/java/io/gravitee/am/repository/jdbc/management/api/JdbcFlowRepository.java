@@ -86,6 +86,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         insertSpec = addQuotedField(insertSpec,"condition", item.getCondition(), String.class);
         insertSpec = addQuotedField(insertSpec,"reference_id", item.getReferenceId(), String.class);
         insertSpec = addQuotedField(insertSpec,"reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
+        insertSpec = addQuotedField(insertSpec,"application_id", item.getApplication(), String.class);
         insertSpec = addQuotedField(insertSpec,"type", item.getType() == null ? null : item.getType().name(), String.class);
         insertSpec = addQuotedField(insertSpec,"enabled", item.isEnabled(), Boolean.class);
         insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
@@ -166,6 +167,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         updateFields = addQuotedField(updateFields,"condition", item.getCondition(), String.class);
         updateFields = addQuotedField(updateFields,"reference_id", item.getReferenceId(), String.class);
         updateFields = addQuotedField(updateFields,"reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
+        updateFields = addQuotedField(updateFields,"application_id", item.getApplication(), String.class);
         updateFields = addQuotedField(updateFields,"type", item.getType() == null ? null : item.getType().name(), String.class);
         updateFields = addQuotedField(updateFields,"enabled", item.isEnabled(), Boolean.class);
         updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
@@ -216,6 +218,17 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
                 .toList()
                 .doOnError(error -> LOGGER.error("Unable to findAll flows with referenceType '{}' and referenceId '{}'",
                         referenceType, referenceId));
+    }
+
+    @Override
+    public Single<List<Flow>> findByApplication(ReferenceType referenceType, String referenceId, String application) {
+        LOGGER.debug("findByApplication({}, {}, {})", referenceType, referenceId, application);
+        return flowRepository.findByApplication(referenceType.name(), referenceId, application)
+                .map(this::toEntity)
+                .flatMap(flow -> completeFlow(flow).toFlowable())
+                .toList()
+                .doOnError(error -> LOGGER.error("Unable to find flows with referenceType '{}' and referenceId '{}' and application '{}'",
+                        referenceType, referenceId, application));
     }
 
     protected Single<Flow> completeFlow(Flow flow) {

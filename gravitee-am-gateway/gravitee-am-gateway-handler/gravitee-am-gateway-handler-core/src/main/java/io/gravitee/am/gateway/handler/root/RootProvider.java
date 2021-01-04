@@ -172,15 +172,17 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         // CSRF handler
         csrfHandler(rootRouter);
 
-        // Root policy chain handler
-        rootRouter.route().handler(policyChainHandler.create(ExtensionPoint.ROOT));
-
         // common handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
         ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
         clientRequestParseHandler.setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
         Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator);
+
+        // Root policy chain handler
+        rootRouter.route()
+                .handler(clientRequestParseHandlerOptional)
+                .handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
         // login route
         rootRouter.get("/login")

@@ -298,6 +298,7 @@ public class Application implements Resource {
             if (applicationSettings.getAdvanced() != null) {
                 ApplicationAdvancedSettings advancedSettings = applicationSettings.getAdvanced();
                 client.setAutoApproveScopes(advancedSettings.isSkipConsent() ? Collections.singletonList("true") : null);
+                client.setFlowsInherited(advancedSettings.isFlowsInherited());
             }
         }
         return client;

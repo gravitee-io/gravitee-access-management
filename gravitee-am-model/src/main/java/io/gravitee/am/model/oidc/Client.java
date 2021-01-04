@@ -191,6 +191,8 @@ public class Client implements Cloneable, Resource {
 
     private boolean forcePKCE;
 
+    private boolean flowsInherited;
+
     public Client() { }
 
     public Client(Client other) {
@@ -257,6 +259,7 @@ public class Client implements Cloneable, Resource {
         this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
         this.forcePKCE = other.forcePKCE;
+        this.flowsInherited = other.flowsInherited;
     }
 
     public String getId() {
@@ -804,6 +807,14 @@ public class Client implements Cloneable, Resource {
 
     public void setForcePKCE(boolean forcePKCE) {
         this.forcePKCE = forcePKCE;
+    }
+
+    public boolean isFlowsInherited() {
+        return flowsInherited;
+    }
+
+    public void setFlowsInherited(boolean flowsInherited) {
+        this.flowsInherited = flowsInherited;
     }
 
     @Override

@@ -32,4 +32,6 @@ public interface FlowRepository extends CrudRepository<Flow, String> {
     Maybe<Flow> findById(ReferenceType referenceType, String referenceId, String id);
 
     Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId);
+
+    Single<List<Flow>> findByApplication(ReferenceType referenceType, String referenceId, String application);
 }

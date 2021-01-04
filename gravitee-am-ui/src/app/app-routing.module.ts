@@ -139,6 +139,7 @@ import {ApplicationCertificatesComponent} from './domain/applications/applicatio
 import {ApplicationMetadataComponent} from './domain/applications/application/advanced/metadata/metadata.component';
 import {ApplicationMembershipsComponent} from './domain/applications/application/advanced/memberships/memberships.component';
 import {ApplicationFactorsComponent} from './domain/applications/application/advanced/factors/factors.component';
+import {ApplicationFlowsComponent} from './domain/applications/application/design/flows/flows.component';
 import {ManagementRolesComponent} from './settings/management/roles/roles.component';
 import {ManagementRoleComponent} from './settings/management/roles/role/role.component';
 import {MembershipsResolver} from './resolvers/memberships.resolver';
@@ -164,6 +165,7 @@ import {ApplicationResourceComponent} from './domain/applications/application/ad
 import {ApplicationResourceResolver} from './resolvers/application-resource.resolver';
 import {ApplicationResourcePolicyComponent} from './domain/applications/application/advanced/resources/resource/policies/policy/policy.component';
 import {ApplicationResourcePolicyResolver} from './resolvers/application-resource-policy.resolver';
+import {ApplicationFlowsResolver} from './resolvers/application-flows.resolver';
 import {DomainSettingsEntrypointsComponent} from './domain/settings/entrypoints/entrypoints.component';
 import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
 import {ApplicationLoginSettingsComponent} from './domain/applications/application/advanced/login/login.component';
@@ -683,7 +685,25 @@ const routes: Routes = [
                     only: ['application_email_template_read']
                   }
                 }
-              }
+              },
+              { path: 'flows',
+                component: ApplicationFlowsComponent,
+                canActivate: [AuthGuard],
+                resolve: {
+                  flows: ApplicationFlowsResolver,
+                  policies: PluginPoliciesResolver,
+                  flowSettingsForm: PlatformFlowSchemaResolver
+                },
+                data: {
+                  menu: {
+                    label: 'Flows',
+                    section: 'Design'
+                  },
+                  perms: {
+                    only: ['application_flow_list', 'application_flow_read']
+                  }
+                }
+              },
             ]
           },
           {

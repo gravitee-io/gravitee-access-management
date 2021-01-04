@@ -27,7 +27,10 @@ import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
-import io.swagger.annotations.*;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
@@ -44,8 +47,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"flow"})
-public class FlowsResource extends AbstractResource {
+public class ApplicationFlowsResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -58,26 +60,27 @@ public class FlowsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered flows for a security domain",
-            notes = "User must have the DOMAIN_FLOW[LIST] permission on the specified domain " +
-                    "or DOMAIN_FLOW[LIST] permission on the specified environment " +
-                    "or DOMAIN_FLOW[LIST] permission on the specified organization. " +
-                    "Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.")
+    @ApiOperation(value = "List registered flows for an application",
+            notes = "User must have the APPLICATION_FLOW[LIST] permission on the specified domain " +
+                    "or APPLICATION_FLOW[LIST] permission on the specified environment " +
+                    "or APPLICATION_FLOW[LIST] permission on the specified organization. " +
+                    "Except if user has APPLICATION_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered flows for a security domain", response = FlowEntity.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "List registered flows for an application", response = FlowEntity.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
+            @PathParam("application") String application,
             @Suspended final AsyncResponse response) {
 
         User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.LIST)
-                .andThen(flowService.findAll(ReferenceType.DOMAIN, domain, true)
+        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.LIST)
+                .andThen(flowService.findByApplication(ReferenceType.DOMAIN, domain, application)
                         .flatMap(flows ->
-                                hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.READ)
+                                hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.READ)
                                         .map(hasPermission -> flows.stream().map(flow -> filterFlowInfos(hasPermission, flow))
                                                 .collect(Collectors.toList())))
                 )
@@ -88,9 +91,9 @@ public class FlowsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Create or update list of flows",
-            notes = "User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain " +
-                    "or DOMAIN_FLOW[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_FLOW[UPDATE] permission on the specified organization")
+            notes = "User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain " +
+                    "or APPLICATION_FLOW[UPDATE] permission on the specified environment " +
+                    "or APPLICATION_FLOW[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(code = 200, message = "Flows successfully updated", response = FlowEntity.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Internal server error")})
@@ -98,22 +101,23 @@ public class FlowsResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
+            @PathParam("application") String application,
             @ApiParam(name = "flows", required = true) @Valid @NotNull final List<io.gravitee.am.service.model.Flow> flows,
             @Suspended final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.UPDATE)
+        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, convert(flows), authenticatedUser))
+                        .flatMapSingle(__ -> flowService.createOrUpdate(ReferenceType.DOMAIN, domain, application, convert(flows), authenticatedUser))
                         .map(updatedFlows -> updatedFlows.stream().map(FlowEntity::new).collect(Collectors.toList())))
                 .subscribe(response::resume, response::resume);
     }
 
     @Path("{flow}")
-    public FlowResource getFlowResource() {
-        return resourceContext.getResource(FlowResource.class);
+    public ApplicationFlowResource getFlowResource() {
+        return resourceContext.getResource(ApplicationFlowResource.class);
     }
 
     private FlowEntity filterFlowInfos(Boolean hasPermission, Flow flow) {
@@ -131,7 +135,7 @@ public class FlowsResource extends AbstractResource {
 
     private static List<Flow> convert(List<io.gravitee.am.service.model.Flow> flows) {
         return flows.stream()
-                .map(FlowsResource::convert)
+                .map(ApplicationFlowsResource::convert)
                 .collect(Collectors.toList());
     }
 

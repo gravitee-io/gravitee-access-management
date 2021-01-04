@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.6.0
+      author: GraviteeSource Team
+      changes:
+
+        # Flows
+        ###############
+        - addColumn:
+            tableName: flows
+            columns:
+              - column: {name: application_id, type: nvarchar(64), constraints: { nullable: true } }
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: application_id
+            indexName: idx_flow_by_application
+            tableName: flows
+            unique: false

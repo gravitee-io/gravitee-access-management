@@ -30,7 +30,9 @@ import java.util.List;
  */
 public interface FlowService {
 
-    Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId);
+    Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId, boolean excludeApps);
+
+    Single<List<Flow>> findByApplication(ReferenceType referenceType, String referenceId, String application);
 
     List<Flow> defaultFlows(ReferenceType referenceType, String referenceId);
 
@@ -40,16 +42,28 @@ public interface FlowService {
 
     Single<Flow> create(ReferenceType referenceType, String referenceId, Flow flow, User principal);
 
+    Single<Flow> create(ReferenceType referenceType, String referenceId, String application, Flow flow, User principal);
+
     Single<Flow> update(ReferenceType referenceType, String referenceId, String id, Flow flow, User principal);
 
     Single<List<Flow>> createOrUpdate(ReferenceType referenceType, String referenceId, List<Flow> flows, User principal);
+
+    Single<List<Flow>> createOrUpdate(ReferenceType referenceType, String referenceId, String application, List<Flow> flows, User principal);
 
     Completable delete(String id, User principal);
 
     Single<String> getSchema();
 
+    default Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId) {
+        return findAll(referenceType, referenceId, false);
+    }
+
     default Single<Flow> create(ReferenceType referenceType, String referenceId, Flow flow) {
         return create(referenceType, referenceId, flow, null);
+    }
+
+    default Single<Flow> create(ReferenceType referenceType, String referenceId, String application, Flow flow) {
+        return create(referenceType, referenceId, application, flow, null);
     }
 
     default Single<Flow> update(ReferenceType referenceType, String referenceId, String id, Flow flow) {
@@ -58,6 +72,10 @@ public interface FlowService {
 
     default Single<List<Flow>> createOrUpdate(ReferenceType referenceType, String referenceId, List<Flow> flows) {
         return createOrUpdate(referenceType, referenceId, flows, null);
+    }
+
+    default Single<List<Flow>> createOrUpdate(ReferenceType referenceType, String referenceId, String application, List<Flow> flows) {
+        return createOrUpdate(referenceType, referenceId, application, flows, null);
     }
 
     default Completable delete(String id) {

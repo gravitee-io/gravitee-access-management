@@ -32,6 +32,7 @@ public class FlowMongo extends Auditable {
     private String id;
     private String referenceType;
     private String referenceId;
+    private String application;
     private String name;
     private List<Step> pre = new ArrayList<>();
     private List<Step> post = new ArrayList<>();
@@ -61,6 +62,14 @@ public class FlowMongo extends Auditable {
 
     public void setReferenceId(String referenceId) {
         this.referenceId = referenceId;
+    }
+
+    public String getApplication() {
+        return application;
+    }
+
+    public void setApplication(String application) {
+        this.application = application;
     }
 
     public String getName() {

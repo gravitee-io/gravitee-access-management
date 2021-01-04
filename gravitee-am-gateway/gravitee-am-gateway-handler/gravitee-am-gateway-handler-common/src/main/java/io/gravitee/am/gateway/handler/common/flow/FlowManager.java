@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.flow;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.policy.Policy;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
 import io.reactivex.Single;
 
@@ -28,5 +29,9 @@ import java.util.List;
  */
 public interface FlowManager extends Service {
 
-    Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint);
+    Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client);
+
+    default Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint) {
+        return findByExtensionPoint(extensionPoint, null);
+    }
 }

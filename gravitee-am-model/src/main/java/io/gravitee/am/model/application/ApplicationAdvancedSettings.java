@@ -22,12 +22,14 @@ package io.gravitee.am.model.application;
 public class ApplicationAdvancedSettings {
 
     private boolean skipConsent;
+    private boolean flowsInherited = true;
 
     public ApplicationAdvancedSettings() {
     }
 
     public ApplicationAdvancedSettings(ApplicationAdvancedSettings other) {
         this.skipConsent = other.skipConsent;
+        this.flowsInherited = other.flowsInherited;
     }
 
     public boolean isSkipConsent() {
@@ -36,5 +38,13 @@ public class ApplicationAdvancedSettings {
 
     public void setSkipConsent(boolean skipConsent) {
         this.skipConsent = skipConsent;
+    }
+
+    public boolean isFlowsInherited() {
+        return flowsInherited;
+    }
+
+    public void setFlowsInherited(boolean flowsInherited) {
+        this.flowsInherited = flowsInherited;
     }
 }

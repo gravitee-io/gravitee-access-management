@@ -127,4 +127,12 @@ export class ApplicationService {
   resourcePolicy(domainId, id, resourceId, policyId): Observable<any> {
     return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/resources/' + resourceId + '/policies/' + policyId);
   }
+
+  flows(domainId, id): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/flows');
+  }
+
+  updateFlows(domainId, id, flows): Observable<any> {
+    return this.http.put<any>(this.appsURL + domainId + '/applications/' + id + '/flows', flows);
+  }
 }

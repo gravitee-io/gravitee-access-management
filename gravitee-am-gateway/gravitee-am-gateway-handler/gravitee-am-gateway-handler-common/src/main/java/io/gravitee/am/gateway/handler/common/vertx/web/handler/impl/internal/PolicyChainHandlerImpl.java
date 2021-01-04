@@ -78,7 +78,7 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
         }
 
         // resolve policies
-        resolve(extensionPoint, handler -> {
+        resolve(context, handler -> {
             if (handler.failed()) {
                 logger.error("An error occurs while resolving policies", handler.cause());
                 context.fail(handler.cause());
@@ -117,8 +117,8 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
         });
     }
 
-    private void resolve(ExtensionPoint extensionPoint, Handler<AsyncResult<List<Policy>>> handler) {
-        flowManager.findByExtensionPoint(extensionPoint)
+    private void resolve(RoutingContext routingContext, Handler<AsyncResult<List<Policy>>> handler) {
+        flowManager.findByExtensionPoint(extensionPoint, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY))
                 .subscribe(
                         policies -> handler.handle(Future.succeededFuture(policies)),
                         error -> handler.handle(Future.failedFuture(error)));

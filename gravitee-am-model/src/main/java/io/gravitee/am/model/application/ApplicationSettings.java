@@ -75,7 +75,7 @@ public class ApplicationSettings {
     }
 
     public ApplicationAdvancedSettings getAdvanced() {
-        return advanced;
+        return advanced != null ? advanced : new ApplicationAdvancedSettings();
     }
 
     public void setAdvanced(ApplicationAdvancedSettings advanced) {

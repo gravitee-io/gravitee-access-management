@@ -92,10 +92,12 @@ db.memberships.createIndex( { "referenceType" : 1, "referenceId": 1 } );
 db.memberships.createIndex( { "referenceId" : 1, "memberId": 1 } );
 db.memberships.reIndex();
 
-// "policies" collection
-db.policies.dropIndexes();
-db.policies.createIndex( { "domain" : 1 } );
-db.policies.reIndex();
+// "flows" collection
+db.flows.dropIndexes();
+db.flows.createIndex( { "referenceType" : 1, "referenceId": 1 } );
+db.flows.createIndex( { "referenceType" : 1, "referenceId": 1, "application": 1 } );
+db.flows.createIndex( { "referenceType" : 1, "referenceId": 1, "_id": 1 } );
+db.flows.reIndex();
 
 // "refresh_tokens" collection
 db.refresh_tokens.dropIndexes();
@@ -133,20 +135,6 @@ db.scope_approvals.reIndex();
 db.tags.dropIndexes();
 db.tags.createIndex( { "_id" : 1, "organizationId": 1 } );
 db.tags.reIndex();
-
-// "users" collection
-db.users.dropIndexes();
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "email": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "additionalInformation.email": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "displayName": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "firstName": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "lastName": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1, "source": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1, "source": 1 } );
-db.users.reIndex();
 
 // "users" collection
 db.users.dropIndexes();

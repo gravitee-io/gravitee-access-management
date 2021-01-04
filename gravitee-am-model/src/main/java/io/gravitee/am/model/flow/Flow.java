@@ -40,6 +40,10 @@ public class Flow {
      */
     private String referenceId;
     /**
+     * The application id the flow is attached to (if flow is defined at application level).
+     */
+    private String application;
+    /**
      * Flow name
      */
     private String name;
@@ -79,6 +83,7 @@ public class Flow {
         this.id = other.id;
         this.referenceType = other.referenceType;
         this.referenceId = other.referenceId;
+        this.application = other.application;
         this.name = other.name;
         this.pre = other.pre;
         this.post = other.post;
@@ -111,6 +116,14 @@ public class Flow {
 
     public void setReferenceId(String referenceId) {
         this.referenceId = referenceId;
+    }
+
+    public String getApplication() {
+        return application;
+    }
+
+    public void setApplication(String application) {
+        this.application = application;
     }
 
     public String getName() {

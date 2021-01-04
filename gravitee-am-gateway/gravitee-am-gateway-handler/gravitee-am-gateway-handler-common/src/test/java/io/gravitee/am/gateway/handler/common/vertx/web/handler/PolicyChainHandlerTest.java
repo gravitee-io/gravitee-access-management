@@ -73,21 +73,21 @@ public class PolicyChainHandlerTest {
 
     @Test
     public void shouldNotInvoke_noPolicies() {
-        when(flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT)).thenReturn(Single.just(Collections.emptyList()));
+        when(flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null)).thenReturn(Single.just(Collections.emptyList()));
 
         PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT);
 
         when(routingContext.request()).thenReturn(request);
         policyChainHandler.handle(routingContext);
 
-        verify(flowManager, times(1)).findByExtensionPoint(ExtensionPoint.PRE_CONSENT);
+        verify(flowManager, times(1)).findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null);
         verify(policyChainProcessorFactory, never()).create(any(), any());
         verify(executionContextFactory, never()).create(any());
     }
 
     @Test
     public void shouldInvoke_onePolicy() {
-        when(flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT)).thenReturn(Single.just(Collections.singletonList(policy)));
+        when(flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null)).thenReturn(Single.just(Collections.singletonList(policy)));
         when(delegateRequest.method()).thenReturn(HttpMethod.GET);
         when(request.getDelegate()).thenReturn(delegateRequest);
         when(routingContext.request()).thenReturn(request);
@@ -101,14 +101,14 @@ public class PolicyChainHandlerTest {
 
         policyChainHandler.handle(routingContext);
 
-        verify(flowManager, times(1)).findByExtensionPoint(ExtensionPoint.PRE_CONSENT);
+        verify(flowManager, times(1)).findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null);
         verify(policyChainProcessorFactory, times(1)).create(any(), any());
         verify(executionContextFactory, times(1)).create(any());
     }
 
     @Test
     public void shouldInvoke_manyPolicies() {
-        when(flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT)).thenReturn(Single.just(Arrays.asList(policy, policy)));
+        when(flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null)).thenReturn(Single.just(Arrays.asList(policy, policy)));
         when(delegateRequest.method()).thenReturn(HttpMethod.GET);
         when(request.getDelegate()).thenReturn(delegateRequest);
         when(routingContext.request()).thenReturn(request);
@@ -123,7 +123,7 @@ public class PolicyChainHandlerTest {
         policyChainHandler.handle(routingContext);
 
         // should be only call once
-        verify(flowManager, times(1)).findByExtensionPoint(ExtensionPoint.PRE_CONSENT);
+        verify(flowManager, times(1)).findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null);
         verify(policyChainProcessorFactory, times(1)).create(any(), any());
         verify(executionContextFactory, times(1)).create(any());
     }

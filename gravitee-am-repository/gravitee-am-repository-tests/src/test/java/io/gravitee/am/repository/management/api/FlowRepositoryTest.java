@@ -44,16 +44,16 @@ public class FlowRepositoryTest extends AbstractManagementTest {
     @Test
     public void testFindAll() {
         Flow flow = buildFlow(1,1);
-        flow.setReferenceType(ReferenceType.ENVIRONMENT);
-        flow.setReferenceId("ENV1");
+        flow.setReferenceType(ReferenceType.DOMAIN);
+        flow.setReferenceId("DOMAIN1");
         Flow flow2 = buildFlow(2,3);
-        flow2.setReferenceType(ReferenceType.ENVIRONMENT);
-        flow2.setReferenceId("ENV1");
+        flow2.setReferenceType(ReferenceType.DOMAIN);
+        flow2.setReferenceId("DOMAIN1");
 
         Flow flowCreated = flowRepository.create(flow).blockingGet();
         Flow flow2Created = flowRepository.create(flow2).blockingGet();
 
-        TestObserver<List<Flow>> obs = flowRepository.findAll(ReferenceType.ENVIRONMENT, "ENV1").test();
+        TestObserver<List<Flow>> obs = flowRepository.findAll(ReferenceType.DOMAIN, "DOMAIN1").test();
         obs.awaitTerminalEvent();
 
         obs.assertComplete();
@@ -64,14 +64,36 @@ public class FlowRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByRefAndIf() {
+    public void testFindByApplication() {
         Flow flow = buildFlow(1,1);
-        flow.setReferenceType(ReferenceType.ENVIRONMENT);
-        flow.setReferenceId("ENV1");
+        flow.setReferenceType(ReferenceType.DOMAIN);
+        flow.setReferenceId("DOMAIN1");
+        Flow flow2 = buildFlow(2,3);
+        flow2.setReferenceType(ReferenceType.DOMAIN);
+        flow2.setReferenceId("DOMAIN1");
+        flow2.setApplication("APP1");
+
+        Flow flowCreated = flowRepository.create(flow).blockingGet();
+        Flow flow2Created = flowRepository.create(flow2).blockingGet();
+
+        TestObserver<List<Flow>> obs = flowRepository.findByApplication(ReferenceType.DOMAIN, "DOMAIN1", "APP1").test();
+        obs.awaitTerminalEvent();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(list -> list.size() == 1);
+        obs.assertValue(list -> list.get(0).getId().equals(flow2Created.getId()));
+    }
+
+    @Test
+    public void testFindByRefAndId() {
+        Flow flow = buildFlow(1,1);
+        flow.setReferenceType(ReferenceType.DOMAIN);
+        flow.setReferenceId("DOMAIN1");
 
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
-        TestObserver<Flow> obs = flowRepository.findById(ReferenceType.ENVIRONMENT, "ENV1", flowCreated.getId()).test();
+        TestObserver<Flow> obs = flowRepository.findById(ReferenceType.DOMAIN, "DOMAIN1", flowCreated.getId()).test();
         obs.awaitTerminalEvent();
 
         obs.assertComplete();
@@ -235,7 +257,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         flow.setCondition("condition"+rand);
         flow.setEnabled(true);
         flow.setReferenceId("refId"+rand);
-        flow.setReferenceType(ReferenceType.ENVIRONMENT);
+        flow.setReferenceType(ReferenceType.DOMAIN);
         flow.setType(Type.REGISTER);
 
         if (nbPreSteps > 0 ) {
