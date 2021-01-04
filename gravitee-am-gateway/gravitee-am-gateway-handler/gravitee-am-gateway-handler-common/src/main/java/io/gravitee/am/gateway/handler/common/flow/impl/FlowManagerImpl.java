@@ -26,6 +26,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Step;
 import io.gravitee.am.model.flow.Type;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.common.event.Event;
@@ -41,6 +42,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -72,7 +74,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     private EventManager eventManager;
 
     private ConcurrentMap<String, Flow> flows = new ConcurrentHashMap<>();
-    private ConcurrentMap<ExtensionPoint, List<Policy>> policies = new ConcurrentHashMap<>();
+    private ConcurrentMap<ExtensionPoint, Set<ExecutionFlow>> policies = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() {
@@ -113,8 +115,34 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     }
 
     @Override
-    public Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint) {
-        return Single.just(policies.getOrDefault(extensionPoint, Collections.emptyList()));
+    public Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client) {
+        Set<ExecutionFlow> executionFlows = policies.get(extensionPoint);
+        // if no flow, returns empty list
+        if (executionFlows == null) {
+            return Single.just(Collections.emptyList());
+        }
+
+        // get domain policies
+        List<Policy> domainExecutionPolicies = getExecutionPolicies(executionFlows, client, true);
+
+        // if client is null, executes only security domain flows
+        if (client == null) {
+            return Single.just(domainExecutionPolicies);
+        }
+
+        // get application policies
+        List<Policy> applicationExecutionPolicies = getExecutionPolicies(executionFlows, client, false);
+
+        // if client does not inherit domain flows, executes only application flows
+        if (!client.isFlowsInherited()) {
+            return Single.just(applicationExecutionPolicies);
+        }
+
+        return Single.just(
+                Stream.concat(
+                        domainExecutionPolicies.stream(),
+                        applicationExecutionPolicies.stream()
+                ).collect(Collectors.toList()));
     }
 
     private void updateFlow(String flowId, FlowEvent flowEvent) {
@@ -123,8 +151,8 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         flowService.findById(flowId)
                 .subscribe(
                         flow -> {
-                            flows.put(flow.getId(), flow);
                             loadFlow(flow);
+                            flows.put(flow.getId(), flow);
                             logger.info("Flow {} has been deployed for domain {}", flowId, domain.getName());
                         },
                         error -> logger.error("Unable to deploy flow {} for domain {}", flowId, domain.getName(), error),
@@ -134,10 +162,9 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     private void removeFlow(String flowId) {
         logger.info("Domain {} has received flow event, delete flow {}", domain.getName(), flowId);
         Flow deletedFlow = flows.remove(flowId);
-        extensionPoints.get(deletedFlow.getType()).forEach(extensionPoint -> {
-            policies.remove(extensionPoint);
-            flows.remove(flowId);
-        });
+        if (deletedFlow != null) {
+            extensionPoints.get(deletedFlow.getType()).forEach(extensionPoint -> removeExecutionFlow(extensionPoint, deletedFlow.getId()));
+        }
     }
 
     private void loadFlows() {
@@ -160,7 +187,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     private void loadFlow(Flow flow) {
         if (!flow.isEnabled()) {
             logger.debug("Flow {} is disabled, skip process", flow.getId());
-            extensionPoints.get(flow.getType()).forEach(extensionPoint -> policies.put(extensionPoint, Collections.emptyList()));
+            extensionPoints.get(flow.getType()).forEach(extensionPoint -> removeExecutionFlow(extensionPoint, flow.getId()));
             return;
         }
 
@@ -181,19 +208,19 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         switch (flow.getType()) {
             case ROOT:
                 // for root type, fetch only the pre step policies
-                policies.put(ExtensionPoint.ROOT, prePolicies);
+                addExecutionFlow(ExtensionPoint.ROOT, flow, prePolicies);
                 break;
             case CONSENT:
-                policies.put(ExtensionPoint.PRE_CONSENT, prePolicies);
-                policies.put(ExtensionPoint.POST_CONSENT, postPolicies);
+                addExecutionFlow(ExtensionPoint.PRE_CONSENT, flow, prePolicies);
+                addExecutionFlow(ExtensionPoint.POST_CONSENT, flow, postPolicies);
                 break;
             case LOGIN:
-                policies.put(ExtensionPoint.PRE_LOGIN, prePolicies);
-                policies.put(ExtensionPoint.POST_LOGIN, postPolicies);
+                addExecutionFlow(ExtensionPoint.PRE_LOGIN, flow, prePolicies);
+                addExecutionFlow(ExtensionPoint.POST_LOGIN, flow, postPolicies);
                 break;
             case REGISTER:
-                policies.put(ExtensionPoint.PRE_REGISTER, prePolicies);
-                policies.put(ExtensionPoint.POST_REGISTER, postPolicies);
+                addExecutionFlow(ExtensionPoint.PRE_REGISTER, flow, prePolicies);
+                addExecutionFlow(ExtensionPoint.POST_REGISTER, flow, postPolicies);
                 break;
             default:
                 throw new IllegalArgumentException("No suitable flow type found for : " + flow.getType());
@@ -208,6 +235,73 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
             return policy;
         } catch (Exception ex) {
             return null;
+        }
+    }
+
+    private void addExecutionFlow(ExtensionPoint extensionPoint, Flow flow, List<Policy> executionPolicies) {
+        Set<ExecutionFlow> existingFlows = policies.get(extensionPoint);
+        if (existingFlows == null) {
+            existingFlows = new HashSet<>();
+        }
+        ExecutionFlow executionFlow = new ExecutionFlow(flow, executionPolicies);
+        existingFlows.remove(executionFlow);
+        existingFlows.add(executionFlow);
+        policies.put(extensionPoint, existingFlows);
+    }
+
+    private void removeExecutionFlow(ExtensionPoint extensionPoint, String flowId) {
+        Set<ExecutionFlow> existingFlows = policies.get(extensionPoint);
+        if (existingFlows == null || existingFlows.isEmpty()) {
+            return;
+        }
+        existingFlows.removeIf(executionFlow -> flowId.equals(executionFlow.getFlowId()));
+    }
+
+    private List<Policy> getExecutionPolicies(Set<ExecutionFlow> executionFlows,
+                                              Client client,
+                                              boolean excludeApps) {
+        return executionFlows.stream()
+                .filter(executionFlow -> (excludeApps) ? executionFlow.getApplication() == null : client.getId().equals(executionFlow.getApplication()))
+                .map(ExecutionFlow::getPolicies)
+                .filter(executionPolicies -> executionPolicies != null)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
+
+    private class ExecutionFlow {
+        private String flowId;
+        private List<Policy> policies;
+        private String application;
+
+        public ExecutionFlow(Flow flow, List<Policy> policies) {
+            this.flowId = flow.getId();
+            this.policies = policies;
+            this.application = flow.getApplication();
+        }
+
+        public String getFlowId() {
+            return flowId;
+        }
+
+        public List<Policy> getPolicies() {
+            return policies;
+        }
+
+        public String getApplication() {
+            return application;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ExecutionFlow that = (ExecutionFlow) o;
+            return Objects.equals(flowId, that.flowId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(flowId);
         }
     }
 }

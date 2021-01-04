@@ -440,6 +440,7 @@ public class ClientServiceImpl implements ClientService {
         // advanced settings
         ApplicationAdvancedSettings advancedSettings = new ApplicationAdvancedSettings();
         advancedSettings.setSkipConsent(client.getAutoApproveScopes() != null && client.getAutoApproveScopes().contains("true"));
+        advancedSettings.setFlowsInherited(client.isFlowsInherited());
         applicationSettings.setAdvanced(advancedSettings);
 
         // account settings

@@ -288,10 +288,12 @@ import { ApplicationResourcePolicyComponent } from './domain/applications/applic
 import { ApplicationResourcePolicyResolver } from './resolvers/application-resource-policy.resolver';
 import { LoginSettingsComponent } from './domain/components/login/login-settings.component';
 import { ApplicationLoginSettingsComponent } from './domain/applications/application/advanced/login/login.component';
+import { ApplicationFlowsComponent } from './domain/applications/application/design/flows/flows.component';
 import { IdentitiesResolver } from './resolvers/identities.resolver';
 import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
 import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
+import { ApplicationFlowsResolver } from './resolvers/application-flows.resolver';
 
 @NgModule({
   declarations: [
@@ -445,6 +447,7 @@ import { UserHistoryComponent } from './domain/settings/users/user/history/histo
     ApplicationResourceComponent,
     ApplicationResourcePolicyComponent,
     ApplicationLoginSettingsComponent,
+    ApplicationFlowsComponent,
     ManagementRolesComponent,
     ManagementRoleComponent,
     MembershipsComponent,
@@ -562,6 +565,7 @@ import { UserHistoryComponent } from './domain/settings/users/user/history/histo
     IdentitiesResolver,
     PluginPoliciesResolver,
     PlatformFlowSchemaResolver,
+    ApplicationFlowsResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

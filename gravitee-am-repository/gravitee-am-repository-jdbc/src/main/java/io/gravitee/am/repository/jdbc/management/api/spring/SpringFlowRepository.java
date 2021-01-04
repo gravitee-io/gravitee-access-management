@@ -34,6 +34,8 @@ public interface SpringFlowRepository extends RxJava2CrudRepository<JdbcFlow, St
     Maybe<JdbcFlow> findById(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("id") String id);
 
     @Query("SELECT * FROM flows f WHERE f.reference_type = :refType AND f.reference_id = :refId")
-    Flowable<JdbcFlow> findAll(@Param("refType")String referenceType, @Param("refId") String referenceId);
+    Flowable<JdbcFlow> findAll(@Param("refType") String referenceType, @Param("refId") String referenceId);
 
+    @Query("SELECT * FROM flows f WHERE f.reference_type = :refType AND f.reference_id = :refId AND f.application_id = :appId")
+    Flowable<JdbcFlow> findByApplication(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("appId") String appId);
 }

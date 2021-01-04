@@ -22,6 +22,7 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 public class ApplicationAdvancedSettingsMongo {
 
     private boolean skipConsent;
+    private boolean flowsInherited;
 
     public boolean isSkipConsent() {
         return skipConsent;
@@ -29,5 +30,13 @@ public class ApplicationAdvancedSettingsMongo {
 
     public void setSkipConsent(boolean skipConsent) {
         this.skipConsent = skipConsent;
+    }
+
+    public boolean isFlowsInherited() {
+        return flowsInherited;
+    }
+
+    public void setFlowsInherited(boolean flowsInherited) {
+        this.flowsInherited = flowsInherited;
     }
 }

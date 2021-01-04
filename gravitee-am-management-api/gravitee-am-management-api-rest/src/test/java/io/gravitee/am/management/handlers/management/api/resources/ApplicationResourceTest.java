@@ -119,7 +119,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNull(application.getIdentities());
         assertNull(application.getCertificate());
         assertNotNull(application.getSettings());
-        assertNull(application.getSettings().getAdvanced());
         assertNull(application.getSettings().getAccount());
         assertNull(application.getSettings().getOauth());
     }
@@ -244,7 +243,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNull(application.getIdentities());
         assertNull(application.getCertificate());
         assertNotNull(application.getSettings());
-        assertNull(application.getSettings().getAdvanced());
         assertNull(application.getSettings().getAccount());
         assertNull(application.getSettings().getOauth());
     }

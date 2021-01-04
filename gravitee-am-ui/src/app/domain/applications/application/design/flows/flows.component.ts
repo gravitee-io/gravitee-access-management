@@ -16,17 +16,19 @@
 import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import '@gravitee/ui-components/wc/gv-policy-studio';
-import {OrganizationService} from '../../../services/organization.service';
-import {DomainService} from '../../../services/domain.service';
-import {SnackbarService} from '../../../services/snackbar.service';
+import {OrganizationService} from '../../../../../services/organization.service';
+import {SnackbarService} from '../../../../../services/snackbar.service';
+import {ApplicationService} from '../../../../../services/application.service';
+import {DialogService} from '../../../../../services/dialog.service';
 
 @Component({
-  selector: 'app-domain-flows',
+  selector: 'app-application-flows',
   templateUrl: './flows.component.html',
   styleUrls: ['./flows.component.scss']
 })
-export class DomainSettingsFlowsComponent implements OnInit {
+export class ApplicationFlowsComponent implements OnInit {
   private domainId: string;
+  private application: any;
   policies: any[];
   definition: any = {};
   flowSchema: string;
@@ -36,13 +38,14 @@ export class DomainSettingsFlowsComponent implements OnInit {
 
   constructor(private route: ActivatedRoute,
               private organizationService: OrganizationService,
-              private domainService: DomainService,
-              private snackbarService: SnackbarService
-  ) {
+              private applicationService: ApplicationService,
+              private snackbarService: SnackbarService,
+              private dialogService: DialogService) {
   }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.application = this.route.snapshot.parent.parent.data['application'];
     this.policies = this.route.snapshot.data['policies'] || [];
     this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
     this.definition.flows = this.route.snapshot.data['flows'] || [];
@@ -81,7 +84,7 @@ export class DomainSettingsFlowsComponent implements OnInit {
       return flow;
     });
 
-    this.domainService.updateFlows(this.domainId, flows).subscribe((updatedFlows) => {
+    this.applicationService.updateFlows(this.domainId, this.application.id, flows).subscribe((updatedFlows) => {
       this.studio.nativeElement.saved();
       this.definition = { ...this.definition, flows:  updatedFlows};
       this.snackbarService.open('Flows updated');
@@ -89,5 +92,34 @@ export class DomainSettingsFlowsComponent implements OnInit {
 
   }
 
+  enableInheritMode(event) {
+    this.dialogService
+      .confirm('Inherit Flows', 'Are you sure you want to change the execution flows behavior ?')
+      .subscribe(res => {
+        if (res) {
+          const settings = {
+            'settings' : {
+              'advanced' : {
+                'flowsInherited' : event.checked
+              }
+            }
+          };
+          this.applicationService.patch(this.domainId, this.application.id, settings).subscribe(data => {
+            this.application = data;
+            this.route.snapshot.parent.parent.data['application'] = this.application;
+            this.snackbarService.open('Application updated');
+          });
+        } else {
+          event.source.checked = !event.checked;
+        }
+      });
+  }
+
+  isInherited() {
+    return this.application &&
+      this.application.settings &&
+      this.application.settings.advanced &&
+      this.application.settings.advanced.flowsInherited;
+  }
 }
 

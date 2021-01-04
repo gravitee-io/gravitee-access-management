@@ -27,6 +27,7 @@ import java.util.Optional;
 public class PatchApplicationAdvancedSettings {
 
     private Optional<Boolean> skipConsent;
+    private Optional<Boolean> flowsInherited;
 
     public Optional<Boolean> getSkipConsent() {
         return skipConsent;
@@ -36,10 +37,19 @@ public class PatchApplicationAdvancedSettings {
         this.skipConsent = skipConsent;
     }
 
+    public Optional<Boolean> getFlowsInherited() {
+        return flowsInherited;
+    }
+
+    public void setFlowsInherited(Optional<Boolean> flowsInherited) {
+        this.flowsInherited = flowsInherited;
+    }
+
     public ApplicationAdvancedSettings patch(ApplicationAdvancedSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationAdvancedSettings toPatch = _toPatch == null ? new ApplicationAdvancedSettings() : new ApplicationAdvancedSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setSkipConsent, this.getSkipConsent(), boolean.class);
+        SetterUtils.safeSet(toPatch::setFlowsInherited, this.getFlowsInherited(), boolean.class);
 
         return toPatch;
     }

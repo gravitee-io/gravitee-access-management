@@ -44,19 +44,40 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoFlowRepository extends AbstractManagementMongoRepository implements FlowRepository {
 
     private MongoCollection<FlowMongo> flowsCollection;
+    private static final String FIELD_APPLICATION = "application";
 
     @PostConstruct
     public void init() {
         flowsCollection = mongoOperations.getCollection("flows", FlowMongo.class);
         super.init(flowsCollection);
         super.createIndex(flowsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
+        super.createIndex(flowsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_APPLICATION, 1));
         super.createIndex(flowsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ID, 1));
     }
 
     @Override
     public Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(flowsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
-                .map(this::convert).collect(ArrayList::new, List::add);
+        return Observable.fromPublisher(
+                flowsCollection.find(
+                        and(
+                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                eq(FIELD_REFERENCE_ID, referenceId)
+                        )
+                )
+        ).map(this::convert).collect(ArrayList::new, List::add);
+    }
+
+    @Override
+    public Single<List<Flow>> findByApplication(ReferenceType referenceType, String referenceId, String application) {
+        return Observable.fromPublisher(
+                flowsCollection.find(
+                        and(
+                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                eq(FIELD_REFERENCE_ID, referenceId),
+                                eq(FIELD_APPLICATION, application)
+                        )
+                )
+        ).map(this::convert).collect(ArrayList::new, List::add);
     }
 
     @Override
@@ -103,6 +124,7 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
         flowMongo.setId(flow.getId());
         flowMongo.setReferenceType(flow.getReferenceType() == null ? null : flow.getReferenceType().toString());
         flowMongo.setReferenceId(flow.getReferenceId());
+        flowMongo.setApplication(flow.getApplication());
         flowMongo.setName(flow.getName());
         flowMongo.setPre(flow.getPre());
         flowMongo.setPost(flow.getPost());
@@ -123,6 +145,7 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
         flow.setId(flowMongo.getId());
         flow.setReferenceType(flowMongo.getReferenceType() == null ? null : ReferenceType.valueOf(flowMongo.getReferenceType()));
         flow.setReferenceId(flowMongo.getReferenceId());
+        flow.setApplication(flowMongo.getApplication());
         flow.setName(flowMongo.getName());
         flow.setPre(flowMongo.getPre());
         flow.setPost(flowMongo.getPost());
