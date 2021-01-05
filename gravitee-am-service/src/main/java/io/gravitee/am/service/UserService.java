@@ -81,6 +81,8 @@ public interface UserService {
 
     Single<Long> countByDomain(String domain);
 
+    Single<Long> countByApplication(String domain, String application);
+
     Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 
     default Single<List<User>> findByDomainAndEmail(String domain, String email) {

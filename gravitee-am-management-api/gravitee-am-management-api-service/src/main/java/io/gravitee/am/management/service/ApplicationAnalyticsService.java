@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
-import * as Highcharts from 'highcharts';
-import {Widget} from './widget.model';
+package io.gravitee.am.management.service;
 
-@Component({
-  selector: 'gv-widget',
-  templateUrl: './widget.component.html',
-  styleUrls: ['./widget.component.scss']
-})
-export class WidgetComponent implements OnInit {
-  @Input('widget') widget: Widget;
-  @Input('Highcharts') Highcharts: typeof Highcharts;
+import io.gravitee.am.model.analytics.AnalyticsQuery;
+import io.gravitee.am.model.analytics.AnalyticsResponse;
+import io.reactivex.Single;
 
-  constructor() { }
+public interface ApplicationAnalyticsService {
 
-  ngOnInit() {
-  }
+    Single<AnalyticsResponse> execute(AnalyticsQuery query);
 }

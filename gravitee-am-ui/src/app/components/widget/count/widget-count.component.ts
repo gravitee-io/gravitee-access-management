@@ -15,6 +15,7 @@
  */
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import * as Highcharts from 'highcharts';
+import {Chart} from '../widget.model';
 
 @Component({
   selector: 'gv-widget-count',
@@ -22,7 +23,7 @@ import * as Highcharts from 'highcharts';
   styleUrls: ['./widget-count.component.scss']
 })
 export class WidgetCountComponent implements OnInit, OnChanges {
-  @Input('chart') chart: any;
+  @Input('chart') chart: Chart;
   value: number;
 
   constructor() { }

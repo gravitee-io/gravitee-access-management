@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
-import * as Highcharts from 'highcharts';
-import {Widget} from './widget.model';
+import {HttpParams} from "@angular/common/http";
+import { isNil } from 'lodash';
 
-@Component({
-  selector: 'gv-widget',
-  templateUrl: './widget.component.html',
-  styleUrls: ['./widget.component.scss']
-})
-export class WidgetComponent implements OnInit {
-  @Input('widget') widget: Widget;
-  @Input('Highcharts') Highcharts: typeof Highcharts;
+export function toHttpParams(params: Record<string, number | string | undefined | null>): HttpParams {
+  let httpParams: HttpParams = new HttpParams();
+  Object.keys(params).forEach(param => {
+    if (!isNil(params[param])) {
+      httpParams = httpParams.set(param, String(params[param]));
+    }
+  });
 
-  constructor() { }
-
-  ngOnInit() {
-  }
+  return httpParams;
 }

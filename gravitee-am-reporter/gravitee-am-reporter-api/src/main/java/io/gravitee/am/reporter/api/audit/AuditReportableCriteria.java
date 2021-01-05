@@ -33,6 +33,7 @@ public class AuditReportableCriteria implements ReportableCriteria {
     private String field;
     private String status;
     private String user;
+    private String accessPointId;
 
     private AuditReportableCriteria(Builder builder) {
         this.from = builder.from;
@@ -43,6 +44,7 @@ public class AuditReportableCriteria implements ReportableCriteria {
         this.field = builder.field;
         this.status = builder.status;
         this.user = builder.user;
+        this.accessPointId = builder.accessPointId;
     }
 
     @Override
@@ -79,6 +81,10 @@ public class AuditReportableCriteria implements ReportableCriteria {
         return user;
     }
 
+    public String accessPointId() {
+        return accessPointId;
+    }
+
     public static class Builder {
         private long from;
         private long to;
@@ -88,6 +94,7 @@ public class AuditReportableCriteria implements ReportableCriteria {
         private String field;
         private String status;
         private String user;
+        private String accessPointId;
 
         public Builder from(long from) {
             this.from = from;
@@ -126,6 +133,11 @@ public class AuditReportableCriteria implements ReportableCriteria {
 
         public Builder user(String user) {
             this.user = user;
+            return this;
+        }
+
+        public Builder accessPointId(String accessPointId) {
+            this.accessPointId = accessPointId;
             return this;
         }
 

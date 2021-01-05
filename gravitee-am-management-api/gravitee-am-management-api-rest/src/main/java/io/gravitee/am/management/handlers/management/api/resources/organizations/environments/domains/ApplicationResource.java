@@ -239,6 +239,11 @@ public class ApplicationResource extends AbstractResource {
         return resourceContext.getResource(ApplicationResourcesResource.class);
     }
 
+    @Path("analytics")
+    public ApplicationAnalyticsResource getAnalyticsResource() {
+        return resourceContext.getResource(ApplicationAnalyticsResource.class);
+    }
+
     public void updateInternal(String organizationId, String environmentId, String domain, String application, PatchApplication patchApplication, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();

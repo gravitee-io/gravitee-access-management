@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
 
@@ -206,16 +205,24 @@ public abstract class AbstractDialect implements DialectHelper {
             }
         }
 
+        if (criteria.accessPointId() != null && !criteria.accessPointId().isEmpty()) {
+            queryBuilder = queryBuilder.append(" INNER JOIN "+auditAccessPointsTable+" p ON a.id = p.audit_id ");
+            entitiesJoin = true;
+
+            whereClauseBuilder = whereClauseBuilder.append(" AND p.id = :accessPointId");
+            bindings.put("accessPointId", criteria.accessPointId());
+        }
+
         if (joinBasedOnField && criteria.field() != null && criteria.field().contains(".")) {
             String[] split = criteria.field().split("\\.");
             String auditFieldName = split[0];
             if ("outcome".equalsIgnoreCase(auditFieldName) && !outcomeJoin) {
-                queryBuilder = queryBuilder.append(" INNER JOIN "+auditOutcomesTable+" o ON a.id = o.audit_id ");
+                queryBuilder = queryBuilder.append(" INNER JOIN " + auditOutcomesTable + " o ON a.id = o.audit_id ");
             } else if ("actor".equalsIgnoreCase(auditFieldName) && !entitiesJoin) {
-                queryBuilder = queryBuilder.append(" INNER JOIN "+auditEntitiesTable+" e ON a.id = e.audit_id ");
+                queryBuilder = queryBuilder.append(" INNER JOIN " + auditEntitiesTable + " e ON a.id = e.audit_id ");
             } else if ("target".equalsIgnoreCase(auditFieldName) && !entitiesJoin) {
-                queryBuilder = queryBuilder.append(" INNER JOIN "+auditEntitiesTable+" e ON a.id = e.audit_id ");
-            } else if (split.length > 1){
+                queryBuilder = queryBuilder.append(" INNER JOIN " + auditEntitiesTable + " e ON a.id = e.audit_id ");
+            } else if ("accessPoint".equalsIgnoreCase(auditFieldName) && !entitiesJoin) {
                 queryBuilder = queryBuilder.append(" INNER JOIN "+auditAccessPointsTable+" p ON a.id = p.audit_id ");
             }
         }

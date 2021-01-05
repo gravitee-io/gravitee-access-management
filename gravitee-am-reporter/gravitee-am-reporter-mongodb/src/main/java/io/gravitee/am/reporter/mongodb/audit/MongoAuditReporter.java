@@ -77,6 +77,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private static final String FIELD_STATUS = "outcome.status";
     private static final String FIELD_TARGET = "target.alternativeId";
     private static final String FIELD_ACTOR = "actor.alternativeId";
+    private static final String FIELD_ACCESS_POINT_ID = "accessPoint.id";
 
     @Autowired
     private MongoClient mongoClient;
@@ -261,6 +262,10 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
             if (criteria.to() != 0) {
                 filters.add(lte(FIELD_TIMESTAMP, new Date(criteria.to())));
             }
+        }
+
+        if (criteria.accessPointId() != null && !criteria.accessPointId().isEmpty()) {
+            filters.add(eq(FIELD_ACCESS_POINT_ID, criteria.accessPointId()));
         }
 
         // build query

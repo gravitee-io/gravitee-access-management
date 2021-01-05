@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
 import {forkJoin, Observable} from "rxjs";
 import {map} from "rxjs/operators";
 import {AnalyticsService} from '../../../services/analytics.service';
 import * as Highcharts from 'highcharts';
 import * as moment from 'moment';
 import * as _ from 'lodash';
+import {Widget} from '../../../components/widget/widget.model';
+import {isNil} from 'lodash';
+
+export interface DashboardData {
+  widgets: Widget[]
+}
 
 Highcharts.setOptions({
   credits: {
@@ -38,19 +43,25 @@ Highcharts.setOptions({
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
-  @Input('dashboard') dashboard: any;
-  widgets: any[];
+  @Input('dashboard') dashboard: DashboardData;
+  widgets: Widget[];
   Highcharts: typeof Highcharts = Highcharts;
+
+  @Input()
   domainId: string;
-  selectedTimeRange = '1d';
+
+  @Input()
+  applicationId?: string;
+
+  selectedTimeRange: '1d' | '1h' | '12h' | '7d' | '30d' | '90d' = '1d';
   isLoading: boolean;
-  timeRanges: any[] = [
+  readonly timeRanges = [
     {
       'id': '1h',
       'name': 'Last hour',
       'value': 1,
       'unit': 'hours',
-      'interval' : 1000 * 60
+      'interval': 1000 * 60
     },
     {
       'id': '12h',
@@ -87,13 +98,11 @@ export class DashboardComponent implements OnInit {
       'unit': 'months',
       'interval' : 1000 * 60 * 60 * 24
     }
-  ];
+  ] as const;
 
-  constructor(private analyticsService: AnalyticsService,
-              private route: ActivatedRoute) { }
+  constructor(private analyticsService: AnalyticsService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
     this.fetch();
   }
 
@@ -101,21 +110,34 @@ export class DashboardComponent implements OnInit {
     this.fetch();
   }
 
-  private query(widget): Observable<any> {
+  private query(widget): Observable<Widget> {
     const selectedTimeRange = _.find(this.timeRanges, { id : this.selectedTimeRange });
-    const from = moment().subtract(selectedTimeRange.value, selectedTimeRange.unit);
-    const to = moment().valueOf();
-    const interval = selectedTimeRange.interval;
-    return this.analyticsService
-      .search(this.domainId, widget.chart.request.type, widget.chart.request.field, interval, from, to, widget.chart.request.size)
-      .pipe(map(response => {
-        widget.chart.response = response
-        return widget;
-      }));
+
+    const analyticsQuery = {
+      type: widget.chart.request.type,
+      field: widget.chart.request.field,
+      from: moment().subtract(selectedTimeRange.value, selectedTimeRange.unit).valueOf(),
+      to: moment().valueOf(),
+      interval: selectedTimeRange.interval,
+      size: widget.chart.request.size
+    }
+
+    const result$ =
+      isNil(this.applicationId)
+        ? this.analyticsService
+          .search(this.domainId, analyticsQuery)
+        : this.analyticsService
+          .searchApplicationAnalytics(this.domainId, this.applicationId, analyticsQuery)
+
+
+    return result$.pipe(map(response => {
+      widget.chart.response = response
+      return widget;
+    }));
   }
 
   private fetch() {
-    const dashboard = Object.assign({}, this.dashboard);
+    const dashboard: DashboardData = Object.assign({}, this.dashboard);
     this.widgets = [];
     this.isLoading = true;
     forkJoin(_.map(dashboard.widgets, widget => this.query(widget)))

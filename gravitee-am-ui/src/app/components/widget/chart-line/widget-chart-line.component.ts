@@ -16,6 +16,7 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import * as Highcharts from 'highcharts';
 import * as _ from 'lodash';
+import {Chart} from '../widget.model';
 
 @Component({
   selector: 'gv-widget-chart-line',
@@ -24,7 +25,7 @@ import * as _ from 'lodash';
 })
 export class WidgetChartLineComponent implements OnInit, OnChanges {
   @Input('Highcharts') Highcharts: typeof Highcharts;
-  @Input('chart') chart: any;
+  @Input('chart') chart: Chart;
   chartOptions;
   constructor() { }
 

@@ -170,6 +170,7 @@ import {ApplicationLoginSettingsComponent} from './domain/applications/applicati
 import {IdentitiesResolver} from './resolvers/identities.resolver';
 import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
 import {PlatformFlowSchemaResolver} from './resolvers/platform-flow-schema.resolver';
+import {ApplicationAnalyticsComponent} from "./domain/applications/application/analytics/analytics.component";
 
 const routes: Routes = [
   {
@@ -675,7 +676,7 @@ const routes: Routes = [
               { path: 'emails/email',
                 component: ApplicationEmailComponent,
                 canActivate: [AuthGuard],
-                resolve: { email: EmailResolver},
+                resolve: {email: EmailResolver},
                 data: {
                   perms: {
                     only: ['application_email_template_read']
@@ -684,10 +685,17 @@ const routes: Routes = [
               }
             ]
           },
-          { path: 'settings',
+          {
+            path: 'analytics',
+            component: ApplicationAnalyticsComponent,
+            canActivate: [AuthGuard],
+          },
+          {
+            path: 'settings',
             component: ApplicationAdvancedComponent,
             children: [
-              { path: 'general',
+              {
+                path: 'general',
                 component: ApplicationGeneralComponent,
                 canActivate: [AuthGuard],
                 resolve: {

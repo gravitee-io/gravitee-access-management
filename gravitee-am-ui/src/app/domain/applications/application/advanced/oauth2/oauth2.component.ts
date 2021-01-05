@@ -287,7 +287,7 @@ export class ApplicationOAuth2Component implements OnInit {
 
   deleteClaim(tokenType, key, event) {
     event.preventDefault();
-    _.remove(this.applicationOauthSettings.tokenCustomClaims, function(el) {
+    _.remove(this.applicationOauthSettings.tokenCustomClaims, function(el: any) {
       return (el.tokenType === tokenType && el.claimName === key);
     });
     this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
