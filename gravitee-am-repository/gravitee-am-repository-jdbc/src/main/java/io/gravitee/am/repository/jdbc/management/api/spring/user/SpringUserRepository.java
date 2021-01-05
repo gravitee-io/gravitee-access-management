@@ -37,6 +37,9 @@ public interface SpringUserRepository extends RxJava2CrudRepository<JdbcUser, St
     @Query("select count(u.id) from users u where u.reference_type = :refType and u.reference_id = :refId")
     Single<Long> countByReference(@Param("refType")String refType, @Param("refId") String refId);
 
+    @Query("select count(u.id) from users u where u.reference_type = :refType and u.reference_id = :refId and u.client = :client")
+    Single<Long> countByClient(@Param("refType") String refType, @Param("refId") String refId, @Param("client") String client);
+
     @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and u.id = :id")
     Maybe<JdbcUser> findById(@Param("refType")String refType, @Param("refId") String refId, @Param("id") String id);
 
@@ -58,11 +61,20 @@ public interface SpringUserRepository extends RxJava2CrudRepository<JdbcUser, St
     @Query("select count(u.id) from users u where u.reference_type = :refType and u.reference_id = :refId and u.account_non_locked = :nl and (u.account_locked_until > :lockedUntil or u.account_locked_until is null)")
     Single<Long> countLockedUser(@Param("refType")String refType, @Param("refId") String refId, @Param("nl") boolean notLocked, @Param("lockedUntil")LocalDateTime lockedUntil);
 
+    @Query("select count(u.id) from users u where u.reference_type = :refType and u.reference_id = :refId and u.client = :client and u.account_non_locked = :nl and (u.account_locked_until > :lockedUntil or u.account_locked_until is null)")
+    Single<Long> countLockedUserByClient(@Param("refType") String refType, @Param("refId") String refId, @Param("client") String client, @Param("nl") boolean notLocked, @Param("lockedUntil") LocalDateTime lockedUntil);
+
     @Query("select count(u.id) from users u where u.reference_type = :refType and u.reference_id = :refId and u.enabled = :en")
     Single<Long> countDisabledUser(@Param("refType")String refType, @Param("refId") String refId, @Param("en") boolean enabled);
 
+    @Query("select count(u.id) from users u where u.reference_type = :refType and u.reference_id = :refId and u.client = :client and u.enabled = :en")
+    Single<Long> countDisabledUserByClient(@Param("refType") String refType, @Param("refId") String refId, @Param("client") String client, @Param("en") boolean enabled);
+
     @Query("select count(u.id) from users u where u.reference_type = :refType and u.reference_id = :refId and u.logged_at < :threshold")
     Single<Long> countInactiveUser(@Param("refType")String refType, @Param("refId") String refId, @Param("threshold")LocalDateTime threshold);
+
+    @Query("select count(u.id) from users u where u.reference_type = :refType and u.reference_id = :refId and u.client = :client and u.logged_at < :threshold")
+    Single<Long> countInactiveUserByClient(@Param("refType") String refType, @Param("refId") String refId, @Param("client") String client, @Param("threshold") LocalDateTime threshold);
 
     @Query("select count(u.id) from users u where u.reference_type = :refType and u.reference_id = :refId and u.pre_registration = :pre")
     Single<Long> countPreRegisteredUser(@Param("refType")String refType, @Param("refId") String refId, @Param("pre") boolean preRegister);

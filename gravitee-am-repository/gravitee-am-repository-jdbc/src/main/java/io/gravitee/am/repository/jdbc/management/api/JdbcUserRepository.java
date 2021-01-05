@@ -188,7 +188,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .toList()
                 .flatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)))
                 .doOnError(error -> LOGGER.error("Unable to search users using SCIM with referenceId {} and referenceType {} ",
-                        referenceId,  referenceType, error));
+                        referenceId, referenceType, error));
     }
 
     @Override
@@ -270,6 +270,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     @Override
+    public Single<Long> countByApplication(String domain, String application) {
+        return userRepository.countByClient(ReferenceType.DOMAIN.name(), domain, application);
+    }
+
+    @Override
     public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
         switch (query.getField()) {
             case Field.USER_STATUS:
@@ -282,11 +287,21 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {
-        LOGGER.debug("process statistic usersStatusRepartition({})", query);
-        Single<Long> total = userRepository.countByReference(DOMAIN.name(), query.getDomain());
-        Single<Long> disabled = userRepository.countDisabledUser(DOMAIN.name(), query.getDomain(), false);
-        Single<Long> locked = userRepository.countLockedUser(DOMAIN.name(), query.getDomain(), false, LocalDateTime.now(UTC));
-        Single<Long> inactive = userRepository.countInactiveUser(DOMAIN.name(), query.getDomain(), LocalDateTime.now(UTC).minus(90, ChronoUnit.DAYS));
+        boolean filteringByApplication = query.getApplication() != null && !query.getApplication().isEmpty();
+
+        Single<Long> total = filteringByApplication
+                ? userRepository.countByClient(DOMAIN.name(), query.getDomain(), query.getApplication())
+                : userRepository.countByReference(DOMAIN.name(), query.getDomain());
+        Single<Long> disabled = filteringByApplication
+                ? userRepository.countDisabledUserByClient(DOMAIN.name(), query.getDomain(), query.getApplication(), false)
+                : userRepository.countDisabledUser(DOMAIN.name(), query.getDomain(), false);
+        Single<Long> locked = filteringByApplication
+                ? userRepository.countLockedUserByClient(DOMAIN.name(), query.getDomain(), query.getApplication(), false, LocalDateTime.now(UTC))
+                : userRepository.countLockedUser(DOMAIN.name(), query.getDomain(), false, LocalDateTime.now(UTC));
+        Single<Long> inactive = filteringByApplication
+                ? userRepository.countInactiveUserByClient(DOMAIN.name(), query.getDomain(), query.getApplication(), LocalDateTime.now(UTC).minus(90, ChronoUnit.DAYS))
+                : userRepository.countInactiveUser(DOMAIN.name(), query.getDomain(), LocalDateTime.now(UTC).minus(90, ChronoUnit.DAYS));
+
         return Single.just(new HashMap<>())
                 .flatMap((stats) -> disabled.map(count -> {
                     LOGGER.debug("usersStatusRepartition(disabled) = {}", count);
@@ -342,40 +357,40 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("users");
 
         // doesn't use the class introspection to handle json objects
-        insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"external_id", item.getExternalId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"username", item.getUsername(), String.class);
-        insertSpec = addQuotedField(insertSpec,"email", item.getEmail(), String.class);
-        insertSpec = addQuotedField(insertSpec,"display_name", item.getDisplayName(), String.class);
-        insertSpec = addQuotedField(insertSpec,"nick_name", item.getNickName(), String.class);
-        insertSpec = addQuotedField(insertSpec,"first_name", item.getFirstName(), String.class);
-        insertSpec = addQuotedField(insertSpec,"last_name", item.getLastName(), String.class);
-        insertSpec = addQuotedField(insertSpec,"title", item.getTitle(), String.class);
-        insertSpec = addQuotedField(insertSpec,"type", item.getType(), String.class);
-        insertSpec = addQuotedField(insertSpec,"preferred_language", item.getPreferredLanguage(), String.class);
-        insertSpec = addQuotedField(insertSpec,"account_non_expired", item.isAccountNonExpired(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"account_locked_at", dateConverter.convertTo(item.getAccountLockedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"account_locked_until", dateConverter.convertTo(item.getAccountLockedUntil(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"account_non_locked", item.isAccountNonLocked(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"credentials_non_expired", item.isCredentialsNonExpired(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"enabled", item.isEnabled(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"internal", item.isInternal(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"pre_registration", item.isPreRegistration(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"registration_completed", item.isRegistrationCompleted(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"newsletter", item.isNewsletter(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"registration_user_uri", item.getRegistrationUserUri(), String.class);
-        insertSpec = addQuotedField(insertSpec,"registration_access_token", item.getRegistrationAccessToken(), String.class);
-        insertSpec = addQuotedField(insertSpec,"reference_type", item.getReferenceType(), String.class);
-        insertSpec = addQuotedField(insertSpec,"reference_id", item.getReferenceId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"source", item.getSource(), String.class);
-        insertSpec = addQuotedField(insertSpec,"client", item.getClient(), String.class);
-        insertSpec = addQuotedField(insertSpec,"logins_count", item.getLoginsCount(), Integer.class);
-        insertSpec = addQuotedField(insertSpec,"logged_at", dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec,"x509_certificates", item.getX509Certificates());
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec,"factors", item.getFactors());
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec,"additional_information", item.getAdditionalInformation());
+        insertSpec = addQuotedField(insertSpec, "id", item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, "external_id", item.getExternalId(), String.class);
+        insertSpec = addQuotedField(insertSpec, "username", item.getUsername(), String.class);
+        insertSpec = addQuotedField(insertSpec, "email", item.getEmail(), String.class);
+        insertSpec = addQuotedField(insertSpec, "display_name", item.getDisplayName(), String.class);
+        insertSpec = addQuotedField(insertSpec, "nick_name", item.getNickName(), String.class);
+        insertSpec = addQuotedField(insertSpec, "first_name", item.getFirstName(), String.class);
+        insertSpec = addQuotedField(insertSpec, "last_name", item.getLastName(), String.class);
+        insertSpec = addQuotedField(insertSpec, "title", item.getTitle(), String.class);
+        insertSpec = addQuotedField(insertSpec, "type", item.getType(), String.class);
+        insertSpec = addQuotedField(insertSpec, "preferred_language", item.getPreferredLanguage(), String.class);
+        insertSpec = addQuotedField(insertSpec, "account_non_expired", item.isAccountNonExpired(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, "account_locked_at", dateConverter.convertTo(item.getAccountLockedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, "account_locked_until", dateConverter.convertTo(item.getAccountLockedUntil(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, "account_non_locked", item.isAccountNonLocked(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, "credentials_non_expired", item.isCredentialsNonExpired(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, "enabled", item.isEnabled(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, "internal", item.isInternal(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, "pre_registration", item.isPreRegistration(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, "registration_completed", item.isRegistrationCompleted(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, "newsletter", item.isNewsletter(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, "registration_user_uri", item.getRegistrationUserUri(), String.class);
+        insertSpec = addQuotedField(insertSpec, "registration_access_token", item.getRegistrationAccessToken(), String.class);
+        insertSpec = addQuotedField(insertSpec, "reference_type", item.getReferenceType(), String.class);
+        insertSpec = addQuotedField(insertSpec, "reference_id", item.getReferenceId(), String.class);
+        insertSpec = addQuotedField(insertSpec, "source", item.getSource(), String.class);
+        insertSpec = addQuotedField(insertSpec, "client", item.getClient(), String.class);
+        insertSpec = addQuotedField(insertSpec, "logins_count", item.getLoginsCount(), Integer.class);
+        insertSpec = addQuotedField(insertSpec, "logged_at", dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "x509_certificates", item.getX509Certificates());
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "factors", item.getFactors());
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "additional_information", item.getAdditionalInformation());
 
         Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
 
@@ -394,40 +409,40 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("users");
         // doesn't use the class introspection to handle json objects
         Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields,"id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields,"external_id", item.getExternalId(), String.class);
-        updateFields = addQuotedField(updateFields,"username", item.getUsername(), String.class);
-        updateFields = addQuotedField(updateFields,"email", item.getEmail(), String.class);
-        updateFields = addQuotedField(updateFields,"display_name", item.getDisplayName(), String.class);
-        updateFields = addQuotedField(updateFields,"nick_name", item.getNickName(), String.class);
-        updateFields = addQuotedField(updateFields,"first_name", item.getFirstName(), String.class);
-        updateFields = addQuotedField(updateFields,"last_name", item.getLastName(), String.class);
-        updateFields = addQuotedField(updateFields,"title", item.getTitle(), String.class);
-        updateFields = addQuotedField(updateFields,"type", item.getType(), String.class);
-        updateFields = addQuotedField(updateFields,"preferred_language", item.getPreferredLanguage(), String.class);
-        updateFields = addQuotedField(updateFields,"account_non_expired", item.isAccountNonExpired(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"account_locked_at", dateConverter.convertTo(item.getAccountLockedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"account_locked_until", dateConverter.convertTo(item.getAccountLockedUntil(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"account_non_locked", item.isAccountNonLocked(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"credentials_non_expired", item.isCredentialsNonExpired(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"enabled", item.isEnabled(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"internal", item.isInternal(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"pre_registration", item.isPreRegistration(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"registration_completed", item.isRegistrationCompleted(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"newsletter", item.isNewsletter(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"registration_user_uri", item.getRegistrationUserUri(), String.class);
-        updateFields = addQuotedField(updateFields,"registration_access_token", item.getRegistrationAccessToken(), String.class);
-        updateFields = addQuotedField(updateFields,"reference_type", item.getReferenceType(), String.class);
-        updateFields = addQuotedField(updateFields,"reference_id", item.getReferenceId(), String.class);
-        updateFields = addQuotedField(updateFields,"source", item.getSource(), String.class);
-        updateFields = addQuotedField(updateFields,"client", item.getClient(), String.class);
-        updateFields = addQuotedField(updateFields,"logins_count", item.getLoginsCount(), Integer.class);
-        updateFields = addQuotedField(updateFields,"logged_at", dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        updateFields = databaseDialectHelper.addJsonField(updateFields,"x509_certificates", item.getX509Certificates());
-        updateFields = databaseDialectHelper.addJsonField(updateFields,"factors", item.getFactors());
-        updateFields = databaseDialectHelper.addJsonField(updateFields,"additional_information", item.getAdditionalInformation());
+        updateFields = addQuotedField(updateFields, "id", item.getId(), String.class);
+        updateFields = addQuotedField(updateFields, "external_id", item.getExternalId(), String.class);
+        updateFields = addQuotedField(updateFields, "username", item.getUsername(), String.class);
+        updateFields = addQuotedField(updateFields, "email", item.getEmail(), String.class);
+        updateFields = addQuotedField(updateFields, "display_name", item.getDisplayName(), String.class);
+        updateFields = addQuotedField(updateFields, "nick_name", item.getNickName(), String.class);
+        updateFields = addQuotedField(updateFields, "first_name", item.getFirstName(), String.class);
+        updateFields = addQuotedField(updateFields, "last_name", item.getLastName(), String.class);
+        updateFields = addQuotedField(updateFields, "title", item.getTitle(), String.class);
+        updateFields = addQuotedField(updateFields, "type", item.getType(), String.class);
+        updateFields = addQuotedField(updateFields, "preferred_language", item.getPreferredLanguage(), String.class);
+        updateFields = addQuotedField(updateFields, "account_non_expired", item.isAccountNonExpired(), Boolean.class);
+        updateFields = addQuotedField(updateFields, "account_locked_at", dateConverter.convertTo(item.getAccountLockedAt(), null), LocalDateTime.class);
+        updateFields = addQuotedField(updateFields, "account_locked_until", dateConverter.convertTo(item.getAccountLockedUntil(), null), LocalDateTime.class);
+        updateFields = addQuotedField(updateFields, "account_non_locked", item.isAccountNonLocked(), Boolean.class);
+        updateFields = addQuotedField(updateFields, "credentials_non_expired", item.isCredentialsNonExpired(), Boolean.class);
+        updateFields = addQuotedField(updateFields, "enabled", item.isEnabled(), Boolean.class);
+        updateFields = addQuotedField(updateFields, "internal", item.isInternal(), Boolean.class);
+        updateFields = addQuotedField(updateFields, "pre_registration", item.isPreRegistration(), Boolean.class);
+        updateFields = addQuotedField(updateFields, "registration_completed", item.isRegistrationCompleted(), Boolean.class);
+        updateFields = addQuotedField(updateFields, "newsletter", item.isNewsletter(), Boolean.class);
+        updateFields = addQuotedField(updateFields, "registration_user_uri", item.getRegistrationUserUri(), String.class);
+        updateFields = addQuotedField(updateFields, "registration_access_token", item.getRegistrationAccessToken(), String.class);
+        updateFields = addQuotedField(updateFields, "reference_type", item.getReferenceType(), String.class);
+        updateFields = addQuotedField(updateFields, "reference_id", item.getReferenceId(), String.class);
+        updateFields = addQuotedField(updateFields, "source", item.getSource(), String.class);
+        updateFields = addQuotedField(updateFields, "client", item.getClient(), String.class);
+        updateFields = addQuotedField(updateFields, "logins_count", item.getLoginsCount(), Integer.class);
+        updateFields = addQuotedField(updateFields, "logged_at", dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
+        updateFields = addQuotedField(updateFields, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        updateFields = addQuotedField(updateFields, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        updateFields = databaseDialectHelper.addJsonField(updateFields, "x509_certificates", item.getX509Certificates());
+        updateFields = databaseDialectHelper.addJsonField(updateFields, "factors", item.getFactors());
+        updateFields = databaseDialectHelper.addJsonField(updateFields, "additional_information", item.getAdditionalInformation());
 
         Mono<Integer> updateAction = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
 
@@ -534,7 +549,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .flatMap(user ->
                         attributesRepository.findByUserId(user.getId())
                                 .toList()
-                                .map(attributes ->  {
+                                .map(attributes -> {
                                     Map<String, List<Attribute>> map = attributes.stream().collect(StreamUtils.toMultiMap(JdbcUser.Attribute::getUserField, attr -> mapper.map(attr, Attribute.class)));
                                     if (map.containsKey(ATTRIBUTE_USER_FIELD_EMAIL)) {
                                         user.setEmails(map.get(ATTRIBUTE_USER_FIELD_EMAIL));

@@ -26,7 +26,7 @@ describe('AnalyticsService', () => {
   let httpTestingController: HttpTestingController;
   let analyticsService: AnalyticsService;
 
-  const domainAnalyticsResponse = { value: 1234 };
+  const analyticsResponse = { value: 1234 };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -46,14 +46,14 @@ describe('AnalyticsService', () => {
     const domainId = 'domain-1234';
     const type = 'count';
     const field = 'application';
-    const interval = '12';
-    const from = '0';
-    const to = '100';
-    const size = '20';
+    const interval = 12;
+    const from = 0;
+    const to = 100;
+    const size = 20;
 
-    analyticsService.search(domainId, type, field, interval, from, to, size)
+    analyticsService.search(domainId, { type, field, interval, from, to, size})
       .subscribe(result => {
-        expect(result.value).toEqual(domainAnalyticsResponse.value);
+        expect(result.value).toEqual(analyticsResponse.value);
         done();
       });
 
@@ -62,7 +62,7 @@ describe('AnalyticsService', () => {
         method: 'GET',
         url: `${AppConfig.settings.domainBaseURL}${domainId}/analytics?type=${type}&field=${field}&interval=${interval}&from=${from}&to=${to}&size=${size}`,
       })
-      .flush(domainAnalyticsResponse);
+      .flush(analyticsResponse);
 
   });
 
@@ -70,12 +70,12 @@ describe('AnalyticsService', () => {
     const domainId = 'domain-1234';
     const type = 'count';
     const field = 'application';
-    const interval = '12';
-    const size = '20';
+    const interval = 12;
+    const size = 20;
 
-    analyticsService.search(domainId, type, field, interval, undefined, undefined, size)
+    analyticsService.search(domainId, {type, field, interval, from: undefined, to: undefined, size})
       .subscribe(result => {
-        expect(result.value).toEqual(domainAnalyticsResponse.value);
+        expect(result.value).toEqual(analyticsResponse.value);
         done();
       });
 
@@ -84,6 +84,52 @@ describe('AnalyticsService', () => {
         method: 'GET',
         url: `${AppConfig.settings.domainBaseURL}${domainId}/analytics?type=${type}&field=${field}&interval=${interval}&size=${size}`,
       })
-      .flush(domainAnalyticsResponse);
+      .flush(analyticsResponse);
+  });
+
+  it('calls application analytics endpoint', (done) => {
+    const domainId = 'domain-1234';
+    const applicationId = 'app-1234';
+    const type = 'count';
+    const field = 'application';
+    const interval = 12;
+    const from = 0;
+    const to = 100;
+    const size = 20;
+
+    analyticsService.searchApplicationAnalytics(domainId, applicationId, { type, field, interval, from, to, size})
+      .subscribe(result => {
+        expect(result.value).toEqual(analyticsResponse.value);
+        done();
+      });
+
+    httpTestingController
+      .expectOne({
+        method: 'GET',
+        url: `${AppConfig.settings.domainBaseURL}${domainId}/applications/${applicationId}/analytics?type=${type}&field=${field}&interval=${interval}&from=${from}&to=${to}&size=${size}`,
+      })
+      .flush(analyticsResponse);
+  });
+
+  it('calls application analytics endpoint with optional params', (done) => {
+    const domainId = 'domain-1234';
+    const applicationId = 'app-1234';
+    const type = 'count';
+    const field = 'application';
+    const interval = 12;
+    const size = 20;
+
+    analyticsService.searchApplicationAnalytics(domainId, applicationId, {type, field, interval, from: undefined, to: undefined, size})
+      .subscribe(result => {
+        expect(result.value).toEqual(analyticsResponse.value);
+        done();
+      });
+
+    httpTestingController
+      .expectOne({
+        method: 'GET',
+        url: `${AppConfig.settings.domainBaseURL}${domainId}/applications/${applicationId}/analytics?type=${type}&field=${field}&interval=${interval}&size=${size}`,
+      })
+      .flush(analyticsResponse);
   });
 });

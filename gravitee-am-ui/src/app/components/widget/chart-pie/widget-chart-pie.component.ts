@@ -15,6 +15,7 @@
  */
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import * as Highcharts from 'highcharts';
+import {Chart} from '../widget.model';
 
 @Component({
   selector: 'gv-widget-chart-pie',
@@ -23,7 +24,7 @@ import * as Highcharts from 'highcharts';
 })
 export class WidgetChartPieComponent implements OnInit, OnChanges {
   @Input('Highcharts') Highcharts: typeof Highcharts;
-  @Input('chart') chart: any;
+  @Input('chart') chart: Chart;
   chartOptions: Highcharts.Options;
 
   constructor() { }

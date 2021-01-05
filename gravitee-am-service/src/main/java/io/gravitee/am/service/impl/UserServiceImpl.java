@@ -416,6 +416,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Single<Long> countByApplication(String domain, String application) {
+        LOGGER.debug("Count user by application {}", application);
+
+        return userRepository.countByApplication(domain, application).onErrorResumeNext(ex -> {
+            if (ex instanceof AbstractManagementException) {
+                return Single.error(ex);
+            }
+            LOGGER.error("An error occurs while trying to count users by application: {}", application, ex);
+            return Single.error(new TechnicalManagementException(
+                    String.format("An error occurs while count users to delete user: %s", application), ex));
+        });
+    }
+
+    @Override
     public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
         LOGGER.debug("Get user collection analytics {}", query);
 

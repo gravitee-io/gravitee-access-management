@@ -16,6 +16,7 @@
 import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import {Router} from '@angular/router';
 import * as _ from 'lodash';
+import {Chart} from '../widget.model';
 
 @Component({
   selector: 'gv-widget-data-table',
@@ -23,7 +24,7 @@ import * as _ from 'lodash';
   styleUrls: ['./widget-data-table.component.scss']
 })
 export class WidgetDataTableComponent implements OnInit, OnChanges {
-  @Input('chart') chart: any;
+  @Input('chart') chart: Chart;
   @Input('domainId') domainId: string;
   rows = [];
   loadingIndicator = true;

@@ -13,9 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { AppConfig } from '../../config/app.config';
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {AppConfig} from '../../config/app.config';
+import {toHttpParams} from "../utils/http-utils";
+import {Observable} from "rxjs";
+
+interface AnalyticsQuery {
+  readonly type: string;
+  readonly field: string;
+  readonly from?: number;
+  readonly to?: number;
+  readonly interval?: number;
+  readonly size?: number;
+}
 
 @Injectable()
 export class AnalyticsService {
@@ -23,13 +34,19 @@ export class AnalyticsService {
 
   constructor(private http: HttpClient) { }
 
-  search(domainId, type, field, interval, from, to, size): any {
-    return this.http.get(this.analyticsURL + domainId + '/analytics' +
-      (type ? '?type=' + type : '') +
-      (field ? '&field=' + field : '') +
-      (interval ? '&interval=' + interval : '') +
-      (from ? '&from=' + from : '') +
-      (to ? '&to=' + to : '') +
-      (size ? '&size=' + size : ''));
+  search(domainId: string, analyticsQuery: AnalyticsQuery): Observable<any> {
+    const url = `${this.analyticsURL + domainId}/analytics`;
+    return this._search(url, analyticsQuery);
+  }
+
+  searchApplicationAnalytics(domainId: string, applicationId: string, analyticsQuery: AnalyticsQuery): Observable<any> {
+    const url = `${this.analyticsURL + domainId}/applications/${applicationId}/analytics`;
+    return this._search(url, analyticsQuery);
+  }
+
+  private _search(url, analyticsQuery: AnalyticsQuery ) {
+    const params = toHttpParams({...analyticsQuery});
+
+    return this.http.get(url, {params});
   }
 }

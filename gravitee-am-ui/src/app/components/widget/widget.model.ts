@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
-import * as Highcharts from 'highcharts';
-import {Widget} from './widget.model';
+export interface AnalyticsQuery {
+  type: string;
+  field: string;
+  interval?: string;
+  from?: string;
+  to?: string;
+  size?: number;
+}
 
-@Component({
-  selector: 'gv-widget',
-  templateUrl: './widget.component.html',
-  styleUrls: ['./widget.component.scss']
-})
-export class WidgetComponent implements OnInit {
-  @Input('widget') widget: Widget;
-  @Input('Highcharts') Highcharts: typeof Highcharts;
+export interface Chart {
+  type: string;
+  request: AnalyticsQuery;
+  response?: any;
+  prefix?: string;
+  columns?: string[];
+  paging?: number;
+}
 
-  constructor() { }
-
-  ngOnInit() {
-  }
+export interface Widget {
+  flex: number;
+  chart: Chart;
+  title: string;
+  subhead?: string;
 }

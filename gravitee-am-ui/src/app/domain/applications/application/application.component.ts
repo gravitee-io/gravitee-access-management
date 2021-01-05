@@ -33,6 +33,7 @@ export class ApplicationComponent implements OnInit {
     {'href': 'endpoints' , 'label': 'Endpoints', 'icon': 'transform'},
     {'href': 'idp' , 'label': 'Identity Providers', 'icon': 'swap_horiz'},
     {'href': 'design' , 'label': 'Design', 'icon': 'palette'},
+    {'href': 'analytics' , 'label': 'Analytics', 'icon': 'bar_chart'},
     {'href': 'settings', 'label': 'Settings', 'icon': 'settings'}
   ];
 

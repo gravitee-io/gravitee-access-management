@@ -252,6 +252,11 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
+    public Single<Long> countByApplication(String domain, String application) {
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_CLIENT, application)))).first(0l);
+    }
+
+    @Override
     public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
         switch (query.getField()) {
             case Field.USER_STATUS:
@@ -264,9 +269,14 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {
+        List<Bson> filters = new ArrayList<>(Arrays.asList(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain())));
+        if (query.getApplication() != null && !query.getApplication().isEmpty()) {
+            filters.add(eq(FIELD_CLIENT, query.getApplication()));
+        }
+
         return Observable.fromPublisher(usersCollection.aggregate(
                 Arrays.asList(
-                        Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()))),
+                        Aggregates.match(and(filters)),
                         Aggregates.group(
                                 new BasicDBObject("_id", query.getField()),
                                 Accumulators.sum("total", 1),

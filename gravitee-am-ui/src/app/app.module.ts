@@ -223,6 +223,7 @@ import { ApplicationCreationComponent } from './domain/applications/creation/app
 import { ApplicationCreationStep1Component } from './domain/applications/creation/steps/step1/step1.component';
 import { ApplicationCreationStep2Component } from './domain/applications/creation/steps/step2/step2.component';
 import { ApplicationComponent } from './domain/applications/application/application.component';
+import { ApplicationAnalyticsComponent } from './domain/applications/application/analytics/analytics.component';
 import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
 import { ApplicationEndpointsComponent } from './domain/applications/application/endpoints/endpoints.component';
 import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
@@ -417,6 +418,7 @@ import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.res
     ClaimsInfoDialog,
     RoleSelectionComponent,
     ApplicationsComponent,
+    ApplicationAnalyticsComponent,
     ApplicationCreationComponent,
     ApplicationCreationStep1Component,
     ApplicationCreationStep2Component,

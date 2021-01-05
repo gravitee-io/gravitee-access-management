@@ -15,19 +15,18 @@
  */
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {DashboardData} from '../components/dashboard/dashboard.component';
+import { DashboardData } from '../../../components/dashboard/dashboard.component';
 
 @Component({
-  selector: 'app-domain-overview',
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  selector: 'app-application-analytics',
+  templateUrl: './analytics.component.html',
+  styleUrls: ['./analytics.component.scss']
 })
-export class DomainDashboardComponent implements OnInit {
-  domain: any = {};
+export class ApplicationAnalyticsComponent implements OnInit {
   dashboard: DashboardData = {
     widgets: [
       {
-        flex: 25,
+        flex: 33,
         title: 'Logins',
         subhead: 'Latest logins',
         chart: {
@@ -40,7 +39,7 @@ export class DomainDashboardComponent implements OnInit {
         }
       },
       {
-        flex: 25,
+        flex: 33,
         title: 'Sign ups',
         subhead: 'New sign ups',
         chart: {
@@ -53,7 +52,7 @@ export class DomainDashboardComponent implements OnInit {
         }
       },
       {
-        flex: 25,
+        flex: 33,
         title: 'Users',
         subhead: 'Total users',
         chart: {
@@ -61,18 +60,6 @@ export class DomainDashboardComponent implements OnInit {
           request: {
             type: 'count',
             field: 'user'
-          }
-        }
-      },
-      {
-        flex: 25,
-        title: 'Applications',
-        subhead: 'Total apps',
-        chart: {
-          type: 'count',
-          request: {
-            type: 'count',
-            field: 'application'
           }
         }
       },
@@ -110,39 +97,17 @@ export class DomainDashboardComponent implements OnInit {
           }
         }
       },
-      {
-        flex: 50,
-        title: 'User registration',
-        subhead: 'User registration completion',
-        chart: {
-          type: 'gauge',
-          request: {
-            type: 'group_by',
-            field: 'user_registration'
-          }
-        }
-      },
-      {
-        flex: 100,
-        title: 'Top applications',
-        subhead: 'Ordered by login calls',
-        chart: {
-          type: 'table',
-          columns: ['Application', 'Logins'],
-          paging: 5,
-          request: {
-            type: 'group_by',
-            field: 'application',
-            size: 20
-          }
-        }
-      },
     ]
   };
+  domainId: string;
+  applicationId: string;
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) {
+  }
 
   ngOnInit() {
-    this.domain = this.route.parent.snapshot.data['domain'];
+    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.applicationId = this.route.snapshot.parent.params['appId'];
   }
+
 }

@@ -60,5 +60,7 @@ public interface UserRepository extends CrudRepository<User, String> {
 
     Single<Long> countByDomain(String domain);
 
+    Single<Long> countByApplication(String domain, String application);
+
     Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 }

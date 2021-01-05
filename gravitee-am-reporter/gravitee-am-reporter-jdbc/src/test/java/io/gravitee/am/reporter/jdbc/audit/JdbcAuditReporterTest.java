@@ -38,7 +38,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -189,6 +188,34 @@ public class JdbcAuditReporterTest {
         waitBulkLoadFlush();
 
         AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().user(MY_USER).build();
+        TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationCount", criteria, Type.COUNT).test();
+        test.awaitTerminalEvent();
+        test.assertNoErrors();
+        test.assertValue(map -> map.size() == 1);
+        test.assertValue(map -> map.containsKey("data"));
+        int expectedResult = acc;
+        test.assertValue(map -> map.get("data") != null && ((Long)map.get("data")).intValue() == expectedResult);
+    }
+
+   @Test
+    public void testReporter_aggregationCount_accessPointId() {
+        int loop = 10;
+        int acc = 0;
+
+       String accessPointId = UUID.randomUUID().toString();
+
+        for (int i = 0; i < loop; ++i) {
+            Audit reportable = buildRandomAudit(ReferenceType.DOMAIN, "testReporter_aggregationCount");
+            if (i % 2 == 0) {
+                reportable.getAccessPoint().setId(accessPointId);
+                acc++;
+            }
+            auditReporter.report(reportable);
+        }
+
+        waitBulkLoadFlush();
+
+        AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().accessPointId(accessPointId).build();
         TestObserver<Map<Object, Object>> test = auditReporter.aggregate(ReferenceType.DOMAIN, "testReporter_aggregationCount", criteria, Type.COUNT).test();
         test.awaitTerminalEvent();
         test.assertNoErrors();

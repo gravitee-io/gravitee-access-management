@@ -894,4 +894,88 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(users -> ((Number)users.get("locked")).intValue() == 1);
     }
 
+    @Test
+    public void testStat_StatusRepartition_byClient() throws TechnicalException {
+        final String domain = "domain_status";
+        final String clientId1 = UUID.randomUUID().toString();;
+        final String clientId2 = UUID.randomUUID().toString();;
+
+        // enabled used
+        User user = new User();
+        user.setClient(clientId1);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain);
+        user.setEnabled(true);
+        user.setLoggedAt(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
+        userRepository.create(user).blockingGet();
+
+        // disabled used
+        User user2 = new User();
+        user2.setClient(clientId1);
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setEnabled(false);
+        user2.setLoggedAt(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
+        userRepository.create(user2).blockingGet();
+
+        // locked used
+        User user3 = new User();
+        user3.setClient(clientId1);
+        user3.setReferenceType(ReferenceType.DOMAIN);
+        user3.setReferenceId(domain);
+        user3.setAccountNonLocked(false);
+        user3.setAccountLockedUntil(new Date(Instant.now().plusSeconds(60).toEpochMilli()));
+        user3.setLoggedAt(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
+        userRepository.create(user3).blockingGet();
+
+        // expired locked user ==> so active one
+        User user4 = new User();
+        user4.setClient(clientId2);
+        user4.setReferenceType(ReferenceType.DOMAIN);
+        user4.setReferenceId(domain);
+        user4.setAccountNonLocked(false);
+        user4.setAccountLockedUntil(new Date(Instant.now().minusSeconds(60).toEpochMilli()));
+        user4.setLoggedAt(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
+        userRepository.create(user4).blockingGet();
+
+        // inactive user
+        User user5 = new User();
+        user5.setClient(clientId2);
+        user5.setReferenceType(ReferenceType.DOMAIN);
+        user5.setReferenceId(domain);
+        user5.setLoggedAt(new Date(Instant.now().minus(91, ChronoUnit.DAYS).toEpochMilli()));
+        userRepository.create(user5).blockingGet();
+
+        // fetch for clientId1
+        AnalyticsQuery query1 = new AnalyticsQuery();
+        query1.setField(Field.USER_STATUS);
+        query1.setDomain(domain);
+        query1.setApplication(clientId1);
+        TestObserver<Map<Object, Object>> testObserver1 = userRepository.statistics(query1).test();
+        testObserver1.awaitTerminalEvent();
+
+        testObserver1.assertComplete();
+        testObserver1.assertNoErrors();
+        testObserver1.assertValue(users -> users.size() == 4);
+        testObserver1.assertValue(users -> ((Number)users.get("active")).intValue() == 1);
+        testObserver1.assertValue(users -> ((Number)users.get("inactive")).intValue() == 0);
+        testObserver1.assertValue(users -> ((Number)users.get("disabled")).intValue() == 1);
+        testObserver1.assertValue(users -> ((Number)users.get("locked")).intValue() == 1);
+
+        // fetch for clientId2
+        AnalyticsQuery query2 = new AnalyticsQuery();
+        query2.setField(Field.USER_STATUS);
+        query2.setDomain(domain);
+        query2.setApplication(clientId2);
+        TestObserver<Map<Object, Object>> testObserver2 = userRepository.statistics(query2).test();
+        testObserver2.awaitTerminalEvent();
+
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(users -> users.size() == 4);
+        testObserver2.assertValue(users -> ((Number)users.get("active")).intValue() == 1);
+        testObserver2.assertValue(users -> ((Number)users.get("inactive")).intValue() == 1);
+        testObserver2.assertValue(users -> ((Number)users.get("disabled")).intValue() == 0);
+        testObserver2.assertValue(users -> ((Number)users.get("locked")).intValue() == 0);
+    }
 }
