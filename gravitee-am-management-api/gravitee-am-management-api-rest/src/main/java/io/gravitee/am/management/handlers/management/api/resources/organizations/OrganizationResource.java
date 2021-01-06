@@ -87,11 +87,6 @@ public class OrganizationResource extends AbstractResource {
         return resourceContext.getResource(EnvironmentsResource.class);
     }
 
-    @Path("plugins")
-    public PluginsResource getPluginsResource() {
-        return resourceContext.getResource(PluginsResource.class);
-    }
-
     @Path("audits")
     public AuditsResource getAuditsResource() {
         return resourceContext.getResource(AuditsResource.class);
