@@ -14,3 +14,10 @@
  * limitations under the License.
  */
 import 'jest-preset-angular';
+import { AppConfig } from './config/app.config';
+
+beforeAll(() => {
+  AppConfig.settings = {
+    domainBaseURL: 'http://example.com/domains/',
+  };
+});
