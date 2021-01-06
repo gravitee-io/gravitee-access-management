@@ -45,15 +45,15 @@ export class OrganizationService {
   }
 
   identities(expandIcon: boolean = false, expandDisplayName: boolean = false, expandLabels: boolean = false): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/identities' + this.computeIdentitiesParameters(false, expandIcon, expandDisplayName, expandLabels));
+    return this.http.get<any>(this.platformURL + '/plugins/identities' + this.computeIdentitiesParameters(false, expandIcon, expandDisplayName, expandLabels));
   }
 
   socialIdentities(expandIcon: boolean = false, expandDisplayName: boolean = false, expandLabels: boolean = false): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/identities' + this.computeIdentitiesParameters(true, expandIcon, expandDisplayName, expandLabels));
+    return this.http.get<any>(this.platformURL + '/plugins/identities' + this.computeIdentitiesParameters(true, expandIcon, expandDisplayName, expandLabels));
   }
 
   identitySchema(id): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/identities/' + id + '/schema');
+    return this.http.get<any>(this.platformURL + '/plugins/identities/' + id + '/schema');
   }
 
   identityProviders(): Observable<any> {
@@ -82,23 +82,23 @@ export class OrganizationService {
   }
 
   certificates(): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/certificates');
+    return this.http.get<any>(this.platformURL + '/plugins/certificates');
   }
 
   certificateSchema(id): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/certificates/' + id + '/schema');
+    return this.http.get<any>(this.platformURL + '/plugins/certificates/' + id + '/schema');
   }
 
   extensionGrants(): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/extensionGrants');
+    return this.http.get<any>(this.platformURL + '/plugins/extensionGrants');
   }
 
   extensionGrantSchema(id): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/extensionGrants/' + id + '/schema');
+    return this.http.get<any>(this.platformURL + '/plugins/extensionGrants/' + id + '/schema');
   }
 
   reporterSchema(id): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/reporters/' + id + '/schema');
+    return this.http.get<any>(this.platformURL + '/plugins/reporters/' + id + '/schema');
   }
 
   audits(page, size, type?, status?, user?, from?, to?): Observable<any> {
@@ -120,7 +120,7 @@ export class OrganizationService {
   }
 
   policies(expandSchema = false, expandIcon = false): Observable<any> {
-    let url = `${this.organizationURL}/plugins/policies`;
+    let url = `${this.platformURL}/plugins/policies`;
     const expand = [];
     if (expandSchema) {
       expand.push('expand=schema');
@@ -135,12 +135,12 @@ export class OrganizationService {
   }
 
   policySchema(id): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/policies/' + id + '/schema');
+    return this.http.get<any>(this.platformURL + '/plugins/policies/' + id + '/schema');
   }
 
   policyDocumentation(id): Observable<any> {
     const headers = new HttpHeaders().set('Content-Type', 'text/plain; charset=utf-8');
-    return this.http.get<any>(this.organizationURL + '/plugins/policies/' + id + '/documentation', {
+    return this.http.get<any>(this.platformURL + '/plugins/policies/' + id + '/documentation', {
       headers,
       responseType: 'text' as 'json'
     });
@@ -319,11 +319,11 @@ export class OrganizationService {
   }
 
   factors(): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/factors');
+    return this.http.get<any>(this.platformURL + '/plugins/factors');
   }
 
   factorSchema(id): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/factors/' + id + '/schema');
+    return this.http.get<any>(this.platformURL + '/plugins/factors/' + id + '/schema');
   }
 
   flowSchema(): Observable<any> {
