@@ -13,18 +13,77 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TestBed, inject } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 
 import { AnalyticsService } from './analytics.service';
+import { AppConfig } from '../../config/app.config';
 
 describe('AnalyticsService', () => {
+  let httpTestingController: HttpTestingController;
+  let analyticsService: AnalyticsService;
+
+  const domainAnalyticsResponse = { value: 1234 };
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AnalyticsService]
+      providers: [AnalyticsService],
+      imports: [HttpClientTestingModule],
     });
+
+    httpTestingController = TestBed.get(HttpTestingController);
+    analyticsService = TestBed.get(AnalyticsService);
   });
 
-  it('should be created', inject([AnalyticsService], (service: AnalyticsService) => {
-    expect(service).toBeTruthy();
-  }));
+  afterEach(() => {
+    httpTestingController.verify();
+  });
+
+  it('calls domain analytics endpoint', (done) => {
+    const domainId = 'domain-1234';
+    const type = 'count';
+    const field = 'application';
+    const interval = '12';
+    const from = '0';
+    const to = '100';
+    const size = '20';
+
+    analyticsService.search(domainId, type, field, interval, from, to, size)
+      .subscribe(result => {
+        expect(result.value).toEqual(domainAnalyticsResponse.value);
+        done();
+      });
+
+    httpTestingController
+      .expectOne({
+        method: 'GET',
+        url: `${AppConfig.settings.domainBaseURL}${domainId}/analytics?type=${type}&field=${field}&interval=${interval}&from=${from}&to=${to}&size=${size}`,
+      })
+      .flush(domainAnalyticsResponse);
+
+  });
+
+  it('calls domain analytics endpoint with optional params', (done) => {
+    const domainId = 'domain-1234';
+    const type = 'count';
+    const field = 'application';
+    const interval = '12';
+    const size = '20';
+
+    analyticsService.search(domainId, type, field, interval, undefined, undefined, size)
+      .subscribe(result => {
+        expect(result.value).toEqual(domainAnalyticsResponse.value);
+        done();
+      });
+
+    httpTestingController
+      .expectOne({
+        method: 'GET',
+        url: `${AppConfig.settings.domainBaseURL}${domainId}/analytics?type=${type}&field=${field}&interval=${interval}&size=${size}`,
+      })
+      .flush(domainAnalyticsResponse);
+  });
 });
