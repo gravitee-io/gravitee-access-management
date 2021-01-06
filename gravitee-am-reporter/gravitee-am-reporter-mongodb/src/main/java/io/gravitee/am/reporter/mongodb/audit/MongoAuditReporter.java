@@ -92,6 +92,10 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private Disposable disposable;
 
     @Override
+    public boolean canSearch() {
+        return true;
+    }
+    @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
         // build query
         Bson query = query(referenceType, referenceId, criteria);

@@ -49,6 +49,17 @@ public class AuditAccessPoint {
      */
     private String userAgent;
 
+    public AuditAccessPoint() {
+    }
+
+    public AuditAccessPoint(AuditAccessPoint other) {
+        this.id = other.id;
+        this.alternativeId = other.alternativeId;
+        this.displayName = other.displayName;
+        this.ipAddress = other.ipAddress;
+        this.userAgent = other.userAgent;
+    }
+
     public String getId() {
         return id;
     }

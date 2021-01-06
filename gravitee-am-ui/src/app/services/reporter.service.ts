@@ -34,12 +34,31 @@ export class ReporterService {
     return this.http.get<any>(this.reportersURL + domainId + "/reporters/" + id);
   }
 
+  delete(domainId, id, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.deleteReporter(id);
+    }
+    return this.http.delete<any>(this.reportersURL + domainId + "/reporters/" + id);
+  }
+
   update(domainId, id, reporter, organizationContext): Observable<any> {
     if (organizationContext) {
       return this.organizationService.updateReporter(id, reporter);
     }
     return this.http.put<any>(this.reportersURL + domainId + "/reporters/" + id, {
       'name' : reporter.name,
+      'enabled': reporter.enabled,
+      'configuration' : reporter.configuration
+    });
+  }
+
+  create(domainId, reporter, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.createReporter(reporter);
+    }
+    return this.http.post<any>(this.reportersURL + domainId + "/reporters/", {
+      'name' : reporter.name,
+      'type' : reporter.type,
       'enabled': reporter.enabled,
       'configuration' : reporter.configuration
     });

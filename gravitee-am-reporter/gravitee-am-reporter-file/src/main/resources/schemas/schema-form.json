@@ -1,0 +1,13 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:reporter:file:FileReporterConfiguration",
+  "properties" : {
+    "filename": {
+      "type": "string",
+      "title": "Filename",
+      "pattern": "^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$",
+      "description": "Filename where the information are written."
+    }
+  },
+  "required" : ["filename"]
+}

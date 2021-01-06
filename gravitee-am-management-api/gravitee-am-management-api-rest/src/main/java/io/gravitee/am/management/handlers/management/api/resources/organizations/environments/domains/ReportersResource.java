@@ -25,6 +25,7 @@ import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
@@ -40,6 +41,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import java.net.URI;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
@@ -90,11 +92,37 @@ public class ReportersResource extends AbstractResource {
                                     if (hasPermission) {
                                         return reporters;
                                     }
-
                                     return reporters.stream().map(this::filterReporterInfos).collect(Collectors.toList());
                                 })
                 )
                 .subscribe(response::resume, response::resume);
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Create a reporter for a security domain",
+            notes = "User must have the DOMAIN_REPORTER[CREATE] permission on the specified domain " +
+                    "or DOMAIN_REPORTER[CREATE] permission on the specified environment " +
+                    "or DOMAIN_REPORTER[CREATE] permission on the specified organization.")
+    @ApiResponses({
+            @ApiResponse(code = 201, message = "Reporter created for a security domain", response = Reporter.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void create(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            NewReporter newReporter,
+            @Suspended final AsyncResponse response) {
+
+        User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.CREATE)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapSingle(irrelevant -> reporterService.create(domain, newReporter, authenticatedUser)))
+                   .subscribe(reporter -> response.resume(Response.created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/reporters/" + reporter.getId()))
+                           .entity(reporter).build()), response::resume);
     }
 
     @Path("{reporter}")

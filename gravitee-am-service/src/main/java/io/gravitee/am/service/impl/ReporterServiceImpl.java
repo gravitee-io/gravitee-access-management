@@ -27,9 +27,11 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.ReporterConfigurationException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewReporter;
@@ -39,6 +41,8 @@ import io.gravitee.am.service.reporter.builder.management.ReporterAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,9 +61,10 @@ import java.util.List;
  */
 @Component
 public class ReporterServiceImpl implements ReporterService {
-
     public static final int TABLE_SUFFIX_MAX_LENGTH = 30;
     public static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
+    public static final String REPORTER_AM_FILE= "reporter-am-file";
+    public static final String REPORTER_CONFIG_FILENAME = "filename";
     private final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
     public static final String ADMIN_DOMAIN = "admin";
 
@@ -75,6 +80,9 @@ public class ReporterServiceImpl implements ReporterService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private DomainService domainService;
 
     @Override
     public Single<List<Reporter>> findAll() {
@@ -205,7 +213,8 @@ public class ReporterServiceImpl implements ReporterService {
         reporter.setCreatedAt(new Date());
         reporter.setUpdatedAt(reporter.getCreatedAt());
 
-        return reporterRepository.create(reporter)
+        return checkReporterConfiguration(reporter)
+                .flatMap(ignore -> reporterRepository.create(reporter))
                 .flatMap(reporter1 -> {
                     // create event for sync process
                     Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.CREATE));
@@ -213,10 +222,50 @@ public class ReporterServiceImpl implements ReporterService {
                 })
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create a reporter", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a reporter", ex));
+                    String message = "An error occurs while trying to create a reporter. ";
+                    if (ex instanceof ReporterConfigurationException) {
+                        message += ex.getMessage();
+                    }
+                    return Single.error(new TechnicalManagementException(message, ex));
                 })
                 .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(reporter1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).throwable(throwable)));
+    }
+
+    /**
+     * This method check if the configuration attribute of a Reporter is valid
+     *
+     * @param reporter to check
+     * @return
+     */
+    private Single<Reporter> checkReporterConfiguration(Reporter reporter) {
+        Single<Reporter> result = Single.just(reporter);
+
+        if (REPORTER_AM_FILE.equalsIgnoreCase(reporter.getType())) {
+            // for FileReporter we have to check if the filename isn't used by another reporter
+            final JsonObject configuration = (JsonObject) Json.decodeValue(reporter.getConfiguration());
+            final String reporterId = reporter.getId();
+
+            result = reporterRepository.findByDomain(reporter.getDomain()).flatMap(reporters -> {
+                long count = reporters.stream()
+                        .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
+                        .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
+                        .map(r -> (JsonObject) Json.decodeValue(r.getConfiguration()))
+                        .filter(cfg ->
+                                cfg.containsKey(REPORTER_CONFIG_FILENAME) &&
+                                        cfg.getString(REPORTER_CONFIG_FILENAME).equals(configuration.getString(REPORTER_CONFIG_FILENAME)))
+                        .count();
+
+                if (count > 0) {
+                    // more than one reporter use the same filename
+                    return Single.error(new ReporterConfigurationException("Filename already defined"));
+                } else {
+                    return Single.just(reporter);
+                }
+            });
+        }
+
+        return result;
     }
 
     @Override
@@ -232,17 +281,18 @@ public class ReporterServiceImpl implements ReporterService {
                     reporterToUpdate.setConfiguration(updateReporter.getConfiguration());
                     reporterToUpdate.setUpdatedAt(new Date());
 
-                    return reporterRepository.update(reporterToUpdate)
-                            .flatMap(reporter1 -> {
-                                // create event for sync process
-                                // except for admin domain
-                                if (!ADMIN_DOMAIN.equals(domain)) {
-                                    Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.UPDATE));
-                                    return eventService.create(event).flatMap(__ -> Single.just(reporter1));
-                                } else {
-                                    return Single.just(reporter1);
-                                }
-                            })
+                    return checkReporterConfiguration(reporterToUpdate)
+                            .flatMap(ignore -> reporterRepository.update(reporterToUpdate)
+                                    .flatMap(reporter1 -> {
+                                        // create event for sync process
+                                        // except for admin domain
+                                        if (!ADMIN_DOMAIN.equals(domain)) {
+                                            Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.UPDATE));
+                                            return eventService.create(event).flatMap(__ -> Single.just(reporter1));
+                                        } else {
+                                            return Single.just(reporter1);
+                                        }
+                                    }))
                             .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).oldValue(oldReporter).reporter(reporter1)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).throwable(throwable)));
                 })
@@ -251,7 +301,11 @@ public class ReporterServiceImpl implements ReporterService {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to update a reporter", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a reporter", ex));
+                    String message = "An error occurs while trying to update a reporter. ";
+                    if (ex instanceof ReporterConfigurationException) {
+                        message += ex.getMessage();
+                    }
+                    return Single.error(new TechnicalManagementException(message, ex));
                 });
     }
 

@@ -17,13 +17,16 @@ package io.gravitee.am.gateway.handler.common.audit.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ReporterEvent;
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.repository.management.api.ReporterRepository;
+import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -37,7 +40,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -65,6 +70,9 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private EnvironmentService environmentService;
+
     private ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporters = new ConcurrentHashMap<>();
 
     @Override
@@ -79,7 +87,14 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
             // Start reporters
             List<Reporter> reporters = reporterRepository.findByDomain(domain.getId()).blockingGet();
             if (!reporters.isEmpty()) {
-                reporters.forEach(reporter -> startReporterProvider(reporter));
+                Map<String, Environment> localEnvCache = new HashMap<>();
+                reporters.forEach(reporter -> {
+                    if (!localEnvCache.containsKey(domain.getReferenceId())) {
+                        localEnvCache.put(domain.getReferenceId(), environmentService.findById(domain.getReferenceId()).blockingGet());
+                    }
+                    GraviteeContext context = new GraviteeContext(localEnvCache.get(domain.getReferenceId()).getOrganizationId(), domain.getReferenceId(), domain.getId());
+                    startReporterProvider(reporter, context);
+                });
                 logger.info("Reporters loaded for domain {}", domain.getName());
             } else {
                 logger.info("\tThere is no reporter to start");
@@ -142,7 +157,9 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         reporterRepository.findById(reporterId)
                 .subscribe(
                         reporter -> {
-                            updateReporterProvider(reporter);
+                            Environment env = environmentService.findById(domain.getReferenceId()).blockingGet();
+                            GraviteeContext context = new GraviteeContext(env.getOrganizationId(), domain.getReferenceId(), domain.getId());
+                            updateReporterProvider(reporter, context);
                             logger.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error),
@@ -155,10 +172,12 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         reporterRepository.findById(reporterId)
                 .subscribe(
                         reporter -> {
+                            Environment env = environmentService.findById(domain.getReferenceId()).blockingGet();
+                            GraviteeContext context = new GraviteeContext(env.getOrganizationId(), domain.getReferenceId(), domain.getId());
                             if (reporters.containsKey(reporterId)) {
-                                updateReporterProvider(reporter);
+                                updateReporterProvider(reporter, context);
                             } else {
-                                startReporterProvider(reporter);
+                                startReporterProvider(reporter, context);
                             }
                             logger.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
                         },
@@ -172,9 +191,9 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         stopReporterProvider(reporterId, reporter);
     }
 
-    private void startReporterProvider(Reporter reporter) {
+    private void startReporterProvider(Reporter reporter, GraviteeContext context) {
         logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
-        io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
+        io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), context);
 
         if (reporterProvider != null) {
             try {
@@ -199,8 +218,8 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         }
     }
 
-    private void updateReporterProvider(Reporter reporter) {
+    private void updateReporterProvider(Reporter reporter, GraviteeContext context) {
         stopReporterProvider(reporter.getId(), reporters.get(reporter.getId()));
-        startReporterProvider(reporter);
+        startReporterProvider(reporter, context);
     }
 }

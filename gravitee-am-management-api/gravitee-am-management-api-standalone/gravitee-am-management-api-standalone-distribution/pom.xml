@@ -206,6 +206,14 @@
 
         <dependency>
             <groupId>io.gravitee.am.reporter</groupId>
+            <artifactId>gravitee-am-reporter-file</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.reporter</groupId>
             <artifactId>gravitee-am-reporter-jdbc</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
@@ -443,6 +451,13 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.reporter</groupId>
                                     <artifactId>gravitee-am-reporter-mongodb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.reporter</groupId>
+                                    <artifactId>gravitee-am-reporter-file</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

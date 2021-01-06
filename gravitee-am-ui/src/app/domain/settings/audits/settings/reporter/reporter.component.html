@@ -19,18 +19,32 @@
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to reporters</small></a>
   <h1>{{reporter.name}}</h1>
   <div class="reporter-content">
-    <form #reporterForm="ngForm" fxLayout="column" fxFlex="70">
+    <form #reporterForm="ngForm" fxLayout="column" fxFlex="70" >
       <div class="gv-form-section" fxLayout="column">
         <div fxFlex fxLayoutAlign="end">
           <mat-slide-toggle matTooltip="{{reporter.enabled ? 'Disable reporter ?' : 'Enable reporter ?'}}"
                             (change)="enableReporter($event)"
                             [checked]="reporter.enabled"></mat-slide-toggle>
         </div>
-        <mat-form-field appearance="outline" floatLabel="always">
-          <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" required>
-          <mat-hint>A name for your reporter.</mat-hint>
-        </mat-form-field>
+        <div *ngIf="createMode">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Reporter Type</mat-label>
+            <mat-select [(value)]="reporter.type" name="type" (selectionChange)="onReporterTypeChanged($event)" [(ngModel)]="reporter.type">
+              <mat-option *ngFor="let plugin of plugins" [value]="plugin.id" required>
+                {{labelFor(plugin.id)}}
+              </mat-option>
+            </mat-select>
+            <mat-hint>The type of reporter.</mat-hint>
+          </mat-form-field>
+        </div>
+        <div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" 
+            (input)="validateName()" required>
+            <mat-hint>A name for your reporter.</mat-hint>
+          </mat-form-field>
+        </div>
       </div>
 
       <div class="gv-form-section">
@@ -44,8 +58,18 @@
       </div>
 
       <div fxLayout="row">
-        <button mat-raised-button [disabled]="(!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
+        <button mat-raised-button [disabled]="((!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || !hasName || configurationPristine) && !formChanged)" (click)="save()">SAVE</button>
       </div>
+      <ng-template [ngIf]="!createMode"> <!-- use ng-template otherwise *ngIf can't be used into the div -->
+        <div *hasPermission="['domain_reporter_delete']" class="gv-page-delete-zone" fxLayout="column">
+          <p>This operation cannot be undone.</p>
+          Reporter will be deleted.
+          <div class="gv-page-delete-button" fxLayout="row">
+            <span fxFlex></span>
+            <button [disabled]="isDefaultReporter()" mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+          </div>
+        </div>
+      </ng-template>
     </form>
     <div class="gv-page-description" fxFlex>
       <h3>Reporter</h3>

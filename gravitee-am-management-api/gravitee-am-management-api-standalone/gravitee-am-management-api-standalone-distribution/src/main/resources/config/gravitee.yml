@@ -119,6 +119,12 @@ oauth2:
     port: ${ds.mongodb.port}
 #    ensureIndexOnStart: true
 
+# Configuration of additional reporters
+#reporters:
+#  file:
+#    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/reporter-logs/
+#    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV
+
 # Management API AM service configurations. Provided values are default values.
 # All services are enabled by default. To stop one of them, you have to add the property 'enabled: false' (See the
 # 'local' service for an example).

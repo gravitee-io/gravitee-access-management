@@ -59,6 +59,19 @@ public class AuditEntity {
 
     private Map<String, Object> attributes;
 
+    public AuditEntity() {
+    }
+
+    public AuditEntity(AuditEntity other) {
+        this.id = other.id;
+        this.alternativeId = other.alternativeId;
+        this.type = other.type;
+        this.displayName = other.displayName;
+        this.referenceType = other.referenceType;
+        this.referenceId = other.referenceId;
+        this.attributes = other.attributes;
+    }
+
     public String getId() {
         return id;
     }

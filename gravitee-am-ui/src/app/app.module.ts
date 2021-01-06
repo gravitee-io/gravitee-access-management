@@ -196,6 +196,7 @@ import { AuditsResolver } from './resolvers/audits.resolver';
 import { AuditResolver } from './resolvers/audit.resolver';
 import { ReporterService } from './services/reporter.service';
 import { ReportersResolver } from './resolvers/reporters.resolver';
+import { PluginReportersResolver } from './resolvers/plugin-reporters.resolver';
 import { ReporterResolver } from './resolvers/reporter.resolver';
 import { ReporterComponent } from './domain/settings/audits/settings/reporter/reporter.component';
 import { ReporterFormComponent } from './domain/settings/audits/settings/reporter/form/form.component';
@@ -553,6 +554,7 @@ import {EnvironmentComponent} from "./environment/environment.component";
     AuditResolver,
     ReporterService,
     ReportersResolver,
+    PluginReportersResolver,
     ReporterResolver,
     TagService,
     TagsResolver,

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.plugins.reporter.core;
 
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.plugin.core.api.Plugin;
 
@@ -29,7 +30,7 @@ public interface ReporterPluginManager {
 
     void register(ReporterDefinition reporterDefinition);
 
-    Reporter create(String type, String configuration);
+    Reporter create(String type, String configuration, GraviteeContext context);
 
     Collection<Plugin> getAll();
 

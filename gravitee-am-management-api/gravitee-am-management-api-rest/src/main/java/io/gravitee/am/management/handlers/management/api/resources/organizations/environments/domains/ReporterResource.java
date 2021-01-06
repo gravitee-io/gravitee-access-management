@@ -26,6 +26,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -39,6 +40,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -106,5 +108,40 @@ public class ReporterResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> reporterService.update(domain, reporter, updateReporter, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Delete a reporter",
+            notes = "User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain " +
+                    "or DOMAIN_REPORTER[DELETE] permission on the specified environment " +
+                    "or DOMAIN_REPORTER[DELETE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(code = 204, message = "Reporter successfully removed", response = Void.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("reporter") String reporter,
+            @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(irrelevant -> reporterService.findById(reporter))
+                        .map(Optional::ofNullable)
+                        .switchIfEmpty(Maybe.just(Optional.empty()))
+                        .flatMapCompletable(reporter1 -> {
+                            if (reporter1.isPresent()) {
+                                if (!reporter1.get().getDomain().equalsIgnoreCase(domain)) {
+                                    throw new BadRequestException("Reporter does not belong to domain");
+                                }
+
+                                return reporterService.delete(reporter, authenticatedUser);
+                            }
+                            return Completable.complete();
+                        }))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }
