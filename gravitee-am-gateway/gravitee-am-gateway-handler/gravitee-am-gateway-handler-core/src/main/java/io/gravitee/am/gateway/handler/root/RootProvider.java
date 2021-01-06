@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root;
 
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -149,6 +150,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private CredentialService credentialService;
 
+    @Autowired
+    private EventManager eventManager;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -196,7 +200,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route("/logout").handler(new LogoutEndpoint(domain, tokenService, auditService));
 
         // SSO/Social login route
-        Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager));
+        Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, domain));
         Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
         Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler();
