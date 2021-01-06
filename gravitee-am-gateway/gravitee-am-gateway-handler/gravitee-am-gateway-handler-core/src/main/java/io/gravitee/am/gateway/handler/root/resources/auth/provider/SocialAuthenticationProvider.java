@@ -16,17 +16,23 @@
 package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
+import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.common.event.EventManager;
 import io.reactivex.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -35,6 +41,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,11 +56,17 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
     private UserAuthenticationManager userAuthenticationManager;
 
+    private EventManager eventManager;
+
+    private Domain domain;
+
     public SocialAuthenticationProvider() {
     }
 
-    public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager) {
+    public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager, EventManager eventManager, Domain domain) {
         this.userAuthenticationManager = userAuthenticationManager;
+        this.eventManager = eventManager;
+        this.domain = domain;
     }
 
     @Override
@@ -73,6 +86,8 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
         // create user authentication
         EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password, authenticationContext);
+        endUserAuthentication.getContext().set(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+        endUserAuthentication.getContext().set(Claims.user_agent, RequestUtils.userAgent(context.request()));
 
         // authenticate the user via the social provider
         authenticationProvider.loadUserByUsername(endUserAuthentication)
@@ -85,8 +100,12 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);
                     return userAuthenticationManager.connect(user);
                 })
-                .subscribe(user -> resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))), error -> {
+                .subscribe(user -> {
+                    eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(endUserAuthentication, domain, client, user));
+                    resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+                }, error -> {
                     logger.error("Unable to authenticate social provider", error);
+                    eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(endUserAuthentication, domain, client, error));
                     resultHandler.handle(Future.failedFuture(error));
                 });
 

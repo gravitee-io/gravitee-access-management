@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -64,6 +66,9 @@ public class SocialAuthenticationProviderTest {
     @Mock
     private HttpServerRequest httpServerRequest;
 
+    @Mock
+    private EventManager eventManager;
+
     @Test
     public void shouldAuthenticateUser() throws Exception {
         JsonObject credentials = new JsonObject();
@@ -95,6 +100,7 @@ public class SocialAuthenticationProviderTest {
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
         verify(userAuthenticationManager, times(1)).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
 
 
@@ -125,6 +131,7 @@ public class SocialAuthenticationProviderTest {
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
         verify(userAuthenticationManager, never()).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
     }
 
     @Test
@@ -154,6 +161,7 @@ public class SocialAuthenticationProviderTest {
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
         verify(userAuthenticationManager, never()).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
     }
 
 
