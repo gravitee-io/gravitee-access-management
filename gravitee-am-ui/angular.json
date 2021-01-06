@@ -88,45 +88,9 @@
           }
         },
         "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "builder": "@angular-builders/jest:run",
           "options": {
-            "main": "src/test.ts",
-            "karmaConfig": "./karma.conf.js",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.spec.json",
-            "scripts": [],
-            "styles": [
-              "src/styles.scss"
-            ],
-            "assets": [
-              "src/assets",
-              "src/favicon.ico",
-              {
-                "glob": "constants.json",
-                "input": "",
-                "output": "/"
-              },
-              {
-                "glob": "build.json",
-                "input": "",
-                "output": "/"
-              },
-              {
-                "glob": "**/*.js",
-                "input": "node_modules/@webcomponents/webcomponentsjs",
-                "output": "webcomponents/"
-              },
-              {
-                "glob": "**/*.css",
-                "input": "node_modules/@gravitee/ui-components/assets/css",
-                "output": "css/"
-              },
-              {
-                "glob": "**/*.json",
-                "input": "node_modules/@gravitee/ui-components/assets/i18n",
-                "output": "i18n/"
-              }
-            ]
+            "tsConfig": "src/tsconfig.spec.json"
           }
         },
         "lint": {
