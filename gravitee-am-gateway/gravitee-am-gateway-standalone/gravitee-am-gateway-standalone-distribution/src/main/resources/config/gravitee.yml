@@ -127,6 +127,12 @@ oauth2:
     port: ${ds.mongodb.port}
 #    ensureIndexOnStart: true
 
+# Configuration of additional reporters
+#reporters:
+#  file:
+#    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/reporter-logs/
+#    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV
+
 # JWT used to generate signed token for OAuth 2.0/OpenID Connect protocols and to verify emails
 jwt:
   secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y # jwt secret used to sign JWT tokens (HMAC algorithm)

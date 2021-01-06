@@ -64,6 +64,11 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
     }
 
     @Override
+    public boolean canSearch() {
+        return this.reporter.canSearch();
+    }
+
+    @Override
     public void handle(Message<Reportable> reportableMsg) {
         Reportable reportable = reportableMsg.body();
 

@@ -179,6 +179,7 @@ import {DummyComponent} from "./components/dummy/dummy.component";
 import {CockpitComponent} from "./settings/cockpit/cockpit.component";
 import {InstallationResolver} from "./resolvers/installation.resolver";
 import {EnvironmentComponent} from "./environment/environment.component";
+import { PluginReportersResolver } from './resolvers/plugin-reporters.resolver';
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1487,11 +1488,24 @@ export const routes: Routes = [
                                   }
                                 }
                               },
+                              { path: 'new',
+                                component: ReporterComponent,
+                                canActivate: [AuthGuard],
+                                resolve: {
+                                  reporterPlugins: PluginReportersResolver
+                                },
+                                data: {
+                                  perms: {
+                                    only: ['domain_reporter_create']
+                                  }
+                                }
+                              },
                               {
                                 path: ':reporterId',
                                 component: ReporterComponent,
                                 resolve: {
-                                  reporter: ReporterResolver
+                                  reporter: ReporterResolver,
+                                  reporterPlugins: PluginReportersResolver
                                 },
                                 data: {
                                   breadcrumb: {

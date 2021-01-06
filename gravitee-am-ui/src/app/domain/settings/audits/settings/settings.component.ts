@@ -15,6 +15,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
+import { AuthService } from 'app/services/auth.service';
 
 @Component({
   selector: 'app-audits-settings',
@@ -25,7 +26,8 @@ export class AuditsSettingsComponent implements OnInit {
   reporters: any[];
   domainId: string;
 
-  constructor(private route: ActivatedRoute) {
+  constructor(private route: ActivatedRoute,
+    private authService: AuthService) {
   }
 
   ngOnInit() {
@@ -42,4 +44,7 @@ export class AuditsSettingsComponent implements OnInit {
     };
   }
 
+  hasPermissions(permissions) {
+    return this.authService.hasPermissions(permissions);
+  }
 }

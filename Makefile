@@ -304,6 +304,7 @@ commonPluginsGateway: # Copy plugins to Gateway
 	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-policy/gravitee-am-policy-enrich-profile/target/gravitee-am-policy-enrich-profile-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-policy/gravitee-am-policy-enrich-auth-flow/target/gravitee-am-policy-enrich-auth-flow-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-reporter/gravitee-am-reporter-file/target/gravitee-am-reporter-file-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 
 
 commonPluginsManagement: # Copy plugins to Management API
@@ -331,6 +332,7 @@ commonPluginsManagement: # Copy plugins to Management API
 	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-policy/gravitee-am-policy-enrich-profile/target/gravitee-am-policy-enrich-profile-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-policy/gravitee-am-policy-enrich-auth-flow/target/gravitee-am-policy-enrich-auth-flow-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-reporter/gravitee-am-reporter-file/target/gravitee-am-reporter-file-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 
 pluginsGateway: # Copy plugins to Gateway
 	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)

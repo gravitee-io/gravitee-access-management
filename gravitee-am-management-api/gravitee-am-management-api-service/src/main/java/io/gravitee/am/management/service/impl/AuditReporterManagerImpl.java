@@ -16,12 +16,17 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.event.ReporterEvent;
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.service.AuditReporterManager;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.reporter.api.provider.Reporter;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.ReporterService;
+import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundForDomainException;
 import io.gravitee.am.service.impl.ReporterServiceImpl;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
@@ -40,10 +45,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -66,6 +68,12 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     @Autowired
     private ReporterService reporterService;
+
+    @Autowired
+    private DomainService domainService;
+
+    @Autowired
+    private EnvironmentService environmentService;
 
     @Autowired
     private Vertx vertx;
@@ -94,7 +102,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
             String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
             String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://" + mongoHost + ":" + mongoPort + "/" + mongoDBName);
             String configuration = "{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + "\",\"bulkActions\":1000,\"flushInterval\":5}";
-            internalReporter = reporterPluginManager.create("mongodb", configuration);
+            internalReporter = reporterPluginManager.create("mongodb", configuration, null);
             logger.info("Internal audit mongodb reporter initialized");
         } else if (useJdbcReporter()) {
             logger.info("Initializing internal audit jdbc reporter");
@@ -118,16 +126,38 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                     "\"bulkActions\":1000," +
                     "\"flushInterval\":5}";
 
-            internalReporter = reporterPluginManager.create(ReporterServiceImpl.REPORTER_AM_JDBC, configuration);
+            internalReporter = reporterPluginManager.create(ReporterServiceImpl.REPORTER_AM_JDBC, configuration, null);
             logger.info("Internal audit jdbc reporter initialized");
         }
 
         logger.info("Initializing audit reporters");
         List<io.gravitee.am.model.Reporter> reporters = reporterService.findAll().blockingGet();
+        Map<String, Domain> localDomainCache = new HashMap<>();
+        Map<String, io.gravitee.am.model.Environment> localEnvCache = new HashMap<>();
         reporters.forEach(reporter -> {
             logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
             try {
-                Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
+                Domain domain = localDomainCache.get(reporter.getDomain());
+                if (domain == null) {
+                    domain = domainService.findById(reporter.getDomain()).blockingGet();
+                    localDomainCache.put(reporter.getDomain(), domain);
+                }
+
+                io.gravitee.am.model.Environment domainEnv = localEnvCache.get(domain.getReferenceId());
+                if (ReferenceType.ENVIRONMENT.equals(domain.getReferenceType())) {
+                    if (domainEnv == null) {
+                        domainEnv = environmentService.findById(domain.getReferenceId()).blockingGet();
+                        localEnvCache.put(domain.getReferenceId(), domainEnv);
+                    }
+                } else {
+                    // currently domain is only linked to domainEnv
+                    throw new EnvironmentNotFoundException("Domain " + reporter.getDomain() +" should be lined to an Environment");
+                }
+
+                Reporter auditReporter = reporterPluginManager.create(
+                        reporter.getType(),
+                        reporter.getConfiguration(),
+                        new GraviteeContext(domainEnv.getOrganizationId(), domainEnv.getId(), domain.getId()));
                 if (auditReporter != null) {
                     logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
                     auditReporters.put(reporter, new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter));
@@ -211,13 +241,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     }
 
     private Reporter doGetReporter(String domain, long startTime) {
-        Optional<Reporter> optionalReporter = auditReporters
-                .entrySet()
-                .stream()
-                .filter(entry -> domain.equals(entry.getKey().getDomain()))
-                .map(entry -> entry.getValue())
-                .findFirst();
-
+        Optional<Reporter> optionalReporter = doGetReporter0(domain);
         if (optionalReporter.isPresent()) {
             return optionalReporter.get();
         }
@@ -251,6 +275,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                 .stream()
                 .filter(entry -> domain.equals(entry.getKey().getDomain()))
                 .map(entry -> entry.getValue())
+                .filter(reporter -> reporter.canSearch() )
                 .findFirst();
     }
 
@@ -302,7 +327,16 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     }
 
     private void loadReporter(io.gravitee.am.model.Reporter reporter) {
-        Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
+        Domain domain = domainService.findById(reporter.getDomain()).blockingGet();
+        io.gravitee.am.model.Environment domainEnv;
+        if (ReferenceType.ENVIRONMENT.equals(domain.getReferenceType())) {
+            domainEnv = environmentService.findById(domain.getReferenceId()).blockingGet();
+        } else {
+            // currently domain is only linked to domainEnv
+            throw new EnvironmentNotFoundException("Domain " + reporter.getDomain() +" should be lined to an Environment");
+        }
+
+        Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), new GraviteeContext(domainEnv.getOrganizationId(), domainEnv.getId(), domain.getId()));
         if (auditReporter != null) {
             Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
             auditReporters.put(reporter, eventBusReporter);

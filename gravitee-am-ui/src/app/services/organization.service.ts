@@ -101,6 +101,10 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/plugins/reporters/' + id + '/schema');
   }
 
+  reporterPlugins(): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/plugins/reporters');
+  }
+
   audits(page, size, type?, status?, user?, from?, to?): Observable<any> {
     return this.http.get(this.organizationURL + '/audits?page=' + page + '&size=' + size +
       (type ? '&type=' + type : '') +
@@ -303,6 +307,19 @@ export class OrganizationService {
       'name': reporter.name,
       'enabled': reporter.enabled,
       'configuration': reporter.configuration
+    });
+  }
+
+  deleteReporter(reporterId): Observable<any> {
+    return this.http.delete<any>(this.organizationURL + '/reporters/' + reporterId);
+  }
+
+  createReporter(reporter): Observable<any> {
+    return this.http.post<any>(this.organizationURL + '/reporters/',  {
+      'name' : reporter.name,
+      'type' : reporter.type,
+      'enabled': reporter.enabled,
+      'configuration' : reporter.configuration
     });
   }
 

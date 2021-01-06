@@ -35,4 +35,6 @@ public interface Reporter<R extends Reportable, C extends ReportableCriteria> ex
     Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId,C criteria, Type analyticsType);
 
     Maybe<R> findById(ReferenceType referenceType, String referenceId, String id);
+
+    boolean canSearch();
 }

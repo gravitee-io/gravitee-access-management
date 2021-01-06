@@ -117,6 +117,11 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
     private boolean ready = false;
 
     @Override
+    public boolean canSearch() {
+        return true;
+    }
+
+    @Override
     public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
         LOGGER.debug("search on ({}, {})", referenceType, referenceType);
         if (!ready) {

@@ -15,11 +15,13 @@
  */
 package io.gravitee.am.plugins.reporter.core.impl;
 
+import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.plugins.reporter.core.ReporterConfigurationFactory;
 import io.gravitee.am.plugins.reporter.core.ReporterDefinition;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
 import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+import io.gravitee.common.service.AbstractService;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
@@ -95,7 +97,7 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
     }
 
     @Override
-    public io.gravitee.am.reporter.api.provider.Reporter create(String type, String configuration) {
+    public io.gravitee.am.reporter.api.provider.Reporter create(String type, String configuration, GraviteeContext context) {
         logger.debug("Looking for an reporter provider for [{}]", type);
         Reporter reporter = reporters.get(type);
 
@@ -105,7 +107,8 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
 
             return create0(reporterPlugins.get(reporter),
                     reporter.auditReporter(),
-                    reporterConfiguration);
+                    reporterConfiguration,
+                    context);
         } else {
             logger.error("No reporter provider is registered for type {}", type);
             throw new IllegalStateException("No reporter provider is registered for type " + type);
@@ -113,7 +116,7 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
     }
 
 
-    private <T> T create0(Plugin plugin, Class<T> auditReporterClass, ReporterConfiguration reporterConfiguration) {
+    private <T> T create0(Plugin plugin, Class<T> auditReporterClass, ReporterConfiguration reporterConfiguration, GraviteeContext context) {
         if (auditReporterClass == null) {
             return null;
         }
@@ -138,12 +141,21 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
                     configurableApplicationContext.addBeanFactoryPostProcessor(
                             new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration));
 
+                    // Add gravitee context bean to provide execution context information to the reporter.
+                    // this is useful for some reporter like the file-reporter
+                    if (context != null) {
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                                new GraviteeContextBeanFactoryPostProcessor(context));
+                    }
+
                     return configurableApplicationContext;
                 }
             });
 
+            if (auditReporterObj instanceof AbstractService) {
+                ((AbstractService<?>) auditReporterObj).setApplicationContext(reporterApplicationContext);
+            }
             reporterApplicationContext.getAutowireCapableBeanFactory().autowireBean(auditReporterObj);
-
             if (auditReporterObj instanceof InitializingBean) {
                 ((InitializingBean) auditReporterObj).afterPropertiesSet();
             }
