@@ -48,6 +48,7 @@
         <module>gravitee-am-identityprovider-jdbc</module>
         <module>gravitee-am-identityprovider-google</module>
         <module>gravitee-am-identityprovider-linkedin</module>
+        <module>gravitee-am-identityprovider-salesforce</module>
     </modules>
 
     <dependencies>
