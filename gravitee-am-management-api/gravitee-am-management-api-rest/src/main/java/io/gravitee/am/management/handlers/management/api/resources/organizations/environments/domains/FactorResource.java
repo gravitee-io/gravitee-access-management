@@ -105,7 +105,7 @@ public class FactorResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
-            @PathParam("policy") String policy,
+            @PathParam("factor") String factor,
             @ApiParam(name = "identity", required = true) @Valid @NotNull UpdateFactor updateFactor,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
@@ -113,7 +113,7 @@ public class FactorResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> factorService.update(domain, policy, updateFactor, authenticatedUser)))
+                        .flatMapSingle(__ -> factorService.update(domain, factor, updateFactor, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 
