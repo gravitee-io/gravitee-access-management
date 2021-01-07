@@ -80,6 +80,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     protected Map<String, Object> defaultClaims(Map attributes) {
         return Stream.concat(StandardClaims.claims().stream(), CustomClaims.claims().stream())
                 .filter(claimName -> attributes.containsKey(claimName))
+                .filter(claimName -> attributes.get(claimName) != null) // sometimes values is null that throws a NPE during the collect phase
                 .collect(Collectors.toMap(claimName -> claimName, claimName -> attributes.get(claimName)));
     }
 
@@ -220,12 +221,13 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, attributes.get(StandardClaims.SUB));
-        additionalInformation.put(StandardClaims.PREFERRED_USERNAME, username);
         // apply user mapping
         additionalInformation.putAll(applyUserMapping(attributes));
         // update username if user mapping has been changed
         if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
             user.setUsername(String.valueOf(additionalInformation.get(StandardClaims.PREFERRED_USERNAME)));
+        } else {
+            additionalInformation.put(StandardClaims.PREFERRED_USERNAME, username);
         }
         user.setAdditionalInformation(additionalInformation);
         // set user roles

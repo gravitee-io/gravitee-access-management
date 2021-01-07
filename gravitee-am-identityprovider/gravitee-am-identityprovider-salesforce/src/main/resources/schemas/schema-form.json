@@ -1,0 +1,72 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:salesforce:SalesForceIdentityProvider",
+  "description": "SalesForce identity provider, let you register and set up permissions and authorization options for OpenID Connect protocol.\n\nhttps://help.salesforce.com/articleView?id=connected_app_create.htm \n\n",
+  "properties" : {
+    "clientId" : {
+      "type" : "string",
+      "title": "Client ID",
+      "description": "OAuth 2.0 client id"
+    },
+    "clientSecret" : {
+      "type" : "string",
+      "title": "Client Secret",
+      "description": "OAuth 2.0 client secret"
+    },
+    "encodeRedirectUri": {
+      "type": "boolean",
+      "title": "Should the redirect_uri parameter be url-encoded ?"
+    },
+    "useIdTokenForUserInfo": {
+      "type": "boolean",
+      "title": "Use the ID Token to retrieve user information ? ",
+      "default": false
+    },
+    "scopes": {
+      "type": "array",
+      "title": "Scopes",
+      "description": "Scopes let you specify exactly what type of access you need. Scopes limit access for OAuth tokens.",
+      "items":
+      {
+        "type": "string",
+        "enum": [
+          "openid",
+          "email",
+          "profile",
+          "visualforce",
+          "address",
+          "custom_permissions",
+          "refresh_token",
+          "wave_api",
+          "web",
+          "phone",
+          "offline_access",
+          "chatter_api",
+          "id",
+          "api",
+          "eclair_api",
+          "pardot_api",
+          "full"
+        ]
+      }
+    },
+    "connectTimeout" : {
+      "type" : "integer",
+      "default": 10000,
+      "minimum": 1,
+      "title": "HTTP Client connect timeout",
+      "description": "Duration of time in milliseconds that connects will block. (default 10000 ms)"
+    },
+    "maxPoolSize" : {
+      "type" : "integer",
+      "default": 200,
+      "minimum": 1,
+      "title": "HTTP Client max pool size",
+      "description": "Maximum pool of connections can grow to. (default 200)"
+    }
+  },
+  "required": [
+    "clientId",
+    "clientSecret"
+  ]
+}

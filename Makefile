@@ -303,6 +303,7 @@ commonPluginsGateway: # Copy plugins to Gateway
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-jdbc/target/gravitee-am-identityprovider-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-franceconnect/target/gravitee-am-identityprovider-franceconnect-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-linkedin/target/gravitee-am-identityprovider-linkedin-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-salesforce/target/gravitee-am-identityprovider-salesforce-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
 
 commonPluginsManagement: # Copy plugins to Management API
@@ -326,6 +327,7 @@ commonPluginsManagement: # Copy plugins to Management API
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-jdbc/target/gravitee-am-identityprovider-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-franceconnect/target/gravitee-am-identityprovider-franceconnect-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-linkedin/target/gravitee-am-identityprovider-linkedin-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-salesforce/target/gravitee-am-identityprovider-salesforce-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 
 pluginsGateway: # Copy plugins to Gateway
