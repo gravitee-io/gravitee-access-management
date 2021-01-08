@@ -68,7 +68,8 @@ import static io.gravitee.am.gateway.handler.vertx.auth.webauthn.impl.attestatio
 public class AndroidSafetynetAttestation implements Attestation {
 
     // codecs
-    private static final Base64.Decoder b64dec = Base64.getUrlDecoder();
+    private static final Base64.Decoder ub64dec = Base64.getUrlDecoder();
+    private static final Base64.Decoder b64dec = Base64.getDecoder();
 
     @Override
     public String fmt() {
@@ -93,7 +94,7 @@ public class AndroidSafetynetAttestation implements Attestation {
                 throw new AttestationException("Missing {ver} in attStmt");
             }
             // response is a JWT
-            JsonObject token = JWT.parse(b64dec.decode(attStmt.getString("response")));
+            JsonObject token = JWT.parse(ub64dec.decode(attStmt.getString("response")));
 
             // verify the payload:
             // 1. Hash clientDataJSON using SHA256, to create clientDataHash
@@ -152,7 +153,7 @@ public class AndroidSafetynetAttestation implements Attestation {
             verifySignature(
                     PublicKeyCredential.valueOf(token.getJsonObject("header").getString("alg")),
                     certChain.get(0),
-                    b64dec.decode(attStmt.getString("signature")),
+                    ub64dec.decode(attStmt.getString("signature")),
                     token.getString("signatureBase").getBytes(StandardCharsets.UTF_8));
 
         } catch (MetaDataException | CertificateException | NoSuchAlgorithmException | InvalidKeyException | SignatureException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
