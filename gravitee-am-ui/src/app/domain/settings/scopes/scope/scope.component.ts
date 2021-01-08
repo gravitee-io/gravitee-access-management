@@ -21,7 +21,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
 import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../../services/auth.service';
-import * as moment from 'moment';
+import moment from 'moment';
 
 @Component({
   selector: 'app-scope',

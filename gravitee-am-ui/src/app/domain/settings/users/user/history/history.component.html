@@ -1,0 +1,209 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <div class="user-audits-analytics">
+    <div class="user-audits-analytics-item">
+      <mat-card class="count-container">
+        <div>
+          <div class="count-title">
+            Logins Count
+          </div>
+          <div class="count-subtitle">
+            Number of logins since creation
+          </div>
+        </div>
+        <div class="count-value">{{user.loginsCount}}</div>
+      </mat-card>
+    </div>
+    <div class="user-audits-analytics-item">
+      <mat-card class="count-container">
+        <div>
+          <div class="count-title">
+            Last Login
+          </div>
+          <div class="count-subtitle">
+            Date of the last login
+          </div>
+        </div>
+        <div class="count-value"><span *ngIf="!(user.loggedAt)">Never logged in</span>
+          <span *ngIf="(user.loggedAt)">{{user.loggedAt | humanDate}}</span></div>
+      </mat-card>
+    </div>
+    <div class="user-audits-analytics-item">
+      <mat-card class="count-container">
+        <div>
+          <div class="count-title">
+            Created At
+          </div>
+          <div class="count-subtitle">
+            Date of the creation
+          </div>
+        </div>
+        <div class="count-value">{{user.createdAt | humanDate}}</div>
+      </mat-card>
+    </div>
+    <div class="user-audits-analytics-item" *ngIf="user.referenceType === 'domain'">
+      <mat-card class="count-container">
+        <div>
+          <div class="count-title">
+            Last Application
+          </div>
+          <div class="count-subtitle">
+            Application used for the latest login
+          </div>
+        </div>
+        <div class="count-value">{{displayClientName()}}</div>
+      </mat-card>
+    </div>
+    <div class="user-audits-analytics-item" *ngIf="accountLocked()">
+      <mat-card class="count-container">
+        <div>
+          <div class="count-title">
+            Unlock Date
+          </div>
+          <div class="count-subtitle">
+            Date when account will be unlocked
+          </div>
+        </div>
+        <div class="count-value">{{user.accountLockedUntil | date:'medium'}}</div>
+      </mat-card>
+    </div>
+  </div>
+
+  <h1 class="user-audits-title">Audit Log</h1>
+  <div fxLayout="column">
+    <form (submit)="search()" #auditsSearchForm="ngForm" fxLayout="row" fxLayoutGap="10px" class="audits-search">
+      <mat-form-field fxFlex="10">
+        <mat-label>Event</mat-label>
+        <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm()">
+          <mat-option></mat-option>
+          <mat-option *ngFor="let eventType of (eventTypes$ | async)" [value]="eventType">
+            {{eventType}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field fxFlex="10">
+        <mat-label>Status</mat-label>
+        <mat-select name="eventStatus" [(ngModel)]="eventStatus" (selectionChange)="updateForm()">
+          <mat-option></mat-option>
+          <mat-option [value]="'SUCCESS'">SUCCESS</mat-option>
+          <mat-option [value]="'FAILURE'">FAILURE</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field fxFlex="10">
+        <input (dateInput)="updateForm()" (dateChange)="startDateChange()" matInput name="startDate" [max]="endDate"
+               [matDatepicker]="pickerStartDate" placeholder="Start date" [(ngModel)]="startDate">
+        <mat-datepicker-toggle matSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+        <mat-datepicker #pickerStartDate></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field fxFlex="10">
+        <input (dateInput)="updateForm()" (dateChange)="endDateChange()" matInput name="endDate" [min]="startDate"
+               [matDatepicker]="pickerEndDate" placeholder="End date" [(ngModel)]="endDate">
+        <mat-datepicker-toggle matSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+        <mat-datepicker #pickerEndDate></mat-datepicker>
+      </mat-form-field>
+
+      <div fxFlex fxLayout="row" style="align-items: baseline;">
+        <button type="submit" mat-icon-button>
+          <mat-icon matTooltip="Search">search</mat-icon>
+        </button>
+        <button *ngIf="displayReset" style="color:grey;" type="button" (click)="resetForm()" mat-icon-button>
+          <mat-icon matTooltip="Reset">clear</mat-icon>
+        </button>
+        <span fxFlex></span>
+        <mat-form-field appearance="fill" floatLabel="always" fxFlex="40" style="font-size: 12px;">
+          <mat-icon matPrefix>timer</mat-icon>
+          <mat-label>Quick Time Range</mat-label>
+          <mat-select name="quickTimeRange" [(value)]="selectedTimeRange" (selectionChange)="search()">
+            <mat-option *ngFor="let timeRange of timeRanges" [value]="timeRange.id">{{timeRange.name}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-icon-button (click)="refresh()">
+          <mat-icon matTooltip="Refresh">refresh</mat-icon>
+        </button>
+      </div>
+    </form>
+
+    <div>
+      <ngx-datatable class="material" #auditsTable
+                     [columnMode]="'flex'"
+                     [headerHeight]="40"
+                     [footerHeight]="40"
+                     [rowHeight]="50"
+                     [messages]="{emptyMessage: 'There is no audit to display.', totalMessage: 'total'}"
+                     [rows]='audits'
+                     [loadingIndicator]="loadingIndicator"
+                     [externalPaging]="true"
+                     [count]="page.totalElements"
+                     [offset]="page.pageNumber"
+                     [limit]="page.size"
+                     (page)='setPage($event)'>
+        <!-- Row Detail Template -->
+        <ngx-datatable-row-detail [rowHeight]="400">
+          <ng-template let-row="row" let-expanded="expanded" ngx-datatable-row-detail-template>
+            <div style="padding-left:35px; max-width: 95%;">
+              <div style="margin-bottom: 20px;"><strong>Details</strong></div>
+              <p *ngIf="row.accessPoint">
+                <span *ngIf="row.accessPoint.ipAddress"><strong>IP: </strong> {{row.accessPoint.ipAddress}}</span>
+                <span
+                  *ngIf="row.accessPoint.userAgent"><strong>User agent: </strong> {{row.accessPoint.userAgent}}</span>
+              </p>
+              <codemirror [value]="auditDetails(row)" [config]="config"></codemirror>
+            </div>
+          </ng-template>
+        </ngx-datatable-row-detail>
+        <!-- Column Templates -->
+        <ngx-datatable-column *hasPermission="[requiredReadPermission]">
+          <ng-template let-row="row" let-expanded="expanded" ngx-datatable-cell-template>
+            <a class="expanded"
+               href="javascript:void(0)"
+               [class.datatable-icon-right]="!expanded"
+               [class.datatable-icon-down]="expanded"
+               title="Expand/Collapse Row"
+               (click)="toggleExpandRow(row)">
+            </a>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Date" [flexGrow]="2">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{row.timestamp | date:'medium'}}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Event" [flexGrow]="2">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <pre style="margin: 0;">{{row.type}}</pre>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Status" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-chip-list>
+              <mat-chip style="font-size: 10px; line-height: 4px; margin: 0px;"
+                        [color]="row.outcome?.status === 'SUCCESS'? 'primary':'warn'" selected>
+                {{row.outcome?.status}}
+              </mat-chip>
+            </mat-chip-list>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+  </div>
+</div>
+

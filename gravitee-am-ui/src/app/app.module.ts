@@ -291,6 +291,7 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
 import { IdentitiesResolver } from './resolvers/identities.resolver';
 import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
+import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
 
 @NgModule({
   declarations: [
@@ -464,7 +465,8 @@ import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.res
     NotFoundComponent,
     UmaComponent,
     LoginSettingsComponent,
-    UsersSearchInfoDialog
+    UsersSearchInfoDialog,
+    UserHistoryComponent
   ],
   imports: [
     BrowserModule,

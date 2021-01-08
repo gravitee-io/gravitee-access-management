@@ -43,7 +43,7 @@
         <mat-icon style="margin: 0px 0px 0px 3px;">close</mat-icon>
       </button>
       <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayUserFn" (optionSelected)="onUserSelectionChanged($event)">
-        <mat-option *ngFor="let user of filteredUsers" [value]="user" matTooltip="{{displayUserName(user)}} | {{user.username}} | {{user.source}}">
+        <mat-option *ngFor="let user of (filteredUsers$ | async)" [value]="user" matTooltip="{{displayUserName(user)}} | {{user.username}} | {{user.source}}">
           <span>{{displayUserName(user)}}</span> |
           <small>{{user.username}}</small> |
           <small style="color:grey;">{{user.source}}</small>

@@ -16,7 +16,7 @@
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {ProviderService} from '../../../services/provider.service';
-import * as moment from 'moment';
+import moment from 'moment';
 
 @Component({
   selector: 'app-account-settings',

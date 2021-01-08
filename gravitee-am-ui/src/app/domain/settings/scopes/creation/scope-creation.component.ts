@@ -17,7 +17,7 @@ import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ScopeService} from '../../../../services/scope.service';
 import {SnackbarService} from '../../../../services/snackbar.service';
-import * as moment from 'moment';
+import moment from 'moment';
 
 @Component({
   selector: 'app-creation',

@@ -22,7 +22,7 @@ import {ApplicationService} from '../../../../../services/application.service';
 import {SnackbarService} from '../../../../../services/snackbar.service';
 import {AuthService} from '../../../../../services/auth.service';
 import * as _ from 'lodash';
-import * as moment from 'moment';
+import moment from 'moment';
 
 @Component({
   selector: 'app-application-oauth2',

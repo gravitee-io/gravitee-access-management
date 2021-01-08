@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BreadcrumbService } from '../../../../services/breadcrumb.service';
+
+interface NavLink {
+  readonly href: string,
+  readonly label: string
+}
 
 @Component({
   selector: 'app-user',
   templateUrl: './user.component.html',
-  styleUrls: ['./user.component.scss']
+  styleUrls: ['./user.component.scss'],
 })
 export class UserComponent implements OnInit {
   private domainId: string;
   private organizationContext = false;
   user: any;
-  navLinks: any = [];
+  navLinks: NavLink[] = [];
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -44,12 +49,13 @@ export class UserComponent implements OnInit {
   }
 
   initNavLinks() {
-    this.navLinks.push({'href': 'profile' , 'label': 'Profile'});
+    this.navLinks.push({ href: 'profile', label: 'Profile' });
     if (!this.organizationContext) {
-      this.navLinks.push({'href': 'applications' , 'label': 'Authorized Apps'});
-      this.navLinks.push({'href': 'factors' , 'label': 'Multi-Factor Authentication'});
-      this.navLinks.push({'href': 'credentials' , 'label': 'Credentials'});
-      this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
+      this.navLinks.push({ href: 'applications', label: 'Authorized Apps' });
+      this.navLinks.push({ href: 'factors', label: 'Multi-Factor Authentication' });
+      this.navLinks.push({ href: 'credentials', label: 'Credentials' });
+      this.navLinks.push({ href: 'roles', label: 'Roles' });
+      this.navLinks.push({ href: 'history', label: 'History' });
     }
   }
 

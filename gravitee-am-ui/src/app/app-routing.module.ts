@@ -171,6 +171,7 @@ import {IdentitiesResolver} from './resolvers/identities.resolver';
 import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
 import {PlatformFlowSchemaResolver} from './resolvers/platform-flow-schema.resolver';
 import {ApplicationAnalyticsComponent} from "./domain/applications/application/analytics/analytics.component";
+import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
 
 const routes: Routes = [
   {
@@ -1234,7 +1235,8 @@ const routes: Routes = [
               { path: 'factors', component: UserFactorsComponent, resolve: {factors: EnrolledFactorsResolver}},
               { path: 'credentials', component: UserCredentialsComponent, resolve: { credentials : UserCredentialsResolver}},
               { path: 'credentials/:credentialId', component: UserCredentialComponent, resolve: { credential : UserCredentialResolver}},
-              { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}}
+              { path: 'roles', component: UserRolesComponent, resolve: { roles : UserRolesResolver}},
+              { path: 'history', component: UserHistoryComponent }
             ]
           },
           { path: 'groups',

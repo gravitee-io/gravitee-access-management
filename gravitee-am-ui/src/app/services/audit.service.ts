@@ -14,38 +14,58 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { AppConfig } from "../../config/app.config";
-import { HttpClient } from "@angular/common/http";
-import { OrganizationService } from "./organization.service";
-import * as moment from 'moment';
+import { AppConfig } from '../../config/app.config';
+import { HttpClient } from '@angular/common/http';
+import { OrganizationService } from './organization.service';
+import moment from 'moment';
+import { Observable } from 'rxjs';
+import { toHttpParams } from '../utils/http-utils';
+
+interface AuditsResponse {
+  currentPage: number,
+  data: any[],
+  totalCount: number
+}
 
 @Injectable()
 export class AuditService {
   private auditsURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
-              private organizationService: OrganizationService) { }
-
-  findByDomain(domainId, page, size): any  {
-    let from = moment().subtract(1, 'days').valueOf();
-    let to = moment().valueOf();
-    return this.http.get(this.auditsURL + domainId + '/audits?page=' + page + '&size=' + size + "&from=" + from + '&to=' + to);
+              private organizationService: OrganizationService) {
   }
 
-  get(domainId, auditId): any  {
-    return this.http.get(this.auditsURL + domainId + '/audits/' + auditId);
+  get(domainId: string, auditId: string): Observable<any> {
+    return this.http.get(`${this.auditsURL + domainId}/audits/${auditId}`);
   }
 
-  search(domainId, page, size, type, status, user, from, to, organizationContext): any {
+  findByDomain(domainId: string, page: number, size: number): Observable<AuditsResponse> {
+    const from = moment().subtract(1, 'days').valueOf();
+    const to = moment().valueOf();
+    return this.http.get<AuditsResponse>(`${this.auditsURL + domainId}/audits`, {
+      params: toHttpParams({
+        page,
+        size,
+        from,
+        to,
+      }),
+    });
+  }
+
+  search(domainId: string, page: number, size: number, type: string, status: string, user: string, from: number, to: number, organizationContext: boolean): Observable<AuditsResponse> {
     if (organizationContext) {
       return this.organizationService.audits(page, size, type, status, user, from, to);
     }
-
-    return this.http.get(this.auditsURL + domainId + '/audits?page=' + page + '&size=' + size +
-      (type ? '&type=' + type : '') +
-      (status ? '&status=' + status : '') +
-      (user ? '&user=' + user : '') +
-      (from ? '&from=' + from : '') +
-      (to ? '&to=' + to : ''));
+    return this.http.get<AuditsResponse>(`${this.auditsURL + domainId}/audits`, {
+      params: toHttpParams({
+        page,
+        size,
+        type,
+        status,
+        user,
+        from,
+        to,
+      }),
+    });
   }
 }

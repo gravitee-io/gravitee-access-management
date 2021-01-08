@@ -18,10 +18,11 @@ import {forkJoin, Observable} from "rxjs";
 import {map} from "rxjs/operators";
 import {AnalyticsService} from '../../../services/analytics.service';
 import * as Highcharts from 'highcharts';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as _ from 'lodash';
 import {Widget} from '../../../components/widget/widget.model';
 import {isNil} from 'lodash';
+import { availableTimeRanges, defaultTimeRangeId } from '../../../utils/time-range-utils';
 
 export interface DashboardData {
   widgets: Widget[]
@@ -53,52 +54,10 @@ export class DashboardComponent implements OnInit {
   @Input()
   applicationId?: string;
 
-  selectedTimeRange: '1d' | '1h' | '12h' | '7d' | '30d' | '90d' = '1d';
   isLoading: boolean;
-  readonly timeRanges = [
-    {
-      'id': '1h',
-      'name': 'Last hour',
-      'value': 1,
-      'unit': 'hours',
-      'interval': 1000 * 60
-    },
-    {
-      'id': '12h',
-      'name': 'Last 12 hours',
-      'value': 12,
-      'unit': 'hours',
-      'interval' : 1000 * 60 * 60
-    },
-    {
-      'id': '1d',
-      'name': 'Today',
-      'value': 1,
-      'unit': 'days',
-      'interval' : 1000 * 60 * 60
-    },
-    {
-      'id': '7d',
-      'name': 'This week',
-      'value': 1,
-      'unit': 'weeks',
-      'interval' : 1000 * 60 * 60 * 24
-    },
-    {
-      'id': '30d',
-      'name': 'This month',
-      'value': 1,
-      'unit': 'months',
-      'interval' : 1000 * 60 * 60 * 24
-    },
-    {
-      'id': '90d',
-      'name': 'Last 90 days',
-      'value': 3,
-      'unit': 'months',
-      'interval' : 1000 * 60 * 60 * 24
-    }
-  ] as const;
+
+  readonly timeRanges = availableTimeRanges;
+  selectedTimeRange = defaultTimeRangeId;
 
   constructor(private analyticsService: AnalyticsService) { }
 
