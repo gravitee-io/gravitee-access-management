@@ -1,0 +1,37 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:policy:am:enrich:profile:EnrichProfilePolicyConfiguration",
+  "properties" : {
+      "properties" : {
+      "type" : "array",
+      "title": "Context properties",
+      "items" : {
+        "type" : "object",
+        "id" : "urn:jsonschema:io:gravitee:policy:am:enrich:profile:configuration:Property",
+        "title": "Property",
+        "properties" : {
+          "claim" : {
+            "title": "Additional Claim",
+            "type" : "string"
+          },
+          "claimValue" : {
+            "title": "Value (Support EL)",
+            "type" : "string"
+          }
+        }
+      },
+      "required": [
+        "claim",
+        "claimValue"
+      ]
+    },
+    "exitOnError": {
+      "title": "Exit on error",
+      "description": "Terminate the request if user profile can't be saved",
+      "type" : "boolean",
+      "default": false
+    }
+  },"required": [
+      "properties"
+  ]
+}
