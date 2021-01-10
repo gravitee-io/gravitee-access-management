@@ -1,0 +1,24 @@
+= Enrich User Profile
+
+== Description
+
+You can use the `enrich-profile` policy to add some information to the user profile based on the AM execution context.
+
+== Configuration
+
+|===
+|Property |Required |Description |Type |Default
+
+.^|properties
+^.^|Yes
+|The information to get from the execution context
+^.^|List of properties
+^.^|-
+
+.^|exitOnError
+^.^|No
+|Terminate the request if there are an error
+^.^|boolean
+^.^|false
+
+|===

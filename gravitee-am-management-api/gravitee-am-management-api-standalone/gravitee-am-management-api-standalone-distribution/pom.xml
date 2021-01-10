@@ -252,6 +252,15 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- AM Policies -->
+        <dependency>
+            <groupId>io.gravitee.am.policy</groupId>
+            <artifactId>gravitee-am-policy-enrich-profile</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- External Plugins -->
         <dependency>
             <groupId>io.gravitee.policy</groupId>
@@ -471,6 +480,14 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.factor</groupId>
                                     <artifactId>gravitee-am-factor-otp</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- AM Policies -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.policy</groupId>
+                                    <artifactId>gravitee-am-policy-enrich-profile</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

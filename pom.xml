@@ -48,6 +48,7 @@
         <module>gravitee-am-common</module>
         <module>gravitee-am-model</module>
         <module>gravitee-am-repository</module>
+        <module>gravitee-am-policy</module>
         <module>gravitee-am-service</module>
         <module>gravitee-am-identityprovider</module>
         <module>gravitee-am-certificate</module>
