@@ -18,6 +18,7 @@ import {ActivatedRoute} from '@angular/router';
 import {DomainService} from '../../../services/domain.service';
 import {SnackbarService} from '../../../services/snackbar.service';
 import {AuthService} from '../../../services/auth.service';
+import {EntrypointService} from '../../../services/entrypoint.service';
 
 @Component({
   selector: 'app-domain-webauthn',
@@ -26,6 +27,8 @@ import {AuthService} from '../../../services/auth.service';
 })
 export class DomainSettingsWebAuthnComponent implements OnInit {
   @ViewChild('webAuthnForm') form: any;
+  private entrypoint: any;
+  private baseUrl: string;
   domainId: string;
   domain: any = {};
   formChanged = false;
@@ -37,12 +40,18 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
   constructor(private domainService: DomainService,
               private snackbarService: SnackbarService,
               private authService: AuthService,
-              private route: ActivatedRoute) { }
+              private route: ActivatedRoute,
+              private entrypointService: EntrypointService) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.parent.parent.params['domainId'];
     this.domain = this.route.snapshot.data['domain'];
+    this.entrypoint = this.route.snapshot.data['entrypoint'];
+    this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain);
     this.domain.webAuthnSettings = this.domain.webAuthnSettings || {};
+    const url = new URL(this.domain.webAuthnSettings.origin || this.baseUrl); 
+    this.domain.webAuthnSettings.origin = url.origin;
+    this.domain.webAuthnSettings.relyingPartyId = this.domain.webAuthnSettings.relyingPartyId || url.hostname;
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
   }
 
