@@ -131,35 +131,30 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
 
             final Client client = ctx.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final String username = webauthnLogin.getString("name");
-            // check if user exists in AM
-            checkUser(client, username, h -> {
-                if (h.failed()) {
-                    // user not found
-                    ctx.fail(401);
-                    return;
-                }
 
-                // STEP 18 Generate assertion
-                webAuthn.getCredentialsOptions(username, generateServerGetAssertion -> {
-                    if (generateServerGetAssertion.failed()) {
-                        logger.error("Unexpected exception", generateServerGetAssertion.cause());
-                        ctx.fail(generateServerGetAssertion.cause());
-                        return;
-                    }
-
+            // STEP 18 Generate assertion
+            webAuthn.getCredentialsOptions(username, generateServerGetAssertion -> {
+                if (generateServerGetAssertion.failed()) {
+                    logger.error("Unexpected exception", generateServerGetAssertion.cause());
+                    ctx.fail(generateServerGetAssertion.cause());
+                } else {
                     final JsonObject getAssertion = generateServerGetAssertion.result();
+                    // check if user exists in AM
+                    checkUser(client, username, h -> {
+                        // if user doesn't exists to need to set values in the session
+                        if (h.result() != null) {
+                            session
+                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
+                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username)
+                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, h.result().getId());
+                        }
+                        ctx.response()
+                                .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                                .end(Json.encodePrettily(getAssertion));
+                    });
 
-                    session
-                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
-                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username)
-                            .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, h.result().getId());
-
-                    ctx.response()
-                            .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
-                            .end(Json.encodePrettily(getAssertion));
-                });
+                }
             });
-
         } catch (IllegalArgumentException e) {
             logger.error("Unexpected exception", e);
             ctx.fail(400);
