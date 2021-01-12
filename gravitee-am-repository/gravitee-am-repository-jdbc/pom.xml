@@ -54,6 +54,7 @@
         <skip-repositories-tests>true</skip-repositories-tests>
 
         <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
+        <dozer-jaxb-runtime.version>2.4.0-b180830.0438</dozer-jaxb-runtime.version>
     </properties>
 
     <dependencies>
@@ -225,6 +226,12 @@
                     <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${dozer-jaxb-runtime.version}</version>
         </dependency>
 
         <dependency>
