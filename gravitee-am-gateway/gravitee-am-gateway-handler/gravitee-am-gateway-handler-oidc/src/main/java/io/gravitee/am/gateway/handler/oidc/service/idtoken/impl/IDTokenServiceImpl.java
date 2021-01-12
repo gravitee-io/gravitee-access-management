@@ -24,6 +24,7 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.idtoken.IDToken;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.gateway.handler.context.provider.UserProperties;
@@ -268,9 +269,16 @@ public class IDTokenServiceImpl implements IDTokenService {
     private ExecutionContext createExecution(OAuth2Request request, Client client, User user) {
         ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, null);
         ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
+
         executionContext.setAttribute("client", new ClientProperties(client));
         if (user != null) {
             executionContext.setAttribute("user", new UserProperties(user));
+        }
+
+        Object authFlowAttributes = request.getContext().get(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY);
+        if (authFlowAttributes != null) {
+            executionContext.setAttribute(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, authFlowAttributes);
+            request.getContext().remove(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY);
         }
         return executionContext;
     }

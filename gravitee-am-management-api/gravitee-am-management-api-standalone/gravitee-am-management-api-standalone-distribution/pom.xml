@@ -260,6 +260,13 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.policy</groupId>
+            <artifactId>gravitee-am-policy-enrich-auth-flow</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
 
         <!-- External Plugins -->
         <dependency>
@@ -488,6 +495,12 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.policy</groupId>
                                     <artifactId>gravitee-am-policy-enrich-profile</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.policy</groupId>
+                                    <artifactId>gravitee-am-policy-enrich-auth-flow</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

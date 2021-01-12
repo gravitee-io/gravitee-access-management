@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
@@ -64,6 +65,7 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
@@ -79,6 +81,7 @@ import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -86,6 +89,20 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 public class RootProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
 
+    public static final String PATH_LOGIN = "/login";
+    public static final String PATH_LOGIN_CALLBACK = "/login/callback";
+    public static final String PATH_LOGIN_SSO_POST = "/login/SSO/POST";
+    public static final String PATH_MFA_ENROLL = "/mfa/enroll";
+    public static final String PATH_MFA_CHALLENGE = "/mfa/challenge";
+    public static final String PATH_LOGOUT = "/logout";
+    public static final String PATH_REGISTER = "/register";
+    public static final String PATH_CONFIRM_REGISTRATION = "/confirmRegistration";
+    public static final String PATH_RESET_PASSWORD = "/resetPassword";
+    public static final String PATH_WEBAUTHN_REGISTER = "/webauthn/register";
+    public static final String PATH_WEBAUTHN_RESPONSE = "/webauthn/response";
+    public static final String PATH_WEBAUTHN_LOGIN = "/webauthn/login";
+    public static final String PATH_FORGOT_PASSWORD = "/forgotPassword";
+    public static final String PATH_ERROR = "/error";
     @Autowired
     private Vertx vertx;
 
@@ -153,6 +170,12 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private AuthenticationFlowContextService authenticationFlowContextService;
+
+    @Autowired
+    private Environment environment;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -168,6 +191,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // session cookie handler
         sessionAndCookieHandler(rootRouter);
+
+        // GraviteeContext handler
+        authFlowContextHandler(rootRouter);
 
         // CSRF handler
         csrfHandler(rootRouter);
@@ -185,78 +211,78 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
         // login route
-        rootRouter.get("/login")
+        rootRouter.get(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
                 .handler(new LoginEndpoint(thymeleafTemplateEngine, domain));
-        rootRouter.post("/login")
+        rootRouter.post(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(new LoginFormHandler(userAuthProvider))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(new LoginPostEndpoint());
-        rootRouter.route("/login")
-                .failureHandler(new LoginFailureHandler());
+        rootRouter.route(PATH_LOGIN)
+                .failureHandler(new LoginFailureHandler(authenticationFlowContextService));
 
         // logout route
-        rootRouter.route("/logout")
-                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService));
+        rootRouter.route(PATH_LOGOUT)
+                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService, authenticationFlowContextService));
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, domain));
         Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
-        Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler();
+        Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(authenticationFlowContextService);
         Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
-        rootRouter.get("/login/callback")
+        rootRouter.get(PATH_LOGIN_CALLBACK)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
-        rootRouter.post("/login/callback")
+        rootRouter.post(PATH_LOGIN_CALLBACK)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
                 .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
-        rootRouter.get("/login/SSO/POST")
+        rootRouter.get(PATH_LOGIN_SSO_POST)
                 .handler(loginSSOPOSTEndpoint);
 
         // MFA route
-        rootRouter.route("/mfa/enroll")
+        rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
                 .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine));
-        rootRouter.route("/mfa/challenge")
+        rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine));
 
         // WebAuthn route
         Handler<RoutingContext> webAuthnAccessHandler = new WebAuthnAccessHandler(domain);
-        rootRouter.route("/webauthn/register")
+        rootRouter.route(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnRegisterEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine));
-        rootRouter.route("/webauthn/login")
+        rootRouter.route(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnLoginEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine));
-        rootRouter.post("/webauthn/response")
+        rootRouter.post(PATH_WEBAUTHN_RESPONSE)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnResponseEndpoint(userAuthenticationManager, webAuthn, credentialService, domain));
 
         // Registration route
         Handler<RoutingContext> registerAccessHandler = new RegisterAccessHandler(domain);
-        rootRouter.route(HttpMethod.GET, "/register")
+        rootRouter.route(HttpMethod.GET, PATH_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(registerAccessHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
                 .handler(new RegisterEndpoint(thymeleafTemplateEngine));
-        rootRouter.route(HttpMethod.POST, "/register")
+        rootRouter.route(HttpMethod.POST, PATH_REGISTER)
                 .handler(new RegisterSubmissionRequestParseHandler())
                 .handler(clientRequestParseHandlerOptional)
                 .handler(registerAccessHandler)
@@ -264,14 +290,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new RegisterProcessHandler(userService, domain))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTER))
                 .handler(new RegisterSubmissionEndpoint());
-        rootRouter.route("/register")
+        rootRouter.route(PATH_REGISTER)
                 .failureHandler(new RegisterFailureHandler());
 
-        rootRouter.route(HttpMethod.GET,"/confirmRegistration")
+        rootRouter.route(HttpMethod.GET, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine));
-        rootRouter.route(HttpMethod.POST, "/confirmRegistration")
+        rootRouter.route(HttpMethod.POST, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
                 .handler(passwordPolicyRequestParseHandler)
@@ -279,27 +305,27 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // Forgot password route
         Handler<RoutingContext> forgotPasswordAccessHandler = new ForgotPasswordAccessHandler(domain);
-        rootRouter.route(HttpMethod.GET, "/forgotPassword")
+        rootRouter.route(HttpMethod.GET, PATH_FORGOT_PASSWORD)
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine));
-        rootRouter.route(HttpMethod.POST, "/forgotPassword")
+        rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
                 .handler(new ForgotPasswordSubmissionRequestParseHandler())
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
-        rootRouter.route(HttpMethod.GET, "/resetPassword")
+        rootRouter.route(HttpMethod.GET, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
                 .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine));
-        rootRouter.route(HttpMethod.POST, "/resetPassword")
+        rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new ResetPasswordSubmissionEndpoint(userService));
 
         // error route
-        rootRouter.route(HttpMethod.GET, "/error")
+        rootRouter.route(HttpMethod.GET, PATH_ERROR)
                 .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
 
         // error handler
@@ -320,62 +346,86 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route().handler(cookieHandler);
 
         // Login endpoint
-        router.route("/login")
+        router.route(PATH_LOGIN)
                 .handler(sessionHandler);
         router
-                .route("/login/callback")
+                .route(PATH_LOGIN_CALLBACK)
                 .handler(sessionHandler);
         router
-                .route("/login/SSO/POST")
+                .route(PATH_LOGIN_SSO_POST)
                 .handler(sessionHandler);
 
         // MFA endpoint
-        router.route("/mfa/enroll")
+        router.route(PATH_MFA_ENROLL)
                 .handler(sessionHandler);
-        router.route("/mfa/challenge")
+        router.route(PATH_MFA_CHALLENGE)
                 .handler(sessionHandler);
 
         // Logout endpoint
         router
-                .route("/logout")
+                .route(PATH_LOGOUT)
                 .handler(sessionHandler);
 
         // Registration confirmation endpoint
         router
-                .post("/register")
+                .post(PATH_REGISTER)
                 .handler(sessionHandler);
         router
-                .route("/confirmRegistration")
+                .route(PATH_CONFIRM_REGISTRATION)
                 .handler(sessionHandler);
 
         // Reset password endpoint
         router
-                .route("/resetPassword")
+                .route(PATH_RESET_PASSWORD)
                 .handler(sessionHandler);
 
         // WebAuthn endpoint
         router
-                .route("/webauthn/register")
+                .route(PATH_WEBAUTHN_REGISTER)
                 .handler(sessionHandler);
         router
-                .route("/webauthn/response")
+                .route(PATH_WEBAUTHN_RESPONSE)
                 .handler(sessionHandler);
         router
-                .route("/webauthn/login")
+                .route(PATH_WEBAUTHN_LOGIN)
                 .handler(sessionHandler);
     }
 
+    private void authFlowContextHandler(Router router) {
+        // Login endpoint
+        AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
+        router.route(PATH_LOGIN).handler(authenticationFlowContextHandler);
+        router.route(PATH_LOGIN_CALLBACK).handler(authenticationFlowContextHandler);
+        router.route(PATH_LOGIN_SSO_POST).handler(authenticationFlowContextHandler);
+
+        // MFA endpoint
+        router.route(PATH_MFA_ENROLL).handler(authenticationFlowContextHandler);
+        router.route(PATH_MFA_CHALLENGE).handler(authenticationFlowContextHandler);
+
+        // Registration confirmation endpoint
+        router.post(PATH_REGISTER).handler(authenticationFlowContextHandler);
+        router.route(PATH_CONFIRM_REGISTRATION).handler(authenticationFlowContextHandler);
+
+        // Reset password endpoint
+        router.route(PATH_RESET_PASSWORD).handler(authenticationFlowContextHandler);
+
+        // WebAuthn endpoint
+        router.route(PATH_WEBAUTHN_REGISTER).handler(authenticationFlowContextHandler);
+        router.route(PATH_WEBAUTHN_RESPONSE).handler(authenticationFlowContextHandler);
+        router.route(PATH_WEBAUTHN_LOGIN).handler(authenticationFlowContextHandler);
+    }
+
     private void csrfHandler(Router router) {
-        router.route("/forgotPassword").handler(csrfHandler);
-        router.route("/login").handler(csrfHandler);
+        router.route(PATH_FORGOT_PASSWORD).handler(csrfHandler);
+        router.route(PATH_LOGIN).handler(csrfHandler);
         // /login/callback does not need csrf as it is not submit to our server.
-        router.route("/login/SSO/POST").handler(csrfHandler);
-        router.route("/mfa/challenge").handler(csrfHandler);
-        router.route("/mfa/enroll").handler(csrfHandler);
+        router.route(PATH_LOGIN_SSO_POST).handler(csrfHandler);
+        router.route(PATH_MFA_CHALLENGE).handler(csrfHandler);
+        router.route(PATH_MFA_ENROLL).handler(csrfHandler);
         // /consent csrf is managed by handler-oidc (see OAuth2Provider).
-        router.route("/register").handler(csrfHandler);
-        router.route("/confirmRegistration").handler(csrfHandler);
-        router.route("/resetPassword").handler(csrfHandler);
+        router.route(PATH_REGISTER).handler(csrfHandler);
+        router.route(PATH_CONFIRM_REGISTRATION).handler(csrfHandler);
+        router.route(PATH_RESET_PASSWORD).handler(csrfHandler);
     }
 
     private void staticHandler(Router router) {
@@ -387,8 +437,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     }
 
     private void errorHandler(Router router) {
-        Handler<RoutingContext> errorHandler = new ErrorHandler( "/error");
-        router.route("/forgotPassword").failureHandler(errorHandler);
-        router.route("/logout").failureHandler(errorHandler);
+        Handler<RoutingContext> errorHandler = new ErrorHandler(PATH_ERROR);
+        router.route(PATH_FORGOT_PASSWORD).failureHandler(errorHandler);
+        router.route(PATH_LOGOUT).failureHandler(errorHandler);
     }
 }

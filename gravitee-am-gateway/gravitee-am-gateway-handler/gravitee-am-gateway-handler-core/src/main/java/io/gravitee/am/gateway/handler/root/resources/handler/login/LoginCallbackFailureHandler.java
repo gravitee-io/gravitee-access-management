@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
@@ -44,6 +45,12 @@ import java.util.Map;
 public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCallbackFailureHandler.class);
+
+    private AuthenticationFlowContextService authenticationFlowContextService;
+
+    public LoginCallbackFailureHandler(AuthenticationFlowContextService authenticationFlowContextService) {
+        this.authenticationFlowContextService = authenticationFlowContextService;
+    }
 
     @Override
     public void handle(RoutingContext routingContext) {
@@ -75,6 +82,11 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
         try {
             // logout user if exists
             if (context.user() != null) {
+                // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
+                authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
+                        .doOnError((error) -> logger.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
+                        .subscribe();
+
                 context.clearUser();
                 context.session().destroy();
             }

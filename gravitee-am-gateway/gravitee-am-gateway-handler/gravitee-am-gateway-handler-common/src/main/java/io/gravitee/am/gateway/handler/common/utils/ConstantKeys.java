@@ -51,6 +51,11 @@ public interface ConstantKeys {
     String SKIP_ACTION_KEY = "skipAction";
     String TRANSACTION_ID_KEY = "tid";
 
+    // enrich authentication flow keys
+    String AUTH_FLOW_CONTEXT_KEY = "authFlowContext";
+    String AUTH_FLOW_CONTEXT_VERSION_KEY = "authFlowVer";
+    String AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY = "authFlow";
+
     // MFA keys.
     String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
     String STRONG_AUTH_COMPLETED_KEY = "strongAuthCompleted";

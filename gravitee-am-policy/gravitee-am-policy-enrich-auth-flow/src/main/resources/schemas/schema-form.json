@@ -1,0 +1,31 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:policy:am:enrich:auth:EnrichAuthFlowPolicyConfiguration",
+  "properties" : {
+      "properties" : {
+      "type" : "array",
+      "title": "Context properties",
+      "items" : {
+        "type" : "object",
+        "id" : "urn:jsonschema:io:gravitee:policy:am:enrich:auth:configuration:Property",
+        "title": "Property",
+        "properties" : {
+          "key" : {
+            "title": "Key",
+            "type" : "string"
+          },
+          "value" : {
+            "title": "Value (Support EL)",
+            "type" : "string"
+          }
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ]
+    }
+  },"required": [
+      "properties"
+  ]
+}

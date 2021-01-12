@@ -128,6 +128,7 @@ public class AuthorizationRequest extends OAuth2Request {
         oAuth2Request.setHeaders(headers());
         oAuth2Request.setParameters(parameters());
         oAuth2Request.setHttpResponse(getHttpResponse());
+        oAuth2Request.setContext(getContext());
 
         // set OAuth 2.0 information
         oAuth2Request.setClientId(getClientId());

@@ -19,13 +19,16 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.context.ReactableExecutionContext;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
@@ -47,6 +50,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
@@ -139,6 +143,7 @@ public class TokenServiceTest {
     @Test
     public void shouldCreateWithCustomClaims() {
         OAuth2Request oAuth2Request = new OAuth2Request();
+        oAuth2Request.getContext().put(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, new HashMap<>());
 
         TokenClaim customClaim = new TokenClaim();
         customClaim.setTokenType(TokenTypeHint.ACCESS_TOKEN);
@@ -154,7 +159,7 @@ public class TokenServiceTest {
         client.setClientId("my-client-id");
         client.setTokenCustomClaims(Arrays.asList(customClaim, customClaim2));
 
-        ExecutionContext executionContext = mock(ExecutionContext.class);
+        ReactableExecutionContext executionContext = mock(ReactableExecutionContext.class);
         TemplateEngine templateEngine = mock(TemplateEngine.class);
         when(templateEngine.getValue("https://custom-iss", Object.class)).thenReturn("https://custom-iss");
         when(templateEngine.getValue("my-api", Object.class)).thenReturn("my-api");
@@ -165,6 +170,7 @@ public class TokenServiceTest {
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doNothing().when(tokenManager).storeAccessToken(any());
+
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -176,6 +182,7 @@ public class TokenServiceTest {
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
         verify(refreshTokenRepository, never()).delete(anyString());
+        verify(executionContext).setAttribute(eq(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY), any());
     }
 
     @Test

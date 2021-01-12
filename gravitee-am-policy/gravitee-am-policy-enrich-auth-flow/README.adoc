@@ -1,0 +1,18 @@
+= Enrich Authentication Flow Profile
+
+== Description
+
+You can use the `enrich-auth-flow` policy to persist some information between the authentication steps.
+These data will be automatically loaded into the execution context attributes through the `authFlow` entry. (`{#context.attributes['authFlow']['my-additional-attribute']}`)
+
+== Configuration
+
+|===
+|Property |Required |Description |Type |Default
+
+.^|properties
+^.^|Yes
+|The information to get from the execution context
+^.^|List of properties
+^.^|-
+|===

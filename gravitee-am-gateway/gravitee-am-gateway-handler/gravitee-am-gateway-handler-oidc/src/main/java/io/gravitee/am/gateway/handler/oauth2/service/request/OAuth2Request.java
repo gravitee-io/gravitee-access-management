@@ -101,6 +101,11 @@ public class OAuth2Request extends BaseRequest {
     private Map<String, Object> context = new HashMap<>();
 
     /**
+     * OAuth 2.0 contextual version
+     */
+    private int contextVersion;
+
+    /**
      * UMA 2.0 permissions
      */
     private List<PermissionRequest> permissions;
@@ -171,6 +176,14 @@ public class OAuth2Request extends BaseRequest {
 
     public void setContext(Map<String, Object> context) {
         this.context = context;
+    }
+
+    public int getContextVersion() {
+        return contextVersion;
+    }
+
+    public void setContextVersion(int contextVersion) {
+        this.contextVersion = contextVersion;
     }
 
     public Map<String, Object> getRefreshToken() {

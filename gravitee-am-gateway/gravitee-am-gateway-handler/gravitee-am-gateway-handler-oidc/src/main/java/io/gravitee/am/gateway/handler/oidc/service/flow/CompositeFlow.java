@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.oidc.service.flow.authorizationcode.Author
 import io.gravitee.am.gateway.handler.oidc.service.flow.hybrid.HybridFlow;
 import io.gravitee.am.gateway.handler.oidc.service.flow.implicit.ImplicitFlow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
+import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Observable;

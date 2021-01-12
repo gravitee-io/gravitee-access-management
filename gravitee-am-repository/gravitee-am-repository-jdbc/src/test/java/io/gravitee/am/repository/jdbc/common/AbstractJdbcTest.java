@@ -19,20 +19,7 @@ import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
-import liquibase.change.AbstractSQLChange;
-import liquibase.changelog.ChangeLogParameters;
-import liquibase.changelog.ChangeSet;
-import liquibase.changelog.DatabaseChangeLog;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.parser.ChangeLogParser;
-import liquibase.parser.ChangeLogParserFactory;
-import liquibase.resource.ClassLoaderResourceAccessor;
-import liquibase.resource.FileSystemResourceAccessor;
-import liquibase.resource.ResourceAccessor;
-import liquibase.sqlgenerator.SqlGeneratorFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;
@@ -40,10 +27,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -111,6 +96,7 @@ public abstract class AbstractJdbcTest {
             tables.add("organization_domain_restrictions");
             tables.add("organization_hrids");
             tables.add("installations");
+            tables.add("auth_flow_ctx");
 
             Connection connection = Flowable.fromPublisher(cnxFact.create()).blockingFirst();
             connection.beginTransaction();

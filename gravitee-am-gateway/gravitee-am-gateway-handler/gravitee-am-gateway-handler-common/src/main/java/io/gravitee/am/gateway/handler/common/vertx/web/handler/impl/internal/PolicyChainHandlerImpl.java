@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
+import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
@@ -109,7 +110,16 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
                     }
                     // update context attributes
                     ExecutionContext executionContext = policyChainHandler.result();
-                    executionContext.getAttributes().forEach((k, v) -> context.put(k, v));
+                    executionContext.getAttributes().forEach((k, v) -> {
+                        if (ConstantKeys.AUTH_FLOW_CONTEXT_KEY.equals(k)) {
+                            final AuthenticationFlowContext authFlowContext = (AuthenticationFlowContext) v;
+                            if (authFlowContext != null) {
+                                // update authentication flow context version into the session
+                                context.session().put(ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY, authFlowContext.getVersion());
+                            }
+                        }
+                        context.put(k, v);
+                    });
                     // continue
                     context.next();
                 });
@@ -131,7 +141,6 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
             Response serverResponse = new VertxHttpServerResponse(request, serverRequest.metrics());
             ExecutionContext simpleExecutionContext = new SimpleExecutionContext(serverRequest, serverResponse);
             ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
-
             // add current context attributes
             Map<String, Object> contextData = new HashMap<>(routingContext.data());
             // remove technical attributes

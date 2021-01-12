@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.services.purge;
 
+import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
 import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.PermissionTicketRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -66,6 +67,9 @@ public class PurgeManagerTest {
     @Mock
     private AuthorizationCodeRepository authorizationCodeRepository;
 
+    @Mock
+    private AuthenticationFlowContextRepository authenticationFlowContextRepository;
+
     @Before
     public void prepare() {
         when(accessTokenRepository.purgeExpiredData()).thenReturn(Completable.complete());
@@ -75,6 +79,7 @@ public class PurgeManagerTest {
         when(scopeApprovalRepository.purgeExpiredData()).thenReturn(Completable.complete());
         when(refreshTokenRepository.purgeExpiredData()).thenReturn(Completable.complete());
         when(requestObjectRepository.purgeExpiredData()).thenReturn(Completable.complete());
+        when(authenticationFlowContextRepository.purgeExpiredData()).thenReturn(Completable.complete());
     }
 
     @Test
@@ -88,6 +93,7 @@ public class PurgeManagerTest {
         verify(scopeApprovalRepository).purgeExpiredData();
         verify(refreshTokenRepository).purgeExpiredData();
         verify(requestObjectRepository).purgeExpiredData();
+        verify(authenticationFlowContextRepository).purgeExpiredData();
     }
 
     @Test
@@ -101,6 +107,7 @@ public class PurgeManagerTest {
         verify(scopeApprovalRepository).purgeExpiredData();
         verify(refreshTokenRepository).purgeExpiredData();
         verify(requestObjectRepository).purgeExpiredData();
+        verify(authenticationFlowContextRepository).purgeExpiredData();
     }
 
     @Test
@@ -114,5 +121,6 @@ public class PurgeManagerTest {
         verify(scopeApprovalRepository).purgeExpiredData();
         verify(refreshTokenRepository).purgeExpiredData();
         verify(requestObjectRepository).purgeExpiredData();
+        verify(authenticationFlowContextRepository).purgeExpiredData();
     }
 }

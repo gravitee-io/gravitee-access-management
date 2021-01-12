@@ -24,6 +24,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
@@ -56,13 +57,15 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     private ClientSyncService clientSyncService;
     @Mock
     private JWTService jwtService;
+    @Mock
+    private AuthenticationFlowContextService authenticationFlowContextService;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.route(HttpMethod.GET, "/logout")
-                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService))
+                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService, authenticationFlowContextService))
                 .failureHandler(new ErrorHandler("/error"));
     }
 

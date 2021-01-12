@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.token;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
+import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.reactivex.Completable;
