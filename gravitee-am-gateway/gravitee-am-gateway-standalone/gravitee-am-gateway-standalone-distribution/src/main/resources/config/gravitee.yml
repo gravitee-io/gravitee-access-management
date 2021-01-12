@@ -232,6 +232,13 @@ gateway:
       # Ex: allow access to all methods of DateTimeFormatter class
 #      - class java.time.format.DateTimeFormatter
 
+# If the policy 'Enrich Authentication Flow' is used, additional information are loaded into the execution context.
+#authenticationFlow:
+#  exitOnError: false # if true, authentication flow will return an error, otherwise the flow will continue without additional information (default: false)
+#  maxRetries: 2 # number of retries when reading information if there are inconsistent with the one previously stored (may happen using mongo replicas)
+#  retryInterval: 1000 # delay in ms between two retries (default: 1000)
+#  expirationTimeOut: 300 # the end of validity of the data in seconds (default 300 = 5 minutes)
+
 # Referenced properties
 ds:
   mongodb:

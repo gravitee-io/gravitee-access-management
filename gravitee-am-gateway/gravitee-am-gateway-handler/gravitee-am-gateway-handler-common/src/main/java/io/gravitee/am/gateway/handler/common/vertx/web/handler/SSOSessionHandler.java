@@ -21,8 +21,10 @@ import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -50,9 +52,11 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SSOSessionHandler.class);
     private ClientSyncService clientSyncService;
+    private AuthenticationFlowContextService authenticationFlowContextService;
 
-    public SSOSessionHandler(ClientSyncService clientSyncService) {
+    public SSOSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService) {
         this.clientSyncService = clientSyncService;
+        this.authenticationFlowContextService = authenticationFlowContextService;
     }
 
     @Override
@@ -69,6 +73,12 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
                 LOGGER.debug("An error occurs while checking SSO Session upon the current user : {}", context.user().principal(), cause);
                 if (cause instanceof AccountStatusException) {
                     // user has been disabled, invalidate session
+
+                    // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
+                    authenticationFlowContextService.clearContext(context.session().get(ConstantKeys.TRANSACTION_ID_KEY))
+                            .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
+                            .subscribe();
+
                     context.clearUser();
                     context.session().destroy();
                 } else if (cause instanceof InvalidRequestException) {

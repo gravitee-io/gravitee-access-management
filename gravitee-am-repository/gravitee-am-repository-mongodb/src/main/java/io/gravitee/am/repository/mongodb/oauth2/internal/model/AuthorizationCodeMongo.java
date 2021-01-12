@@ -33,6 +33,8 @@ public class AuthorizationCodeMongo {
 
     private String transactionId;
 
+    private int contextVersion;
+
     private String code;
 
     @BsonProperty("created_at")
@@ -65,6 +67,14 @@ public class AuthorizationCodeMongo {
 
     public void setTransactionId(String transactionId) {
         this.transactionId = transactionId;
+    }
+
+    public int getContextVersion() {
+        return contextVersion;
+    }
+
+    public void setContextVersion(int contextVersion) {
+        this.contextVersion = contextVersion;
     }
 
     public String getCode() {

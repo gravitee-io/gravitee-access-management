@@ -26,5 +26,6 @@ public enum TableName {
     scope_approvals,
     request_objects,
     login_attempts,
-    uma_permission_ticket
+    uma_permission_ticket,
+    auth_flow_ctx
 }

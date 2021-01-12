@@ -40,13 +40,12 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoInstallationRepository extends AbstractManagementMongoRepository implements InstallationRepository {
 
-    public static final String FIELD_ID = "_id";
     private MongoCollection<InstallationMongo> collection;
 
     @PostConstruct
     public void init() {
         collection = mongoOperations.getCollection("installation", InstallationMongo.class);
-        super.createIndex(collection, new Document(FIELD_ID, 1));
+        super.init(collection);
     }
 
     @Override
@@ -85,7 +84,7 @@ public class MongoInstallationRepository extends AbstractManagementMongoReposito
     public Completable delete(String id) {
         return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)));
     }
-    
+
     private Installation convert(InstallationMongo installationMongo) {
 
         Installation installation = new Installation();

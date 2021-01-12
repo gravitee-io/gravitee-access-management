@@ -37,6 +37,11 @@ public class AuthorizationCode {
     private String transactionId;
 
     /**
+     * Context version
+     */
+    private int contextVersion;
+
+    /**
      * Authorization code value
      */
     private String code;
@@ -90,6 +95,14 @@ public class AuthorizationCode {
 
     public void setTransactionId(String transactionId) {
         this.transactionId = transactionId;
+    }
+
+    public int getContextVersion() {
+        return contextVersion;
+    }
+
+    public void setContextVersion(int contextVersion) {
+        this.contextVersion = contextVersion;
     }
 
     public String getRedirectUri() {

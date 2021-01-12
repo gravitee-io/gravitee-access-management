@@ -69,6 +69,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         insertSpec = addQuotedField(insertSpec,"redirect_uri", authorizationCode.getRedirectUri(), String.class);
         insertSpec = addQuotedField(insertSpec,"subject", authorizationCode.getSubject(), String.class);
         insertSpec = addQuotedField(insertSpec,"transaction_id", authorizationCode.getTransactionId(), String.class);
+        insertSpec = addQuotedField(insertSpec,"context_version", authorizationCode.getContextVersion(), int.class);
         insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(authorizationCode.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,"expire_at", dateConverter.convertTo(authorizationCode.getExpireAt(), null), LocalDateTime.class);
         insertSpec = databaseDialectHelper.addJsonField(insertSpec,"scopes", authorizationCode.getScopes());

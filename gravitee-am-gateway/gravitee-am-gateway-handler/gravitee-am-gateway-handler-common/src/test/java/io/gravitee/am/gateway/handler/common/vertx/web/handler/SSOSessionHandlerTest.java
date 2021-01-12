@@ -24,8 +24,10 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -54,18 +56,22 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
     private JWTService jwtService;
     @Mock
     private CertificateManager certificateManager;
+
     @Mock
     private UserService userService;
+
+    @Mock
+    private AuthenticationFlowContextService authenticationFlowContextService;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
+        when(authenticationFlowContextService.clearContext(any())).thenReturn(Completable.complete());
         when(jwtService.encode(any(JWT.class), (CertificateProvider) eq(null))).thenReturn(Single.just("token"));
 
         router.route("/login")
                 .handler(new CookieSessionHandler(jwtService, certificateManager, userService, "am-cookie", 30 * 60 * 60))
-                .handler(new SSOSessionHandler(clientSyncService))
+                .handler(new SSOSessionHandler(clientSyncService, authenticationFlowContextService))
                 .handler(rc -> {
                     if (rc.session().isDestroyed()) {
                         rc.response().setStatusCode(401).end();

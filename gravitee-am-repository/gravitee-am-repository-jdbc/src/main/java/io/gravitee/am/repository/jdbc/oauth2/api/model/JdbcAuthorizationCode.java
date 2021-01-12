@@ -31,6 +31,8 @@ public class JdbcAuthorizationCode {
     private String id;
     @Column("transaction_id")
     private String transactionId;
+    @Column("context_version")
+    private int contextVersion;
     private String code;
     @Column("created_at")
     private LocalDateTime createdAt;
@@ -60,6 +62,14 @@ public class JdbcAuthorizationCode {
 
     public void setTransactionId(String transactionId) {
         this.transactionId = transactionId;
+    }
+
+    public int getContextVersion() {
+        return contextVersion;
+    }
+
+    public void setContextVersion(int contextVersion) {
+        this.contextVersion = contextVersion;
     }
 
     public String getCode() {

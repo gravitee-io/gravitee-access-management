@@ -94,6 +94,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         AuthorizationCode authorizationCode = new AuthorizationCode();
         authorizationCode.setId(authorizationCodeMongo.getId());
         authorizationCode.setTransactionId(authorizationCodeMongo.getTransactionId());
+        authorizationCode.setContextVersion(authorizationCodeMongo.getContextVersion());
         authorizationCode.setCode(authorizationCodeMongo.getCode());
         authorizationCode.setClientId(authorizationCodeMongo.getClientId());
         authorizationCode.setCreatedAt(authorizationCodeMongo.getCreatedAt());
@@ -117,6 +118,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         AuthorizationCodeMongo authorizationCodeMongo = new AuthorizationCodeMongo();
         authorizationCodeMongo.setId(authorizationCode.getId());
         authorizationCodeMongo.setTransactionId(authorizationCode.getTransactionId());
+        authorizationCodeMongo.setContextVersion(authorizationCode.getContextVersion());
         authorizationCodeMongo.setCode(authorizationCode.getCode());
         authorizationCodeMongo.setClientId(authorizationCode.getClientId());
         authorizationCodeMongo.setCreatedAt(authorizationCode.getCreatedAt());

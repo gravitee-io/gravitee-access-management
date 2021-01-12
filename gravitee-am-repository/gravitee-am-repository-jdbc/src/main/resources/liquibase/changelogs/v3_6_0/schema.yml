@@ -21,3 +21,46 @@ databaseChangeLog:
             indexName: idx_flow_by_application
             tableName: flows
             unique: false
+
+        # Authentication Flow Context
+        ########################
+        - createTable:
+            tableName: auth_flow_ctx
+            columns:
+              - column: { name: id, type: nvarchar(138), constraints: { nullable: false } }
+              - column: { name: transaction_id, type: nvarchar(128), constraints: { nullable: true } }
+              - column: { name: version, type: int, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: data, type: clob, constraints: { nullable: true } }
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE auth_flow_ctx ALTER data TYPE JSON USING data::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE auth_flow_ctx MODIFY data JSON;
+
+        - addPrimaryKey:
+            constraintName: pk_auth_flow_ctx
+            columnNames: id
+            tableName: auth_flow_ctx
+
+        - createIndex:
+            columns:
+              - column:
+                  name: transaction_id
+              - column:
+                  name: version
+            indexName: idx_auth_flow_ctx_trx_version
+            tableName: auth_flow_ctx
+            unique: true
+
+        # Authorization code
+        ###############
+        - addColumn:
+            tableName: authorization_codes
+            columns:
+              - column: {name: context_version, type: integer, constraints: { nullable: true } }
+

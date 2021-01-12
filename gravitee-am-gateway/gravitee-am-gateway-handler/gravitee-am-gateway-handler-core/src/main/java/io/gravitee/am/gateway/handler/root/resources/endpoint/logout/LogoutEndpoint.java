@@ -28,6 +28,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.LogoutAuditBuilder;
@@ -57,17 +58,20 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
     private AuditService auditService;
     private ClientSyncService clientSyncService;
     private JWTService jwtService;
+    private AuthenticationFlowContextService authenticationFlowContextService;
 
     public LogoutEndpoint(Domain domain,
                           TokenService tokenService,
                           AuditService auditService,
                           ClientSyncService clientSyncService,
-                          JWTService jwtService) {
+                          JWTService jwtService,
+                          AuthenticationFlowContextService authenticationFlowContextService) {
         this.domain = domain;
         this.tokenService = tokenService;
         this.auditService = auditService;
         this.clientSyncService = clientSyncService;
         this.jwtService = jwtService;
+        this.authenticationFlowContextService = authenticationFlowContextService;
     }
 
     @Override
@@ -215,6 +219,11 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
         }
 
         if (routingContext.session() != null) {
+            // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
+            authenticationFlowContextService.clearContext(routingContext.session().get(ConstantKeys.TRANSACTION_ID_KEY))
+                    .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
+                    .subscribe();
+
             routingContext.session().destroy();
         }
 

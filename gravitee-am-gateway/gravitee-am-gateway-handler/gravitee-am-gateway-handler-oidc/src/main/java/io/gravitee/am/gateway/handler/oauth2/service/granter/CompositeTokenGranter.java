@@ -33,6 +33,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.uma.policy.RulesEngine;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.am.service.ResourceService;
 import io.reactivex.Maybe;
@@ -40,6 +41,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,8 +83,15 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private ExecutionContextFactory executionContextFactory;
 
+    @Autowired
+    private AuthenticationFlowContextService authenticationFlowContextService;
+
+    @Autowired
+    private Environment environment;
+
     public CompositeTokenGranter() { }
 
+    @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return Observable
                 .fromIterable(tokenGranters.values())
@@ -112,7 +121,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     public void afterPropertiesSet() {
         addTokenGranter(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService));
         addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService,userAuthenticationManager));
-        addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager));
+        addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, environment));
         addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
         addTokenGranter(GrantType.UMA, new UMATokenGranter(tokenService, userAuthenticationManager, permissionTicketService, resourceService, jwtService, domain, rulesEngine, executionContextFactory));
     }

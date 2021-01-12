@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
@@ -55,6 +56,13 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setTimestamp(System.currentTimeMillis());
         authorizationRequest.setId(RandomString.generate());
         authorizationRequest.setTransactionId(context.session().get(ConstantKeys.TRANSACTION_ID_KEY));
+
+        if (context.get(ConstantKeys.AUTH_FLOW_CONTEXT_KEY) != null) {
+            AuthenticationFlowContext authFlowContext = context.get(ConstantKeys.AUTH_FLOW_CONTEXT_KEY);
+            authorizationRequest.setContextVersion(authFlowContext.getVersion());
+            authorizationRequest.getContext().put(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, authFlowContext.getData());
+        }
+
         authorizationRequest.setUri(request.uri());
         authorizationRequest.setOrigin(extractOrigin(context));
         authorizationRequest.setContextPath(request.path() != null ? request.path().split("/")[0] : null);
