@@ -569,7 +569,9 @@ public class UserServiceImpl implements UserService {
     }
 
     private String getUserRegistrationToken(User user) {
-        return getUserRegistrationToken(user, null);
+        // fetch email to get the custom expiresAfter time
+        io.gravitee.am.model.Email email = emailManager.getEmail(getTemplateName(user), registrationSubject, expireAfter);
+        return getUserRegistrationToken(user, email.getExpiresAfter());
     }
 
     private String getUserRegistrationToken(User user, Integer expiresAfter) {

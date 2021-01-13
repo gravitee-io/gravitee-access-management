@@ -91,6 +91,9 @@ public class UserServiceTest {
     @Mock
     private MembershipService membershipService;
 
+    @Mock
+    private EmailManager emailManager;
+
     @Before
     public void setUp() {
         ((UserServiceImpl) userService).setExpireAfter(24 * 3600);
@@ -198,11 +201,13 @@ public class UserServiceTest {
 
     @Test
     public void shouldPreRegisterUser_dynamicUserRegistration_domainLevel() {
+        when(emailManager.getEmail(anyString(), eq(null), anyInt())).thenReturn(new Email());
         shouldPreRegisterUser(true, false);
     }
 
     @Test
     public void shouldPreRegisterUser_dynamicUserRegistration_clientLevel() {
+        when(emailManager.getEmail(anyString(), eq(null), anyInt())).thenReturn(new Email());
         shouldPreRegisterUser(true, true);
     }
 
