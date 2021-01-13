@@ -582,10 +582,6 @@ public class UserServiceImpl implements UserService {
         if (user.getClient() != null) {
             claims.put(Claims.aud, user.getClient());
         }
-        claims.put(StandardClaims.EMAIL, user.getEmail());
-        claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
-        claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
-
         return jwtBuilder.setClaims(claims).compact();
     }
 
