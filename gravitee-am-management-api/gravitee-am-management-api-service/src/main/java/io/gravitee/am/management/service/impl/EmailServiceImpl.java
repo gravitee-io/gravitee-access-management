@@ -96,6 +96,11 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+    @Override
+    public io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, User user) {
+        return emailManager.getEmail(getTemplateName(template, user), getDefaultSubject(template), getDefaultExpireAt(template));
+    }
+
     private void sendEmail(Email email, User user) {
         if (enabled) {
             try {
@@ -138,9 +143,6 @@ public class EmailServiceImpl implements EmailService {
         if (user.getClient() != null) {
             claims.put(Claims.aud, user.getClient());
         }
-        claims.put(StandardClaims.EMAIL, user.getEmail());
-        claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
-        claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
 
         String token = jwtBuilder.sign(new JWT(claims));
         String redirectUrl = domainService.buildUrl(domain, redirectUri + "?token=" + token);
@@ -156,10 +158,6 @@ public class EmailServiceImpl implements EmailService {
         params.put("expireAfterSeconds", expiresAfter);
 
         return params;
-    }
-
-    private io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, User user) {
-        return emailManager.getEmail(getTemplateName(template, user), getDefaultSubject(template), getDefaultExpireAt(template));
     }
 
     private String getTemplateName(io.gravitee.am.model.Template template, User user) {

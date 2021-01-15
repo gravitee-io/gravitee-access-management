@@ -22,6 +22,8 @@ import io.vertx.core.net.SocketAddress;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 
+import java.net.URI;
+
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
 
 /**
@@ -114,5 +116,15 @@ public class RequestUtils {
         queryStringDecoder.parameters().forEach(queryParams::add);
 
         return queryParams;
+    }
+
+    public static String getDomain(String url) {
+        try {
+            URI uri = new URI(url);
+            String domain = uri.getHost();
+            return domain.startsWith("www.") ? domain.substring(4) : domain;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 }

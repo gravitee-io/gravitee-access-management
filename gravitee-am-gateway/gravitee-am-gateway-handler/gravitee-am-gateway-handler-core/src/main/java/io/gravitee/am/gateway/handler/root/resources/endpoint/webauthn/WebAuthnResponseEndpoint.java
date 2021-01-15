@@ -132,7 +132,7 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                                 final User user = h.result();
                                 final io.gravitee.am.model.User authenticatedUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) user).getUser();
                                 // check if the authenticated user is the same as the one in session
-                                if (!userId.equals(authenticatedUser.getId())) {
+                                if (userId == null || !userId.equals(authenticatedUser.getId())) {
                                     logger.error("Invalid authenticated user {}, user in session was {}", authenticatedUser.getId(), userId);
                                     ctx.fail(401);
                                     return;

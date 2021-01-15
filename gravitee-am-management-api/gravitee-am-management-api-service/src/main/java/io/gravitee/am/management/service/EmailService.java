@@ -28,6 +28,8 @@ public interface EmailService {
 
     void send(Domain domain, Application client, Template template, User user);
 
+    io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, User user);
+
     default void send(Domain domain, Template template, User user) {
         send(domain, null, template, user);
     }

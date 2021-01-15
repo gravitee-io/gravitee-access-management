@@ -1036,7 +1036,8 @@ const routes: Routes = [
             component: DomainSettingsWebAuthnComponent,
             canActivate: [AuthGuard],
             resolve: {
-              domain: DomainResolver
+              domain: DomainResolver,
+              entrypoint: DomainEntrypointResolver
             },
             data: {
               menu: {
