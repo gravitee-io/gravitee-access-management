@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.management.service;
 
-import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
@@ -31,7 +31,6 @@ import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -39,9 +38,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
@@ -276,6 +276,7 @@ public class UserServiceTest {
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
         when(commonUserService.create(any())).thenReturn(Single.just(new User()));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
+        when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(new Email());
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
         testObserver.assertComplete();
@@ -326,6 +327,7 @@ public class UserServiceTest {
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
         when(commonUserService.create(any())).thenReturn(Single.just(new User()));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
+        when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(new Email());
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
         testObserver.assertComplete();

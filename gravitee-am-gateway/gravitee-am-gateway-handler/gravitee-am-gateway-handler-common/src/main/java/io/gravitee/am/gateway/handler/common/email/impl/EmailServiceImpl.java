@@ -139,10 +139,9 @@ public class EmailServiceImpl implements EmailService {
         claims.put(Claims.iat, new Date().getTime() / 1000);
         claims.put(Claims.exp, new Date(System.currentTimeMillis() + (expiresAfter * 1000)).getTime() / 1000);
         claims.put(Claims.sub, user.getId());
-        claims.put(Claims.aud, client.getId());
-        claims.put(StandardClaims.EMAIL, user.getEmail());
-        claims.put(StandardClaims.GIVEN_NAME, user.getFirstName());
-        claims.put(StandardClaims.FAMILY_NAME, user.getLastName());
+        if (client != null) {
+            claims.put(Claims.aud, client.getId());
+        }
 
         String token = jwtBuilder.sign(new JWT(claims));
         String redirectUrl =  domainService.buildUrl(domain, redirectUri + "?token=" + token);
