@@ -15,9 +15,18 @@
     limitations under the License.
 
 -->
-<div class="gv-page-container">
-
-  <gv-dashboard [domainId]="domainId" [applicationId]="applicationId" [dashboard]="dashboard"></gv-dashboard>
-
-
+<div class="gv-page-content" fxLayout="row">
+  <div fxFlex="75" class="gv-form-section">
+    <gv-dashboard [domainId]="domainId"
+              [applicationId]="applicationId"
+              [dashboard]="dashboard"></gv-dashboard>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>Activities</h3>
+    <div class="gv-page-description-content">
+      <p>
+        Retrieve all activities and usage statistics of the application.
+      </p>
+    </div>
+  </div>
 </div>

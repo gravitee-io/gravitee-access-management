@@ -26,7 +26,7 @@ export class ApplicationAnalyticsComponent implements OnInit {
   dashboard: DashboardData = {
     widgets: [
       {
-        flex: 33,
+        flex: 50,
         title: 'Logins',
         subhead: 'Latest logins',
         chart: {
@@ -39,7 +39,7 @@ export class ApplicationAnalyticsComponent implements OnInit {
         }
       },
       {
-        flex: 33,
+        flex: 50,
         title: 'Sign ups',
         subhead: 'New sign ups',
         chart: {
@@ -48,18 +48,6 @@ export class ApplicationAnalyticsComponent implements OnInit {
           request: {
             type: 'count',
             field: 'user_registered'
-          }
-        }
-      },
-      {
-        flex: 33,
-        title: 'Users',
-        subhead: 'Total users',
-        chart: {
-          type: 'count',
-          request: {
-            type: 'count',
-            field: 'user'
           }
         }
       },
@@ -84,19 +72,7 @@ export class ApplicationAnalyticsComponent implements OnInit {
             field: 'user_registered',
           }
         }
-      },
-      {
-        flex: 50,
-        title: 'User status',
-        subhead: 'User status repartition',
-        chart: {
-          type: 'pie',
-          request: {
-            type: 'group_by',
-            field: 'user_status'
-          }
-        }
-      },
+      }
     ]
   };
   domainId: string;

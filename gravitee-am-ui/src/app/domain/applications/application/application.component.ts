@@ -49,6 +49,7 @@ export class ApplicationComponent implements OnInit {
     if (this.application.type === 'service') {
       _.remove(this.navLinks, { href: 'idp' });
       _.remove(this.navLinks, { href: 'design' });
+      _.remove(this.navLinks, { href: 'analytics' });
     }
     if (!this.canDisplay(['application_identity_provider_list'])) {
       _.remove(this.navLinks, { href: 'idp' });
