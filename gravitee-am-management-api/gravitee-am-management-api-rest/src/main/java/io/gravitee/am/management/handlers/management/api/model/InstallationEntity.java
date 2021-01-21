@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model;
+package io.gravitee.am.management.handlers.management.api.model;
+
+import io.gravitee.am.model.Installation;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -23,44 +25,23 @@ import java.util.Map;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class Installation {
+public class InstallationEntity {
 
-    public static final String COCKPIT_INSTALLATION_ID = "COCKPIT_INSTALLATION_ID";
-    public static final String COCKPIT_URL = "COCKPIT_URL";
-    public static final String COCKPIT_INSTALLATION_STATUS = "COCKPIT_INSTALLATION_STATUS";
-
-    /**
-     * Auto generated id.
-     * This id is generated at the first startup time.
-     */
     private String id;
-
-    /**
-     * Additional information about this installation.
-     */
     private Map<String, String> additionalInformation = new HashMap<>();
-
-    /**
-     * Creation date.
-     */
     private Date createdAt;
-
-    /**
-     * Last update date.
-     */
     private Date updatedAt;
 
-    public Installation() {
+    public InstallationEntity() {
     }
 
-    public Installation(Installation other) {
+    public InstallationEntity(Installation other) {
 
-        this.id = other.id;
-        this.additionalInformation = other.additionalInformation;
-        this.createdAt = other.createdAt;
-        this.updatedAt = other.updatedAt;
+        this.id = other.getId();
+        this.additionalInformation = other.getAdditionalInformation();
+        this.createdAt = other.getCreatedAt();
+        this.updatedAt = other.getUpdatedAt();
     }
-
 
     public String getId() {
         return id;
