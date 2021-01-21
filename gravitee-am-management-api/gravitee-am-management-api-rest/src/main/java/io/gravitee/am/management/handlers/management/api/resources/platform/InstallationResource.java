@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
+import io.gravitee.am.management.handlers.management.api.model.InstallationEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Installation;
+import io.gravitee.am.model.Platform;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.InstallationService;
 import io.gravitee.common.http.MediaType;
@@ -26,8 +29,10 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 
@@ -37,6 +42,11 @@ import javax.ws.rs.container.Suspended;
  */
 public class InstallationResource extends AbstractResource {
 
+    protected static final String DEFAULT_COCKPIT_URL = "https://cockpit.gravitee.io";
+
+    @Autowired
+    private Environment environment;
+
     @Autowired
     private InstallationService installationService;
 
@@ -45,14 +55,17 @@ public class InstallationResource extends AbstractResource {
     @ApiOperation(value = "Get installation information",
             notes = "User must have the INSTALLATION[READ] permission on the platform")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Installation successfully fetched", response = Installation.class),
+            @ApiResponse(code = 200, message = "Installation successfully fetched", response = InstallationEntity.class),
             @ApiResponse(code = 404, message = "No installation has been found", response = ErrorEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void get(
             @Suspended final AsyncResponse response) {
 
         checkPermission(ReferenceType.PLATFORM, Platform.DEFAULT, Permission.INSTALLATION, Acl.READ)
-                .andThen(installationService.get())
+                .andThen(installationService.get()
+                        .map(InstallationEntity::new))
+                .doOnSuccess(installationEntity -> installationEntity.getAdditionalInformation()
+                        .put(Installation.COCKPIT_URL, environment.getProperty("cockpit.url", DEFAULT_COCKPIT_URL)))
                 .subscribe(response::resume, response::resume);
     }
 }
