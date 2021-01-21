@@ -23,17 +23,17 @@
     </app-emptystate>
 
     <app-emptystate *ngIf="installation!.additionalInformation!.COCKPIT_INSTALLATION_STATUS === 'PENDING'" message="Almost there !"
-                    subMessage="Your installation is connected but you still have to accept it on <a href=&quot;http://localhost:4004&quot; target=&quot;_blank&quot;>Cockpit</a> !"
+                    subMessage="Your installation is connected but you still have to accept it on <a href=&quot;{{installation.additionalInformation.COCKPIT_URL}}&quot; target=&quot;_blank&quot;>Cockpit</a> !"
                     icon="explore_off">
     </app-emptystate>
 
     <app-emptystate *ngIf="installation!.additionalInformation!.COCKPIT_INSTALLATION_STATUS === 'ACCEPTED'" message="Congratulation !"
-                    subMessage="Your installation is now connected to <a href=&quot;http://localhost:4004&quot; target=&quot;_blank&quot;>Cockpit</a>, you can now explore all the possibilities offered by Cockpit !"
+                    subMessage="Your installation is now connected to <a href=&quot;{{installation.additionalInformation.COCKPIT_URL}}&quot; target=&quot;_blank&quot;>Cockpit</a>, you can now explore all the possibilities offered by Cockpit !"
                     icon="check_circle">
     </app-emptystate>
 
     <app-emptystate *ngIf="installation!.additionalInformation!.COCKPIT_INSTALLATION_STATUS === 'REJECTED'" message="No luck !"
-                    subMessage="Seems that your installation is connected to <a href=&quot;http://localhost:4004&quot; target=&quot;_blank&quot;>Cockpit</a>, but has been rejected..."
+                    subMessage="Seems that your installation is connected to <a href=&quot;{{installation.additionalInformation.COCKPIT_URL}}&quot; target=&quot;_blank&quot;>Cockpit</a>, but has been rejected..."
                     icon="warning">
     </app-emptystate>
   </div>
