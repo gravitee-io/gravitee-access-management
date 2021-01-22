@@ -161,6 +161,10 @@ export class UserProfileComponent implements OnInit {
       });
   }
 
+  asObject(value) {
+    return value && typeof value === 'object'
+  }
+
   isUserEnabled() {
     return this.user.enabled;
   }

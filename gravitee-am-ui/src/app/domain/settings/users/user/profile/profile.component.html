@@ -64,7 +64,7 @@
             <a (click)="addDynamicComponent()" class="gv-accent-link" *ngIf="editMode() && canEdit">(+) add user attribute</a>
             <template #dynamic></template>
             <div *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
-              <div *ngIf="keyValuePair.value" fxLayout="row">
+              <div *ngIf="keyValuePair.value && !asObject(keyValuePair.value)" fxLayout="row">
                 <mat-form-field style="margin-right: 20px;" fxFlex="40">
                   <input matInput type="text" name="claimName" [value]="keyValuePair.key" disabled>
                 </mat-form-field>
@@ -72,6 +72,16 @@
                   <input matInput type="text" [name]="'claimValue'+keyValuePair.key" [(ngModel)]="user.additionalInformation[keyValuePair.key]" (change)="formChanged = true;" [disabled]="!editMode()">
                 </mat-form-field>
                 <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)"><mat-icon>clear</mat-icon></button>
+              </div>
+              <div *ngIf="keyValuePair.value && asObject(keyValuePair.value)" fxLayout="row">
+                <mat-form-field style="margin-right: 20px; vertical-align: middle;" fxFlex="40">
+                  <input matInput type="text" name="claimName" [value]="keyValuePair.key" disabled>
+                </mat-form-field>
+                <mat-form-field>
+                  <!-- do not allow edition of this fields because it is JSON Object -->
+                  <input matInput type="text" [name]="'claimValue'+keyValuePair.key" [value]="user.additionalInformation[keyValuePair.key] | json" disabled>
+                 </mat-form-field>
+                 <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)"><mat-icon>clear</mat-icon></button>
               </div>
             </div>
           </div>
