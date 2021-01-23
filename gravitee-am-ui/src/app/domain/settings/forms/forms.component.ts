@@ -127,13 +127,6 @@ export class DomainSettingsFormsComponent implements OnInit {
         'template': 'LOGIN',
         'icon': 'account_box',
         'enabled': true
-      },
-      {
-        'name': 'Complete profile',
-        'description': 'Enrich user profile after first authentication',
-        'template': 'COMPLETE_PROFILE',
-        'icon': 'person_add',
-        'enabled': true
       }
     ];
   }

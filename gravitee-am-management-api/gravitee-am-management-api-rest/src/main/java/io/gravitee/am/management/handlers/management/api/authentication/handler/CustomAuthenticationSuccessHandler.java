@@ -21,7 +21,6 @@ import io.gravitee.am.management.handlers.management.api.authentication.service.
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 
@@ -46,9 +45,6 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     @Autowired
     private AuthenticationService authenticationService;
 
-    @Value("${newsletter.enabled:true}")
-    private boolean newsletterEnabled;
-
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws ServletException, IOException {
@@ -62,14 +58,8 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         Cookie jwtAuthenticationCookie = jwtGenerator.generateCookie(principal);
         response.addCookie(jwtAuthenticationCookie);
 
-
-        // if first login and newsletter option enabled, go to complete profile step
-        if (newsletterEnabled && (long) principal.getAdditionalInformation().get("login_count") == 1) {
-            getRedirectStrategy().sendRedirect(request, response, "/auth/completeProfile");
-        } else {
-            // Replay the original request.
-            logger.debug("Redirecting to Url: " + redirectUri);
-            getRedirectStrategy().sendRedirect(request, response, redirectUri);
-        }
+        // Replay the original request.
+        logger.debug("Redirecting to Url: " + redirectUri);
+        getRedirectStrategy().sendRedirect(request, response, redirectUri);
     }
 }
