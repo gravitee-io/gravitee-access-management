@@ -170,6 +170,7 @@ import {ApplicationLoginSettingsComponent} from './domain/applications/applicati
 import {IdentitiesResolver} from './resolvers/identities.resolver';
 import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
 import {PlatformFlowSchemaResolver} from './resolvers/platform-flow-schema.resolver';
+import {NewsletterComponent} from "./newsletter/newsletter.component";
 
 const routes: Routes = [
   {
@@ -1455,6 +1456,7 @@ const routes: Routes = [
   { path: 'login/callback', component: LoginCallbackComponent },
   { path: 'logout', component: LogoutComponent },
   { path: 'logout/callback', component: LogoutCallbackComponent },
+  { path: 'newsletter', component: NewsletterComponent },
   { path: 'dummy', component: DummyComponent },
   { path: '404', component: NotFoundComponent },
   { path: '', component: HomeComponent},

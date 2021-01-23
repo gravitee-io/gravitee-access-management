@@ -15,12 +15,11 @@ import {filter} from 'rxjs/operators';
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { SidenavService } from './sidenav.service';
 import { AppConfig } from '../../../config/app.config';
 import { AuthGuard } from '../../guards/auth-guard.service';
-import { Subscription} from 'rxjs';
 import * as _ from 'lodash';
 
 @Component({
@@ -28,14 +27,13 @@ import * as _ from 'lodash';
   templateUrl: './sidenav.component.html',
   styleUrls: ['./sidenav.component.scss']
 })
-export class SidenavComponent implements OnInit, OnDestroy {
+export class SidenavComponent implements OnInit {
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
   reducedMode = false;
   paths: any[] = [];
   subPaths: any = {};
   currentSubPaths: any[] = [];
-  subscription: Subscription;
   displayFirstLevel = false;
   displaySettingsLevel = false;
 
@@ -55,10 +53,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
       }
     }
     this.watchRoute();
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
   }
 
   watchRoute() {

@@ -290,6 +290,7 @@ import { ApplicationLoginSettingsComponent } from './domain/applications/applica
 import { IdentitiesResolver } from './resolvers/identities.resolver';
 import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
+import { NewsletterComponent } from "./newsletter/newsletter.component";
 
 @NgModule({
   declarations: [
@@ -462,7 +463,8 @@ import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.res
     NotFoundComponent,
     UmaComponent,
     LoginSettingsComponent,
-    UsersSearchInfoDialog
+    UsersSearchInfoDialog,
+    NewsletterComponent
   ],
   imports: [
     BrowserModule,

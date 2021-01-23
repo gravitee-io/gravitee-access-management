@@ -39,4 +39,13 @@ export class AppComponent implements OnInit {
 
     this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
   }
+
+  displaySidenav(): boolean {
+    return this.router.url !== '/login' && this.router.url !== '/newsletter';
+  }
+
+  displayNavbar(): boolean {
+    return this.router.url !== '/login' && this.router.url !== '/newsletter';
+  }
+
 }

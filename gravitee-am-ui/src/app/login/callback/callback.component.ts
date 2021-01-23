@@ -28,9 +28,13 @@ export class LoginCallbackComponent implements OnInit {
   ngOnInit() {
     this.authService.handleAuthentication().subscribe(authentSuccess => {
       if (authentSuccess) {
-        this.authService.userInfo().subscribe(res => {
+        this.authService.userInfo().subscribe(user => {
           this.snackbarService.open('Login successful');
-          this.router.navigate(['/']);
+          if (user['newsletter_enabled'] && user['login_count'] === 1) {
+            this.router.navigate(['/newsletter']);
+          } else {
+            this.router.navigate(['/']);
+          }
         });
       }
     }, error => {
