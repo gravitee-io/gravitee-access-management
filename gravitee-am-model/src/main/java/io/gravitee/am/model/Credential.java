@@ -33,6 +33,9 @@ public class Credential {
     private String credentialId;
     private String publicKey;
     private long counter;
+    private String aaguid;
+    private String attestationStatementFormat;
+    private String attestationStatement;
     private String ipAddress;
     private String userAgent;
     private Date createdAt;
@@ -101,6 +104,30 @@ public class Credential {
 
     public void setCounter(long counter) {
         this.counter = counter;
+    }
+
+    public String getAaguid() {
+        return aaguid;
+    }
+
+    public void setAaguid(String aaguid) {
+        this.aaguid = aaguid;
+    }
+
+    public String getAttestationStatementFormat() {
+        return attestationStatementFormat;
+    }
+
+    public void setAttestationStatementFormat(String attestationStatementFormat) {
+        this.attestationStatementFormat = attestationStatementFormat;
+    }
+
+    public String getAttestationStatement() {
+        return attestationStatement;
+    }
+
+    public void setAttestationStatement(String attestationStatement) {
+        this.attestationStatement = attestationStatement;
     }
 
     public String getIpAddress() {
