@@ -130,6 +130,9 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
         credential.setCredentialId(credentialMongo.getCredentialId());
         credential.setPublicKey(credentialMongo.getPublicKey());
         credential.setCounter(credentialMongo.getCounter());
+        credential.setAaguid(credentialMongo.getAaguid());
+        credential.setAttestationStatementFormat(credentialMongo.getAttestationStatementFormat());
+        credential.setAttestationStatement(credentialMongo.getAttestationStatement());
         credential.setIpAddress(credentialMongo.getIpAddress());
         credential.setUserAgent(credentialMongo.getUserAgent());
         credential.setCreatedAt(credentialMongo.getCreatedAt());
@@ -152,6 +155,9 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
         credentialMongo.setCredentialId(credential.getCredentialId());
         credentialMongo.setPublicKey(credential.getPublicKey());
         credentialMongo.setCounter(credential.getCounter());
+        credentialMongo.setAaguid(credential.getAaguid());
+        credentialMongo.setAttestationStatementFormat(credential.getAttestationStatementFormat());
+        credentialMongo.setAttestationStatement(credential.getAttestationStatement());
         credentialMongo.setIpAddress(credential.getIpAddress());
         credentialMongo.setUserAgent(credential.getUserAgent());
         credentialMongo.setCreatedAt(credential.getCreatedAt());
