@@ -251,6 +251,11 @@ public class ApplicationOAuthSettings {
      */
     private String authorizationEncryptedResponseEnc;
 
+    /**
+     * Array of URLs supplied by the RP to which it MAY request that the End-User's User Agent be redirected using the post_logout_redirect_uri parameter after a logout has been performed.
+     */
+    private List<String> postLogoutRedirectUris;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -310,6 +315,7 @@ public class ApplicationOAuthSettings {
         this.authorizationSignedResponseAlg = other.authorizationSignedResponseAlg;
         this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
+        this.postLogoutRedirectUris = other.postLogoutRedirectUris;
     }
 
     public String getClientId() {
@@ -750,5 +756,13 @@ public class ApplicationOAuthSettings {
 
     public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
         this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
+    }
+
+    public List<String> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 }

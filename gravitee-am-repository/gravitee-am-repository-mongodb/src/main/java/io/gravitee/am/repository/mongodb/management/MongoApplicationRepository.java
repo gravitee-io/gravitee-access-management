@@ -303,6 +303,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setAuthorizationSignedResponseAlg(other.getAuthorizationSignedResponseAlg());
         applicationOAuthSettingsMongo.setAuthorizationEncryptedResponseAlg(other.getAuthorizationEncryptedResponseAlg());
         applicationOAuthSettingsMongo.setAuthorizationEncryptedResponseEnc(other.getAuthorizationEncryptedResponseEnc());
+        applicationOAuthSettingsMongo.setPostLogoutRedirectUris(other.getPostLogoutRedirectUris());
         return applicationOAuthSettingsMongo;
     }
 
@@ -366,6 +367,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setAuthorizationSignedResponseAlg(other.getAuthorizationSignedResponseAlg());
         applicationOAuthSettings.setAuthorizationEncryptedResponseAlg(other.getAuthorizationEncryptedResponseAlg());
         applicationOAuthSettings.setAuthorizationEncryptedResponseEnc(other.getAuthorizationEncryptedResponseEnc());
+        applicationOAuthSettings.setPostLogoutRedirectUris(other.getPostLogoutRedirectUris());
 
         return applicationOAuthSettings;
     }

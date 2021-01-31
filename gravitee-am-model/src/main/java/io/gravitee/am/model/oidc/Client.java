@@ -189,6 +189,8 @@ public class Client implements Cloneable, Resource {
 
     private Map<String, Object> metadata;
 
+    private List<String> postLogoutRedirectUris;
+
     public Client() { }
 
     public Client(Client other) {
@@ -793,6 +795,14 @@ public class Client implements Cloneable, Resource {
 
     public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
         this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
+    }
+
+    public List<String> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
     @Override

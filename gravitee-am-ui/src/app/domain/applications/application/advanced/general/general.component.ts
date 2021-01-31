@@ -34,7 +34,9 @@ export class ApplicationGeneralComponent implements OnInit {
   applicationOAuthSettings: any = {};
   applicationAdvancedSettings: any = {};
   redirectUri: string;
+  logoutRedirectUri: string;
   redirectUris: any[] = [];
+  logoutRedirectUris: any[] = [];
   formChanged = false;
   editMode: boolean;
   deleteMode: boolean;
@@ -80,6 +82,7 @@ export class ApplicationGeneralComponent implements OnInit {
     this.applicationOAuthSettings.redirectUris = this.applicationOAuthSettings.redirectUris || [];
     this.application.factors = this.application.factors || [];
     this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) { return { value: item }; });
+    this.logoutRedirectUris = _.map(this.applicationOAuthSettings.postLogoutRedirectUris, function (item) { return { value: item }; });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
     this.renewSecretMode = this.authService.hasPermissions(['application_openid_update']);
@@ -94,7 +97,7 @@ export class ApplicationGeneralComponent implements OnInit {
     data.name = this.application.name;
     data.description = this.application.description;
     data.settings = {};
-    data.settings.oauth = { 'redirectUris' : _.map(this.redirectUris, 'value') };
+    data.settings.oauth = { 'redirectUris' : _.map(this.redirectUris, 'value'), 'postLogoutRedirectUris' : _.map(this.logoutRedirectUris, 'value') };
     data.settings.advanced = { 'skipConsent' : this.applicationAdvancedSettings.skipConsent };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
       this.application = response;
@@ -163,6 +166,20 @@ export class ApplicationGeneralComponent implements OnInit {
     }
   }
 
+  addLogoutRedirectUris(event) {
+    event.preventDefault();
+    if (this.logoutRedirectUri) {
+      if (!this.logoutRedirectUris.some(el => el.value === this.logoutRedirectUri)) {
+        this.logoutRedirectUris.push({value: this.logoutRedirectUri});
+        this.logoutRedirectUris = [...this.logoutRedirectUris];
+        this.logoutRedirectUri = null;
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open(`Error : redirect URI "${this.logoutRedirectUri}" already exists`);
+      }
+    }
+  }
+
   deleteRedirectUris(redirectUri, event) {
     event.preventDefault();
     this.dialogService
@@ -171,6 +188,19 @@ export class ApplicationGeneralComponent implements OnInit {
         if (res) {
           _.remove(this.redirectUris, { value: redirectUri });
           this.redirectUris = [...this.redirectUris];
+          this.formChanged = true;
+        }
+      });
+  }
+
+  deleteLogoutRedirectUris(logoutRedirectUri, event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Remove logout redirect URI', 'Are you sure you want to remove this redirect URI ?')
+      .subscribe(res => {
+        if (res) {
+          _.remove(this.logoutRedirectUris, { value: logoutRedirectUri });
+          this.logoutRedirectUris = [...this.logoutRedirectUris];
           this.formChanged = true;
         }
       });
