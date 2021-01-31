@@ -81,6 +81,7 @@ public class ApplicationOAuthSettingsMongo {
     private String authorizationSignedResponseAlg;
     private String authorizationEncryptedResponseAlg;
     private String authorizationEncryptedResponseEnc;
+    private List<String> postLogoutRedirectUris;
 
     public String getClientId() {
         return clientId;
@@ -520,5 +521,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setAuthorizationEncryptedResponseEnc(String authorizationEncryptedResponseEnc) {
         this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
+    }
+
+    public List<String> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 }

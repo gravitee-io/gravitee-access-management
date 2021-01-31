@@ -84,6 +84,10 @@ public interface Parameters {
      * This parameter enables OpenID Connect response to be passed in a single, self-contained parameter and to be optionally signed and/or encrypted.
      */
     String RESPONSE = "response";
+    /**
+     * URL to which the RP is requesting that the End-User's User Agent be redirected after a logout has been performed.
+     */
+    String POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
 
     Collection<String> values = Arrays.asList(NONCE, DISPLAY, PROMPT, MAX_AGE, UI_LOCALES, CLAIMS_LOCALES, ID_TOKEN_HINT, LOGIN_HINT, ACR_VALUES, CLAIMS,
                 REGISTRATION, REQUEST, REQUEST_URI);

@@ -188,7 +188,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(FormLoginHandler.create(userAuthProvider));
 
         // logout route
-        rootRouter.route("/logout").handler(new LogoutEndpoint(domain, tokenService, auditService));
+        rootRouter.route("/logout")
+                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService));
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager));
@@ -370,5 +371,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> errorHandler = new ErrorHandler( "/error");
         router.route("/login").failureHandler(errorHandler);
         router.route("/forgotPassword").failureHandler(errorHandler);
+        router.route("/logout").failureHandler(errorHandler);
     }
 }
