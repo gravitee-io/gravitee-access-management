@@ -45,14 +45,7 @@
     </ngx-datatable>
   </div>
 
-  <div *ngIf="!hasEnv">
-    <app-emptystate message="Domains will appear here"
-                    subMessage="But you need to create an environment before. See <a href=&quot;https://gravitee.io/products/cockpit&quot; target=&quot;_blank&quot;>https://gravitee.io/products/cockpit</a> for details"
-                    icon="domain">
-    </app-emptystate>
-  </div>
-
-  <div *ngIf="hasEnv">
+  <div>
     <app-emptystate *ngIf="isEmpty" [message]="'Domains will appear here'"
                     [subMessage]="'Start creating a domain'"
                     [icon]="'domain'"></app-emptystate>

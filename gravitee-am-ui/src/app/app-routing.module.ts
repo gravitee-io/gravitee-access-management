@@ -1970,8 +1970,8 @@ export const routes: Routes = [
   {path: 'login/callback', component: LoginCallbackComponent},
   {path: 'logout', component: LogoutComponent},
   {path: 'logout/callback', component: LogoutCallbackComponent},
-  { path: 'dummy', component: DummyComponent },
-  { path: '404', component: NotFoundComponent },
+  {path: 'dummy', component: DummyComponent},
+  {path: '404', component: NotFoundComponent},
   {path: '', component: HomeComponent},
   {path: '**', redirectTo: '404', pathMatch: 'full'}
 ];

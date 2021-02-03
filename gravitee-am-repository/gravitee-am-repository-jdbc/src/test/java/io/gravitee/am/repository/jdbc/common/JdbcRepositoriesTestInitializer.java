@@ -91,9 +91,12 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         tables.add("domain_vhosts");
         tables.add("environments");
         tables.add("environment_domain_restrictions");
+        tables.add("environment_hrids");
         tables.add("organizations");
         tables.add("organization_identities");
         tables.add("organization_domain_restrictions");
+        tables.add("organization_hrids");
+        tables.add("installations");
 
         io.r2dbc.spi.Connection connection = Flowable.fromPublisher(connectionFactory.create()).blockingFirst();
         connection.beginTransaction();

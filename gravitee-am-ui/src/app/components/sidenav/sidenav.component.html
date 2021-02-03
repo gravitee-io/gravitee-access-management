@@ -54,7 +54,7 @@
 
   <mat-list class="sidenav-list">
     <mat-list-item>
-      <a *ngIf="canDisplayOrganizationSettings()" [routerLink]="[ '/settings' ]" title="Organization settings" routerLinkActive="sidenav-active">
+      <a style="padding-left: 16px" *ngIf="canDisplayOrganizationSettings()" [routerLink]="[ '/settings' ]" title="Organization settings" routerLinkActive="sidenav-active">
         <mat-icon>settings_applications</mat-icon>
         <span *ngIf="!reducedMode">Organization settings</span>
       </a>

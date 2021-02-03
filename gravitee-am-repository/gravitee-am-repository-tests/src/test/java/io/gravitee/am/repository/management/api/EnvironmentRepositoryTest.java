@@ -55,11 +55,12 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
 
         obs.assertComplete();
         obs.assertNoErrors();
-        obs.assertValue(o -> o.getId().equals(envCreated.getId()));
-        obs.assertValue(o -> o.getName().equals(environment.getName()));
-        obs.assertValue(o -> o.getDescription().equals(environment.getDescription()));
-        obs.assertValue(o -> o.getOrganizationId().equals(environment.getOrganizationId()));
-        obs.assertValue(o -> o.getDomainRestrictions().containsAll(environment.getDomainRestrictions()));
+        obs.assertValue(e -> e.getId().equals(envCreated.getId()));
+        obs.assertValue(e -> e.getName().equals(environment.getName()));
+        obs.assertValue(e -> e.getDescription().equals(environment.getDescription()));
+        obs.assertValue(e -> e.getOrganizationId().equals(environment.getOrganizationId()));
+        obs.assertValue(e -> e.getDomainRestrictions().containsAll(environment.getDomainRestrictions()));
+        obs.assertValue(e -> e.getHrids().containsAll(environment.getHrids()));
     }
 
     @Test
@@ -69,7 +70,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testCreate() {
-        Environment env = new Environment();
+        Environment env = buildEnv();
         env.setOrganizationId(UUID.randomUUID().toString());
         env.setName("testName");
 
@@ -78,8 +79,13 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
 
         obs.assertComplete();
         obs.assertNoErrors();
-        obs.assertValue(o -> o.getName().equals(env.getName()) && o.getId() != null);
-        obs.assertValue(o -> o.getOrganizationId().equals(env.getOrganizationId()) && o.getId() != null);
+        obs.assertValue(e -> e.getName().equals(env.getName()) && e.getId() != null);
+        obs.assertValue(e -> e.getOrganizationId().equals(env.getOrganizationId()) && e.getId() != null);
+        obs.assertValue(e -> e.getName().equals(env.getName()));
+        obs.assertValue(e -> e.getDescription().equals(env.getDescription()));
+        obs.assertValue(e -> e.getOrganizationId().equals(env.getOrganizationId()));
+        obs.assertValue(e -> e.getDomainRestrictions().containsAll(env.getDomainRestrictions()));
+        obs.assertValue(e -> e.getHrids().containsAll(env.getHrids()));
     }
 
     @Test
@@ -93,14 +99,16 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         envUpdated.setOrganizationId(env.getOrganizationId());
         envUpdated.setName("testNameUpdated");
         envUpdated.setDomainRestrictions(Arrays.asList("ValueDom2", "ValueDom3", "ValueDom4"));
+        envUpdated.setHrids(Arrays.asList("Hrid2", "Hrid3", "Hrid4"));
 
         TestObserver<Environment> obs = environmentRepository.update(envUpdated).test();
         obs.awaitTerminalEvent();
 
         obs.assertComplete();
         obs.assertNoErrors();
-        obs.assertValue(o -> o.getName().equals(envUpdated.getName()) && o.getId().equals(envCreated.getId()));
-        obs.assertValue(o -> o.getDomainRestrictions().containsAll(envUpdated.getDomainRestrictions()));
+        obs.assertValue(e -> e.getName().equals(envUpdated.getName()) && e.getId().equals(envCreated.getId()));
+        obs.assertValue(e -> e.getDomainRestrictions().containsAll(envUpdated.getDomainRestrictions()));
+        obs.assertValue(e -> e.getHrids().containsAll(envUpdated.getHrids()));
     }
 
     @Test
@@ -112,6 +120,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         env.setCreatedAt(new Date());
         env.setUpdatedAt(env.getUpdatedAt());
         env.setDomainRestrictions(Arrays.asList("ValueDom1", "ValueDom2"));
+        env.setHrids(Arrays.asList("Hrid1", "Hrid2"));
 
         Environment envCreated = environmentRepository.create(env).blockingGet();
 
@@ -153,6 +162,7 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         env.setUpdatedAt(env.getUpdatedAt());
         env.setOrganizationId(UUID.randomUUID().toString());
         env.setDomainRestrictions(Arrays.asList("ValueDom1", "ValueDom2"));
+        env.setHrids(Arrays.asList("Hrid1", "Hrid2"));
         return env;
     }
 }

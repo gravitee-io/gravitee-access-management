@@ -17,10 +17,14 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEnvironment;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganization;
 import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEnvironmentDomainRestrictionRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEnvironmentHridsRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEnvironmentRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.organization.SpringOrganizationHridsRepository;
 import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -32,12 +36,12 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -50,6 +54,8 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
     private SpringEnvironmentRepository environmentRepository;
     @Autowired
     private SpringEnvironmentDomainRestrictionRepository domainRestrictionRepository;
+    @Autowired
+    private SpringEnvironmentHridsRepository hridsRepository;
 
     protected Environment toEnvironment(JdbcEnvironment entity) {
         return mapper.map(entity, Environment.class);
@@ -63,33 +69,20 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
     public Maybe<Environment> findById(String id, String organizationId) {
         LOGGER.debug("findById({},{})", id, organizationId);
 
-        Maybe<List<String>> domains = domainRestrictionRepository.findAllByEnvironmentId(id)
-                .map(JdbcEnvironment.DomainRestriction::getDomainRestriction)
-                .toList()
-                .toMaybe();
-
-        Maybe<Environment> result = environmentRepository.findByIdAndOrganization(id, organizationId)
+        return environmentRepository.findByIdAndOrganization(id, organizationId)
                 .map(this::toEnvironment)
-                .zipWith(domains, (org, dom) -> {
-                    LOGGER.debug("findById({}, {}) fetch {} domainRestrictions", id, organizationId, dom == null ? 0 : dom.size());
-                    org.setDomainRestrictions(dom);
-                    return org;
-                });
-
-        return result.doOnError((error) -> LOGGER.error("unable to retrieve Environment with id {}", id, error));
+                .flatMap(environment -> retrieveDomainRestrictions(environment).toMaybe())
+                .flatMap(environment -> retrieveHrids(environment).toMaybe());
     }
 
     @Override
     public Flowable<Environment> findAll(String organizationId) {
-        LOGGER.debug("findById({})", organizationId);
+        LOGGER.debug("findAll({})", organizationId);
 
         final Flowable<Environment> result = environmentRepository.findByOrganization(organizationId)
                 .map(this::toEnvironment)
-                .flatMapSingle(environment -> domainRestrictionRepository.findAllByEnvironmentId(environment.getId())
-                        .map(JdbcEnvironment.DomainRestriction::getDomainRestriction)
-                        .toList()
-                        .doOnSuccess(environment::setDomainRestrictions)
-                        .map(domainRestriction -> environment));
+                .flatMapSingle(this::retrieveDomainRestrictions)
+                .flatMapSingle(this::retrieveHrids);
 
         return result.doOnError((error) -> LOGGER.error("unable to retrieve Environments with organizationId {}", organizationId, error));
     }
@@ -103,96 +96,141 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
     public Maybe<Environment> findById(String id) {
         LOGGER.debug("findById({})", id);
 
-        Maybe<List<String>> domains = domainRestrictionRepository.findAllByEnvironmentId(id)
-                .map(JdbcEnvironment.DomainRestriction::getDomainRestriction)
-                .toList()
-                .toMaybe();
-
         Maybe<Environment> result = environmentRepository.findById(id)
                 .map(this::toEnvironment)
-                .zipWith(domains, (org, dom) -> {
-                    LOGGER.debug("findById({}) fetch {} domainRestrictions", id, dom == null ? 0 : dom.size());
-                    org.setDomainRestrictions(dom);
-                    return org;
-                });
+                .flatMap(environment -> retrieveDomainRestrictions(environment).toMaybe())
+                .flatMap(environment -> retrieveHrids(environment).toMaybe());
 
         return result.doOnError((error) -> LOGGER.error("unable to retrieve Environment with id {}", id, error));
     }
 
     @Override
-    public Single<Environment> create(Environment item) {
-        item.setId(item.getId() == null ? RandomString.generate() : item.getId());
-        LOGGER.debug("create Environment with id {}", item.getId());
+    public Single<Environment> create(Environment environment) {
+        environment.setId(environment.getId() == null ? RandomString.generate() : environment.getId());
+        LOGGER.debug("create Environment with id {}", environment.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> insertResult = dbClient.insert()
+        Mono<Void> insert = dbClient.insert()
                 .into(JdbcEnvironment.class)
-                .using(toJdbcEnvironment(item))
-                .fetch().rowsUpdated();
+                .using(toJdbcEnvironment(environment))
+                .then();
 
-        final List<String> domainRestrictions = item.getDomainRestrictions();
-        if (domainRestrictions != null && !domainRestrictions.isEmpty()) {
-            insertResult = insertResult.then(Flux.fromIterable(domainRestrictions).concatMap(domain -> {
-                JdbcEnvironment.DomainRestriction domainRestriction = new JdbcEnvironment.DomainRestriction();
-                domainRestriction.setDomainRestriction(domain);
-                domainRestriction.setEnvironmentId(item.getId());
-                return dbClient.insert().into(JdbcEnvironment.DomainRestriction.class).using(domainRestriction).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
-        }
+        final Mono<Void> storeDomainRestrictions = storeDomainRestrictions(environment, false);
+        final Mono<Void> storeHrids = storeHrids(environment, false);
 
-        return monoToSingle(insertResult.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create Environment with id {}", item.getId(), error));
+        return monoToSingle(insert
+                .then(storeDomainRestrictions)
+                .then(storeHrids)
+                .as(trx::transactional)
+                .then(maybeToMono(findById(environment.getId()))));
     }
 
     @Override
-    public Single<Environment> update(Environment item) {
-        LOGGER.debug("update environment with id {}", item.getId());
-        Maybe<JdbcEnvironment> existEnv = environmentRepository.findById(item.getId());
+    public Single<Environment> update(Environment environment) {
+        LOGGER.debug("update environment with id {}", environment.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        return existEnv.toSingle()
-                .flatMap((env) -> monoToSingle(updateEnvironmentFlow(item).as(trx::transactional)))
-                .flatMap((i) -> this.findById(item.getId(), item.getOrganizationId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update Environment with id {}", item.getId(), error));
+
+        // prepare the update for environment table
+        Mono<Void> update = dbClient.update()
+                .table(JdbcEnvironment.class)
+                .using(toJdbcEnvironment(environment))
+                .matching(from(where("id").is(environment.getId()))).then();
+
+        return monoToSingle(update
+                .then(storeDomainRestrictions(environment, true))
+                .then(storeHrids(environment, true))
+                .as(trx::transactional)
+                .then(maybeToMono(findById(environment.getId()))));
     }
 
-    private Mono<Integer> updateEnvironmentFlow(Environment item) {
-        // prepare the update for environment table
-        Mono<Integer> updateEnv = dbClient.update()
-                .table(JdbcEnvironment.class)
-                .using(toJdbcEnvironment(item))
-                .matching(from(where("id").is(item.getId())
-                        .and(where("organization_id").is(item.getOrganizationId()))))
-                .fetch().rowsUpdated();
+    @Override
+    public Completable delete(String environmentId) {
+        LOGGER.debug("delete environment with id {}", environmentId);
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+        Mono<Void> deleteDomainRestrictions = deleteDomainRestrictions(environmentId);
+        Mono<Void> deleteHrids = deleteHrids(environmentId);
+        Mono<Void> delete = dbClient.delete().from(JdbcEnvironment.class).matching(from(where("id").is(environmentId))).then();
 
-        // prepare the clean up of domainRestriction table
-        Mono<Integer> deleteDomain = dbClient.delete().from(JdbcEnvironment.DomainRestriction.class)
-                .matching(from(where("environment_id").is(item.getId()))).fetch().rowsUpdated();
+        return monoToCompletable(delete
+                .then(deleteDomainRestrictions)
+                .then(deleteHrids)
+                .as(trx::transactional));
+    }
 
-        // concat flows
-        updateEnv = updateEnv.then(deleteDomain);
+    private Single<Environment> retrieveDomainRestrictions(Environment environment) {
+        return domainRestrictionRepository.findAllByEnvironmentId(environment.getId())
+                .map(JdbcEnvironment.DomainRestriction::getDomainRestriction)
+                .toList()
+                .doOnSuccess(domainRestrictions -> LOGGER.debug("findById({}) fetch {} domainRestrictions", environment.getId(), domainRestrictions.size()))
+                .doOnSuccess(environment::setDomainRestrictions)
+                .map(domainRestriction -> environment);
+    }
 
-        final List<String> domainRestrictions = item.getDomainRestrictions();
+    private Single<Environment> retrieveHrids(Environment environment) {
+        return hridsRepository.findAllByEnvironmentId(environment.getId())
+                .map(JdbcEnvironment.Hrid::getHrid)
+                .toList()
+                .doOnSuccess(hrids -> LOGGER.debug("findById({}) fetch {} hrids", environment.getId(), hrids.size()))
+                .doOnSuccess(environment::setHrids)
+                .map(hrids -> environment);
+    }
+
+    private Mono<Void> storeDomainRestrictions(Environment environment, boolean deleteFirst) {
+
+        Mono<Void> delete = Mono.empty();
+
+        if (deleteFirst) {
+            delete = deleteDomainRestrictions(environment.getId());
+        }
+
+        final List<String> domainRestrictions = environment.getDomainRestrictions();
         if (domainRestrictions != null && !domainRestrictions.isEmpty()) {
             // concat flows to create domainRestrictions
-            updateEnv = updateEnv.then(Flux.fromIterable(domainRestrictions).concatMap(domain -> {
-                JdbcEnvironment.DomainRestriction domainRestriction = new JdbcEnvironment.DomainRestriction();
-                domainRestriction.setDomainRestriction(domain);
-                domainRestriction.setEnvironmentId(item.getId());
-                return dbClient.insert().into(JdbcEnvironment.DomainRestriction.class).using(domainRestriction).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            return delete.thenMany(Flux.fromIterable(domainRestrictions)
+                    .map(domainRestriction -> {
+                        JdbcEnvironment.DomainRestriction dbDomainRestriction = new JdbcEnvironment.DomainRestriction();
+                        dbDomainRestriction.setDomainRestriction(domainRestriction);
+                        dbDomainRestriction.setEnvironmentId(environment.getId());
+                        return dbDomainRestriction;
+                    })
+                    .concatMap(dbDomainRestriction -> dbClient.insert().into(JdbcEnvironment.DomainRestriction.class).using(dbDomainRestriction).then()))
+                    .ignoreElements();
         }
 
-        return updateEnv;
+        return Mono.empty();
     }
 
-    @Override
-    public Completable delete(String id) {
-        LOGGER.debug("delete environment with id {}", id);
-        TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteDomain = dbClient.delete().from(JdbcEnvironment.DomainRestriction.class).matching(from(where("environment_id").is(id))).fetch().rowsUpdated();
-        Mono<Integer> delete = dbClient.delete().from(JdbcEnvironment.class).matching(from(where("id").is(id))).fetch().rowsUpdated();
-        return monoToCompletable(delete.then(deleteDomain).as(trx::transactional))
-                .doOnError((error) -> LOGGER.error("unable to delete Environment with id {}", id, error));
+    private Mono<Void> storeHrids(Environment environment, boolean deleteFirst) {
+
+        Mono<Void> delete = Mono.empty();
+
+        if (deleteFirst) {
+            delete = deleteHrids(environment.getId());
+        }
+
+        final List<String> hrids = environment.getHrids();
+        if (hrids != null && !hrids.isEmpty()) {
+            final ArrayList<JdbcEnvironment.Hrid> dbHrids = new ArrayList<>();
+            for (int i = 0; i < hrids.size(); i++) {
+                JdbcEnvironment.Hrid hrid = new JdbcEnvironment.Hrid();
+                hrid.setEnvironmentId(environment.getId());
+                hrid.setHrid(hrids.get(i));
+                hrid.setPos(i);
+                dbHrids.add(hrid);
+            }
+            return delete.thenMany(Flux.fromIterable(dbHrids)).
+                    concatMap(hrid -> dbClient.insert().into(JdbcEnvironment.Hrid.class).using(hrid).then())
+                    .ignoreElements();
+        }
+
+        return Mono.empty();
+    }
+
+    private Mono<Void> deleteDomainRestrictions(String environmentId) {
+        return dbClient.delete().from(JdbcEnvironment.DomainRestriction.class).matching(from(where("environment_id").is(environmentId))).then();
+    }
+
+    private Mono<Void> deleteHrids(String environmentId) {
+        return dbClient.delete().from(JdbcEnvironment.Hrid.class).matching(from(where("environment_id").is(environmentId))).then();
     }
 }

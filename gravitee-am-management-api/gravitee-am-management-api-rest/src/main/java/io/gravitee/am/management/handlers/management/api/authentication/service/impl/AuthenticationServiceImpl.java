@@ -93,7 +93,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         principal.getRoles().removeAll(existingUser.getRoles());
                         existingUser.getRoles().addAll(principal.getRoles());
                     }
-                    existingUser.getAdditionalInformation().putAll(principal.getAdditionalInformation());
+                    if(existingUser.getAdditionalInformation() != null) {
+                        existingUser.getAdditionalInformation().putAll(principal.getAdditionalInformation());
+                    } else {
+                        existingUser.setAdditionalInformation(new HashMap<>(principal.getAdditionalInformation()));
+                    }
                     return userService.update(existingUser);
                 })
                 .onErrorResumeNext(ex -> {

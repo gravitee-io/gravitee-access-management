@@ -119,4 +119,44 @@ public class JdbcEnvironment {
             this.domainRestriction = domainRestriction;
         }
     }
+
+    /**
+     * Bean class to provide list of hrids of the Environment
+     */
+    @Table("environment_hrids")
+    public static class Hrid {
+
+        @Column("environment_id")
+        String environmentId;
+
+        @Column("hrid")
+        String hrid;
+
+        @Column("pos")
+        int pos;
+
+        public String getEnvironmentId() {
+            return environmentId;
+        }
+
+        public void setEnvironmentId(String environmentId) {
+            this.environmentId = environmentId;
+        }
+
+        public String getHrid() {
+            return hrid;
+        }
+
+        public void setHrid(String hrid) {
+            this.hrid = hrid;
+        }
+
+        public int getPos() {
+            return pos;
+        }
+
+        public void setPos(int pos) {
+            this.pos = pos;
+        }
+    }
 }

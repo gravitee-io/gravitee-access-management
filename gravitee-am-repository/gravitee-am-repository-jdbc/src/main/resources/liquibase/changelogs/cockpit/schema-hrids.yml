@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: cockpit-hrids
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+          # As Cockpit feature will be propably back ported on v3.5.x, we assume that if the DEFAULT organization already has an hrid, then we don't have to run this script.
+          and:
+            - sqlCheck:
+                expectedResult: 1
+                sql: SELECT COUNT(*) FROM organizations WHERE id = 'DEFAULT'
+            - sqlCheck:
+                expectedResult: 0
+                sql: SELECT COUNT(*) FROM organization_hrids WHERE organization_id = 'DEFAULT'
+      changes:
+        - sql:
+            sql: INSERT INTO organization_hrids (organization_id, hrid, pos) VALUES('DEFAULT', 'default', 0);
+        - sql:
+            sql: INSERT INTO environment_hrids (environment_id, hrid, pos) VALUES('DEFAULT', 'default', 0);

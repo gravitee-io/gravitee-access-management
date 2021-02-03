@@ -29,7 +29,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.apache.commons.lang3.tuple.Pair;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -64,11 +63,11 @@ public class CurrentUserResource extends AbstractResource {
         final Single<List<String>> platformPermissions = permissionService.findAllPermissions(authenticatedUser, ReferenceType.PLATFORM, Platform.DEFAULT)
                 .map(Permission::flatten);
 
-        Single.zip(platformPermissions, organizationPermissions, Pair::of)
-                .map(p -> {
+        Single.zip(platformPermissions, organizationPermissions,
+                (p, o) -> {
                     Set<String> allPermissions = new HashSet<>();
-                    allPermissions.addAll(p.getLeft());
-                    allPermissions.addAll(p.getRight());
+                    allPermissions.addAll(p);
+                    allPermissions.addAll(o);
                     return allPermissions;
                 })
                 .map(permissions -> {

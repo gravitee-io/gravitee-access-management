@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - property:
+      name: uuid_function
+      value: NEWID()
+      dbms: mssql
+  - property:
+      name: uuid_function
+      value: uuid()
+      dbms: mariadb, mysql
+  - property:
+      name: uuid_function
+      value: md5(random()::text || clock_timestamp()::text)::uuid
+      dbms: postgresql
+  - property:
+      name: now_function
+      value: NOW()
+      dbms: postgresql, mariadb, mysql
+  - property:
+      name: now_function
+      value: GETDATE()
+      dbms: mssql
+  - property:
+      name: false_value
+      value: false
+      dbms: postgresql, mariadb, mysql
+  - property:
+      name: false_value
+      value: 0
+      dbms: mssql
+  - property:
+      name: true_value
+      value: true
+      dbms: postgresql, mariadb, mysql
+  - property:
+      name: true_value
+      value: 1
+      dbms: mssql
+  - property:
+      name: system_field
+      value: system
+      dbms: postgresql, mssql
+  - property:
+      name: system_field
+      value: "`system`"
+      dbms: mariadb, mysql
+  - changeSet:
+      id: cockpit-schema-add-environment-permissions
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+          sqlCheck:
+            # As Cockpit feature will be propably back ported on v3.5.x, we assume that if the 'ENVIRONMENT_OWNER' role already exists it means
+            # that we come from v3.5.x with Cockpit feature and we don't have to run this script.
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM roles WHERE name = 'ENVIRONMENT_OWNER' AND reference_type = 'ORGANIZATION' AND reference_id = 'DEFAULT'
+      changes:
+        - sql:
+            sql: "INSERT INTO roles (id, name, description, reference_type, reference_id, assignable_type, ${system_field}, default_role, permission_acls, created_at, updated_at) SELECT ${uuid_function} as id, 'ENVIRONMENT_OWNER', null, 'ORGANIZATION', 'DEFAULT', 'ENVIRONMENT', ${false_value}, ${true_value}, '{\"DOMAIN\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_UMA\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_FLOW\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_FORM\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_ROLE\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_SCIM\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_USER\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"ENVIRONMENT\": [\"READ\"], \"DOMAIN_AUDIT\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_GROUP\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_SCOPE\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_FACTOR\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_MEMBER\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_OPENID\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_REPORTER\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_SETTINGS\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_FORM\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_ANALYTICS\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_UMA_SCOPE\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_FACTOR\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_MEMBER\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_OPENID\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_CERTIFICATE\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_RESOURCE\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_SETTINGS\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_ANALYTICS\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_EMAIL_TEMPLATE\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_EXTENSION_GRANT\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_EXTENSION_POINT\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_CERTIFICATE\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"DOMAIN_IDENTITY_PROVIDER\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_EMAIL_TEMPLATE\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"], \"APPLICATION_IDENTITY_PROVIDER\": [\"LIST\", \"CREATE\", \"READ\", \"UPDATE\", \"DELETE\"]}', ${now_function}, ${now_function};"
+        - sql:
+            sql: "INSERT INTO roles (id, name, description, reference_type, reference_id, assignable_type, ${system_field}, default_role, permission_acls, created_at, updated_at) SELECT ${uuid_function} as id, 'ENVIRONMENT_USER', null, 'ORGANIZATION', 'DEFAULT', 'ENVIRONMENT', ${false_value}, ${true_value}, '{\"DOMAIN\": [\"LIST\"], \"ENVIRONMENT\": [\"READ\"]}', ${now_function}, ${now_function};"
+        - sql:
+            sql: "UPDATE roles SET permission_acls = '{\"DOMAIN\": [\"LIST\"], \"ORGANIZATION\": [\"READ\"], \"ORGANIZATION_TAG\": [\"LIST\"], \"ORGANIZATION_ROLE\": [\"LIST\"], \"ORGANIZATION_GROUP\": [\"LIST\"], \"ENVIRONMENT\": [\"LIST\"]}', updated_at = ${now_function} WHERE name = 'ORGANIZATION_USER' AND reference_type = 'ORGANIZATION' AND reference_id = 'DEFAULT';"
