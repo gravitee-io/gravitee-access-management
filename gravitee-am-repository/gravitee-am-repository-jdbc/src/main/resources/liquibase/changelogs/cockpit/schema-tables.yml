@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: cockpit-tables
+      author: GraviteeSource Team
+      preConditions:
+        # As Cockpit feature will be propably back ported on v3.5.x, we assume that if the table 'installations' already exists it means
+        # that we come from v3.5.x with Cockpit feature and we don't have to run this script.
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: installations
+      changes:
+        - createTable:
+            tableName: organization_hrids
+            columns:
+              - column: { name: organization_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: hrid, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: pos, type: integer, constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_organization_hrids
+            columnNames: organization_id, hrid
+            tableName: organization_hrids
+
+        - createTable:
+            tableName: environment_hrids
+            columns:
+              - column: { name: environment_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: hrid, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: pos, type: integer, constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_environment_hrids
+            columnNames: environment_id, hrid
+            tableName: environment_hrids
+
+        - createTable:
+            tableName: installations
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: additional_information, type: clob, constraints: { nullable: true } }
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE installations ALTER additional_information TYPE JSON USING additional_information::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE installations MODIFY additional_information JSON;

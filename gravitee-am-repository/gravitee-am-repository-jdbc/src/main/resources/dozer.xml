@@ -144,4 +144,15 @@
             <a-hint>java.util.Set</a-hint>
         </field>
     </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.Installation</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcInstallation</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
+            <a>additionalInformation</a>
+            <b>additionalInformation</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.Map</a-hint>
+        </field>
+    </mapping>
 </mappings>

@@ -45,6 +45,7 @@ public class OrganisationRepositoryTest extends AbstractManagementTest {
         organization.setUpdatedAt(organization.getUpdatedAt());
         organization.setIdentities(Arrays.asList("ValueIdp1", "ValueIdp2"));
         organization.setDomainRestrictions(Arrays.asList("ValueDom1", "ValueDom2"));
+        organization.setHrids(Arrays.asList("Hrid1", "Hrid2"));
 
         // TODO: find another way to inject data in DB. Avoid to rely on class under test for that.
         Organization organizationCreated = organizationRepository.create(organization).blockingGet();
@@ -59,6 +60,7 @@ public class OrganisationRepositoryTest extends AbstractManagementTest {
         obs.assertValue(o -> o.getDescription().equals(organization.getDescription()));
         obs.assertValue(o -> o.getIdentities().containsAll(organization.getIdentities()));
         obs.assertValue(o -> o.getDomainRestrictions().containsAll(organization.getDomainRestrictions()));
+        obs.assertValue(o -> o.getHrids().containsAll(organization.getHrids()));
     }
 
     @Test
@@ -92,6 +94,7 @@ public class OrganisationRepositoryTest extends AbstractManagementTest {
         organization.setUpdatedAt(organization.getUpdatedAt());
         organization.setIdentities(Arrays.asList("ValueIdp1", "ValueIdp2"));
         organization.setDomainRestrictions(Arrays.asList("ValueDom1", "ValueDom2"));
+        organization.setHrids(Arrays.asList("Hrid1", "Hrid2"));
 
         Organization organizationCreated = organizationRepository.create(organization).blockingGet();
 
@@ -100,6 +103,7 @@ public class OrganisationRepositoryTest extends AbstractManagementTest {
         organizationUpdated.setName("testNameUpdated");
         organizationUpdated.setIdentities(Arrays.asList("ValueIdp3", "ValueIdp4"));
         organizationUpdated.setDomainRestrictions(Arrays.asList("ValueDom2", "ValueDom3", "ValueDom4"));
+        organizationUpdated.setHrids(Arrays.asList("Hrid2", "Hrid3", "Hrid4"));
 
         TestObserver<Organization> obs = organizationRepository.update(organizationUpdated).test();
         obs.awaitTerminalEvent();
@@ -109,6 +113,7 @@ public class OrganisationRepositoryTest extends AbstractManagementTest {
         obs.assertValue(o -> o.getName().equals(organizationUpdated.getName()) && o.getId().equals(organizationCreated.getId()));
         obs.assertValue(o -> o.getIdentities().containsAll(organizationUpdated.getIdentities()));
         obs.assertValue(o -> o.getDomainRestrictions().containsAll(organizationUpdated.getDomainRestrictions()));
+        obs.assertValue(o -> o.getHrids().containsAll(organizationUpdated.getHrids()));
     }
 
     @Test
@@ -120,6 +125,7 @@ public class OrganisationRepositoryTest extends AbstractManagementTest {
         organization.setUpdatedAt(organization.getUpdatedAt());
         organization.setIdentities(Arrays.asList("ValueIdp1", "ValueIdp2"));
         organization.setDomainRestrictions(Arrays.asList("ValueDom1", "ValueDom2"));
+        organization.setHrids(Arrays.asList("Hrid1", "Hrid2"));
 
         Organization organizationCreated = organizationRepository.create(organization).blockingGet();
 

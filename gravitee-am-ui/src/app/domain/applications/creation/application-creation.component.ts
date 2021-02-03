@@ -27,12 +27,13 @@ import {SnackbarService} from '../../../services/snackbar.service';
 export class ApplicationCreationComponent implements OnInit {
   public application: any = {};
   private domainId: string;
-  @ViewChild('stepper', { static: true }) stepper: MatStepper;
+  @ViewChild('stepper', {static: true}) stepper: MatStepper;
 
   constructor(private applicationService: ApplicationService,
               private snackbarService: SnackbarService,
               private router: Router,
-              private route: ActivatedRoute) { }
+              private route: ActivatedRoute) {
+  }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.params['domainId'];

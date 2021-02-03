@@ -105,9 +105,12 @@ public abstract class AbstractJdbcTest {
             tables.add("domain_vhosts");
             tables.add("environments");
             tables.add("environment_domain_restrictions");
+            tables.add("environment_hrids");
             tables.add("organizations");
             tables.add("organization_identities");
             tables.add("organization_domain_restrictions");
+            tables.add("organization_hrids");
+            tables.add("installations");
 
             Connection connection = Flowable.fromPublisher(cnxFact.create()).blockingFirst();
             connection.beginTransaction();

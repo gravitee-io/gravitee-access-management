@@ -136,4 +136,44 @@ public class JdbcOrganization {
             this.domainRestriction = domainRestriction;
         }
     }
+
+    /**
+     * Bean class to provide list of hrids of the Organization
+     */
+    @Table("organization_hrids")
+    public static class Hrid {
+
+        @Column("organization_id")
+        String organizationId;
+
+        @Column("hrid")
+        String hrid;
+
+        @Column("pos")
+        int pos;
+
+        public String getOrganizationId() {
+            return organizationId;
+        }
+
+        public void setOrganizationId(String organizationId) {
+            this.organizationId = organizationId;
+        }
+
+        public String getHrid() {
+            return hrid;
+        }
+
+        public void setHrid(String hrid) {
+            this.hrid = hrid;
+        }
+
+        public int getPos() {
+            return pos;
+        }
+
+        public void setPos(int pos) {
+            this.pos = pos;
+        }
+    }
 }

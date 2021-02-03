@@ -52,7 +52,7 @@ public class EnvironmentsResource extends AbstractResource {
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create or update an environment",
+    @ApiOperation(value = "List all the environments",
             notes = "User must have the ENVIRONMENT[LIST] permission on the specified organization " +
                     "AND either ENVIRONMENT[READ] permission on each environment " +
                     "or ENVIRONMENT[READ] permission on the specified organization." +
@@ -83,6 +83,7 @@ public class EnvironmentsResource extends AbstractResource {
         Environment filteredEnvironment = new Environment();
         filteredEnvironment.setId(environment.getId());
         filteredEnvironment.setName(environment.getName());
+        filteredEnvironment.setDescription(environment.getDescription());
         filteredEnvironment.setDomainRestrictions(environment.getDomainRestrictions());
         filteredEnvironment.setHrids(environment.getHrids());
 
