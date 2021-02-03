@@ -48,7 +48,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.PRNG;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.webauthn.Authenticator;
 import io.vertx.ext.auth.webauthn.AuthenticatorTransport;
 import io.vertx.ext.auth.webauthn.impl.CBOR;
 import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
@@ -530,6 +529,8 @@ public class WebAuthnImpl implements WebAuthn {
             // Create new authenticator record and store counter, credId and publicKey in the DB
             return new JsonObject()
                     .put("fmt", fmt)
+                    .put("aaguid", authData.getAaguidString())
+                    .put("attStmt", String.valueOf(attestation.getValue("attStmt")))
                     .put("publicKey", b64enc.encodeToString(authData.getCredentialPublicKey()))
                     .put("counter", authData.getSignCounter())
                     .put("credID", b64enc.encodeToString(authData.getCredentialId()));

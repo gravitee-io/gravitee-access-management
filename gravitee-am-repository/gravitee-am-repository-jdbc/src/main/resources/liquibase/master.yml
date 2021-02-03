@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v3_5_0/schema.yml
+  - include:
+      - file: liquibase/changelogs/v3_5_2/schema.yml

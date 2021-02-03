@@ -293,6 +293,7 @@ public class Application implements Resource {
                 client.setAuthorizationEncryptedResponseAlg(oAuthSettings.getAuthorizationEncryptedResponseAlg());
                 client.setAuthorizationEncryptedResponseEnc(oAuthSettings.getAuthorizationEncryptedResponseEnc());
                 client.setForcePKCE(oAuthSettings.isForcePKCE());
+                client.setPostLogoutRedirectUris(oAuthSettings.getPostLogoutRedirectUris());
             }
 
             if (applicationSettings.getAdvanced() != null) {

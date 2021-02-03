@@ -45,6 +45,12 @@ public class JdbcCredential {
     @Column("public_key")
     private String publicKey;
     private long counter;
+    @Column("aaguid")
+    private String aaguid;
+    @Column("att_stmt_fmt")
+    private String attestationStatementFormat;
+    @Column("att_stmt")
+    private String attestationStatement;
     @Column("created_at")
     private LocalDateTime createdAt;
     @Column("updated_at")
@@ -116,6 +122,30 @@ public class JdbcCredential {
         this.counter = counter;
     }
 
+    public String getAaguid() {
+        return aaguid;
+    }
+
+    public void setAaguid(String aaguid) {
+        this.aaguid = aaguid;
+    }
+
+    public String getAttestationStatementFormat() {
+        return attestationStatementFormat;
+    }
+
+    public void setAttestationStatementFormat(String attestationStatementFormat) {
+        this.attestationStatementFormat = attestationStatementFormat;
+    }
+
+    public String getAttestationStatement() {
+        return attestationStatement;
+    }
+
+    public void setAttestationStatement(String attestationStatement) {
+        this.attestationStatement = attestationStatement;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -155,4 +185,6 @@ public class JdbcCredential {
     public void setAccessedAt(LocalDateTime accessedAt) {
         this.accessedAt = accessedAt;
     }
+
+
 }
