@@ -245,8 +245,8 @@ public class JdbcDomain {
 
         String path;
 
-        @Column("override_endpoints")
-        boolean overrideEndpoint;
+        @Column("override_entrypoint")
+        boolean overrideEntrypoint;
 
         public String getDomainId() {
             return domainId;
@@ -272,12 +272,12 @@ public class JdbcDomain {
             this.path = path;
         }
 
-        public boolean isOverrideEndpoint() {
-            return overrideEndpoint;
+        public boolean isOverrideEntrypoint() {
+            return overrideEntrypoint;
         }
 
-        public void setOverrideEndpoint(boolean overrideEndpoint) {
-            this.overrideEndpoint = overrideEndpoint;
+        public void setOverrideEntrypoint(boolean overrideEntrypoint) {
+            this.overrideEntrypoint = overrideEntrypoint;
         }
     }
 

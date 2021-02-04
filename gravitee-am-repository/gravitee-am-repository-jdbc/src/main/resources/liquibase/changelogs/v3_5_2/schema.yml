@@ -13,3 +13,10 @@ databaseChangeLog:
               - column: {name: att_stmt_fmt, type: nvarchar(64), constraints: { nullable: true } }
               - column: {name: att_stmt, type: clob, constraints: { nullable: true } }
 
+        # Domains
+        ###############
+        - renameColumn:
+            tableName: domain_vhosts
+            columnDataType: boolean
+            oldColumnName: override_endpoints
+            newColumnName: override_entrypoint
