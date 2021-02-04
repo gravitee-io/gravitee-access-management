@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn.store;
 
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -26,7 +30,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.webauthn.Authenticator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +47,10 @@ public class RepositoryCredentialStore {
     private CredentialService credentialService;
 
     @Autowired
+    @Qualifier("managementJwtBuilder")
+    private JWTBuilder jwtBuilder;
+
+    @Autowired
     private Domain domain;
 
     public Future<List<Authenticator>> fetch(Authenticator query) {
@@ -51,7 +61,32 @@ public class RepositoryCredentialStore {
                 credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), query.getCredID());
 
         fetchCredentials
-                .map(credentials -> credentials.stream().map(this::convert).collect(Collectors.toList()))
+                .flatMap(credentials -> {
+                    if (credentials.isEmpty() && query.getUserName() != null) {
+                        // If, when initiating an authentication ceremony, there is no account matching the provided username,
+                        // continue the ceremony by invoking navigator.credentials.get() using a syntactically valid
+                        // PublicKeyCredentialRequestOptions object that is populated with plausible imaginary values.
+                        // Prevent 14.6.2. Username Enumeration (https://www.w3.org/TR/webauthn-2/#sctn-username-enumeration)
+                        return Single.zip(
+                                generateCredID(query.getUserName(), Claims.sub),
+                                generateCredID(query.getUserName(), StandardClaims.PREFERRED_USERNAME), (part1, part2) -> {
+                                    Authenticator authenticator = new Authenticator();
+                                    authenticator.setUserName(query.getUserName());
+                                    String credID = part2 + part1;
+                                    if (credID.length() > 86) {
+                                        // 86 characters is the length of a CredID for some devices
+                                        credID = credID.substring(0, 86);
+                                    }
+                                    authenticator.setCredID(credID);
+                                    return Collections.singletonList(authenticator);
+                                });
+                    } else {
+                        return Single.just(credentials
+                                .stream()
+                                .map(this::convert)
+                                .collect(Collectors.toList()));
+                    }
+                })
                 .subscribe(
                         authenticators -> promise.complete(authenticators),
                         error -> promise.fail(error)
@@ -105,5 +140,12 @@ public class RepositoryCredentialStore {
         authenticator.setPublicKey(credential.getPublicKey());
 
         return authenticator;
+    }
+
+    private Single<String> generateCredID(String username, String claim) {
+        return Single.create(emitter -> {
+            String credID = jwtBuilder.sign(new JWT(Collections.singletonMap(claim, username))).split("\\.")[2];
+            emitter.onSuccess(credID);
+        });
     }
 }

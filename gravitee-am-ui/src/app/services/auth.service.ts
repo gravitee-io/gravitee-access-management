@@ -114,4 +114,10 @@ export class AuthService {
   applicationPermissionsLoaded(): boolean {
     return this.applicationPermissions != null;
   }
+
+  subscribeNewsletter(email): Observable<any>  {
+    return this.http.post<any>(this.userInfoUrl + '/subscribeNewsletter', {
+      'email': email
+    });
+  }
 }

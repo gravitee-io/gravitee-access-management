@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.management.handlers.management.api.model;
 
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailService {
+public class EmailValue {
 
-    void send(Domain domain, Application client, Template template, User user);
+    @NotNull
+    private String email;
 
-    io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, User user);
-
-    default void send(Domain domain, Template template, User user) {
-        send(domain, null, template, user);
+    public String getEmail() {
+        return email;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
 }

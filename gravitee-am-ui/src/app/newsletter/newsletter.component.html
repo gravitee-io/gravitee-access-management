@@ -15,14 +15,6 @@
     limitations under the License.
 
 -->
-<mat-sidenav-container>
-  <mat-sidenav *ngIf="displaySidenav()" mode="side" opened="true" class="main-sidenav">
-    <gv-sidenav></gv-sidenav>
-  </mat-sidenav>
-  <mat-sidenav-content [ngClass]="{'gs-sidenav-content-min': reducedMode}">
-    <gv-navbar *ngIf="displayNavbar()"></gv-navbar>
-    <div class="main-content">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+<div class="newsletter-subscription-page">
+  <gv-newsletter-subscription #newsletter [email]="email"></gv-newsletter-subscription>
+</div>

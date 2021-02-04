@@ -132,6 +132,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
         principal.getAdditionalInformation().put(Claims.organization, endUser.getReferenceId());
         principal.getAdditionalInformation().put("login_count", endUser.getLoginsCount());
+        principal.getAdditionalInformation().computeIfAbsent(StandardClaims.EMAIL, val -> endUser.getEmail());
 
         // set roles
         Set<String> roles = endUser.getRoles() != null ? new HashSet<>(endUser.getRoles()) : new HashSet<>();

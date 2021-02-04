@@ -106,7 +106,7 @@ public class SecurityConfiguration {
         protected void configure(HttpSecurity http) throws Exception {
 
             http.requestMatchers()
-                .antMatchers("/auth/authorize", "/auth/login", "/auth/cockpit", "/auth/login/callback", "/auth/logout", "/auth/completeProfile", "/auth/assets/**")
+                .antMatchers("/auth/authorize", "/auth/login", "/auth/cockpit", "/auth/login/callback", "/auth/logout", "/auth/assets/**")
                 .and()
             .authorizeRequests()
                 .antMatchers("/auth/login", "/auth/assets/**", "/auth/cockpit").permitAll()
@@ -174,7 +174,7 @@ public class SecurityConfiguration {
         protected void configure(HttpSecurity http) throws Exception {
 
             http.requestMatchers()
-                    .antMatchers("/organizations/**", "/user", "/platform/**")
+                    .antMatchers("/organizations/**", "/user/**", "/platform/**")
                     .and()
                 .sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

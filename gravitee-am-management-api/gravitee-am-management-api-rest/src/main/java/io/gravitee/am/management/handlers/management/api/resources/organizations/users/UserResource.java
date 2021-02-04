@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
-import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
-import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
@@ -25,14 +23,9 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
-import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -62,16 +55,7 @@ public class UserResource extends AbstractResource {
     private UserService userService;
 
     @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private IdentityProviderService identityProviderService;
-
-    @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
-    private PasswordValidator passwordValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

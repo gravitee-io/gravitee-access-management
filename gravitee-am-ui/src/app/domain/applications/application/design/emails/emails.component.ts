@@ -65,12 +65,16 @@ export class ApplicationEmailsComponent {
       return this.application.type !== 'service';
     }
     if (this.application.settings && this.application.settings.oauth && this.application.settings.oauth.grantTypes) {
-      return this.application.settings.oauth.grantTypes.includes('authorization_code') || this.application.settings.oauth.grantTypes.includes("implicit");
+      return this.application.settings.oauth.grantTypes.includes('authorization_code') ||
+        this.application.settings.oauth.grantTypes.includes('implicit');
     }
     return false;
   }
 
   allowResetPassword() {
+    if (this.application.settings && this.application.settings.login && !this.application.settings.login.inherited) {
+      return this.application.settings.login.forgotPasswordEnabled;
+    }
     return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
   }
 }
