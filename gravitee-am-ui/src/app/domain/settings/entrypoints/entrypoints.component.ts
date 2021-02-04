@@ -20,9 +20,6 @@ import {DomainService} from '../../../services/domain.service';
 import {DialogService} from '../../../services/dialog.service';
 import {SnackbarService} from '../../../services/snackbar.service';
 import {AuthService} from '../../../services/auth.service';
-import {FormControl} from "@angular/forms";
-import {Observable} from 'rxjs';
-import {map, startWith} from "rxjs/operators";
 
 @Component({
   selector: 'app-general',
@@ -36,10 +33,8 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   entrypoint: any;
   readonly = false;
   switchModeLabel: string;
-  hostControl: FormControl = new FormControl();
   domainRestrictions: string[];
   domainRegexList: RegExp[] = [];
-  hostOptions: Observable<string[]>;
   hostPattern: string;
 
   constructor(private domainService: DomainService,
@@ -69,13 +64,13 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     }
 
     if (this.domainRestrictions.length === 0) {
-      this.hostPattern = '^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}$';
+      this.hostPattern = '^(?:(?!-|[^.]+_)[A-Za-z0-9-_]{1,63}(?<!-)(?:\\.|((?:\\:[0-9]{1,5})?|$)))+$'
     } else {
-      this.hostPattern = '^' + this.domainRestrictions.map(value => '((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)?' + value).join('$|') + '$';
+      this.hostPattern = '^' + this.domainRestrictions.map(value => '((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)?' + value).join('|') + '(?:\\.|((?:\\:[0-9]{1,5})?|$))+$';
     }
 
     // Prepare host regex (used to assist user when specifying an host).
-    this.domainRestrictions.forEach(hostOption => this.domainRegexList.push(new RegExp('\\.?' + hostOption, 'i')));
+    this.domainRestrictions.forEach(hostOption => this.domainRegexList.push(new RegExp('\\.?' + hostOption + "$", 'i')));
   }
 
   update() {
@@ -88,7 +83,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   }
 
   switchMode() {
-    this.domain.vhostMode = !this.domain.vhostMode
+    this.domain.vhostMode = !this.domain.vhostMode;
     this.changeSwitchModeLabel();
     this.formChanged = true;
   }
@@ -121,39 +116,27 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   }
 
   getHostOptions(host: string): string[] {
-    this.domainRegexList.forEach(regex => host = host.replace(regex, ''));
 
-    if (host !== '' && !this.domainRestrictions.includes(host)) {
-      return this.domainRestrictions.map(domain => host + '.' + domain);
+    if (host !== '') {
+      let hostAndPort = host.split(':');
+      let finalHost = hostAndPort[0];
+      let finalPort = '';
+
+      if (hostAndPort.length > 1) {
+        finalPort = ':' + hostAndPort[1];
+      }
+
+      this.domainRegexList.forEach(regex => finalHost = finalHost.replace(regex, ''));
+
+      if (!this.domainRestrictions.includes(finalHost)) {
+        if(finalHost === '') {
+          return this.domainRestrictions.map(domain => domain + finalPort);
+        }
+        return this.domainRestrictions.map(domain => finalHost + '.' + domain + finalPort);
+      }
     }
 
     return this.domainRestrictions;
-  }
-
-  focus(input: HTMLInputElement) {
-    if (this.domainRestrictions.includes(input.value) && !input.value.startsWith('.')) {
-      input.value = '.' + input.value
-    }
-
-    for (let i = 0; i < this.domainRegexList.length; i++) {
-      let match = input.value.match(this.domainRegexList[i]);
-
-      if (match) {
-        let index = input.value.indexOf(match[0]);
-        input.setSelectionRange(index, index, 'none');
-        break;
-      }
-    }
-  }
-
-  unfocus(vhost : any, input: HTMLInputElement) {
-    if(input.value.startsWith('.')) {
-      input.value = input.value.replace('.', '');
-    }
-
-    if(vhost.host.startsWith('.')) {
-      vhost.host = vhost.host.replace('.', '');
-    }
   }
 
   hostSelected(input: HTMLInputElement) {
