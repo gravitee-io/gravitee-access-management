@@ -59,6 +59,9 @@ export class ApplicationComponent implements OnInit {
     if (!this.canDisplay(['application_email_template_list', 'application_email_template_read', 'application_form_list', 'application_form_read'])) {
       _.remove(this.navLinks, { href: 'design' });
     }
+    if (!this.canDisplay(['application_analytics_list'])) {
+      _.remove(this.navLinks, { href: 'analytics' });
+    }
     if (!this.canDisplay(['application_settings_read'])
       && !this.canDisplay(['application_oauth_read'])
       && !this.canDisplay(['application_certificate_list'])
