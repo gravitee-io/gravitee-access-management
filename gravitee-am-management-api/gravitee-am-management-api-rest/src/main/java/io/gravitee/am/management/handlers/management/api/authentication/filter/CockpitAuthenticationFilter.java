@@ -24,10 +24,12 @@ import io.gravitee.am.jwt.DefaultJWTParser;
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
+import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.RoleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,6 +95,9 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
     @Autowired
     private AuthenticationService authenticationService;
 
+    @Autowired
+    private EnvironmentService environmentService;
+
     private JWTParser jwtParser;
 
     @Override
@@ -125,9 +130,16 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
                     UsernamePasswordAuthenticationToken authentication = convertToAuthentication(jwt);
                     User principal = authenticationService.onAuthenticationSuccess(authentication);
 
+                    final Environment environment = environmentService.findById((String) jwt.get(Claims.environment), (String) jwt.get(Claims.organization)).blockingGet();
+                    String redirectPath = "";
+
+                    if(environment != null) {
+                        redirectPath = "/environments/"+ environment.getHrids().get(0);
+                    }
+
                     Cookie jwtAuthenticationCookie = jwtGenerator.generateCookie(principal);
                     httpResponse.addCookie(jwtAuthenticationCookie);
-                    httpResponse.sendRedirect((String) jwt.get("redirect_uri"));
+                    httpResponse.sendRedirect((String) jwt.get("redirect_uri") + redirectPath);
                 } catch (Exception e) {
                     LOGGER.error("Error occurred when trying to login using cockpit.", e);
                     httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);

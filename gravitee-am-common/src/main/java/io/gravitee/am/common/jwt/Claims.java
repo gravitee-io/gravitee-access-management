@@ -74,6 +74,11 @@ public interface Claims {
     String organization = "org";
 
     /**
+     * The "env" (environment) claim identifies the environment that the JWT is intended for.
+     */
+    String environment = "env";
+
+    /**
      * The claims parameter used to request that specific Claims be returned
      */
     String claims = "claims_request_parameter";

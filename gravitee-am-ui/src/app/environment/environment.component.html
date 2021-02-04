@@ -1,0 +1,29 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div *ngIf="!isLoading" class="environment-container">
+  <div class="environment-content">
+    <div class="environment-content-header">Integrate authentication and authorization to secure access for your applications and APIs.</div>
+    <div class="environment-content-description">
+      Identity and Access Management Platform will let you create applications, register users and manage identity providers to provide centralize authentication, authorization and user management features.
+    </div>
+    <div class="environment-content-actions">
+      <a mat-raised-button color="primary" [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', 'new']" [disabled]="readonly">Create a Security Domain</a>
+      <span *ngIf="readonly">There is not enough permission, ask for support or wait for invitation to collaborate.</span>
+    </div>
+  </div>
+</div>

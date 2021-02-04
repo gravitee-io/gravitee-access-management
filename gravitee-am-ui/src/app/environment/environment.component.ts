@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {DomainService} from '../services/domain.service';
 import {AuthService} from '../services/auth.service';
@@ -23,12 +23,13 @@ import {EnvironmentService} from "../services/environment.service";
 
 @Component({
   selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  templateUrl: './environment.component.html',
+  styleUrls: ['./environment.component.scss']
 })
-export class HomeComponent implements OnInit {
+export class EnvironmentComponent implements OnInit, OnDestroy {
   readonly: boolean = true;
-  isLoading = true;
+  isLoading: boolean = true;
+  hasDomain: boolean = false;
   currentEnvironment: any;
   subscription: Subscription;
 
@@ -43,23 +44,23 @@ export class HomeComponent implements OnInit {
   ngOnInit() {
     this.subscription = this.environmentService.currentEnvironmentObs$.subscribe(environment => {
       this.currentEnvironment = environment;
-      this.initDomain(environment);
+      this.initDomains();
     });
   }
 
   ngOnDestroy() {
-    this.subscription.unsubscribe();
   }
 
-  initDomain(environment: any) {
-    if (this.hasCurrentEnvironment()) {
-      this.router.navigate(['environments', environment.hrids[0]], { relativeTo: this.route});
-    } else {
-      this.isLoading = false;
-    }
-  }
-
-  private hasCurrentEnvironment(): boolean {
-    return this.currentEnvironment && this.currentEnvironment !== EnvironmentService.NO_ENVIRONMENT;
+  initDomains() {
+    // redirect user to the first domain, if any.
+    this.domainService.list().subscribe(response => {
+      if (response && response.length > 0) {
+        this.router.navigate(['domains', response[0].id], {relativeTo: this.route});
+      } else {
+        this.isLoading = false;
+        this.readonly = !this.authService.hasPermissions(['domain_create']);
+        this.navbarService.notifyDomain({});
+      }
+    });
   }
 }
