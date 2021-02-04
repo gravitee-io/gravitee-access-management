@@ -1,0 +1,35 @@
+.environment-container {
+  margin: 100px 0px 0px 150px;
+  .environment-content {
+    .environment-content-header {
+      width: 600px;
+      color: #000;
+      margin-bottom: 32px;
+      text-align: left;
+      font-weight: 500;
+      font-size: 40px;
+      line-height: 48px;
+      white-space: pre-wrap;
+    }
+    .environment-content-description {
+      width: 676px;
+      font-size: 16px;
+      line-height: 26px;
+      color: #000;
+      margin-bottom: 32px;
+      text-align: left;
+      font-weight: 400;
+    }
+    .environment-content-actions {
+      button {
+        min-width: 100px;
+      }
+      span {
+        color: #637282;
+        margin-left: 8px;
+        font-size: small;
+        font-style: italic;
+      }
+    }
+  }
+}

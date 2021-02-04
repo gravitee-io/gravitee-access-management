@@ -300,6 +300,7 @@ import {map, mergeMap} from "rxjs/operators";
 import {CockpitComponent} from "./settings/cockpit/cockpit.component";
 import {InstallationResolver} from "./resolvers/installation.resolver";
 import {InstallationService} from "./services/installation.service";
+import {EnvironmentComponent} from "./environment/environment.component";
 
 @NgModule({
   declarations: [
@@ -477,7 +478,8 @@ import {InstallationService} from "./services/installation.service";
     UmaComponent,
     LoginSettingsComponent,
     UsersSearchInfoDialog,
-    UserHistoryComponent
+    UserHistoryComponent,
+    EnvironmentComponent,
   ],
   imports: [
     BrowserModule,

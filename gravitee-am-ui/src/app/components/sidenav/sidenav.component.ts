@@ -85,10 +85,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
   switchEnvironment($event: MatSelectChange) {
     this.environmentService.setCurrentEnvironment($event.value);
-
-    if (this.router.url !== '/') {
-      this.router.navigate(["/"]);
-    }
+    this.router.navigate(['/', 'environments', $event.value.hrids[0]]);
   }
 
   canDisplayEnvironments(): boolean {
@@ -96,6 +93,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
   }
 
   canDisplayOrganizationSettings(): boolean {
-    return !this.router.url.startsWith('/settings') && this.authService.hasPermissions([ 'organization_settings_read' ]);
+    return !this.router.url.startsWith('/settings') && this.authService.hasPermissions(['organization_settings_read']);
   }
 }

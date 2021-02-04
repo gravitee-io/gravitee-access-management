@@ -177,6 +177,7 @@ import {EnvironmentResolver} from "./resolvers/environment-resolver.service";
 import {DummyComponent} from "./components/dummy/dummy.component";
 import {CockpitComponent} from "./settings/cockpit/cockpit.component";
 import {InstallationResolver} from "./resolvers/installation.resolver";
+import {EnvironmentComponent} from "./environment/environment.component";
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -648,6 +649,7 @@ export const routes: Routes = [
     children: [
       {
         path: ':envHrid',
+        canActivate: [AuthGuard],
         data: {
           breadcrumb: {
             disabled: true
@@ -657,6 +659,11 @@ export const routes: Routes = [
           environment: EnvironmentResolver,
         },
         children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            component: EnvironmentComponent,
+          },
           {
             path: 'domains',
             canActivate: [AuthGuard],
@@ -1981,6 +1988,7 @@ export const routes: Routes = [
     paramsInheritanceStrategy: 'always',
     scrollPositionRestoration: 'top',
     relativeLinkResolution: 'corrected',
+    onSameUrlNavigation: 'reload',
   })],
   exports: [RouterModule]
 })
