@@ -26,6 +26,7 @@ import io.gravitee.cockpit.api.command.hello.HelloCommand;
 import io.gravitee.cockpit.api.command.hello.HelloReply;
 import io.gravitee.node.api.Node;
 import io.reactivex.Single;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,6 +35,15 @@ import org.springframework.stereotype.Component;
  */
 @Component("cockpitHelloCommandProducer")
 public class HelloCommandProducer implements CommandProducer<HelloCommand, HelloReply> {
+
+    private static final String API_URL = "API_URL";
+    private static final String UI_URL = "UI_URL";
+
+    @Value("${console.api.url:http://localhost:8093/management}")
+    private String apiURL;
+
+    @Value("${console.ui.url:http://localhost:4200}")
+    private String uiURL;
 
     private final Node node;
     private final InstallationService installationService;
@@ -55,6 +65,8 @@ public class HelloCommandProducer implements CommandProducer<HelloCommand, Hello
             command.getPayload().getNode().setInstallationId(installation.getId());
             command.getPayload().getNode().setHostname(node.hostname());
             command.getPayload().getAdditionalInformation().putAll(installation.getAdditionalInformation());
+            command.getPayload().getAdditionalInformation().put(API_URL, apiURL);
+            command.getPayload().getAdditionalInformation().put(UI_URL, uiURL);
             command.getPayload().setDefaultOrganizationId(Organization.DEFAULT);
             command.getPayload().setDefaultEnvironmentId(Environment.DEFAULT);
 

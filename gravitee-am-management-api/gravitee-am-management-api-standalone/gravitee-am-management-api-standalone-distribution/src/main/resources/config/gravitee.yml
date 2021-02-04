@@ -271,6 +271,13 @@ gateway:
 #cockpit:
 #  url: https://cockpit.gravitee.io
 
+# Specify the URL of the Management API and UI of this instance, mandatory if you want to connect it to Cockpit
+#console:
+#  ui:
+#    url: http://localhost:4200
+#  api:
+#    url: http://localhost:8093/management
+
 
 # Referenced properties
 ds:
