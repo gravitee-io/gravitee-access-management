@@ -724,10 +724,8 @@ export const routes: Routes = [
                   }
                 },
                 children: [
-                  {
-                    path: '',
-                    pathMatch: 'full',
-                    redirectTo: 'dashboard'
+                  { path: '',
+                    component: DomainComponent
                   },
                   {
                     path: 'dashboard',
