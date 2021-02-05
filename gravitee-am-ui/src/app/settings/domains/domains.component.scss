@@ -1,0 +1,51 @@
+ngx-datatable {
+  .domain-header {
+    margin: 5px;
+    align-items: center;
+    .domain-icon {
+      margin: 10px 12px 0 0;
+    }
+    .domain-information {
+      h3 {
+        font-size: 14px;
+        font-weight: normal;
+        margin: 0;
+      }
+      small {
+        color: rgba(0,0,0,.54);
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .domain-name-cell {
+    padding: 0 !important;
+    a {
+      text-decoration: none;
+    }
+  }
+
+  .mat-badge-small .mat-badge-content {
+    width: 12px;
+    height: 12px;
+    line-height: 12px;
+  }
+  .mat-badge-small.mat-badge-overlap.mat-badge-after .mat-badge-content {
+    right: 1px;
+  }
+
+  .mat-badge-small.mat-badge-above .mat-badge-content {
+    top: -2px;
+  }
+
+  .domain-enabled .mat-badge-content {
+    color: white;
+    background: limegreen;
+  }
+
+  .domain-disabled .mat-badge-content {
+    color: white;
+    background: orange;
+  }
+}

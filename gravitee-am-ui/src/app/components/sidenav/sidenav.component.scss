@@ -7,7 +7,7 @@ $sidenavItemLeftWidth: 25px;
 $sidenavReducedItemLeftWidth: 15px;
 $sidenavItemBorderSize: 4px;
 $sidenavFooterHeight: 150px;
-$sidenavHeaderHeight: 100px;
+$sidenavHeaderHeight: 64px;
 
 @mixin min-max-width($width) {
   width: $width;
@@ -91,15 +91,12 @@ $sidenavHeaderHeight: 100px;
 }
 
 .side-nav-environments {
-  margin-left: 10px;
-  margin-right: 10px;
-  min-height: 52px;
-
-  ::ng-deep .mat-form-field-infix {
-    background-color: white;
-    height: 18px;
-    padding: 7px 4px;
-    border-top-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  mat-form-field {
+    width: 90%;
+    font-size: 13px;
   }
 }
 
@@ -131,10 +128,24 @@ $sidenavHeaderHeight: 100px;
 }
 
 .sidenav-footer {
-  position: fixed;
-  bottom: 0;
+  height: $sidenavFooterHeight;
+  width: 100%;
   mat-icon {
     color: $fontColor;
+  }
+  a {
+    color: $fontColor;
+    text-decoration: none;
+    &:hover, &.sidenav-active {
+      font-weight: bold;
+      .mat-icon {
+        font-weight: bold;
+      }
+    }
+  }
+  span {
+    font-size: 13px;
+    margin-left: 4px;
   }
   mat-list-item:last-child {
     margin-top: -20px;

@@ -1,4 +1,4 @@
-:host ::ng-deepul {
+:host ::ng-deep ul {
   display: flex;
   list-style-type: none;
   padding-left: 20px;
@@ -12,6 +12,7 @@
 
     a {
       cursor: pointer;
+      text-decoration: none;
     }
   }
 }

@@ -28,18 +28,17 @@
     </a>
   </mat-toolbar>
 
-  <div class="side-nav-environments" *ngIf="canDisplayEnvironments()">
-    <mat-form-field *ngIf="!reducedMode">
-      <mat-select [(value)]="currentEnvironment" (selectionChange)="switchEnvironment($event)" [disabled]="environments.length === 1">
-        <mat-option *ngFor="let env of environments" [value]="env">
-          {{env.name}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
-
   <mat-list class="sidenav-list">
     <!-- First level menus -->
+    <div class="side-nav-environments" *ngIf="canDisplayEnvironments()">
+      <mat-form-field *ngIf="!reducedMode" appearance="outline">
+        <mat-select [(value)]="currentEnvironment" (selectionChange)="switchEnvironment($event)" [disabled]="environments.length === 1">
+          <mat-option *ngFor="let env of environments" [value]="env">
+            {{env.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
     <div>
       <mat-list-item *ngFor="let menuItem of topMenuItems">
         <a [routerLink]="menuItem.path" title="{{menuItem.label}}" *ngIf="menuItem.display"
@@ -52,16 +51,13 @@
     </div>
   </mat-list>
 
-  <mat-list class="sidenav-list">
+  <mat-list class="sidenav-footer">
     <mat-list-item>
-      <a style="padding-left: 16px" *ngIf="canDisplayOrganizationSettings()" [routerLink]="[ '/settings' ]" title="Organization settings" routerLinkActive="sidenav-active">
+      <a *ngIf="canDisplayOrganizationSettings()" [routerLink]="[ '/settings' ]" title="Organization settings" routerLinkActive="sidenav-active">
         <mat-icon>settings_applications</mat-icon>
         <span *ngIf="!reducedMode">Organization settings</span>
       </a>
     </mat-list-item>
-  </mat-list>
-
-  <mat-list class="sidenav-footer">
     <mat-list-item>
       <button mat-icon-button (click)="resize()">
         <mat-icon *ngIf="reducedMode" class="sidenav-toggle-icon">menu</mat-icon>
