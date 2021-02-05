@@ -18,7 +18,7 @@
 <div class="gv-page-container">
   <div>
     <app-emptystate *ngIf="!installation!.additionalInformation!.COCKPIT_INSTALLATION_STATUS" message="Meet Cockpit..."
-                    subMessage="Create an account on <a href=&quot;http://localhost:4004&quot; target=&quot;_blank&quot;>Cockpit</a>, register your current installation and start creating new organizations and environments !"
+                    subMessage="Create an account on <a href=&quot;{{installation.additionalInformation.COCKPIT_URL}}&quot; target=&quot;_blank&quot;>Cockpit</a>, register your current installation and start creating new organizations and environments !"
                     icon="explore">
     </app-emptystate>
 
