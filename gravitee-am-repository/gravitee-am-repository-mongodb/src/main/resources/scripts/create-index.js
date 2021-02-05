@@ -148,20 +148,6 @@ db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1, "s
 db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1, "source": 1 } );
 db.users.reIndex();
 
-// "users" collection
-db.users.dropIndexes();
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "email": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "additionalInformation.email": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "displayName": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "firstName": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "lastName": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1, "source": 1 } );
-db.users.createIndex( { "referenceType" : 1, "referenceId": 1, "externalId": 1, "source": 1 } );
-db.users.reIndex();
-
 // "uma_access_policies" collection
 db.uma_access_policies.dropIndexes();
 db.uma_access_policies.createIndex( { "domain" : 1 } );
@@ -178,7 +164,7 @@ db.uma_resource_set.reIndex();
 
 // "webauthn_credentials" collection
 db.webauthn_credentials.dropIndexes();
-db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1 } );
+db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "userId": 1 } );
 db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1 } );
 db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "credentialId": 1 } );
 db.webauthn_credentials.reIndex();
