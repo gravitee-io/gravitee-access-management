@@ -16,13 +16,11 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
-import io.gravitee.am.common.oidc.AuthenticationFlow;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectAuthenticationProvider;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
@@ -32,10 +30,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_ID_PARAM_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_CONTEXT_KEY;
-
 /**
+ * Handle OpenID Connect response with response_type = id_token or id_token token.
+ * For this kind of response, the OIDC provider redirects user to the OAuth 2.0 client with parameters as fragment instead of query.
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
@@ -51,18 +49,18 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
 
     @Override
     public void handle(RoutingContext context) {
-        final String providerId = context.request().getParam(PROVIDER_ID_PARAM_KEY);
-        final AuthenticationProvider authenticationProvider = context.get(PROVIDER_CONTEXT_KEY);
+        final HttpServerRequest request = context.request();
 
-        // identity provider type is not OpenID Connect or the implicit flow is not used, continue
-        if (!canHandle(authenticationProvider)) {
+        // if request contains query parameters, authorization_code flow is used, continue
+        if (request.method().equals(HttpMethod.GET) &&
+                (request.params() != null && !request.params().isEmpty())) {
             context.next();
             return;
         }
 
         // if method is post, the OpenID Connect implicit flow response hash url must be present, add it to the execution context
-        if (context.request().method().equals(HttpMethod.POST)) {
-            final String hashValue = context.request().getParam(HASH_VALUE_PARAMETER);
+        if (request.method().equals(HttpMethod.POST)) {
+            final String hashValue = request.getParam(HASH_VALUE_PARAMETER);
             if (hashValue == null) {
                 context.fail(new InternalAuthenticationServiceException("No URL hash value found"));
                 return;
@@ -75,7 +73,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
         }
 
         // implicit flow, we need to retrieve hash url from the browser to get access_token, id_token, ...
-        engine.render(Collections.singletonMap("providerId", providerId), "login_callback", res -> {
+        engine.render(Collections.emptyMap(), "login_callback", res -> {
             if (res.succeeded()) {
                 context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 context.response().end(res.result());
@@ -84,11 +82,6 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
                 context.fail(res.cause());
             }
         });
-    }
-
-    private boolean canHandle(AuthenticationProvider authenticationProvider) {
-        return (authenticationProvider instanceof OpenIDConnectAuthenticationProvider)
-                && (((OpenIDConnectAuthenticationProvider) authenticationProvider).authenticationFlow().equals(AuthenticationFlow.IMPLICIT_FLOW));
     }
 
     private Map<String, String> getParams(String query) {

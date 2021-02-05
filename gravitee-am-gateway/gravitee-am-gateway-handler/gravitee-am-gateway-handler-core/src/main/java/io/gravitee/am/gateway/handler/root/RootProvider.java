@@ -204,15 +204,15 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
         rootRouter.get("/login/callback")
-                .handler(loginCallbackParseHandler)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.post("/login/callback")
-                .handler(loginCallbackParseHandler)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginCallbackEndpoint)
