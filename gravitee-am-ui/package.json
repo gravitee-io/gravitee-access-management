@@ -33,7 +33,7 @@
     "codemirror": "^5.56.0",
     "core-js": "^2.6.11",
     "hammerjs": "^2.0.8",
-    "highcharts": "8.0.4",
+    "highcharts": "9.0.0",
     "highcharts-angular": "^2.4.0",
     "jdenticon": "^2.2.0",
     "lodash": "^4.17.19",
