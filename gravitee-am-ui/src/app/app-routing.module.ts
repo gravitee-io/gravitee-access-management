@@ -1378,6 +1378,9 @@ export const routes: Routes = [
                         path: 'webauthn',
                         component: DomainSettingsWebAuthnComponent,
                         canActivate: [AuthGuard],
+                        resolve: {
+                          entrypoint: DomainEntrypointResolver
+                        },
                         data: {
                           menu: {
                             label: 'WebAuthn',
