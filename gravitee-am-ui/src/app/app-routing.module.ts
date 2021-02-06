@@ -409,8 +409,15 @@ export const routes: Routes = [
                   }
                 },
                 children: [
-                  {path: '', redirectTo: 'profile', pathMatch: 'full'},
-                  {path: 'profile', component: UserProfileComponent}
+                  {
+                    path: '',
+                    redirectTo: 'profile',
+                    pathMatch: 'full'
+                  },
+                  {
+                    path: 'profile',
+                    component: UserProfileComponent
+                  }
                 ]
               },
             ]
@@ -1625,6 +1632,10 @@ export const routes: Routes = [
                                 component: UserProfileComponent
                               },
                               {
+                                path: 'history',
+                                component: UserHistoryComponent
+                              },
+                              {
                                 path: 'applications',
                                 children: [
                                   {
@@ -1678,8 +1689,10 @@ export const routes: Routes = [
                                   }
                                 ]
                               },
-                              { path: 'history', component: UserHistoryComponent },
-                              {path: 'roles', component: UserRolesComponent, resolve: {roles: UserRolesResolver}}
+                              { path: 'roles',
+                                component: UserRolesComponent,
+                                resolve: {roles: UserRolesResolver}
+                              }
                             ]
                           },
                         ]

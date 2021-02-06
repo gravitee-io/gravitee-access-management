@@ -15,79 +15,9 @@
     limitations under the License.
 
 -->
-<div class="gv-page-container">
-  <div class="user-audits-analytics">
-    <div class="user-audits-analytics-item">
-      <mat-card class="count-container">
-        <div>
-          <div class="count-title">
-            Logins Count
-          </div>
-          <div class="count-subtitle">
-            Number of logins since creation
-          </div>
-        </div>
-        <div class="count-value">{{user.loginsCount}}</div>
-      </mat-card>
-    </div>
-    <div class="user-audits-analytics-item">
-      <mat-card class="count-container">
-        <div>
-          <div class="count-title">
-            Last Login
-          </div>
-          <div class="count-subtitle">
-            Date of the last login
-          </div>
-        </div>
-        <div class="count-value"><span *ngIf="!(user.loggedAt)">Never logged in</span>
-          <span *ngIf="(user.loggedAt)">{{user.loggedAt | humanDate}}</span></div>
-      </mat-card>
-    </div>
-    <div class="user-audits-analytics-item">
-      <mat-card class="count-container">
-        <div>
-          <div class="count-title">
-            Created At
-          </div>
-          <div class="count-subtitle">
-            Date of the creation
-          </div>
-        </div>
-        <div class="count-value">{{user.createdAt | humanDate}}</div>
-      </mat-card>
-    </div>
-    <div class="user-audits-analytics-item" *ngIf="user.referenceType === 'domain'">
-      <mat-card class="count-container">
-        <div>
-          <div class="count-title">
-            Last Application
-          </div>
-          <div class="count-subtitle">
-            Application used for the latest login
-          </div>
-        </div>
-        <div class="count-value">{{displayClientName()}}</div>
-      </mat-card>
-    </div>
-    <div class="user-audits-analytics-item" *ngIf="accountLocked()">
-      <mat-card class="count-container">
-        <div>
-          <div class="count-title">
-            Unlock Date
-          </div>
-          <div class="count-subtitle">
-            Date when account will be unlocked
-          </div>
-        </div>
-        <div class="count-value">{{user.accountLockedUntil | date:'medium'}}</div>
-      </mat-card>
-    </div>
-  </div>
-
-  <h1 class="user-audits-title">Audit Log</h1>
-  <div fxLayout="column">
-    <form (submit)="search()" #auditsSearchForm="ngForm" fxLayout="row" fxLayoutGap="10px" class="audits-search">
+<div>
+  <div fxLayout="column" class="gv-form-section" fxFlex="70">
+    <form (submit)="search()" fxLayout="row" fxLayoutGap="10px" class="audits-search">
       <mat-form-field fxFlex="10">
         <mat-label>Event</mat-label>
         <mat-select name="eventType" [(ngModel)]="eventType" (selectionChange)="updateForm()">
@@ -182,17 +112,17 @@
             </a>
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Date" [flexGrow]="2">
+        <ngx-datatable-column name="Date" [flexGrow]="3">
           <ng-template let-row="row" ngx-datatable-cell-template>
             {{row.timestamp | date:'medium'}}
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Event" [flexGrow]="2">
+        <ngx-datatable-column name="Event" [flexGrow]="3">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <pre style="margin: 0;">{{row.type}}</pre>
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="Status" [flexGrow]="1">
+        <ngx-datatable-column name="Status" [flexGrow]="2">
           <ng-template let-row="row" ngx-datatable-cell-template>
             <mat-chip-list>
               <mat-chip style="font-size: 10px; line-height: 4px; margin: 0px;"
@@ -203,6 +133,12 @@
           </ng-template>
         </ngx-datatable-column>
       </ngx-datatable>
+    </div>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>User history</h3>
+    <div class="gv-page-description-content">
+      <p>History of the user's account activity.</p>
     </div>
   </div>
 </div>

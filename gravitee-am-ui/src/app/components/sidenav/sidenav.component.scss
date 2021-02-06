@@ -147,13 +147,8 @@ $sidenavHeaderHeight: 64px;
     font-size: 13px;
     margin-left: 4px;
   }
-  mat-list-item:last-child {
-    margin-top: -20px;
-  }
   .mat-icon-button {
-    flex-shrink: inherit;
-    width: 24px;
-    height: 24px;
+    margin: -20px -8px 0;
   }
 }
 

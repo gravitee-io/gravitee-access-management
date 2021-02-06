@@ -131,12 +131,4 @@ export class UserHistoryComponent implements OnInit {
       this.loadingIndicator = false;
     });
   }
-
-  displayClientName() {
-    return this.user.applicationEntity != null ? this.user.applicationEntity.name : this.user.client;
-  }
-
-  accountLocked() {
-    return !this.user.accountNonLocked && this.user.accountLockedUntil > new Date();
-  }
 }

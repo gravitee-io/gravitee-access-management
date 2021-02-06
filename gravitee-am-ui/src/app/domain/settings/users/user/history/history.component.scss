@@ -1,49 +1,36 @@
-.user-audits-analytics {
-
-  $text-color-grey: rgba(0, 0, 0, .54);
-
-  *, *:before, *:after {
-    box-sizing: border-box;
+.audits-search {
+  font-size: 14px;
+  align-items: center;
+  button, a {
+    color: grey;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
   }
-
-  display: flex;
-  flex-direction: row;
-
-  .user-audits-analytics-item {
-    flex: 1;
-    padding: 10px;
-    min-height: 100px;
-
-    mat-card {
-      height: 100%;
-    }
-
-    .count-container {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-
-      .count-title {
-        font-size: 16px;
-        font-weight: 500;
-      }
-
-      .count-subtitle {
-        color: $text-color-grey;
-        font-size: 12px;
-        margin-top: 4px;
-      }
-
-      .count-value {
-        color: $text-color-grey;
-        font-size: 22px;
-        text-align: end;
-        margin-top: 16px;
-      }
-    }
+}
+a, a.expanded {
+  text-decoration: none;
+  color: grey;
+  &:hover {
+    color: grey;
+    text-decoration: none;
   }
+  mat-icon {
+    color: grey;
+  }
+}
 
-  .user-audits-title {
-    margin-top: 10px;
+.ngx-datatable.material {
+  font-size: 12px;
+}
+
+:host {
+  ::ng-deep.ngx-datatable.material .datatable-body .datatable-body-row .datatable-body-cell {
+    font-size: 12px;
+  }
+  ::ng-deep.ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
+    &:first-child {
+      padding-left: 32px;
+    }
   }
 }

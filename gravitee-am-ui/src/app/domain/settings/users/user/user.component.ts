@@ -48,11 +48,11 @@ export class UserComponent implements OnInit {
   initNavLinks() {
     this.navLinks.push({ href: 'profile', label: 'Profile' });
     if (!this.organizationContext) {
+      this.navLinks.push({ href: 'history', label: 'History' });
       this.navLinks.push({ href: 'applications', label: 'Authorized Apps' });
       this.navLinks.push({ href: 'factors', label: 'Multi-Factor Authentication' });
       this.navLinks.push({ href: 'credentials', label: 'Credentials' });
       this.navLinks.push({ href: 'roles', label: 'Roles' });
-      this.navLinks.push({ href: 'history', label: 'History' });
     }
   }
 }
