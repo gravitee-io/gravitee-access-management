@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.service.user.model;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 
@@ -26,10 +27,12 @@ public class UserToken {
 
     private final User user;
     private final Client client;
+    private final JWT token;
 
-    public UserToken(User user, Client client) {
+    public UserToken(User user, Client client, JWT token) {
         this.user = user;
         this.client = client;
+        this.token = token;
     }
 
     public User getUser() {
@@ -38,5 +41,9 @@ public class UserToken {
 
     public Client getClient() {
         return client;
+    }
+
+    public JWT getToken() {
+        return token;
     }
 }

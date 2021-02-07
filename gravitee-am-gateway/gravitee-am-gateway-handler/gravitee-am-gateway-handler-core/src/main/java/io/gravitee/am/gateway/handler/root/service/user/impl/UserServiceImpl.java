@@ -86,7 +86,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public Maybe<UserToken> verifyToken(String token) {
         return Maybe.fromCallable(() -> jwtParser.parse(token))
-                .flatMap(jwt -> userService.findById(jwt.getSub()).zipWith(clientSource(jwt.getAud()), (user, optionalClient) -> new UserToken(user, optionalClient.orElse(null))));
+                .flatMap(jwt -> {
+                    return userService.findById(jwt.getSub())
+                            .zipWith(clientSource(jwt.getAud()),
+                                    (user, optionalClient) -> {
+                                return new UserToken(user, optionalClient.orElse(null), jwt);
+                            });
+                });
     }
 
     @Override
