@@ -37,6 +37,7 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -82,6 +83,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private LoginAttemptService loginAttemptService;
+
+    @Autowired
+    private CredentialService credentialService;
 
     @Override
     public Maybe<UserToken> verifyToken(String token) {
@@ -198,6 +202,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<ResetPasswordResponse> resetPassword(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
+        // get account settings
+        final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+
         // if user registration is not completed and force registration option is disabled throw invalid account exception
         if (user.isInactive() && !forceUserRegistration(domain, client)) {
             return Single.error(new AccountInactiveException("User needs to complete the activation process"));
@@ -241,7 +248,6 @@ public class UserServiceImpl implements UserService {
                     // additional information
                     extractAdditionalInformation(user, idpUser.getAdditionalInformation());
                     // set login information
-                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
                     if (accountSettings != null && accountSettings.isAutoLoginAfterResetPassword()) {
                         user.setLoggedAt(new Date());
                         user.setLoginsCount(user.getLoginsCount() + 1);
@@ -257,11 +263,16 @@ public class UserServiceImpl implements UserService {
                             .build();
                     return loginAttemptService.reset(criteria).andThen(Single.just(user1));
                 })
-                .flatMap(userService::enhance)
-                .map(user1 -> {
-                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-                    return new ResetPasswordResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterResetPassword() : null, accountSettings != null ? accountSettings.isAutoLoginAfterResetPassword() : false);
+                // delete passwordless devices
+                .flatMap(user1 -> {
+                    if (accountSettings != null && accountSettings.isDeletePasswordlessDevicesAfterResetPassword()) {
+                        return credentialService.deleteByUserId(user1.getReferenceType(), user1.getReferenceId(), user1.getId())
+                                .andThen(Single.just(user1));
+                    }
+                    return Single.just(user1);
                 })
+                .flatMap(userService::enhance)
+                .map(user1 -> new ResetPasswordResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterResetPassword() : null, accountSettings != null ? accountSettings.isAutoLoginAfterResetPassword() : false))
                 .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)));
     }

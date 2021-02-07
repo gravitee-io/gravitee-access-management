@@ -152,4 +152,18 @@ public class CredentialServiceImpl implements CredentialService {
                             String.format("An error occurs while trying to delete credential: %s", id), ex));
                 });
     }
+
+    @Override
+    public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
+        LOGGER.debug("Delete credentials by {} {} and user id: {}", referenceType, referenceId, userId);
+        return credentialRepository.deleteByUserId(referenceType, referenceId, userId)
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Completable.error(ex);
+                    }
+                    LOGGER.error("An error has occurred while trying to delete credentials using {} {} and user id: {}", referenceType, referenceId, userId, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error has occurred while trying to delete credentials using: %s %s and user id: %s", referenceType, referenceId, userId), ex));
+                });
+    }
 }
