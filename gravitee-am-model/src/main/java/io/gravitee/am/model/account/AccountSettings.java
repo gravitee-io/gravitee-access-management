@@ -90,6 +90,11 @@ public class AccountSettings {
      */
     private String redirectUriAfterResetPassword;
 
+    /**
+     * Delete passwordless devices after reset password process
+     */
+    private boolean deletePasswordlessDevicesAfterResetPassword;
+
     public AccountSettings() {
     }
 
@@ -106,6 +111,7 @@ public class AccountSettings {
         this.dynamicUserRegistration = other.dynamicUserRegistration;
         this.autoLoginAfterResetPassword = other.autoLoginAfterResetPassword;
         this.redirectUriAfterResetPassword = other.redirectUriAfterResetPassword;
+        this.deletePasswordlessDevicesAfterResetPassword = other.deletePasswordlessDevicesAfterResetPassword;
     }
 
     public boolean isInherited() {
@@ -210,6 +216,14 @@ public class AccountSettings {
 
     public void setRedirectUriAfterResetPassword(String redirectUriAfterResetPassword) {
         this.redirectUriAfterResetPassword = redirectUriAfterResetPassword;
+    }
+
+    public boolean isDeletePasswordlessDevicesAfterResetPassword() {
+        return deletePasswordlessDevicesAfterResetPassword;
+    }
+
+    public void setDeletePasswordlessDevicesAfterResetPassword(boolean deletePasswordlessDevicesAfterResetPassword) {
+        this.deletePasswordlessDevicesAfterResetPassword = deletePasswordlessDevicesAfterResetPassword;
     }
 
     public static AccountSettings getInstance(Domain domain, Client client) {

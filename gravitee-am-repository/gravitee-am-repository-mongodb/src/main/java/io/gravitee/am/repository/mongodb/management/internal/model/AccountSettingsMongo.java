@@ -36,6 +36,7 @@ public class AccountSettingsMongo {
     private String defaultIdentityProviderForRegistration;
     private boolean autoLoginAfterResetPassword;
     private String redirectUriAfterResetPassword;
+    private boolean deletePasswordlessDevicesAfterResetPassword;
 
     public boolean isInherited() {
         return inherited;
@@ -141,6 +142,14 @@ public class AccountSettingsMongo {
         this.redirectUriAfterResetPassword = redirectUriAfterResetPassword;
     }
 
+    public boolean isDeletePasswordlessDevicesAfterResetPassword() {
+        return deletePasswordlessDevicesAfterResetPassword;
+    }
+
+    public void setDeletePasswordlessDevicesAfterResetPassword(boolean deletePasswordlessDevicesAfterResetPassword) {
+        this.deletePasswordlessDevicesAfterResetPassword = deletePasswordlessDevicesAfterResetPassword;
+    }
+
     public AccountSettings convert() {
         AccountSettings accountSettings = new AccountSettings();
         accountSettings.setInherited(isInherited());
@@ -156,6 +165,7 @@ public class AccountSettingsMongo {
         accountSettings.setAutoLoginAfterResetPassword(isAutoLoginAfterResetPassword());
         accountSettings.setRedirectUriAfterResetPassword(getRedirectUriAfterResetPassword());
         accountSettings.setSendRecoverAccountEmail(isSendRecoverAccountEmail());
+        accountSettings.setDeletePasswordlessDevicesAfterResetPassword(isDeletePasswordlessDevicesAfterResetPassword());
         return accountSettings;
     }
 
@@ -177,6 +187,7 @@ public class AccountSettingsMongo {
         accountSettingsMongo.setAutoLoginAfterResetPassword(accountSettings.isAutoLoginAfterResetPassword());
         accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
         accountSettingsMongo.setSendRecoverAccountEmail(accountSettings.isSendRecoverAccountEmail());
+        accountSettingsMongo.setDeletePasswordlessDevicesAfterResetPassword(accountSettings.isDeletePasswordlessDevicesAfterResetPassword());
         return accountSettingsMongo;
     }
 }
