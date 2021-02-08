@@ -18,6 +18,8 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.flow.Flow;
+import io.gravitee.am.model.flow.Step;
+import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.FlowRepository;
 import io.gravitee.am.service.exception.FlowNotFoundException;
@@ -34,8 +36,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Collections;
 
+import static java.util.Collections.emptyList;
 import static org.mockito.Mockito.*;
 
 /**
@@ -125,6 +129,35 @@ public class FlowServiceTest {
 
         verify(flowRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-flow");
         verify(flowRepository, times(1)).update(any(Flow.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldResetPostStepsWhenUpdateRoot() {
+        final String ID = "ROOT";
+
+        Flow existingFlow = new Flow();
+        existingFlow.setPre(emptyList());
+        existingFlow.setPost(emptyList());
+        existingFlow.setType(Type.ROOT);
+
+        Flow updateFlow = new Flow();
+        updateFlow.setPre(Arrays.asList(new Step()));
+        updateFlow.setPost(Arrays.asList(new Step()));
+        updateFlow.setType(Type.ROOT);
+
+        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, ID)).thenReturn(Maybe.just(existingFlow));
+        when(flowRepository.update(any(Flow.class))).thenReturn(Single.just(new Flow()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = flowService.update(ReferenceType.DOMAIN, DOMAIN, ID, updateFlow).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(flowRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, ID);
+        verify(flowRepository, times(1)).update(argThat( flow -> flow.getPost().isEmpty() && !flow.getPre().isEmpty()));
         verify(eventService, times(1)).create(any());
     }
 
