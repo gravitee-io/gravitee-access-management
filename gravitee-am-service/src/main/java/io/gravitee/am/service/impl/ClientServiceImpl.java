@@ -432,6 +432,7 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setAuthorizationSignedResponseAlg(client.getAuthorizationSignedResponseAlg());
         oAuthSettings.setAuthorizationEncryptedResponseAlg(client.getAuthorizationEncryptedResponseAlg());
         oAuthSettings.setAuthorizationEncryptedResponseEnc(client.getAuthorizationEncryptedResponseEnc());
+        oAuthSettings.setPostLogoutRedirectUris(client.getPostLogoutRedirectUris());
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         // oauth settings

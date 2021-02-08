@@ -153,7 +153,7 @@ public class AndroidSafetynetAttestation implements Attestation {
             verifySignature(
                     PublicKeyCredential.valueOf(token.getJsonObject("header").getString("alg")),
                     certChain.get(0),
-                    ub64dec.decode(attStmt.getString("signature")),
+                    ub64dec.decode(token.getString("signature")),
                     token.getString("signatureBase").getBytes(StandardCharsets.UTF_8));
 
         } catch (MetaDataException | CertificateException | NoSuchAlgorithmException | InvalidKeyException | SignatureException | NoSuchProviderException | InvalidAlgorithmParameterException e) {

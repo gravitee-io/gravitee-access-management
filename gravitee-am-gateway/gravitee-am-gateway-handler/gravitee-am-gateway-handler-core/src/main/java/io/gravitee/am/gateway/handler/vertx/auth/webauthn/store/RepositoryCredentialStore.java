@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.auth.webauthn.store;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.gateway.handler.vertx.auth.webauthn.Authenticator;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
@@ -28,7 +29,6 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.ext.auth.webauthn.Authenticator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -118,6 +118,9 @@ public class RepositoryCredentialStore {
                     credential.setCredentialId(authenticator.getCredID());
                     credential.setPublicKey(authenticator.getPublicKey());
                     credential.setCounter(authenticator.getCounter());
+                    credential.setAaguid(authenticator.getAaguid());
+                    credential.setAttestationStatementFormat(authenticator.getAttestationStatementFormat());
+                    credential.setAttestationStatement(authenticator.getAttestationStatement());
                     credential.setCreatedAt(new Date());
                     credential.setUpdatedAt(credential.getCreatedAt());
                     return credentialService.create(credential).ignoreElement();

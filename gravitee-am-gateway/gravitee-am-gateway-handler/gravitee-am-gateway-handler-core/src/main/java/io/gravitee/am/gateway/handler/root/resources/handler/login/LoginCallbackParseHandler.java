@@ -98,7 +98,9 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
 
     private void restoreInitialQueryParams(RoutingContext context, Handler<AsyncResult<Boolean>> handler) {
 
-        final String state = context.request().getParam(Parameters.STATE) != null ? context.request().getParam(Parameters.STATE) : context.request().getParam(RELAY_STATE_PARAM_KEY);
+        final String state =
+                context.request().getParam(Parameters.STATE) != null ? context.request().getParam(Parameters.STATE) :
+                (context.request().getParam(RELAY_STATE_PARAM_KEY) != null ? context.request().getParam(RELAY_STATE_PARAM_KEY) : context.get(Parameters.STATE));
 
         if (StringUtils.isEmpty(state)) {
             logger.error("No state or RelayState on login callback");

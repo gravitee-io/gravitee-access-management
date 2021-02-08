@@ -82,6 +82,7 @@ public class ApplicationOAuthSettingsMongo {
     private String authorizationEncryptedResponseAlg;
     private String authorizationEncryptedResponseEnc;
     private boolean forcePKCE;
+    private List<String> postLogoutRedirectUris;
 
     public String getClientId() {
         return clientId;
@@ -529,5 +530,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setForcePKCE(boolean forcePKCE) {
         this.forcePKCE = forcePKCE;
+    }
+
+    public List<String> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 }

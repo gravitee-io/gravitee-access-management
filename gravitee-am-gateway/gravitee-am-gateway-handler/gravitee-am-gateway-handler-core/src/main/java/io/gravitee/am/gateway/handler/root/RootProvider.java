@@ -199,7 +199,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .failureHandler(new LoginFailureHandler());
 
         // logout route
-        rootRouter.route("/logout").handler(new LogoutEndpoint(domain, tokenService, auditService));
+        rootRouter.route("/logout")
+                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService));
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, domain));
@@ -209,15 +210,15 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
         rootRouter.get("/login/callback")
-                .handler(loginCallbackParseHandler)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginCallbackEndpoint)
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.post("/login/callback")
-                .handler(loginCallbackParseHandler)
                 .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(loginCallbackParseHandler)
                 .handler(socialAuthHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(loginCallbackEndpoint)
@@ -388,5 +389,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private void errorHandler(Router router) {
         Handler<RoutingContext> errorHandler = new ErrorHandler( "/error");
         router.route("/forgotPassword").failureHandler(errorHandler);
+        router.route("/logout").failureHandler(errorHandler);
     }
 }

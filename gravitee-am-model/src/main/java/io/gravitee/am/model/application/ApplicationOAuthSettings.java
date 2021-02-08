@@ -257,6 +257,11 @@ public class ApplicationOAuthSettings {
      */
     private boolean forcePKCE;
 
+    /**
+     * Array of URLs supplied by the RP to which it MAY request that the End-User's User Agent be redirected using the post_logout_redirect_uri parameter after a logout has been performed.
+     */
+    private List<String> postLogoutRedirectUris;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -317,6 +322,7 @@ public class ApplicationOAuthSettings {
         this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
         this.forcePKCE = other.forcePKCE;
+        this.postLogoutRedirectUris = other.postLogoutRedirectUris;
     }
 
     public String getClientId() {
@@ -765,5 +771,13 @@ public class ApplicationOAuthSettings {
 
     public void setForcePKCE(boolean forcePKCE) {
         this.forcePKCE = forcePKCE;
+    }
+
+    public List<String> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 }

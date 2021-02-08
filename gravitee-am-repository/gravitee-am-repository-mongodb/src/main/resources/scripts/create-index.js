@@ -166,7 +166,7 @@ db.uma_resource_set.reIndex();
 
 // "webauthn_credentials" collection
 db.webauthn_credentials.dropIndexes();
-db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1 } );
+db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "userId": 1 } );
 db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1 } );
 db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "credentialId": 1 } );
 db.webauthn_credentials.reIndex();

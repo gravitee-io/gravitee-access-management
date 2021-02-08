@@ -22,12 +22,15 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
+import io.vertx.ext.auth.webauthn.AuthenticatorTransport;
 import io.vertx.ext.auth.webauthn.RelyingParty;
 import io.vertx.reactivex.core.Vertx;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static io.vertx.ext.auth.webauthn.Attestation.NONE;
 import static io.vertx.ext.auth.webauthn.UserVerification.DISCOURAGED;
@@ -64,7 +67,8 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
                         .setAuthenticatorAttachment(getAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment()))
                         .setUserVerification(getUserVerification(webAuthnSettings.getUserVerification()))
                         .setRequireResidentKey(webAuthnSettings.isRequireResidentKey())
-                        .setAttestation(getAttestation(webAuthnSettings.getAttestationConveyancePreference())))
+                        .setAttestation(getAttestation(webAuthnSettings.getAttestationConveyancePreference()))
+                        .setTransports(getTransports(webAuthnSettings.getAuthenticatorAttachment())))
                 .authenticatorFetcher(credentialStore::fetch)
                 .authenticatorUpdater(credentialStore::store);
     }
@@ -100,6 +104,21 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
 
     private static io.vertx.ext.auth.webauthn.Attestation getAttestation(AttestationConveyancePreference attestationConveyancePreference) {
         return attestationConveyancePreference != null ? io.vertx.ext.auth.webauthn.Attestation.valueOf(attestationConveyancePreference.name()) : NONE;
+    }
+
+    private static List<AuthenticatorTransport> getTransports(AuthenticatorAttachment authenticatorAttachment) {
+        if (authenticatorAttachment == null) {
+            return Arrays.asList(AuthenticatorTransport.values());
+        }
+
+        switch (authenticatorAttachment) {
+            case PLATFORM:
+                return Collections.singletonList(AuthenticatorTransport.INTERNAL);
+            case CROSS_PLATFORM:
+                return Arrays.asList(AuthenticatorTransport.USB, AuthenticatorTransport.BLE, AuthenticatorTransport.NFC);
+            default:
+                throw new IllegalArgumentException("Unknown authenticator attachment : " + authenticatorAttachment);
+        }
     }
 
     private WebAuthn defaultWebAuthn() {

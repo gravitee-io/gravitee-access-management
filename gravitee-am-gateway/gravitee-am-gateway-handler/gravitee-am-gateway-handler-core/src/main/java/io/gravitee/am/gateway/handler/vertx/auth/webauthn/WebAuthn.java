@@ -35,7 +35,6 @@ import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.webauthn.Authenticator;
 
 import java.util.List;
 import java.util.function.Function;

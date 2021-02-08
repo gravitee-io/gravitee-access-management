@@ -191,6 +191,8 @@ public class Client implements Cloneable, Resource {
 
     private boolean forcePKCE;
 
+    private List<String> postLogoutRedirectUris;
+
     private boolean flowsInherited;
 
     public Client() { }
@@ -259,6 +261,7 @@ public class Client implements Cloneable, Resource {
         this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
         this.forcePKCE = other.forcePKCE;
+        this.postLogoutRedirectUris = other.postLogoutRedirectUris;
         this.flowsInherited = other.flowsInherited;
     }
 
@@ -807,6 +810,14 @@ public class Client implements Cloneable, Resource {
 
     public void setForcePKCE(boolean forcePKCE) {
         this.forcePKCE = forcePKCE;
+    }
+
+    public List<String> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
     public boolean isFlowsInherited() {
