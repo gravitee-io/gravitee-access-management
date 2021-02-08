@@ -45,13 +45,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.Charset.defaultCharset;
+import static java.util.Collections.emptyList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -184,14 +182,18 @@ public class FlowServiceImpl implements FlowService {
                 flowToUpdate.setPost(flow.getPost());
                 flowToUpdate.setUpdatedAt(new Date());
                 if (Type.ROOT.equals(flowToUpdate.getType())) {
-                    flowToUpdate.setPost(null);
+                    // Pre or Post steps are not supposed to be null in the UI-Component
+                    // force the ROOT post with emptyList to avoid UI issue
+                    flowToUpdate.setPost(emptyList());
                 }
                 return flowRepository.update(flowToUpdate)
                     // create event for sync process
                     .flatMap(flow1 -> {
                         Event event = new Event(io.gravitee.am.common.event.Type.FLOW, new Payload(flow1.getId(), flow1.getReferenceType(), flow1.getReferenceId(), Action.UPDATE));
                         if (Type.ROOT.equals(flow1.getType())) {
-                            flow1.setPost(null);
+                            // Pre or Post steps are not supposed to be null in the UI-Component
+                            // force the ROOT post with emptyList to avoid UI issue
+                            flow1.setPost(emptyList());
                         }
                         return eventService.create(event).flatMap(__ -> Single.just(flow1));
                     })
