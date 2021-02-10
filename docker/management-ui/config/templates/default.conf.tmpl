@@ -8,7 +8,7 @@ server {
 
     location / {
         try_files $uri$args $uri$args/ $uri $uri/ /index.html =404;
-        root /var/www/html;
+        root /usr/share/nginx/html;
     }
 
     # redirect server error pages to the static page /50x.html
