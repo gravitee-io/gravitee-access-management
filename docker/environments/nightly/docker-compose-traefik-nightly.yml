@@ -77,8 +77,8 @@ services:
     depends_on:
     - nightly_am_management
     environment:
-    - MGMT_API_URL=https://auth-nightly.gravitee.io/
-    - MGMT_UI_URL=https://auth-nightly.gravitee.io/
+    - MGMT_API_URL=https://auth-nightly.gravitee.io
+    - MGMT_UI_URL=https://auth-nightly.gravitee.io
     volumes:
     - ./logs/am-webui:/var/log/httpd
     labels:
