@@ -62,7 +62,7 @@ public class WebClientBuilder {
     @Value("${httpClient.proxy.https.password:#{null}}")
     private String httpClientProxyHttpsPassword;
 
-    @Value("#{systemProperties['httpClient.proxy'] == null ? false : true }")
+    @Value("${httpClient.proxy.enabled:false}")
     private boolean isProxyConfigured;
 
     public WebClient createWebClient(Vertx vertx, URL url) {
