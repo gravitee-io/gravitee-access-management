@@ -35,6 +35,7 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
 
     private final ClientSyncService clientSyncService;
     private boolean required;
+    private boolean continueOnError;
 
     public ClientRequestParseHandler(ClientSyncService clientSyncService) {
         this.clientSyncService = clientSyncService;
@@ -54,7 +55,11 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
 
         authenticate(clientId, authHandler -> {
             if (authHandler.failed()) {
-                context.fail(authHandler.cause());
+                if (continueOnError) {
+                    context.next();
+                } else {
+                    context.fail(authHandler.cause());
+                }
                 return;
             }
 
@@ -65,8 +70,14 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
         });
     }
 
-    public void setRequired(boolean required) {
+    public ClientRequestParseHandler setRequired(boolean required) {
         this.required = required;
+        return this;
+    }
+
+    public ClientRequestParseHandler setContinueOnError(boolean continueOnError) {
+        this.continueOnError = continueOnError;
+        return this;
     }
 
     private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
