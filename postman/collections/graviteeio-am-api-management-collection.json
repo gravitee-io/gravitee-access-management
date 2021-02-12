@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "5a5c0a16-b15c-41fc-95b6-47a77fb4f9f3",
+		"_postman_id": "5508f705-38b9-45d4-98ec-ee29f4c724b5",
 		"name": "Gravitee.io - AM - API Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -14,7 +14,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "62601a92-4759-4c6a-b260-88fc3ac6fdd4",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -70,8 +69,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Login",
@@ -85,7 +83,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "afae455a-a7ea-40fb-a757-a632aa1ee7b8",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -128,7 +125,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "a94bce6e-9157-428b-84f0-a8a6af170922",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -143,7 +139,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "37ad02e7-f7a3-4f1b-a9bf-07b39259c5f9",
 										"exec": [
 											"var username = pm.variables.replaceIn('{{$randomUserName}}') ;",
 											"",
@@ -198,7 +193,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b2bdea04-e579-4b46-a987-63f1d500d3c9",
 										"exec": [
 											"// wait for sync process",
 											"setTimeout(function(){}, 10000);"
@@ -251,7 +245,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "b4f23d55-783d-49f9-b1ee-8604cb9a6665",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -261,460 +254,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "2cee8d80-62e5-42a9-a7d7-fe28bbdfb153",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
-				},
-				{
-					"name": "Login with complete profile",
-					"item": [
-						{
-							"name": "Initiate Login Flow",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "65d7474f-e493-4908-a90d-c0f9a70011c4",
-										"exec": [
-											"pm.test(\"Status code is 302\", function () {",
-											"    pm.response.to.have.status(302);",
-											"});",
-											"",
-											"pm.test(\"Should be redirected\", function () {",
-											"    pm.response.to.be.redirection;",
-											"    pm.response.to.have.header('Location');",
-											"});",
-											"",
-											"pm.test(\"Should be a redirection to login page\", function() {",
-											"    var location = postman.getResponseHeader('Location');",
-											"      ",
-											"    tests['Redirect to login page'] = location.includes('/management/auth/login');",
-											"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
-											"});",
-											"",
-											"pm.test(\"Should have redirect cookie set\", function() {",
-											"    var redirectUrl = decodeURIComponent(postman.getResponseCookie('Redirect-Graviteeio-AM').value);",
-											"    tests['Cookie redirect url'] = redirectUrl === pm.request.url.toString();",
-											"    pm.environment.set('cookieRedirectUrl', redirectUrl);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{management_url}}/management/auth/authorize?redirect_uri=http://nowhere.com",
-									"host": [
-										"{{management_url}}"
-									],
-									"path": [
-										"management",
-										"auth",
-										"authorize"
-									],
-									"query": [
-										{
-											"key": "redirect_uri",
-											"value": "http://nowhere.com"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Redirect to login form",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "720f6078-0ab0-4fb1-b4d9-a9e947f98a23",
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Should be ok\", function () {",
-											"    pm.response.to.be.ok;",
-											"    ",
-											"    // Extract the XSRF token to send it with the next request.",
-											"    var responseHTML = cheerio(pm.response.text());",
-											"    var xsrfToken = responseHTML.find('[name=\"_csrf\"]').val();",
-											"    pm.environment.set('xsrf', xsrfToken);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "e4bd8bf3-095b-413c-9eb1-0966ab8e500f",
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{redirection}}",
-									"host": [
-										"{{redirection}}"
-									]
-								},
-								"description": "The client does not have a redirect_uri define"
-							},
-							"response": []
-						},
-						{
-							"name": "Post login form",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "acf511a6-7eb8-44e6-a3e0-718d09b2b6d0",
-										"exec": [
-											"pm.test(\"Status code is 302\", function () {",
-											"    pm.response.to.have.status(302);",
-											"});",
-											"",
-											"pm.test(\"Should be redirected to complete profile page\", function () {",
-											"    pm.response.to.be.redirection;",
-											"    pm.response.to.have.header('Location');",
-											"",
-											"    var location = postman.getResponseHeader(\"Location\");",
-											"    pm.environment.set('redirection', location);",
-											"    tests['Redirect to complete profile'] = location === pm.request.url.toString().replace(\"/login\", \"/completeProfile\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "3f1dbacc-f354-4f76-bb0c-06c1c5ef7824",
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/x-www-form-urlencoded"
-									}
-								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "_csrf",
-											"value": "{{xsrf}}",
-											"type": "text"
-										},
-										{
-											"key": "username",
-											"value": "{{username}}",
-											"type": "text"
-										},
-										{
-											"key": "password",
-											"value": "test",
-											"type": "text"
-										}
-									]
-								},
-								"url": {
-									"raw": "{{management_url}}/management/auth/login",
-									"host": [
-										"{{management_url}}"
-									],
-									"path": [
-										"management",
-										"auth",
-										"login"
-									]
-								},
-								"description": "The client does not have a redirect_uri define"
-							},
-							"response": []
-						},
-						{
-							"name": "Redirect to complete profile",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "fc05aba6-dd7a-46cc-a43f-aeb4f3e9aa8f",
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Should be ok\", function () {",
-											"    pm.response.to.be.ok;",
-											"    ",
-											"    // Extract the XSRF token to send it with the next request.",
-											"    var responseHTML = cheerio(pm.response.text());",
-											"    var xsrfToken = responseHTML.find('[name=\"_csrf\"]').val();",
-											"    pm.environment.set('xsrf', xsrfToken);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "f1cd3732-69af-4f56-8f95-4bb580b23fff",
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{redirection}}",
-									"host": [
-										"{{redirection}}"
-									]
-								},
-								"description": "The client does not have a redirect_uri define"
-							},
-							"response": []
-						},
-						{
-							"name": "Post complete profile form",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "b44c6f00-ed06-412b-8903-6d7f4f4a34da",
-										"exec": [
-											"pm.test(\"Status code is 302\", function () {",
-											"    pm.response.to.have.status(302);",
-											"});",
-											"",
-											"pm.test(\"Should be redirected to authorize\", function () {",
-											"    pm.response.to.be.redirection;",
-											"    pm.response.to.have.header('Location');",
-											"",
-											"    var location = postman.getResponseHeader(\"Location\");",
-											"    pm.environment.set('redirection', location);",
-											"    tests['Redirect to authorize'] = location === pm.environment.get(\"cookieRedirectUrl\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "43ab6037-44a4-4c5e-8e72-ac75c3dab15b",
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/x-www-form-urlencoded"
-									}
-								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "_csrf",
-											"value": "{{xsrf}}",
-											"type": "text"
-										},
-										{
-											"key": "given_name",
-											"value": "test",
-											"type": "text"
-										},
-										{
-											"key": "first_name",
-											"value": "test",
-											"type": "text"
-										}
-									]
-								},
-								"url": {
-									"raw": "{{management_url}}/management/auth/completeProfile",
-									"host": [
-										"{{management_url}}"
-									],
-									"path": [
-										"management",
-										"auth",
-										"completeProfile"
-									]
-								},
-								"description": "The client does not have a redirect_uri define"
-							},
-							"response": []
-						},
-						{
-							"name": "Redirect to authorize",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "858b069b-8aa9-4a30-a232-f3db5983a4ab",
-										"exec": [
-											"pm.test(\"Status code is 302\", function () {",
-											"    pm.response.to.have.status(302);",
-											"});",
-											"",
-											"pm.test(\"Should be redirected\", function () {",
-											"    pm.response.to.be.redirection;",
-											"    pm.response.to.have.header('Location');",
-											"});",
-											"",
-											"pm.test(\"Should be a redirection to login page\", function() {",
-											"    var location = postman.getResponseHeader('Location');",
-											"      ",
-											"    tests['Redirect initial redirect uri'] = location.includes('http://nowhere.com');",
-											"});",
-											"",
-											"pm.test(\"Should not have redirect cookie anymore\", function() {",
-											"    var redirectCookie = decodeURIComponent(postman.getResponseCookie('Redirect-Graviteeio-AM'));",
-											"    tests['Cookie redirect is cleared'] = redirectCookie === \"undefined\";",
-											"    pm.environment.unset('cookieRedirectUrl');",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "375a93a4-6f56-4c49-808c-9223dfb11339",
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{redirection}}",
-									"host": [
-										"{{redirection}}"
-									]
-								},
-								"description": "The client does not have a redirect_uri define"
-							},
-							"response": []
-						},
-						{
-							"name": "Logout",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "88e1c30d-3cd1-4627-a530-8ac6bb23f348",
-										"exec": [
-											"pm.test(\"Status code is 302\", function () {",
-											"    pm.response.to.have.status(302);",
-											"});",
-											"",
-											"pm.test(\"Should be redirected\", function () {",
-											"    pm.response.to.be.redirection;",
-											"    pm.response.to.have.header('Location');",
-											"});",
-											"",
-											"pm.test(\"Should be a redirection to target url\", function() {",
-											"    var location = postman.getResponseHeader('Location');",
-											"      ",
-											"    tests['Redirect to login page'] = location === 'http://nowhere.com';",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{management_url}}/management/auth/logout?target_url=http://nowhere.com",
-									"host": [
-										"{{management_url}}"
-									],
-									"path": [
-										"management",
-										"auth",
-										"logout"
-									],
-									"query": [
-										{
-											"key": "target_url",
-											"value": "http://nowhere.com"
-										}
-									]
-								}
-							},
-							"response": []
-						}
-					],
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"id": "78876d35-7df9-44bc-b10e-458e8c3100c7",
-								"type": "text/javascript",
-								"exec": [
-									""
-								]
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"id": "3bbe8622-f896-4c60-be01-9a9a5b1aeecc",
-								"type": "text/javascript",
-								"exec": [
-									""
-								]
-							}
-						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Login",
@@ -725,7 +271,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "fb82c285-303e-4f21-b3fc-e342bc6b2c7e",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -782,7 +327,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "cc5bf7ae-3b85-4a5a-bff7-8904374300f3",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -803,7 +347,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "7c6c067f-b5a9-4b65-92b6-b6f49c25e559",
 										"exec": [
 											""
 										],
@@ -830,7 +373,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1e5d28ee-5f4d-486c-aec3-f9b6aeeb22e4",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -851,7 +393,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "1c5ec66e-eebe-46d9-9cb8-f23fe5879bde",
 										"exec": [
 											""
 										],
@@ -908,7 +449,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "515650cb-2a4a-46c5-b63a-23498cdf1bda",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -937,7 +477,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "42ea3434-c459-453d-abd1-f591c923a316",
 										"exec": [
 											""
 										],
@@ -964,7 +503,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ed3f44c1-f192-47e6-b70e-82e587a33f15",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -1013,7 +551,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "eea173bb-4311-4b8d-b425-16b5a009ad70",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -1023,16 +560,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "f87ab69a-2a60-413f-b98c-b55e5e68c25f",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Token",
@@ -1043,7 +577,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "6b7b886d-18f5-4680-84b2-ee98cd585bf5",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1091,9 +624,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Cleanup",
@@ -1145,7 +676,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "6c43fd10-111b-4e7c-9aaf-23558522a08e",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -1180,12 +710,9 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Login Social Provider",
@@ -1199,7 +726,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b11c8bf5-82ea-4f60-a6e3-fac862aecfc7",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -1252,7 +778,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "5d0b961b-7601-447a-91f5-75c37ce89f0a",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -1267,7 +792,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "86a502d4-70e8-4f46-82a0-94dfcb664e8c",
 										"exec": [
 											"var username = pm.variables.replaceIn('{{$randomUserName}}') ;",
 											"",
@@ -1318,7 +842,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "eebc9ecd-9469-4fdd-980f-7175c8700124",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -1374,7 +897,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b4c80bff-65c4-4faf-a2fe-325e1babc20f",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1426,7 +948,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "42c6e917-c9e1-4a62-94c2-b8788e729e09",
 										"exec": [
 											"// wait for sync process",
 											"setTimeout(function(){}, 10000);"
@@ -1475,7 +996,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "6f7fe5d5-4f0d-400b-ae79-e432d17fe91b",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1518,7 +1038,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1c4c68b0-d47c-4569-ba20-c6ff8dd1c039",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -1533,7 +1052,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "9817624c-5af0-4b7c-8fbd-16528d1cf215",
 										"exec": [
 											""
 										],
@@ -1586,7 +1104,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "63f66ecb-5772-48df-a656-b1c33cdc4d71",
 										"exec": [
 											"// wait for sync process",
 											"setTimeout(function(){}, 10000);"
@@ -1639,7 +1156,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "94b19c66-86ec-4089-b22f-49193a3a8342",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -1649,19 +1165,16 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "649878f3-ecba-4b46-9d64-83d59f2c2d00",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
-					"name": "Login with complete profile",
+					"name": "Login with consent",
 					"item": [
 						{
 							"name": "Initiate Login Flow",
@@ -1669,7 +1182,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "2f848dd8-0696-40b2-8db5-a6815aa1e940",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -1726,7 +1238,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "10d9bc98-c9ab-4e71-91e5-c83b1551474b",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1749,7 +1260,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "67dbc321-91f9-484f-b98f-c8773c2f3193",
 										"exec": [
 											""
 										],
@@ -1776,7 +1286,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1736ee34-c41c-429e-8902-e9dfee1726cc",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -1794,7 +1303,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "f67ab5d8-20eb-464f-88f2-c18dd17905f0",
 										"exec": [
 											""
 										],
@@ -1821,7 +1329,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "23a05e8d-64ef-469b-ac31-b1112ca8088b",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1844,7 +1351,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "c5392ed3-8831-4aca-9459-f3dd98cd6fd3",
 										"exec": [
 											""
 										],
@@ -1871,7 +1377,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "6c08e1e9-b9e7-4aa6-bfa7-51ddb9b9ae18",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -1891,7 +1396,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "34e78693-e183-40ad-9dcd-d1084ba9c04f",
 										"exec": [
 											""
 										],
@@ -1948,7 +1452,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "26b2d5d0-b870-4df0-aec7-141bfd1a8b61",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -1967,7 +1470,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "4a523176-4dc5-4539-a088-5956c4f82177",
 										"exec": [
 											""
 										],
@@ -1994,7 +1496,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f5312eca-6826-4fa1-a7b4-1b60a3d70927",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -2017,7 +1518,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "6a320a3e-e0c4-40e5-8316-49213c2ce75e",
 										"exec": [
 											""
 										],
@@ -2044,7 +1544,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9d244a98-a5cb-4ecb-b3ec-996884f1f49b",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2063,7 +1562,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "53516d7c-8235-40e5-9dc5-73994c3e274c",
 										"exec": [
 											""
 										],
@@ -2115,7 +1613,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "efe5ba30-5613-4e49-852e-d0900a9111e5",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2134,7 +1631,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "2ae617ce-dafe-40f6-bd4e-b09c85c80d8b",
 										"exec": [
 											""
 										],
@@ -2161,7 +1657,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ac3a3b70-0265-4fd9-b977-ea5ef073b0e8",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2180,7 +1675,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "a96b385e-d55a-4656-bd4d-a9c5753fbe10",
 										"exec": [
 											""
 										],
@@ -2195,132 +1689,6 @@
 									"raw": "{{redirection}}",
 									"host": [
 										"{{redirection}}"
-									]
-								},
-								"description": "The client does not have a redirect_uri define"
-							},
-							"response": []
-						},
-						{
-							"name": "Redirect to complete profile",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "02b7276b-a5de-4db1-a71d-525fe02ec298",
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Should be ok\", function () {",
-											"    pm.response.to.be.ok;",
-											"    ",
-											"    // Extract the XSRF token to send it with the next request.",
-											"    var responseHTML = cheerio(pm.response.text());",
-											"    var xsrfToken = responseHTML.find('[name=\"_csrf\"]').val();",
-											"    pm.environment.set('xsrf', xsrfToken);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "bb2e8669-6bb0-4d26-931b-71905259e5cf",
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{redirection}}",
-									"host": [
-										"{{redirection}}"
-									]
-								},
-								"description": "The client does not have a redirect_uri define"
-							},
-							"response": []
-						},
-						{
-							"name": "Post complete profile form",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"id": "266e55e8-fb01-4188-b4d7-3e1dff448e23",
-										"exec": [
-											"pm.test(\"Status code is 302\", function () {",
-											"    pm.response.to.have.status(302);",
-											"});",
-											"",
-											"pm.test(\"Should be redirected to authorize\", function () {",
-											"    pm.response.to.be.redirection;",
-											"    pm.response.to.have.header('Location');",
-											"",
-											"    var location = postman.getResponseHeader(\"Location\");",
-											"    pm.environment.set('redirection', location);",
-											"    tests['Redirect to authorize'] = location === pm.environment.get(\"cookieRedirectUrl\");",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								},
-								{
-									"listen": "prerequest",
-									"script": {
-										"id": "3936b578-d7f4-4cd4-8cb5-cd70e52984af",
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/x-www-form-urlencoded"
-									}
-								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "_csrf",
-											"value": "{{xsrf}}",
-											"type": "text"
-										},
-										{
-											"key": "given_name",
-											"value": "test",
-											"type": "text"
-										},
-										{
-											"key": "first_name",
-											"value": "test",
-											"type": "text"
-										}
-									]
-								},
-								"url": {
-									"raw": "{{management_url}}/management/auth/completeProfile",
-									"host": [
-										"{{management_url}}"
-									],
-									"path": [
-										"management",
-										"auth",
-										"completeProfile"
 									]
 								},
 								"description": "The client does not have a redirect_uri define"
@@ -2333,7 +1701,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "afd253f4-e934-49cd-8996-41ce447ceef9",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2362,7 +1729,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "9c1e9866-1c15-47f0-8fb5-fabe7ac3058e",
 										"exec": [
 											""
 										],
@@ -2389,7 +1755,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "7968cc5a-829a-4f90-a56d-02a45c63c3f5",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2439,7 +1804,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "df6f4377-6358-4019-95ee-e98693be53ba",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2475,7 +1839,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "2f6eceb2-bbbf-46e6-828e-9d7682fe4238",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -2485,16 +1848,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "c560b711-da8d-484f-a909-097392059569",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Login",
@@ -2505,7 +1865,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "0676f171-6949-40e1-a1ce-0b1706e93f48",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2562,7 +1921,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1fc823d3-3265-4a10-8c31-29e6c517876c",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -2585,7 +1943,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "f7c8f72e-7ef6-4a19-a3f3-b937d1b6a83d",
 										"exec": [
 											""
 										],
@@ -2612,7 +1969,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "7a2efcf4-0d29-49fd-b069-ca203ae752f5",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2630,7 +1986,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "de7e83d1-eafa-4d14-b2e0-53044496ce6b",
 										"exec": [
 											""
 										],
@@ -2657,7 +2012,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "7af43022-9544-4633-8fe3-1b891122eb39",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -2680,7 +2034,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "5dc994ff-e3aa-4ee6-9da0-0fcc2a7c1699",
 										"exec": [
 											""
 										],
@@ -2707,7 +2060,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "3898ff88-d19e-4acb-85f4-68d2b8510dc8",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2727,7 +2079,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "31de124c-0baf-478b-b49c-9720edac5160",
 										"exec": [
 											""
 										],
@@ -2784,7 +2135,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "8e47ee90-dcaf-4ebd-be8e-c78f9762e74e",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2803,7 +2153,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "dfd5d4ee-b0af-4a3b-935d-6d7a83d69fc1",
 										"exec": [
 											""
 										],
@@ -2830,7 +2179,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "0ebe557e-b9de-4639-9dd3-5da75ecf90db",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2849,7 +2197,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "4e5c1521-2a1c-4597-96db-1ac9ac05542d",
 										"exec": [
 											""
 										],
@@ -2876,7 +2223,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "de6868c3-5bc4-4fa2-b197-5ac238f26e14",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2905,7 +2251,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "7029ec47-0d58-4d4c-a913-a2afd018eea7",
 										"exec": [
 											""
 										],
@@ -2932,7 +2277,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "574122fe-8742-4a86-9d91-48cc5a061a2d",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -2982,7 +2326,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b5aedd8b-d463-4ac2-8208-ba42158c2597",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -3018,7 +2361,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "dc1cfbc9-ece8-4233-8a1a-71489b85d561",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -3028,16 +2370,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "12073c62-4584-4e08-9e99-6c665b26c557",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Cleanup",
@@ -3048,7 +2387,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "15072289-c934-45a1-b898-12299d27d015",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -3139,7 +2477,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "c97f3c89-aaeb-412b-8e2c-d687f6d3c313",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -3179,7 +2516,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "f79f2ead-fb81-40f8-9af8-2bd3dd0bb309",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -3189,20 +2525,15 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "b9b052fe-0f53-4dc6-ad62-215883cd2b43",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }
