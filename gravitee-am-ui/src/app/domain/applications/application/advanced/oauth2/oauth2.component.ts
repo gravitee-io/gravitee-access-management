@@ -98,7 +98,8 @@ export class ApplicationOAuth2Component implements OnInit {
   }
 
   initSettings() {
-    this.applicationOauthSettings = (this.application.settings == null) ? {} : this.application.settings.oauth || {};
+    // Need to create a copy of the oauth settings because it is a shared object and we made some deletions on it before calling server to path oauth config.
+    this.applicationOauthSettings = (this.application.settings == null) ? {} : JSON.parse(JSON.stringify(this.application.settings.oauth || {}));
     this.selectedScopeApprovals = this.applicationOauthSettings.scopeApprovals || {};
     this.applicationOauthSettings.scopes =  this.applicationOauthSettings.scopes || [];
     this.applicationOauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims || [];
