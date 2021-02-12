@@ -200,14 +200,17 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // common handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
-        ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
-        clientRequestParseHandler.setRequired(true);
+        Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
         Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator);
 
         // Root policy chain handler
         rootRouter.route()
-                .handler(clientRequestParseHandlerOptional)
+                // client_id is useful at root level in order to handle properly the ROOT app flow
+                // but if the client_id is unknown or invalid (not only missing) the rootRouter will throw an error that will prevent to propagate the call to the right route
+                // for instance, the OAuthProvider will not execute the /oauth/authorize and there will have 500 ERROR instead of "missing client_id" OAuth 2.0 error
+                // See https://github.com/gravitee-io/issues/issues/5035
+                .handler(new ClientRequestParseHandler(clientSyncService).setContinueOnError(true))
                 .handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
         // login route
