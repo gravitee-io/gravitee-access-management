@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.login.LoginSettings;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
 
@@ -83,6 +83,7 @@ public class PatchClient {
     private Optional<List<TokenClaim>> tokenCustomClaims;
     private Optional<Boolean> template;
     private Optional<Map<String, Object>> metadata;
+    private Optional<Boolean> flowsInherited;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -500,6 +501,14 @@ public class PatchClient {
         this.metadata = metadata;
     }
 
+    public Optional<Boolean> getFlowsInherited() {
+        return flowsInherited;
+    }
+
+    public void setFlowsInherited(Optional<Boolean> flowsInherited) {
+        this.flowsInherited = flowsInherited;
+    }
+
     public Client patch(Client _toPatch, boolean forceNull) {
         // create new object for audit purpose (patch json result)
         Client toPatch = new Client(_toPatch);
@@ -561,6 +570,7 @@ public class PatchClient {
         SetterUtils.safeSet(toPatch::setTokenCustomClaims, this.getTokenCustomClaims());
         SetterUtils.safeSet(toPatch::setTemplate, this.getTemplate(), boolean.class);
         SetterUtils.safeSet(toPatch::setMetadata, this.getMetadata());
+        SetterUtils.safeSet(toPatch::setFlowsInherited, this.getFlowsInherited());
 
         return toPatch;
     }
