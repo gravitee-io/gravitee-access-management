@@ -59,7 +59,7 @@ export class UserApplicationComponent implements OnInit {
         if (res) {
           this.userService.revokeConsents(this.domainId, this.userId, this.clientId).subscribe(response => {
             this.snackbarService.open('Access for application ' + this.application.name + ' revoked');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'users', this.userId, 'applications']);
+            this.router.navigate(['..'], { relativeTo: this.route });
           });
         }
       });
@@ -74,7 +74,7 @@ export class UserApplicationComponent implements OnInit {
           this.userService.revokeConsent(this.domainId, this.userId, consent.id).subscribe(response => {
             this.snackbarService.open('Permission ' + consent.scopeEntity.name + ' revoked');
             if (this.consents.length === 1) {
-              this.router.navigate(['/domains', this.domainId, 'settings', 'users', this.userId, 'applications']);
+              this.router.navigate(['..'], { relativeTo: this.route });
             } else {
               this.loadConsents();
             }
@@ -84,8 +84,8 @@ export class UserApplicationComponent implements OnInit {
   }
 
   loadConsents() {
-    this.userService.consents(this.domainId, this.userId, this.clientId).subscribe(consents => {
-      this.consents = consents;
+    this.userService.consents(this.domainId, this.userId, null).subscribe(consents => {
+      this.consents = consents.filter(consent => consent.clientId === this.clientId);
       this.consents = [...this.consents];
     });
   }
