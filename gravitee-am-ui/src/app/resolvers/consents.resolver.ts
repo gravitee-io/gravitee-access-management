@@ -26,7 +26,10 @@ export class ConsentsResolver implements Resolve<any> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     const domainId = route.paramMap.get('domainId');
     const userId = route.paramMap.get('userId');
-    const clientId = route.paramMap.get('clientId');
+    let clientId = route.paramMap.get('clientId');
+    if (!clientId) {
+      clientId = route.queryParamMap.get('clientId');
+    }
     return this.userService.consents(domainId, userId, clientId);
   }
 }

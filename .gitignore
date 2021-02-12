@@ -25,3 +25,4 @@ gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-man
 .vertx
 
 dependency-reduced-pom.xml
+audit-logs
