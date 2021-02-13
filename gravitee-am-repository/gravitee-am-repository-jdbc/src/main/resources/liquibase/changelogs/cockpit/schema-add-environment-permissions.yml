@@ -60,3 +60,5 @@ databaseChangeLog:
             sql: "INSERT INTO roles (id, name, description, reference_type, reference_id, assignable_type, ${system_field}, default_role, permission_acls, created_at, updated_at) SELECT ${uuid_function} as id, 'ENVIRONMENT_USER', null, 'ORGANIZATION', 'DEFAULT', 'ENVIRONMENT', ${false_value}, ${true_value}, '{\"DOMAIN\": [\"LIST\"], \"ENVIRONMENT\": [\"READ\"]}', ${now_function}, ${now_function};"
         - sql:
             sql: "UPDATE roles SET permission_acls = '{\"DOMAIN\": [\"LIST\"], \"ORGANIZATION\": [\"READ\"], \"ORGANIZATION_TAG\": [\"LIST\"], \"ORGANIZATION_ROLE\": [\"LIST\"], \"ORGANIZATION_GROUP\": [\"LIST\"], \"ENVIRONMENT\": [\"LIST\"]}', updated_at = ${now_function} WHERE name = 'ORGANIZATION_USER' AND reference_type = 'ORGANIZATION' AND reference_id = 'DEFAULT';"
+        - sql:
+            sql: "INSERT INTO memberships(id, member_id, member_type, reference_id, reference_type, role_id, created_at, updated_at) SELECT ${uuid_function} as id, u.id, 'USER', 'DEFAULT', 'ENVIRONMENT', r.id, ${now_function}, ${now_function} FROM users as u, roles as r WHERE u.reference_type = 'ORGANIZATION' AND r.name = 'ENVIRONMENT_USER';"
