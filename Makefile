@@ -279,60 +279,12 @@ pluginsJdbc: # Copy plugins to Gateway and Management API
 	@make pluginsJdbcManagement
 
 commonPluginsGateway: # Copy plugins to Gateway
-	@rm -fr $(GIO_AM_GATEWAY_PLUGINS)/gravitee-am*.zip
-	@cp -fr gravitee-am-certificate/gravitee-am-certificate-javakeystore/target/gravitee-am-certificate-javakeystore-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-certificate/gravitee-am-certificate-pkcs12/target/gravitee-am-certificate-pkcs12-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-extensiongrant/gravitee-am-extensiongrant-jwtbearer/target/gravitee-am-extensiongrant-jwtbearer-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-gateway/gravitee-am-gateway-services/gravitee-am-gateway-services-sync/target/gravitee-am-gateway-services-sync-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-oidc/target/gravitee-am-gateway-handler-oidc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-scim/target/gravitee-am-gateway-handler-scim-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-users/target/gravitee-am-gateway-handler-users-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-gateway/gravitee-am-gateway-handler/gravitee-am-gateway-handler-discovery/target/gravitee-am-gateway-handler-discovery-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-github/target/gravitee-am-identityprovider-github-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-facebook/target/gravitee-am-identityprovider-facebook-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-twitter/target/gravitee-am-identityprovider-twitter-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-inline/target/gravitee-am-identityprovider-inline-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-ldap/target/gravitee-am-identityprovider-ldap-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-mongo/target/gravitee-am-identityprovider-mongo-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-oauth2-generic/target/gravitee-am-identityprovider-oauth2-generic-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-azure-ad/target/gravitee-am-identityprovider-azure-ad-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-google/target/gravitee-am-identityprovider-google-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-jdbc/target/gravitee-am-identityprovider-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-franceconnect/target/gravitee-am-identityprovider-franceconnect-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-linkedin/target/gravitee-am-identityprovider-linkedin-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-salesforce/target/gravitee-am-identityprovider-salesforce-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-policy/gravitee-am-policy-enrich-profile/target/gravitee-am-policy-enrich-profile-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-policy/gravitee-am-policy-enrich-auth-flow/target/gravitee-am-policy-enrich-auth-flow-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-	@cp -fr gravitee-am-reporter/gravitee-am-reporter-file/target/gravitee-am-reporter-file-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)
-
+	@rm -fr $(GIO_AM_GATEWAY_PLUGINS)/*.zip
+	@cp -fr gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/target/staging/*.zip $(GIO_AM_GATEWAY_PLUGINS)
 
 commonPluginsManagement: # Copy plugins to Management API
-	@rm -fr $(GIO_AM_MANAGEMENT_API_PLUGINS)/gravitee-am*.zip
-	@cp -fr gravitee-am-certificate/gravitee-am-certificate-javakeystore/target/gravitee-am-certificate-javakeystore-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-certificate/gravitee-am-certificate-pkcs12/target/gravitee-am-certificate-pkcs12-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-extensiongrant/gravitee-am-extensiongrant-jwtbearer/target/gravitee-am-extensiongrant-jwtbearer-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-management-api/gravitee-am-management-api-services/gravitee-am-management-api-services-sync/target/gravitee-am-management-api-services-sync-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-management-api/gravitee-am-management-api-services/gravitee-am-management-api-services-purge/target/gravitee-am-management-api-services-purge-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-github/target/gravitee-am-identityprovider-github-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-facebook/target/gravitee-am-identityprovider-facebook-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-twitter/target/gravitee-am-identityprovider-twitter-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-inline/target/gravitee-am-identityprovider-inline-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-ldap/target/gravitee-am-identityprovider-ldap-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-mongo/target/gravitee-am-identityprovider-mongo-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-oauth2-generic/target/gravitee-am-identityprovider-oauth2-generic-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-oauth2-generic/target/gravitee-am-identityprovider-oauth2-generic-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-oauth2-generic/target/gravitee-am-identityprovider-oauth2-generic-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-azure-ad/target/gravitee-am-identityprovider-azure-ad-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-google/target/gravitee-am-identityprovider-google-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-jdbc/target/gravitee-am-identityprovider-jdbc-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-franceconnect/target/gravitee-am-identityprovider-franceconnect-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-linkedin/target/gravitee-am-identityprovider-linkedin-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-identityprovider/gravitee-am-identityprovider-salesforce/target/gravitee-am-identityprovider-salesforce-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-factor/gravitee-am-factor-otp/target/gravitee-am-factor-otp-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-policy/gravitee-am-policy-enrich-profile/target/gravitee-am-policy-enrich-profile-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-policy/gravitee-am-policy-enrich-auth-flow/target/gravitee-am-policy-enrich-auth-flow-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
-	@cp -fr gravitee-am-reporter/gravitee-am-reporter-file/target/gravitee-am-reporter-file-$(GIO_AM_VERSION).zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@rm -fr $(GIO_AM_MANAGEMENT_API_PLUGINS)/*.zip
+	@cp -fr gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/target/staging/*.zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 
 pluginsGateway: # Copy plugins to Gateway
 	@cp -fr gravitee-am-repository/gravitee-am-repository-mongodb/target/gravitee-am-repository-mongodb-$(GIO_AM_VERSION).zip $(GIO_AM_GATEWAY_PLUGINS)

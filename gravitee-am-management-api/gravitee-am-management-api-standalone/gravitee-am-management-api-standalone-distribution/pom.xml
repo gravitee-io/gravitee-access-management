@@ -305,6 +305,13 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.cockpit</groupId>
+            <artifactId>gravitee-cockpit-connectors-ws</artifactId>
+            <version>${gravitee-cockpit-connectors.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -543,6 +550,12 @@
                                     <groupId>io.gravitee.policy</groupId>
                                     <artifactId>gravitee-policy-request-validation</artifactId>
                                     <version>${gravitee-policy-request-validation.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.cockpit</groupId>
+                                    <artifactId>gravitee-cockpit-connectors-ws</artifactId>
+                                    <version>${gravitee-cockpit-connectors.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
                             </artifactItems>
