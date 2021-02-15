@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {ApplicationService} from "../../../../../services/application.service";
 import {SnackbarService} from "../../../../../services/snackbar.service";
 import * as _ from 'lodash';
@@ -35,6 +35,7 @@ export class ApplicationMetadataComponent implements OnInit {
   formChanged: boolean = false;
 
   constructor(private route: ActivatedRoute,
+              private router: Router,
               private applicationService: ApplicationService,
               private snackbarService: SnackbarService) { }
 
@@ -108,12 +109,8 @@ export class ApplicationMetadataComponent implements OnInit {
       metadata[item.name] = item.value;
     });
     this.applicationService.patch(this.domainId, this.application.id, { 'metadata' : metadata }).subscribe(data => {
-      this.application = data;
-      this.route.snapshot.data['application'] = this.application;
-      this.formChanged = false;
       this.snackbarService.open('Application updated');
-      this.appMetadata = [];
-      this.initMetadata();
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
     });
   }
 }
