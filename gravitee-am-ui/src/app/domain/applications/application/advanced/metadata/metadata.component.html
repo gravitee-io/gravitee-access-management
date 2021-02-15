@@ -18,7 +18,7 @@
 <div>
   <div>
     <div fxFlex="70">
-      <form #metadataForm (keydown.enter)="false" (ngSubmit)="patch()">
+      <form #metadataForm="ngForm" (keydown.enter)="false" (ngSubmit)="patch(); formChanged = false;">
         <div class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Metadata</h5>

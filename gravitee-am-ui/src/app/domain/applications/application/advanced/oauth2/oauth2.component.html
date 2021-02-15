@@ -18,7 +18,7 @@
 <div fxLayout="column">
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
-      <form #clientOAuth2Form="ngForm" (keydown.enter)="false" (ngSubmit)="update()" fxLayout="column">
+      <form #clientOAuth2Form="ngForm" (keydown.enter)="false" (ngSubmit)="update(); formChanged = false;" fxLayout="column">
         <div class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Grant flows</h5>

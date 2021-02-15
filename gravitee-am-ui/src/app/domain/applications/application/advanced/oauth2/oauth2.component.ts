@@ -17,7 +17,7 @@ import {Component, EventEmitter, OnInit, Output, ViewChild} from '@angular/core'
 import {NgForm} from '@angular/forms';
 import {MatDialog} from '@angular/material';
 import {MatDialogRef} from '@angular/material/dialog';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {ApplicationService} from '../../../../../services/application.service';
 import {SnackbarService} from '../../../../../services/snackbar.service';
 import {AuthService} from '../../../../../services/auth.service';
@@ -61,6 +61,7 @@ export class ApplicationOAuth2Component implements OnInit {
   readonly = false;
 
   constructor(private route: ActivatedRoute,
+              private router: Router,
               private applicationService: ApplicationService,
               private snackbarService: SnackbarService,
               private authService: AuthService,
@@ -87,19 +88,13 @@ export class ApplicationOAuth2Component implements OnInit {
     delete this.applicationOauthSettings.jwks;
     this.cleanCustomClaims();
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : this.applicationOauthSettings}}).subscribe(data => {
-      this.application = data;
-      this.route.snapshot.data['application'] = this.application;
-      this.scopes = this.route.snapshot.data['scopes'];
-      this.applicationOauthSettings = {};
-      this.formChanged = false;
-      this.initSettings();
       this.snackbarService.open('Application updated');
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
     });
   }
 
   initSettings() {
-    // Need to create a copy of the oauth settings because it is a shared object and we made some deletions on it before calling server to path oauth config.
-    this.applicationOauthSettings = (this.application.settings == null) ? {} : JSON.parse(JSON.stringify(this.application.settings.oauth || {}));
+    this.applicationOauthSettings = this.applicationOauthSettings = (this.application.settings == null) ? {} : this.application.settings.oauth || {};
     this.selectedScopeApprovals = this.applicationOauthSettings.scopeApprovals || {};
     this.applicationOauthSettings.scopes =  this.applicationOauthSettings.scopes || [];
     this.applicationOauthSettings.tokenCustomClaims = this.applicationOauthSettings.tokenCustomClaims || [];
