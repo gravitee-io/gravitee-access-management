@@ -1,5 +1,102 @@
 # Change Log
 
+
+== https://github.com/gravitee-io/issues/milestone/340?closed=1[AM - 3.5.2 (2021-02-08)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- OIDC provider with id_token or id_token token response type not working anymore https://github.com/gravitee-io/issues/issues/5023[#5023]
+
+*_General_*
+
+- Merge 3.4.5 https://github.com/gravitee-io/issues/issues/4990[#4990]
+
+*_Repository_*
+
+- [jdbc] vhost override entrypoint is not mapped https://github.com/gravitee-io/issues/issues/5003[#5003]
+- [mongodb] missing index creation https://github.com/gravitee-io/issues/issues/5021[#5021]
+
+== https://github.com/gravitee-io/issues/milestone/335?closed=1[AM - 3.4.5 (2021-02-02)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [webauthn] AndroidSafetynetAttestation validation failure https://github.com/gravitee-io/issues/issues/4933[#4933]
+- [webauthn] Apple Attestation verification failed https://github.com/gravitee-io/issues/issues/4921[#4921]
+
+=== Improvements
+
+*_Gateway_*
+
+- [webauthn] collect and store attestation statement https://github.com/gravitee-io/issues/issues/4949[#4949]
+- [webauthn] select Authenticator Transport https://github.com/gravitee-io/issues/issues/4950[#4950]
+
+*_Management_*
+
+- Add approved logout URL list https://github.com/gravitee-io/issues/issues/4978[#4978]
+
+== https://github.com/gravitee-io/issues/milestone/330?closed=1[AM - 3.5.1 (2021-02-02)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.4.3 https://github.com/gravitee-io/issues/issues/4866[#4866]
+- Merge 3.4.4 https://github.com/gravitee-io/issues/issues/4920[#4920]
+
+*_Management-ui_*
+
+- Error in console when add callout policy to flow https://github.com/gravitee-io/issues/issues/4924[#4924]
+- Identity provider json encoding issue https://github.com/gravitee-io/issues/issues/4980[#4980]
+
+=== Improvements
+
+*_Management_*
+
+- Newsletter improvement https://github.com/gravitee-io/issues/issues/4936[#4936]
+
+== https://github.com/gravitee-io/issues/milestone/331?closed=1[AM - 3.4.4 (2021-01-15)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [webauthn] AndroidSafetynetAttestation validation failure https://github.com/gravitee-io/issues/issues/4880[#4880]
+- [webauthn] Username Enumeration https://github.com/gravitee-io/issues/issues/4876[#4876]
+- [webauthn] relying party ID/name issues https://github.com/gravitee-io/issues/issues/4875[#4875]
+
+*_General_*
+
+- Merge 3.0.10 https://github.com/gravitee-io/issues/issues/4915[#4915]
+
+== https://github.com/gravitee-io/issues/milestone/323?closed=1[AM - 3.0.10 (2021-01-15)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Self user registration custom expiresAfter is not set https://github.com/gravitee-io/issues/issues/4911[#4911]
+
+*_Snyk_*
+
+- Security upgrade org.bouncycastle:bcpkix-jdk15on from 1.66 to 1.68 https://github.com/gravitee-io/issues/issues/4869[#4869]
+
+=== Improvements
+
+*_Gateway_*
+
+- [management] reduce information contained in the JWT for reset password and registration email https://github.com/gravitee-io/issues/issues/4451[#4451]
+
+== https://github.com/gravitee-io/issues/milestone/328?closed=1[AM - 3.4.3 (2021-01-04)]
+
+=== Improvements
+
+*_Gateway_*
+
+- [passwordless] Split the webauthn.js file to be able to override it https://github.com/gravitee-io/issues/issues/4812[#4812]
 == https://github.com/gravitee-io/issues/milestone/247?closed=1[AM - 3.5.0 (2020-12-23)]
 
 === Bug fixes
