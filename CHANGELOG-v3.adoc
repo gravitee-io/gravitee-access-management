@@ -1,5 +1,59 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/248?closed=1[AM - 3.6.0 (2021-02-17)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.5.1 https://github.com/gravitee-io/issues/issues/4991[#4991]
+- Merge 3.5.2 https://github.com/gravitee-io/issues/issues/5032[#5032]
+
+*_Management_*
+
+- Environment permissions must be added to migration script https://github.com/gravitee-io/issues/issues/4529[#4529]
+- JS error when trying to add application metadata https://github.com/gravitee-io/issues/issues/5065[#5065]
+- Social authentication user always attached to DEFAULT organization https://github.com/gravitee-io/issues/issues/4528[#4528]
+- Unable to assign administrative role using sqlserver https://github.com/gravitee-io/issues/issues/4989[#4989]
+
+=== Features
+
+*_Gateway_*
+
+- Enrich UserProfile policy https://github.com/gravitee-io/issues/issues/4882[#4882]
+- [management] Auth Flows for applications https://github.com/gravitee-io/issues/issues/4764[#4764]
+- [policy] Enrich Authentication Flow Policy https://github.com/gravitee-io/issues/issues/4883[#4883]
+
+*_Identity-provider_*
+
+- Add SalesForce identity provider https://github.com/gravitee-io/issues/issues/4730[#4730]
+
+*_Management_*
+
+- Add application analytics https://github.com/gravitee-io/issues/issues/3290[#3290]
+- Add user analytics https://github.com/gravitee-io/issues/issues/3291[#3291]
+- Manage Cockpit installation registration https://github.com/gravitee-io/issues/issues/4765[#4765]
+
+*_Reporter_*
+
+- [file] Add support for a File reporter https://github.com/gravitee-io/issues/issues/4731[#4731]
+
+=== Improvements
+
+*_Gateway_*
+
+- Propagate execution context data to the whole authentication flow https://github.com/gravitee-io/issues/issues/4407[#4407]
+- [reporter] trace login activity for social IdP https://github.com/gravitee-io/issues/issues/4874[#4874]
+
+*_Management_*
+
+- Cockpit url must be configurable https://github.com/gravitee-io/issues/issues/4947[#4947]
+- Handle installation events from cockpit https://github.com/gravitee-io/issues/issues/4942[#4942]
+
+*_Management-ui_*
+
+- Display Object claim values https://github.com/gravitee-io/issues/issues/4916[#4916]
+- Manage human readable identifier for environment https://github.com/gravitee-io/issues/issues/4311[#4311]
 
 == https://github.com/gravitee-io/issues/milestone/340?closed=1[AM - 3.5.2 (2021-02-08)]
 
