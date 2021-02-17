@@ -83,7 +83,7 @@ import {UserFactorsComponent} from './domain/settings/users/user/factors/factors
 import {UserCredentialsResolver} from './resolvers/user-credentials.resolver';
 import {UserCredentialResolver} from './resolvers/user-credential.resolver';
 import {UserCredentialsComponent} from './domain/settings/users/user/credentials/credentials.component';
-import {UserCredentialComponent} from'./domain/settings/users/user/credentials/credential/credential.component';
+import {UserCredentialComponent} from './domain/settings/users/user/credentials/credential/credential.component';
 import {ExtensionGrantCreationComponent} from './domain/settings/extension-grants/creation/extension-grant-creation.component';
 import {ExtensionGrantComponent} from './domain/settings/extension-grants/extension-grant/extension-grant.component';
 import {ExtensionGrantsResolver} from './resolvers/extension-grants.resolver';
@@ -132,6 +132,7 @@ import {ApplicationEmailsComponent} from './domain/applications/application/desi
 import {ApplicationEmailComponent} from './domain/applications/application/design/emails/email/email.component';
 import {ApplicationAdvancedComponent} from './domain/applications/application/advanced/advanced.component';
 import {ApplicationGeneralComponent} from './domain/applications/application/advanced/general/general.component';
+import {PasswordPolicyComponent} from './domain/applications/application/advanced/password-policy/password-policy.component';
 import {ApplicationAccountSettingsComponent} from './domain/applications/application/advanced/account/account.component';
 import {ApplicationOAuth2Component} from './domain/applications/application/advanced/oauth2/oauth2.component';
 import {ApplicationCertificatesComponent} from './domain/applications/application/advanced/certificates/certificates.component';
@@ -173,13 +174,13 @@ import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
 import {PlatformFlowSchemaResolver} from './resolvers/platform-flow-schema.resolver';
 import {NewsletterComponent} from "./newsletter/newsletter.component";
 import {ApplicationAnalyticsComponent} from "./domain/applications/application/analytics/analytics.component";
-import { UserHistoryComponent } from './domain/settings/users/user/history/history.component';
+import {UserHistoryComponent} from './domain/settings/users/user/history/history.component';
 import {EnvironmentResolver} from "./resolvers/environment-resolver.service";
 import {DummyComponent} from "./components/dummy/dummy.component";
 import {CockpitComponent} from "./settings/cockpit/cockpit.component";
 import {InstallationResolver} from "./resolvers/installation.resolver";
 import {EnvironmentComponent} from "./environment/environment.component";
-import { PluginReportersResolver } from './resolvers/plugin-reporters.resolver';
+import {PluginReportersResolver} from './resolvers/plugin-reporters.resolver';
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1055,6 +1056,20 @@ export const routes: Routes = [
                                   },
                                   perms: {
                                     only: ['application_certificate_list']
+                                  }
+                                }
+                              },
+                              {
+                                path: 'password-policy',
+                                component: PasswordPolicyComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Password policy',
+                                    section: 'Security'
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read']
                                   }
                                 }
                               },

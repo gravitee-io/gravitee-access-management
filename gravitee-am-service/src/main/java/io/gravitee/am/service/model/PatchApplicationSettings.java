@@ -35,6 +35,7 @@ public class PatchApplicationSettings {
     private Optional<LoginSettings> login;
     private Optional<PatchApplicationOAuthSettings> oauth;
     private Optional<PatchApplicationAdvancedSettings> advanced;
+    private Optional<PatchPasswordSettings> passwordSettings;
 
     public Optional<AccountSettings> getAccount() {
         return account;
@@ -64,6 +65,14 @@ public class PatchApplicationSettings {
         return advanced;
     }
 
+    public Optional<PatchPasswordSettings> getPasswordSettings() {
+        return passwordSettings;
+    }
+
+    public void setPasswordSettings(Optional<PatchPasswordSettings> passwordSettings) {
+        this.passwordSettings = passwordSettings;
+    }
+
     public void setAdvanced(Optional<PatchApplicationAdvancedSettings> advanced) {
         this.advanced = advanced;
     }
@@ -81,6 +90,7 @@ public class PatchApplicationSettings {
         if (this.getAdvanced() != null && this.getAdvanced().isPresent()) {
             toPatch.setAdvanced(this.getAdvanced().get().patch(toPatch.getAdvanced()));
         }
+        this.passwordSettings.ifPresent(ps -> toPatch.setPasswordSettings(ps.patch(toPatch.getPasswordSettings())));
         return toPatch;
     }
 
@@ -90,7 +100,8 @@ public class PatchApplicationSettings {
 
         if (account != null && account.isPresent()
                 || login != null && login.isPresent()
-                || advanced != null && advanced.isPresent()) {
+                || advanced != null && advanced.isPresent()
+                || passwordSettings != null && passwordSettings.isPresent()) {
             requiredPermissions.add(Permission.APPLICATION_SETTINGS);
         }
 

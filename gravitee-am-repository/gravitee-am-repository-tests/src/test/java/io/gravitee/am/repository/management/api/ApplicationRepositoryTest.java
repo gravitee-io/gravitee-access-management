@@ -15,20 +15,27 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.common.policy.PasswordInclude;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.PasswordSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.login.LoginSettings;
-import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -171,30 +178,47 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getMetadata().containsKey("key1"));
     }
 
-    private Application buildApplication() {
+    private static Application buildApplication() {
         String random = UUID.randomUUID().toString();
         Application app = new Application();
         app.setType(ApplicationType.NATIVE);
-        app.setCertificate("cert"+random);
-        app.setDescription("desc"+random);
-        app.setDomain("domain"+random);
-        app.setName("name"+random);
+        app.setCertificate("cert" + random);
+        app.setDescription("desc" + random);
+        app.setDomain("domain" + random);
+        app.setName("name" + random);
         app.setTemplate(true);
         app.setEnabled(true);
-        app.setIdentities(Sets.newSet("ipd1"+random, "idp2"+random));
-        app.setFactors(Sets.newSet("fact1"+random, "fact2"+random));
-        ApplicationSettings settings = new ApplicationSettings();
-        settings.setLogin(new LoginSettings());
-        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
-        settings.setOauth(oauth);
-        oauth.setGrantTypes(Arrays.asList("authorization_code"));
-        app.setSettings(settings);
+        app.setIdentities(Sets.newSet("ipd1" + random, "idp2" + random));
+        app.setFactors(Sets.newSet("fact1" + random, "fact2" + random));
+        app.setSettings(buildApplicationSettings());
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("key1", "value1");
         app.setMetadata(metadata);
         app.setCreatedAt(new Date());
         app.setUpdatedAt(new Date());
         return app;
+    }
+
+    private static ApplicationSettings buildApplicationSettings() {
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setLogin(new LoginSettings());
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setGrantTypes(Collections.singletonList("authorization_code"));
+        settings.setOauth(oauth);
+        settings.setPasswordSettings(buildPasswordSettings());
+        return settings;
+    }
+
+    private static PasswordSettings buildPasswordSettings() {
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setRegex(false);
+        passwordSettings.setRegexFormat("*");
+        passwordSettings.setMinLength(5);
+        passwordSettings.setMaxLength(9);
+        passwordSettings.setPasswordInclude(PasswordInclude.NUMBERS_AND_SPECIAL_CHARACTERS);
+        passwordSettings.setLettersInMixedCase(true);
+        passwordSettings.setMaxConsecutiveLetters(4);
+        return passwordSettings;
     }
 
     @Test

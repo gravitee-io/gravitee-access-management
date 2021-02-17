@@ -33,14 +33,33 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.PasswordSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.ApplicationTemplateManager;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.FormService;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.exception.InvalidRoleException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.TopApplication;
@@ -61,7 +80,12 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -517,12 +541,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));
     }
 
+    //TODO Boualem : domain never used
     private Single<Application> update0(String domain, Application currentApplication, Application applicationToUpdate, User principal) {
         // updated date
         applicationToUpdate.setUpdatedAt(new Date());
-
-        // validate application metadata
-        return validateApplicationMetadata(applicationToUpdate)
+        // validate password settings
+        return validatePasswordSettings(applicationToUpdate)
+                // validate application metadata
+                .flatMap(this::validateApplicationMetadata)
                 // validate identity providers
                 .flatMap(this::validateApplicationIdentityProviders)
                 // update application
@@ -580,6 +606,7 @@ public class ApplicationServiceImpl implements ApplicationService {
      * We try to enable Dynamic Client Registration on client side while it is not enabled on domain.
      * The redirect_uris do not respect domain conditions (localhost, scheme and wildcard)
      * </pre>
+     *
      * @param application application to check
      * @return a client only if every conditions are respected.
      */
@@ -688,9 +715,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     /**
-     *    A client using the "tls_client_auth" authentication method MUST use exactly one of the
-     *    below metadata parameters to indicate the certificate subject value that the authorization server is
-     *    to expect when authenticating the respective client.
+     * A client using the "tls_client_auth" authentication method MUST use exactly one of the
+     * below metadata parameters to indicate the certificate subject value that the authorization server is
+     * to expect when authenticating the respective client.
      */
     private Single<Application> validateTlsClientAuth(Application application) {
         ApplicationOAuthSettings settings = application.getSettings().getOauth();
@@ -738,6 +765,26 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
+        return Single.just(application);
+    }
+
+    static Single<Application> validatePasswordSettings(Application application) {
+        Optional<PasswordSettings> optionalPasswordSettings = Optional.ofNullable(application.getSettings()).map(ApplicationSettings::getPasswordSettings);
+        if (!optionalPasswordSettings.isPresent()) {
+            return Single.just(application);
+        }
+
+        PasswordSettings passwordSettings = optionalPasswordSettings.get();
+        if (passwordSettings.getRegex() == null) {
+            return Single.error(new IllegalArgumentException("'regex' field must not be null"));
+        }
+
+        //case regxFormat
+        if (Boolean.FALSE.equals(passwordSettings.getRegex())) {
+            if (passwordSettings.getMaxLength() <= passwordSettings.getMinLength()) {
+                return Single.error(new IllegalArgumentException("Password max length must be greater than min length"));
+            }
+        }
         return Single.just(application);
     }
 }

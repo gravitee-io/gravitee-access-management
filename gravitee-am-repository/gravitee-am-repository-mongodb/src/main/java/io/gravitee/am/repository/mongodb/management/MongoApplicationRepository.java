@@ -26,12 +26,26 @@ import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.PasswordSettings;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.jose.*;
+import io.gravitee.am.model.jose.ECKey;
+import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.model.jose.KeyType;
+import io.gravitee.am.model.jose.OCTKey;
+import io.gravitee.am.model.jose.OKPKey;
+import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.repository.mongodb.management.internal.model.*;
+import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationAdvancedSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationOAuthSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -41,11 +55,18 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,7 +79,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
-    private static final String FIELD_GRANT_TYPES= "settings.oauth.grantTypes";
+    private static final String FIELD_GRANT_TYPES = "settings.oauth.grantTypes";
     private MongoCollection<ApplicationMongo> applicationsCollection;
 
     @PostConstruct
@@ -76,20 +97,20 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Single<List<Application>> findAll() {
-        return Observable.fromPublisher(applicationsCollection.find()).map(this::convert).collect(ArrayList::new, List::add);
+        return Observable.fromPublisher(applicationsCollection.find()).map(MongoApplicationRepository::convert).collect(ArrayList::new, List::add);
     }
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments()).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find().sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find().sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
     @Override
     public Single<Page<Application>> findByDomain(String domain, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain))).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
@@ -110,44 +131,44 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 searchQuery);
 
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery)).first(0l);
-        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
+        Single<Set<Application>> applicationsOperation = Observable.fromPublisher(applicationsCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
 
     @Override
     public Single<Set<Application>> findByCertificate(String certificate) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_CERTIFICATE, certificate))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_CERTIFICATE, certificate))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Set<Application>> findByIdentityProvider(String identityProvider) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_IDENTITIES, identityProvider))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_IDENTITIES, identityProvider))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Set<Application>> findByFactor(String factor) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_FACTORS, factor))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_FACTORS, factor))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Maybe<Application> findById(String id) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(MongoApplicationRepository::convert);
     }
 
     @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
         return Observable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId)))
-                .first()).firstElement().map(this::convert);
+                .first()).firstElement().map(MongoApplicationRepository::convert);
     }
 
     @Override
     public Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
-        return Observable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant)))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant)))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Set<Application>> findByIdIn(List<String> ids) {
-        return Observable.fromPublisher(applicationsCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable.fromPublisher(applicationsCollection.find(in(FIELD_ID, ids))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
@@ -198,7 +219,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return applicationMongo;
     }
 
-    private Application convert(ApplicationMongo other) {
+    private static Application convert(ApplicationMongo other) {
         Application application = new Application();
         application.setId(other.getId());
         application.setName(other.getName());
@@ -218,7 +239,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return application;
     }
 
-    private ApplicationSettingsMongo convert(ApplicationSettings other) {
+    private static ApplicationSettingsMongo convert(ApplicationSettings other) {
         if (other == null) {
             return null;
         }
@@ -228,10 +249,26 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setAccount(convert(other.getAccount()));
         applicationSettingsMongo.setLogin(convert(other.getLogin()));
         applicationSettingsMongo.setAdvanced(convert(other.getAdvanced()));
+        applicationSettingsMongo.setPasswordSettings(convert(other.getPasswordSettings()));
         return applicationSettingsMongo;
     }
 
-    private ApplicationSettings convert(ApplicationSettingsMongo other) {
+    private static PasswordSettingsMongo convert(PasswordSettings other) {
+        if (other == null) {
+            return null;
+        }
+        PasswordSettingsMongo passwordSettings = new PasswordSettingsMongo();
+        passwordSettings.setRegex(other.getRegex());
+        passwordSettings.setRegexFormat(other.getRegexFormat());
+        passwordSettings.setMinLength(other.getMinLength());
+        passwordSettings.setMaxLength(other.getMaxLength());
+        passwordSettings.setPasswordInclude(other.getPasswordInclude());
+        passwordSettings.setLettersInMixedCase(other.getLettersInMixedCase());
+        passwordSettings.setMaxConsecutiveLetters(other.getMaxConsecutiveLetters());
+        return passwordSettings;
+    }
+
+    private static ApplicationSettings convert(ApplicationSettingsMongo other) {
         if (other == null) {
             return null;
         }
@@ -241,10 +278,26 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setAccount(convert(other.getAccount()));
         applicationSettings.setLogin(convert(other.getLogin()));
         applicationSettings.setAdvanced(convert(other.getAdvanced()));
+        applicationSettings.setPasswordSettings(convert(other.getPasswordSettings()));
         return applicationSettings;
     }
 
-    private ApplicationOAuthSettingsMongo convert(ApplicationOAuthSettings other) {
+    private static PasswordSettings convert(PasswordSettingsMongo other) {
+        if (other == null) {
+            return null;
+        }
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setRegex(other.getRegex());
+        passwordSettings.setRegexFormat(other.getRegexFormat());
+        passwordSettings.setMinLength(other.getMinLength());
+        passwordSettings.setMaxLength(other.getMaxLength());
+        passwordSettings.setPasswordInclude(other.getPasswordInclude());
+        passwordSettings.setLettersInMixedCase(other.getLettersInMixedCase());
+        passwordSettings.setMaxConsecutiveLetters(other.getMaxConsecutiveLetters());
+        return passwordSettings;
+    }
+
+    private static ApplicationOAuthSettingsMongo convert(ApplicationOAuthSettings other) {
         if (other == null) {
             return null;
         }
@@ -290,7 +343,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setClientIdIssuedAt(other.getClientIdIssuedAt());
         applicationOAuthSettingsMongo.setClientSecretExpiresAt(other.getClientSecretExpiresAt());
         applicationOAuthSettingsMongo.setScopes(other.getScopes());
-        applicationOAuthSettingsMongo.setScopeApprovals(other.getScopeApprovals() != null ? new Document((Map)other.getScopeApprovals()) : null);
+        applicationOAuthSettingsMongo.setScopeApprovals(other.getScopeApprovals() != null ? new Document((Map) other.getScopeApprovals()) : null);
         applicationOAuthSettingsMongo.setEnhanceScopesWithUserPermissions(other.isEnhanceScopesWithUserPermissions());
         applicationOAuthSettingsMongo.setAccessTokenValiditySeconds(other.getAccessTokenValiditySeconds());
         applicationOAuthSettingsMongo.setRefreshTokenValiditySeconds(other.getRefreshTokenValiditySeconds());
@@ -309,7 +362,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return applicationOAuthSettingsMongo;
     }
 
-    private ApplicationOAuthSettings convert(ApplicationOAuthSettingsMongo other) {
+    private static ApplicationOAuthSettings convert(ApplicationOAuthSettingsMongo other) {
         if (other == null) {
             return null;
         }
@@ -375,23 +428,23 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return applicationOAuthSettings;
     }
 
-    private AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {
+    private static AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {
         return accountSettingsMongo != null ? accountSettingsMongo.convert() : null;
     }
 
-    private AccountSettingsMongo convert(AccountSettings accountSettings) {
+    private static AccountSettingsMongo convert(AccountSettings accountSettings) {
         return AccountSettingsMongo.convert(accountSettings);
     }
 
-    private LoginSettings convert(LoginSettingsMongo loginSettingsMongo) {
+    private static LoginSettings convert(LoginSettingsMongo loginSettingsMongo) {
         return loginSettingsMongo != null ? loginSettingsMongo.convert() : null;
     }
 
-    private LoginSettingsMongo convert(LoginSettings loginSettings) {
+    private static LoginSettingsMongo convert(LoginSettings loginSettings) {
         return LoginSettingsMongo.convert(loginSettings);
     }
 
-    private ApplicationAdvancedSettings convert(ApplicationAdvancedSettingsMongo other) {
+    private static ApplicationAdvancedSettings convert(ApplicationAdvancedSettingsMongo other) {
         if (other == null) {
             return null;
         }
@@ -402,7 +455,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return applicationAdvancedSettings;
     }
 
-    private ApplicationAdvancedSettingsMongo convert(ApplicationAdvancedSettings other) {
+    private static ApplicationAdvancedSettingsMongo convert(ApplicationAdvancedSettings other) {
         if (other == null) {
             return null;
         }
@@ -413,21 +466,21 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return applicationAdvancedSettingsMongo;
     }
 
-    private List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {
+    private static List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {
         if (mongoTokenClaims == null) {
             return null;
         }
-        return mongoTokenClaims.stream().map(this::convert).collect(Collectors.toList());
+        return mongoTokenClaims.stream().map(MongoApplicationRepository::convert).collect(Collectors.toList());
     }
 
-    private List<TokenClaimMongo> getMongoTokenClaims(List<TokenClaim> tokenClaims) {
+    private static List<TokenClaimMongo> getMongoTokenClaims(List<TokenClaim> tokenClaims) {
         if (tokenClaims == null) {
             return null;
         }
-        return tokenClaims.stream().map(this::convert).collect(Collectors.toList());
+        return tokenClaims.stream().map(MongoApplicationRepository::convert).collect(Collectors.toList());
     }
 
-    private TokenClaim convert(TokenClaimMongo mongoTokenClaim) {
+    private static TokenClaim convert(TokenClaimMongo mongoTokenClaim) {
         TokenClaim tokenClaim = new TokenClaim();
         tokenClaim.setTokenType(TokenTypeHint.from(mongoTokenClaim.getTokenType()));
         tokenClaim.setClaimName(mongoTokenClaim.getClaimName());
@@ -435,7 +488,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return tokenClaim;
     }
 
-    private TokenClaimMongo convert(TokenClaim tokenClaim) {
+    private static TokenClaimMongo convert(TokenClaim tokenClaim) {
         TokenClaimMongo mongoTokenClaim = new TokenClaimMongo();
         mongoTokenClaim.setTokenType(tokenClaim.getTokenType().toString());
         mongoTokenClaim.setClaimName(tokenClaim.getClaimName());
@@ -443,15 +496,15 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return mongoTokenClaim;
     }
 
-    private JWKSet convert(List<JWKMongo> jwksMongo) {
-        if (jwksMongo==null) {
+    private static JWKSet convert(List<JWKMongo> jwksMongo) {
+        if (jwksMongo == null) {
             return null;
         }
 
         JWKSet jwkSet = new JWKSet();
 
         List<JWK> jwkList = jwksMongo.stream()
-                .map(jwkMongo -> this.convert(jwkMongo))
+                .map(jwkMongo -> convert(jwkMongo))
                 .collect(Collectors.toList());
 
         jwkSet.setKeys(jwkList);
@@ -459,27 +512,29 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return jwkSet;
     }
 
-    private JWK convert(JWKMongo jwkMongo) {
-        if (jwkMongo==null) {
+    private static JWK convert(JWKMongo jwkMongo) {
+        if (jwkMongo == null) {
             return null;
         }
 
         JWK result;
 
         switch (KeyType.parse(jwkMongo.getKty())) {
+            // @formatter:off
             case EC: result = convertEC(jwkMongo);break;
             case RSA:result = convertRSA(jwkMongo);break;
             case OCT:result = convertOCT(jwkMongo);break;
             case OKP:result = convertOKP(jwkMongo);break;
             default: result = null;
+            // @formatter:on
         }
 
         result.setAlg(jwkMongo.getAlg());
-        result.setKeyOps(jwkMongo.getKeyOps()!=null?jwkMongo.getKeyOps().stream().collect(Collectors.toSet()):null);
+        result.setKeyOps(jwkMongo.getKeyOps() != null ? jwkMongo.getKeyOps().stream().collect(Collectors.toSet()) : null);
         result.setKid(jwkMongo.getKid());
         result.setKty(jwkMongo.getKty());
         result.setUse(jwkMongo.getUse());
-        result.setX5c(jwkMongo.getX5c()!=null?jwkMongo.getX5c().stream().collect(Collectors.toSet()):null);
+        result.setX5c(jwkMongo.getX5c() != null ? jwkMongo.getX5c().stream().collect(Collectors.toSet()) : null);
         result.setX5t(jwkMongo.getX5t());
         result.setX5tS256(jwkMongo.getX5tS256());
         result.setX5u(jwkMongo.getX5u());
@@ -487,7 +542,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return result;
     }
 
-    private RSAKey convertRSA(JWKMongo rsaKeyMongo) {
+    private static RSAKey convertRSA(JWKMongo rsaKeyMongo) {
         RSAKey key = new RSAKey();
 
         // Public key
@@ -504,7 +559,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return key;
     }
 
-    private ECKey convertEC(JWKMongo ecKeyMongo) {
+    private static ECKey convertEC(JWKMongo ecKeyMongo) {
         ECKey key = new ECKey();
 
         // Public key
@@ -517,13 +572,13 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return key;
     }
 
-    private OCTKey convertOCT(JWKMongo ecKeyMongo) {
+    private static OCTKey convertOCT(JWKMongo ecKeyMongo) {
         OCTKey key = new OCTKey();
         key.setK(ecKeyMongo.getK());
         return key;
     }
 
-    private OKPKey convertOKP(JWKMongo ecKeyMongo) {
+    private static OKPKey convertOKP(JWKMongo ecKeyMongo) {
         OKPKey key = new OKPKey();
         key.setCrv(ecKeyMongo.getCrv());
         key.setX(ecKeyMongo.getX());
@@ -534,37 +589,39 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return key;
     }
 
-    private List<JWKMongo> convert(JWKSet jwkSet) {
-        if (jwkSet==null) {
+    private static List<JWKMongo> convert(JWKSet jwkSet) {
+        if (jwkSet == null) {
             return null;
         }
 
         return jwkSet.getKeys().stream()
-                .map(jwk -> this.convert(jwk))
+                .map(jwk -> convert(jwk))
                 .collect(Collectors.toList());
     }
 
-    private JWKMongo convert(JWK jwk) {
-        if (jwk==null) {
+    private static JWKMongo convert(JWK jwk) {
+        if (jwk == null) {
             return null;
         }
 
         JWKMongo result;
 
         switch (KeyType.parse(jwk.getKty())) {
+            // @formatter:off
             case EC: result = convert((ECKey)jwk);break;
             case RSA:result = convert((RSAKey)jwk);break;
             case OCT:result = convert((OCTKey)jwk);break;
             case OKP:result = convert((OKPKey)jwk);break;
             default: result = null;
+            // @formatter:on
         }
 
         result.setAlg(jwk.getAlg());
-        result.setKeyOps(jwk.getKeyOps()!=null?jwk.getKeyOps().stream().collect(Collectors.toList()):null);
+        result.setKeyOps(jwk.getKeyOps() != null ? jwk.getKeyOps().stream().collect(Collectors.toList()) : null);
         result.setKid(jwk.getKid());
         result.setKty(jwk.getKty());
         result.setUse(jwk.getUse());
-        result.setX5c(jwk.getX5c()!=null?jwk.getX5c().stream().collect(Collectors.toList()):null);
+        result.setX5c(jwk.getX5c() != null ? jwk.getX5c().stream().collect(Collectors.toList()) : null);
         result.setX5t(jwk.getX5t());
         result.setX5tS256(jwk.getX5tS256());
         result.setX5u(jwk.getX5u());
@@ -572,7 +629,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return result;
     }
 
-    private JWKMongo convert(RSAKey rsaKey) {
+    private static JWKMongo convert(RSAKey rsaKey) {
         JWKMongo key = new JWKMongo();
         key.setE(rsaKey.getE());
         key.setN(rsaKey.getN());
@@ -585,7 +642,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return key;
     }
 
-    private JWKMongo convert(ECKey ecKey) {
+    private static JWKMongo convert(ECKey ecKey) {
         JWKMongo key = new JWKMongo();
         key.setCrv(ecKey.getCrv());
         key.setX(ecKey.getX());
@@ -594,7 +651,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return key;
     }
 
-    private JWKMongo convert(OKPKey okpKey) {
+    private static JWKMongo convert(OKPKey okpKey) {
         JWKMongo key = new JWKMongo();
         key.setCrv(okpKey.getCrv());
         key.setX(okpKey.getX());
@@ -602,7 +659,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return key;
     }
 
-    private JWKMongo convert(OCTKey octKey) {
+    private static JWKMongo convert(OCTKey octKey) {
         JWKMongo key = new JWKMongo();
         key.setK(octKey.getK());
         return key;
