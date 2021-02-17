@@ -61,32 +61,41 @@ public class RepositoryCredentialStoreTest {
 
         when(domain.getId()).thenReturn("domain-id");
         when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName())).thenReturn(Single.just(Collections.emptyList()));
-        when(jwtBuilder.sign(any())).thenReturn("part1.part2.part3");
+        when(jwtBuilder.sign(any())).thenReturn("part1.part2.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c");
+
         List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).result();
+        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(query).result();
 
         Assert.assertNotNull(authenticators);
-        Assert.assertTrue(authenticators.size() == 1);
-        Assert.assertTrue(authenticators.get(0).getCredID().equals("part3part3"));
-        verify(jwtBuilder, times(2)).sign(any());
-
+        Assert.assertNotNull(authenticators2);
+        Assert.assertTrue(!authenticators.isEmpty());
+        Assert.assertTrue(!authenticators2.isEmpty());
+        Assert.assertTrue(authenticators.get(0).getCredID().equals(authenticators2.get(0).getCredID()));
+        verify(jwtBuilder, times(4)).sign(any());
     }
 
     @Test
-    public void shouldFetchAuthenticator_byUsername_emptyList_truncateCredId() {
+    public void shouldFetchAuthenticator_byUsername_emptyList_different_users() {
         Authenticator query = new Authenticator();
         query.setUserName("username");
 
+        Authenticator query2 = new Authenticator();
+        query2.setUserName("username2");
+
         when(domain.getId()).thenReturn("domain-id");
         when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName())).thenReturn(Single.just(Collections.emptyList()));
-        when(jwtBuilder.sign(any())).thenReturn("part1.part2.000000000000000000000000000000000000000000000000000000000000000000","part1.part2.000000000000000000000000000000000000000000000000000000000000000000");
+        when(credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query2.getUserName())).thenReturn(Single.just(Collections.emptyList()));
+        when(jwtBuilder.sign(any())).thenReturn("part1.part2.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c").thenReturn("part1.part2.-sVkXqTOhFeJwQXyH3WhuNJfAfnRkVM6llEu6k46iqY");
+
         List<Authenticator> authenticators = repositoryCredentialStore.fetch(query).result();
+        List<Authenticator> authenticators2 = repositoryCredentialStore.fetch(query2).result();
 
         Assert.assertNotNull(authenticators);
-        Assert.assertTrue(authenticators.size() == 1);
-        Assert.assertTrue(authenticators.get(0).getCredID().equals("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000"));
-        Assert.assertTrue(authenticators.get(0).getCredID().length() == 86);
-        verify(jwtBuilder, times(2)).sign(any());
-
+        Assert.assertNotNull(authenticators2);
+        Assert.assertTrue(!authenticators.isEmpty());
+        Assert.assertTrue(!authenticators2.isEmpty());
+        Assert.assertTrue(!authenticators.get(0).getCredID().equals(authenticators2.get(0).getCredID()));
+        verify(jwtBuilder, times(4)).sign(any());
     }
 
     @Test
