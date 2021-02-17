@@ -25,6 +25,7 @@ public class ApplicationSettingsMongo {
     private AccountSettingsMongo account;
     private LoginSettingsMongo login;
     private ApplicationAdvancedSettingsMongo advanced;
+    private PasswordSettingsMongo passwordSettings;
 
     public ApplicationOAuthSettingsMongo getOauth() {
         return oauth;
@@ -56,5 +57,13 @@ public class ApplicationSettingsMongo {
 
     public void setAdvanced(ApplicationAdvancedSettingsMongo advanced) {
         this.advanced = advanced;
+    }
+
+    public PasswordSettingsMongo getPasswordSettings() {
+        return passwordSettings;
+    }
+
+    public void setPasswordSettings(PasswordSettingsMongo passwordSettings) {
+        this.passwordSettings = passwordSettings;
     }
 }

@@ -37,7 +37,9 @@ public class DefaultApplicationTemplateManager implements ApplicationTemplateMan
         templates.stream()
                 .filter(applicationTemplate -> applicationTemplate.canHandle(application))
                 .findFirst()
-                .get().handle(application);
+                //TODO Boualem : risque of NoSuchElementException
+                .get()
+                .handle(application);
     }
 
     @Override
@@ -45,7 +47,9 @@ public class DefaultApplicationTemplateManager implements ApplicationTemplateMan
         templates.stream()
                 .filter(applicationTemplate -> applicationTemplate.canHandle(application))
                 .findFirst()
-                .get().changeType(application);
+                //TODO Boualem : risque of NoSuchElementException
+                .get()
+                .changeType(application);
     }
 
     @Override

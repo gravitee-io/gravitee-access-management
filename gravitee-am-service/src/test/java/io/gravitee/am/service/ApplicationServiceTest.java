@@ -20,7 +20,14 @@ import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Form;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -29,7 +36,11 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
+import io.gravitee.am.service.exception.ApplicationNotFoundException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
@@ -48,10 +59,20 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,8 +82,9 @@ import static org.mockito.Mockito.*;
 public class ApplicationServiceTest {
 
     public static final String ORGANIZATION_ID = "DEFAULT";
+
     @InjectMocks
-    private ApplicationService applicationService = new ApplicationServiceImpl();
+    private final ApplicationService applicationService = new ApplicationServiceImpl();
 
     @Mock
     private ApplicationRepository applicationRepository;
@@ -183,8 +205,8 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainPagination() {
-        Page pageClients = new Page(Collections.singleton(new Application()), 1 , 1);
-        when(applicationRepository.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.just(pageClients));
+        Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
+        when(applicationRepository.findByDomain(DOMAIN, 1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN, 1, 1).test();
         testObserver.awaitTerminalEvent();
 
@@ -195,10 +217,10 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainPagination_technicalException() {
-        when(applicationRepository.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByDomain(DOMAIN, 1, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        applicationService.findByDomain(DOMAIN, 1 , 1).subscribe(testObserver);
+        applicationService.findByDomain(DOMAIN, 1, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -294,8 +316,8 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindAllPagination() {
-        Page pageClients = new Page(Collections.singleton(new Application()), 1 , 1);
-        when(applicationRepository.findAll(1 , 1)).thenReturn(Single.just(pageClients));
+        Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
+        when(applicationRepository.findAll(1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Application>> testObserver = applicationService.findAll(1, 1).test();
         testObserver.awaitTerminalEvent();
 
@@ -306,10 +328,10 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindAllPagination_technicalException() {
-        when(applicationRepository.findAll(1 , 1)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findAll(1, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        applicationService.findAll(1 , 1).subscribe(testObserver);
+        applicationService.findAll(1, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -398,7 +420,7 @@ public class ApplicationServiceTest {
     public void shouldCreate_technicalException() {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         when(newClient.getName()).thenReturn("my-client");
-        when(applicationRepository.findByDomainAndClientId( DOMAIN, null)).thenReturn(Maybe.error(TechnicalException::new));
+        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Application> testObserver = new TestObserver<>();
         applicationService.create(DOMAIN, newClient).subscribe(testObserver);
@@ -504,8 +526,8 @@ public class ApplicationServiceTest {
 
         ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
         verify(applicationRepository, times(1)).create(captor.capture());
-        Assert.assertTrue("client_id must be generated",captor.getValue().getSettings().getOauth().getClientId()!=null);
-        Assert.assertTrue("client_secret must be generated",captor.getValue().getSettings().getOauth().getClientSecret()!=null);
+        Assert.assertTrue("client_id must be generated", captor.getValue().getSettings().getOauth().getClientId() != null);
+        Assert.assertTrue("client_secret must be generated", captor.getValue().getSettings().getOauth().getClientSecret() != null);
     }
 
     @Test
@@ -517,6 +539,7 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setResponseTypes(Optional.of(Arrays.asList("token")));
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("implicit")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         Application toPatch = new Application();
@@ -538,7 +561,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
 
         TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -567,6 +590,7 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("implicit")));
         patchApplicationOAuthSettings.setResponseTypes(Optional.of(Arrays.asList("token")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
@@ -659,7 +683,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(any(),any())).thenReturn(Single.just(true));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
         Application toPatch = new Application();
         toPatch.setDomain(DOMAIN);
@@ -686,7 +710,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(any())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(any(),any())).thenReturn(Single.just(true));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
         Application toPatch = new Application();
         toPatch.setDomain(DOMAIN);
@@ -725,6 +749,7 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
         patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("https://callback")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
@@ -733,7 +758,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -757,13 +782,14 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
         patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("com.gravitee.app://callback")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -786,13 +812,14 @@ public class ApplicationServiceTest {
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
         patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("com.google.app:/callback")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN,null)).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -1090,7 +1117,7 @@ public class ApplicationServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
-        when(scopeService.validateScope(DOMAIN,Collections.emptyList())).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, Collections.emptyList())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();

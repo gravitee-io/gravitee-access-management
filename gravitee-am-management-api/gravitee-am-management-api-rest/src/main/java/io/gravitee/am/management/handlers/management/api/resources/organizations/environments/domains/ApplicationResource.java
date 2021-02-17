@@ -39,7 +39,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
@@ -286,7 +295,7 @@ public class ApplicationResource extends AbstractResource {
             filteredApplication.setUpdatedAt(application.getUpdatedAt());
         }
 
-        if(hasAnyPermission(userPermissions, Permission.APPLICATION_FACTOR, Acl.READ)){
+        if (hasAnyPermission(userPermissions, Permission.APPLICATION_FACTOR, Acl.READ)) {
             filteredApplication.setFactors(application.getFactors());
         }
 
@@ -298,20 +307,22 @@ public class ApplicationResource extends AbstractResource {
             filteredApplication.setCertificate(application.getCertificate());
         }
 
-        if (application.getSettings() != null) {
+        ApplicationSettings settings = application.getSettings();
+        if (settings != null) {
 
             ApplicationSettings filteredApplicationSettings = new ApplicationSettings();
             filteredApplication.setSettings(filteredApplicationSettings);
 
             if (hasAnyPermission(userPermissions, Permission.APPLICATION_SETTINGS, Acl.READ)) {
                 filteredApplication.setMetadata(application.getMetadata());
-                filteredApplicationSettings.setAdvanced(application.getSettings().getAdvanced());
-                filteredApplicationSettings.setAccount(application.getSettings().getAccount());
-                filteredApplicationSettings.setLogin(application.getSettings().getLogin());
+                filteredApplicationSettings.setAdvanced(settings.getAdvanced());
+                filteredApplicationSettings.setAccount(settings.getAccount());
+                filteredApplicationSettings.setLogin(settings.getLogin());
+                filteredApplicationSettings.setPasswordSettings(settings.getPasswordSettings());
             }
 
             if (hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {
-                filteredApplicationSettings.setOauth(application.getSettings().getOauth());
+                filteredApplicationSettings.setOauth(settings.getOauth());
             }
         }
 

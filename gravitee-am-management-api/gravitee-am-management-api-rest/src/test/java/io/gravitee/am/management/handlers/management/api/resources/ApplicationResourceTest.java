@@ -27,23 +27,26 @@ import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.PasswordSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.model.PatchApplication;
-import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
-
 import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -86,6 +89,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNotNull(application.getSettings().getAdvanced());
         assertNotNull(application.getSettings().getAccount());
         assertNotNull(application.getSettings().getOauth());
+        assertNotNull(application.getSettings().getPasswordSettings());
     }
 
     @Test
@@ -121,6 +125,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNotNull(application.getSettings());
         assertNull(application.getSettings().getAccount());
         assertNull(application.getSettings().getOauth());
+        assertNull(application.getSettings().getPasswordSettings());
     }
 
     @Test
@@ -203,10 +208,12 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertEquals(mockApplication.getUpdatedAt(), application.getUpdatedAt());
         assertEquals(mockApplication.getIdentities(), application.getIdentities());
         assertEquals(mockApplication.getCertificate(), application.getCertificate());
-        assertNotNull(application.getSettings());
-        assertNotNull(application.getSettings().getAdvanced());
-        assertNotNull(application.getSettings().getAccount());
-        assertNotNull(application.getSettings().getOauth());
+        ApplicationSettings settings = application.getSettings();
+        assertNotNull(settings);
+        assertNotNull(settings.getAdvanced());
+        assertNotNull(settings.getAccount());
+        assertNotNull(settings.getOauth());
+        assertNotNull(settings.getPasswordSettings());
     }
 
     @Test
@@ -242,9 +249,11 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertEquals(mockApplication.getUpdatedAt(), application.getUpdatedAt());
         assertNull(application.getIdentities());
         assertNull(application.getCertificate());
-        assertNotNull(application.getSettings());
-        assertNull(application.getSettings().getAccount());
-        assertNull(application.getSettings().getOauth());
+        ApplicationSettings settings = application.getSettings();
+        assertNotNull(settings);
+        assertNull(settings.getAccount());
+        assertNull(settings.getOauth());
+        assertNull(settings.getPasswordSettings());
     }
 
     @Test
@@ -365,6 +374,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         filteredApplicationSettings.setAdvanced(new ApplicationAdvancedSettings());
         filteredApplicationSettings.setAccount(new AccountSettings());
         filteredApplicationSettings.setOauth(new ApplicationOAuthSettings());
+        filteredApplicationSettings.setPasswordSettings(new PasswordSettings());
 
         mockApplication.setSettings(filteredApplicationSettings);
         mockApplication.setMetadata(Collections.singletonMap("key", "value"));
