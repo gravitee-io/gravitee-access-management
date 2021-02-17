@@ -32,9 +32,10 @@ import io.vertx.core.Promise;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -70,15 +71,41 @@ public class RepositoryCredentialStore {
                         return Single.zip(
                                 generateCredID(query.getUserName(), Claims.sub),
                                 generateCredID(query.getUserName(), StandardClaims.PREFERRED_USERNAME), (part1, part2) -> {
-                                    Authenticator authenticator = new Authenticator();
-                                    authenticator.setUserName(query.getUserName());
-                                    String credID = part2 + part1;
-                                    if (credID.length() > 86) {
-                                        // 86 characters is the length of a CredID for some devices
-                                        credID = credID.substring(0, 86);
+                                    MessageDigest md = MessageDigest.getInstance("SHA-512");
+                                    SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+                                    secureRandom.setSeed(part1.getBytes());
+                                    int nbDevices = secureRandom.nextInt(3) + 1;
+                                    int deviceType = secureRandom.nextInt(2) + 1;
+                                    List<Authenticator> authenticators = new ArrayList<>(nbDevices);
+                                    for (int i = 0; i < nbDevices; i++) {
+                                        byte[] salt = new byte[16];
+                                        secureRandom.nextBytes(salt);
+                                        md.update(salt);
+                                        String initialValue = shiftValue(part2, i);
+                                        Authenticator authenticator = new Authenticator();
+                                        authenticator.setUserName(query.getUserName());
+                                        if (deviceType == 1) {
+                                            if (i < 2) {
+                                                if (initialValue.length() > 27) {
+                                                    initialValue = initialValue.substring(0, 27);
+                                                }
+                                                authenticator.setCredID(initialValue);
+                                            } else {
+                                                authenticator.setCredID(createCredID(md, initialValue, part1));
+                                            }
+                                        } else {
+                                            if (i < 2) {
+                                                authenticator.setCredID(createCredID(md, initialValue, part1));
+                                            } else {
+                                                if (initialValue.length() > 27) {
+                                                    initialValue = initialValue.substring(0, 27);
+                                                }
+                                                authenticator.setCredID(initialValue);
+                                            }
+                                        }
+                                        authenticators.add(authenticator);
                                     }
-                                    authenticator.setCredID(credID);
-                                    return Collections.singletonList(authenticator);
+                                    return authenticators;
                                 });
                     } else {
                         return Single.just(credentials
@@ -150,5 +177,28 @@ public class RepositoryCredentialStore {
             String credID = jwtBuilder.sign(new JWT(Collections.singletonMap(claim, username))).split("\\.")[2];
             emitter.onSuccess(credID);
         });
+    }
+
+    private static String createCredID(MessageDigest md, String input, String suffix) {
+        String result = Base64.getUrlEncoder().encodeToString(md.digest(input.getBytes(StandardCharsets.UTF_8))).replace("=", "") + suffix;
+        if (result.length() > 87) {
+            result = result.substring(0, 87);
+        }
+        return result;
+    }
+
+    private static String shiftValue(String input, int delta) {
+        String credID = "";
+        char c;
+        for (int j = 0; j < input.length(); j++) {
+            c = input.charAt(j);
+            char deltaC = (char) (c + delta);
+            if (Character.isLetterOrDigit(deltaC)) {
+                credID += deltaC;
+            } else {
+                credID += c;
+            }
+        }
+        return credID;
     }
 }
