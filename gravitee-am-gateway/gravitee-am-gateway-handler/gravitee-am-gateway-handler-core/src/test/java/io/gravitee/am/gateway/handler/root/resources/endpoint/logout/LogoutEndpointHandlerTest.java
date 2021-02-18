@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.common.http.HttpStatusCode;
@@ -184,7 +185,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/error?client_id=client-id&error=invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URL+for+this+application"));
+                    assertTrue(location.endsWith("/error?client_id=client-id&error=invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URLs"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -214,7 +215,24 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/error?client_id=client-id&error=invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URL+for+this+application"));
+                    assertTrue(location.endsWith("/error?client_id=client-id&error=invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URLs"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_noClient_restriction_mismatch() throws Exception {
+        OIDCSettings oidcSettings = mock(OIDCSettings.class);
+        when(oidcSettings.getPostLogoutRedirectUris()).thenReturn(Arrays.asList("https://dev"));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Ftest",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/error?error=invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URLs"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
