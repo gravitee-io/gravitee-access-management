@@ -22,6 +22,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,6 +38,8 @@ public class PatchOIDCSettings {
     private Optional<PatchClientRegistrationSettings> clientRegistrationSettings;
 
     private Optional<Boolean> redirectUriStrictMatching;
+
+    private Optional<List<String>> postLogoutRedirectUris;
 
     public Optional<PatchClientRegistrationSettings> getClientRegistrationSettings() {
         return clientRegistrationSettings;
@@ -54,6 +57,14 @@ public class PatchOIDCSettings {
         this.redirectUriStrictMatching = redirectUriStrictMatching;
     }
 
+    public Optional<List<String>> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(Optional<List<String>> postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
+    }
+
     public OIDCSettings patch(OIDCSettings toPatch) {
 
         //If source may be null, in such case init with default values
@@ -61,6 +72,7 @@ public class PatchOIDCSettings {
             toPatch = OIDCSettings.defaultSettings();
         }
         SetterUtils.safeSet(toPatch::setRedirectUriStrictMatching, this.getRedirectUriStrictMatching(), boolean.class);
+        SetterUtils.safeSet(toPatch::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
 
         if(getClientRegistrationSettings()!=null) {
             //If present apply settings, else return default settings.

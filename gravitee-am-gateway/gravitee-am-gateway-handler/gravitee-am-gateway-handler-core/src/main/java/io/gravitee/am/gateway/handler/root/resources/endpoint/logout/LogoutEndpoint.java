@@ -23,7 +23,6 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -41,6 +40,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -172,26 +173,15 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
                 request.getParam(LOGOUT_URL_PARAMETER) : (!StringUtils.isEmpty(request.getParam(Parameters.POST_LOGOUT_REDIRECT_URI)) ?
                 request.getParam(Parameters.POST_LOGOUT_REDIRECT_URI) : DEFAULT_TARGET_URL);
 
-        // what should we do in this case ?
-        // for back-compatibility purpose, only check the target_url parameter
-        if (client == null) {
-            final String targetUrl = !StringUtils.isEmpty(request.getParam(LOGOUT_URL_PARAMETER)) ? request.getParam(LOGOUT_URL_PARAMETER) : DEFAULT_TARGET_URL;
-            doRedirect0(routingContext, targetUrl);
-            return;
-        }
-
         // The OP also MUST NOT perform post-logout redirection if the post_logout_redirect_uri value supplied
         // does not exactly match one of the previously registered post_logout_redirect_uris values.
-        if (client.getPostLogoutRedirectUris() != null
-                && !client.getPostLogoutRedirectUris().isEmpty()
-                && !DEFAULT_TARGET_URL.equals(logoutRedirectUrl)) {
-            if (client.getPostLogoutRedirectUris()
-                    .stream()
-                    .noneMatch(registeredClientUri -> logoutRedirectUrl.equals(registeredClientUri))) {
-                routingContext.fail(new InvalidRequestException("The post_logout_redirect_uri MUST match the registered callback URL for this application"));
-                return;
-            }
-        }
+        // if client is null, check security domain options
+        List<String> registeredUris = client != null ? client.getPostLogoutRedirectUris() :
+                (domain.getOidc() != null ? domain.getOidc().getPostLogoutRedirectUris() : null);
+        if (!isMatchingRedirectUri(logoutRedirectUrl, registeredUris)) {
+            routingContext.fail(new InvalidRequestException("The post_logout_redirect_uri MUST match the registered callback URLs"));
+            return;
+         }
 
         // redirect the End-User
         doRedirect0(routingContext, logoutRedirectUrl);
@@ -273,5 +263,24 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
             LOGGER.error("An error has occurred during post-logout redirection", ex);
             routingContext.fail(500);
         }
+    }
+
+    private boolean isMatchingRedirectUri(String requestedRedirectUri, List<String> registeredRedirectUris) {
+        // no registered uris to check, continue
+        if (registeredRedirectUris == null) {
+            return true;
+        }
+        // no registered uris to check, continue
+        if (registeredRedirectUris.isEmpty()) {
+            return true;
+        }
+        // default value, continue
+        if (DEFAULT_TARGET_URL.equals(requestedRedirectUri)) {
+            return true;
+        }
+        // compare values
+        return registeredRedirectUris
+                .stream()
+                .anyMatch(registeredUri -> requestedRedirectUri.equals(registeredUri));
     }
 }

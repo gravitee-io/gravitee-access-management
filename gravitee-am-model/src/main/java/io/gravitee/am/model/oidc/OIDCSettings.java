@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.oidc;
 
+import java.util.List;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,6 +30,11 @@ public class OIDCSettings {
      * Enable redirect_uri strict matching during OIDC flow (check for redirect_uri_mismatch exception)
      */
     private boolean redirectUriStrictMatching;
+
+    /**
+     * Array of URLs supplied by the RP to which it MAY request that the End-User's User Agent be redirected using the post_logout_redirect_uri parameter after a logout has been performed.
+     */
+    private List<String> postLogoutRedirectUris;
 
     public ClientRegistrationSettings getClientRegistrationSettings() {
         return clientRegistrationSettings!=null?clientRegistrationSettings: ClientRegistrationSettings.defaultSettings();
@@ -43,6 +50,14 @@ public class OIDCSettings {
 
     public void setRedirectUriStrictMatching(boolean redirectUriStrictMatching) {
         this.redirectUriStrictMatching = redirectUriStrictMatching;
+    }
+
+    public List<String> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
     public static OIDCSettings defaultSettings() {

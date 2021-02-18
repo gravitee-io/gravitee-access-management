@@ -163,6 +163,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         OIDCSettings oidcSettings = new OIDCSettings();
         oidcSettings.setRedirectUriStrictMatching(oidcMongo.isRedirectUriStrictMatching());
         oidcSettings.setClientRegistrationSettings(convert(oidcMongo.getClientRegistrationSettings()));
+        oidcSettings.setPostLogoutRedirectUris(oidcMongo.getPostLogoutRedirectUris());
 
         return oidcSettings;
     }
@@ -204,6 +205,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         OIDCSettingsMongo oidcSettings = new OIDCSettingsMongo();
         oidcSettings.setRedirectUriStrictMatching(oidc.isRedirectUriStrictMatching());
         oidcSettings.setClientRegistrationSettings(convert(oidc.getClientRegistrationSettings()));
+        oidcSettings.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
 
         return oidcSettings;
     }
