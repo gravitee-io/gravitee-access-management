@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.ldap.authentication.encoding;
+package io.gravitee.am.identityprovider.ldap.common.config;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class NoneEncoder implements BinaryToTextEncoder {
-
-    @Override
-    public String encode(byte[] value) {
-        return new String(value);
-    }
+public interface LdapProviderConfiguration {
+    boolean isHashEncodedByThirdParty();
 }

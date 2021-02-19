@@ -16,12 +16,13 @@
 package io.gravitee.am.identityprovider.ldap;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.ldap.common.config.LdapProviderConfiguration;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class LdapIdentityProviderConfiguration implements IdentityProviderConfiguration {
+public class LdapIdentityProviderConfiguration implements IdentityProviderConfiguration, LdapProviderConfiguration {
 
     private String contextSourceUrl;
 
@@ -205,6 +206,7 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
         this.passwordEncoding = passwordEncoding;
     }
 
+    @Override
     public boolean isHashEncodedByThirdParty() {
         return hashEncodedByThirdParty;
     }

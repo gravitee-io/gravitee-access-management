@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login SSO SPNEGO</title>
+</head>
+<body>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var actionUrl = /*[[${action}]]*/;
+        window.location.replace(actionUrl);
+        /*]]>*/
+    </script>
+
+    <noscript>
+        <p>
+            <strong>Note:</strong> Since your browser does not support JavaScript,
+            you must click <a th:href="${action}">LOGIN</a> to proceed.
+        </p>
+    </noscript>
+</body>
+</html>

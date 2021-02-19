@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.ldap.authentication.encoding;
-
-import org.ldaptive.LdapUtils;
+package io.gravitee.am.identityprovider.ldap.common.authentication.encoding;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class HexEncoder implements BinaryToTextEncoder {
+public class NoneEncoder implements BinaryToTextEncoder {
 
     @Override
     public String encode(byte[] value) {
-        return new String(LdapUtils.hexEncode(value)).toLowerCase();
+        return new String(value);
     }
 }

@@ -108,6 +108,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                                 return Single.error(new UsernameNotFoundException("Invalid or unknown user"));
                             } else if (lastException instanceof AccountStatusException) {
                                 return Single.error(lastException);
+                            }  else if (lastException instanceof NegotiateContinueException) {
+                                return Single.error(lastException);
                             } else {
                                 logger.error("An error occurs during user authentication", lastException);
                                 return Single.error(new InternalAuthenticationServiceException("Unable to validate credentials. The user account you are trying to access may be experiencing a problem.", lastException));

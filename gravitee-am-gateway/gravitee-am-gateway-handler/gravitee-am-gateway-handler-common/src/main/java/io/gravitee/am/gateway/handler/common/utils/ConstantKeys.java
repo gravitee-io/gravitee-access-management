@@ -79,4 +79,8 @@ public interface ConstantKeys {
 
     // Register keys.
     String REGISTRATION_RESPONSE_KEY = "registrationResponse";
+
+    String AUTH_NEGOTIATE_KEY = "Negotiate";
+    String ASK_FOR_NEGOTIATE_KEY = "ask-negotiate";
+    String NEGOTIATE_CONTINUE_TOKEN_KEY = "negotiate-continue-token";
 }

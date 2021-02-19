@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.ldap.authentication;
+package io.gravitee.am.identityprovider.ldap.common.authentication;
 
-import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.ldap.authentication.encoding.BinaryToTextEncoder;
-import io.gravitee.am.identityprovider.ldap.authentication.encoding.PasswordEncoder;
+import io.gravitee.am.identityprovider.ldap.common.authentication.encoding.BinaryToTextEncoder;
+import io.gravitee.am.identityprovider.ldap.common.authentication.encoding.PasswordEncoder;
+import io.gravitee.am.identityprovider.ldap.common.config.LdapProviderConfiguration;
 import org.ldaptive.*;
 import org.ldaptive.auth.AuthenticationCriteria;
 import org.ldaptive.auth.AuthenticationHandlerResponse;
@@ -34,7 +34,7 @@ public class CompareAuthenticationHandler extends PooledCompareAuthenticationHan
 
     private PasswordEncoder passwordEncoder;
     private BinaryToTextEncoder binaryToTextEncoder;
-    private LdapIdentityProviderConfiguration configuration;
+    private LdapProviderConfiguration configuration;
 
     public CompareAuthenticationHandler() {}
 
@@ -42,7 +42,7 @@ public class CompareAuthenticationHandler extends PooledCompareAuthenticationHan
         super(cf);
     }
 
-    public CompareAuthenticationHandler(PooledConnectionFactory connectionFactory, PasswordEncoder passwordEncoder, BinaryToTextEncoder binaryToTextEncoder, LdapIdentityProviderConfiguration configuration) {
+    public CompareAuthenticationHandler(PooledConnectionFactory connectionFactory, PasswordEncoder passwordEncoder, BinaryToTextEncoder binaryToTextEncoder, LdapProviderConfiguration configuration) {
         this(connectionFactory);
         this.passwordEncoder = passwordEncoder;
         this.binaryToTextEncoder = binaryToTextEncoder;

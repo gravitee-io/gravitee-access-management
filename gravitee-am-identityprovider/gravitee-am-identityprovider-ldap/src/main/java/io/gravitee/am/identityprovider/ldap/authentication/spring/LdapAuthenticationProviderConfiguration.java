@@ -16,10 +16,10 @@
 package io.gravitee.am.identityprovider.ldap.authentication.spring;
 
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.ldap.authentication.CompareAuthenticationHandler;
-import io.gravitee.am.identityprovider.ldap.authentication.GroupSearchEntryHandler;
-import io.gravitee.am.identityprovider.ldap.authentication.encoding.*;
-import io.gravitee.am.identityprovider.ldap.pool.CustomBlockingConnectionPool;
+import io.gravitee.am.identityprovider.ldap.common.authentication.CompareAuthenticationHandler;
+import io.gravitee.am.identityprovider.ldap.common.authentication.GroupSearchEntryHandler;
+import io.gravitee.am.identityprovider.ldap.common.authentication.encoding.*;
+import io.gravitee.am.identityprovider.ldap.common.pool.CustomBlockingConnectionPool;
 import org.ldaptive.*;
 import org.ldaptive.auth.*;
 import org.ldaptive.handler.SearchEntryHandler;

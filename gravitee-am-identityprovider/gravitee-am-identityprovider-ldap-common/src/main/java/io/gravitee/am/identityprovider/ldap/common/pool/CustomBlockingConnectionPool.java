@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.ldap.pool;
+package io.gravitee.am.identityprovider.ldap.common.pool;
 
 import org.ldaptive.DefaultConnectionFactory;
 import org.ldaptive.pool.BlockingConnectionPool;
