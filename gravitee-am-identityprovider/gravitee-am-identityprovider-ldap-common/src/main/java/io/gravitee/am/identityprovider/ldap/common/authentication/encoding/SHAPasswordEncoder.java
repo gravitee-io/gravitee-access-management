@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.ldap.authentication.encoding;
-
-import org.ldaptive.LdapUtils;
+package io.gravitee.am.identityprovider.ldap.common.authentication.encoding;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class Base64Encoder implements BinaryToTextEncoder {
+public class SHAPasswordEncoder extends MessageDigestPasswordEncoder {
 
+    public SHAPasswordEncoder() {
+        super("SHA");
+    }
+
+    public SHAPasswordEncoder(int strength) {
+        super("SHA-" + strength);
+    }
+
+    public void setStrength(int strength) {
+        setAlgorithm("SHA-" + strength);
+    }
 
     @Override
-    public String encode(byte[] value) {
-        return LdapUtils.base64Encode(value);
+    public String getPasswordSchemeLabel() {
+        return "SHA";
     }
 }

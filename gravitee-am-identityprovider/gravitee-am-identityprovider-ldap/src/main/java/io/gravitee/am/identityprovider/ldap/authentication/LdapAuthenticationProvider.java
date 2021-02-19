@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.identityprovider.ldap.authentication;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -24,9 +27,7 @@ import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderMapper;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.ldap.authentication.spring.LdapAuthenticationProviderConfiguration;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
+import io.gravitee.am.identityprovider.ldap.common.utils.LdapUtils;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
 import org.ldaptive.*;
@@ -90,7 +91,7 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
         if (searchFilter != null) {
             // Search filter can be uid={0} or mail={0}
             try {
-                identifierAttribute = io.gravitee.am.identityprovider.ldap.utils.LdapUtils.extractAttribute(searchFilter);
+                identifierAttribute = LdapUtils.extractAttribute(searchFilter);
             } catch (Exception e) {
                 LOGGER.debug("Fail to set identifierAttribute from searchFilter : {}", searchFilter);
             }

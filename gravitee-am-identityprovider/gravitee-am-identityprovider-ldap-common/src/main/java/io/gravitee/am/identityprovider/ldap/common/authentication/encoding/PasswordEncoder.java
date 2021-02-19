@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.ldap.authentication.encoding;
+package io.gravitee.am.identityprovider.ldap.common.authentication.encoding;
+
+import org.ldaptive.Credential;
+import org.ldaptive.LdapException;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface BinaryToTextEncoder {
+public interface PasswordEncoder {
 
-    String encode(byte[] value);
+    byte[] digestCredential(final Credential credential) throws LdapException;
+
+    String getPasswordSchemeLabel();
 }

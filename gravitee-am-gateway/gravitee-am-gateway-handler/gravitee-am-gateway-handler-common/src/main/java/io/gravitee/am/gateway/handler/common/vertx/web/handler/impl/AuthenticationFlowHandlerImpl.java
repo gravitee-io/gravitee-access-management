@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.*;
@@ -37,11 +37,12 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     private Domain domain;
 
     @Autowired
-    private UserAuthProvider authProvider;
+    private IdentityProviderManager identityProviderManager;
 
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
+        steps.add(new SPNEGOStep(RedirectHandler.create("/login/SSO/SPNEGO"), identityProviderManager));
         steps.add(new FormLoginStep(RedirectHandler.create("/login")));
         steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register")));
         steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll")));

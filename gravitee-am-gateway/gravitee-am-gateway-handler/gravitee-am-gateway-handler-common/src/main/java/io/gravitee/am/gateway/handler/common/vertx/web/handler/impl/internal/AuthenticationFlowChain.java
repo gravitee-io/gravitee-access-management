@@ -27,12 +27,10 @@ import java.util.List;
  */
 public class AuthenticationFlowChain {
 
-    private final List<AuthenticationFlowStep> steps;
     private Iterator<AuthenticationFlowStep> stepsIterator;
     private Handler<Handler<RoutingContext>> exitHandler;
 
     public AuthenticationFlowChain(List<AuthenticationFlowStep> steps) {
-        this.steps = steps;
         this.stepsIterator = steps.iterator();
     }
 

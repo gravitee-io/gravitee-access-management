@@ -92,6 +92,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_LOGIN = "/login";
     public static final String PATH_LOGIN_CALLBACK = "/login/callback";
     public static final String PATH_LOGIN_SSO_POST = "/login/SSO/POST";
+    public static final String PATH_LOGIN_SSO_SPNEGO = "/login/SSO/SPNEGO";
     public static final String PATH_MFA_ENROLL = "/mfa/enroll";
     public static final String PATH_MFA_CHALLENGE = "/mfa/challenge";
     public static final String PATH_LOGOUT = "/logout";
@@ -254,6 +255,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .failureHandler(loginCallbackFailureHandler);
         rootRouter.get(PATH_LOGIN_SSO_POST)
                 .handler(loginSSOPOSTEndpoint);
+        rootRouter.get(PATH_LOGIN_SSO_SPNEGO)
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
+                .handler(new LoginNegotiateAuthenticationHandler(userAuthProvider, thymeleafTemplateEngine))
+                .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
+                .handler(new LoginPostEndpoint());
 
         // MFA route
         rootRouter.route(PATH_MFA_ENROLL)
@@ -357,6 +363,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router
                 .route(PATH_LOGIN_SSO_POST)
                 .handler(sessionHandler);
+        router
+                .route(PATH_LOGIN_SSO_SPNEGO)
+                .handler(sessionHandler);
 
         // MFA endpoint
         router.route(PATH_MFA_ENROLL)
@@ -400,6 +409,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_LOGIN).handler(authenticationFlowContextHandler);
         router.route(PATH_LOGIN_CALLBACK).handler(authenticationFlowContextHandler);
         router.route(PATH_LOGIN_SSO_POST).handler(authenticationFlowContextHandler);
+        router.route(PATH_LOGIN_SSO_SPNEGO).handler(authenticationFlowContextHandler);
 
         // MFA endpoint
         router.route(PATH_MFA_ENROLL).handler(authenticationFlowContextHandler);

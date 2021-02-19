@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.ldap.authentication.encoding;
+package io.gravitee.am.identityprovider.ldap.common.authentication.encoding;
+
+import org.ldaptive.LdapUtils;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MD5PasswordEncoder extends MessageDigestPasswordEncoder {
+public class Base64Encoder implements BinaryToTextEncoder {
 
-    public MD5PasswordEncoder() {
-        super("MD5");
-    }
 
     @Override
-    public String getPasswordSchemeLabel() {
-        return "MD5";
+    public String encode(byte[] value) {
+        return LdapUtils.base64Encode(value);
     }
 }

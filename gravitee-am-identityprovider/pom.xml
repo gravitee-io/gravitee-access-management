@@ -49,6 +49,7 @@
         <module>gravitee-am-identityprovider-google</module>
         <module>gravitee-am-identityprovider-linkedin</module>
         <module>gravitee-am-identityprovider-salesforce</module>
+        <module>gravitee-am-identityprovider-ldap-common</module>
     </modules>
 
     <dependencies>
