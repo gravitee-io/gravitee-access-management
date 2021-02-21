@@ -659,6 +659,60 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldInvokeUserEndpoint_scopesRequest_roles_groups_full_profile() throws Exception {
+        JWT jwt = new JWT();
+        jwt.setJti("id-token");
+        jwt.setAud("client-id");
+        jwt.setSub("id-subject");
+        jwt.setScope("openid full_profile roles groups");
+
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        Role role1 = new Role();
+        role1.setId("role1");
+        role1.setName("role-1");
+
+        Role role2 = new Role();
+        role2.setId("role2");
+        role2.setName("role-2");
+
+        Group group1 = new Group();
+        group1.setId("group1");
+        group1.setName("group-1");
+
+        Group group2 = new Group();
+        group2.setId("group2");
+        group2.setName("group-2");
+
+        router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
+
+        User user = createUser();
+        user.setRoles(Arrays.asList("role1", "role2"));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(roleService.findByIdIn(anyList())).thenReturn(Single.just(new HashSet<>(Arrays.asList(role1, role2))));
+        when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group1, group2)));
+
+        testRequest(
+                HttpMethod.GET,
+                "/userinfo",
+                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+                resp -> resp.bodyHandler(body -> {
+                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                    assertNotNull(claims);
+                    assertEquals(23, claims.size());
+                    assertTrue(claims.containsKey(CustomClaims.ROLES));
+                    assertTrue(((List) claims.get(CustomClaims.ROLES)).containsAll(Arrays.asList("role-1", "role-2")));
+                    assertTrue(claims.containsKey(CustomClaims.GROUPS));
+                    assertTrue(((List) claims.get(CustomClaims.GROUPS)).containsAll(Arrays.asList("group-1", "group-2")));
+                    assertTrue(claims.containsKey("custom-claim"));
+                    assertTrue("gravitee".equals(claims.get("custom-claim")));
+                }),
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
     public void shouldInvokeUserEndpoint_scopesRequest_and_claimsRequest() throws Exception {
         JWT jwt = new JWT();
         jwt.setJti("id-token");
@@ -753,6 +807,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         additionalInformation.put(StandardClaims.ADDRESS, "gravitee");
         additionalInformation.put(StandardClaims.PHONE_NUMBER, "gravitee");
         additionalInformation.put(StandardClaims.PHONE_NUMBER_VERIFIED, "gravitee");
+        additionalInformation.put("custom-claim", "gravitee");
         user.setAdditionalInformation(additionalInformation);
 
         return user;
