@@ -38,9 +38,12 @@ export class DomainSettingsGeneralComponent implements OnInit {
   @ViewChild('chipInput', { static: true }) chipInput: MatInput;
   formChanged = false;
   domain: any = {};
+  domainOIDCSettings: any = {};
   tags: Tag[];
   selectedTags: Tag[];
   readonly = false;
+  logoutRedirectUri: string;
+  logoutRedirectUris: any[] = [];
 
   constructor(private domainService: DomainService,
               private dialogService: DialogService,
@@ -54,11 +57,11 @@ export class DomainSettingsGeneralComponent implements OnInit {
 
   ngOnInit() {
     this.domain = this.route.snapshot.parent.data['domain'];
-
-    if(this.domain.tags === undefined) {
+    this.domainOIDCSettings = this.domain.oidc || {};
+    this.logoutRedirectUris = _.map(this.domainOIDCSettings.postLogoutRedirectUris, function (item) { return { value: item }; });
+    if (this.domain.tags === undefined) {
       this.domain.tags = [];
     }
-
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
     this.initTags();
   }
@@ -91,7 +94,35 @@ export class DomainSettingsGeneralComponent implements OnInit {
     this.formChanged = true;
   }
 
+  addLogoutRedirectUris(event) {
+    event.preventDefault();
+    if (this.logoutRedirectUri) {
+      if (!this.logoutRedirectUris.some(el => el.value === this.logoutRedirectUri)) {
+        this.logoutRedirectUris.push({value: this.logoutRedirectUri});
+        this.logoutRedirectUris = [...this.logoutRedirectUris];
+        this.logoutRedirectUri = null;
+        this.formChanged = true;
+      } else {
+        this.snackbarService.open(`Error : redirect URI "${this.logoutRedirectUri}" already exists`);
+      }
+    }
+  }
+
+  deleteLogoutRedirectUris(logoutRedirectUri, event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Remove logout redirect URI', 'Are you sure you want to remove this redirect URI ?')
+      .subscribe(res => {
+        if (res) {
+          _.remove(this.logoutRedirectUris, { value: logoutRedirectUri });
+          this.logoutRedirectUris = [...this.logoutRedirectUris];
+          this.formChanged = true;
+        }
+      });
+  }
+
   update() {
+    this.domain.oidc = { 'postLogoutRedirectUris' : _.map(this.logoutRedirectUris, 'value') };
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe(response => {
       this.domain = response;
       this.domainService.notify(this.domain);

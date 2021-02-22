@@ -24,6 +24,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -64,6 +65,9 @@ public class UserServiceTest {
 
     @Mock
     private LoginAttemptService loginAttemptService;
+
+    @Mock
+    private CredentialService credentialService;
 
     @Mock
     private AuditService auditService;
@@ -108,6 +112,8 @@ public class UserServiceTest {
         TestObserver testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+
+        verify(credentialService, never()).deleteByUserId(any(), any(), any());
     }
 
     @Test
@@ -134,6 +140,8 @@ public class UserServiceTest {
         TestObserver testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+
+        verify(credentialService, never()).deleteByUserId(any(), any(), any());
     }
 
     @Test
@@ -160,6 +168,8 @@ public class UserServiceTest {
         TestObserver testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+
+        verify(credentialService, never()).deleteByUserId(any(), any(), any());
     }
 
     @Test
@@ -187,6 +197,7 @@ public class UserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(userProvider, times(1)).create(any());
+        verify(credentialService, never()).deleteByUserId(any(), any(), any());
     }
 
     @Test
@@ -355,4 +366,36 @@ public class UserServiceTest {
         testObserver.assertError(UserNotFoundException.class);
     }
 
+    @Test
+    public void shouldResetPassword_delete_passwordless_devices() {
+        AccountSettings accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isDeletePasswordlessDevicesAfterResetPassword()).thenReturn(true);
+
+        Client client = mock(Client.class);
+        when(client.getAccountSettings()).thenReturn(accountSettings);
+
+        User user = mock(User.class);
+        when(user.getUsername()).thenReturn("username");
+        when(user.isInactive()).thenReturn(false);
+        when(user.getSource()).thenReturn("default-idp");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
+        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(credentialService.deleteByUserId(any(), any(), any())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.resetPassword(client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(credentialService, times(1)).deleteByUserId(any(), any(), any());
+    }
 }

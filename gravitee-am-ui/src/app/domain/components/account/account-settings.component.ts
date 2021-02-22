@@ -144,6 +144,15 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     return this.accountSettings && this.accountSettings.sendRecoverAccountEmail;
   }
 
+  enableDeletePasswordlessDevicesAfterResetPassword(event) {
+    this.accountSettings.deletePasswordlessDevicesAfterResetPassword = event.checked;
+    this.formChanged = true;
+  }
+
+  isDeletePasswordlessDevicesAfterResetPasswordEnabled() {
+    return this.accountSettings && this.accountSettings.deletePasswordlessDevicesAfterResetPassword;
+  }
+
   updateModel() {
     this.formChanged = true;
   }

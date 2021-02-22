@@ -44,4 +44,7 @@ public interface CredentialService {
     Completable update(ReferenceType referenceType, String referenceId, String credentialId, Credential credential);
 
     Completable delete(String id);
+
+    Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId);
+
 }

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model.oidc;
 
+import java.util.List;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
@@ -23,6 +25,7 @@ public class OIDCSettingsMongo {
 
     private ClientRegistrationSettingsMongo clientRegistrationSettings;
     private boolean redirectUriStrictMatching;
+    private List<String> postLogoutRedirectUris;
 
     public ClientRegistrationSettingsMongo getClientRegistrationSettings() {
         return clientRegistrationSettings;
@@ -38,5 +41,13 @@ public class OIDCSettingsMongo {
 
     public void setRedirectUriStrictMatching(boolean redirectUriStrictMatching) {
         this.redirectUriStrictMatching = redirectUriStrictMatching;
+    }
+
+    public List<String> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 }
