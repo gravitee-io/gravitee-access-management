@@ -43,6 +43,11 @@
                 "glob": "**/*.json",
                 "input": "node_modules/@gravitee/ui-components/assets/i18n",
                 "output": "i18n/"
+              },
+              {
+                "glob": "**/*.svg",
+                "input": "node_modules/@gravitee/ui-components/assets/icons",
+                "output": "icons/"
               }
             ],
             "styles": [
