@@ -15,34 +15,38 @@
  */
 package io.gravitee.am.identityprovider.api;
 
-import io.gravitee.common.component.Lifecycle;
-import io.gravitee.common.service.Service;
-import io.reactivex.Maybe;
+import io.gravitee.common.http.HttpHeaders;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthenticationProvider extends Service<AuthenticationProvider> {
+public class Metadata {
 
-    Maybe<User> loadUserByUsername(Authentication authentication);
+    private HttpHeaders headers;
 
-    Maybe<User> loadUserByUsername(String username);
+    private String body;
 
-    default Metadata metadata(String idpUrl) {
-        return null;
+    public Metadata() {}
+
+    public Metadata(HttpHeaders headers, String body) {
+        this.headers = headers;
+        this.body = body;
     }
 
-    default Lifecycle.State lifecycleState() {
-        return Lifecycle.State.INITIALIZED;
+    public HttpHeaders getHeaders() {
+        return headers;
     }
 
-    default AuthenticationProvider start() throws Exception {
-        return this;
+    public void setHeaders(HttpHeaders headers) {
+        this.headers = headers;
     }
 
-    default AuthenticationProvider stop() throws Exception {
-        return this;
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
     }
 }

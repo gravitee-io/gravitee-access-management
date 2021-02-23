@@ -40,5 +40,6 @@
         <module>gravitee-am-gateway-handler-users</module>
         <module>gravitee-am-gateway-handler-context</module>
         <module>gravitee-am-gateway-handler-discovery</module>
+        <module>gravitee-am-gateway-handler-saml2</module>
     </modules>
 </project>

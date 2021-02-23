@@ -13,37 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.certificate.api;
+package io.gravitee.am.gateway.handler.saml2.service.sp;
 
-import io.gravitee.am.model.jose.JWK;
-import io.reactivex.Flowable;
+import io.gravitee.am.identityprovider.api.Metadata;
 import io.reactivex.Single;
-
-import java.security.cert.Certificate;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateProvider {
+public interface ServiceProviderService {
 
-    Single<Key> key();
-
-    Single<String> publicKey();
-
-    Flowable<JWK> keys();
-
-    CertificateMetadata certificateMetadata();
-
-    String signatureAlgorithm();
-
-    default Certificate certificate() {
-        return null;
-    }
-
-    default Single<List<CertificateKey>> publicKeys() {
-        return Single.just(Collections.emptyList());
-    }
+    Single<Metadata> metadata(String providerId, String idpUrl);
 }

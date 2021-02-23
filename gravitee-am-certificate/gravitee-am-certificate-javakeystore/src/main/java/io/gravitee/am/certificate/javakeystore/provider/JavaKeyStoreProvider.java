@@ -46,6 +46,7 @@ import java.util.stream.Stream;
 public class JavaKeyStoreProvider implements CertificateProvider, InitializingBean {
 
     private KeyPair keyPair;
+    private Certificate cert;
     private JWKSet jwkSet;
     private Set<JWK> keys;
     private SignatureAlgorithm signature = SignatureAlgorithm.RS256;
@@ -74,7 +75,7 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
             Key key = keystore.getKey(configuration.getAlias(), configuration.getKeypass().toCharArray());
             if (key instanceof PrivateKey) {
                 // Get certificate of public key
-                Certificate cert = keystore.getCertificate(configuration.getAlias());
+                cert = keystore.getCertificate(configuration.getAlias());
                 // create key pair
                 keyPair = new KeyPair(cert.getPublicKey(), (PrivateKey) key);
                 // create key
@@ -126,6 +127,11 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     @Override
     public CertificateMetadata certificateMetadata() {
         return certificateMetadata;
+    }
+
+    @Override
+    public Certificate certificate() {
+        return cert;
     }
 
     private Set<JWK> getKeys() {
