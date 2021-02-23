@@ -13,37 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.certificate.api;
+package io.gravitee.am.gateway.handler.saml2.spring;
 
-import io.gravitee.am.model.jose.JWK;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-
-import java.security.cert.Certificate;
-import java.util.Collections;
-import java.util.List;
+import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import io.gravitee.am.gateway.handler.saml2.service.sp.ServiceProviderService;
+import io.gravitee.am.gateway.handler.saml2.service.sp.impl.ServiceProviderServiceImpl;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateProvider {
+@Configuration
+public class SAMLConfiguration implements ProtocolConfiguration {
 
-    Single<Key> key();
-
-    Single<String> publicKey();
-
-    Flowable<JWK> keys();
-
-    CertificateMetadata certificateMetadata();
-
-    String signatureAlgorithm();
-
-    default Certificate certificate() {
-        return null;
-    }
-
-    default Single<List<CertificateKey>> publicKeys() {
-        return Single.just(Collections.emptyList());
+    @Bean
+    public ServiceProviderService serviceProviderService() {
+        return new ServiceProviderServiceImpl();
     }
 }

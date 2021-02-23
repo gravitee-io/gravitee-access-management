@@ -13,37 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.certificate.api;
-
-import io.gravitee.am.model.jose.JWK;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-
-import java.security.cert.Certificate;
-import java.util.Collections;
-import java.util.List;
+package io.gravitee.am.service.exception;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateProvider {
+public class IdentityProviderMetadataNotFoundException extends AbstractNotFoundException {
 
-    Single<Key> key();
+    private final String identityProvider;
 
-    Single<String> publicKey();
-
-    Flowable<JWK> keys();
-
-    CertificateMetadata certificateMetadata();
-
-    String signatureAlgorithm();
-
-    default Certificate certificate() {
-        return null;
+    public IdentityProviderMetadataNotFoundException(String identityProvider) {
+        this.identityProvider = identityProvider;
     }
 
-    default Single<List<CertificateKey>> publicKeys() {
-        return Single.just(Collections.emptyList());
+    @Override
+    public String getMessage() {
+        return "Identity Provider [" + identityProvider + "] metadata can not be found.";
     }
 }
