@@ -1,10 +1,10 @@
 {
   "name": "gravitee-am-webui",
-  "version": "3.5.2",
+  "version": "3.5.3-SNAPSHOT",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "serve": "ng serve",
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",

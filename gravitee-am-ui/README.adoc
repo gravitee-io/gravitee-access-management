@@ -4,11 +4,12 @@ This project was generated with https://github.com/angular/angular-cli[Angular C
 
 == Install
 
-- Install http://nodejs.org[nodejs] 10.9.0 or later, it comes with http://npmjs.org[npm]
+- Install https://github.com/nvm-sh/nvm[nvm]
 - Install the Angular CLI
 ```
 npm install -g @angular/cli
 ```
+- Use with `nvm use` or install with `nvm install` the node version declared in `.nvmrc`
 - Then install node modules with:
 ```
 npm install
@@ -16,7 +17,7 @@ npm install
 
 == Development server
 
-Run `npm run start` for a dev server. Navigate to `http://localhost:4200/`.
+Run `npm run serve` for a dev server. Navigate to `http://localhost:4200/`.
 The app will automatically reload if you change any of the source files.
 
 == Code scaffolding
