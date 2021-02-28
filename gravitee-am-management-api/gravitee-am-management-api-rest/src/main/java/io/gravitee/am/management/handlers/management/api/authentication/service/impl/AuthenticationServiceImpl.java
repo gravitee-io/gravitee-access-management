@@ -35,6 +35,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,16 +85,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     existingUser.setClient(CLIENT_ID);
                     existingUser.setLoggedAt(new Date());
                     existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
-                    // set roles
-                    if (existingUser.getRoles() == null) {
-                        existingUser.setRoles(principal.getRoles());
-                    } else if (principal.getRoles() != null) {
-                        // filter roles
-                        principal.getRoles().removeAll(existingUser.getRoles());
-                        existingUser.getRoles().addAll(principal.getRoles());
-                    }
                     existingUser.setAdditionalInformation(principal.getAdditionalInformation());
-                    return userService.update(existingUser);
+                    return userService.update(existingUser)
+                            .flatMap(user -> updateRoles(principal, existingUser).andThen(Single.just(user)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof UserNotFoundException) {
@@ -108,8 +102,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         newUser.setLoginsCount(1l);
                         newUser.setAdditionalInformation(principal.getAdditionalInformation());
                         return userService.create(newUser)
-                                .flatMap(user -> setRoles(principal, user)
-                                        .map(membership -> user));
+                                .flatMap(user -> setRoles(principal, user).andThen(Single.just(user)));
                     }
                     return Single.error(ex);
                 })
@@ -139,7 +132,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * Note: this business code should not be here and will be moved to a dedicated UserService when the following issue
      * will be handled https://github.com/gravitee-io/issues/issues/3323
      */
-    private Single<Membership> setRoles(User principal, io.gravitee.am.model.User user) {
+    private Completable setRoles(User principal, io.gravitee.am.model.User user) {
 
         final Maybe<Role> defaultRoleObs = roleService.findDefaultRole(user.getReferenceId(), DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION);
         Maybe<Role> roleObs = defaultRoleObs;
@@ -168,9 +161,49 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         membership.setReferenceId(user.getReferenceId());
 
         return roleObs.switchIfEmpty(Maybe.error(new TechnicalManagementException(String.format("Cannot add user membership to organization %s. Unable to find ORGANIZATION_USER role", user.getReferenceId()))))
-                .flatMapSingle(role -> {
+                .flatMapCompletable(role -> {
                     membership.setRoleId(role.getId());
-                    return membershipService.addOrUpdate(user.getReferenceId(), membership);
+                    return membershipService.addOrUpdate(user.getReferenceId(), membership).ignoreElement();
+                });
+    }
+
+    /**
+     * Update ORGANIZATION role to an existing user if the identity provider role mapper has changed
+     */
+    private Completable updateRoles(User principal, io.gravitee.am.model.User existingUser) {
+        // no role defined, continue
+        if (principal.getRoles() == null || principal.getRoles().isEmpty()) {
+            return Completable.complete();
+        }
+
+        // role to update if it's different from the current one
+        final String roleId = principal.getRoles().get(0);
+
+        // update membership if necessary
+        return membershipService.findByMember(existingUser.getId(), MemberType.USER)
+                .flatMapCompletable(memberships -> {
+                    boolean mustChangeOrganizationRole = memberships
+                            .stream()
+                            .filter(membership -> ReferenceType.ORGANIZATION == membership.getReferenceType())
+                            .findFirst()
+                            .map(membership -> !membership.getRoleId().equals(roleId))
+                            .orElse(false);
+
+                    if (!mustChangeOrganizationRole) {
+                        return Completable.complete();
+                    }
+
+                    Membership membership = new Membership();
+                    membership.setMemberType(MemberType.USER);
+                    membership.setMemberId(existingUser.getId());
+                    membership.setReferenceType(existingUser.getReferenceType());
+                    membership.setReferenceId(existingUser.getReferenceId());
+                    membership.setRoleId(roleId);
+
+                    // check role and then update membership
+                    return roleService.findById(existingUser.getReferenceType(), existingUser.getReferenceId(), roleId)
+                            .flatMap(__ -> membershipService.addOrUpdate(existingUser.getReferenceId(), membership))
+                            .ignoreElement();
                 });
     }
 }
