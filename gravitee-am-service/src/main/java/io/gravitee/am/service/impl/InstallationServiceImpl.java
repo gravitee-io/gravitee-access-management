@@ -20,6 +20,7 @@ import io.gravitee.am.model.Installation;
 import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InstallationNotFoundException;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +67,20 @@ public class InstallationServiceImpl implements InstallationService {
                     toUpdate.setAdditionalInformation(additionalInformation);
 
                     return updateInternal(toUpdate);
+                });
+    }
+
+    @Override
+    public Completable delete() {
+        return this.installationRepository.find()
+                .switchIfEmpty(Single.error(new InstallationNotFoundException()))
+                .flatMapCompletable(installation -> installationRepository.delete(installation.getId()))
+                .onErrorResumeNext(ex -> {
+                    // installation already deleted, continue
+                    if (ex instanceof InstallationNotFoundException) {
+                        return Completable.complete();
+                    }
+                    return Completable.error(ex);
                 });
     }
 
