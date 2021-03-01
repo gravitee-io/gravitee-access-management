@@ -43,7 +43,8 @@ public class LoginFailureHandler implements Handler<RoutingContext> {
             } else if (throwable instanceof AuthenticationException) {
                 handleException(routingContext, "invalid_user", "Invalid or unknown user");
             } else {
-                handleException(routingContext, "internal_server_error", "Unexpected error");
+                // technical exception will be managed by the generic error handler, continue
+                routingContext.next();
             }
         }
     }
