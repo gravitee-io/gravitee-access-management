@@ -384,5 +384,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> errorHandler = new ErrorHandler( "/error");
         router.route("/forgotPassword").failureHandler(errorHandler);
         router.route("/logout").failureHandler(errorHandler);
+        router.route("/login").failureHandler(errorHandler);
     }
 }
