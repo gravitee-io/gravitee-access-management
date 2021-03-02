@@ -15,12 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
+import io.gravitee.am.common.exception.uma.InvalidPasswordException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.model.application.PasswordSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.utils.PasswordUtils;
 import io.vertx.reactivex.core.MultiMap;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -36,18 +43,35 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
 
     @Override
     public void handle(RoutingContext context) {
-        if (!passwordValidator.validate(context.request().getParam(ConstantKeys.PASSWORD_PARAM_KEY))) {
-            MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
-            if (context.request().getParam(Parameters.CLIENT_ID) != null) {
-                queryParams.set(Parameters.CLIENT_ID, context.request().getParam(Parameters.CLIENT_ID));
+        HttpServerRequest request = context.request();
+        String password = request.getParam(ConstantKeys.PASSWORD_PARAM_KEY);
+        MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
+        Optional<PasswordSettings> passwordSettings = Optional
+                .ofNullable(context.<Client>get(ConstantKeys.CLIENT_CONTEXT_KEY))
+                .map(Client::getPasswordSettings);
+
+        if (passwordSettings.isPresent()) {
+            try {
+                PasswordUtils.validate(password, passwordSettings.get());
+            } catch (InvalidPasswordException e) {
+                queryParams.set(Parameters.CLIENT_ID, request.getParam(Parameters.CLIENT_ID));
+                warningRedirection(context, queryParams, e.getErrorKey());
             }
-            if (context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY) != null) {
-                queryParams.set(ConstantKeys.TOKEN_PARAM_KEY, context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY));
-            }
-            queryParams.set(ConstantKeys.WARNING_PARAM_KEY, "invalid_password_value");
-            redirectToPage(context, queryParams);
-        } else {
             context.next();
+            return;
         }
+
+        if (this.passwordValidator.isValid(password)) {
+            context.next();
+        } else {
+            warningRedirection(context, queryParams, "invalid_password_value");
+        }
+    }
+
+    private void warningRedirection(RoutingContext context, MultiMap queryParams, String warningMsg) {
+        Optional.ofNullable(context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY)).ifPresent(t -> queryParams.set(ConstantKeys.TOKEN_PARAM_KEY, t));
+        queryParams.set(ConstantKeys.WARNING_PARAM_KEY, warningMsg);
+        redirectToPage(context, queryParams);
+
     }
 }

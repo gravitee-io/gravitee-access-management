@@ -107,11 +107,10 @@ public class UserEndpoint extends AbstractUserEndpoint {
             }
 
             // password policy
-            if (user.getPassword() != null) {
-                if (!passwordValidator.validate(user.getPassword())) {
-                    context.fail(new InvalidValueException("Field [password] is invalid"));
-                    return;
-                }
+            String password = user.getPassword();
+            if (password != null && !passwordValidator.isValid(password)) {
+                context.fail(new InvalidValueException("Field [password] is invalid"));
+                return;
             }
 
             userService.update(userId, user, location(context.request()))

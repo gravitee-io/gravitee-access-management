@@ -15,44 +15,38 @@
  */
 package io.gravitee.am.service.authentication.crypto.password;
 
-import org.springframework.beans.factory.InitializingBean;
+import io.gravitee.am.common.exception.uma.InvalidPasswordException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RegexPasswordValidator implements PasswordValidator, InitializingBean {
+@Component
+public class RegexPasswordValidator implements PasswordValidator {
 
-    private Pattern pattern;
-    private Matcher matcher;
+    private final Pattern defaultPasswordPattern;
 
-    @Value("${user.password.policy.pattern:^(?:(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))(?!.*(.)\\1{2,})[A-Za-z0-9!~<>,;:_\\-=?*+#.\"'&§`£€%°()\\\\\\|\\[\\]\\-\\$\\^\\@\\/]{8,32}$}")
-    private String passwordPattern;
-
-    public RegexPasswordValidator() { }
-
-    public RegexPasswordValidator(String pattern) {
-        this.pattern = Pattern.compile(pattern);
+    @Autowired
+    public RegexPasswordValidator(@Value("${user.password.policy.pattern:^(?:(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))(?!.*(.)\\1{2,})[A-Za-z0-9!~<>,;:_\\-=?*+#.\"'&§`£€%°()\\\\\\|\\[\\]\\-\\$\\^\\@\\/]{8,32}$}")
+                                          String pattern) {
+        this.defaultPasswordPattern = Pattern.compile(pattern);
     }
 
     @Override
-    public boolean validate(final String password) {
+    public boolean isValid(String password) {
+        return password.length() <= PASSWORD_MAX_LENGTH
+                && defaultPasswordPattern.matcher(password).matches();
+    }
 
-        if(password.length() > PASSWORD_MAX_LENGTH) {
-            return false;
+    @Override
+    public void validate(String password) {
+        if (!isValid(password)) {
+            throw InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value");
         }
-
-        matcher = pattern.matcher(password);
-        return matcher.matches();
-    }
-
-
-    @Override
-    public void afterPropertiesSet() {
-        pattern = Pattern.compile(passwordPattern);
     }
 }

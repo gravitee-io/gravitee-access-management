@@ -15,16 +15,31 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.common.exception.uma.InvalidPasswordException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
@@ -44,13 +59,25 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,7 +88,10 @@ public class UserServiceTest {
 
     public static final String DOMAIN_ID = "domain#1";
     @InjectMocks
-    private UserService userService = new UserServiceImpl();
+    private final UserService userService = new UserServiceImpl();
+
+    @Mock
+    private PasswordValidator passwordValidator;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -96,6 +126,9 @@ public class UserServiceTest {
     @Mock
     private MembershipService membershipService;
 
+    @Mock
+    private ClientService clientService;
+
     @Before
     public void setUp() {
         ((UserServiceImpl) userService).setExpireAfter(24 * 3600);
@@ -105,13 +138,15 @@ public class UserServiceTest {
     public void shouldCreateUser_invalid_identity_provider() {
         final String domain = "domain";
 
-        Domain domain1 = mock(Domain.class);
-        when(domain1.getId()).thenReturn(domain);
+        Domain domain1 = new Domain();
+        domain1.setId(domain);
 
-        NewUser newUser = mock(NewUser.class);
-        when(newUser.getUsername()).thenReturn("username");
-        when(newUser.getSource()).thenReturn("unknown-idp");
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setSource("unknown-idp");
+        newUser.setPassword("myPassword");
 
+        doReturn(true).when(passwordValidator).isValid(anyString());
         when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
@@ -126,18 +161,19 @@ public class UserServiceTest {
     public void shouldNotCreateUser_unknown_client() {
         final String domain = "domain";
 
-        Domain domain1 = mock(Domain.class);
-        when(domain1.getId()).thenReturn(domain);
+        Domain domain1 = new Domain();
+        domain1.setId(domain);
 
-        NewUser newUser = mock(NewUser.class);
-        when(newUser.getUsername()).thenReturn("username");
-        when(newUser.getSource()).thenReturn("idp");
-        when(newUser.getClient()).thenReturn("client");
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setSource("idp");
+        newUser.setClient("client");
+        newUser.setPassword("myPassword");
 
-        UserProvider userProvider = mock(UserProvider.class);
-
+        doReturn(true).when(passwordValidator).isValid(anyString());
+        doReturn(Maybe.just(mock(Client.class))).when(clientService).findById("client");
         when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.empty());
         when(applicationService.findByDomainAndClientId(domain, newUser.getClient())).thenReturn(Maybe.empty());
@@ -150,24 +186,25 @@ public class UserServiceTest {
 
     @Test
     public void shouldNotCreateUser_invalid_client() {
-        final String domain = "domain";
+        String domain = "domain";
 
-        Domain domain1 = mock(Domain.class);
-        when(domain1.getId()).thenReturn(domain);
+        Domain domain1 = new Domain();
+        domain1.setId(domain);
 
-        NewUser newUser = mock(NewUser.class);
-        when(newUser.getUsername()).thenReturn("username");
-        when(newUser.getSource()).thenReturn("idp");
-        when(newUser.getClient()).thenReturn("client");
-
-        UserProvider userProvider = mock(UserProvider.class);
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setSource("idp");
+        newUser.setClient("client");
+        newUser.setPassword("MyPassword");
 
         Application application = mock(Application.class);
         when(application.getDomain()).thenReturn("other-domain");
 
+        doReturn(true).when(passwordValidator).isValid(anyString());
+        doReturn(Maybe.just(mock(Client.class))).when(clientService).findById("client");
         when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(application));
 
         TestObserver<User> testObserver = userService.create(domain, newUser).test();
@@ -178,15 +215,17 @@ public class UserServiceTest {
 
     @Test
     public void shouldNotCreateUser_user_already_exists() {
-        final String domain = "domain";
+        String domain = "domain";
 
-        Domain domain1 = mock(Domain.class);
-        when(domain1.getId()).thenReturn(domain);
+        Domain domain1 = new Domain();
+        domain1.setId(domain);
 
-        NewUser newUser = mock(NewUser.class);
-        when(newUser.getUsername()).thenReturn("username");
-        when(newUser.getSource()).thenReturn("idp");
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setSource("idp");
+        newUser.setPassword("MyPassword");
 
+        doReturn(true).when(passwordValidator).isValid(anyString());
         when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(new User()));
 
@@ -199,32 +238,31 @@ public class UserServiceTest {
     @Test
     public void shouldPreRegisterUser() throws InterruptedException {
 
-        final String domain = "domain";
+        String domain = "domain";
 
-        AccountSettings accountSettings;
-        accountSettings = mock(AccountSettings.class);
-        when(accountSettings.isDynamicUserRegistration()).thenReturn(false);
+        AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setDynamicUserRegistration(false);
 
-        Domain domain1 = mock(Domain.class);
-        when(domain1.getId()).thenReturn(domain);
-        when(domain1.getAccountSettings()).thenReturn(accountSettings);
+        Domain domain1 = new Domain();
+        domain1.setId(domain);
+        domain1.setAccountSettings(accountSettings);
 
-        NewUser newUser = mock(NewUser.class);
-        when(newUser.getUsername()).thenReturn("username");
-        when(newUser.getSource()).thenReturn("idp");
-        when(newUser.getClient()).thenReturn("client");
-        when(newUser.isPreRegistration()).thenReturn(true);
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setSource("idp");
+        newUser.setClient("client");
+        newUser.setPreRegistration(true);
 
-        User preRegisteredUser = mock(User.class);
-        when(preRegisteredUser.getId()).thenReturn("userId");
-        when(preRegisteredUser.getReferenceId()).thenReturn("domain");
-        when(preRegisteredUser.isPreRegistration()).thenReturn(true);
+        User preRegisteredUser = new User();
+        preRegisteredUser.setId("userId");
+        preRegisteredUser.setReferenceId("domain");
+        preRegisteredUser.setPreRegistration(true);
 
         UserProvider userProvider = mock(UserProvider.class);
         doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
 
-        Application client = mock(Application.class);
-        when(client.getDomain()).thenReturn("domain");
+        Application client = new Application();
+        client.setDomain("domain");
         when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
@@ -250,27 +288,27 @@ public class UserServiceTest {
     @Test
     public void shouldPreRegisterUser_dynamicUserRegistration_domainLevel() {
 
-        final String domain = "domain";
+        String domain = "domain";
 
         AccountSettings accountSettings;
-        accountSettings = mock(AccountSettings.class);
-        when(accountSettings.isDynamicUserRegistration()).thenReturn(true);
+        accountSettings = new AccountSettings();
+        accountSettings.setDynamicUserRegistration(true);
 
-        Domain domain1 = mock(Domain.class);
-        when(domain1.getId()).thenReturn(domain);
-        when(domain1.getAccountSettings()).thenReturn(accountSettings);
+        Domain domain1 = new Domain();
+        domain1.setId(domain);
+        domain1.setAccountSettings(accountSettings);
 
-        NewUser newUser = mock(NewUser.class);
-        when(newUser.getUsername()).thenReturn("username");
-        when(newUser.getSource()).thenReturn("idp");
-        when(newUser.getClient()).thenReturn("client");
-        when(newUser.isPreRegistration()).thenReturn(true);
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setSource("idp");
+        newUser.setClient("client");
+        newUser.setPreRegistration(true);
 
         UserProvider userProvider = mock(UserProvider.class);
         doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
 
-        Application client = mock(Application.class);
-        when(client.getDomain()).thenReturn("domain");
+        Application client = new Application();
+        client.setDomain("domain");
 
         when(jwtBuilder.sign(any())).thenReturn("token");
         when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
@@ -298,30 +336,30 @@ public class UserServiceTest {
     @Test
     public void shouldPreRegisterUser_dynamicUserRegistration_clientLevel() {
 
-        final String domain = "domain";
+        String domain = "domain";
 
-        AccountSettings accountSettings;
-        accountSettings = mock(AccountSettings.class);
-        when(accountSettings.isDynamicUserRegistration()).thenReturn(true);
+        AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setDynamicUserRegistration(true);
+        accountSettings.setInherited(false);
 
-        Domain domain1 = mock(Domain.class);
-        when(domain1.getId()).thenReturn(domain);
+        Domain domain1 = new Domain();
+        domain1.setId(domain);
 
-        NewUser newUser = mock(NewUser.class);
-        when(newUser.getUsername()).thenReturn("username");
-        when(newUser.getSource()).thenReturn("idp");
-        when(newUser.getClient()).thenReturn("client");
-        when(newUser.isPreRegistration()).thenReturn(true);
+        NewUser newUser = new NewUser();
+        newUser.setUsername("username");
+        newUser.setSource("idp");
+        newUser.setClient("client");
+        newUser.setPreRegistration(true);
 
         UserProvider userProvider = mock(UserProvider.class);
         doReturn(Single.just(new DefaultUser(newUser.getUsername()))).when(userProvider).create(any());
 
-        Application client = mock(Application.class);
-        when(client.getDomain()).thenReturn("domain");
+        Application client = new Application();
+        client.setDomain("domain");
 
-        ApplicationSettings settings = mock(ApplicationSettings.class);
-        when(settings.getAccount()).thenReturn(accountSettings);
-        when(client.getSettings()).thenReturn(settings);
+        ApplicationSettings settings = new ApplicationSettings();
+        settings.setAccount(accountSettings);
+        client.setSettings(settings);
 
         when(jwtBuilder.sign(any())).thenReturn("token");
         when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
@@ -348,19 +386,17 @@ public class UserServiceTest {
 
     @Test
     public void shouldNotUpdateUser_unknown_client() {
-        final String domain = "domain";
-        final String id = "id";
+        String domain = "domain";
+        String id = "id";
 
-        User user = mock(User.class);
-        when(user.getSource()).thenReturn("idp");
+        User user = new User();
+        user.setSource("idp");
 
-        UpdateUser updateUser = mock(UpdateUser.class);
-        when(updateUser.getClient()).thenReturn("client");
-
-        UserProvider userProvider = mock(UserProvider.class);
+        UpdateUser updateUser = new UpdateUser();
+        updateUser.setClient("client");
 
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.empty());
         when(applicationService.findByDomainAndClientId(domain, updateUser.getClient())).thenReturn(Maybe.empty());
 
@@ -371,22 +407,20 @@ public class UserServiceTest {
 
     @Test
     public void shouldNotUpdateUser_invalid_client() {
-        final String domain = "domain";
-        final String id = "id";
+        String domain = "domain";
+        String id = "id";
 
-        User user = mock(User.class);
-        when(user.getSource()).thenReturn("idp");
+        User user = new User();
+        user.setSource("idp");
 
-        UpdateUser updateUser = mock(UpdateUser.class);
-        when(updateUser.getClient()).thenReturn("client");
+        UpdateUser updateUser = new UpdateUser();
+        updateUser.setClient("client");
 
-        UserProvider userProvider = mock(UserProvider.class);
-
-        Application application = mock(Application.class);
-        when(application.getDomain()).thenReturn("other-domain");
+        Application application = new Application();
+        application.setDomain("other-domain");
 
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq(id))).thenReturn(Single.just(user));
-        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.just(application));
 
         TestObserver<User> testObserver = userService.update(domain, id, updateUser).test();
@@ -396,8 +430,9 @@ public class UserServiceTest {
 
     @Test
     public void shouldResetPassword_externalIdEmpty() {
-        final String domain = "domain";
-        final String password = "password";
+
+        String domain = "domain";
+        String password = "password";
 
         User user = new User();
         user.setId("user-id");
@@ -422,8 +457,8 @@ public class UserServiceTest {
 
     @Test
     public void shouldResetPassword_idpUserNotFound() {
-        final String domain = "domain";
-        final String password = "password";
+        String domain = "domain";
+        String password = "password";
 
         User user = new User();
         user.setId("user-id");
@@ -480,14 +515,6 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
 
-        Set<Role> roles = new HashSet<>();
-        Role role1 = new Role();
-        role1.setId("role-1");
-        Role role2 = new Role();
-        role2.setId("role-2");
-        roles.add(role1);
-        roles.add(role2);
-
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
@@ -533,14 +560,6 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
 
-        Set<Role> roles = new HashSet<>();
-        Role role1 = new Role();
-        role1.setId("role-1");
-        Role role2 = new Role();
-        role2.setId("role-2");
-        roles.add(role1);
-        roles.add(role2);
-
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
@@ -553,11 +572,13 @@ public class UserServiceTest {
 
     @Test
     public void shouldDeleteUser_without_membership() {
-        final String organization = "DEFAULT";
-        final String userId = "user-id";
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(userId);
-        when(user.getSource()).thenReturn("source-idp");
+        String organization = "DEFAULT";
+        String userId = "user-id";
+
+        User user = new User();
+        user.setId(userId);
+        user.setSource("source-idp");
+
         when(commonUserService.findById(any(), any(), any())).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.empty());
         when(commonUserService.delete(anyString())).thenReturn(Completable.complete());
@@ -572,12 +593,12 @@ public class UserServiceTest {
 
     @Test
     public void shouldDeleteUser_with_memberships() {
-        final String organization = "DEFAULT";
-        final String userId = "user-id";
+        String organization = "DEFAULT";
+        String userId = "user-id";
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(userId);
-        when(user.getSource()).thenReturn("source-idp");
+        User user = new User();
+        user.setId(userId);
+        user.setSource("source-idp");
 
         Membership m1 = mock(Membership.class);
         when(m1.getId()).thenReturn("m1");
@@ -711,5 +732,39 @@ public class UserServiceTest {
 
             return true;
         });
+    }
+
+    @Test
+    public void shouldNotCreate_invalid_password() {
+
+        String password = "myPassword";
+        NewUser newUser = new NewUser();
+        newUser.setUsername("Username");
+        newUser.setSource("source");
+        newUser.setPassword(password);
+
+        TestObserver<User> testObserver = userService.create("domain", newUser).test();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidPasswordException.class);
+        verify(passwordValidator, times(1)).isValid(password);
+    }
+
+    @Test
+    public void shouldNotResetPassword_invalid_password() {
+        String domain = "domain";
+        String password = "password";
+
+        User user = new User();
+        user.setId("user-id");
+        user.setSource("idp-id");
+
+        doThrow(InvalidPasswordException.class).when(passwordValidator).validate(eq(password));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq("user-id"))).thenReturn(Single.just(user));
+
+        TestObserver<Void> testObserver = userService.resetPassword(domain, user.getId(), password).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidPasswordException.class);
+        verify(passwordValidator, times(1)).validate(password);
     }
 }

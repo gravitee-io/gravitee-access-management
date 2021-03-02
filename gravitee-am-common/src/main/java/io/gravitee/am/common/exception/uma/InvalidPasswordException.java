@@ -13,24 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.authentication.crypto.password;
-
-import io.gravitee.am.common.exception.uma.InvalidPasswordException;
+package io.gravitee.am.common.exception.uma;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PasswordValidator {
+public class InvalidPasswordException extends RuntimeException {
 
-    int PASSWORD_MAX_LENGTH = 72;
+    private final String errorKey;
 
-    //TODO Boualem : user domain setting to validate password
-    boolean isValid(final String password);
+    private InvalidPasswordException(String message, String errorKey) {
+        super(message);
+        this.errorKey = errorKey;
+    }
 
-    /**
-     * @throws InvalidPasswordException if the password is not valid
-     */
-    //TODO Boualem : user domain setting to validate password
-    void validate(String password);
+    public static InvalidPasswordException of(String message, String errorKey) {
+        return new InvalidPasswordException(message, errorKey);
+    }
+
+    public String getErrorKey() {
+        return errorKey;
+    }
 }

@@ -22,16 +22,25 @@ import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.model.Resource;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.PasswordSettings;
 import io.gravitee.am.model.login.LoginSettings;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
- *
  * See https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata
  */
 public class Client implements Cloneable, Resource {
@@ -183,6 +192,8 @@ public class Client implements Cloneable, Resource {
 
     private LoginSettings loginSettings;
 
+    private PasswordSettings passwordSettings;
+
     private List<TokenClaim> tokenCustomClaims;
 
     private boolean template;
@@ -195,7 +206,8 @@ public class Client implements Cloneable, Resource {
 
     private boolean flowsInherited;
 
-    public Client() { }
+    public Client() {
+    }
 
     public Client(Client other) {
         this.id = other.id;
@@ -254,6 +266,7 @@ public class Client implements Cloneable, Resource {
         this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
         this.accountSettings = other.accountSettings;
         this.loginSettings = other.loginSettings;
+        this.passwordSettings = other.passwordSettings;
         this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
         this.template = other.template;
         this.metadata = other.metadata != null ? new HashMap<>(other.metadata) : null;
@@ -301,7 +314,9 @@ public class Client implements Cloneable, Resource {
         return authorizedGrantTypes;
     }
 
-    public void setAuthorizedGrantTypes(List<String> grantTypes) { this.authorizedGrantTypes = grantTypes; }
+    public void setAuthorizedGrantTypes(List<String> grantTypes) {
+        this.authorizedGrantTypes = grantTypes;
+    }
 
     public List<String> getResponseTypes() {
         return responseTypes;
@@ -716,6 +731,14 @@ public class Client implements Cloneable, Resource {
         this.loginSettings = loginSettings;
     }
 
+    public PasswordSettings getPasswordSettings() {
+        return passwordSettings;
+    }
+
+    public void setPasswordSettings(PasswordSettings passwordSettings) {
+        this.passwordSettings = passwordSettings;
+    }
+
     public List<TokenClaim> getTokenCustomClaims() {
         return tokenCustomClaims;
     }
@@ -845,19 +868,19 @@ public class Client implements Cloneable, Resource {
     public Client clone() throws CloneNotSupportedException {
         Client clone = (Client) super.clone();
 
-        clone.setRedirectUris(this.getRedirectUris()!=null?new ArrayList<>(this.getRedirectUris()):null);
-        clone.setAuthorizedGrantTypes(this.getAuthorizedGrantTypes()!=null?new ArrayList<>(this.getAuthorizedGrantTypes()):null);
-        clone.setResponseTypes(this.getResponseTypes()!=null?new ArrayList<>(this.getResponseTypes()):null);
-        clone.setContacts(this.getContacts()!=null?new ArrayList<>(this.getContacts()):null);
-        clone.setDefaultACRvalues(this.getDefaultACRvalues()!=null?new ArrayList<>(this.getDefaultACRvalues()):null);
-        clone.setRequestUris(this.getRequestUris()!=null?new ArrayList<>(this.getRequestUris()):null);
-        clone.setScopes(this.getScopes()!=null?new ArrayList<>(this.getScopes()):null);
-        clone.setScopeApprovals(this.getScopeApprovals()!=null?new HashMap<>(this.getScopeApprovals()):null);
-        clone.setAutoApproveScopes(this.getAutoApproveScopes()!=null?new ArrayList<>(this.getAutoApproveScopes()):null);
-        clone.setIdentities(this.getIdentities()!=null?new HashSet<>(this.getIdentities()):null);
-        clone.setFactors(this.getFactors()!=null?new HashSet<>(this.getFactors()):null);
-        clone.setJwks(this.getJwks()!=null?this.getJwks().clone():null);
-
+        clone.setRedirectUris(this.getRedirectUris() != null ? new ArrayList<>(this.getRedirectUris()) : null);
+        clone.setAuthorizedGrantTypes(this.getAuthorizedGrantTypes() != null ? new ArrayList<>(this.getAuthorizedGrantTypes()) : null);
+        clone.setResponseTypes(this.getResponseTypes() != null ? new ArrayList<>(this.getResponseTypes()) : null);
+        clone.setContacts(this.getContacts() != null ? new ArrayList<>(this.getContacts()) : null);
+        clone.setDefaultACRvalues(this.getDefaultACRvalues() != null ? new ArrayList<>(this.getDefaultACRvalues()) : null);
+        clone.setRequestUris(this.getRequestUris() != null ? new ArrayList<>(this.getRequestUris()) : null);
+        clone.setScopes(this.getScopes() != null ? new ArrayList<>(this.getScopes()) : null);
+        clone.setScopeApprovals(this.getScopeApprovals() != null ? new HashMap<>(this.getScopeApprovals()) : null);
+        clone.setAutoApproveScopes(this.getAutoApproveScopes() != null ? new ArrayList<>(this.getAutoApproveScopes()) : null);
+        clone.setIdentities(this.getIdentities() != null ? new HashSet<>(this.getIdentities()) : null);
+        clone.setFactors(this.getFactors() != null ? new HashSet<>(this.getFactors()) : null);
+        clone.setJwks(this.getJwks() != null ? this.getJwks().clone() : null);
+        Optional.ofNullable(this.passwordSettings).ifPresent(ps -> clone.setPasswordSettings(new PasswordSettings(ps)));
         return clone;
     }
 }

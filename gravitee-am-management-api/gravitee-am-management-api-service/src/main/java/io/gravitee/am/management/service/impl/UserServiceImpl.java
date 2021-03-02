@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.exception.uma.InvalidPasswordException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -25,20 +26,38 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.am.service.utils.PasswordUtils;
 import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -49,7 +68,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -87,6 +110,9 @@ public class UserServiceImpl implements UserService {
     private ApplicationService applicationService;
 
     @Autowired
+    private ClientService clientService;
+
+    @Autowired
     private RoleService roleService;
 
     @Autowired
@@ -94,6 +120,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private MembershipService membershipService;
+
+    @Autowired
+    private PasswordValidator passwordValidator;
 
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
@@ -145,8 +174,36 @@ public class UserServiceImpl implements UserService {
                 }));
     }
 
+    private boolean isInValidUserPassword(String password, String clientId) {
+        return Optional.ofNullable(clientService.findById(clientId).blockingGet())
+                .map(Client::getPasswordSettings)
+                .map(settings -> !PasswordUtils.isValid(password, settings))
+                .orElseGet(() -> !passwordValidator.isValid(password));
+    }
+
     @Override
     public Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
+
+        String clientId = newUser.getClient();
+
+        // user must have a password in no pre registration mode
+        String password = newUser.getPassword();
+
+        if (password == null) {
+            if (!newUser.isPreRegistration()) {
+                return Single.error(new UserInvalidException("Field [password] is required"));
+            }
+        } else {
+            if (clientId == null) {
+                if (!passwordValidator.isValid(password)) {
+                    return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+                }
+            } else if (isInValidUserPassword(password, clientId)) {
+                return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+            }
+        }
+
+
         // set user idp source
         if (newUser.getSource() == null && referenceType == ReferenceType.DOMAIN) {
             newUser.setSource(DEFAULT_IDP_PREFIX + referenceId);
@@ -167,7 +224,7 @@ public class UserServiceImpl implements UserService {
                                             .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
                                             .flatMapSingle(userProvider -> {
                                                 // check client
-                                                return checkClient(referenceId, newUser.getClient())
+                                                return checkClient(referenceId, clientId)
                                                         .map(Optional::of)
                                                         .defaultIfEmpty(Optional.empty())
                                                         .flatMapSingle(optClient -> {
@@ -353,10 +410,10 @@ public class UserServiceImpl implements UserService {
                         // remove from memberships if user is an administrative user
                         .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
                                 membershipService.findByMember(userId, MemberType.USER)
-                                    .flatMapCompletable(memberships -> {
-                                        List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteMembershipsCompletable);
-                                    }))
+                                        .flatMapCompletable(memberships -> {
+                                            List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
+                                            return Completable.concat(deleteMembershipsCompletable);
+                                        }))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
                 );
@@ -365,6 +422,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public Completable resetPassword(ReferenceType referenceType, String referenceId, String userId, String password, io.gravitee.am.identityprovider.api.User principal) {
         return userService.findById(referenceType, referenceId, userId)
+                .doOnSuccess(user -> {
+                    String clientId = user.getClient();
+                    if (clientId == null) {
+                        passwordValidator.validate(password);
+                    } else if (isInValidUserPassword(password, clientId)) {
+                        throw InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value");
+                    }
+                })
                 .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                                 .flatMapSingle(userProvider -> {

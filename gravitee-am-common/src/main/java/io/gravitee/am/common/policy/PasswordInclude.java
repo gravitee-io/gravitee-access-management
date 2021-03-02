@@ -21,7 +21,6 @@ package io.gravitee.am.common.policy;
  */
 
 public enum PasswordInclude {
-    NUMBERS_ONLY,
+    NUMBERS,
     NUMBERS_AND_SPECIAL_CHARACTERS
-
 }

@@ -22,18 +22,27 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
-import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
@@ -56,9 +65,6 @@ public class UsersResource extends AbstractUsersResource {
 
     @Autowired
     private IdentityProviderService identityProviderService;
-
-    @Autowired
-    private PasswordValidator passwordValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -104,20 +110,6 @@ public class UsersResource extends AbstractUsersResource {
             @ApiParam(name = "user", required = true) @Valid @NotNull final NewUser newUser,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
-
-        // user must have a password in no pre registration mode
-        if (!newUser.isPreRegistration() && newUser.getPassword() == null) {
-            response.resume(new UserInvalidException(("Field [password] is required")));
-            return;
-        }
-
-        // check password policy
-        if (newUser.getPassword() != null) {
-            if (!passwordValidator.validate(newUser.getPassword())) {
-                response.resume(new UserInvalidException(("Field [password] is invalid")));
-                return;
-            }
-        }
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.CREATE)
                 .andThen(userService.create(ReferenceType.ORGANIZATION, organizationId, newUser, authenticatedUser)

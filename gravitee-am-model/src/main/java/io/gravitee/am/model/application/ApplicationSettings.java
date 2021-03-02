@@ -17,6 +17,7 @@ package io.gravitee.am.model.application;
 
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
+import io.gravitee.am.model.oidc.Client;
 
 import java.util.Optional;
 
@@ -96,5 +97,13 @@ public class ApplicationSettings {
 
     public void setPasswordSettings(PasswordSettings passwordSettings) {
         this.passwordSettings = passwordSettings;
+    }
+
+    public void copyTo(Client client ){
+        client.setAccountSettings(this.account);
+        client.setLoginSettings(this.login);
+        client.setPasswordSettings(this.passwordSettings);
+        Optional.ofNullable(this.oauth).ifPresent(o->o.copyTo(client));
+        Optional.ofNullable(getAdvanced()).ifPresent(a->a.copyTo(client));
     }
 }

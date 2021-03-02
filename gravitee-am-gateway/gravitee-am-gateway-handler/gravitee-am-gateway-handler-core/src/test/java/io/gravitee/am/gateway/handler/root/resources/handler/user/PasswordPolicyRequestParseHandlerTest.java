@@ -23,9 +23,8 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -58,7 +57,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(rc -> rc.response().end());
 
-        when(passwordValidator.validate(anyString())).thenReturn(false);
+        when(passwordValidator.isValid(anyString())).thenReturn(false);
 
         testRequest(HttpMethod.POST, "/", req -> {
             Buffer buffer = Buffer.buffer();
@@ -70,7 +69,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
             String location = resp.headers().get("location");
             assertNotNull(location);
             assertTrue(location.contains("warning=invalid_password_value"));
-        },302, "Found", null);
+        }, 302, "Found", null);
     }
 
     @Test
@@ -79,7 +78,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(rc -> rc.response().end());
 
-        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(passwordValidator.isValid(anyString())).thenReturn(true);
 
         testRequest(HttpMethod.POST, "/", req -> {
             Buffer buffer = Buffer.buffer();
@@ -87,6 +86,6 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
             req.headers().set("content-length", String.valueOf(buffer.length()));
             req.headers().set("content-type", "application/x-www-form-urlencoded");
             req.write(buffer);
-        },200, "OK", null);
+        }, 200, "OK", null);
     }
 }

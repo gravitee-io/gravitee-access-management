@@ -27,8 +27,6 @@ import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
-import io.gravitee.am.service.exception.RoleNotFoundException;
-import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
@@ -81,7 +79,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeSCIMCreateUserEndpoint_invalid_password() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(passwordValidator.validate(anyString())).thenReturn(false);
+        when(passwordValidator.isValid(anyString())).thenReturn(false);
 
         testRequest(
                 HttpMethod.POST,
@@ -103,7 +101,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldInvokeSCIMCreateUserEndpoint_valid_password() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(passwordValidator.isValid(anyString())).thenReturn(true);
         when(userService.create(any(), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
@@ -123,7 +121,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
         user.setSource("unknown-idp");
 
         router.route("/Users").handler(usersEndpoint::create);
-        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(passwordValidator.isValid(anyString())).thenReturn(true);
         when(userService.create(any(), any())).thenReturn(Single.error(new InvalidValueException("User provider [unknown-idp] can not be found.")));
 
         testRequest(
@@ -146,7 +144,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeSCIMCreateUserEndpoint_invalid_roles() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(passwordValidator.isValid(anyString())).thenReturn(true);
         when(userService.create(any(), any())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
 
         testRequest(
@@ -169,7 +167,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn409WhenUsernameAlreadyExists() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(passwordValidator.isValid(anyString())).thenReturn(true);
         when(userService.create(any(), any())).thenReturn(Single.error(new UniquenessException("Username already exists")));
 
         testRequest(
@@ -192,7 +190,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenInvalidUserException() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(passwordValidator.isValid(anyString())).thenReturn(true);
         when(userService.create(any(), any())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
 
         testRequest(
@@ -215,7 +213,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenEmailFormatInvalidException() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(passwordValidator.validate(anyString())).thenReturn(true);
+        when(passwordValidator.isValid(anyString())).thenReturn(true);
         when(userService.create(any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
 
         testRequest(
