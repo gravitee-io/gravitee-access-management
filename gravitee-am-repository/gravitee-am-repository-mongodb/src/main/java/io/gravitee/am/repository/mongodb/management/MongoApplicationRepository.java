@@ -26,7 +26,6 @@ import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
-import io.gravitee.am.model.application.PasswordSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
@@ -44,7 +43,6 @@ import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationOA
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -249,23 +247,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setAccount(convert(other.getAccount()));
         applicationSettingsMongo.setLogin(convert(other.getLogin()));
         applicationSettingsMongo.setAdvanced(convert(other.getAdvanced()));
-        applicationSettingsMongo.setPasswordSettings(convert(other.getPasswordSettings()));
+        applicationSettingsMongo.setPasswordSettings(ConversionUtils.convert(other.getPasswordSettings()));
         return applicationSettingsMongo;
-    }
-
-    private static PasswordSettingsMongo convert(PasswordSettings other) {
-        if (other == null) {
-            return null;
-        }
-        PasswordSettingsMongo passwordSettings = new PasswordSettingsMongo();
-        passwordSettings.setRegex(other.getRegex());
-        passwordSettings.setRegexFormat(other.getRegexFormat());
-        passwordSettings.setMinLength(other.getMinLength());
-        passwordSettings.setMaxLength(other.getMaxLength());
-        passwordSettings.setPasswordInclude(other.getPasswordInclude());
-        passwordSettings.setLettersInMixedCase(other.getLettersInMixedCase());
-        passwordSettings.setMaxConsecutiveLetters(other.getMaxConsecutiveLetters());
-        return passwordSettings;
     }
 
     private static ApplicationSettings convert(ApplicationSettingsMongo other) {
@@ -278,23 +261,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setAccount(convert(other.getAccount()));
         applicationSettings.setLogin(convert(other.getLogin()));
         applicationSettings.setAdvanced(convert(other.getAdvanced()));
-        applicationSettings.setPasswordSettings(convert(other.getPasswordSettings()));
+        applicationSettings.setPasswordSettings(ConversionUtils.convert(other.getPasswordSettings()));
         return applicationSettings;
-    }
-
-    private static PasswordSettings convert(PasswordSettingsMongo other) {
-        if (other == null) {
-            return null;
-        }
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setRegex(other.getRegex());
-        passwordSettings.setRegexFormat(other.getRegexFormat());
-        passwordSettings.setMinLength(other.getMinLength());
-        passwordSettings.setMaxLength(other.getMaxLength());
-        passwordSettings.setPasswordInclude(other.getPasswordInclude());
-        passwordSettings.setLettersInMixedCase(other.getLettersInMixedCase());
-        passwordSettings.setMaxConsecutiveLetters(other.getMaxConsecutiveLetters());
-        return passwordSettings;
     }
 
     private static ApplicationOAuthSettingsMongo convert(ApplicationOAuthSettings other) {

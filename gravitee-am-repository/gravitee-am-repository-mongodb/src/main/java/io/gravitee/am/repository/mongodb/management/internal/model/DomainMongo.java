@@ -20,7 +20,6 @@ import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
-import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.List;
@@ -58,6 +57,8 @@ public class DomainMongo extends Auditable {
     private WebAuthnSettingsMongo webAuthnSettings;
 
     private AccountSettingsMongo accountSettings;
+
+    private PasswordSettingsMongo passwordSettings;
 
     private Set<String> tags;
 
@@ -216,5 +217,13 @@ public class DomainMongo extends Auditable {
 
     public void setVhosts(List<VirtualHost> vhosts) {
         this.vhosts = vhosts;
+    }
+
+    public PasswordSettingsMongo getPasswordSettings() {
+        return passwordSettings;
+    }
+
+    public void setPasswordSettings(PasswordSettingsMongo passwordSettings) {
+        this.passwordSettings = passwordSettings;
     }
 }

@@ -202,16 +202,16 @@ public class UserResource extends AbstractResource {
     public void resetPassword(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(user1 -> userService.resetPassword(ReferenceType.DOMAIN, domain, user, password.getPassword(), authenticatedUser)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(domain -> userService.resetPassword(ReferenceType.DOMAIN, domain, user, password.getPassword(), authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
 
     }

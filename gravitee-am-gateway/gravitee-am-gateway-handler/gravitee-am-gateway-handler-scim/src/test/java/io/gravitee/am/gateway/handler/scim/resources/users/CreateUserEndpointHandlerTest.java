@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
@@ -61,7 +62,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     private ObjectWriter objectWriter;
 
     @InjectMocks
-    private UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator);
+    private final UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator, new Domain());
 
     @Override
     public void setUp() throws Exception {
@@ -87,7 +88,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
                 req -> {
                     req.setChunked(true);
                     req.write(Json.encode(getUser()));
-                    },
+                },
                 400,
                 "Bad Request",
                 "{\n" +

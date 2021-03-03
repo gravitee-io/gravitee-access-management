@@ -25,12 +25,10 @@ public interface PasswordValidator {
 
     int PASSWORD_MAX_LENGTH = 72;
 
-    //TODO Boualem : user domain setting to validate password
     boolean isValid(final String password);
 
     /**
      * @throws InvalidPasswordException if the password is not valid
      */
-    //TODO Boualem : user domain setting to validate password
     void validate(String password);
 }

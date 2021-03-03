@@ -22,8 +22,10 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.swagger.annotations.Api;
@@ -112,7 +114,9 @@ public class UsersResource extends AbstractUsersResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.CREATE)
-                .andThen(userService.create(ReferenceType.ORGANIZATION, organizationId, newUser, authenticatedUser)
+                .andThen(domainService.findById(organizationId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(organizationId)))
+                        .flatMapSingle(domain -> userService.create(ReferenceType.ORGANIZATION, domain, newUser, authenticatedUser))
                         .map(user -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/users/" + user.getId()))
                                 .entity(user)

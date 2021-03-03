@@ -136,60 +136,64 @@ public class UserServiceTest {
 
     @Test
     public void shouldCreateUser_invalid_identity_provider() {
-        final String domain = "domain";
+        String domainId = "domain";
+        String clientId = "clientId";
 
-        Domain domain1 = new Domain();
-        domain1.setId(domain);
+        Domain domain = new Domain();
+        domain.setId(domainId);
 
         NewUser newUser = new NewUser();
         newUser.setUsername("username");
         newUser.setSource("unknown-idp");
         newUser.setPassword("myPassword");
+        newUser.setClient(clientId);
 
         doReturn(true).when(passwordValidator).isValid(anyString());
-        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        doReturn(Maybe.just(new Client())).when(clientService).findById(clientId);
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
-        TestObserver<User> testObserver = userService.create(domain, newUser).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(UserProviderNotFoundException.class);
+        userService.create(domain, newUser, null)
+                .test()
+                .assertNotComplete()
+                .assertError(UserProviderNotFoundException.class);
         verify(commonUserService, never()).create(any());
     }
 
     @Test
     public void shouldNotCreateUser_unknown_client() {
-        final String domain = "domain";
+        String domainId = "domain";
+        String clientId = "clientId";
 
-        Domain domain1 = new Domain();
-        domain1.setId(domain);
+        Domain domain = new Domain();
+        domain.setId(domainId);
 
         NewUser newUser = new NewUser();
         newUser.setUsername("username");
         newUser.setSource("idp");
-        newUser.setClient("client");
+        newUser.setClient(clientId);
         newUser.setPassword("myPassword");
 
         doReturn(true).when(passwordValidator).isValid(anyString());
-        doReturn(Maybe.just(mock(Client.class))).when(clientService).findById("client");
-        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        doReturn(Maybe.just(new Client())).when(clientService).findById(clientId);
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.empty());
-        when(applicationService.findByDomainAndClientId(domain, newUser.getClient())).thenReturn(Maybe.empty());
+        when(applicationService.findByDomainAndClientId(domainId, newUser.getClient())).thenReturn(Maybe.empty());
 
-        TestObserver<User> testObserver = userService.create(domain, newUser).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(ClientNotFoundException.class);
+        userService.create(domain, newUser, null)
+                .test()
+                .assertNotComplete()
+                .assertError(ClientNotFoundException.class);
         verify(commonUserService, never()).create(any());
     }
 
     @Test
     public void shouldNotCreateUser_invalid_client() {
-        String domain = "domain";
+        String domainId = "domain";
 
-        Domain domain1 = new Domain();
-        domain1.setId(domain);
+        Domain domain = new Domain();
+        domain.setId(domainId);
 
         NewUser newUser = new NewUser();
         newUser.setUsername("username");
@@ -202,50 +206,53 @@ public class UserServiceTest {
 
         doReturn(true).when(passwordValidator).isValid(anyString());
         doReturn(Maybe.just(mock(Client.class))).when(clientService).findById("client");
-        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(application));
 
-        TestObserver<User> testObserver = userService.create(domain, newUser).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(ClientNotFoundException.class);
+        userService.create(domain, newUser, null)
+                .test()
+                .assertNotComplete()
+                .assertError(ClientNotFoundException.class);
         verify(commonUserService, never()).create(any());
     }
 
     @Test
     public void shouldNotCreateUser_user_already_exists() {
-        String domain = "domain";
+        String domainId = "domain";
+        String clientId = "clientId";
 
-        Domain domain1 = new Domain();
-        domain1.setId(domain);
+        Domain domain = new Domain();
+        domain.setId(domainId);
 
         NewUser newUser = new NewUser();
         newUser.setUsername("username");
         newUser.setSource("idp");
         newUser.setPassword("MyPassword");
+        newUser.setClient(clientId);
 
         doReturn(true).when(passwordValidator).isValid(anyString());
-        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        doReturn(Maybe.just(new Client())).when(clientService).findById(clientId);
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(new User()));
 
-        TestObserver<User> testObserver = userService.create(domain, newUser).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(UserAlreadyExistsException.class);
+        userService.create(domain, newUser, null)
+                .test()
+                .assertNotComplete()
+                .assertError(UserAlreadyExistsException.class);
         verify(commonUserService, never()).create(any());
     }
 
     @Test
     public void shouldPreRegisterUser() throws InterruptedException {
 
-        String domain = "domain";
+        String domainId = "domain";
 
         AccountSettings accountSettings = new AccountSettings();
         accountSettings.setDynamicUserRegistration(false);
 
-        Domain domain1 = new Domain();
-        domain1.setId(domain);
-        domain1.setAccountSettings(accountSettings);
+        Domain domain = new Domain();
+        domain.setId(domainId);
+        domain.setAccountSettings(accountSettings);
 
         NewUser newUser = new NewUser();
         newUser.setUsername("username");
@@ -263,16 +270,17 @@ public class UserServiceTest {
 
         Application client = new Application();
         client.setDomain("domain");
-        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
+        when(domainService.findById(domainId)).thenReturn(Maybe.just(domain));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
         when(commonUserService.create(any())).thenReturn(Single.just(preRegisteredUser));
         when(commonUserService.findById(any(), anyString(), anyString())).thenReturn(Single.just(preRegisteredUser));
 
-        TestObserver<User> testObserver = userService.create(domain, newUser).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        userService.create(domain, newUser, null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
         verify(commonUserService, times(1)).create(any());
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
         verify(commonUserService).create(argument.capture());
@@ -288,15 +296,15 @@ public class UserServiceTest {
     @Test
     public void shouldPreRegisterUser_dynamicUserRegistration_domainLevel() {
 
-        String domain = "domain";
+        String domainId = "domain";
 
         AccountSettings accountSettings;
         accountSettings = new AccountSettings();
         accountSettings.setDynamicUserRegistration(true);
 
-        Domain domain1 = new Domain();
-        domain1.setId(domain);
-        domain1.setAccountSettings(accountSettings);
+        Domain domain = new Domain();
+        domain.setId(domainId);
+        domain.setAccountSettings(accountSettings);
 
         NewUser newUser = new NewUser();
         newUser.setUsername("username");
@@ -311,7 +319,6 @@ public class UserServiceTest {
         client.setDomain("domain");
 
         when(jwtBuilder.sign(any())).thenReturn("token");
-        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
@@ -319,9 +326,10 @@ public class UserServiceTest {
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
         when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(new Email());
 
-        TestObserver<User> testObserver = userService.create(domain, newUser).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        userService.create(domain, newUser, null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
         verify(commonUserService, times(1)).create(any());
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
         verify(commonUserService).create(argument.capture());
@@ -336,14 +344,14 @@ public class UserServiceTest {
     @Test
     public void shouldPreRegisterUser_dynamicUserRegistration_clientLevel() {
 
-        String domain = "domain";
+        String domainId = "domain";
 
         AccountSettings accountSettings = new AccountSettings();
         accountSettings.setDynamicUserRegistration(true);
         accountSettings.setInherited(false);
 
-        Domain domain1 = new Domain();
-        domain1.setId(domain);
+        Domain domain = new Domain();
+        domain.setId(domainId);
 
         NewUser newUser = new NewUser();
         newUser.setUsername("username");
@@ -362,7 +370,6 @@ public class UserServiceTest {
         client.setSettings(settings);
 
         when(jwtBuilder.sign(any())).thenReturn("token");
-        when(domainService.findById(domain)).thenReturn(Maybe.just(domain1));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
@@ -370,9 +377,10 @@ public class UserServiceTest {
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
         when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(new Email());
 
-        TestObserver<User> testObserver = userService.create(domain, newUser).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        userService.create(domain, newUser, null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
         verify(commonUserService, times(1)).create(any());
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
         verify(commonUserService).create(argument.capture());
@@ -400,9 +408,10 @@ public class UserServiceTest {
         when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.empty());
         when(applicationService.findByDomainAndClientId(domain, updateUser.getClient())).thenReturn(Maybe.empty());
 
-        TestObserver<User> testObserver = userService.update(domain, id, updateUser).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(ClientNotFoundException.class);
+        userService.update(domain, id, updateUser)
+                .test()
+                .assertNotComplete()
+                .assertError(ClientNotFoundException.class);
     }
 
     @Test
@@ -423,15 +432,17 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(updateUser.getClient())).thenReturn(Maybe.just(application));
 
-        TestObserver<User> testObserver = userService.update(domain, id, updateUser).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(ClientNotFoundException.class);
+        userService.update(domain, id, updateUser)
+                .test()
+                .assertNotComplete()
+                .assertError(ClientNotFoundException.class);
     }
 
     @Test
     public void shouldResetPassword_externalIdEmpty() {
 
-        String domain = "domain";
+        Domain domain = new Domain();
+        domain.setId("domain");
         String password = "password";
 
         User user = new User();
@@ -445,19 +456,21 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
 
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(domain, user.getId(), password).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        userService.resetPassword(ReferenceType.DOMAIN, domain, user.getId(), password, null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
     }
 
     @Test
     public void shouldResetPassword_idpUserNotFound() {
-        String domain = "domain";
+        Domain domain = new Domain();
+        domain.setId("domain");
         String password = "password";
 
         User user = new User();
@@ -471,14 +484,15 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = userService.resetPassword(domain, user.getId(), password).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        userService.resetPassword(ReferenceType.DOMAIN, domain, user.getId(), password, null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
         verify(userProvider, times(1)).create(any());
     }
 
@@ -501,9 +515,10 @@ public class UserServiceTest {
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
-        TestObserver testObserver = userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
         verify(commonUserService, times(1)).update(any());
     }
 
@@ -519,9 +534,10 @@ public class UserServiceTest {
         when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        TestObserver testObserver = userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(RoleNotFoundException.class);
+        userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+                .test()
+                .assertNotComplete()
+                .assertError(RoleNotFoundException.class);
         verify(commonUserService, never()).update(any());
     }
 
@@ -546,9 +562,10 @@ public class UserServiceTest {
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
-        TestObserver testObserver = userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
         verify(commonUserService, times(1)).update(any());
     }
 
@@ -564,9 +581,10 @@ public class UserServiceTest {
         when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        TestObserver testObserver = userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(RoleNotFoundException.class);
+        userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+                .test()
+                .assertNotComplete()
+                .assertError(RoleNotFoundException.class);
         verify(commonUserService, never()).update(any());
     }
 
@@ -584,9 +602,10 @@ public class UserServiceTest {
         when(commonUserService.delete(anyString())).thenReturn(Completable.complete());
         when(membershipService.findByMember(any(), any())).thenReturn(Single.just(Collections.emptyList()));
 
-        TestObserver<Void> testObserver = userService.delete(ReferenceType.ORGANIZATION, organization, userId).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        userService.delete(ReferenceType.ORGANIZATION, organization, userId)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
         verify(commonUserService, times(1)).delete(any());
         verify(membershipService, never()).delete(anyString());
     }
@@ -613,9 +632,10 @@ public class UserServiceTest {
         when(membershipService.findByMember(any(), any())).thenReturn(Single.just(Arrays.asList(m1, m2, m3)));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
 
-        TestObserver<Void> testObserver = userService.delete(ReferenceType.ORGANIZATION, organization, userId).test();
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
+        userService.delete(ReferenceType.ORGANIZATION, organization, userId)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
         verify(commonUserService, times(1)).delete(any());
         verify(membershipService, times(3)).delete(anyString());
     }
@@ -738,21 +758,26 @@ public class UserServiceTest {
     public void shouldNotCreate_invalid_password() {
 
         String password = "myPassword";
+        String clientId = "clientId";
+
         NewUser newUser = new NewUser();
         newUser.setUsername("Username");
         newUser.setSource("source");
         newUser.setPassword(password);
+        newUser.setClient(clientId);
 
-        TestObserver<User> testObserver = userService.create("domain", newUser).test();
-
-        testObserver.assertNotComplete();
-        testObserver.assertError(InvalidPasswordException.class);
+        doReturn(Maybe.just(new Client())).when(clientService).findById(clientId);
+        userService.create(new Domain(), newUser, null)
+                .test()
+                .assertNotComplete()
+                .assertError(InvalidPasswordException.class);
         verify(passwordValidator, times(1)).isValid(password);
     }
 
     @Test
     public void shouldNotResetPassword_invalid_password() {
-        String domain = "domain";
+        Domain domain = new Domain();
+        domain.setId("domain");
         String password = "password";
 
         User user = new User();
@@ -760,11 +785,12 @@ public class UserServiceTest {
         user.setSource("idp-id");
 
         doThrow(InvalidPasswordException.class).when(passwordValidator).validate(eq(password));
-        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain), eq("user-id"))).thenReturn(Single.just(user));
+        when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
 
-        TestObserver<Void> testObserver = userService.resetPassword(domain, user.getId(), password).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(InvalidPasswordException.class);
+        userService.resetPassword(ReferenceType.DOMAIN, domain, user.getId(), password, null)
+                .test()
+                .assertNotComplete()
+                .assertError(InvalidPasswordException.class);
         verify(passwordValidator, times(1)).validate(password);
     }
 }

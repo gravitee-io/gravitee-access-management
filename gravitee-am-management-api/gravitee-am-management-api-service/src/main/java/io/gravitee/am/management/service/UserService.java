@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -48,9 +49,9 @@ public interface UserService {
 
     Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewUser newUser);
 
-    Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> create(ReferenceType referenceType, Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> create(String domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> create(Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
 
@@ -62,9 +63,7 @@ public interface UserService {
 
     Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable resetPassword(ReferenceType referenceType, String referenceId, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
-
-    Completable resetPassword(String domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
+    Completable resetPassword(ReferenceType referenceType, Domain domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 
     Completable sendRegistrationConfirmation(String domain, String userId, io.gravitee.am.identityprovider.api.User principal);
 
@@ -76,10 +75,6 @@ public interface UserService {
 
     Single<User> enrollFactors(String userId, List<EnrolledFactor> factors, io.gravitee.am.identityprovider.api.User principal);
 
-    default Single<User> create(String domain, NewUser newUser) {
-        return create(domain, newUser, null);
-    }
-
     default Single<User> update(String domain, String id, UpdateUser updateUser) {
         return update(domain, id, updateUser, null);
     }
@@ -90,10 +85,6 @@ public interface UserService {
 
     default Completable delete(ReferenceType referenceType, String referenceId, String userId) {
         return delete(referenceType, referenceId, userId, null);
-    }
-
-    default Completable resetPassword(String domain, String userId, String password) {
-        return resetPassword(domain, userId, password, null);
     }
 
     default Completable unlock(ReferenceType referenceType, String referenceId, String userId) {

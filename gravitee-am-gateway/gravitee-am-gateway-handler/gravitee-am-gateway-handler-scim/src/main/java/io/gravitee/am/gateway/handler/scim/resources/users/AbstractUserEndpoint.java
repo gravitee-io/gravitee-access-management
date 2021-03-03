@@ -20,15 +20,18 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.EntrepriseUser;
+import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.utils.PasswordUtils;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -48,11 +51,11 @@ public class AbstractUserEndpoint {
         this.passwordValidator = passwordValidator;
     }
 
-    protected void checkSchemas(List<String> schemas) throws Exception {
+    protected void checkSchemas(List<String> schemas) {
         if (schemas == null || schemas.isEmpty()) {
             throw new InvalidValueException("Field [schemas] is required");
         }
-        Set<String> schemaSet = new HashSet();
+        Set<String> schemaSet = new HashSet<>();
         // check duplicate and check if values are supported
         schemas.forEach(schema -> {
             if (!schemaSet.add(schema)) {
@@ -66,5 +69,15 @@ public class AbstractUserEndpoint {
 
     protected String location(HttpServerRequest request) {
         return UriBuilderRequest.resolveProxyRequest(request, request.path());
+    }
+
+    protected boolean isInValidUserPassword(User user, Domain domain) {
+        String password = user.getPassword();
+        if (password == null) {
+            return false;
+        }
+        return Optional.ofNullable(domain.getPasswordSettings())
+                .map(ps -> !PasswordUtils.isValid(password, ps))
+                .orElseGet(() -> !passwordValidator.isValid(password));
     }
 }

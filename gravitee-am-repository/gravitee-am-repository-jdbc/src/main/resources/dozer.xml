@@ -42,6 +42,10 @@
             <a>accountSettings</a>
             <b>accountSettings</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.PasswordSettingsConverter">
+            <a>passwordSettings</a>
+            <b>passwordSettings</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">

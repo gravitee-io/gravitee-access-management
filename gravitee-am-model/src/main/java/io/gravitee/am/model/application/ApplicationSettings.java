@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.application;
 
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;

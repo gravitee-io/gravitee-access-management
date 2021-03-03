@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.application;
+package io.gravitee.am.model;
 
 import io.gravitee.am.common.policy.PasswordInclude;
+import io.gravitee.am.model.oidc.Client;
+
+import java.util.Optional;
 
 /**
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class PasswordSettings {
+
+    /**
+     * Account settings configuration inherited ?
+     */
+    private boolean inherited = true;
 
     /**
      * if use a regex
@@ -63,6 +71,7 @@ public class PasswordSettings {
     }
 
     public PasswordSettings(PasswordSettings passwordSettings) {
+        this.inherited = passwordSettings.inherited;
         this.regex = passwordSettings.regex;
         this.regexFormat = passwordSettings.regexFormat;
         this.minLength = passwordSettings.minLength;
@@ -126,5 +135,25 @@ public class PasswordSettings {
 
     public void setMaxConsecutiveLetters(Integer maxConsecutiveLetters) {
         this.maxConsecutiveLetters = maxConsecutiveLetters;
+    }
+
+    public boolean isInherited() {
+        return inherited;
+    }
+
+    public void setInherited(boolean inherited) {
+        this.inherited = inherited;
+    }
+
+    public static Optional<PasswordSettings> getInstance(Client client, Domain domain) {
+        if (client == null) {
+            return Optional.ofNullable(domain.getPasswordSettings());
+        }
+
+        PasswordSettings passwordSettings = client.getPasswordSettings();
+        if (passwordSettings != null && !passwordSettings.isInherited()) {
+            return Optional.of(passwordSettings);
+        }
+        return Optional.ofNullable(domain.getPasswordSettings());
     }
 }

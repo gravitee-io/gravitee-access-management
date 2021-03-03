@@ -36,7 +36,6 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -122,7 +121,7 @@ public class UsersResourceTest extends JerseySpringTest {
         newUser.setSource("unknown-source");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.error(new UserProviderNotFoundException(newUser.getSource()))).when(userService).create(anyString(), any(), any());
+        doReturn(Single.error(new UserProviderNotFoundException(newUser.getSource()))).when(userService).create(any(Domain.class), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)

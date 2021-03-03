@@ -133,6 +133,7 @@ import {ApplicationEmailComponent} from './domain/applications/application/desig
 import {ApplicationAdvancedComponent} from './domain/applications/application/advanced/advanced.component';
 import {ApplicationGeneralComponent} from './domain/applications/application/advanced/general/general.component';
 import {PasswordPolicyComponent} from './domain/applications/application/advanced/password-policy/password-policy.component';
+import {DomainPasswordPolicyComponent} from './domain/settings/password-policy/domain-password-policy.component';
 import {ApplicationAccountSettingsComponent} from './domain/applications/application/advanced/account/account.component';
 import {ApplicationOAuth2Component} from './domain/applications/application/advanced/oauth2/oauth2.component';
 import {ApplicationCertificatesComponent} from './domain/applications/application/advanced/certificates/certificates.component';
@@ -1462,6 +1463,20 @@ export const routes: Routes = [
                             }
                           }
                         ]
+                      },
+                      {
+                        path: 'password-policy',
+                        component: DomainPasswordPolicyComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Password policy',
+                            section: 'Security'
+                          },
+                          perms: {
+                            only: ['application_settings_read']
+                          }
+                        }
                       },
                       {
                         path: 'audits',

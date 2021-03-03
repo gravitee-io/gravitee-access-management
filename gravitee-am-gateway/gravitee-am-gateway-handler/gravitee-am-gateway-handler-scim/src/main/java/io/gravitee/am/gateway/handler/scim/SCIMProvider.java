@@ -95,8 +95,8 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             scimRouter.route().handler(OAuth2AuthHandler.create(oAuth2AuthProvider, "scim"));
 
             // Users resource
-            UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator);
-            UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper, passwordValidator);
+            UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator,domain);
+            UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper, passwordValidator,domain);
 
             scimRouter.get("/Users").handler(usersEndpoint::list);
             scimRouter.get("/Users/:id").handler(userEndpoint::get);

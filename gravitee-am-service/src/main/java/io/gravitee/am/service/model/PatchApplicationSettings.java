@@ -90,7 +90,9 @@ public class PatchApplicationSettings {
         if (this.getAdvanced() != null && this.getAdvanced().isPresent()) {
             toPatch.setAdvanced(this.getAdvanced().get().patch(toPatch.getAdvanced()));
         }
-        this.passwordSettings.ifPresent(ps -> toPatch.setPasswordSettings(ps.patch(toPatch.getPasswordSettings())));
+        if (this.passwordSettings != null) {
+            this.passwordSettings.ifPresent(ps -> toPatch.setPasswordSettings(ps.patch(toPatch.getPasswordSettings())));
+        }
         return toPatch;
     }
 

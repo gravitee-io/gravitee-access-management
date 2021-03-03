@@ -24,6 +24,11 @@ import io.gravitee.am.common.policy.PasswordInclude;
 public class PasswordSettingsMongo {
 
     /**
+     * Account settings configuration inherited ?
+     */
+    private boolean inherited;
+
+    /**
      * if use a regex
      */
     private Boolean regex;
@@ -63,6 +68,7 @@ public class PasswordSettingsMongo {
     }
 
     public PasswordSettingsMongo(PasswordSettingsMongo passwordSettings) {
+        this.inherited = passwordSettings.inherited;
         this.regex = passwordSettings.regex;
         this.regexFormat = passwordSettings.regexFormat;
         this.minLength = passwordSettings.minLength;
@@ -126,5 +132,13 @@ public class PasswordSettingsMongo {
 
     public void setMaxConsecutiveLetters(Integer maxConsecutiveLetters) {
         this.maxConsecutiveLetters = maxConsecutiveLetters;
+    }
+
+    public boolean isInherited() {
+        return inherited;
+    }
+
+    public void setInherited(boolean inherited) {
+        this.inherited = inherited;
     }
 }

@@ -17,7 +17,7 @@ package io.gravitee.am.service.utils;
 
 import io.gravitee.am.common.exception.uma.InvalidPasswordException;
 import io.gravitee.am.common.policy.PasswordInclude;
-import io.gravitee.am.model.application.PasswordSettings;
+import io.gravitee.am.model.PasswordSettings;
 
 import java.util.regex.Pattern;
 

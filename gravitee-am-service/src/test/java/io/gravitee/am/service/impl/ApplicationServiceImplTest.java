@@ -18,8 +18,8 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.policy.PasswordInclude;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.model.application.PasswordSettings;
 import org.junit.Test;
 
 /**

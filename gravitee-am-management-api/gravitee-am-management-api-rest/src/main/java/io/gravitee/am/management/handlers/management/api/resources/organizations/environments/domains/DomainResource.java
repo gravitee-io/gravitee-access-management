@@ -294,6 +294,7 @@ public class DomainResource extends AbstractResource {
             filteredDomain.setVhosts(domain.getVhosts());
             filteredDomain.setReferenceType(domain.getReferenceType());
             filteredDomain.setReferenceId(domain.getReferenceId());
+            filteredDomain.setPasswordSettings(domain.getPasswordSettings());
         }
 
         if (hasAnyPermission(userPermissions, Permission.DOMAIN_OPENID, Acl.READ)) {

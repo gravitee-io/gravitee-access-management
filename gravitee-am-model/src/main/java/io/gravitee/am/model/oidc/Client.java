@@ -19,10 +19,10 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.Resource;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.PasswordSettings;
 import io.gravitee.am.model.login.LoginSettings;
 
 import java.time.ZoneId;

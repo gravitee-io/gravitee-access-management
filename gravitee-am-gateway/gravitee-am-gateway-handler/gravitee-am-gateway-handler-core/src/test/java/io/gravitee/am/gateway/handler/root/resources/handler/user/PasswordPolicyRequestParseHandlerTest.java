@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.buffer.Buffer;
@@ -44,7 +45,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator);
+        passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator, new Domain());
 
         router.route()
                 .handler(BodyHandler.create())

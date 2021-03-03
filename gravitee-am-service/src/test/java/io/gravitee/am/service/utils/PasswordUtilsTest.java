@@ -16,7 +16,7 @@
 package io.gravitee.am.service.utils;
 
 import io.gravitee.am.common.policy.PasswordInclude;
-import io.gravitee.am.model.application.PasswordSettings;
+import io.gravitee.am.model.PasswordSettings;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 

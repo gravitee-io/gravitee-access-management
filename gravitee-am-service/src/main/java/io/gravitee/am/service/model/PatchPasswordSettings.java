@@ -16,7 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.common.policy.PasswordInclude;
-import io.gravitee.am.model.application.PasswordSettings;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.Optional;
@@ -27,6 +27,7 @@ import java.util.Optional;
  */
 public class PatchPasswordSettings {
 
+    private Optional<Boolean> inherited;
     private Optional<Boolean> regex;
     private Optional<String> regexFormat;
     private Optional<Integer> minLength;
@@ -91,9 +92,18 @@ public class PatchPasswordSettings {
         this.maxConsecutiveLetters = maxConsecutiveLetters;
     }
 
+    public Optional<Boolean> getInherited() {
+        return inherited;
+    }
+
+    public void setInherited(Optional<Boolean> inherited) {
+        this.inherited = inherited;
+    }
+
     public PasswordSettings patch(PasswordSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         PasswordSettings toPatch = Optional.ofNullable(_toPatch).map(PasswordSettings::new).orElseGet(PasswordSettings::new);
+        SetterUtils.safeSet(toPatch::setInherited, this.inherited);
         SetterUtils.safeSet(toPatch::setRegex, this.regex);
         SetterUtils.safeSet(toPatch::setRegexFormat, this.regexFormat);
         SetterUtils.safeSet(toPatch::setMinLength, this.minLength);

@@ -19,7 +19,8 @@ import io.gravitee.am.common.exception.uma.InvalidPasswordException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-import io.gravitee.am.model.application.PasswordSettings;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.utils.PasswordUtils;
@@ -36,9 +37,11 @@ import java.util.Optional;
 public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
 
     private final PasswordValidator passwordValidator;
+    private final Domain domain;
 
-    public PasswordPolicyRequestParseHandler(PasswordValidator passwordValidator) {
+    public PasswordPolicyRequestParseHandler(PasswordValidator passwordValidator, Domain domain) {
         this.passwordValidator = passwordValidator;
+        this.domain = domain;
     }
 
     @Override
@@ -46,18 +49,18 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         HttpServerRequest request = context.request();
         String password = request.getParam(ConstantKeys.PASSWORD_PARAM_KEY);
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
-        Optional<PasswordSettings> passwordSettings = Optional
-                .ofNullable(context.<Client>get(ConstantKeys.CLIENT_CONTEXT_KEY))
-                .map(Client::getPasswordSettings);
+
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        Optional<PasswordSettings> passwordSettings = PasswordSettings.getInstance(client, this.domain);
 
         if (passwordSettings.isPresent()) {
             try {
                 PasswordUtils.validate(password, passwordSettings.get());
+                context.next();
             } catch (InvalidPasswordException e) {
-                queryParams.set(Parameters.CLIENT_ID, request.getParam(Parameters.CLIENT_ID));
+                Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID)).ifPresent(t -> queryParams.set(Parameters.CLIENT_ID, t));
                 warningRedirection(context, queryParams, e.getErrorKey());
             }
-            context.next();
             return;
         }
 
@@ -68,10 +71,9 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         }
     }
 
-    private void warningRedirection(RoutingContext context, MultiMap queryParams, String warningMsg) {
+    private void warningRedirection(RoutingContext context, MultiMap queryParams, String warningMsgKey) {
         Optional.ofNullable(context.request().getParam(ConstantKeys.TOKEN_PARAM_KEY)).ifPresent(t -> queryParams.set(ConstantKeys.TOKEN_PARAM_KEY, t));
-        queryParams.set(ConstantKeys.WARNING_PARAM_KEY, warningMsg);
+        queryParams.set(ConstantKeys.WARNING_PARAM_KEY, warningMsgKey);
         redirectToPage(context, queryParams);
-
     }
 }

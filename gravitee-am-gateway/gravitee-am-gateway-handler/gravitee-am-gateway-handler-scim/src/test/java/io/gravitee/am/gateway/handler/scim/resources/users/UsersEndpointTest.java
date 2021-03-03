@@ -54,7 +54,7 @@ public class UsersEndpointTest extends RxWebTestBase {
     private ObjectWriter objectWriter;
 
     @InjectMocks
-    private UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator);
+    private UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator, domain);
 
     @Override
     public void setUp() throws Exception {
