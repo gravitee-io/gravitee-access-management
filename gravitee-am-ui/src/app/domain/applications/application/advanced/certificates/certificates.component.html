@@ -31,11 +31,15 @@
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" floatLabel="always" *ngIf="certificatePublicKey">
-            <mat-label>Public key</mat-label>
-            <textarea rows="10" matInput placeholder="Certificate" name="certificate" [value]="certificatePublicKey" disabled="true"></textarea>
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="certificatePublicKey" (cbOnSuccess)="valueCopied('Certificate key copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
-          </mat-form-field>
+          <div *ngIf="certificatePublicKeys.length > 0">
+            <div *ngFor="let certificatePublicKey of certificatePublicKeys">
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>{{certificatePublicKey.fmt}}</mat-label>
+                <textarea rows="5" matInput placeholder="Certificate" name="certificate" [value]="certificatePublicKey.payload" disabled="true"></textarea>
+                <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="certificatePublicKey.payload" (cbOnSuccess)="valueCopied('Certificate key copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+              </mat-form-field>
+            </div>
+          </div>
 
           <app-emptystate *ngIf="!application.certificate"
                           [message]="'You are using the default certificate.'"

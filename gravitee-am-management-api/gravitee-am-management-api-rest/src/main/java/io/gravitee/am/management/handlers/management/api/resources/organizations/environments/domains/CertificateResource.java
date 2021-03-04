@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import io.gravitee.am.certificate.api.CertificateKey;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
@@ -113,6 +114,31 @@ public class CertificateResource extends AbstractResource {
                 .andThen(certificateManager.getCertificateProvider(certificate)
                         .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
                         .flatMapSingle(CertificateProvider::publicKey))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("keys")
+    @ApiOperation(value = "Get the certificate public keys",
+            notes = "User must have the DOMAIN[READ] permission on the specified domain " +
+                    "or DOMAIN[READ] permission on the specified environment " +
+                    "or DOMAIN[READ] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Certificate keys successfully fetched", response = CertificateKey.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void getPublicKeys(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("certificate") String certificate,
+            @Suspended final AsyncResponse response) {
+
+        // FIXME: should we create a DOMAIN_CERTIFICATE_KEY permission instead ?
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN, Acl.READ)
+                .andThen(certificateManager.getCertificateProvider(certificate)
+                        .switchIfEmpty(Maybe.error(new BadRequestException("No certificate provider found for the certificate " + certificate)))
+                        .flatMapSingle(CertificateProvider::publicKeys))
                 .subscribe(response::resume, response::resume);
     }
 

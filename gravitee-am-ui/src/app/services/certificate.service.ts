@@ -47,8 +47,8 @@ export class CertificateService {
     return this.http.delete<any>(this.certificatesURL + domainId + "/certificates/" + id);
   }
 
-  publicKey(domainId, id): Observable<any> {
-    return this.http.get(this.certificatesURL + domainId + "/certificates/" + id + "/key", {responseType: 'text'});
+  publicKeys(domainId, id): Observable<any> {
+    return this.http.get(this.certificatesURL + domainId + "/certificates/" + id + "/keys");
   }
 
 }

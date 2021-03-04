@@ -16,9 +16,7 @@
 package io.gravitee.am.certificate.pkcs12.provider;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import io.gravitee.am.certificate.api.CertificateMetadata;
-import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.am.certificate.api.DefaultKey;
+import io.gravitee.am.certificate.api.*;
 import io.gravitee.am.certificate.pkcs12.PKCS12Configuration;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.model.jose.JWK;
@@ -28,15 +26,16 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.*;
-import java.math.BigInteger;
-import java.security.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,10 +49,10 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
 
     private KeyPair keyPair;
     private JWKSet jwkSet;
-    private String publicKey;
     private Set<JWK> keys;
     private SignatureAlgorithm signature = SignatureAlgorithm.RS256;
     private io.gravitee.am.certificate.api.Key certificateKey;
+    private List<CertificateKey> certificateKeys;
 
     @Autowired
     private PKCS12Configuration configuration;
@@ -71,6 +70,7 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
             keystore.load(is, configuration.getStorepass().toCharArray());
 
             // generate JWK set
+            // TODO : should be moved to the gravitee-am-jwt module
             jwkSet = JWKSet.load(keystore, name -> configuration.getKeypass().toCharArray());
             keys = getKeys();
             // generate Key pair
@@ -78,19 +78,21 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
             if (key instanceof PrivateKey) {
                 // Get certificate of public key
                 Certificate cert = keystore.getCertificate(configuration.getAlias());
+                // create key pair
+                keyPair = new KeyPair(cert.getPublicKey(), (PrivateKey) key);
+                // create key
+                certificateKey = new DefaultKey(configuration.getAlias(), keyPair);
+                // update metadata
+                certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestName());
+                // generate public certificate keys
+                certificateKeys = new ArrayList<>();
                 // Get Signing Algorithm name
                 if (cert instanceof X509Certificate) {
                     signature = getSignature(((X509Certificate) cert).getSigAlgName());
+                    String pem = X509CertUtils.toPEMString((X509Certificate) cert);
+                    certificateKeys.add(new CertificateKey(CertificateFormat.PEM, pem));
                 }
-                certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestName());
-                // Get public key
-                PublicKey publicKey = cert.getPublicKey();
-                // create key pair
-                keyPair = new KeyPair(publicKey, (PrivateKey) key);
-                // create key
-                certificateKey = new DefaultKey(configuration.getAlias(), keyPair);
-                // get public key
-                this.publicKey = getPublicKey();
+                certificateKeys.add(new CertificateKey(CertificateFormat.SSH_RSA, RSAKeyUtils.toSSHRSAString((RSAPublicKey) keyPair.getPublic())));
             } else {
                 throw new IllegalArgumentException("A RSA Signer must be supplied");
             }
@@ -104,7 +106,19 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
 
     @Override
     public Single<String> publicKey() {
-        return Single.just(publicKey);
+        // fallback to ssh-rsa
+        return Single.just(
+                certificateKeys
+                        .stream()
+                        .filter(c -> c.getFmt().equals(CertificateFormat.SSH_RSA))
+                        .map(CertificateKey::getPayload)
+                        .findFirst()
+                        .get());
+    }
+
+    @Override
+    public Single<List<CertificateKey>> publicKeys() {
+        return Single.just(certificateKeys);
     }
 
     @Override
@@ -117,37 +131,11 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
         return certificateMetadata;
     }
 
-    private String getPublicKey() throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        /* encode the "ssh-rsa" string */
-        byte[] sshrsa = new byte[]{0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a'};
-        out.write(sshrsa);
-        /* Encode the public exponent */
-        BigInteger e = ((RSAPublicKey) keyPair.getPublic()).getPublicExponent();
-        byte[] data = e.toByteArray();
-        encodeUInt32(data.length, out);
-        out.write(data);
-        /* Encode the modulus */
-        BigInteger m = ((RSAPublicKey) keyPair.getPublic()).getModulus();
-        data = m.toByteArray();
-        encodeUInt32(data.length, out);
-        out.write(data);
-        return Base64.getEncoder().encodeToString(out.toByteArray());
-    }
-
     private Set<JWK> getKeys() {
         return jwkSet.toPublicJWKSet().getKeys().stream().map(this::convert).collect(Collectors.toSet());
     }
 
-    private void encodeUInt32(int value, OutputStream out) throws IOException {
-        byte[] tmp = new byte[4];
-        tmp[0] = (byte)((value >>> 24) & 0xff);
-        tmp[1] = (byte)((value >>> 16) & 0xff);
-        tmp[2] = (byte)((value >>> 8) & 0xff);
-        tmp[3] = (byte)(value & 0xff);
-        out.write(tmp);
-    }
-
+    // TODO : should be moved to the gravitee-am-jwt module
     private JWK convert(com.nimbusds.jose.jwk.JWK nimbusJwk) {
         RSAKey jwk = new RSAKey();
         if (nimbusJwk.getKeyType() != null) {

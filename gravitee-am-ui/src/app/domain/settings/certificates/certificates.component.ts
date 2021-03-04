@@ -55,10 +55,10 @@ export class DomainSettingsCertificatesComponent implements OnInit {
 
   publicKey(id, event) {
     event.preventDefault();
-    this.certificateService.publicKey(this.domainId, id).subscribe(response => {
+    this.certificateService.publicKeys(this.domainId, id).subscribe(response => {
       this.openPublicKeyInfo(response, false);
     }, error => {
-      this.openPublicKeyInfo('Failed to load public key', true);
+      this.openPublicKeyInfo([], true);
     });
   }
 
@@ -90,10 +90,10 @@ export class DomainSettingsCertificatesComponent implements OnInit {
       });
   }
 
-  openPublicKeyInfo(publicKey, error) {
-    const dialogRef = this.dialog.open(CertitificatePublicKeyDialog);
+  openPublicKeyInfo(publicKeys, error) {
+    const dialogRef = this.dialog.open(CertitificatePublicKeyDialog, { width : '700px' });
     dialogRef.componentInstance.title = 'Public certificate key';
-    dialogRef.componentInstance.message = publicKey;
+    dialogRef.componentInstance.certificateKeys = publicKeys;
     dialogRef.componentInstance.error = error;
   }
 }
@@ -105,12 +105,12 @@ export class DomainSettingsCertificatesComponent implements OnInit {
 })
 export class CertitificatePublicKeyDialog {
   public title: string;
-  public message: string;
+  public certificateKeys: any[] = [];
   public error: boolean;
 
   constructor(public dialogRef: MatDialogRef<CertitificatePublicKeyDialog>, private snackbarService: SnackbarService) {}
 
-  keyCopied() {
-    this.snackbarService.open('Key copied to the clipboard');
+  valueCopied(message) {
+    this.snackbarService.open(message);
   }
 }
