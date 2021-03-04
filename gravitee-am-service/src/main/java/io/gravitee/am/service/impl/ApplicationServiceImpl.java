@@ -26,10 +26,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -40,18 +37,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.ApplicationTemplateManager;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.EmailTemplateService;
-import io.gravitee.am.service.EventService;
-import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
@@ -134,6 +120,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private MembershipService membershipService;
+
+    @Autowired
+    private CertificateService certificateService;
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
@@ -509,6 +498,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         return checkApplicationUniqueness(domain, application)
                 // validate application metadata
                 .andThen(validateApplicationMetadata(application))
+                // set default certificate
+                .flatMap(this::setDefaultCertificate)
                 // create the application
                 .flatMap(applicationRepository::create)
                 // create the owner
@@ -560,6 +551,28 @@ public class ApplicationServiceImpl implements ApplicationService {
                 })
                 .doOnSuccess(application -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_UPDATED).oldValue(currentApplication).application(application)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_UPDATED).throwable(throwable)));
+    }
+
+    /**
+     * Set default domain certificate for the application
+     * @param application the application to create
+     * @return the application with the certificate
+     */
+    private Single<Application> setDefaultCertificate(Application application) {
+        return certificateService
+                .findByDomain(application.getDomain())
+                .map(certificates -> {
+                    if (certificates == null || certificates.isEmpty()) {
+                        return application;
+                    }
+                    Certificate defaultCertificate = certificates
+                            .stream()
+                            .filter(certificate -> "Default".equals(certificate.getName()))
+                            .findFirst()
+                            .orElse(certificates.get(0));
+                    application.setCertificate(defaultCertificate.getId());
+                    return application;
+                });
     }
 
     private Completable checkApplicationUniqueness(String domain, Application application) {

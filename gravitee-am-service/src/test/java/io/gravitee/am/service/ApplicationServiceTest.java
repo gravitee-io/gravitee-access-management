@@ -119,6 +119,9 @@ public class ApplicationServiceTest {
     @Mock
     private RoleService roleService;
 
+    @Mock
+    private CertificateService certificateService;
+
     private final static String DOMAIN = "domain1";
 
     @Test
@@ -401,6 +404,7 @@ public class ApplicationServiceTest {
         }).when(applicationTemplateManager).apply(any());
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
@@ -444,6 +448,7 @@ public class ApplicationServiceTest {
         }).when(applicationTemplateManager).apply(any());
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
         when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
         when(applicationRepository.create(any(Application.class))).thenReturn(Single.error(TechnicalException::new));
 
@@ -517,6 +522,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = applicationService.create(DOMAIN, newClient).test();
         testObserver.awaitTerminalEvent();
