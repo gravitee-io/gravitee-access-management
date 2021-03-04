@@ -29,7 +29,7 @@ export class ApplicationCertificatesComponent implements OnInit {
   formChanged: boolean = false;
   application: any;
   certificates: any[] = [];
-  certificatePublicKey: string;
+  certificatePublicKeys: any[] = [];
   selectedCertificate: string;
 
   constructor(private route: ActivatedRoute,
@@ -43,7 +43,7 @@ export class ApplicationCertificatesComponent implements OnInit {
     this.certificates = this.route.snapshot.data['certificates'];
     if (this.application.certificate) {
       this.selectedCertificate = this.application.certificate;
-      this.publicKey(this.application.certificate);
+      this.publicKeys(this.application.certificate);
     }
   }
 
@@ -52,11 +52,11 @@ export class ApplicationCertificatesComponent implements OnInit {
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
       this.application = data;
       this.route.snapshot.data['application'] = this.application;
-      this.certificatePublicKey = null;
+      this.certificatePublicKeys = [];
       this.formChanged = false;
       this.snackbarService.open('Application updated');
       if (this.application.certificate) {
-        this.publicKey(this.application.certificate);
+        this.publicKeys(this.application.certificate);
       }
     });
   }
@@ -69,9 +69,9 @@ export class ApplicationCertificatesComponent implements OnInit {
     this.snackbarService.open(message);
   }
 
-  private publicKey(certificateId) {
-    this.certificateService.publicKey(this.domainId, certificateId).subscribe(response => {
-      this.certificatePublicKey = response;
+  private publicKeys(certificateId) {
+    this.certificateService.publicKeys(this.domainId, certificateId).subscribe(response => {
+      this.certificatePublicKeys = response;
     });
   }
 }

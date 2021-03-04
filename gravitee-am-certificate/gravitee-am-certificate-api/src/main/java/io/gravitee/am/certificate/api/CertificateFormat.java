@@ -15,30 +15,12 @@
  */
 package io.gravitee.am.certificate.api;
 
-import io.gravitee.am.model.jose.JWK;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-
-import java.util.Collections;
-import java.util.List;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateProvider {
+public interface CertificateFormat {
 
-    Single<Key> key();
-
-    Single<String> publicKey();
-
-    Flowable<JWK> keys();
-
-    CertificateMetadata certificateMetadata();
-
-    String signatureAlgorithm();
-
-    default Single<List<CertificateKey>> publicKeys() {
-        return Single.just(Collections.emptyList());
-    }
+    String SSH_RSA = "SSH-RSA";
+    String PEM = "PEM";
 }
