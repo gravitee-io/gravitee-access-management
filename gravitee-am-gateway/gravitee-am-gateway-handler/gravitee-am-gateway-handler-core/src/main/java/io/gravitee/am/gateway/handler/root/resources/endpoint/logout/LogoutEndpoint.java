@@ -161,12 +161,13 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
         // validate request
         // see https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
         // An id_token_hint is REQUIRED when the post_logout_redirect_uri parameter is included.
-        // we do not check against the target_url for back-compatibility purpose
-        if (request.getParam(Parameters.POST_LOGOUT_REDIRECT_URI) != null &&
+        // for back-compatibility purpose, we skip this validation
+        // see https://github.com/gravitee-io/issues/issues/5163
+        /*if (request.getParam(Parameters.POST_LOGOUT_REDIRECT_URI) != null &&
                 request.getParam(Parameters.ID_TOKEN_HINT) == null) {
             routingContext.fail(new InvalidRequestException("Missing parameter: id_token_hint"));
             return;
-        }
+        }*/
 
         // redirect to target url
         String logoutRedirectUrl = !StringUtils.isEmpty(request.getParam(LOGOUT_URL_PARAMETER)) ?
