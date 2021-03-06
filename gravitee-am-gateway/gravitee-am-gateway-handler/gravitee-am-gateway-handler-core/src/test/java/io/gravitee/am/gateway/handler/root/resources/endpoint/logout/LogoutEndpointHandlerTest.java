@@ -236,4 +236,22 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
+    // see https://github.com/gravitee-io/issues/issues/5163
+    @Test
+    public void shouldInvokeLogoutEndpoint_postRedirectUri_lax_id_token_hint() throws Exception {
+        OIDCSettings oidcSettings = mock(OIDCSettings.class);
+        when(oidcSettings.getPostLogoutRedirectUris()).thenReturn(Arrays.asList("https://dev"));
+        when(domain.getOidc()).thenReturn(oidcSettings);
+
+        testRequest(
+                HttpMethod.GET, "/logout?post_logout_redirect_uri=https%3A%2F%2Fdev",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.equals("https://dev"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
 }
