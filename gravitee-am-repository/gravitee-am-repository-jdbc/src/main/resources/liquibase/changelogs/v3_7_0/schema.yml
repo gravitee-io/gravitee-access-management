@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.7.0
+      author: GraviteeSource Team
+      changes:
+
+        # domains
+        ###############
+        - addColumn:
+            tableName: domains
+            columns:
+              - column: {name: passwordSettings, type: clob, constraints: { nullable: true } }

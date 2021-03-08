@@ -15,46 +15,42 @@
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {ApplicationService} from '../../../../../services/application.service';
-import {AuthService} from '../../../../../services/auth.service';
+import {AuthService} from "../../../services/auth.service";
+import {DomainService} from "../../../services/domain.service";
+import {SnackbarService} from "../../../services/snackbar.service";
+
 
 @Component({
   selector: 'password-policy',
-  templateUrl: './password-policy.component.html',
-  styleUrls: ['./password-policy.component.scss']
+  templateUrl: './domain-password-policy.component.html',
+  styleUrls: ['./domain-password-policy.component.scss']
 })
-export class PasswordPolicyComponent implements OnInit {
+export class DomainPasswordPolicyComponent implements OnInit {
   @ViewChild('applicationForm', {static: true}) form: any;
   private domainId: string;
   domain: any;
-  application: any;
   formChanged = false;
   editMode: boolean;
 
-  passwordSettings: any = {};
+  passwordSettings: any;
   minLength: string;
   passwordInclude: string;
   lettersInMixedCase: boolean;
-  inherited: boolean;
   maxConsecutiveLetters: number;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
+              private authService: AuthService,
               private snackbarService: SnackbarService,
-              private applicationService: ApplicationService,
-              private authService: AuthService) {
+              private domainService: DomainService
+  ) {
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
     this.domainId = this.domain.id;
-    this.application = this.route.snapshot.data['application'];
-    this.passwordSettings = this.application.settings.passwordSettings;
-    if (this.passwordSettings == null) {
-      this.inherited = true;
-    } else {
-      this.inherited = this.passwordSettings.inherited;
+    this.passwordSettings = this.domain.passwordSettings;
+    if (this.passwordSettings != null) {
       this.minLength = this.passwordSettings.minLength;
       this.passwordInclude = this.passwordSettings.passwordInclude;
       this.lettersInMixedCase = this.passwordSettings.lettersInMixedCase;
@@ -71,24 +67,20 @@ export class PasswordPolicyComponent implements OnInit {
     this.lettersInMixedCase = e.checked;
   }
 
-  setInheritConfigurationValue(e) {
-    this.inherited = e.checked;
-  }
 
   update() {
     const data: any = {};
-    data.settings = {};
-    data.settings.passwordSettings = {
-      'inherited': this.inherited,
+    data.passwordSettings = {
       'minLength': this.minLength,
       'passwordInclude': this.passwordInclude,
       'lettersInMixedCase': this.lettersInMixedCase,
       'maxConsecutiveLetters': this.maxConsecutiveLetters,
     };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
+    this.domainService.patchPasswordSettings(this.domainId, data).subscribe(data => {
+      this.domain = data;
+      this.form.reset(data.passwordSettings);
       this.formChanged = false;
-      this.snackbarService.open('Application updated');
-      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
+      this.snackbarService.open('Password settings configuration updated');
     });
   }
 }

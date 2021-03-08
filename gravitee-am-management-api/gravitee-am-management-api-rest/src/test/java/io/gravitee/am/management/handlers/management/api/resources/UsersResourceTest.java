@@ -36,7 +36,6 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -63,7 +62,7 @@ public class UsersResourceTest extends JerseySpringTest {
         mockUser2.setReferenceType(ReferenceType.DOMAIN);
         mockUser2.setReferenceId(domainId);
 
-        final Set<User> users = new HashSet(Arrays.asList(mockUser, mockUser2));
+        final Set<User> users = new HashSet<>(Arrays.asList(mockUser, mockUser2));
         final Page<User> pagedUsers = new Page<>(users, 0, 2);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
@@ -110,27 +109,6 @@ public class UsersResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldNotCreate_invalid_password() {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        NewUser newUser = new NewUser();
-        newUser.setUsername("username");
-        newUser.setPassword("password");
-        newUser.setEmail("test@test.com");
-
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(false).when(passwordValidator).validate(anyString());
-
-        final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .request().post(Entity.json(newUser));
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-    }
-
-    @Test
     public void shouldNotCreate_invalid_identity_provider() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
@@ -143,7 +121,7 @@ public class UsersResourceTest extends JerseySpringTest {
         newUser.setSource("unknown-source");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.error(new UserProviderNotFoundException(newUser.getSource()))).when(userService).create(anyString(), any(), any());
+        doReturn(Single.error(new UserProviderNotFoundException(newUser.getSource()))).when(userService).create(any(Domain.class), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -152,25 +130,5 @@ public class UsersResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
-    @Test
-    public void shouldCreate() {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
 
-        NewUser newUser = new NewUser();
-        newUser.setUsername("username");
-        newUser.setPassword("password");
-        newUser.setEmail("test@test.com");
-
-        doReturn(true).when(passwordValidator).validate(anyString());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(new User())).when(userService).create(anyString(), any(), any());
-
-        final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .request().post(Entity.json(newUser));
-        assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
-    }
 }

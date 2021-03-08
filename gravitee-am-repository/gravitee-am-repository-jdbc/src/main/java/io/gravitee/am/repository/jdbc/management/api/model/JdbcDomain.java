@@ -47,6 +47,8 @@ public class JdbcDomain {
     private String scim;
     @Column("account_settings")
     private String accountSettings;
+    @Column("password_settings")
+    private String passwordSettings;
     @Column("reference_type")
     private String referenceType;
     @Column("reference_id")
@@ -162,6 +164,14 @@ public class JdbcDomain {
 
     public void setAccountSettings(String accountSettings) {
         this.accountSettings = accountSettings;
+    }
+
+    public String getPasswordSettings() {
+        return passwordSettings;
+    }
+
+    public void setPasswordSettings(String passwordSettings) {
+        this.passwordSettings = passwordSettings;
     }
 
     public String getReferenceType() {

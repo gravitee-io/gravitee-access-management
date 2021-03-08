@@ -21,6 +21,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.gravitee.am.service.DomainService;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -37,6 +38,9 @@ public abstract class AbstractUsersResource extends AbstractResource {
 
     @Autowired
     protected UserService userService;
+
+    @Autowired
+    protected DomainService domainService;
 
     protected Single<Page<User>> searchUsers(ReferenceType referenceType,
                                              String referenceId,

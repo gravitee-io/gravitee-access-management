@@ -17,18 +17,20 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
-import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.validators.PasswordValidator;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,7 +47,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator);
+        passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator, new Domain());
 
         router.route()
                 .handler(BodyHandler.create())
@@ -58,7 +60,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(rc -> rc.response().end());
 
-        when(passwordValidator.validate(anyString())).thenReturn(false);
+        doThrow(InvalidPasswordException.class).when(passwordValidator).validate(anyString(), eq(null));
 
         testRequest(HttpMethod.POST, "/", req -> {
             Buffer buffer = Buffer.buffer();
@@ -70,7 +72,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
             String location = resp.headers().get("location");
             assertNotNull(location);
             assertTrue(location.contains("warning=invalid_password_value"));
-        },302, "Found", null);
+        }, 302, "Found", null);
     }
 
     @Test
@@ -79,7 +81,8 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(rc -> rc.response().end());
 
-        when(passwordValidator.validate(anyString())).thenReturn(true);
+
+        doNothing().when(passwordValidator).validate(anyString(), eq(null));
 
         testRequest(HttpMethod.POST, "/", req -> {
             Buffer buffer = Buffer.buffer();
@@ -87,6 +90,6 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
             req.headers().set("content-length", String.valueOf(buffer.length()));
             req.headers().set("content-type", "application/x-www-form-urlencoded");
             req.write(buffer);
-        },200, "OK", null);
+        }, 200, "OK", null);
     }
 }

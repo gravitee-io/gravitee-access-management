@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -25,20 +26,38 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -49,7 +68,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -94,6 +117,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private MembershipService membershipService;
+
+    @Autowired
+    private PasswordValidator passwordValidator;
 
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
@@ -146,119 +172,120 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
-        // set user idp source
-        if (newUser.getSource() == null && referenceType == ReferenceType.DOMAIN) {
-            newUser.setSource(DEFAULT_IDP_PREFIX + referenceId);
+    public Single<User> create(Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
+        // user must have a password in no pre registration mode
+        if (newUser.getPassword() == null) {
+            if (!newUser.isPreRegistration()) {
+                return Single.error(new UserInvalidException("Field [password] is required"));
+            }
         }
-        // check domain
-        return domainService.findById(referenceId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(referenceId)))
-                .flatMapSingle(domain1 -> {
-                    // check user
-                    return userService.findByDomainAndUsernameAndSource(domain1.getId(), newUser.getUsername(), newUser.getSource())
-                            .isEmpty()
-                            .flatMap(isEmpty -> {
-                                if (!isEmpty) {
-                                    return Single.error(new UserAlreadyExistsException(newUser.getUsername()));
-                                } else {
-                                    // check user provider
-                                    return identityProviderManager.getUserProvider(newUser.getSource())
-                                            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
-                                            .flatMapSingle(userProvider -> {
-                                                // check client
-                                                return checkClient(referenceId, newUser.getClient())
-                                                        .map(Optional::of)
-                                                        .defaultIfEmpty(Optional.empty())
-                                                        .flatMapSingle(optClient -> {
-                                                            Application client = optClient.orElse(null);
-                                                            newUser.setDomain(domain1.getId());
-                                                            newUser.setClient(client != null ? client.getId() : null);
-                                                            // user is flagged as internal user
-                                                            newUser.setInternal(true);
-                                                            if (newUser.isPreRegistration()) {
-                                                                newUser.setPassword(null);
-                                                                newUser.setRegistrationCompleted(false);
-                                                                newUser.setEnabled(false);
+
+        // set user idp source
+        if (newUser.getSource() == null) {
+            newUser.setSource(DEFAULT_IDP_PREFIX + domain.getId());
+        }
+
+        // check user
+        return userService.findByDomainAndUsernameAndSource(domain.getId(), newUser.getUsername(), newUser.getSource())
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (!isEmpty) {
+                        return Single.error(new UserAlreadyExistsException(newUser.getUsername()));
+                    } else {
+                        // check user provider
+                        return identityProviderManager.getUserProvider(newUser.getSource())
+                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
+                                .flatMapSingle(userProvider -> {
+                                    // check client
+                                    return checkClient(domain.getId(), newUser.getClient())
+                                            .map(Optional::of)
+                                            .defaultIfEmpty(Optional.empty())
+                                            .flatMapSingle(optClient -> {
+                                                Application client = optClient.orElse(null);
+                                                newUser.setDomain(domain.getId());
+                                                newUser.setClient(client != null ? client.getId() : null);
+                                                // user is flagged as internal user
+                                                newUser.setInternal(true);
+                                                if (newUser.isPreRegistration()) {
+                                                    newUser.setPassword(null);
+                                                    newUser.setRegistrationCompleted(false);
+                                                    newUser.setEnabled(false);
+                                                } else {
+                                                    String password = newUser.getPassword();
+                                                    if (password != null && isInvalidUserPassword(password, client, domain)) {
+                                                        return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+                                                    }
+                                                    newUser.setRegistrationCompleted(true);
+                                                    newUser.setEnabled(true);
+                                                    newUser.setDomain(domain.getId());
+                                                }
+
+                                                // store user in its identity provider:
+                                                // - perform first validation of user to avoid error status 500 when the IDP is based on relational databases
+                                                // - in case of error, trace the event otherwise continue the creation process
+                                                return UserValidator.validate(transform(newUser))
+                                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
+                                                        .andThen(userProvider.create(convert(newUser)))
+                                                        .map(idpUser -> {
+                                                            // AM 'users' collection is not made for authentication (but only management stuff)
+                                                            // clear password
+                                                            newUser.setPassword(null);
+                                                            // set external id
+                                                            newUser.setExternalId(idpUser.getId());
+                                                            return newUser;
+                                                        })
+                                                        // if a user is already in the identity provider but not in the AM users collection,
+                                                        // it means that the user is coming from a pre-filled AM compatible identity provider (user creation enabled)
+                                                        // try to create the user with the idp user information
+                                                        .onErrorResumeNext(ex -> {
+                                                            if (ex instanceof UserAlreadyExistsException) {
+                                                                return userProvider.findByUsername(newUser.getUsername())
+                                                                        // double check user existence for case sensitive
+                                                                        .flatMapSingle(idpUser -> userService.findByDomainAndUsernameAndSource(domain.getId(), idpUser.getUsername(), newUser.getSource())
+                                                                                .isEmpty()
+                                                                                .map(empty -> {
+                                                                                    if (!empty) {
+                                                                                        throw new UserAlreadyExistsException(newUser.getUsername());
+                                                                                    } else {
+                                                                                        // AM 'users' collection is not made for authentication (but only management stuff)
+                                                                                        // clear password
+                                                                                        newUser.setPassword(null);
+                                                                                        // set external id
+                                                                                        newUser.setExternalId(idpUser.getId());
+                                                                                        // set username
+                                                                                        newUser.setUsername(idpUser.getUsername());
+                                                                                        return newUser;
+                                                                                    }
+                                                                                }));
                                                             } else {
-                                                                newUser.setRegistrationCompleted(true);
-                                                                newUser.setEnabled(true);
-                                                                newUser.setDomain(referenceId);
+                                                                return Single.error(ex);
                                                             }
-
-                                                            // store user in its identity provider:
-                                                            // - perform first validation of user to avoid error status 500 when the IDP is based on relational databases
-                                                            // - in case of error, trace the event otherwise continue the creation process
-                                                            return UserValidator.validate(transform(newUser))
-                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
-                                                                    .andThen(userProvider.create(convert(newUser)))
-                                                                    .map(idpUser -> {
-                                                                        // AM 'users' collection is not made for authentication (but only management stuff)
-                                                                        // clear password
-                                                                        newUser.setPassword(null);
-                                                                        // set external id
-                                                                        newUser.setExternalId(idpUser.getId());
-                                                                        return newUser;
-                                                                    })
-                                                                    // if a user is already in the identity provider but not in the AM users collection,
-                                                                    // it means that the user is coming from a pre-filled AM compatible identity provider (user creation enabled)
-                                                                    // try to create the user with the idp user information
-                                                                    .onErrorResumeNext(ex -> {
-                                                                        if (ex instanceof UserAlreadyExistsException) {
-                                                                            return userProvider.findByUsername(newUser.getUsername())
-                                                                                    // double check user existence for case sensitive
-                                                                                    .flatMapSingle(idpUser -> userService.findByDomainAndUsernameAndSource(domain1.getId(), idpUser.getUsername(), newUser.getSource())
-                                                                                            .isEmpty()
-                                                                                            .map(empty -> {
-                                                                                                if (!empty) {
-                                                                                                    throw new UserAlreadyExistsException(newUser.getUsername());
-                                                                                                } else {
-                                                                                                    // AM 'users' collection is not made for authentication (but only management stuff)
-                                                                                                    // clear password
-                                                                                                    newUser.setPassword(null);
-                                                                                                    // set external id
-                                                                                                    newUser.setExternalId(idpUser.getId());
-                                                                                                    // set username
-                                                                                                    newUser.setUsername(idpUser.getUsername());
-                                                                                                    return newUser;
-                                                                                                }
-                                                                                            }));
-                                                                        } else {
-                                                                            return Single.error(ex);
-                                                                        }
-                                                                    })
-                                                                    .flatMap(newUser1 -> {
-                                                                        User user = transform(newUser1);
-                                                                        AccountSettings accountSettings = AccountSettings.getInstance(domain1, client);
-                                                                        if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
-                                                                            user.setRegistrationUserUri(domainService.buildUrl(domain1, "/confirmRegistration"));
-                                                                            user.setRegistrationAccessToken(getUserRegistrationToken(user));
-                                                                        }
-                                                                        return userService.create(user)
-                                                                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
-                                                                    })
-                                                                    .flatMap(user -> {
-                                                                        // end pre-registration user if required
-                                                                        AccountSettings accountSettings = AccountSettings.getInstance(domain1, client);
-                                                                        if (newUser.isPreRegistration() && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
-                                                                            return sendRegistrationConfirmation(user.getReferenceId(), user.getId(), principal).toSingleDefault(user);
-                                                                        } else {
-                                                                            return Single.just(user);
-                                                                        }
-                                                                    })
-                                                                    .map(this::setInternalStatus);
-                                                        });
+                                                        })
+                                                        .flatMap(newUser1 -> {
+                                                            User user = transform(newUser1);
+                                                            AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+                                                            if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
+                                                                user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
+                                                                user.setRegistrationAccessToken(getUserRegistrationToken(user));
+                                                            }
+                                                            return userService.create(user)
+                                                                    .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
+                                                        })
+                                                        .flatMap(user -> {
+                                                            // end pre-registration user if required
+                                                            AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+                                                            if (newUser.isPreRegistration() && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
+                                                                return sendRegistrationConfirmation(user.getReferenceId(), user.getId(), principal).toSingleDefault(user);
+                                                            } else {
+                                                                return Single.just(user);
+                                                            }
+                                                        })
+                                                        .map(this::setInternalStatus);
                                             });
-                                }
-                            });
+                                });
+                    }
                 });
-    }
-
-    @Override
-    public Single<User> create(String domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
-
-        return create(ReferenceType.DOMAIN, domain, newUser, principal);
     }
 
     @Override
@@ -305,7 +332,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
-
         return update(ReferenceType.DOMAIN, domain, id, updateUser, principal);
     }
 
@@ -353,55 +379,66 @@ public class UserServiceImpl implements UserService {
                         // remove from memberships if user is an administrative user
                         .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
                                 membershipService.findByMember(userId, MemberType.USER)
-                                    .flatMapCompletable(memberships -> {
-                                        List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteMembershipsCompletable);
-                                    }))
+                                        .flatMapCompletable(memberships -> {
+                                            List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
+                                            return Completable.concat(deleteMembershipsCompletable);
+                                        }))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
                 );
     }
 
     @Override
-    public Completable resetPassword(ReferenceType referenceType, String referenceId, String userId, String password, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.findById(referenceType, referenceId, userId)
-                .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                                .flatMapSingle(userProvider -> {
-                                    // update idp user
-                                    return userProvider.findByUsername(user.getUsername())
-                                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                                            .flatMapSingle(idpUser -> {
-                                                // set password
-                                                ((DefaultUser) idpUser).setCredentials(password);
-                                                return userProvider.update(idpUser.getId(), idpUser);
-                                            })
-                                            .onErrorResumeNext(ex -> {
-                                                if (ex instanceof UserNotFoundException) {
-                                                    // idp user not found, create its account
-                                                    user.setPassword(password);
-                                                    return userProvider.create(convert(user));
-                                                }
-                                                return Single.error(ex);
-                                            });
-                                })
-                                .flatMap(idpUser -> {
-                                    // update 'users' collection for management and audit purpose
-                                    // if user was in pre-registration mode, end the registration process
-                                    if (user.isPreRegistration()) {
-                                        user.setRegistrationCompleted(true);
-                                        user.setEnabled(true);
-                                    }
-                                    user.setPassword(null);
-                                    user.setExternalId(idpUser.getId());
-                                    user.setLastPasswordReset(new Date());
-                                    user.setUpdatedAt(new Date());
-                                    return userService.update(user);
-                                })
-                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)))
-                        // reset login attempts in case of reset password action
-                ).flatMapCompletable(user -> {
+    public Completable resetPassword(Domain domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.findById(ReferenceType.DOMAIN, domain.getId(), userId)
+                .flatMap(user -> {
+                    // get client for password settings
+                    return checkClient(domain.getId(), user.getClient())
+                            .map(Optional::of)
+                            .defaultIfEmpty(Optional.empty())
+                            .flatMapSingle(optClient -> {
+                                // check user password
+                                if (isInvalidUserPassword(password, optClient.orElse(null), domain)) {
+                                    return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+                                }
+                                return identityProviderManager.getUserProvider(user.getSource())
+                                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                                        .flatMapSingle(userProvider -> {
+                                            // update idp user
+                                            return userProvider.findByUsername(user.getUsername())
+                                                    .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                                                    .flatMapSingle(idpUser -> {
+                                                        // set password
+                                                        ((DefaultUser) idpUser).setCredentials(password);
+                                                        return userProvider.update(idpUser.getId(), idpUser);
+                                                    })
+                                                    .onErrorResumeNext(ex -> {
+                                                        if (ex instanceof UserNotFoundException) {
+                                                            // idp user not found, create its account
+                                                            user.setPassword(password);
+                                                            return userProvider.create(convert(user));
+                                                        }
+                                                        return Single.error(ex);
+                                                    });
+                                        })
+                                        .flatMap(idpUser -> {
+                                            // update 'users' collection for management and audit purpose
+                                            // if user was in pre-registration mode, end the registration process
+                                            if (user.isPreRegistration()) {
+                                                user.setRegistrationCompleted(true);
+                                                user.setEnabled(true);
+                                            }
+                                            user.setPassword(null);
+                                            user.setExternalId(idpUser.getId());
+                                            user.setLastPasswordReset(new Date());
+                                            user.setUpdatedAt(new Date());
+                                            return userService.update(user);
+                                        })
+                                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
+                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)));
+                            });
+                }).flatMapCompletable(user -> {
+                    // reset login attempts in case of reset password action
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
                             .domain(user.getReferenceId())
                             .client(user.getClient())
@@ -409,11 +446,6 @@ public class UserServiceImpl implements UserService {
                             .build();
                     return loginAttemptService.reset(criteria);
                 });
-    }
-
-    @Override
-    public Completable resetPassword(String domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal) {
-        return resetPassword(ReferenceType.DOMAIN, domain, userId, password, principal);
     }
 
     @Override
@@ -533,6 +565,12 @@ public class UserServiceImpl implements UserService {
                     }
                     return roles1;
                 }).toCompletable();
+    }
+
+    private boolean isInvalidUserPassword(String password, Application application, Domain domain) {
+        return PasswordSettings.getInstance(application, domain)
+                .map(ps -> !passwordValidator.isValid(password, ps))
+                .orElseGet(() -> !passwordValidator.isValid(password));
     }
 
     private String getUserRegistrationToken(User user) {

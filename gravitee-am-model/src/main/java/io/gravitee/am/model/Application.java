@@ -15,19 +15,21 @@
  */
 package io.gravitee.am.model;
 
-import io.gravitee.am.model.application.ApplicationAdvancedSettings;
-import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.oidc.Client;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class Application implements Resource {
+public class Application implements Resource, PasswordSettingsAware {
 
     /**
      * Application technical id
@@ -218,90 +220,24 @@ public class Application implements Resource {
         this.updatedAt = updatedAt;
     }
 
-    public static Client convert(Application application) {
+    public Client toClient() {
         Client client = new Client();
-        client.setId(application.getId());
-        client.setDomain(application.getDomain());
-        client.setEnabled(application.isEnabled());
-        client.setTemplate(application.isTemplate());
-        client.setCertificate(application.getCertificate());
-        client.setIdentities(application.getIdentities());
-        client.setFactors(application.getFactors());
-        client.setMetadata(application.getMetadata());
-        client.setCreatedAt(application.getCreatedAt());
-        client.setUpdatedAt(application.getUpdatedAt());
-
-        if (application.getSettings() != null) {
-            ApplicationSettings applicationSettings = application.getSettings();
-            client.setAccountSettings(applicationSettings.getAccount());
-            client.setLoginSettings(applicationSettings.getLogin());
-
-            if (applicationSettings.getOauth() != null) {
-                ApplicationOAuthSettings oAuthSettings = applicationSettings.getOauth();
-                client.setClientId(oAuthSettings.getClientId());
-                client.setClientSecret(oAuthSettings.getClientSecret());
-                client.setRedirectUris(oAuthSettings.getRedirectUris());
-                client.setAuthorizedGrantTypes(oAuthSettings.getGrantTypes());
-                client.setResponseTypes(oAuthSettings.getResponseTypes());
-                client.setApplicationType(oAuthSettings.getApplicationType());
-                client.setContacts(oAuthSettings.getContacts());
-                client.setClientName(oAuthSettings.getClientName());
-                client.setLogoUri(oAuthSettings.getLogoUri());
-                client.setClientUri(oAuthSettings.getClientUri());
-                client.setPolicyUri(oAuthSettings.getPolicyUri());
-                client.setTosUri(oAuthSettings.getTosUri());
-                client.setJwksUri(oAuthSettings.getJwksUri());
-                client.setJwks(oAuthSettings.getJwks());
-                client.setSectorIdentifierUri(oAuthSettings.getSectorIdentifierUri());
-                client.setSubjectType(oAuthSettings.getSubjectType());
-                client.setIdTokenSignedResponseAlg(oAuthSettings.getIdTokenSignedResponseAlg());
-                client.setIdTokenEncryptedResponseAlg(oAuthSettings.getIdTokenEncryptedResponseAlg());
-                client.setIdTokenEncryptedResponseEnc(oAuthSettings.getIdTokenEncryptedResponseEnc());
-                client.setUserinfoSignedResponseAlg(oAuthSettings.getUserinfoSignedResponseAlg());
-                client.setUserinfoEncryptedResponseAlg(oAuthSettings.getUserinfoEncryptedResponseAlg());
-                client.setUserinfoEncryptedResponseEnc(oAuthSettings.getUserinfoEncryptedResponseEnc());
-                client.setRequestObjectSigningAlg(oAuthSettings.getRequestObjectSigningAlg());
-                client.setRequestObjectEncryptionAlg(oAuthSettings.getRequestObjectEncryptionAlg());
-                client.setRequestObjectEncryptionEnc(oAuthSettings.getRequestObjectEncryptionEnc());
-                client.setTokenEndpointAuthMethod(oAuthSettings.getTokenEndpointAuthMethod());
-                client.setTokenEndpointAuthSigningAlg(oAuthSettings.getTokenEndpointAuthSigningAlg());
-                client.setDefaultMaxAge(oAuthSettings.getDefaultMaxAge());
-                client.setRequireAuthTime(oAuthSettings.getRequireAuthTime());
-                client.setDefaultACRvalues(oAuthSettings.getDefaultACRvalues());
-                client.setInitiateLoginUri(oAuthSettings.getInitiateLoginUri());
-                client.setRequestUris(oAuthSettings.getRequestUris());
-                client.setScopes(oAuthSettings.getScopes());
-                client.setSoftwareId(oAuthSettings.getSoftwareId());
-                client.setSoftwareVersion(oAuthSettings.getSoftwareVersion());
-                client.setSoftwareStatement(oAuthSettings.getSoftwareStatement());
-                client.setRegistrationAccessToken(oAuthSettings.getRegistrationAccessToken());
-                client.setRegistrationClientUri(oAuthSettings.getRegistrationClientUri());
-                client.setClientIdIssuedAt(oAuthSettings.getClientIdIssuedAt());
-                client.setClientSecretExpiresAt(oAuthSettings.getClientSecretExpiresAt());
-                client.setAccessTokenValiditySeconds(oAuthSettings.getAccessTokenValiditySeconds());
-                client.setRefreshTokenValiditySeconds(oAuthSettings.getRefreshTokenValiditySeconds());
-                client.setIdTokenValiditySeconds(oAuthSettings.getIdTokenValiditySeconds());
-                client.setEnhanceScopesWithUserPermissions(oAuthSettings.isEnhanceScopesWithUserPermissions());
-                client.setScopeApprovals(oAuthSettings.getScopeApprovals());
-                client.setTokenCustomClaims(oAuthSettings.getTokenCustomClaims());
-                client.setTlsClientAuthSubjectDn(oAuthSettings.getTlsClientAuthSubjectDn());
-                client.setTlsClientAuthSanDns(oAuthSettings.getTlsClientAuthSanDns());
-                client.setTlsClientAuthSanEmail(oAuthSettings.getTlsClientAuthSanEmail());
-                client.setTlsClientAuthSanIp(oAuthSettings.getTlsClientAuthSanIp());
-                client.setTlsClientAuthSanUri(oAuthSettings.getTlsClientAuthSanUri());
-                client.setAuthorizationSignedResponseAlg(oAuthSettings.getAuthorizationSignedResponseAlg());
-                client.setAuthorizationEncryptedResponseAlg(oAuthSettings.getAuthorizationEncryptedResponseAlg());
-                client.setAuthorizationEncryptedResponseEnc(oAuthSettings.getAuthorizationEncryptedResponseEnc());
-                client.setForcePKCE(oAuthSettings.isForcePKCE());
-                client.setPostLogoutRedirectUris(oAuthSettings.getPostLogoutRedirectUris());
-            }
-
-            if (applicationSettings.getAdvanced() != null) {
-                ApplicationAdvancedSettings advancedSettings = applicationSettings.getAdvanced();
-                client.setAutoApproveScopes(advancedSettings.isSkipConsent() ? Collections.singletonList("true") : null);
-                client.setFlowsInherited(advancedSettings.isFlowsInherited());
-            }
-        }
+        client.setId(this.id);
+        client.setDomain(this.domain);
+        client.setEnabled(this.enabled);
+        client.setTemplate(this.template);
+        client.setCertificate(this.certificate);
+        client.setIdentities(this.identities);
+        client.setFactors(this.factors);
+        client.setMetadata(this.metadata);
+        client.setCreatedAt(this.createdAt);
+        client.setUpdatedAt(this.updatedAt);
+        Optional.ofNullable(settings).ifPresent(s -> s.copyTo(client));
         return client;
+    }
+
+    @Override
+    public PasswordSettings getPasswordSettings() {
+        return Optional.ofNullable(settings).map(ApplicationSettings::getPasswordSettings).orElse(null);
     }
 }

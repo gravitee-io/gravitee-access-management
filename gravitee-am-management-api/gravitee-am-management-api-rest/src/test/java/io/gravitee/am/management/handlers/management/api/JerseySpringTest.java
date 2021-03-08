@@ -19,12 +19,40 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
-import io.gravitee.am.management.service.*;
+import io.gravitee.am.management.service.AuditReporterManager;
+import io.gravitee.am.management.service.CertificateManager;
+import io.gravitee.am.management.service.EmailManager;
+import io.gravitee.am.management.service.ExtensionGrantPluginService;
+import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.IdentityProviderPluginService;
+import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.CertificatePluginService;
+import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.ClientService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EntrypointService;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.ExtensionGrantService;
+import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.FlowService;
+import io.gravitee.am.service.FormService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.ReporterService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeApprovalService;
+import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.TagService;
+import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.validators.PasswordValidator;
 import io.reactivex.Single;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -120,9 +148,6 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected FormService formService;
-
-    @Autowired
-    protected PasswordValidator passwordValidator;
 
     @Autowired
     protected ScopeApprovalService scopeApprovalService;

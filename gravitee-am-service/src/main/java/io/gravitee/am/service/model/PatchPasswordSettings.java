@@ -16,7 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.common.policy.PasswordInclude;
-import io.gravitee.am.model.application.PasswordSettings;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.Optional;
@@ -27,29 +27,11 @@ import java.util.Optional;
  */
 public class PatchPasswordSettings {
 
-    private Optional<Boolean> regex;
-    private Optional<String> regexFormat;
+    private Optional<Boolean> inherited;
     private Optional<Integer> minLength;
-    private Optional<Integer> maxLength;
     private Optional<PasswordInclude> passwordInclude;
     private Optional<Boolean> lettersInMixedCase;
     private Optional<Integer> maxConsecutiveLetters;
-
-    public Optional<Boolean> getRegex() {
-        return regex;
-    }
-
-    public void setRegex(Optional<Boolean> regex) {
-        this.regex = regex;
-    }
-
-    public Optional<String> getRegexFormat() {
-        return regexFormat;
-    }
-
-    public void setRegexFormat(Optional<String> regexFormat) {
-        this.regexFormat = regexFormat;
-    }
 
     public Optional<Integer> getMinLength() {
         return minLength;
@@ -57,14 +39,6 @@ public class PatchPasswordSettings {
 
     public void setMinLength(Optional<Integer> minLength) {
         this.minLength = minLength;
-    }
-
-    public Optional<Integer> getMaxLength() {
-        return maxLength;
-    }
-
-    public void setMaxLength(Optional<Integer> maxLength) {
-        this.maxLength = maxLength;
     }
 
     public Optional<PasswordInclude> getPasswordInclude() {
@@ -91,13 +65,19 @@ public class PatchPasswordSettings {
         this.maxConsecutiveLetters = maxConsecutiveLetters;
     }
 
+    public Optional<Boolean> getInherited() {
+        return inherited;
+    }
+
+    public void setInherited(Optional<Boolean> inherited) {
+        this.inherited = inherited;
+    }
+
     public PasswordSettings patch(PasswordSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         PasswordSettings toPatch = Optional.ofNullable(_toPatch).map(PasswordSettings::new).orElseGet(PasswordSettings::new);
-        SetterUtils.safeSet(toPatch::setRegex, this.regex);
-        SetterUtils.safeSet(toPatch::setRegexFormat, this.regexFormat);
+        SetterUtils.safeSet(toPatch::setInherited, this.inherited);
         SetterUtils.safeSet(toPatch::setMinLength, this.minLength);
-        SetterUtils.safeSet(toPatch::setMaxLength, this.maxLength);
         SetterUtils.safeSet(toPatch::setPasswordInclude, this.passwordInclude);
         SetterUtils.safeSet(toPatch::setLettersInMixedCase, this.lettersInMixedCase);
         SetterUtils.safeSet(toPatch::setMaxConsecutiveLetters, this.maxConsecutiveLetters);

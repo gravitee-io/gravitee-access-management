@@ -23,7 +23,11 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.ClientAlreadyExistsException;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.ClientServiceImpl;
 import io.gravitee.am.service.model.NewClient;
 import io.gravitee.am.service.model.PatchClient;
@@ -41,12 +45,20 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 import static io.gravitee.am.service.impl.ClientServiceImpl.DEFAULT_CLIENT_NAME;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -148,8 +160,8 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindByDomainPagination() {
-        Page pageClients = new Page(Collections.singleton(new Application()), 1 , 1);
-        when(applicationService.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.just(pageClients));
+        Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
+        when(applicationService.findByDomain(DOMAIN, 1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Client>> testObserver = clientService.findByDomain(DOMAIN, 1, 1).test();
         testObserver.awaitTerminalEvent();
 
@@ -160,10 +172,10 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindByDomainPagination_technicalException() {
-        when(applicationService.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.error(TechnicalManagementException::new));
+        when(applicationService.findByDomain(DOMAIN, 1, 1)).thenReturn(Single.error(TechnicalManagementException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        clientService.findByDomain(DOMAIN, 1 , 1).subscribe(testObserver);
+        clientService.findByDomain(DOMAIN, 1, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -193,8 +205,8 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindAllPagination() {
-        Page pageClients = new Page(Collections.singleton(new Application()), 1 , 1);
-        when(applicationService.findAll(1 , 1)).thenReturn(Single.just(pageClients));
+        Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
+        when(applicationService.findAll(1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Client>> testObserver = clientService.findAll(1, 1).test();
         testObserver.awaitTerminalEvent();
 
@@ -205,10 +217,10 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindAllPagination_technicalException() {
-        when(applicationService.findAll(1 , 1)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationService.findAll(1, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        clientService.findAll(1 , 1).subscribe(testObserver);
+        clientService.findAll(1, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -216,7 +228,7 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindTotalClientsByDomain() {
-        when(applicationService.countByDomain(DOMAIN)).thenReturn(Single.just(1l));
+        when(applicationService.countByDomain(DOMAIN)).thenReturn(Single.just(1L));
         TestObserver<TotalClient> testObserver = clientService.findTotalClientsByDomain(DOMAIN).test();
 
         testObserver.awaitTerminalEvent();
@@ -262,11 +274,9 @@ public class ClientServiceTest {
 
     @Test
     public void shouldCreate() {
-        NewClient newClient = Mockito.mock(NewClient.class);
-        Application createApplication = Mockito.mock(Application.class);
-
-        when(newClient.getClientId()).thenReturn("my-client");
-        when(applicationService.create(any(Application.class))).thenReturn(Single.just(createApplication));
+        NewClient newClient = new NewClient();
+        newClient.setClientId("my-client");
+        when(applicationService.create(any(Application.class))).thenReturn(Single.just(new Application()));
 
         TestObserver<Client> testObserver = clientService.create(DOMAIN, newClient).test();
         testObserver.awaitTerminalEvent();
@@ -279,11 +289,9 @@ public class ClientServiceTest {
 
     @Test
     public void shouldCreate_withoutClientId() {
-        NewClient newClient = Mockito.mock(NewClient.class);
-        Application createApplication = Mockito.mock(Application.class);
+        NewClient newClient = new NewClient();
 
-        when(newClient.getClientId()).thenReturn(null);
-        when(applicationService.create(any(Application.class))).thenReturn(Single.just(createApplication));
+        when(applicationService.create(any(Application.class))).thenReturn(Single.just(new Application()));
 
         TestObserver<Client> testObserver = clientService.create(DOMAIN, newClient).test();
         testObserver.awaitTerminalEvent();
@@ -298,13 +306,9 @@ public class ClientServiceTest {
     @Test
     public void shouldCreate_withClientName() {
         String customClientName = "My custom client name";
-
-        NewClient newClient = Mockito.mock(NewClient.class);
-        Application createApplication = Mockito.mock(Application.class);
-
-        when(newClient.getClientId()).thenReturn(null);
-        when(newClient.getClientName()).thenReturn(customClientName);
-        when(applicationService.create(any(Application.class))).thenReturn(Single.just(createApplication));
+        NewClient newClient = new NewClient();
+        newClient.setClientName(customClientName);
+        when(applicationService.create(any(Application.class))).thenReturn(Single.just(new Application()));
 
         TestObserver<Client> testObserver = clientService.create(DOMAIN, newClient).test();
         testObserver.awaitTerminalEvent();
@@ -318,8 +322,8 @@ public class ClientServiceTest {
 
     @Test
     public void shouldCreate_technicalException() {
-        NewClient newClient = Mockito.mock(NewClient.class);
-        when(newClient.getClientId()).thenReturn("my-client");
+        NewClient newClient = new NewClient();
+        newClient.setClientId("my-client");
         when(applicationService.create(any())).thenReturn(Single.error(TechnicalManagementException::new));
 
         TestObserver<Client> testObserver = new TestObserver<>();
@@ -333,8 +337,8 @@ public class ClientServiceTest {
 
     @Test
     public void shouldCreate_clientAlreadyExists() {
-        NewClient newClient = Mockito.mock(NewClient.class);
-        when(newClient.getClientId()).thenReturn("my-client");
+        NewClient newClient =new NewClient();
+        newClient.setClientId("my-client");
         when(applicationService.create(any())).thenReturn(Single.error(new ClientAlreadyExistsException("my-client", DOMAIN)));
 
         TestObserver<Client> testObserver = new TestObserver<>();
@@ -357,8 +361,8 @@ public class ClientServiceTest {
     public void create_implicit_invalidRedirectUri() {
         Client toCreate = new Client();
         toCreate.setDomain(DOMAIN);
-        toCreate.setAuthorizedGrantTypes(Arrays.asList("implicit"));
-        toCreate.setResponseTypes(Arrays.asList("token"));
+        toCreate.setAuthorizedGrantTypes(Collections.singletonList("implicit"));
+        toCreate.setResponseTypes(Collections.singletonList("token"));
         when(applicationService.create(any())).thenReturn(Single.error(new InvalidRedirectUriException()));
         TestObserver testObserver = clientService.create(toCreate).test();
         testObserver.awaitTerminalEvent();
@@ -373,7 +377,7 @@ public class ClientServiceTest {
 
         Client toCreate = new Client();
         toCreate.setDomain(DOMAIN);
-        toCreate.setRedirectUris(Arrays.asList("https://callback"));
+        toCreate.setRedirectUris(Collections.singletonList("https://callback"));
         TestObserver testObserver = clientService.create(toCreate).test();
         testObserver.awaitTerminalEvent();
 
@@ -382,19 +386,19 @@ public class ClientServiceTest {
 
         ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
         verify(applicationService, times(1)).create(captor.capture());
-        Assert.assertTrue("client_id must be generated",captor.getValue().getSettings().getOauth().getClientId()!=null);
-        Assert.assertTrue("client_secret must be generated",captor.getValue().getSettings().getOauth().getClientSecret()!=null);
+        Assert.assertNotNull("client_id must be generated", captor.getValue().getSettings().getOauth().getClientId());
+        Assert.assertNotNull("client_secret must be generated", captor.getValue().getSettings().getOauth().getClientSecret());
     }
 
     @Test
     public void shouldPatch_keepingClientRedirectUris() {
         PatchClient patchClient = new PatchClient();
         patchClient.setIdentities(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
-        patchClient.setAuthorizedGrantTypes(Optional.of(Arrays.asList("authorization_code")));
+        patchClient.setAuthorizedGrantTypes(Optional.of(Collections.singletonList("authorization_code")));
         Application toPatch = new Application();
         ApplicationSettings applicationSettings = new ApplicationSettings();
         ApplicationOAuthSettings applicationOAuthSettings = new ApplicationOAuthSettings();
-        applicationOAuthSettings.setRedirectUris(Arrays.asList("https://callback"));
+        applicationOAuthSettings.setRedirectUris(Collections.singletonList("https://callback"));
         applicationSettings.setOauth(applicationOAuthSettings);
         toPatch.setDomain(DOMAIN);
         toPatch.setSettings(applicationSettings);
@@ -416,8 +420,8 @@ public class ClientServiceTest {
         Application client = new Application();
         client.setDomain(DOMAIN);
         PatchClient patchClient = new PatchClient();
-        patchClient.setAuthorizedGrantTypes(Optional.of(Arrays.asList("implicit")));
-        patchClient.setResponseTypes(Optional.of(Arrays.asList("token")));
+        patchClient.setAuthorizedGrantTypes(Optional.of(Collections.singletonList("implicit")));
+        patchClient.setResponseTypes(Optional.of(Collections.singletonList("token")));
 
         when(applicationService.findById(any())).thenReturn(Maybe.just(client));
         when(applicationService.update(any(Application.class))).thenReturn(Single.error(new InvalidRedirectUriException()));
@@ -470,8 +474,8 @@ public class ClientServiceTest {
         when(applicationService.update(any(Application.class))).thenReturn(Single.error(new InvalidRedirectUriException()));
 
         Client toUpdate = new Client();
-        toUpdate.setAuthorizedGrantTypes(Arrays.asList("implicit"));
-        toUpdate.setResponseTypes(Arrays.asList("token"));
+        toUpdate.setAuthorizedGrantTypes(Collections.singletonList("implicit"));
+        toUpdate.setResponseTypes(Collections.singletonList("token"));
         toUpdate.setDomain(DOMAIN);
         TestObserver testObserver = clientService.update(toUpdate).test();
         testObserver.awaitTerminalEvent();
@@ -486,7 +490,7 @@ public class ClientServiceTest {
 
         Client toUpdate = new Client();
         toUpdate.setDomain(DOMAIN);
-        toUpdate.setRedirectUris(Arrays.asList("https://callback"));
+        toUpdate.setRedirectUris(Collections.singletonList("https://callback"));
         TestObserver testObserver = clientService.update(toUpdate).test();
         testObserver.awaitTerminalEvent();
 
@@ -497,13 +501,13 @@ public class ClientServiceTest {
     }
 
     @Test
-    public void   update_clientCredentials_ok() {
+    public void update_clientCredentials_ok() {
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
 
         Client toUpdate = new Client();
         toUpdate.setDomain(DOMAIN);
-        toUpdate.setAuthorizedGrantTypes(Arrays.asList("client_credentials"));
-        toUpdate.setResponseTypes(Arrays.asList());
+        toUpdate.setAuthorizedGrantTypes(Collections.singletonList("client_credentials"));
+        toUpdate.setResponseTypes(Collections.emptyList());
         TestObserver testObserver = clientService.update(toUpdate).test();
         testObserver.awaitTerminalEvent();
 
@@ -520,8 +524,8 @@ public class ClientServiceTest {
 
         PatchClient patchClient = new PatchClient();
         patchClient.setIdentities(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
-        patchClient.setAuthorizedGrantTypes(Optional.of(Arrays.asList("authorization_code")));
-        patchClient.setRedirectUris(Optional.of(Arrays.asList("https://callback")));
+        patchClient.setAuthorizedGrantTypes(Optional.of(Collections.singletonList("authorization_code")));
+        patchClient.setRedirectUris(Optional.of(Collections.singletonList("https://callback")));
 
         when(applicationService.findById("my-client")).thenReturn(Maybe.just(client));
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
@@ -542,8 +546,8 @@ public class ClientServiceTest {
         client.setDomain(DOMAIN);
 
         PatchClient patchClient = new PatchClient();
-        patchClient.setAuthorizedGrantTypes(Optional.of(Arrays.asList("authorization_code")));
-        patchClient.setRedirectUris(Optional.of(Arrays.asList("com.gravitee.app://callback")));
+        patchClient.setAuthorizedGrantTypes(Optional.of(Collections.singletonList("authorization_code")));
+        patchClient.setRedirectUris(Optional.of(Collections.singletonList("com.gravitee.app://callback")));
 
         when(applicationService.findById("my-client")).thenReturn(Maybe.just(client));
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
@@ -564,8 +568,8 @@ public class ClientServiceTest {
         client.setDomain(DOMAIN);
 
         PatchClient patchClient = new PatchClient();
-        patchClient.setAuthorizedGrantTypes(Optional.of(Arrays.asList("authorization_code")));
-        patchClient.setRedirectUris(Optional.of(Arrays.asList("com.google.app:/callback")));
+        patchClient.setAuthorizedGrantTypes(Optional.of(Collections.singletonList("authorization_code")));
+        patchClient.setRedirectUris(Optional.of(Collections.singletonList("com.google.app:/callback")));
 
         when(applicationService.findById("my-client")).thenReturn(Maybe.just(client));
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
@@ -582,7 +586,6 @@ public class ClientServiceTest {
 
     @Test
     public void shouldDelete() {
-        Application existingClient = Mockito.mock(Application.class);
         when(applicationService.delete("my-client", null)).thenReturn(Completable.complete());
         Form form = new Form();
         form.setId("form-id");
@@ -600,7 +603,6 @@ public class ClientServiceTest {
 
     @Test
     public void shouldDelete_withoutRelatedData() {
-        Application existingClient = Mockito.mock(Application.class);
         when(applicationService.delete("my-client", null)).thenReturn(Completable.complete());
 
         TestObserver testObserver = clientService.delete("my-client").test();

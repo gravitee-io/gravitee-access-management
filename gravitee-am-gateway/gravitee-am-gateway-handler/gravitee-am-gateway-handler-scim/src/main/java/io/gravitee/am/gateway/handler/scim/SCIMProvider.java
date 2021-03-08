@@ -29,7 +29,7 @@ import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
@@ -95,8 +95,8 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             scimRouter.route().handler(OAuth2AuthHandler.create(oAuth2AuthProvider, "scim"));
 
             // Users resource
-            UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator);
-            UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper, passwordValidator);
+            UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator,domain);
+            UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper, passwordValidator,domain);
 
             scimRouter.get("/Users").handler(usersEndpoint::list);
             scimRouter.get("/Users/:id").handler(userEndpoint::get);

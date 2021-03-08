@@ -55,6 +55,7 @@ public class PatchDomain {
     private Optional<LoginSettings> loginSettings;
     private Optional<WebAuthnSettings> webAuthnSettings;
     private Optional<AccountSettings> accountSettings;
+    private Optional<PatchPasswordSettings> passwordSettings;
     private Optional<Set<String>> tags;
 
     public Optional<String> getName() {
@@ -145,6 +146,14 @@ public class PatchDomain {
         this.tags = tags;
     }
 
+    public Optional<PatchPasswordSettings> getPasswordSettings() {
+        return passwordSettings;
+    }
+
+    public void setPasswordSettings(Optional<PatchPasswordSettings> passwordSettings) {
+        this.passwordSettings = passwordSettings;
+    }
+
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
         Domain toPatch = new Domain(_toPatch);
@@ -170,6 +179,9 @@ public class PatchDomain {
                 toPatch.setOidc(OIDCSettings.defaultSettings());
             }
         }
+        if (this.passwordSettings != null) {
+            this.passwordSettings.ifPresent(ps -> toPatch.setPasswordSettings(ps.patch(toPatch.getPasswordSettings())));
+        }
 
         return toPatch;
     }
@@ -177,7 +189,7 @@ public class PatchDomain {
 
     /**
      * Returns the list of required permission depending on what fields are filled.
-     *
+     * <p>
      * Ex: if settings.oauth is filled, {@link Permission#DOMAIN_OPENID} will be added to the list of required permissions cause it means the user want to update this information.
      *
      * @return the list of required permissions.
@@ -195,6 +207,7 @@ public class PatchDomain {
                 || loginSettings != null && loginSettings.isPresent()
                 || webAuthnSettings != null && webAuthnSettings.isPresent()
                 || accountSettings != null && accountSettings.isPresent()
+                || passwordSettings != null && passwordSettings.isPresent()
                 || tags != null && tags.isPresent()) {
 
             requiredPermissions.add(Permission.DOMAIN_SETTINGS);

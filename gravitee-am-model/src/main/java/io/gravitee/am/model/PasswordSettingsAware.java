@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.authentication.crypto.password;
+package io.gravitee.am.model;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PasswordValidator {
 
-    int PASSWORD_MAX_LENGTH = 72;
+public interface PasswordSettingsAware {
 
-    boolean validate(final String password);
+    PasswordSettings getPasswordSettings();
 }
