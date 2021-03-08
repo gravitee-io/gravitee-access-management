@@ -90,6 +90,11 @@ public class Domain implements Resource {
 
     private AccountSettings accountSettings;
 
+    /**
+     * Password settings
+     */
+    private PasswordSettings passwordSettings;
+
     private Set<String> tags;
 
     /**
@@ -129,6 +134,7 @@ public class Domain implements Resource {
         this.tags = other.tags;
         this.referenceType = other.referenceType;
         this.referenceId = other.referenceId;
+        this.passwordSettings = other.passwordSettings;
     }
 
     public String getId() {
@@ -322,6 +328,14 @@ public class Domain implements Resource {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
+    }
+
+    public PasswordSettings getPasswordSettings() {
+        return passwordSettings;
+    }
+
+    public void setPasswordSettings(PasswordSettings passwordSettings) {
+        this.passwordSettings = passwordSettings;
     }
 
     @Override

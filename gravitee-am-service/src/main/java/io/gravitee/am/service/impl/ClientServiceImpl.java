@@ -45,7 +45,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -68,7 +72,7 @@ public class ClientServiceImpl implements ClientService {
         LOGGER.debug("Find client by ID: {}", id);
         return applicationService.findById(id)
                 .map(application -> {
-                    Client client = Application.convert(application);
+                    Client client = application.toClient();
                     // Send an empty array in case of no grant types
                     if (client.getAuthorizedGrantTypes() == null) {
                         client.setAuthorizedGrantTypes(Collections.emptyList());
@@ -81,7 +85,7 @@ public class ClientServiceImpl implements ClientService {
     public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
         LOGGER.debug("Find client by domain: {} and client id: {}", domain, clientId);
         return applicationService.findByDomainAndClientId(domain, clientId)
-                .map(Application::convert)
+                .map(Application::toClient)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find client by domain: {} and client id: {}", domain, clientId, ex);
                     return Maybe.error(new TechnicalManagementException(
@@ -91,11 +95,11 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public Single<Set<Client>> findByDomain(String domain) {
-        LOGGER.debug("Find clients by domain", domain);
+        LOGGER.debug("Find clients by domain : {}", domain);
         return applicationService.findByDomain(domain)
                 .map(pagedApplications -> pagedApplications
                         .stream()
-                        .map(Application::convert)
+                        .map(Application::toClient)
                         .collect(Collectors.toSet()));
     }
 
@@ -105,7 +109,7 @@ public class ClientServiceImpl implements ClientService {
         return applicationService.search(domain, query, 0, Integer.MAX_VALUE)
                 .map(pagedApplications -> pagedApplications.getData()
                         .stream()
-                        .map(Application::convert)
+                        .map(Application::toClient)
                         .collect(Collectors.toSet()));
     }
 
@@ -116,20 +120,20 @@ public class ClientServiceImpl implements ClientService {
                 .map(pagedApplications -> {
                     Set<Client> clients = pagedApplications.getData()
                             .stream()
-                            .map(Application::convert)
+                            .map(Application::toClient)
                             .collect(Collectors.toSet());
-                    return new Page(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
+                    return new Page<>(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
                 });
     }
 
     @Override
     public Single<Page<Client>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("Find clients by domain", domain);
+        LOGGER.debug("Find clients by domain: {}", domain);
         return applicationService.findByDomain(domain, page, size)
                 .map(pagedApplications -> {
                     List<Client> clients = pagedApplications.getData()
                             .stream()
-                            .map(Application::convert)
+                            .map(Application::toClient)
                             .collect(Collectors.toList());
                     return new Page<>(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
                 })
@@ -146,7 +150,7 @@ public class ClientServiceImpl implements ClientService {
         return applicationService.findAll()
                 .map(pagedApplications -> pagedApplications
                         .stream()
-                        .map(Application::convert)
+                        .map(Application::toClient)
                         .collect(Collectors.toSet()))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find clients", ex);
@@ -161,7 +165,7 @@ public class ClientServiceImpl implements ClientService {
                 .map(pagedApplications -> {
                     List<Client> clients = pagedApplications.getData()
                             .stream()
-                            .map(Application::convert)
+                            .map(Application::toClient)
                             .collect(Collectors.toList());
                     return new Page<>(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
                 })
@@ -180,7 +184,7 @@ public class ClientServiceImpl implements ClientService {
                             .stream()
                             .map(topApplication -> {
                                 TopClient topClient = new TopClient();
-                                topClient.setClient(Application.convert(topApplication.getApplication()));
+                                topClient.setClient(topApplication.getApplication().toClient());
                                 topClient.setAccessTokens(topApplication.getAccessTokens());
                                 return topClient;
                             })
@@ -201,7 +205,7 @@ public class ClientServiceImpl implements ClientService {
                             .stream()
                             .map(topApplication -> {
                                 TopClient topClient = new TopClient();
-                                topClient.setClient(Application.convert(topApplication.getApplication()));
+                                topClient.setClient(topApplication.getApplication().toClient());
                                 topClient.setAccessTokens(topApplication.getAccessTokens());
                                 return topClient;
                             })
@@ -295,8 +299,7 @@ public class ClientServiceImpl implements ClientService {
         client.setCreatedAt(new Date());
         client.setUpdatedAt(client.getCreatedAt());
 
-        return applicationService.create(convert(client))
-                .map(Application::convert);
+        return applicationService.create(convert(client)).map(Application::toClient);
     }
 
     @Override
@@ -308,7 +311,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         return applicationService.update(convert(client))
-                .map(Application::convert);
+                .map(Application::toClient);
     }
 
     @Override
@@ -329,7 +332,7 @@ public class ClientServiceImpl implements ClientService {
     public Single<Client> renewClientSecret(String domain, String id, User principal) {
         LOGGER.debug("Renew client secret for client {} in domain {}", id, domain);
         return applicationService.renewClientSecret(domain, id, principal)
-                .map(Application::convert);
+                .map(Application::toClient);
     }
 
     private Application convert(Client client) {

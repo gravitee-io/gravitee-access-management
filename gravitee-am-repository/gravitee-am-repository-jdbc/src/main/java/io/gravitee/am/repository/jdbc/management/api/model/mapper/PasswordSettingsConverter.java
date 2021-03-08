@@ -13,14 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.policy;
+package io.gravitee.am.repository.jdbc.management.api.model.mapper;
+
+import com.github.dozermapper.core.DozerConverter;
+import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.repository.jdbc.common.JSONMapper;
 
 /**
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
  * @author GraviteeSource Team
  */
+public class PasswordSettingsConverter extends DozerConverter<PasswordSettings, String> {
+    public PasswordSettingsConverter() {
+        super(PasswordSettings.class, String.class);
+    }
 
-public enum PasswordInclude {
-    NUMBERS,
-    NUMBERS_AND_SPECIAL_CHARACTERS
+    @Override
+    public String convertTo(PasswordSettings bean, String s) {
+        return JSONMapper.toJson(bean);
+    }
+
+    @Override
+    public PasswordSettings convertFrom(String s, PasswordSettings bean) {
+        return JSONMapper.toBean(s, PasswordSettings.class);
+    }
 }

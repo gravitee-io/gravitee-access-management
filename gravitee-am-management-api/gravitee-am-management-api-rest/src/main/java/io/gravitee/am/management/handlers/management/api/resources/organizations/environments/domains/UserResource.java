@@ -28,9 +28,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
@@ -43,7 +41,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
@@ -70,9 +76,6 @@ public class UserResource extends AbstractResource {
 
     @Autowired
     private ApplicationService applicationService;
-
-    @Autowired
-    private PasswordValidator passwordValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -195,22 +198,16 @@ public class UserResource extends AbstractResource {
     public void resetPassword(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        // check password policy
-        if (!passwordValidator.validate(password.getPassword())) {
-            response.resume(new UserInvalidException(("Field [password] is invalid")));
-            return;
-        }
-
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(user1 -> userService.resetPassword(ReferenceType.DOMAIN, domain, user, password.getPassword(), authenticatedUser)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(domain -> userService.resetPassword(domain, user, password.getPassword(), authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
 
     }

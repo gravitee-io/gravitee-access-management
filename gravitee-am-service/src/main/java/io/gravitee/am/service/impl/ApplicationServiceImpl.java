@@ -33,7 +33,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
-import io.gravitee.am.model.application.PasswordSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -545,10 +544,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> update0(String domain, Application currentApplication, Application applicationToUpdate, User principal) {
         // updated date
         applicationToUpdate.setUpdatedAt(new Date());
-        // validate password settings
-        return validatePasswordSettings(applicationToUpdate)
-                // validate application metadata
-                .flatMap(this::validateApplicationMetadata)
+
+        // validate application metadata
+        return validateApplicationMetadata(applicationToUpdate)
                 // validate identity providers
                 .flatMap(this::validateApplicationIdentityProviders)
                 // update application
@@ -765,26 +763,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
-        return Single.just(application);
-    }
-
-    static Single<Application> validatePasswordSettings(Application application) {
-        Optional<PasswordSettings> optionalPasswordSettings = Optional.ofNullable(application.getSettings()).map(ApplicationSettings::getPasswordSettings);
-        if (!optionalPasswordSettings.isPresent()) {
-            return Single.just(application);
-        }
-
-        PasswordSettings passwordSettings = optionalPasswordSettings.get();
-        if (passwordSettings.getRegex() == null) {
-            return Single.error(new IllegalArgumentException("'regex' field must not be null"));
-        }
-
-        //case regxFormat
-        if (Boolean.FALSE.equals(passwordSettings.getRegex())) {
-            if (passwordSettings.getMaxLength() <= passwordSettings.getMinLength()) {
-                return Single.error(new IllegalArgumentException("Password max length must be greater than min length"));
-            }
-        }
         return Single.just(application);
     }
 }

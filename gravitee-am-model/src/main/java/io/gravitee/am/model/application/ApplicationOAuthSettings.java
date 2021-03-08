@@ -16,9 +16,14 @@
 package io.gravitee.am.model.application;
 
 import io.gravitee.am.model.TokenClaim;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * See <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">2. Client Metadata</a>
@@ -296,7 +301,7 @@ public class ApplicationOAuthSettings {
         this.tokenEndpointAuthSigningAlg = other.tokenEndpointAuthSigningAlg;
         this.defaultMaxAge = other.defaultMaxAge;
         this.requireAuthTime = other.requireAuthTime;
-        this.defaultACRvalues = other.defaultACRvalues != null ? new ArrayList<>(other.defaultACRvalues): null;
+        this.defaultACRvalues = other.defaultACRvalues != null ? new ArrayList<>(other.defaultACRvalues) : null;
         this.initiateLoginUri = other.initiateLoginUri;
         this.requestUris = other.requestUris != null ? new ArrayList<>(other.requestUris) : null;
         this.softwareId = other.softwareId;
@@ -307,12 +312,12 @@ public class ApplicationOAuthSettings {
         this.clientIdIssuedAt = other.clientIdIssuedAt;
         this.clientSecretExpiresAt = other.clientSecretExpiresAt;
         this.scopes = other.scopes != null ? new ArrayList<>(other.scopes) : null;
-        this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals): null;
+        this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
         this.idTokenValiditySeconds = other.idTokenValiditySeconds;
-        this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims): null;
+        this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
         this.tlsClientAuthSubjectDn = other.tlsClientAuthSubjectDn;
         this.tlsClientAuthSanDns = other.tlsClientAuthSanDns;
         this.tlsClientAuthSanEmail = other.tlsClientAuthSanEmail;
@@ -779,5 +784,64 @@ public class ApplicationOAuthSettings {
 
     public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
+    }
+
+    public void copyTo(Client client) {
+        client.setClientId(this.clientId);
+        client.setClientSecret(this.clientSecret);
+        client.setRedirectUris(this.redirectUris);
+        client.setAuthorizedGrantTypes(this.grantTypes);
+        client.setResponseTypes(this.responseTypes);
+        client.setApplicationType(this.applicationType);
+        client.setContacts(this.contacts);
+        client.setClientName(this.clientName);
+        client.setLogoUri(logoUri);
+        client.setClientUri(this.clientUri);
+        client.setPolicyUri(this.policyUri);
+        client.setTosUri(this.tosUri);
+        client.setJwksUri(this.jwksUri);
+        client.setJwks(this.jwks);
+        client.setSectorIdentifierUri(this.sectorIdentifierUri);
+        client.setSubjectType(this.subjectType);
+        client.setIdTokenSignedResponseAlg(this.idTokenSignedResponseAlg);
+        client.setIdTokenEncryptedResponseAlg(this.idTokenEncryptedResponseAlg);
+        client.setIdTokenEncryptedResponseEnc(this.idTokenEncryptedResponseEnc);
+        client.setUserinfoSignedResponseAlg(this.userinfoSignedResponseAlg);
+        client.setUserinfoEncryptedResponseAlg(this.userinfoEncryptedResponseAlg);
+        client.setUserinfoEncryptedResponseEnc(this.userinfoEncryptedResponseEnc);
+        client.setRequestObjectSigningAlg(this.requestObjectSigningAlg);
+        client.setRequestObjectEncryptionAlg(this.requestObjectEncryptionAlg);
+        client.setRequestObjectEncryptionEnc(this.requestObjectEncryptionEnc);
+        client.setTokenEndpointAuthMethod(this.tokenEndpointAuthMethod);
+        client.setTokenEndpointAuthSigningAlg(this.tokenEndpointAuthSigningAlg);
+        client.setDefaultMaxAge(this.defaultMaxAge);
+        client.setRequireAuthTime(this.requireAuthTime);
+        client.setDefaultACRvalues(this.defaultACRvalues);
+        client.setInitiateLoginUri(this.initiateLoginUri);
+        client.setRequestUris(this.requestUris);
+        client.setScopes(this.scopes);
+        client.setSoftwareId(this.softwareId);
+        client.setSoftwareVersion(this.softwareVersion);
+        client.setSoftwareStatement(this.softwareStatement);
+        client.setRegistrationAccessToken(this.registrationAccessToken);
+        client.setRegistrationClientUri(this.registrationClientUri);
+        client.setClientIdIssuedAt(this.clientIdIssuedAt);
+        client.setClientSecretExpiresAt(this.clientSecretExpiresAt);
+        client.setAccessTokenValiditySeconds(this.accessTokenValiditySeconds);
+        client.setRefreshTokenValiditySeconds(this.refreshTokenValiditySeconds);
+        client.setIdTokenValiditySeconds(this.idTokenValiditySeconds);
+        client.setEnhanceScopesWithUserPermissions(this.enhanceScopesWithUserPermissions);
+        client.setScopeApprovals(this.scopeApprovals);
+        client.setTokenCustomClaims(this.tokenCustomClaims);
+        client.setTlsClientAuthSubjectDn(this.tlsClientAuthSubjectDn);
+        client.setTlsClientAuthSanDns(this.tlsClientAuthSanDns);
+        client.setTlsClientAuthSanEmail(this.tlsClientAuthSanEmail);
+        client.setTlsClientAuthSanIp(this.tlsClientAuthSanIp);
+        client.setTlsClientAuthSanUri(this.tlsClientAuthSanUri);
+        client.setAuthorizationSignedResponseAlg(this.authorizationSignedResponseAlg);
+        client.setAuthorizationEncryptedResponseAlg(this.authorizationEncryptedResponseAlg);
+        client.setAuthorizationEncryptedResponseEnc(this.authorizationEncryptedResponseEnc);
+        client.setForcePKCE(this.forcePKCE);
+        client.setPostLogoutRedirectUris(this.postLogoutRedirectUris);
     }
 }

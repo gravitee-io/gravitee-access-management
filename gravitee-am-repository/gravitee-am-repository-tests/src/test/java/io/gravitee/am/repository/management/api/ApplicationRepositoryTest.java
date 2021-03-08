@@ -17,10 +17,10 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.common.policy.PasswordInclude;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
-import io.gravitee.am.model.application.PasswordSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -211,10 +211,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
     private static PasswordSettings buildPasswordSettings() {
         PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setRegex(false);
-        passwordSettings.setRegexFormat("*");
         passwordSettings.setMinLength(5);
-        passwordSettings.setMaxLength(9);
         passwordSettings.setPasswordInclude(PasswordInclude.NUMBERS_AND_SPECIAL_CHARACTERS);
         passwordSettings.setLettersInMixedCase(true);
         passwordSettings.setMaxConsecutiveLetters(4);

@@ -20,8 +20,8 @@ import io.gravitee.am.gateway.certificate.DefaultCertificateManager;
 import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
-import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oidc.Client;
@@ -38,7 +38,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 import java.text.Collator;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -161,7 +169,7 @@ public class SyncManager implements InitializingBean {
         logger.info("Starting clients initialization ...");
         List<Application> applications = applicationRepository.findAll().blockingGet();
         if (applications != null) {
-            ((DefaultClientManager) clientManager).init(applications.stream().map(Application::convert).collect(Collectors.toList()));
+            ((DefaultClientManager) clientManager).init(applications.stream().map(Application::toClient).collect(Collectors.toList()));
         }
         logger.info("Clients initialization done");
     }
@@ -176,7 +184,7 @@ public class SyncManager implements InitializingBean {
     private void computeEvents(Collection<Event> events) {
         events.forEach(event -> {
             logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-            switch(event.getType()) {
+            switch (event.getType()) {
                 case DOMAIN:
                     synchronizeDomain(event);
                     break;
@@ -234,7 +242,7 @@ public class SyncManager implements InitializingBean {
                 Application application = applicationRepository.findById(applicationId).blockingGet();
                 if (application != null) {
                     // Get deployed client
-                    Client client = Application.convert(application);
+                    Client client = application.toClient();
                     Client deployedClient = clientManager.get(application.getId());
                     // client is not yet deployed, so let's do it !
                     if (deployedClient == null) {
@@ -278,7 +286,7 @@ public class SyncManager implements InitializingBean {
         String systemPropertyTags = System.getProperty(SHARDING_TAGS_SYSTEM_PROPERTY);
         String tags = systemPropertyTags == null ?
                 environment.getProperty(SHARDING_TAGS_SYSTEM_PROPERTY) : systemPropertyTags;
-        if (tags != null && ! tags.isEmpty()) {
+        if (tags != null && !tags.isEmpty()) {
             shardingTags = Optional.of(Arrays.asList(tags.split(SHARDING_TAGS_SEPARATOR)));
         } else {
             shardingTags = Optional.empty();

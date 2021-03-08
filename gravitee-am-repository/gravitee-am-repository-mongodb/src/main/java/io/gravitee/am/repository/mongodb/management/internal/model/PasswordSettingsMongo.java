@@ -24,24 +24,14 @@ import io.gravitee.am.common.policy.PasswordInclude;
 public class PasswordSettingsMongo {
 
     /**
-     * if use a regex
+     * Account settings configuration inherited ?
      */
-    private Boolean regex;
-
-    /**
-     * regex format
-     */
-    private String regexFormat;
+    private boolean inherited;
 
     /**
      * password min length
      */
     private Integer minLength;
-
-    /**
-     * Password ma length
-     */
-    private Integer maxLength;
 
     /**
      * Password include
@@ -63,29 +53,11 @@ public class PasswordSettingsMongo {
     }
 
     public PasswordSettingsMongo(PasswordSettingsMongo passwordSettings) {
-        this.regex = passwordSettings.regex;
-        this.regexFormat = passwordSettings.regexFormat;
+        this.inherited = passwordSettings.inherited;
         this.minLength = passwordSettings.minLength;
-        this.maxLength = passwordSettings.maxLength;
         this.passwordInclude = passwordSettings.passwordInclude;
         this.lettersInMixedCase = passwordSettings.lettersInMixedCase;
         this.maxConsecutiveLetters = passwordSettings.maxConsecutiveLetters;
-    }
-
-    public Boolean getRegex() {
-        return regex;
-    }
-
-    public void setRegex(Boolean regex) {
-        this.regex = regex;
-    }
-
-    public String getRegexFormat() {
-        return regexFormat;
-    }
-
-    public void setRegexFormat(String regexFormat) {
-        this.regexFormat = regexFormat;
     }
 
     public Integer getMinLength() {
@@ -94,14 +66,6 @@ public class PasswordSettingsMongo {
 
     public void setMinLength(Integer minLength) {
         this.minLength = minLength;
-    }
-
-    public Integer getMaxLength() {
-        return maxLength;
-    }
-
-    public void setMaxLength(Integer maxLength) {
-        this.maxLength = maxLength;
     }
 
     public PasswordInclude getPasswordInclude() {
@@ -126,5 +90,13 @@ public class PasswordSettingsMongo {
 
     public void setMaxConsecutiveLetters(Integer maxConsecutiveLetters) {
         this.maxConsecutiveLetters = maxConsecutiveLetters;
+    }
+
+    public boolean isInherited() {
+        return inherited;
+    }
+
+    public void setInherited(boolean inherited) {
+        this.inherited = inherited;
     }
 }

@@ -21,9 +21,8 @@ import javax.validation.constraints.Size;
 import java.util.Date;
 import java.util.Map;
 
-import static io.gravitee.am.service.authentication.crypto.password.PasswordValidator.PASSWORD_MAX_LENGTH;
-import static io.gravitee.am.service.validators.EmailValidator.EMAIL_MAX_LENGTH;
 import static io.gravitee.am.service.validators.EmailValidator.EMAIL_PATTERN;
+import static io.gravitee.am.service.validators.PasswordValidator.PASSWORD_MAX_LENGTH;
 import static io.gravitee.am.service.validators.UserValidator.*;
 
 /**

@@ -30,11 +30,19 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.mongodb.management.internal.model.*;
+import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.WebAuthnSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
-import io.reactivex.*;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -42,7 +50,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -62,23 +72,23 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Single<Set<Domain>> findAll() {
-        return Observable.fromPublisher(domainsCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable.fromPublisher(domainsCollection.find()).map(MongoDomainRepository::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Maybe<Domain> findById(String id) {
-        return Observable.fromPublisher(domainsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(domainsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(MongoDomainRepository::convert);
     }
 
     @Override
     public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
-        return Observable.fromPublisher(domainsCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable.fromPublisher(domainsCollection.find(in(FIELD_ID, ids))).map(MongoDomainRepository::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Flowable<Domain> findAllByEnvironment(String environmentId) {
 
-        return Flowable.fromPublisher(domainsCollection.find(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()), eq(FIELD_REFERENCE_ID, environmentId)))).map(this::convert);
+        return Flowable.fromPublisher(domainsCollection.find(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()), eq(FIELD_REFERENCE_ID, environmentId)))).map(MongoDomainRepository::convert);
     }
 
     @Override
@@ -99,7 +109,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return Completable.fromPublisher(domainsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
-    private Domain convert(DomainMongo domainMongo) {
+    private static Domain convert(DomainMongo domainMongo) {
         if (domainMongo == null) {
             return null;
         }
@@ -120,6 +130,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
         domain.setWebAuthnSettings(convert(domainMongo.getWebAuthnSettings()));
         domain.setAccountSettings(convert(domainMongo.getAccountSettings()));
+        domain.setPasswordSettings(ConversionUtils.convert(domainMongo.getPasswordSettings()));
         domain.setTags(domainMongo.getTags());
         domain.setReferenceType(domainMongo.getReferenceType());
         domain.setReferenceId(domainMongo.getReferenceId());
@@ -127,7 +138,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return domain;
     }
 
-    private DomainMongo convert(Domain domain) {
+    private static DomainMongo convert(Domain domain) {
         if (domain == null) {
             return null;
         }
@@ -148,6 +159,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setLoginSettings(convert(domain.getLoginSettings()));
         domainMongo.setWebAuthnSettings(convert(domain.getWebAuthnSettings()));
         domainMongo.setAccountSettings(convert(domain.getAccountSettings()));
+        domainMongo.setPasswordSettings(ConversionUtils.convert(domain.getPasswordSettings()));
         domainMongo.setTags(domain.getTags());
         domainMongo.setReferenceType(domain.getReferenceType());
         domainMongo.setReferenceId(domain.getReferenceId());
@@ -155,7 +167,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return domainMongo;
     }
 
-    private OIDCSettings convert(OIDCSettingsMongo oidcMongo) {
+    private static OIDCSettings convert(OIDCSettingsMongo oidcMongo) {
         if (oidcMongo == null) {
             return null;
         }
@@ -167,7 +179,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return oidcSettings;
     }
 
-    private UMASettings convert(UMASettingsMongo umaMongo) {
+    private static UMASettings convert(UMASettingsMongo umaMongo) {
         if (umaMongo == null) {
             return null;
         }
@@ -177,7 +189,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return umaSettings;
     }
 
-    private ClientRegistrationSettings convert(ClientRegistrationSettingsMongo dcrMongo) {
+    private static ClientRegistrationSettings convert(ClientRegistrationSettingsMongo dcrMongo) {
         if (dcrMongo == null) {
             return null;
         }
@@ -196,7 +208,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return result;
     }
 
-    private OIDCSettingsMongo convert(OIDCSettings oidc) {
+    private static OIDCSettingsMongo convert(OIDCSettings oidc) {
         if (oidc == null) {
             return null;
         }
@@ -208,7 +220,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return oidcSettings;
     }
 
-    private UMASettingsMongo convert(UMASettings uma) {
+    private static UMASettingsMongo convert(UMASettings uma) {
         if (uma == null) {
             return null;
         }
@@ -218,7 +230,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return umaMongo;
     }
 
-    private ClientRegistrationSettingsMongo convert(ClientRegistrationSettings dcr) {
+    private static ClientRegistrationSettingsMongo convert(ClientRegistrationSettings dcr) {
         if (dcr == null) {
             return null;
         }
@@ -237,7 +249,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return result;
     }
 
-    private SCIMSettings convert(SCIMSettingsMongo scimMongo) {
+    private static SCIMSettings convert(SCIMSettingsMongo scimMongo) {
         if (scimMongo == null) {
             return null;
         }
@@ -247,7 +259,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return scimSettings;
     }
 
-    private SCIMSettingsMongo convert(SCIMSettings scim) {
+    private static SCIMSettingsMongo convert(SCIMSettings scim) {
         if (scim == null) {
             return null;
         }
@@ -257,15 +269,15 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return scimMongo;
     }
 
-    private LoginSettings convert(LoginSettingsMongo loginSettingsMongo) {
+    private static LoginSettings convert(LoginSettingsMongo loginSettingsMongo) {
         return loginSettingsMongo != null ? loginSettingsMongo.convert() : null;
     }
 
-    private LoginSettingsMongo convert(LoginSettings loginSettings) {
+    private static LoginSettingsMongo convert(LoginSettings loginSettings) {
         return LoginSettingsMongo.convert(loginSettings);
     }
 
-    private WebAuthnSettings convert(WebAuthnSettingsMongo webAuthnSettingsMongo) {
+    private static WebAuthnSettings convert(WebAuthnSettingsMongo webAuthnSettingsMongo) {
         if (webAuthnSettingsMongo == null) {
             return null;
         }
@@ -284,7 +296,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return webAuthnSettings;
     }
 
-    private WebAuthnSettingsMongo convert(WebAuthnSettings webAuthnSettings) {
+    private static WebAuthnSettingsMongo convert(WebAuthnSettings webAuthnSettings) {
         if (webAuthnSettings == null) {
             return null;
         }
@@ -300,11 +312,11 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return webAuthnSettingsMongo;
     }
 
-    private AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {
+    private static AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {
         return accountSettingsMongo != null ? accountSettingsMongo.convert() : null;
     }
 
-    private AccountSettingsMongo convert(AccountSettings accountSettings) {
+    private static AccountSettingsMongo convert(AccountSettings accountSettings) {
         return AccountSettingsMongo.convert(accountSettings);
     }
 

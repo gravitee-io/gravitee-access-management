@@ -259,6 +259,7 @@ import {ApplicationOverviewComponent} from './domain/applications/application/ov
 import {ApplicationEndpointsComponent} from './domain/applications/application/endpoints/endpoints.component';
 import {ApplicationGeneralComponent} from './domain/applications/application/advanced/general/general.component';
 import {PasswordPolicyComponent} from './domain/applications/application/advanced/password-policy/password-policy.component';
+import {DomainPasswordPolicyComponent} from './domain/settings/password-policy/domain-password-policy.component';
 import {ApplicationIdPComponent} from './domain/applications/application/idp/idp.component';
 import {ApplicationDesignComponent} from './domain/applications/application/design/design.component';
 import {ApplicationFormsComponent} from './domain/applications/application/design/forms/forms.component';
@@ -472,6 +473,7 @@ import {EnvironmentComponent} from "./environment/environment.component";
     ApplicationEndpointsComponent,
     ApplicationGeneralComponent,
     PasswordPolicyComponent,
+    DomainPasswordPolicyComponent,
     ApplicationIdPComponent,
     ApplicationDesignComponent,
     ApplicationFormsComponent,

@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.model.application;
 
+import io.gravitee.am.model.oidc.Client;
+
+import java.util.Collections;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -46,5 +50,10 @@ public class ApplicationAdvancedSettings {
 
     public void setFlowsInherited(boolean flowsInherited) {
         this.flowsInherited = flowsInherited;
+    }
+
+    public void copyTo(Client client) {
+        client.setAutoApproveScopes(this.skipConsent ? Collections.singletonList("true") : null);
+        client.setFlowsInherited(this.flowsInherited);
     }
 }

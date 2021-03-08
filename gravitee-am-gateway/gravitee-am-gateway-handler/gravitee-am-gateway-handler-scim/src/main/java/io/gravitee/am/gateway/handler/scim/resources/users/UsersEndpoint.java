@@ -22,7 +22,8 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
-import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.DecodeException;
@@ -38,8 +39,11 @@ public class UsersEndpoint extends AbstractUserEndpoint {
     private static final int MAX_ITEMS_PER_PAGE = 100;
     private static final int DEFAULT_START_INDEX = 1;
 
-    public UsersEndpoint(UserService userService, ObjectMapper objectMapper, PasswordValidator passwordValidator) {
+    private final Domain domain;
+
+    public UsersEndpoint(UserService userService, ObjectMapper objectMapper, PasswordValidator passwordValidator, Domain domain) {
         super(userService, objectMapper, passwordValidator);
+        this.domain = domain;
     }
 
     public void list(RoutingContext context) {
@@ -84,7 +88,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
                                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                 .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(users)),
-                        error -> context.fail(error));
+                        context::fail);
     }
 
     /**
@@ -146,11 +150,9 @@ public class UsersEndpoint extends AbstractUserEndpoint {
             }
 
             // password policy
-            if (user.getPassword() != null) {
-                if (!passwordValidator.validate(user.getPassword())) {
-                    context.fail(new InvalidValueException("Field [password] is invalid"));
-                    return;
-                }
+            if (isInvalidUserPassword(user, this.domain)) {
+                context.fail(new InvalidValueException("Field [password] is invalid"));
+                return;
             }
 
             userService.create(user, location(context.request()))
@@ -162,7 +164,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
                                     .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
                                     .putHeader(HttpHeaders.LOCATION, user1.getMeta().getLocation())
                                     .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user1)),
-                            error -> context.fail(error));
+                            context::fail);
         } catch (DecodeException ex) {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }
