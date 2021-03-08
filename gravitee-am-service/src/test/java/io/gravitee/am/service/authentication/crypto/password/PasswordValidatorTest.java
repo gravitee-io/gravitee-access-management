@@ -109,8 +109,8 @@ public class PasswordValidatorTest {
     @Test
     public void maxConsecutiveLetters() {
         PasswordSettings passwordSettings = buildPasswordSettings(3, null, false, 3);
-        Assertions.assertThat(getValidationErrorKey("ABBBCD", passwordSettings)).hasValue("invalid max consecutive letters");
-        Assertions.assertThat(getValidationErrorKey("ABcd", passwordSettings)).isEmpty();
+        Assertions.assertThat(getValidationErrorKey("ABBBBCD", passwordSettings)).hasValue("invalid max consecutive letters");
+        Assertions.assertThat(getValidationErrorKey("ABBBcd", passwordSettings)).isEmpty();
     }
 
     private Optional<String> getValidationErrorKey(String password, PasswordSettings passwordSettings) {

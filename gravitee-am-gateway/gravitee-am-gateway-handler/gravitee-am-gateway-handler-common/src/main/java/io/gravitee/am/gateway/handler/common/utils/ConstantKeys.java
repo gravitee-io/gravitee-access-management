@@ -41,6 +41,7 @@ public interface ConstantKeys {
     String ERROR_DESCRIPTION_PARAM_KEY = "error_description";
     String SUCCESS_PARAM_KEY = "success";
     String WARNING_PARAM_KEY = "warning";
+    String PASSWORD_SETTINGS_PARAM_KEY = "passwordSettings";
     String TOKEN_PARAM_KEY = "token";
     String TOKEN_TYPE_HINT_PARAM_KEY = "token_type_hint";
     String USERNAME_PARAM_KEY = "username";

@@ -73,6 +73,10 @@
     text-align: center;
 }
 
+.error-left .error {
+    text-align: left;
+}
+
 a, a:hover, a:focus {
     text-decoration: none;
     -o-transition: all .3s; -moz-transition: all .3s; -webkit-transition: all .3s; -ms-transition: all .3s; transition: all .3s;
