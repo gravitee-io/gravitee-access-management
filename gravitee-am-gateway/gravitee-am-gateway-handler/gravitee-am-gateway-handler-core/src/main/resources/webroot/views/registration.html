@@ -27,7 +27,29 @@
             </div>
 
             <div class="register-error-info" th:switch="${warning}" th:if="${warning}">
-                <p style="margin: 0;" th:case="invalid_password_value">Invalid password value. It does not comply with the password policy.</p>
+                <p style="margin: 0;" th:case="invalid_password_value">Invalid password value. It does not comply with
+                    the password policy.
+                    <br/>
+                <div th:if="${passwordConfig!=null}" class="error-left">
+
+                    <div th:if="${passwordConfig.minLength!= null}">
+                        * Must be at least <span th:text="${passwordConfig.minLength}"/> characters
+                        <br/>
+                    </div>
+                    <div th:if="${passwordConfig.lettersInMixedCase!= null && passwordConfig.lettersInMixedCase}">
+                        * Must include letters in mixed case
+                        <br/>
+                    </div>
+                    <div th:if="${passwordConfig.maxConsecutiveLetters != null && passwordConfig.maxConsecutiveLetters > 0}">
+                        * <span th:text="${passwordConfig.maxConsecutiveLetters}"/> consecutive letters or numbers
+                    </div>
+                    <div th:if="${passwordConfig.passwordInclude!= null}">
+                        * Must include <span
+                            th:text="${#strings.replace(#strings.toLowerCase(passwordConfig.passwordInclude),'_',' ')}"/>
+                        <br/>
+                    </div>
+                </div>
+
                 <p style="margin: 0;" th:case="invalid_user_information">Invalid first name, last name or username.</p>
                 <p style="margin: 0;" th:case="invalid_email">Invalid email address.</p>
                 <p style="margin: 0;" th:case="*">Some information are missing or invalid.</p>
