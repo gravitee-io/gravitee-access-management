@@ -12,6 +12,7 @@
     <link rel="stylesheet" th:href="@{assets/material/material.icons.css}">
     <link rel="stylesheet" th:href="@{assets/font-awesome/css/font-awesome.min.css}">
     <link rel="stylesheet" th:href="@{assets/css/register.css}">
+    <link rel="stylesheet" th:href="@{assets/css/password_validation.css}">
 
     <!-- Favicon and touch icons -->
     <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
@@ -27,7 +28,8 @@
             </div>
 
             <div class="register-error-info" th:switch="${warning}" th:if="${warning}">
-                <p style="margin: 0;" th:case="invalid_password_value">Invalid password value. It does not comply with the password policy.</p>
+                <p style="margin: 0;" th:case="invalid_password_value">Invalid password value. It does not comply with
+                    the password policy.
                 <p style="margin: 0;" th:case="invalid_user_information">Invalid first name, last name or username.</p>
                 <p style="margin: 0;" th:case="invalid_email">Invalid email address.</p>
                 <p style="margin: 0;" th:case="*">Some information are missing or invalid.</p>
@@ -57,10 +59,22 @@
                         </div>
                     </div>
 
+
                     <div class="input-textfield">
                         <label for="password">Password</label>
                         <i id="changePasswordVisibility" class="mdl-textfield__icon material-icons" style="position: absolute; margin-top: 27px; margin-left: 5px;">visibility</i>
                         <input type="password" id="password" name="password" required style="padding-left: 30px;"/>
+                    </div>
+
+                    <div th:if="${passwordSettings != null}" id="passwordSettings">
+                        <span>Password policy :</span>
+                        <p th:if="${passwordSettings.minLength != null}" id="minLength" class="invalid">Contains at least <span th:text="${passwordSettings.minLength}"/> characters</p>
+                        <div th:if="${passwordSettings.passwordInclude != null}">
+                            <p th:if="${passwordSettings.passwordInclude.toString() == 'NUMBERS'}" id="includeNumbers" class="invalid">Contains a number</p>
+                            <p th:if="${passwordSettings.passwordInclude.toString() == 'NUMBERS_AND_SPECIAL_CHARACTERS'}" id="includeSpecialChar" class="invalid">Contains number and special character</p>
+                        </div>
+                        <p th:if="${passwordSettings.lettersInMixedCase != null && passwordSettings.lettersInMixedCase}" id="mixedCase" class="invalid">Contains letters in mixed case</p>
+                        <p th:if="${passwordSettings.maxConsecutiveLetters != null}" id="maxConsecutiveLetters" class="valid">Max <span th:text="${passwordSettings.maxConsecutiveLetters}"/> consecutive letters or numbers</p>
                     </div>
                 </div>
 
@@ -69,7 +83,7 @@
                 <div style="display: flex; flex-direction: row;">
                     <a th:href="${loginAction}"><< Back to login</a>
                     <span style="display: flex; flex: 1;"></span>
-                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Create account</button>
+                    <button type="submit" id="submitBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Create account</button>
                 </div>
             </form>
         </div>
@@ -98,18 +112,18 @@
 <![endif]-->
 <script th:src="@{assets/material/material.min.js}"></script>
 <script th:src="@{assets/js/jquery-3.5.1.min.js}"></script>
-<script>
-    $(".mdl-textfield__input").focus(function (){
-        if( !this.value ){
+<script th:inline="javascript">
+    $(".mdl-textfield__input").focus(function () {
+        if (!this.value) {
             $(this).prop('required', true);
             $(this).parent().addClass('is-invalid');
         }
     });
-    $(".mdl-button[type='submit']").click(function (event){
+    $(".mdl-button[type='submit']").click(function (event) {
         $(this).siblings(".mdl-textfield").addClass('is-invalid');
         $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
     });
-    $("#changePasswordVisibility").click(function() {
+    $("#changePasswordVisibility").click(function () {
         var inputType = $('input#password').attr('type');
         if (inputType === 'text') {
             $('input#password').prop('type', 'password');
@@ -119,6 +133,9 @@
             $(this).text('visibility_off');
         }
     });
+    submitBtn.disabled = true;
+    const passwordSettings = /*[[${passwordSettings}]]*/ null;
 </script>
+<script th:src="@{assets/js/password-validation.js}"></script>
 </body>
 </html>

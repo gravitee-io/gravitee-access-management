@@ -19,7 +19,9 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.form.FormManager;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -40,30 +42,33 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RegisterEndpoint implements Handler<RoutingContext> {
+public class RegisterEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(RegisterEndpoint.class);
 
     private final ThymeleafTemplateEngine engine;
+    private final Domain domain;
 
-    public RegisterEndpoint(ThymeleafTemplateEngine engine) {
+    public RegisterEndpoint(ThymeleafTemplateEngine engine, Domain domain) {
         this.engine = engine;
+        this.domain = domain;
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
-        final HttpServerRequest request = routingContext.request();
-        final String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
-        final String errorDescription = request.getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
-        final String success = request.getParam(ConstantKeys.SUCCESS_PARAM_KEY);
-        final String warning = request.getParam(ConstantKeys.WARNING_PARAM_KEY);
-        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final String clientId = request.getParam(Parameters.CLIENT_ID);
+        HttpServerRequest request = routingContext.request();
+        copyValue(request, routingContext, ConstantKeys.SUCCESS_PARAM_KEY);
+        copyValue(request, routingContext, ConstantKeys.WARNING_PARAM_KEY);
+        Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        PasswordSettings.getInstance(client, domain).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
+
+        String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
+        String errorDescription = request.getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
+
+        String clientId = request.getParam(Parameters.CLIENT_ID);
         // add query params to context
         routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
         routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
-        routingContext.put(ConstantKeys.SUCCESS_PARAM_KEY, success);
-        routingContext.put(ConstantKeys.WARNING_PARAM_KEY, warning);
 
         // put parameters in context (backward compatibility)
         Map<String, String> params = new HashMap<>();
@@ -72,7 +77,7 @@ public class RegisterEndpoint implements Handler<RoutingContext> {
         params.computeIfAbsent(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, val -> errorDescription);
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
-        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+        MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams));
         routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams));
 
@@ -88,7 +93,8 @@ public class RegisterEndpoint implements Handler<RoutingContext> {
         });
     }
 
-    private String getTemplateFileName(Client client) {
-        return "registration" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
+    @Override
+    public String getTemplateSuffix() {
+        return "registration";
     }
 }

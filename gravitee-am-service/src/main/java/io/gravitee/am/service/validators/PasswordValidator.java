@@ -41,7 +41,7 @@ public class PasswordValidator {
 
     @Autowired
     public PasswordValidator(@Value("${user.password.policy.pattern:^(?:(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))(?!.*(.)\\1{2,})[A-Za-z0-9!~<>,;:_\\-=?*+#.\"'&§`£€%°()\\\\\\|\\[\\]\\-\\$\\^\\@\\/]{8,32}$}")
-                                          String pattern) {
+                                     String pattern) {
         this.defaultPasswordPattern = Pattern.compile(pattern);
     }
 
@@ -85,11 +85,9 @@ public class PasswordValidator {
         }
 
         Integer maxConsecutiveLetters = passwordSettings.getMaxConsecutiveLetters();
-        if (maxConsecutiveLetters != null && maxConsecutiveLetters > 1) {
-            for (char c : password.toCharArray()) {
-                if (password.chars().filter(ch -> ch == c).count() >= maxConsecutiveLetters) {
-                    throw InvalidPasswordException.of("invalid max consecutive letters", "invalid_password_value");
-                }
+        if (maxConsecutiveLetters != null && maxConsecutiveLetters > 0) {
+            if (isOverMaxConsecutiveLetters(password, maxConsecutiveLetters)) {
+                throw InvalidPasswordException.of("invalid max consecutive letters", "invalid_password_value");
             }
         }
     }
@@ -117,5 +115,28 @@ public class PasswordValidator {
         if (!isValid(password)) {
             throw InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value");
         }
+    }
+
+    /**
+     * Test if any character is repeated consecutively more than the giver max number
+     * str="aaabb", max=3 -> true
+     * str="aaabb", max=2 -> false
+     */
+    private static boolean isOverMaxConsecutiveLetters(String str, int max) {
+        int len = str.length();
+        for (int i = 0; i < len; i++) {
+            int cur_count = 1;
+            for (int j = i + 1; j < len; j++) {
+                if (str.charAt(i) != str.charAt(j)) {
+                    break;
+                }
+                cur_count++;
+            }
+
+            if (cur_count > max) {
+                return true;
+            }
+        }
+        return false;
     }
 }
