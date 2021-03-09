@@ -52,12 +52,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFormHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordAccessHandler;
