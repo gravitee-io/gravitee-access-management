@@ -1,5 +1,21 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/343?closed=1[AM - 3.0.11 (2021-03-06)]
+
+=== Bug fixes
+
+*_Idp_*
+
+- HttpClient proxy is never used https://github.com/gravitee-io/issues/issues/5048[#5048]
+- [saml] add missing saml:AuthnContextClassRef https://github.com/gravitee-io/issues/issues/5142[#5142]
+
+=== Improvements
+
+*_Management_*
+
+- [oauth2] add full_profile scope https://github.com/gravitee-io/issues/issues/5107[#5107]
+
+
 == https://github.com/gravitee-io/issues/milestone/248?closed=1[AM - 3.6.0 (2021-02-17)]
 
 === Bug fixes
