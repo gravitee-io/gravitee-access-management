@@ -1,5 +1,26 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/346?closed=1[AM - 3.5.3 (2021-03-10)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [login] better support for invalid request exception https://github.com/gravitee-io/issues/issues/5153[#5153]
+- [logout] Lax id_token_hint parameter https://github.com/gravitee-io/issues/issues/5163[#5163]
+
+*_General_*
+
+- Merge 3.0.11 https://github.com/gravitee-io/issues/issues/5172[#5172]
+- Merge 3.4.6 https://github.com/gravitee-io/issues/issues/5102[#5102]
+
+*_Management_*
+
+- Can define a context path on "/" in virtual host mode https://github.com/gravitee-io/issues/issues/4966[#4966]
+- Missing media type for members resources https://github.com/gravitee-io/issues/issues/5108[#5108]
+- Update administrative user roles when using the role mapping https://github.com/gravitee-io/issues/issues/5087[#5087]
+
+
 == https://github.com/gravitee-io/issues/milestone/343?closed=1[AM - 3.0.11 (2021-03-06)]
 
 === Bug fixes
