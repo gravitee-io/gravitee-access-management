@@ -15,21 +15,21 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ProvidersComponent } from './providers.component';
+import { DomainSettingsProvidersComponent } from './providers.component';
 
-describe('ProvidersComponent', () => {
-  let component: ProvidersComponent;
-  let fixture: ComponentFixture<ProvidersComponent>;
+describe('DomainSettingsProvidersComponent', () => {
+  let component: DomainSettingsProvidersComponent;
+  let fixture: ComponentFixture<DomainSettingsProvidersComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ProvidersComponent ]
+      declarations: [ DomainSettingsProvidersComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ProvidersComponent);
+    fixture = TestBed.createComponent(DomainSettingsProvidersComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

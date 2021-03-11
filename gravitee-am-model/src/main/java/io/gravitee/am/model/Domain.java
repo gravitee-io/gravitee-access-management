@@ -54,6 +54,11 @@ public class Domain implements Resource {
     private boolean enabled;
 
     /**
+     * Flag indicating if alerts are enabled or not.
+     */
+    private Boolean alertEnabled;
+
+    /**
      * Domain creation date
      */
     private Date createdAt;
@@ -120,6 +125,7 @@ public class Domain implements Resource {
         this.name = other.name;
         this.description = other.description;
         this.enabled = other.enabled;
+        this.alertEnabled = other.alertEnabled;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.path = other.path;
@@ -351,5 +357,13 @@ public class Domain implements Resource {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    public Boolean isAlertEnabled() {
+        return alertEnabled;
+    }
+
+    public void setAlertEnabled(Boolean alertEnabled) {
+        this.alertEnabled = alertEnabled;
     }
 }

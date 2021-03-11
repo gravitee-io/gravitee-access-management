@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.container.AbstractNode;
+import io.gravitee.plugin.alert.AlertEventProducerManager;
 
 import java.util.List;
 
@@ -45,6 +46,7 @@ public class GatewayNode extends AbstractNode {
 
         components.add(Reactor.class);
         components.add(VertxEmbeddedContainer.class);
+        components.add(AlertEventProducerManager.class);
 
         return components;
     }

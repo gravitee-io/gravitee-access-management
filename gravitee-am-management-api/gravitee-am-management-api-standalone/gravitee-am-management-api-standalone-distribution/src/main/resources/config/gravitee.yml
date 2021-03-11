@@ -284,6 +284,19 @@ gateway:
 #  api:
 #    url: http://localhost:8093/management
 
+# Beta subject to change
+alerts:
+  too_many_login_failures:
+    name: "Too many login failures detected"
+    description: "More than {threshold}% of logins are in failure over the last {window} second(s)"
+    # the threshold rate in % to reach before notify. Default 10% of login failures.
+    threshold: 10
+    # the minimum sample size. Default 1000 login attempts.
+    sampleSize: 1000
+    # window time in seconds. Default 600s (10 minutes).
+    window: 600
+    # severity of the alert (INFO, WARNING, CRITICAL). Default WARNING.
+    severity: WARNING
 
 # Referenced properties
 ds:

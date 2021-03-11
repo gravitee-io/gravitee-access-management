@@ -46,6 +46,10 @@
             <a>passwordSettings</a>
             <b>passwordSettings</b>
         </field>
+        <field>
+            <a get-method="isAlertEnabled">alertEnabled</a>
+            <b>alertEnabled</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">

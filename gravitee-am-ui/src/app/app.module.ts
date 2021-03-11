@@ -335,6 +335,19 @@ import {CockpitComponent} from "./settings/cockpit/cockpit.component";
 import {InstallationResolver} from "./resolvers/installation.resolver";
 import {InstallationService} from "./services/installation.service";
 import {EnvironmentComponent} from "./environment/environment.component";
+import {DomainAlertsComponent} from "./domain/alerts/alerts.component";
+import {DomainAlertGeneralComponent} from "./domain/alerts/general/general.component";
+import { AlertService } from './services/alert.service';
+import {DomainAlertNotifiersComponent} from "./domain/alerts/notifiers/notifiers.component";
+import {NotifiersResolver} from "./resolvers/notifiers.resolver";
+import {AlertNotifiersResolver} from "./resolvers/alert-notifiers.resolver";
+import {AlertNotifierResolver} from "./resolvers/alert-notifier.resolver";
+import {DomainAlertNotifierCreationStep1Component} from "./domain/alerts/notifiers/creation/steps/step1/step1.component";
+import {DomainAlertNotifierCreationComponent} from "./domain/alerts/notifiers/creation/notifier-creation.component";
+import {DomainAlertNotifierCreationStep2Component} from "./domain/alerts/notifiers/creation/steps/step2/step2.component";
+import {AlertNotifierFormComponent} from "./domain/alerts/notifiers/notifier/form/form.component";
+import {DomainAlertNotifierComponent} from "./domain/alerts/notifiers/notifier/notifier.component";
+import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.resolver";
 
 @NgModule({
   declarations: [
@@ -516,7 +529,15 @@ import {EnvironmentComponent} from "./environment/environment.component";
     UsersSearchInfoDialog,
     NewsletterComponent,
     UserHistoryComponent,
-    EnvironmentComponent
+    EnvironmentComponent,
+    DomainAlertsComponent,
+    DomainAlertGeneralComponent,
+    DomainAlertNotifiersComponent,
+    DomainAlertNotifierCreationComponent,
+    DomainAlertNotifierCreationStep1Component,
+    DomainAlertNotifierCreationStep2Component,
+    AlertNotifierFormComponent,
+    DomainAlertNotifierComponent
   ],
   imports: [
     BrowserModule,
@@ -551,6 +572,7 @@ import {EnvironmentComponent} from "./environment/environment.component";
     UserService,
     ExtensionGrantService,
     InstallationService,
+    AlertService,
     AppConfig,
     DomainsResolver,
     DomainResolver,
@@ -618,6 +640,10 @@ import {EnvironmentComponent} from "./environment/environment.component";
     PlatformFlowSchemaResolver,
     ApplicationFlowsResolver,
     InstallationResolver,
+    NotifiersResolver,
+    AlertNotifiersResolver,
+    AlertNotifierResolver,
+    PlatformAlertStatusResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

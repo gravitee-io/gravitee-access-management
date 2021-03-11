@@ -18,6 +18,8 @@ package io.gravitee.am.management.standalone.node;
 import io.gravitee.am.management.service.*;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.jetty.node.JettyNode;
+import io.gravitee.plugin.alert.AlertEventProducerManager;
+import io.gravitee.plugin.alert.AlertTriggerProviderManager;
 import io.gravitee.plugin.core.internal.PluginEventListener;
 
 import java.util.List;
@@ -48,6 +50,9 @@ public class ManagementNode extends JettyNode {
         components.add(CertificateManager.class);
         components.add(EmailManager.class);
         components.add(InitializerService.class);
+        components.add(AlertTriggerManager.class);
+        components.add(AlertTriggerProviderManager.class);
+        components.add(AlertEventProducerManager.class);
 
         return components;
     }

@@ -45,6 +45,7 @@ public class PatchDomain {
     private Optional<String> name;
     private Optional<String> description;
     private Optional<Boolean> enabled;
+    private Optional<Boolean> alertEnabled;
     private Optional<String> path;
     private Optional<Boolean> vhostMode;
     private Optional<List<VirtualHost>> vhosts;
@@ -161,6 +162,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setName, this.getName());
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
+        SetterUtils.safeSet(toPatch::setAlertEnabled, this.getAlertEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setPath, this.getPath());
         SetterUtils.safeSet(toPatch::setVhostMode, this.getVhostMode());
         SetterUtils.safeSet(toPatch::setVhosts, this.getVhosts());
@@ -213,6 +215,10 @@ public class PatchDomain {
             requiredPermissions.add(Permission.DOMAIN_SETTINGS);
         }
 
+        if(alertEnabled != null && alertEnabled.isPresent()) {
+            requiredPermissions.add(Permission.DOMAIN_ALERT);
+        }
+
         if (oidc != null && oidc.isPresent()) {
             requiredPermissions.addAll(oidc.get().getRequiredPermissions());
         }
@@ -242,5 +248,13 @@ public class PatchDomain {
 
     public void setVhosts(Optional<List<VirtualHost>> vhosts) {
         this.vhosts = vhosts;
+    }
+
+    public Optional<Boolean> getAlertEnabled() {
+        return alertEnabled;
+    }
+
+    public void setAlertEnabled(Optional<Boolean> alertEnabled) {
+        this.alertEnabled = alertEnabled;
     }
 }

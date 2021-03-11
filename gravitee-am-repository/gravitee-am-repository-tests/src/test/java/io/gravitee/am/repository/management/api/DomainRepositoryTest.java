@@ -26,6 +26,7 @@ import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
@@ -68,6 +69,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domain.setUpdatedAt(domain.getCreatedAt());
         domain.setDescription(name + " description");
         domain.setEnabled(true);
+        domain.setAlertEnabled(false);
         domain.setPath("/"+name);
         domain.setReferenceId("refId"+name);
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
@@ -259,5 +261,29 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         // fetch domain
         domainRepository.findById(domainCreated.getId()).test().assertEmpty();
+    }
+
+    @Test
+    public void findByCriteria() {
+        Domain domainToCreate = initDomain();
+        Domain domainCreated = domainRepository.create(domainToCreate).blockingGet();
+
+        DomainCriteria criteria = new DomainCriteria();
+        criteria.setAlertEnabled(true);
+        TestSubscriber<Domain> testObserver1 = domainRepository.findAllByCriteria(criteria).test();
+
+        testObserver1.awaitTerminalEvent();
+        testObserver1.assertComplete();
+        testObserver1.assertNoErrors();
+        testObserver1.assertNoValues();
+
+        domainCreated.setAlertEnabled(true);
+        final Domain domainUpdated = domainRepository.update(domainCreated).blockingGet();
+        testObserver1 = domainRepository.findAllByCriteria(criteria).test();
+        testObserver1.awaitTerminalEvent();
+        testObserver1.assertComplete();
+        testObserver1.assertNoErrors();
+        testObserver1.assertValue(domain -> domain.getId().equals(domainUpdated.getId()));
+
     }
 }

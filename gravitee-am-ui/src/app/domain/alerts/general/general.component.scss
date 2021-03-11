@@ -1,0 +1,43 @@
+.gv-page-content {
+  ngx-datatable {
+    font-size: 14px;
+    box-shadow: none;
+
+    .row-disabled {
+      background: #f1f1f1;
+    }
+
+    .alert-trigger-header {
+      align-items: center;
+
+      .alert-trigger-icon {
+        margin: 0 12px 0 0;
+      }
+
+      .alert-trigger-information {
+        h3 {
+          font-size: 14px;
+          font-weight: normal;
+          margin: 0;
+        }
+
+        small {
+          color: rgba(0, 0, 0, .54);
+        }
+      }
+    }
+  }
+}
+
+:host {
+  ::ng-deep.row-disabled {
+    background: #f1f1f1;
+    border: 1px solid #fafafa;
+
+    datatable-body-cell {
+      color: grey !important;
+      font-size: 85% !important;
+      font-style: italic !important;
+    }
+  }
+}

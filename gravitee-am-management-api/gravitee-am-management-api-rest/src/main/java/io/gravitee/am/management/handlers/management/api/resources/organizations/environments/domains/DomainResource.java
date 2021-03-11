@@ -267,6 +267,11 @@ public class DomainResource extends AbstractResource {
         return resourceContext.getResource(FlowsResource.class);
     }
 
+    @Path("alerts")
+    public AlertsResource getAlertsResource() {
+        return resourceContext.getResource(AlertsResource.class);
+    }
+
     private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain patchDomain, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
@@ -303,6 +308,10 @@ public class DomainResource extends AbstractResource {
             filteredDomain.setReferenceType(domain.getReferenceType());
             filteredDomain.setReferenceId(domain.getReferenceId());
             filteredDomain.setPasswordSettings(domain.getPasswordSettings());
+        }
+
+        if(hasAnyPermission(userPermissions, Permission.DOMAIN_ALERT, Acl.READ)) {
+            filteredDomain.setAlertEnabled(domain.isAlertEnabled());
         }
 
         if (hasAnyPermission(userPermissions, Permission.DOMAIN_OPENID, Acl.READ)) {

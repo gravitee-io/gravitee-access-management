@@ -15,9 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.configuration;
 
-import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.management.handlers.management.api.model.AlertServiceStatusEntity;
+import io.gravitee.am.management.service.AlertService;
 import io.gravitee.am.service.FlowService;
+import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -35,6 +39,9 @@ public class ConfigurationResource {
     @Inject
     private FlowService flowService;
 
+    @Inject
+    private AlertService alertService;
+
     @GET
     @Path("/flow/schema")
     @Produces(javax.ws.rs.core.MediaType.APPLICATION_JSON)
@@ -42,6 +49,21 @@ public class ConfigurationResource {
             notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
         flowService.getSchema()
+                .subscribe(response::resume, response::resume);
+    }
+
+    @GET
+    @Path("alerts/status")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get the alert service status",
+            notes = "There is no particular permission needed. User must be authenticated.")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Current alert service status", response = AlertServiceStatusEntity.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void getAlertServiceStatus(@Suspended final AsyncResponse response) {
+
+        alertService.isAlertingAvailable()
+                .map(AlertServiceStatusEntity::new)
                 .subscribe(response::resume, response::resume);
     }
 }

@@ -1,0 +1,107 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>General</h1>
+  <div class="gv-page-content">
+    <div fxLayout="column" fxFlex="70">
+      <form (ngSubmit)="update()" fxLayout="column">
+        <div class="gv-form-section">
+          <div fxLayout="column" style="margin-bottom: 10px;">
+            <mat-slide-toggle
+              name="toggle-alert-enabled"
+              [(ngModel)]="domain.alertEnabled"
+              (change)="formChanged = true"
+              [checked]="domain.alertEnabled" [disabled]="readonly">
+              Enable alerts
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">Enable alerts on this domain to be notified when abnormal authentication events happen.
+            </mat-hint>
+          </div>
+        </div>
+
+        <div class="gv-form-section" *ngIf="domain.alertEnabled">
+          <ngx-datatable class="material"
+                         [columnMode]="'flex'"
+                         [headerHeight]="40"
+                         [footerHeight]="40"
+                         [rowHeight]="60"
+                         [rows]='alertTriggers'
+                         [rowClass]='getRowClass'>
+            <ngx-datatable-column name="Alerts" [flexGrow]="3" [cellClass]="'form-name-cell'">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div class="alert-trigger-header" fxLayout="row">
+                  <div class="alert-trigger-icon">
+                    <mat-icon>{{row.icon}}</mat-icon>
+                  </div>
+                  <div class="alert-trigger-information" fxLayout="column">
+                    <h3>{{row.name}}</h3>
+                    <small>{{row.description}}</small>
+                  </div>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Notification channels" [flexGrow]="2" [cellClass]="'form-name-cell'">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row">
+                  <mat-select [name]="'select'+row.type" placeholder="Channels" [(ngModel)]="row.alertNotifiers" multiple
+                              (valueChange)="formChanged=true" [disabled]="isDisabled(row)">
+                    <mat-option *ngFor="let alertNotifier of alertNotifiers"
+                                [value]="alertNotifier.id">{{ alertNotifier.name }}</mat-option>
+                  </mat-select>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="1">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row" class="forms-actions">
+                  <mat-slide-toggle *ngIf="row.available"
+                                    [name]="'toggle' + row.type"
+                                    [(ngModel)]="row.enabled"
+                                    (change)="formChanged = true"
+                                    [checked]="row.enabled"
+                                    [disabled]="isDisabled(row)">
+                  </mat-slide-toggle>
+
+                  <mat-icon *ngIf="!row.available" matTooltip="Alert not yet available">block</mat-icon>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-footer></ngx-datatable-footer>
+          </ngx-datatable>
+        </div>
+
+        <div *hasPermission="['domain_settings_update']">
+          <button mat-raised-button [disabled]="!formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>Manage domain alerts</h3>
+      <div class="gv-page-description-content">
+        <p>
+          Enable alerts on your domain and select which alerts you're interested on.
+        </p>
+        <small>For each alert, you can select the channels on which you want to be notified.</small>
+        <br/>
+        <br/>
+        <small>Want to know how to configure a notification channel ? Have a look at the <a [routerLink]="['../notifiers']">notifiers</a>
+          section.</small>
+      </div>
+    </div>
+  </div>
+</div>

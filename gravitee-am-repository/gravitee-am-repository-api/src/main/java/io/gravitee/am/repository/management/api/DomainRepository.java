@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 
@@ -34,4 +35,6 @@ public interface DomainRepository extends CrudRepository<Domain, String> {
     Single<Set<Domain>> findByIdIn(Collection<String> ids);
 
     Flowable<Domain> findAllByEnvironment(String environmentId);
+
+    Flowable<Domain> findAllByCriteria(DomainCriteria criteria);
 }

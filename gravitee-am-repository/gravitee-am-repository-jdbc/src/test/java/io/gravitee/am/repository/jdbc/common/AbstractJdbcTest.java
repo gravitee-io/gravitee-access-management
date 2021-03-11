@@ -97,6 +97,9 @@ public abstract class AbstractJdbcTest {
             tables.add("organization_hrids");
             tables.add("installations");
             tables.add("auth_flow_ctx");
+            tables.add("alert_triggers_alert_notifiers");
+            tables.add("alert_triggers");
+            tables.add("alert_notifiers");
 
             Connection connection = Flowable.fromPublisher(cnxFact.create()).blockingFirst();
             connection.beginTransaction();

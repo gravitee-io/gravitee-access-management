@@ -33,6 +33,7 @@ import org.springframework.util.Assert;
  */
 public class ReporterPluginHandler implements PluginHandler {
 
+    private static final String AM_REPORTER_PLUGIN_TYPE = "am-reporter";
     private final Logger LOGGER = LoggerFactory.getLogger(ReporterPluginHandler.class);
 
     @Autowired
@@ -43,15 +44,12 @@ public class ReporterPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PluginType.REPORTER.name().equalsIgnoreCase(plugin.type());
+        return AM_REPORTER_PLUGIN_TYPE.equalsIgnoreCase(plugin.type());
     }
 
     @Override
     public void handle(Plugin plugin) {
         try {
-            // disable default node reporter plugin handler
-            System.setProperty("reporters." + plugin.id() + ".enabled", "false");
-
             ClassLoader classloader = pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
 
             final Class<?> reporterClass = classloader.loadClass(plugin.clazz());

@@ -1,0 +1,35 @@
+.gv-page-container {
+  ngx-datatable {
+    .idp-header {
+      margin: 5px;
+      align-items: center;
+
+      .idp-icon {
+        margin: 0 12px 0 0;
+      }
+
+      .idp-img {
+        height: 24px;
+        width: 24px;
+      }
+
+      .idp-information {
+        h3 {
+          font-size: 14px;
+          font-weight: normal;
+          margin: 0;
+        }
+
+        small {
+          color: rgba(0, 0, 0, .54);
+        }
+      }
+    }
+  }
+}
+
+:host {
+  ::ng-deep.idp-name-cell {
+    padding: 0 !important;
+  }
+}

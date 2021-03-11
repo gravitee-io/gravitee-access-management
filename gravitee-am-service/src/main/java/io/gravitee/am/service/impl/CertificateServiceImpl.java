@@ -194,7 +194,6 @@ public class CertificateServiceImpl implements CertificateService {
                     }
                 });
 
-
         return certificateSingle
                 .flatMap(certificate -> certificateRepository.create(certificate))
                 // create event for sync process

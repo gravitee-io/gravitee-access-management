@@ -234,6 +234,24 @@ public interface EventType {
     String FLOW_UPDATED = "FLOW_UPDATED";
     String FLOW_DELETED = "FLOW_DELETED";
 
+    /**
+     * ----------
+     * Alert trigger audit log actions
+     * ----------
+     */
+    String ALERT_TRIGGER_CREATED = "ALERT_TRIGGER_CREATED";
+    String ALERT_TRIGGER_UPDATED = "ALERT_TRIGGER_UPDATED";
+    String ALERT_TRIGGER_DELETED = "ALERT_TRIGGER_DELETED";
+
+    /**
+     * ----------
+     * Alert notifier audit log actions
+     * ----------
+     */
+    String ALERT_NOTIFIER_CREATED = "ALERT_NOTIFIER_CREATED";
+    String ALERT_NOTIFIER_UPDATED = "ALERT_NOTIFIER_UPDATED";
+    String ALERT_NOTIFIER_DELETED = "ALERT_NOTIFIER_DELETED";
+
     static Collection<String> types() {
         return new TreeSet(Arrays.asList(
                 APPLICATION_CREATED, APPLICATION_UPDATED, APPLICATION_DELETED, APPLICATION_CLIENT_SECRET_RENEWED,
@@ -257,7 +275,8 @@ public interface EventType {
                 ORGANIZATION_CREATED, ORGANIZATION_UPDATED,
                 ENVIRONMENT_CREATED, ENVIRONMENT_UPDATED,
                 ENTRYPOINT_CREATED, ENTRYPOINT_UPDATED, ENTRYPOINT_DELETED,
-                FLOW_CREATED, FLOW_UPDATED, FLOW_DELETED
+                FLOW_CREATED, FLOW_UPDATED, FLOW_DELETED,
+                ALERT_TRIGGER_CREATED, ALERT_TRIGGER_UPDATED, ALERT_TRIGGER_DELETED
         ));
     }
 }

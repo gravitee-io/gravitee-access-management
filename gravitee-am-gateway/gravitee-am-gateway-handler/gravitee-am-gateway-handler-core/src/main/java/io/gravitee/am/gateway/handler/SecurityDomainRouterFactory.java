@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler;
 
+import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.listener.AuthenticationEventListener;
@@ -97,6 +98,7 @@ public class SecurityDomainRouterFactory {
         components.add(AuditReporterManager.class);
         components.add(FlowManager.class);
         components.add(AuthenticationEventListener.class);
+        components.add(AlertEventProcessor.class);
         components.add(FactorManager.class);
 
         components.forEach(componentClass -> {

@@ -40,6 +40,8 @@ public class DomainMongo extends Auditable {
 
     private boolean enabled;
 
+    private boolean alertEnabled;
+
     private String path;
 
     private boolean vhostMode;
@@ -217,6 +219,14 @@ public class DomainMongo extends Auditable {
 
     public void setVhosts(List<VirtualHost> vhosts) {
         this.vhosts = vhosts;
+    }
+
+    public boolean isAlertEnabled() {
+        return alertEnabled;
+    }
+
+    public void setAlertEnabled(boolean alertEnabled) {
+        this.alertEnabled = alertEnabled;
     }
 
     public PasswordSettingsMongo getPasswordSettings() {

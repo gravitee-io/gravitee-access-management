@@ -20,17 +20,20 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcAlertNotifier;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcDomain;
 import io.gravitee.am.repository.jdbc.management.api.spring.domain.SpringDomainIdentitiesRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.domain.SpringDomainRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.domain.SpringDomainTagRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.domain.SpringDomainVHostsRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -40,8 +43,7 @@ import java.util.*;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -81,6 +83,28 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         return domains.flatMap(this::completeDomain)
                 .doOnError((error) -> LOGGER.error("unable to retrieve all domain", error))
                 .toList().map(HashSet::new);
+    }
+
+    @Override
+    public Flowable<Domain> findAllByCriteria(DomainCriteria criteria) {
+
+        Criteria whereClause = Criteria.empty();
+        Criteria alertEnableClause = Criteria.empty();
+
+        if (criteria.isAlertEnabled().isPresent()) {
+            alertEnableClause = where("alert_enabled").is(criteria.isAlertEnabled().get());
+        }
+
+        whereClause = whereClause.and(alertEnableClause);
+
+        return fluxToFlowable(dbClient.select()
+                .from(JdbcDomain.class)
+                .matching(from(whereClause))
+                .as(JdbcDomain.class)
+                .all())
+                .map(this::toDomain)
+                .flatMap(this::completeDomain)
+                .doOnError(error -> LOGGER.error("Unable to retrieve Domain with criteria {}", criteria, error));
     }
 
     private Flowable<Domain> completeDomain(Domain entity) {

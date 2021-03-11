@@ -27,12 +27,14 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
+import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
+import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
-import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
 import io.gravitee.am.service.validators.DomainValidator;
@@ -128,6 +130,12 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private ResourceService resourceService;
 
+    @Autowired
+    private AlertTriggerService alertTriggerService;
+
+    @Autowired
+    private AlertNotifierService alertNotifierService;
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -160,6 +168,12 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
+    public Flowable<Domain> findAllByCriteria(DomainCriteria criteria) {
+        LOGGER.debug("Find all domains by criteria");
+        return domainRepository.findAllByCriteria(criteria);
+    }
+
+    @Override
     public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
         LOGGER.debug("Find domains by id in {}", ids);
         return domainRepository.findByIdIn(ids)
@@ -187,6 +201,7 @@ public class DomainServiceImpl implements DomainService {
                         domain.setName(newDomain.getName());
                         domain.setDescription(newDomain.getDescription());
                         domain.setEnabled(false);
+                        domain.setAlertEnabled(false);
                         domain.setOidc(OIDCSettings.defaultSettings());
                         domain.setReferenceType(ReferenceType.ENVIRONMENT);
                         domain.setReferenceId(environmentId);
@@ -403,6 +418,16 @@ public class DomainServiceImpl implements DomainService {
                                         return Completable.concat(deletedResourceCompletable);
                                     })
                             )
+                            // delete alert triggers
+                            .andThen(alertTriggerService.findByDomainAndCriteria(domainId, new AlertTriggerCriteria())
+                                    .flatMapCompletable(alertTrigger -> alertTriggerService.delete(alertTrigger.getReferenceType(), alertTrigger.getReferenceId(), alertTrigger.getId(), principal)
+                                    )
+                            )
+                            // delete alert notifiers
+                            .andThen(alertNotifierService.findByDomainAndCriteria(domainId, new AlertNotifierCriteria())
+                                    .flatMapCompletable(alertNotifier -> alertNotifierService.delete(alertNotifier.getReferenceType(), alertNotifier.getReferenceId(), alertNotifier.getId(), principal)
+                                    )
+                            )
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, ReferenceType.DOMAIN, domainId, Action.DELETE)))))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))
@@ -499,7 +524,7 @@ public class DomainServiceImpl implements DomainService {
 
     private void setDeployMode(Domain domain, Environment environment) {
 
-        if(CollectionUtils.isEmpty(environment.getDomainRestrictions())) {
+        if (CollectionUtils.isEmpty(environment.getDomainRestrictions())) {
             domain.setVhostMode(false);
         } else {
             // There are some domain restrictions defined at environment level. Switching to domain vhost mode.

@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.model.UpdateDomain;
@@ -40,6 +41,8 @@ public interface DomainService {
     Flowable<Domain> findAllByEnvironment(String organizationId, String environment);
 
     Single<Set<Domain>> findAll();
+
+    Flowable<Domain> findAllByCriteria(DomainCriteria criteria);
 
     Single<Set<Domain>> findByIdIn(Collection<String> ids);
 
