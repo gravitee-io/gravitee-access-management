@@ -56,6 +56,24 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/plugins/identities/' + id + '/schema');
   }
 
+  notifiers(expandIcon: boolean = false): Observable<any> {
+    let expands = [];
+
+    if (expandIcon) {
+      expands.push("icon");
+    }
+
+    return this.http.get<any>(this.platformURL + '/plugins/notifiers', {
+      params: {
+        expand: expands
+      }
+    });
+  }
+
+  notifierSchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/plugins/notifiers/' + id + '/schema');
+  }
+
   identityProviders(): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/identities');
   }
@@ -345,5 +363,9 @@ export class OrganizationService {
 
   flowSchema(): Observable<any> {
     return this.http.get<any>(this.platformURL + '/configuration/flow/schema');
+  }
+
+  alertingStatus(): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/configuration/alerts/status');
   }
 }

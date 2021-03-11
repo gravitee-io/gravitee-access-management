@@ -1,0 +1,64 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1 *ngIf="!isEmpty">Alert notifiers</h1>
+  <div class="gv-page-content" *ngIf="!isEmpty">
+    <ngx-datatable class="material"
+                   [columnMode]="'flex'"
+                   [headerHeight]="40"
+                   [footerHeight]="40"
+                   [rowHeight]="50"
+                   [rows]='alertNotifiers'>
+      <ngx-datatable-column [sortable]="false" name="Alert notifiers" [flexGrow]="4" [cellClass]="'idp-name-cell'">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="idp-header" fxLayout="row">
+            <div class="idp-icon" [innerHTML]="getNotifierIcon(row.type) | safe:'html'"></div>
+            <div class="idp-information" fxLayout="column">
+              <h3>{{row.name}}</h3>
+              <small>{{row.type}}</small>
+            </div>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="gv-table-cell-actions">
+            <a mat-icon-button [routerLink]="isNotifierAvailable(row.type) ? [row.id]: []" *hasPermission="['domain_alert_notifier_read']" [disabled]="!isNotifierAvailable(row.type)">
+              <mat-icon *ngIf="isNotifierAvailable(row.type)">settings</mat-icon>
+              <mat-icon *ngIf="!isNotifierAvailable(row.type)" matTooltip="Notifier plugin not installed">block</mat-icon>
+            </a>
+            <button *hasPermission="['domain_alert_notifier_delete']" mat-icon-button (click)="delete(row.id, $event)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </div>
+
+  <app-emptystate *ngIf="isEmpty"
+                  [message]="'Alert notifiers will appear here'"
+                  [subMessage]="'Start creating an alert notifier'"
+                  [icon]="'notifications_active'"></app-emptystate>
+
+  <div *hasPermission="['domain_alert_notifier_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+    <a mat-fab color="primary" [routerLink]="['new']">
+      <mat-icon>add</mat-icon>
+    </a>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+:host {
+  mat-sidenav {
+    overflow: scroll;
+  }
+
+  mat-sidenav-content {
+    width: 100%;
+  }
+
+  .domain-alerts-main-content {
+    height: calc(100vh - 60px);
+  }
+
+  mat-card.alert-banner {
+    display: flex;
+    padding: 12px;
+    text-align: center;
+    background: none;
+    color: #ce4844;
+    top: 35px;
+    margin: 0 20px 20px 20px;
+
+    .alert-banner-text {
+      margin: 3px 0px 0px 20px;
+    }
+  }
+}

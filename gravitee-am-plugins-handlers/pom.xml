@@ -39,5 +39,6 @@
         <module>gravitee-am-plugins-handlers-protocol</module>
         <module>gravitee-am-plugins-handlers-policy</module>
         <module>gravitee-am-plugins-handlers-factor</module>
+        <module>gravitee-am-plugins-handlers-notifier</module>
     </modules>
 </project>

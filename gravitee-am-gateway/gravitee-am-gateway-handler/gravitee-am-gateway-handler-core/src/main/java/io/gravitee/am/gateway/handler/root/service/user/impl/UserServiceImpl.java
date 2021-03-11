@@ -97,16 +97,17 @@ public class UserServiceImpl implements UserService {
                 : (user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource());
 
         // validate user and then check user uniqueness
-        return UserValidator.validate(user).andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
-                .isEmpty()
-                .map(isEmpty -> {
-                    if (!isEmpty) {
-                        throw new UserAlreadyExistsException(user.getUsername());
-                    }
-                    return true;
-                })
-                // check if user provider exists
-                .flatMap(irrelevant -> identityProviderManager.getUserProvider(source)
+        return UserValidator.validate(user)
+                .andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
+                        .isEmpty()
+                        .flatMapMaybe(isEmpty -> {
+                            if (!isEmpty) {
+                                return Maybe.error(new UserAlreadyExistsException(user.getUsername()));
+                            }
+
+                            // check if user provider exists
+                            return identityProviderManager.getUserProvider(source);
+                        })
                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
                         .flatMapSingle(userProvider -> userProvider.create(convert(user)))
                         .flatMap(idpUser -> {
@@ -134,19 +135,19 @@ public class UserServiceImpl implements UserService {
                             return userService.create(user);
                         })
                         .flatMap(userService::enhance)
-                        .map(user1 -> new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false))
+                        .map(user1 -> new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null && accountSettings.isAutoLoginAfterRegistration()))
                         .doOnSuccess(registrationResponse -> {
                             // reload principal
                             final User user1 = registrationResponse.getUser();
                             io.gravitee.am.identityprovider.api.User principal1 = reloadPrincipal(principal, user1);
                             auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.USER_REGISTERED));
                         })
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_REGISTERED).throwable(throwable)))
-                ));
+                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_REGISTERED).throwable(throwable))));
     }
 
     @Override
-    public Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User
+            principal) {
         // user has completed his account, add it to the idp
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
@@ -304,7 +305,9 @@ public class UserServiceImpl implements UserService {
                                         })
                                         .defaultIfEmpty(Optional.empty());
                             })
-                            .takeUntil(optional -> { return optional.isPresent(); })
+                            .takeUntil(optional -> {
+                                return optional.isPresent();
+                            })
                             .lastOrError()
                             .flatMap(optional -> {
                                 io.gravitee.am.identityprovider.api.User idpUser = optional.get();

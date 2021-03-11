@@ -9,4 +9,63 @@ databaseChangeLog:
         - addColumn:
             tableName: domains
             columns:
-              - column: {name: passwordSettings, type: clob, constraints: { nullable: true } }
+              - column: {name: password_settings, type: clob, constraints: { nullable: true } }
+              - column: {name: alert_enabled, type: boolean, constraints: { nullable: false }, defaultValue: false }
+
+        # alert_triggers
+        ########################
+        - createTable:
+            tableName: alert_triggers
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: enabled, type: boolean, constraints: { nullable: false }, defaultValue: false }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_alert_triggers
+            columnNames: id
+            tableName: alert_triggers
+
+        # alert_triggers
+        ########################
+        - createTable:
+            tableName: alert_notifiers
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: enabled, type: boolean, constraints: { nullable: false }, defaultValue: false }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: configuration, type: clob, constraints: { nullable: true } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_alert_notfiers
+            columnNames: id
+            tableName: alert_notifiers
+
+        # alert_triggers_alert_notifiers
+        ########################
+        - createTable:
+            tableName: alert_triggers_alert_notifiers
+            columns:
+              - column: { name: alert_trigger_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: alert_notifier_id, type: nvarchar(64), constraints: { nullable: false } }
+
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{DOMAIN_ALERT}', '[\"CREATE\",\"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.DOMAIN_ALERT', JSON_ARRAY('CREATE', 'READ', 'UPDATE', 'DELETE', 'LIST')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.DOMAIN_ALERT', JSON_QUERY('[\"CREATE\", \"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"

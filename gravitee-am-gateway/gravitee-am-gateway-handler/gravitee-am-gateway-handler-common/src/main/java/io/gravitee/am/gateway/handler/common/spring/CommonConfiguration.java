@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.spring;
 
+import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.audit.impl.AuditReporterManagerImpl;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -132,6 +133,11 @@ public class CommonConfiguration {
     @Bean
     public AuthenticationEventListener authenticationEventListener() {
         return new AuthenticationEventListener();
+    }
+
+    @Bean
+    public AlertEventProcessor alertEventProcessor() {
+        return new AlertEventProcessor();
     }
 
     @Bean

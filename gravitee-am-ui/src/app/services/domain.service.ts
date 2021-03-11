@@ -55,7 +55,6 @@ export class DomainService {
       }));
   }
 
-
   create(domain): Observable<any> {
     return this.http.post<any>(this.domainsURL, domain);
   }
@@ -73,6 +72,12 @@ export class DomainService {
       'path': domain.path,
       'enabled': domain.enabled,
       'tags': domain.tags
+    });
+  }
+
+  patchAlertSettings(id, domain): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, {
+      'alertEnabled': domain.alertEnabled,
     });
   }
 
@@ -179,5 +184,4 @@ export class DomainService {
   updateFlows(id, flows) {
     return this.http.put<any>(this.domainsURL + id + '/flows', flows);
   }
-
 }

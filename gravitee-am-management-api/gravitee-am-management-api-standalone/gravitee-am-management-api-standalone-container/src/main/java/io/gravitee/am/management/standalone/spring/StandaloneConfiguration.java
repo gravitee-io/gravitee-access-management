@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.service.spring.ServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.management.standalone.server.ManagementApiServer;
+import io.gravitee.am.plugins.notifier.spring.NotifierConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
@@ -33,6 +34,7 @@ import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
+import io.gravitee.plugin.notifier.spring.NotifierPluginConfiguration;
 import io.vertx.reactivex.core.Vertx;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -56,8 +58,9 @@ import org.springframework.context.annotation.Import;
         ExtensionGrantConfiguration.class,
         ReporterConfiguration.class,
         PolicyConfiguration.class,
-        AlertPluginConfiguration.class,
-        FactorConfiguration.class
+        NotifierConfiguration.class,
+        FactorConfiguration.class,
+        AlertPluginConfiguration.class
 })
 public class StandaloneConfiguration {
 

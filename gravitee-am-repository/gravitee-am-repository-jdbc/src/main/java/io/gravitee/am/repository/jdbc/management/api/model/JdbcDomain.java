@@ -32,6 +32,8 @@ public class JdbcDomain {
     private String name;
     private String description;
     private boolean enabled;
+    @Column("alert_enabled")
+    private boolean alertEnabled;
     @Column("created_at")
     private LocalDateTime createdAt;
     @Column("updated_at")
@@ -188,6 +190,14 @@ public class JdbcDomain {
 
     public void setReferenceId(String referenceId) {
         this.referenceId = referenceId;
+    }
+
+    public boolean isAlertEnabled() {
+        return alertEnabled;
+    }
+
+    public void setAlertEnabled(boolean alertEnabled) {
+        this.alertEnabled = alertEnabled;
     }
 
     /**

@@ -106,6 +106,9 @@
         <gravitee-policy-request-validation.version>1.10.0</gravitee-policy-request-validation.version>
         <gravitee-license-node.version>1.1.0</gravitee-license-node.version>
         <gravitee-cockpit-connectors.version>1.0.0</gravitee-cockpit-connectors.version>
+        <gravitee-notifier-webhook.version>1.0.6</gravitee-notifier-webhook.version>
+        <gravitee-notifier-email.version>1.2.8</gravitee-notifier-email.version>
+        <gravitee-alert-api.version>1.7.0</gravitee-alert-api.version>
     </properties>
 
     <dependencyManagement>
@@ -163,6 +166,11 @@
                 <groupId>io.gravitee.platform</groupId>
                 <artifactId>gravitee-platform-repository-api</artifactId>
                 <version>${gravitee-platform-repository-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.alert</groupId>
+                <artifactId>gravitee-alert-api</artifactId>
+                <version>${gravitee-alert-api.version}</version>
             </dependency>
 
             <!-- Nimbus jose+jwt -->

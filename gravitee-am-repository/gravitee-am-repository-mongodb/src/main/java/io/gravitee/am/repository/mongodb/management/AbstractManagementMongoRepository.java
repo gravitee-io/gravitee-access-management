@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -65,6 +66,10 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
                 return eq(name, ((Enum<?>) value).name());
             }
 
+            if(value instanceof Collection) {
+                return in(name, (Collection<?>) value);
+            }
+
             return eq(name, value);
         }).orElse(null);
     }
@@ -76,8 +81,6 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
         if (filterCriteria.isEmpty()) {
             return Maybe.empty();
         }
-
-        Bson bsonFilter;
 
         if (logicalOr) {
             return Maybe.just(or(filterCriteria));

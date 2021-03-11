@@ -72,6 +72,12 @@ public abstract class Event {
             case FLOW:
                 event1 =  FlowEvent.actionOf(action);
                 break;
+            case ALERT_TRIGGER:
+                event1 =  AlertTriggerEvent.actionOf(action);
+                break;
+            case ALERT_NOTIFIER:
+                event1 =  AlertNotifierEvent.actionOf(action);
+                break;
         }
 
         return event1;

@@ -17,6 +17,8 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.alert.AlertNotifier;
+import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.oauth2.Scope;
@@ -24,6 +26,9 @@ import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
+import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
+import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -31,11 +36,12 @@ import io.gravitee.am.service.impl.DomainServiceImpl;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
-import io.gravitee.am.service.model.UpdateDomain;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -73,6 +79,8 @@ public class DomainServiceTest {
     private static final String FACTOR_ID = "id-factor";
     public static final String ORGANIZATION_ID = "orga#1";
     public static final String ENVIRONMENT_ID = "env#1";
+    private static final String ALERT_TRIGGER_ID = "alertTrigger#1";
+    private static final String ALERT_NOTIFIER_ID = "alertNotifier#1";
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
@@ -178,6 +186,12 @@ public class DomainServiceTest {
 
     @Mock
     private EnvironmentService environmentService;
+
+    @Mock
+    private AlertTriggerService alertTriggerService;
+
+    @Mock
+    private AlertNotifierService alertNotifierService;
 
     @Test
     public void shouldFindById() {
@@ -397,6 +411,16 @@ public class DomainServiceTest {
         mockApplications.add(mockApp1);
         mockApplications.add(mockApp2);
 
+        final AlertTrigger alertTrigger = new AlertTrigger();
+        alertTrigger.setId(ALERT_TRIGGER_ID);
+        alertTrigger.setReferenceType(ReferenceType.DOMAIN);
+        alertTrigger.setReferenceId(DOMAIN_ID);
+
+        final AlertNotifier alertNotifier = new AlertNotifier();
+        alertNotifier.setId(ALERT_NOTIFIER_ID);
+        alertNotifier.setReferenceType(ReferenceType.DOMAIN);
+        alertNotifier.setReferenceId(DOMAIN_ID);
+
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(Completable.complete());
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(mockApplications));
@@ -442,6 +466,10 @@ public class DomainServiceTest {
         when(factorService.delete(DOMAIN_ID, FACTOR_ID)).thenReturn(Completable.complete());
         when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(new HashSet<>(Collections.singletonList(resource))));
         when(resourceService.delete(resource)).thenReturn(Completable.complete());
+        when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.just(alertTrigger));
+        when(alertTriggerService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(ALERT_TRIGGER_ID), isNull())).thenReturn(Completable.complete());
+        when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.just(alertNotifier));
+        when(alertNotifierService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(ALERT_NOTIFIER_ID), isNull())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -486,6 +514,8 @@ public class DomainServiceTest {
         when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
+        when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.empty());
+        when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -507,6 +537,8 @@ public class DomainServiceTest {
         verify(flowService, never()).delete(anyString());
         verify(membershipService, never()).delete(anyString());
         verify(factorService, never()).delete(anyString(), anyString());
+        verify(alertTriggerService, never()).delete(any(ReferenceType.class), anyString(), anyString(), any(io.gravitee.am.identityprovider.api.User.class));
+        verify(alertNotifierService, never()).delete(any(ReferenceType.class), anyString(), anyString(), any(io.gravitee.am.identityprovider.api.User.class));
         verify(eventService, times(1)).create(any());
     }
 
@@ -602,5 +634,20 @@ public class DomainServiceTest {
         String url = domainService.buildUrl(domain, "/mySubPath?myParam=param1");
 
         assertEquals("https://test2.gravitee.io/test2/mySubPath?myParam=param1", url);
+    }
+
+    @Test
+    public void shouldFindByCriteria() {
+
+        final DomainCriteria criteria = new DomainCriteria();
+        final Domain domain = new Domain();
+
+        when(domainRepository.findAllByCriteria(eq(criteria))).thenReturn(Flowable.just(domain));
+
+        final TestSubscriber<Domain> obs = domainService.findAllByCriteria(criteria).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(domain);
     }
 }

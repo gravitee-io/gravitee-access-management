@@ -93,8 +93,24 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-notifier</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.cockpit</groupId>
             <artifactId>gravitee-cockpit-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.alert</groupId>
+            <artifactId>gravitee-alert-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.plugin</groupId>
+            <artifactId>gravitee-plugin-alert</artifactId>
         </dependency>
 
         <!-- Spring dependencies -->

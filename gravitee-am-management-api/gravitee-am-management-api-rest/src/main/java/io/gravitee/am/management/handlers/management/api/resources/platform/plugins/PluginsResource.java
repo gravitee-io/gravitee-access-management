@@ -60,4 +60,9 @@ public class PluginsResource {
     public FactorsPluginResource getFactorsPlugins() {
         return resourceContext.getResource(FactorsPluginResource.class);
     }
+
+    @Path("notifiers")
+    public NotifiersPluginResource getNotifiersPluginResource() {
+        return resourceContext.getResource(NotifiersPluginResource.class);
+    }
 }

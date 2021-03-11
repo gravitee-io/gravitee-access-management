@@ -15,7 +15,6 @@
  */
 import {Directive, ElementRef, Input, TemplateRef, ViewContainerRef} from '@angular/core';
 import {AuthService} from '../services/auth.service';
-import {forEach} from "angular7-json-schema-form";
 
 @Directive({
   selector: '[hasAnyPermission]'

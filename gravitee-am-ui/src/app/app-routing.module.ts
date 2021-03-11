@@ -182,6 +182,15 @@ import {CockpitComponent} from "./settings/cockpit/cockpit.component";
 import {InstallationResolver} from "./resolvers/installation.resolver";
 import {EnvironmentComponent} from "./environment/environment.component";
 import {PluginReportersResolver} from './resolvers/plugin-reporters.resolver';
+import {DomainAlertGeneralComponent} from "./domain/alerts/general/general.component";
+import {DomainAlertsComponent} from "./domain/alerts/alerts.component";
+import {NotifiersResolver} from "./resolvers/notifiers.resolver";
+import {AlertNotifiersResolver} from "./resolvers/alert-notifiers.resolver";
+import {DomainAlertNotifiersComponent} from "./domain/alerts/notifiers/notifiers.component";
+import {AlertNotifierResolver} from "./resolvers/alert-notifier.resolver";
+import {DomainAlertNotifierCreationComponent} from "./domain/alerts/notifiers/creation/notifier-creation.component";
+import {DomainAlertNotifierComponent} from "./domain/alerts/notifiers/notifier/notifier.component";
+import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.resolver";
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -683,8 +692,8 @@ export const routes: Routes = [
                 label: 'Domains',
                 level: 'top',
                 icon: 'developer_board',
-                routerLinkActiveOptions: { exact: true },
-                displayOptions: { exact: true }
+                routerLinkActiveOptions: {exact: true},
+                displayOptions: {exact: true}
               },
               breadcrumb: {
                 label: 'domains'
@@ -734,7 +743,8 @@ export const routes: Routes = [
                   }
                 },
                 children: [
-                  { path: '',
+                  {
+                    path: '',
                     component: DomainComponent
                   },
                   {
@@ -905,7 +915,8 @@ export const routes: Routes = [
                                   }
                                 ]
                               },
-                              { path: 'flows',
+                              {
+                                path: 'flows',
                                 component: ApplicationFlowsComponent,
                                 canActivate: [AuthGuard],
                                 resolve: {
@@ -1293,7 +1304,8 @@ export const routes: Routes = [
                           }
                         ]
                       },
-                      { path: 'flows',
+                      {
+                        path: 'flows',
                         component: DomainSettingsFlowsComponent,
                         canActivate: [AuthGuard],
                         resolve: {
@@ -1519,7 +1531,8 @@ export const routes: Routes = [
                                   }
                                 }
                               },
-                              { path: 'new',
+                              {
+                                path: 'new',
                                 component: ReporterComponent,
                                 canActivate: [AuthGuard],
                                 resolve: {
@@ -1737,7 +1750,8 @@ export const routes: Routes = [
                                   }
                                 ]
                               },
-                              { path: 'roles',
+                              {
+                                path: 'roles',
                                 component: UserRolesComponent,
                                 resolve: {roles: UserRolesResolver}
                               }
@@ -2024,6 +2038,98 @@ export const routes: Routes = [
                         }
                       }
                     ]
+                  },
+                  {
+                    path: 'alerts',
+                    component: DomainAlertsComponent,
+                    canActivate: [AuthGuard],
+                    resolve: {
+                      alertStatus: PlatformAlertStatusResolver
+                    },
+                    data: {
+                      menu: {
+                        label: 'Alerts',
+                        icon: 'alarm',
+                        level: 'top',
+                        beta: true
+                      },
+                      perms: {
+                        only: ['domain_alert_read']
+                      }
+                    },
+                    children: [
+                      {
+                        path: '', redirectTo: 'general', pathMatch: 'full'
+                      },
+                      {
+                        path: 'general',
+                        component: DomainAlertGeneralComponent,
+                        canActivate: [AuthGuard],
+                        resolve: {
+                          alertNotifiers: AlertNotifiersResolver
+                        },
+                        data: {
+                          menu: {
+                            label: 'General',
+                            section: 'Alerts'
+                          },
+                          perms: {
+                            only: ['domain_alert_read']
+                          }
+                        }
+                      },
+                      {
+                        path: 'notifiers',
+                        canActivate: [AuthGuard],
+                        runGuardsAndResolvers: 'pathParamsOrQueryParamsChange',
+                        resolve: {
+                          notifiers: NotifiersResolver,
+                          alertNotifiers: AlertNotifiersResolver
+                        },
+                        data: {
+                          menu: {
+                            label: 'Notifiers',
+                            section: 'Alerts'
+                          },
+                          perms: {
+                            only: ['domain_alert_notifier_list']
+                          }
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: DomainAlertNotifiersComponent,
+                          },
+                          {
+                            path: 'new',
+                            component: DomainAlertNotifierCreationComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_alert_notifier_create']
+                              }
+                            }
+                          },
+                          {
+                            path: ':alertNotifierId',
+                            component: DomainAlertNotifierComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              alertNotifier: AlertNotifierResolver
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: 'alertNotifier.name'
+                              },
+                              perms: {
+                                only: ['domain_alert_notifier_read']
+                              }
+                            }
+                          },
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -2037,8 +2143,8 @@ export const routes: Routes = [
   {path: 'login/callback', component: LoginCallbackComponent},
   {path: 'logout', component: LogoutComponent},
   {path: 'logout/callback', component: LogoutCallbackComponent},
-  {path: 'newsletter', component: NewsletterComponent },
-  { path: 'dummy', component: DummyComponent},
+  {path: 'newsletter', component: NewsletterComponent},
+  {path: 'dummy', component: DummyComponent},
   {path: '404', component: NotFoundComponent},
   {path: '', component: HomeComponent},
   {path: '**', redirectTo: '404', pathMatch: 'full'}

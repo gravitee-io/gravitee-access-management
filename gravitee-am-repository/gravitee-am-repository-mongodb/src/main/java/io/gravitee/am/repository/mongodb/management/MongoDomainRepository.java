@@ -31,15 +31,14 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
+import org.bson.BsonDocument;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -47,9 +46,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -89,6 +86,17 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
+    public Flowable<Domain> findAllByCriteria(DomainCriteria criteria) {
+
+        Bson eqAlertEnabled = toBsonFilter("alertEnabled", criteria.isAlertEnabled());
+
+        return toBsonFilter(criteria.isLogicalOR(), eqAlertEnabled)
+                .switchIfEmpty(Single.just(new BsonDocument()))
+                .flatMapPublisher(filter -> Flowable.fromPublisher(domainsCollection.find(filter))).map(MongoDomainRepository::convert);
+
+    }
+
+    @Override
     public Single<Domain> create(Domain item) {
         DomainMongo domain = convert(item);
         domain.setId(domain.getId() == null ? RandomString.generate() : domain.getId());
@@ -121,6 +129,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setName(domainMongo.getName());
         domain.setDescription(domainMongo.getDescription());
         domain.setEnabled(domainMongo.isEnabled());
+        domain.setAlertEnabled(domainMongo.isAlertEnabled());
         domain.setOidc(convert(domainMongo.getOidc()));
         domain.setUma(convert(domainMongo.getUma()));
         domain.setScim(convert(domainMongo.getScim()));
@@ -150,6 +159,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setName(domain.getName());
         domainMongo.setDescription(domain.getDescription());
         domainMongo.setEnabled(domain.isEnabled());
+        domainMongo.setAlertEnabled(domain.isAlertEnabled());
         domainMongo.setOidc(convert(domain.getOidc()));
         domainMongo.setUma(convert(domain.getUma()));
         domainMongo.setScim(convert(domain.getScim()));

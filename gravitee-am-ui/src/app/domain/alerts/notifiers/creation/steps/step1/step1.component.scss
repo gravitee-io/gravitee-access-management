@@ -1,0 +1,45 @@
+mat-card {
+  margin-top: 10px;
+  box-shadow: 0 0 0 1px var(--gv-theme-neutral-color, #F5F5F5), 0 1px 3px var(--gv-theme-neutral-color-dark, #BFBFBF);
+  transition: transform .3s;
+  box-sizing: border-box;
+  border: 2px transparent solid;
+  justify-content: center;
+  align-content: center;
+  display: flex;
+}
+
+mat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px -10px var(--gv-theme-neutral-color-dark, #BFBFBF);
+  cursor: pointer;
+}
+
+mat-card.selected {
+  border-color: #5A7684;
+}
+
+mat-card-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+:host ::ng-deep mat-card-content i {
+  font-size: 6rem;
+}
+
+:host ::ng-deep mat-card-content img {
+  height: 6rem;
+}
+
+.identities-search__input {
+  margin: 0.5rem 2rem;
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 1rem;
+}
