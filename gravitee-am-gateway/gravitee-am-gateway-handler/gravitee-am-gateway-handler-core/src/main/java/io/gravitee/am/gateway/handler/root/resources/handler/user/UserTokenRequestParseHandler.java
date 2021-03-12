@@ -84,6 +84,7 @@ public class UserTokenRequestParseHandler extends UserRequestHandler {
             UserToken userToken = handler.result();
             context.put(ConstantKeys.USER_CONTEXT_KEY, userToken.getUser());
             context.put(ConstantKeys.CLIENT_CONTEXT_KEY, userToken.getClient());
+            context.put(ConstantKeys.TOKEN_CONTEXT_KEY, userToken.getToken());
             context.next();
         });
     }

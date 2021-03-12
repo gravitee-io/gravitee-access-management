@@ -34,6 +34,7 @@ public enum Scope {
             StandardClaims.NICKNAME, StandardClaims.PREFERRED_USERNAME, StandardClaims.PROFILE, StandardClaims.PICTURE,
             StandardClaims.WEBSITE, StandardClaims.GENDER, StandardClaims.BIRTHDATE, StandardClaims.ZONEINFO, StandardClaims.LOCALE,
             StandardClaims.UPDATED_AT),true),
+    FULL_PROFILE("full_profile", "Extended profile", "Access to the End-User extended profile Claims", Collections.emptyList(), true),
     EMAIL("email","Email","Access to the email and email_verified Claims", Arrays.asList(StandardClaims.EMAIL, StandardClaims.EMAIL_VERIFIED),true),
     ADDRESS("address", "Address","Access to the address Claim", Arrays.asList(StandardClaims.ADDRESS),true),
     PHONE("phone", "Phone", "Access to the phone_number and phone_number_verified Claims", Arrays.asList(StandardClaims.PHONE_NUMBER, StandardClaims.PHONE_NUMBER_VERIFIED),true),

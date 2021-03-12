@@ -31,6 +31,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -117,5 +120,18 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
         return credentialRepository.deleteById(id)
                 .doOnError(error -> LOGGER.error("Unable to delete credential for Id {}", id, error));
 
+    }
+
+    @Override
+    public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
+        LOGGER.debug("deleteByUserId({})", userId);
+        return monoToCompletable(dbClient.delete()
+                .from(JdbcCredential.class)
+                .matching(from(
+                        where("reference_type").is(referenceType.name())
+                                .and(where("reference_id").is(referenceId))
+                                .and(where("user_id").is(userId))))
+                .then())
+                .doOnError(error -> LOGGER.error("Unable to delete credential for userId {}", userId, error));
     }
 }

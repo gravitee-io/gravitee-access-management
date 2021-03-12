@@ -173,6 +173,11 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * @return true if OpenID Connect scopes have been found
      */
     private boolean processScopesRequest(Set<String> scopes, final Map<String, Object> userClaims, Map<String, Object> requestedClaims) {
+        // if full_profile requested, continue
+        if (scopes.contains(Scope.FULL_PROFILE.getKey())) {
+            return false;
+        }
+
         // get requested scopes claims
         final List<String> scopesClaims = scopes.stream()
                 .map(String::toUpperCase)
