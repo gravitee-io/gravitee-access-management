@@ -20,6 +20,7 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
@@ -36,14 +37,7 @@ import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationAdvancedSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationOAuthSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.*;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -247,7 +241,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setAccount(convert(other.getAccount()));
         applicationSettingsMongo.setLogin(convert(other.getLogin()));
         applicationSettingsMongo.setAdvanced(convert(other.getAdvanced()));
-        applicationSettingsMongo.setPasswordSettings(ConversionUtils.convert(other.getPasswordSettings()));
+        applicationSettingsMongo.setPasswordSettings(convert(other.getPasswordSettings()));
         return applicationSettingsMongo;
     }
 
@@ -261,7 +255,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setAccount(convert(other.getAccount()));
         applicationSettings.setLogin(convert(other.getLogin()));
         applicationSettings.setAdvanced(convert(other.getAdvanced()));
-        applicationSettings.setPasswordSettings(ConversionUtils.convert(other.getPasswordSettings()));
+        applicationSettings.setPasswordSettings(convert(other.getPasswordSettings()));
         return applicationSettings;
     }
 
@@ -410,6 +404,14 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     private static LoginSettingsMongo convert(LoginSettings loginSettings) {
         return LoginSettingsMongo.convert(loginSettings);
+    }
+
+    private static PasswordSettings convert(PasswordSettingsMongo passwordSettingsMongo) {
+        return passwordSettingsMongo != null ? passwordSettingsMongo.convert() : null;
+    }
+
+    private static PasswordSettingsMongo convert(PasswordSettings passwordSettings) {
+        return PasswordSettingsMongo.convert(passwordSettings);
     }
 
     private static ApplicationAdvancedSettings convert(ApplicationAdvancedSettingsMongo other) {

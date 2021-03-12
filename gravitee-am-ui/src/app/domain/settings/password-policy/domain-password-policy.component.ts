@@ -31,10 +31,10 @@ export class DomainPasswordPolicyComponent implements OnInit {
   domain: any;
   formChanged = false;
   editMode: boolean;
-
   passwordSettings: any;
   minLength: string;
-  passwordInclude: string;
+  includeNumbers: boolean;
+  includeSpecialCharacters: boolean;
   lettersInMixedCase: boolean;
   maxConsecutiveLetters: number;
 
@@ -52,7 +52,8 @@ export class DomainPasswordPolicyComponent implements OnInit {
     this.passwordSettings = this.domain.passwordSettings;
     if (this.passwordSettings != null) {
       this.minLength = this.passwordSettings.minLength;
-      this.passwordInclude = this.passwordSettings.passwordInclude;
+      this.includeNumbers = this.passwordSettings.includeNumbers;
+      this.includeSpecialCharacters = this.passwordSettings.includeSpecialCharacters;
       this.lettersInMixedCase = this.passwordSettings.lettersInMixedCase;
       this.maxConsecutiveLetters = this.passwordSettings.maxConsecutiveLetters;
     }
@@ -63,16 +64,24 @@ export class DomainPasswordPolicyComponent implements OnInit {
     this.formChanged = true;
   }
 
+  setIncludeNumbers(e) {
+    this.includeNumbers = e.checked;
+  }
+
+  setIncludeSpecialCharacters(e) {
+    this.includeSpecialCharacters = e.checked;
+  }
+
   setLettersInMixedValue(e) {
     this.lettersInMixedCase = e.checked;
   }
-
 
   update() {
     const data: any = {};
     data.passwordSettings = {
       'minLength': this.minLength,
-      'passwordInclude': this.passwordInclude,
+      'includeNumbers': this.includeNumbers,
+      'includeSpecialCharacters': this.includeSpecialCharacters,
       'lettersInMixedCase': this.lettersInMixedCase,
       'maxConsecutiveLetters': this.maxConsecutiveLetters,
     };

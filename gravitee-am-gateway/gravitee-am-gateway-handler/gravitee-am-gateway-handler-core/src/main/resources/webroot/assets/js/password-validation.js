@@ -15,7 +15,7 @@ passwordInput.onkeyup = function () {
     if (passwordSettings == null) {
         return;
     }
-    // validate length
+    //validate min length
     let isMinLengthOk = true;
     const minLength = passwordSettings.minLength;
     if (minLength != null) {
@@ -23,22 +23,25 @@ passwordInput.onkeyup = function () {
         validateMessageElement(length, isMinLengthOk);
     }
 
-    // validate include
-    let isPasswordIncludeOk = true;
-    const passwordInclude = passwordSettings.passwordInclude;
-    const numbersPattern = /[0-9]/g;
-    if (passwordInclude === "NUMBERS") {
+    //validate include numbers
+    let isIncludeNumbersOk = true;
+    if (passwordSettings.includeNumbers) {
+        const numbersPattern = /[0-9]/g;
         isPasswordIncludeOk = passwordInput.value.match(numbersPattern);
-        validateMessageElement(number, isPasswordIncludeOk);
-    } else if (passwordInclude === "NUMBERS_AND_SPECIAL_CHARACTERS") {
+        validateMessageElement(number, isIncludeNumbersOk);
+    }
+
+    //validate include special characters
+    let isIncludeSpecialCharactersOk = true;
+    if (passwordSettings.includeSpecialCharacters) {
         const specialCharPattern = /[^a-zA-Z0-9]/g;
-        isPasswordIncludeOk = passwordInput.value.match(numbersPattern) && passwordInput.value.match(specialCharPattern);
-        validateMessageElement(specialChar, isPasswordIncludeOk);
+        isIncludeSpecialCharactersOk = passwordInput.value.match(specialCharPattern);
+        validateMessageElement(specialChar, isIncludeSpecialCharactersOk);
     }
 
     //validate letters in mixed case
     let isLettersInMixedCaseOk = true;
-    if (passwordSettings.lettersInMixedCase != null && passwordSettings.lettersInMixedCase) {
+    if (passwordSettings.lettersInMixedCase) {
         const upperCharPattern = /[A-Z]/g;
         const lowerCharPattern = /[a-z]/g;
         isLettersInMixedCaseOk = passwordInput.value.match(upperCharPattern) && passwordInput.value.match(lowerCharPattern);
@@ -51,7 +54,7 @@ passwordInput.onkeyup = function () {
         isMaxConsecutiveLettersOk = !isOverMaxConsecutiveLetters(passwordInput.value, passwordSettings.maxConsecutiveLetters);
         validateMessageElement(maxConsecutiveLetters, isMaxConsecutiveLettersOk);
     }
-    submitBtn.disabled = !(isMinLengthOk && isPasswordIncludeOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk);
+    submitBtn.disabled = !(isMinLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk);
 }
 
 /**

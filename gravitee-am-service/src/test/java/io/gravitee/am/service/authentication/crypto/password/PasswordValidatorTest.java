@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.authentication.crypto.password;
 
-import io.gravitee.am.common.policy.PasswordInclude;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.service.validators.PasswordValidator;
 import org.assertj.core.api.Assertions;
@@ -76,31 +75,31 @@ public class PasswordValidatorTest {
 
     @Test
     public void invalidMinLength() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, null);
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, null, null);
         Optional<String> result = getValidationErrorKey("AB", passwordSettings);
         Assertions.assertThat(result).hasValue("invalid password minimum length");
     }
 
     @Test
     public void includeNumber() {
-        PasswordSettings passwordSettings = buildPasswordSettings(2, PasswordInclude.NUMBERS, null, null);
+        PasswordSettings passwordSettings = buildPasswordSettings(2, true, null, null, null);
         Assertions.assertThat(getValidationErrorKey("ABC", passwordSettings)).hasValue("password must contains numbers");
         Assertions.assertThat(getValidationErrorKey("A234", passwordSettings)).isEmpty();
         Assertions.assertThat(getValidationErrorKey("1234", passwordSettings)).isEmpty();
     }
 
     @Test
-    public void includeNumbersAndSpecialCharacters() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, PasswordInclude.NUMBERS_AND_SPECIAL_CHARACTERS, null, null);
-        Assertions.assertThat(getValidationErrorKey("AB12", passwordSettings)).hasValue("password must contains numbers and special characters");
-        Assertions.assertThat(getValidationErrorKey("1234", passwordSettings)).hasValue("password must contains numbers and special characters");
-        Assertions.assertThat(getValidationErrorKey("ABCD", passwordSettings)).hasValue("password must contains numbers and special characters");
+    public void includeSpecialCharacters() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, false, true, null, null);
+        Assertions.assertThat(getValidationErrorKey("AB12", passwordSettings)).hasValue("password must contains special characters");
+        Assertions.assertThat(getValidationErrorKey("1234", passwordSettings)).hasValue("password must contains special characters");
+        Assertions.assertThat(getValidationErrorKey("ABCD", passwordSettings)).hasValue("password must contains special characters");
         Assertions.assertThat(getValidationErrorKey("A$12", passwordSettings)).isEmpty();
     }
 
     @Test
     public void lettersInMixedCase() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, true, null);
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, true, null);
         Assertions.assertThat(getValidationErrorKey("ABCD", passwordSettings)).hasValue("password must contains letters in mixed case");
         Assertions.assertThat(getValidationErrorKey("abcd", passwordSettings)).hasValue("password must contains letters in mixed case");
         Assertions.assertThat(getValidationErrorKey("ABcd", passwordSettings)).isEmpty();
@@ -108,7 +107,7 @@ public class PasswordValidatorTest {
 
     @Test
     public void maxConsecutiveLetters() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, false, 3);
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, 3);
         Assertions.assertThat(getValidationErrorKey("ABBBBCD", passwordSettings)).hasValue("invalid max consecutive letters");
         Assertions.assertThat(getValidationErrorKey("ABBBcd", passwordSettings)).isEmpty();
     }
@@ -123,12 +122,14 @@ public class PasswordValidatorTest {
     }
 
     private static PasswordSettings buildPasswordSettings(Integer minLength,
-                                                          PasswordInclude passwordInclude,
+                                                          Boolean includeNumbers,
+                                                          Boolean includeSpecialCharacters,
                                                           Boolean lettersInMixedCase,
                                                           Integer maxConsecutiveLetters) {
         PasswordSettings passwordSettings = new PasswordSettings();
         passwordSettings.setMinLength(minLength);
-        passwordSettings.setPasswordInclude(passwordInclude);
+        passwordSettings.setIncludeNumbers(includeNumbers);
+        passwordSettings.setIncludeSpecialCharacters(includeSpecialCharacters);
         passwordSettings.setLettersInMixedCase(lettersInMixedCase);
         passwordSettings.setMaxConsecutiveLetters(maxConsecutiveLetters);
         return passwordSettings;

@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import io.gravitee.am.common.policy.PasswordInclude;
+import io.gravitee.am.model.PasswordSettings;
 
 /**
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
@@ -34,9 +34,14 @@ public class PasswordSettingsMongo {
     private Integer minLength;
 
     /**
-     * Password include
+     * Must include numbers
      */
-    private PasswordInclude passwordInclude;
+    private Boolean includeNumbers;
+
+    /**
+     * Must include special characters
+     */
+    private Boolean includeSpecialCharacters;
 
     /**
      * letters in mixed case
@@ -48,16 +53,12 @@ public class PasswordSettingsMongo {
      */
     private Integer maxConsecutiveLetters;
 
-    public PasswordSettingsMongo() {
-
+    public boolean isInherited() {
+        return inherited;
     }
 
-    public PasswordSettingsMongo(PasswordSettingsMongo passwordSettings) {
-        this.inherited = passwordSettings.inherited;
-        this.minLength = passwordSettings.minLength;
-        this.passwordInclude = passwordSettings.passwordInclude;
-        this.lettersInMixedCase = passwordSettings.lettersInMixedCase;
-        this.maxConsecutiveLetters = passwordSettings.maxConsecutiveLetters;
+    public void setInherited(boolean inherited) {
+        this.inherited = inherited;
     }
 
     public Integer getMinLength() {
@@ -68,12 +69,20 @@ public class PasswordSettingsMongo {
         this.minLength = minLength;
     }
 
-    public PasswordInclude getPasswordInclude() {
-        return passwordInclude;
+    public Boolean isIncludeNumbers() {
+        return includeNumbers;
     }
 
-    public void setPasswordInclude(PasswordInclude passwordInclude) {
-        this.passwordInclude = passwordInclude;
+    public void setIncludeNumbers(Boolean includeNumbers) {
+        this.includeNumbers = includeNumbers;
+    }
+
+    public Boolean isIncludeSpecialCharacters() {
+        return includeSpecialCharacters;
+    }
+
+    public void setIncludeSpecialCharacters(Boolean includeSpecialCharacters) {
+        this.includeSpecialCharacters = includeSpecialCharacters;
     }
 
     public Boolean getLettersInMixedCase() {
@@ -92,11 +101,28 @@ public class PasswordSettingsMongo {
         this.maxConsecutiveLetters = maxConsecutiveLetters;
     }
 
-    public boolean isInherited() {
-        return inherited;
+    public PasswordSettings convert() {
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setInherited(isInherited());
+        passwordSettings.setMinLength(getMinLength());
+        passwordSettings.setIncludeNumbers(isIncludeNumbers());
+        passwordSettings.setIncludeSpecialCharacters(isIncludeSpecialCharacters());
+        passwordSettings.setLettersInMixedCase(getLettersInMixedCase());
+        passwordSettings.setMaxConsecutiveLetters(getMaxConsecutiveLetters());
+        return passwordSettings;
     }
 
-    public void setInherited(boolean inherited) {
-        this.inherited = inherited;
+    public static PasswordSettingsMongo convert(PasswordSettings other) {
+        if (other == null) {
+            return null;
+        }
+        PasswordSettingsMongo passwordSettings = new PasswordSettingsMongo();
+        passwordSettings.setInherited(other.isInherited());
+        passwordSettings.setMinLength(other.getMinLength());
+        passwordSettings.setIncludeNumbers(other.isIncludeNumbers());
+        passwordSettings.setIncludeSpecialCharacters(other.isIncludeSpecialCharacters());
+        passwordSettings.setLettersInMixedCase(other.getLettersInMixedCase());
+        passwordSettings.setMaxConsecutiveLetters(other.getMaxConsecutiveLetters());
+        return passwordSettings;
     }
 }

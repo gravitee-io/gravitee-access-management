@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.validators;
 
-import io.gravitee.am.common.policy.PasswordInclude;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,25 +55,20 @@ public class PasswordValidator {
         if (password.length() > PASSWORD_MAX_LENGTH) {
             throw InvalidPasswordException.of("invalid password maximum length", "invalid_password_value");
         }
+
         if (passwordSettings.getMinLength() != null && password.length() < passwordSettings.getMinLength()) {
             throw InvalidPasswordException.of("invalid password minimum length", "invalid_password_value");
         }
 
-        PasswordInclude passwordInclude = passwordSettings.getPasswordInclude();
-        if (passwordInclude != null) {
-            switch (passwordInclude) {
-                case NUMBERS:
-                    if (!NUMBER_PATTERN.matcher(password).find()) {
-                        throw InvalidPasswordException.of("password must contains numbers", "invalid_password_value");
-                    }
-                    break;
-                case NUMBERS_AND_SPECIAL_CHARACTERS:
-                    if (!NUMBER_PATTERN.matcher(password).find() || !SPECIAL_CHARACTER_PATTERN.matcher(password).find()) {
-                        throw InvalidPasswordException.of("password must contains numbers and special characters", "invalid_password_value");
-                    }
-                    break;
-                default:
-                    throw new IllegalStateException("Unsupported enum : {}" + passwordInclude);
+        if (Boolean.TRUE.equals(passwordSettings.isIncludeNumbers())) {
+            if (!NUMBER_PATTERN.matcher(password).find()) {
+                throw InvalidPasswordException.of("password must contains numbers", "invalid_password_value");
+            }
+        }
+
+        if (Boolean.TRUE.equals(passwordSettings.isIncludeSpecialCharacters())) {
+            if (!SPECIAL_CHARACTER_PATTERN.matcher(password).find()) {
+                throw InvalidPasswordException.of("password must contains special characters", "invalid_password_value");
             }
         }
 

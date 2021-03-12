@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.common.policy.PasswordInclude;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
@@ -29,7 +28,8 @@ public class PatchPasswordSettings {
 
     private Optional<Boolean> inherited;
     private Optional<Integer> minLength;
-    private Optional<PasswordInclude> passwordInclude;
+    private Optional<Boolean> includeNumbers;
+    private Optional<Boolean> includeSpecialCharacters;
     private Optional<Boolean> lettersInMixedCase;
     private Optional<Integer> maxConsecutiveLetters;
 
@@ -41,12 +41,20 @@ public class PatchPasswordSettings {
         this.minLength = minLength;
     }
 
-    public Optional<PasswordInclude> getPasswordInclude() {
-        return passwordInclude;
+    public Optional<Boolean> getIncludeNumbers() {
+        return includeNumbers;
     }
 
-    public void setPasswordInclude(Optional<PasswordInclude> passwordInclude) {
-        this.passwordInclude = passwordInclude;
+    public void setIncludeNumbers(Optional<Boolean> includeNumbers) {
+        this.includeNumbers = includeNumbers;
+    }
+
+    public Optional<Boolean> getIncludeSpecialCharacters() {
+        return includeSpecialCharacters;
+    }
+
+    public void setIncludeSpecialCharacters(Optional<Boolean> includeSpecialCharacters) {
+        this.includeSpecialCharacters = includeSpecialCharacters;
     }
 
     public Optional<Boolean> getLettersInMixedCase() {
@@ -78,7 +86,8 @@ public class PatchPasswordSettings {
         PasswordSettings toPatch = Optional.ofNullable(_toPatch).map(PasswordSettings::new).orElseGet(PasswordSettings::new);
         SetterUtils.safeSet(toPatch::setInherited, this.inherited);
         SetterUtils.safeSet(toPatch::setMinLength, this.minLength);
-        SetterUtils.safeSet(toPatch::setPasswordInclude, this.passwordInclude);
+        SetterUtils.safeSet(toPatch::setIncludeNumbers, this.includeNumbers);
+        SetterUtils.safeSet(toPatch::setIncludeSpecialCharacters, this.includeSpecialCharacters);
         SetterUtils.safeSet(toPatch::setLettersInMixedCase, this.lettersInMixedCase);
         SetterUtils.safeSet(toPatch::setMaxConsecutiveLetters, this.maxConsecutiveLetters);
         return toPatch;

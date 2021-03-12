@@ -15,9 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.common.policy.PasswordInclude;
 import io.gravitee.am.model.Application;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -30,12 +28,7 @@ import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -205,17 +198,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
         oauth.setGrantTypes(Collections.singletonList("authorization_code"));
         settings.setOauth(oauth);
-        settings.setPasswordSettings(buildPasswordSettings());
         return settings;
-    }
-
-    private static PasswordSettings buildPasswordSettings() {
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setMinLength(5);
-        passwordSettings.setPasswordInclude(PasswordInclude.NUMBERS_AND_SPECIAL_CHARACTERS);
-        passwordSettings.setLettersInMixedCase(true);
-        passwordSettings.setMaxConsecutiveLetters(4);
-        return passwordSettings;
     }
 
     @Test

@@ -21,6 +21,7 @@ import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -30,11 +31,7 @@ import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.WebAuthnSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.*;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
@@ -130,7 +127,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setLoginSettings(convert(domainMongo.getLoginSettings()));
         domain.setWebAuthnSettings(convert(domainMongo.getWebAuthnSettings()));
         domain.setAccountSettings(convert(domainMongo.getAccountSettings()));
-        domain.setPasswordSettings(ConversionUtils.convert(domainMongo.getPasswordSettings()));
+        domain.setPasswordSettings(convert(domainMongo.getPasswordSettings()));
         domain.setTags(domainMongo.getTags());
         domain.setReferenceType(domainMongo.getReferenceType());
         domain.setReferenceId(domainMongo.getReferenceId());
@@ -159,7 +156,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setLoginSettings(convert(domain.getLoginSettings()));
         domainMongo.setWebAuthnSettings(convert(domain.getWebAuthnSettings()));
         domainMongo.setAccountSettings(convert(domain.getAccountSettings()));
-        domainMongo.setPasswordSettings(ConversionUtils.convert(domain.getPasswordSettings()));
+        domainMongo.setPasswordSettings(convert(domain.getPasswordSettings()));
         domainMongo.setTags(domain.getTags());
         domainMongo.setReferenceType(domain.getReferenceType());
         domainMongo.setReferenceId(domain.getReferenceId());
@@ -320,4 +317,11 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return AccountSettingsMongo.convert(accountSettings);
     }
 
+    private static PasswordSettings convert(PasswordSettingsMongo passwordSettingsMongo) {
+        return passwordSettingsMongo != null ? passwordSettingsMongo.convert() : null;
+    }
+
+    private static PasswordSettingsMongo convert(PasswordSettings passwordSettings) {
+        return PasswordSettingsMongo.convert(passwordSettings);
+    }
 }

@@ -34,7 +34,8 @@ export class PasswordPolicyComponent implements OnInit {
 
   passwordSettings: any = {};
   minLength: string;
-  passwordInclude: string;
+  includeNumbers: boolean;
+  includeSpecialCharacters: boolean;
   lettersInMixedCase: boolean;
   inherited: boolean;
   maxConsecutiveLetters: number;
@@ -56,7 +57,8 @@ export class PasswordPolicyComponent implements OnInit {
     } else {
       this.inherited = this.passwordSettings.inherited;
       this.minLength = this.passwordSettings.minLength;
-      this.passwordInclude = this.passwordSettings.passwordInclude;
+      this.includeNumbers = this.passwordSettings.includeNumbers;
+      this.includeSpecialCharacters = this.passwordSettings.includeSpecialCharacters;
       this.lettersInMixedCase = this.passwordSettings.lettersInMixedCase;
       this.maxConsecutiveLetters = this.passwordSettings.maxConsecutiveLetters;
     }
@@ -65,6 +67,14 @@ export class PasswordPolicyComponent implements OnInit {
 
   formChange(): void {
     this.formChanged = true;
+  }
+
+  setIncludeNumbers(e) {
+    this.includeNumbers = e.checked;
+  }
+
+  setIncludeSpecialCharacters(e) {
+    this.includeSpecialCharacters = e.checked;
   }
 
   setLettersInMixedValue(e) {
@@ -81,7 +91,8 @@ export class PasswordPolicyComponent implements OnInit {
     data.settings.passwordSettings = {
       'inherited': this.inherited,
       'minLength': this.minLength,
-      'passwordInclude': this.passwordInclude,
+      'includeNumbers': this.includeNumbers,
+      'includeSpecialCharacters': this.includeSpecialCharacters,
       'lettersInMixedCase': this.lettersInMixedCase,
       'maxConsecutiveLetters': this.maxConsecutiveLetters,
     };

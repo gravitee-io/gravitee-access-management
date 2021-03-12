@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.model;
 
-import io.gravitee.am.common.policy.PasswordInclude;
-
 import java.util.Optional;
 
 /**
@@ -31,14 +29,19 @@ public class PasswordSettings {
     private boolean inherited = true;
 
     /**
-     * password min length
+     * Password min length
      */
     private Integer minLength;
 
     /**
-     * Password include
+     * Must include numbers
      */
-    private PasswordInclude passwordInclude;
+    private Boolean includeNumbers;
+
+    /**
+     * Must include special characters
+     */
+    private Boolean includeSpecialCharacters;
 
     /**
      * letters in mixed case
@@ -54,12 +57,13 @@ public class PasswordSettings {
 
     }
 
-    public PasswordSettings(PasswordSettings passwordSettings) {
-        this.inherited = passwordSettings.inherited;
-        this.minLength = passwordSettings.minLength;
-        this.passwordInclude = passwordSettings.passwordInclude;
-        this.lettersInMixedCase = passwordSettings.lettersInMixedCase;
-        this.maxConsecutiveLetters = passwordSettings.maxConsecutiveLetters;
+    public PasswordSettings(PasswordSettings other) {
+        this.inherited = other.inherited;
+        this.minLength = other.minLength;
+        this.includeNumbers = other.includeNumbers;
+        this.includeSpecialCharacters = other.includeSpecialCharacters;
+        this.lettersInMixedCase = other.lettersInMixedCase;
+        this.maxConsecutiveLetters = other.maxConsecutiveLetters;
     }
 
     public Integer getMinLength() {
@@ -70,12 +74,20 @@ public class PasswordSettings {
         this.minLength = minLength;
     }
 
-    public PasswordInclude getPasswordInclude() {
-        return passwordInclude;
+    public Boolean isIncludeNumbers() {
+        return includeNumbers;
     }
 
-    public void setPasswordInclude(PasswordInclude passwordInclude) {
-        this.passwordInclude = passwordInclude;
+    public void setIncludeNumbers(Boolean includeNumbers) {
+        this.includeNumbers = includeNumbers;
+    }
+
+    public Boolean isIncludeSpecialCharacters() {
+        return includeSpecialCharacters;
+    }
+
+    public void setIncludeSpecialCharacters(Boolean includeSpecialCharacters) {
+        this.includeSpecialCharacters = includeSpecialCharacters;
     }
 
     public Boolean getLettersInMixedCase() {
