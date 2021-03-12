@@ -68,6 +68,7 @@
         <dependency>
             <groupId>io.gravitee.plugin</groupId>
             <artifactId>gravitee-plugin-policy</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
