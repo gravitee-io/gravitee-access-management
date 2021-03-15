@@ -118,7 +118,7 @@ export class ApplicationGeneralComponent implements OnInit {
         if (res) {
           this.applicationService.delete(this.domainId, this.application.id).subscribe(response => {
             this.snackbarService.open('Application deleted');
-            this.router.navigate(['../..'], { relativeTo: this.route });
+            this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domainId, 'applications']);
           });
         }
       });
