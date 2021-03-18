@@ -30,7 +30,7 @@
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>3.6.1</version>
+    <version>3.6.2-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>
