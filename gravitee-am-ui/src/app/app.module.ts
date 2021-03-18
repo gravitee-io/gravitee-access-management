@@ -126,6 +126,7 @@ import {
   DomainSettingsMembershipsComponent
 } from './domain/settings/memberships/memberships.component';
 import {DomainSettingsFactorsComponent} from './domain/settings/factors/factors.component';
+import {DomainSettingsResourcesComponent} from './domain/settings/resources/resources.component';
 import {DomainSettingsWebAuthnComponent} from './domain/settings/webauthn/webauthn.component';
 import {DomainSettingsFlowsComponent} from './domain/settings/flows/flows.component';
 import {ProvidersResolver} from './resolvers/providers.resolver';
@@ -297,6 +298,7 @@ import {WidgetDataTableComponent} from './components/widget/data-table/widget-da
 import {WidgetCountComponent} from './components/widget/count/widget-count.component';
 import {LoaderComponent} from './components/loader/loader.component';
 import {FactorsResolver} from './resolvers/factors.resolver';
+import {FactorPluginsResolver} from './resolvers/factor-plugins.resolver';
 import {FactorService} from './services/factor.service';
 import {FactorComponent} from './domain/settings/factors/factor/factor.component';
 import {FactorCreationComponent} from './domain/settings/factors/creation/factor-creation.component';
@@ -305,6 +307,15 @@ import {FactorCreationStep2Component} from './domain/settings/factors/creation/s
 import {FactorFormComponent} from './domain/settings/factors/factor/form/form.component';
 import {FactorResolver} from './resolvers/factor.resolver';
 import {EnrolledFactorsResolver} from './resolvers/enrolled-factors.resolver';
+import {ResourcesResolver} from './resolvers/resources.resolver';
+import {ResourcePluginsResolver} from './resolvers/resource-plugins.resolver';
+import {ResourceService} from './services/resource.service';
+import {ResourceComponent} from './domain/settings/resources/resource/resource.component';
+import {ResourceCreationComponent} from './domain/settings/resources/creation/resource-creation.component';
+import {ResourceCreationStep1Component} from './domain/settings/resources/creation/steps/step1/step1.component';
+import {ResourceCreationStep2Component} from './domain/settings/resources/creation/steps/step2/step2.component';
+import {ResourceFormComponent} from './domain/settings/resources/resource/form/form.component';
+import {ResourceResolver} from './resolvers/resource.resolver';
 import {IdenticonHashDirective} from './directives/identicon-hash.directive';
 import {UserAvatarComponent} from './components/user-avatar/user-avatar.component';
 import {NotFoundComponent} from './not-found/not-found.component';
@@ -378,6 +389,7 @@ import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.res
     DomainSettingsAccountComponent,
     DomainSettingsMembershipsComponent,
     DomainSettingsFactorsComponent,
+    DomainSettingsResourcesComponent,
     DomainSettingsWebAuthnComponent,
     DomainSettingsFlowsComponent,
     ConfirmComponent,
@@ -415,6 +427,11 @@ import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.res
     FactorCreationStep1Component,
     FactorCreationStep2Component,
     FactorFormComponent,
+    ResourceComponent,
+    ResourceCreationComponent,
+    ResourceCreationStep1Component,
+    ResourceCreationStep2Component,
+    ResourceFormComponent,
     SnackbarComponent,
     NavbarComponent,
     SettingsComponent,
@@ -624,8 +641,13 @@ import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.res
     DomainPermissionsResolver,
     FactorService,
     FactorsResolver,
+    FactorPluginsResolver,
     FactorResolver,
     EnrolledFactorsResolver,
+    ResourceService,
+    ResourcesResolver,
+    ResourcePluginsResolver,
+    ResourceResolver,
     AuthGuard,
     AnalyticsService,
     ApplicationResourcesResolver,

@@ -21,10 +21,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.FactorRepository;
-import io.gravitee.am.service.exception.FactorAlreadyExistsException;
-import io.gravitee.am.service.exception.FactorNotFoundException;
-import io.gravitee.am.service.exception.FactorWithApplicationsException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.FactorServiceImpl;
 import io.gravitee.am.service.model.NewFactor;
 import io.gravitee.am.service.model.UpdateFactor;
@@ -125,7 +122,6 @@ public class FactorServiceTest {
     public void shouldCreate() {
         NewFactor newFactor = Mockito.mock(NewFactor.class);
         when(newFactor.getFactorType()).thenReturn(FactorType.TOTP);
-        when(factorRepository.findByDomainAndFactorType(DOMAIN, FactorType.TOTP)).thenReturn(Maybe.empty());
         when(factorRepository.create(any(Factor.class))).thenReturn(Single.just(new Factor()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -135,15 +131,50 @@ public class FactorServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(factorRepository, times(1)).findByDomainAndFactorType(anyString(), anyString());
+        verify(eventService, times(1)).create(any());
         verify(factorRepository, times(1)).create(any(Factor.class));
+    }
+
+    @Test
+    public void shouldCreateSMS() {
+        NewFactor newFactor = Mockito.mock(NewFactor.class);
+        when(newFactor.getFactorType()).thenReturn(FactorType.SMS);
+        when(newFactor.getType()).thenReturn("sms-am-factor");
+        when(newFactor.getConfiguration()).thenReturn("{\"countryCodes\":\"fr, us\"}");
+        when(factorRepository.create(any(Factor.class))).thenReturn(Single.just(new Factor()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = factorService.create(DOMAIN, newFactor).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(eventService, times(1)).create(any());
+        verify(factorRepository, times(1)).create(any(Factor.class));
+    }
+
+    @Test
+    public void shouldCreate_SMS_InvalidCountry() {
+        NewFactor newFactor = Mockito.mock(NewFactor.class);
+        when(newFactor.getFactorType()).thenReturn(FactorType.SMS);
+        when(newFactor.getType()).thenReturn("sms-am-factor");
+        when(newFactor.getConfiguration()).thenReturn("{\"countryCodes\":\"fr, g8\"}");
+
+        TestObserver testObserver = factorService.create(DOMAIN, newFactor).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(FactorConfigurationException.class);
+
+        verify(eventService, never()).create(any());
+        verify(factorRepository, never()).create(any(Factor.class));
     }
 
     @Test
     public void shouldCreate_technicalException() {
         NewFactor newFactor = Mockito.mock(NewFactor.class);
         when(newFactor.getFactorType()).thenReturn(FactorType.TOTP);
-        when(factorRepository.findByDomainAndFactorType(DOMAIN, FactorType.TOTP)).thenReturn(Maybe.error(TechnicalException::new));
+        when(factorRepository.create(any())).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Factor> testObserver = new TestObserver<>();
         factorService.create(DOMAIN, newFactor).subscribe(testObserver);
@@ -151,14 +182,13 @@ public class FactorServiceTest {
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
-        verify(factorRepository, never()).create(any(Factor.class));
+        verify(eventService, never()).create(any());
     }
 
     @Test
     public void shouldCreate2_technicalException() {
         NewFactor newFactor = Mockito.mock(NewFactor.class);
         when(newFactor.getFactorType()).thenReturn(FactorType.TOTP);
-        when(factorRepository.findByDomainAndFactorType(DOMAIN, FactorType.TOTP)).thenReturn(Maybe.empty());
         when(factorRepository.create(any(Factor.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Factor> testObserver = new TestObserver<>();
@@ -167,22 +197,7 @@ public class FactorServiceTest {
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
-        verify(factorRepository, times(1)).findByDomainAndFactorType(anyString(), anyString());
-    }
-
-    @Test
-    public void shouldCreate_existingFactor() {
-        NewFactor newFactor = Mockito.mock(NewFactor.class);
-        when(newFactor.getFactorType()).thenReturn(FactorType.TOTP);
-        when(factorRepository.findByDomainAndFactorType(DOMAIN, FactorType.TOTP)).thenReturn(Maybe.just(new Factor()));
-
-        TestObserver<Factor> testObserver = new TestObserver<>();
-        factorService.create(DOMAIN, newFactor).subscribe(testObserver);
-
-        testObserver.assertError(FactorAlreadyExistsException.class);
-        testObserver.assertNotComplete();
-
-        verify(factorRepository, never()).create(any(Factor.class));
+        verify(eventService, never()).create(any());
     }
 
     @Test

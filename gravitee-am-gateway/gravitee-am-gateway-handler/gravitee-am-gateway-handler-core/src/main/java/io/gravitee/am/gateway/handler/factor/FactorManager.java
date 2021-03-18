@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.factor;
 
+import io.gravitee.am.common.event.FactorEvent;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.model.Factor;
 import io.gravitee.common.service.Service;
@@ -28,4 +29,6 @@ public interface FactorManager extends Service {
     FactorProvider get(String factorId);
 
     Factor getFactor(String factorId);
+
+    void updateFactor(String factorId);
 }

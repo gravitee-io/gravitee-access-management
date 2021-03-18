@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.root.service.user.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
+import io.gravitee.am.common.factor.FactorSecurityType;
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -35,6 +37,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
@@ -365,6 +368,22 @@ public class UserServiceImpl implements UserService {
                         enrolledFactors.add(enrolledFactor);
                     }
                     user.setFactors(enrolledFactors);
+
+                    if (FactorSecurityType.MOBILE_PHONE.equals(enrolledFactor.getSecurity().getType())) {
+                        // MFA SMS currently used, preserve the phone number into the user profile if not yet present
+                        List<Attribute> phoneNumbers = user.getPhoneNumbers();
+                        if (phoneNumbers == null) {
+                            phoneNumbers = new ArrayList<>();
+                            user.setPhoneNumbers(phoneNumbers);
+                        }
+                        if (!phoneNumbers.stream().filter(p -> p.getValue().equals(enrolledFactor.getSecurity().getValue())).findFirst().isPresent()) {
+                            Attribute newPhoneNumber = new Attribute();
+                            newPhoneNumber.setType("mobile");
+                            newPhoneNumber.setPrimary(phoneNumbers.isEmpty());
+                            newPhoneNumber.setValue(enrolledFactor.getSecurity().getValue());
+                            phoneNumbers.add(newPhoneNumber);
+                        }
+                    }
                     return userService.update(user);
                 });
     }

@@ -78,6 +78,9 @@ public abstract class Event {
             case ALERT_NOTIFIER:
                 event1 =  AlertNotifierEvent.actionOf(action);
                 break;
+            case RESOURCE:
+                event1 =  ResourceEvent.actionOf(action);
+                break;
         }
 
         return event1;

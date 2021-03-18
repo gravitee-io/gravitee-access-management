@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
@@ -24,6 +25,7 @@ import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -41,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -93,8 +96,18 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
                     routingContext.fail(503);
                     return;
                 }
+
                 // put factors in context
-                routingContext.put("factors", h.result());
+                List<Factor> factorsToRender = h.result();
+                routingContext.put("factors", factorsToRender);
+
+                // put CountryCodes in context to internationalize phone number
+                List<String> countries = factorsToRender.stream().flatMap(f -> f.enrollment.getCountries().stream()).distinct().collect(Collectors.toList());
+
+                routingContext.put("countries", countries);
+                if (endUser.getPhoneNumbers() != null && !endUser.getPhoneNumbers().isEmpty()) {
+                    routingContext.put("phoneNumber", endUser.getPhoneNumbers().get(0).getValue());
+                }
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
                 engine.render(routingContext.data(), getTemplateFileName(client), res -> {
@@ -118,29 +131,58 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
         final Boolean acceptEnrollment = Boolean.valueOf(params.get("user_mfa_enrollment"));
         final String factorId = params.get("factorId");
         final String sharedSecret = params.get("sharedSecret");
+        final String phoneNumber = params.get("phone");
+
         if (factorId == null) {
             logger.warn("No factor id in form - did you forget to include factor id value ?");
             routingContext.fail(400);
             return;
         }
-        if (sharedSecret == null) {
-            logger.warn("No shared secret in form - did you forget to include shared secret value ?");
+
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
+        Optional<Map.Entry<io.gravitee.am.model.Factor, FactorProvider>> optFactor = factors.entrySet().stream().filter(factor -> factorId.equals(factor.getKey().getId())).findFirst();
+        if (!optFactor.isPresent()) {
+            logger.warn("Factor not found - did you send a valid factor id ?");
             routingContext.fail(400);
             return;
         }
+
         // manage enrolled factors
         // if user has skipped the enrollment process, continue
         if (!acceptEnrollment) {
             routingContext.session().put(ConstantKeys.MFA_SKIPPED_KEY, true);
         }else {
-            // save enrolled factor for the current user and continue
-            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, factorId);
-            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
+            FactorProvider provider = optFactor.get().getValue();
+            if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.get().getKey()))) {
+                // save enrolled factor for the current user and continue
+                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, factorId);
+                if (sharedSecret != null) {
+                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
+                }
+                if (phoneNumber != null) {
+                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER, phoneNumber);
+                }
+            } else {
+                // parameters are invalid
+                routingContext.fail(400);
+            }
         }
 
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
         doRedirect(routingContext.response(), returnURL);
+    }
+
+    private EnrolledFactorSecurity getSecurityFactor(MultiMap params, io.gravitee.am.model.Factor factor) {
+        switch (factor.getFactorType()) {
+            case "TOTP":
+                return new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret"));
+            case "SMS":
+                return new EnrolledFactorSecurity(FactorSecurityType.MOBILE_PHONE, params.get("phone"));
+            default:
+                return null;
+        }
     }
 
     private void load(Map<io.gravitee.am.model.Factor, FactorProvider> providers, User user, Handler<AsyncResult<List<Factor>>> handler) {
@@ -171,11 +213,13 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
 
     private static class Factor {
         private String id;
+        private String name;
         private String factorType;
         private Enrollment enrollment;
 
         public Factor(io.gravitee.am.model.Factor factor, Enrollment enrollment) {
             this.id = factor.getId();
+            this.name = factor.getName();
             this.factorType = factor.getFactorType();
             this.enrollment = enrollment;
         }
@@ -202,6 +246,14 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
 
         public void setEnrollment(Enrollment enrollment) {
             this.enrollment = enrollment;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
         }
     }
 }

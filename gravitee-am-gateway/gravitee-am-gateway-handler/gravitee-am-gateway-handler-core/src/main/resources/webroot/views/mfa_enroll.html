@@ -10,6 +10,8 @@
     <link rel="stylesheet" th:href="@{../assets/material/material.icons.css}">
     <link rel="stylesheet" th:href="@{../assets/font-awesome/css/font-awesome.min.css}">
     <link rel="stylesheet" th:href="@{../assets/css/mfa_enroll.css}">
+    <link rel="stylesheet" th:href="@{../assets/css/intl-tel-input.css}">
+
     <!-- Favicon and touch icons -->
     <link rel="shortcut icon" th:href="@{../assets/ico/favicon.ico}">
 </head>
@@ -17,62 +19,113 @@
 <div class="mdl-layout mdl-js-layout">
     <div class="mfa-enroll-container">
         <div class="mfa-enroll-form">
-            <div class="mfa-enroll-form-title">
+            <div th:if="${factors.size == 1}" class="mfa-enroll-form-title">
                 <label>Multi-Factor Auth Setup</label>
             </div>
-            <form role="form" th:action="${action}" method="post" th:each="factor : ${factors}">
-                <div th:if="${factor.factorType == 'TOTP'}" class="mfa-enroll-form-description">
-                    <div>
-                        <ul class="mdl-list">
-                            <li class="mdl-list__item mdl-list__item--three-line">
-                                <span class="mdl-list__item-primary-content">
-                                    <i class="material-icons mdl-list__item-avatar">cloud_download</i>
-                                    <span>1. Download a mobile app</span>
-                                    <span class="mdl-list__item-text-body">
-                                        Download and install a two-factor authenticator application like <i>FreeOTP</i> or <i>Google Authenticator</i>.
-                                    </span>
-                                </span>
-                            </li>
-                            <li class="mdl-list__item mdl-list__item--three-line">
-                                <span class="mdl-list__item-primary-content">
-                                  <i class="material-icons  mdl-list__item-avatar">settings</i>
-                                  <span>2. Configure the app</span>
-                                  <span class="mdl-list__item-text-body">
-                                      Open the application and scan the barcode. A one-time password code will be displayed to the screen.
-                                  </span>
-                                </span>
-                            </li>
-                            <li class="mdl-list__item mdl-list__item--three-line">
-                                <span class="mdl-list__item-primary-content">
-                                    <i class="material-icons  mdl-list__item-avatar">rotate_right</i>
-                                    <span>3. Finish set up</span>
-                                    <span class="mdl-list__item-text-body">
-                                        Go to the next step and enter the code provided by the application.
-                                    </span>
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div>
-                        <img th:src="${factor.enrollment.barcode}" width="200" />
-                    </div>
-                    <input type="hidden" th:name="sharedSecret" th:value="${factor.enrollment.key}" />
-                </div>
-                <div th:if="${error}" class="mfa-enroll-error-info">
-                    <span>
-                        <span class="error" th:text="${error}"></span>
-                        <small class="error_description" th:text="*{error_description}?: 'Error during enrollment'"></small>
-                    </span>
+            <div th:if="${factors.size > 1}" class="mfa-enroll-form-title">
+                <label>Select a Multi-Factor Auth Setup</label>
+            </div>
+            <div class="mdl-tabs mdl-js-tabs" >
+
+                <div class="mdl-tabs__tab-bar">
+                    <a th:href="'#fact' + ${factIter.index}" class="mdl-tabs__tab" th:each="factor,factIter : ${factors}" th:text="${factor.name}"></a>
                 </div>
 
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <input type="hidden" th:name="factorId" th:value="${factor.id}" />
-                <div class="mfa-enroll-form-actions">
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button--skipped">Skip for now</button>
-                    <span style="flex: 1 1 0%;"></span>
-                    <button type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                <div class="mdl-tabs__panel " th:attrappend="class=${ factIter.index == 0 }?@{is-active}" th:id="'fact' + ${factIter.index}" th:each="factor,factIter : ${factors}">
+                    <form role="form" th:id="${factor.id}" th:action="${action}" method="post" >
+                        <!--
+                        START OF MFA FACTORS SWITCH
+                        -->
+
+                        <!-- TOTP MFA FACTOR -->
+                        <div th:if="${factor.factorType == 'TOTP'}" class="mfa-enroll-form-description">
+                            <div>
+                                <ul class="mdl-list">
+                                    <li class="mdl-list__item mdl-list__item--three-line">
+                                        <span class="mdl-list__item-primary-content">
+                                            <i class="material-icons mdl-list__item-avatar">cloud_download</i>
+                                            <span>1. Download a mobile app</span>
+                                            <span class="mdl-list__item-text-body">
+                                                Download and install a two-factor authenticator application like <i>FreeOTP</i> or <i>Google Authenticator</i>.
+                                            </span>
+                                        </span>
+                                    </li>
+                                    <li class="mdl-list__item mdl-list__item--three-line">
+                                        <span class="mdl-list__item-primary-content">
+                                          <i class="material-icons  mdl-list__item-avatar">settings</i>
+                                          <span>2. Configure the app</span>
+                                          <span class="mdl-list__item-text-body">
+                                              Open the application and scan the barcode. A one-time password code will be displayed to the screen.
+                                          </span>
+                                        </span>
+                                    </li>
+                                    <li class="mdl-list__item mdl-list__item--three-line">
+                                        <span class="mdl-list__item-primary-content">
+                                            <i class="material-icons  mdl-list__item-avatar">rotate_right</i>
+                                            <span>3. Finish set up</span>
+                                            <span class="mdl-list__item-text-body">
+                                                Go to the next step and enter the code provided by the application.
+                                            </span>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div>
+                                <img th:src="${factor.enrollment.barcode}" width="200" />
+                            </div>
+                            <input type="hidden" th:name="sharedSecret" th:value="${factor.enrollment.key}" />
+                        </div>
+
+                        <!-- SMS MFA FACTOR -->
+                        <div th:if="${factor.factorType == 'SMS'}" class="mfa-enroll-form-description">
+                            <div>
+                                <ul class="mdl-list">
+                                    <li class="mdl-list__item mdl-list__item--three-line">
+                                        <span class="mdl-list__item-primary-content">
+                                            <i class="material-icons mdl-list__item-avatar">phone_enabled</i>
+                                            <span th:if="${phoneNumber != null}">1. Confirm your phone number </span>
+                                            <span th:if="${phoneNumber == null}">1. Enter your phone number </span>
+                                            <input th:id="'phoneFact' + ${factIter.index}" type="tel" th:name="'phoneFact' + ${factIter.index}"  th:value="${phoneNumber}" th:data1="'phoneFact' + ${factIter.index}" onkeydown="javascript:hideNumberError(this.getAttribute('data1'))">
+                                        </span>
+                                    </li>
+                                    <li th:id="'invalidphoneFact' + ${factIter.index}" class="mfa-enroll-error-info error">
+                                        Invalid Phone Number
+                                    </li>
+                                    <li class="mdl-list__item mdl-list__item--three-line">
+                                        <span class="mdl-list__item-primary-content">
+                                            <i class="material-icons  mdl-list__item-avatar">rotate_right</i>
+                                            <span>2. Finish set up</span>
+                                            <span class="mdl-list__item-text-body">
+                                                Go to the next step and enter the code provided by SMS.
+                                            </span>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!--
+                        END OF MFA FACTORS SWITCH
+                        -->
+                        <div th:if="${error}" class="mfa-enroll-error-info">
+                            <span>
+                                <span class="error" th:text="${error}"></span>
+                                <small class="error_description" th:text="*{error_description}?: 'Error during enrollment'"></small>
+                            </span>
+                        </div>
+
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" th:name="factorId" th:value="${factor.id}" />
+                        <input th:if="${factor.factorType == 'SMS'}" type="hidden" id="phone" name="phone" value=""/>
+                        <div class="mfa-enroll-form-actions">
+                            <button type="submit" name="user_mfa_enrollment" value="false" class="button--skipped">Skip for now</button>
+                            <span style="flex: 1 1 0%;"></span>
+                            <button th:if="${factor.factorType == 'TOTP'}"  type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                            <button th:if="${factor.factorType == 'SMS'}"  type="submit" th:data1="${factor.id}" th:data2="'phoneFact' + ${factIter.index}" th:onclick="javascript:checkPhoneNumber(event, this.getAttribute('data1'), this.getAttribute('data2'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -81,7 +134,9 @@
 <![endif]-->
 <script th:src="@{../assets/material/material.min.js}"></script>
 <script th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
-<script>
+<script th:src="@{../assets/js/intl-tel-input-17.0.8.min.js}"></script>
+<script th:inline="javascript">
+/*<![CDATA[*/
     $(".mdl-textfield__input").focus(function() {
         if (!this.value) {
             $(this).prop('required', true);
@@ -92,6 +147,50 @@
         $(this).siblings(".mdl-textfield").addClass('is-invalid');
         $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
     });
+
+    function initializeIntlTelInput(eltId, countries) {
+        // hide the invalid phone number message
+        $("#invalid" + eltId).hide();
+
+        // Handle international prefixes, format phone input field
+        // Uses intl-tel-input plugin
+        const phoneInputField = document.querySelector("#"+eltId);
+        const phoneInput = window.intlTelInput(phoneInputField, {
+          autoPlaceholder: "off",
+          dropdownContainer: document.body,
+          onlyCountries: countries,
+          utilsScript: "../assets/js/intl-tel-input-17.0.8-utils.js",
+        });
+        return phoneInput;
+    }
+
+    const intlFields = {};
+    /*[# th:each="factor,factIter: ${factors}"]*/
+    if ( [[${factor.factorType}]] == 'SMS' )
+    intlFields['phoneFact'+/*[[${factIter.index}]]*/] = initializeIntlTelInput("phoneFact"+/*[[${factIter.index}]]*/, /*[[${factor.enrollment.countries}]]*/);
+    /*[/]*/
+
+    function hideNumberError(eltId){
+        $("#invalid" + eltId).hide();
+    }
+
+    function checkPhoneNumber(event, factor, eltId) {
+      const phoneInput = intlFields[eltId];
+      const phoneNumber = phoneInput.getNumber();
+
+      // intl-tel-input validity check, Requires plugin updates for updates on phone number validity
+      if (phoneInput.isValidNumber()) {
+        $("#invalid" + eltId).hide();
+        $("#"+factor).find( '#phone' )[0].value = phoneNumber;
+        $("#"+factor).submit();
+      } else {
+        // do not submit form in case of wrong number
+        event.preventDefault();
+        $("#invalid" + eltId).show();
+      }
+    }
+
+/*]]>*/
 </script>
 </body>
 </html>

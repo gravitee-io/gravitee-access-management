@@ -37,15 +37,15 @@ import io.gravitee.am.service.reporter.builder.management.FactorAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,6 +54,9 @@ import java.util.List;
 @Component
 public class FactorServiceImpl implements FactorService {
 
+    public static final String SMS_AM_FACTOR = "sms-am-factor";
+    public static final String CONFIG_KEY_COUNTRY_CODES = "countryCodes";
+    private static final List<String> COUNTRY_CODES = Arrays.asList(Locale.getISOCountries());
     /**
      * Logger.
      */
@@ -109,24 +112,18 @@ public class FactorServiceImpl implements FactorService {
     public Single<Factor> create(String domain, NewFactor newFactor, User principal) {
         LOGGER.debug("Create a new factor {} for domain {}", newFactor, domain);
 
-        return factorRepository.findByDomainAndFactorType(domain, newFactor.getFactorType())
-                .isEmpty()
-                .flatMap(empty -> {
-                    if (!empty) {
-                        throw new FactorAlreadyExistsException(newFactor.getFactorType());
-                    } else {
-                        Factor factor = new Factor();
-                        factor.setId(newFactor.getId() == null ? RandomString.generate() : newFactor.getId());
-                        factor.setDomain(domain);
-                        factor.setName(newFactor.getName());
-                        factor.setType(newFactor.getType());
-                        factor.setFactorType(newFactor.getFactorType());
-                        factor.setConfiguration(newFactor.getConfiguration());
-                        factor.setCreatedAt(new Date());
-                        factor.setUpdatedAt(factor.getCreatedAt());
-                        return factorRepository.create(factor);
-                    }
-                })
+        Factor factor = new Factor();
+        factor.setId(newFactor.getId() == null ? RandomString.generate() : newFactor.getId());
+        factor.setDomain(domain);
+        factor.setName(newFactor.getName());
+        factor.setType(newFactor.getType());
+        factor.setFactorType(newFactor.getFactorType());
+        factor.setConfiguration(newFactor.getConfiguration());
+        factor.setCreatedAt(new Date());
+        factor.setUpdatedAt(factor.getCreatedAt());
+
+        return checkFactorConfiguration(factor)
+                .flatMap(factor1 -> factorRepository.create(factor1))
                 .flatMap(factor1 -> {
                     // create event for sync process
                     Event event = new Event(Type.FACTOR, new Payload(factor1.getId(), ReferenceType.DOMAIN, factor1.getDomain(), Action.CREATE));
@@ -144,6 +141,20 @@ public class FactorServiceImpl implements FactorService {
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_CREATED).throwable(throwable)));
     }
 
+    private Single<Factor> checkFactorConfiguration(Factor factor) {
+        if (SMS_AM_FACTOR.equalsIgnoreCase(factor.getType())) {
+            // for SMS Factor, check that countries code provided into the configuration are valid
+            final JsonObject configuration = (JsonObject) Json.decodeValue(factor.getConfiguration());
+            String countryCodes = configuration.getString(CONFIG_KEY_COUNTRY_CODES);
+            for(String code : countryCodes.split(",")) {
+                if (!COUNTRY_CODES.contains(code.trim().toUpperCase(Locale.ROOT))) {
+                    return Single.error(new FactorConfigurationException(CONFIG_KEY_COUNTRY_CODES, code));
+                }
+            }
+        }
+        return Single.just(factor);
+    }
+
     @Override
     public Single<Factor> update(String domain, String id, UpdateFactor updateFactor, User principal) {
         LOGGER.debug("Update an factor {} for domain {}", id, domain);
@@ -156,7 +167,8 @@ public class FactorServiceImpl implements FactorService {
                     factorToUpdate.setConfiguration(updateFactor.getConfiguration());
                     factorToUpdate.setUpdatedAt(new Date());
 
-                    return factorRepository.update(factorToUpdate)
+                    return  checkFactorConfiguration(factorToUpdate)
+                            .flatMap(factor1 -> factorRepository.update(factor1))
                             .flatMap(factor1 -> {
                                 // create event for sync process
                                 Event event = new Event(Type.FACTOR, new Payload(factor1.getId(), ReferenceType.DOMAIN, factor1.getDomain(), Action.UPDATE));

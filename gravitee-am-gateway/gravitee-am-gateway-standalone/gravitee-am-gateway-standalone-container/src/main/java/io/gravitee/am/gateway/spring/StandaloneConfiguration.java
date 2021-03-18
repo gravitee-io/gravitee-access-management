@@ -31,6 +31,8 @@ import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
 import io.gravitee.am.plugins.protocol.spring.ProtocolConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
+import io.gravitee.am.plugins.resource.core.ResourceConfigurationFactory;
+import io.gravitee.am.plugins.resource.spring.ResourceConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
@@ -39,7 +41,6 @@ import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import io.vertx.core.json.jackson.DatabindCodec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,7 +63,8 @@ import org.springframework.context.annotation.Import;
         ProtocolConfiguration.class,
         PolicyConfiguration.class,
         AlertPluginConfiguration.class,
-        FactorConfiguration.class
+        FactorConfiguration.class,
+        ResourceConfiguration.class
 })
 public class StandaloneConfiguration {
 

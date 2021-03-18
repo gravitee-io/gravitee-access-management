@@ -31,8 +31,11 @@
                                 <span class="mdl-list__item-primary-content">
                                     <i class="material-icons mdl-list__item-avatar">important_devices</i>
                                     <span>Enter code</span>
-                                    <span class="mdl-list__item-text-body">
+                                    <span th:if="${factor.factorType == 'TOTP'}" class="mdl-list__item-text-body">
                                         Please type in the code displayed on your multi-factor authenticator app from your device.
+                                    </span>
+                                    <span th:if="${factor.factorType == 'SMS'}" class="mdl-list__item-text-body">
+                                        Please type in the code sent by SMS on your mobile phone.
                                     </span>
                                 </span>
                             </li>

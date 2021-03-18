@@ -201,6 +201,15 @@ public interface EventType {
 
     /**
      * ----------
+     * Resource audit log actions
+     * ----------
+     */
+    String RESOURCE_CREATED = "RESOURCE_CREATED";
+    String RESOURCE_UPDATED = "RESOURCE_UPDATED";
+    String RESOURCE_DELETED = "RESOURCE_DELETED";
+
+    /**
+     * ----------
      * Organization audit log actions
      * ----------
      */

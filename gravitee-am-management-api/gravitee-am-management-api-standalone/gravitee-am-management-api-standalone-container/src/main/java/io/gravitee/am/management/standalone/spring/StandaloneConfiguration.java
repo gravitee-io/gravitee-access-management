@@ -19,13 +19,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.service.spring.ServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.management.standalone.server.ManagementApiServer;
-import io.gravitee.am.plugins.notifier.spring.NotifierConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
+import io.gravitee.am.plugins.notifier.spring.NotifierConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
+import io.gravitee.am.plugins.resource.spring.ResourceConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.el.ExpressionLanguageInitializer;
@@ -34,7 +35,6 @@ import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
-import io.gravitee.plugin.notifier.spring.NotifierPluginConfiguration;
 import io.vertx.reactivex.core.Vertx;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,6 +60,7 @@ import org.springframework.context.annotation.Import;
         PolicyConfiguration.class,
         NotifierConfiguration.class,
         FactorConfiguration.class,
+        ResourceConfiguration.class,
         AlertPluginConfiguration.class
 })
 public class StandaloneConfiguration {

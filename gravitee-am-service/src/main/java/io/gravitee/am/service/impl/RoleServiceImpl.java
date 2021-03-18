@@ -455,6 +455,7 @@ public class RoleServiceImpl implements RoleService {
         domainUserPermissions.put(Permission.DOMAIN_CERTIFICATE, Acl.of(LIST));
         domainUserPermissions.put(Permission.DOMAIN_IDENTITY_PROVIDER, Acl.of(LIST));
         domainUserPermissions.put(Permission.DOMAIN_FACTOR, Acl.of(LIST));
+        domainUserPermissions.put(Permission.DOMAIN_RESOURCE, Acl.of(LIST));
         domainUserPermissions.put(Permission.APPLICATION, Acl.of(LIST));
 
         applicationUserPermissions.put(Permission.APPLICATION, Acl.of(READ));

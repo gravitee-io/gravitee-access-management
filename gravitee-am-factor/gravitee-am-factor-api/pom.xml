@@ -36,6 +36,20 @@
             <artifactId>gravitee-am-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.model</groupId>
+            <artifactId>gravitee-am-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Spring -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- RxJava 2 -->
         <dependency>
             <groupId>io.reactivex.rxjava2</groupId>

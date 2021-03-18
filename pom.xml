@@ -60,6 +60,7 @@
         <module>gravitee-am-gateway</module>
         <module>gravitee-am-management-api</module>
         <module>gravitee-am-ui</module>
+        <module>gravitee-am-resource</module>
     </modules>
 
     <properties>

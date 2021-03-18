@@ -36,6 +36,9 @@ export class FactorComponent implements OnInit {
   factorConfiguration: any;
   updateFactorConfiguration: any;
   editMode: boolean;
+  private factorPlugins: any[];
+  private resourcePlugins: any[];
+  private resources: any[];
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -51,12 +54,39 @@ export class FactorComponent implements OnInit {
     this.factorConfiguration = JSON.parse(this.factor.configuration);
     this.updateFactorConfiguration = this.factorConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_factor_update']);
+    this.factorPlugins = this.route.snapshot.data['factorPlugins'];
+    this.resourcePlugins = this.route.snapshot.data['resourcePlugins'];
+    this.resources = this.route.snapshot.data['resources'];
+
     this.organizationService.factorSchema(this.factor.type).subscribe(data => {
       this.factorSchema = data;
       // set the grant_type value
       if (this.factorSchema.properties.factorType) {
         this.factor.factorType = this.factorSchema.properties.factorType.default;
       }
+
+      if (this.factorSchema.properties.graviteeResource && this.resources && this.resources.length > 0) {
+        const resourcePluginTypeToCategories = this.resourcePlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories}), {});
+        const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
+        const factorCategory = factorPluginTypeToCategories[this.factor.type];
+        // filter resources with category compatible with the Factor Plugin one
+        const filteredResources = this.resources.filter(r => 
+          resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0
+        );
+        
+        this.factorSchema.properties.graviteeResource['x-schema-form'] = { 'type' : 'select' };
+        if (filteredResources.length > 0) {
+          this.factorSchema.properties.graviteeResource.enum = filteredResources.map(r => r.id);
+          this.factorSchema.properties.graviteeResource['x-schema-form'].titleMap = filteredResources.reduce(function(map, obj) {
+            map[obj.id] = obj.name;
+            return map;
+          }, {});
+        } else {
+          // if list of resources is empty, disable the field
+          this.factorSchema.properties.graviteeResource['readonly'] = true;
+        }
+      }
+
     });
   }
 

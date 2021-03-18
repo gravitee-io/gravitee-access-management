@@ -344,6 +344,30 @@
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" th:name="sharedSecret" th:value="${factor.enrollment.key}" />
                 </div>
+                <div th:if="${factor.factorType == 'SMS'}" class="mfa-enroll-form-description">
+                  <div>
+                      <ul class="mdl-list">
+                          <li class="mdl-list__item mdl-list__item--three-line">
+                              <span class="mdl-list__item-primary-content">
+                                  <i class="material-icons mdl-list__item-avatar">phone_enabled</i>
+                                  <span th:if="${phoneNumber != null}">1. Confirm your phone number </span>
+                                  <span th:if="${phoneNumber == null}">1. Enter your phone number </span>
+                                  <!-- Phone value must follow the E.164 format -->
+                                  <input id="phone" type="tel" name="phone"  th:value="${phoneNumber}">
+                              </span>
+                          </li>
+                          <li class="mdl-list__item mdl-list__item--three-line">
+                              <span class="mdl-list__item-primary-content">
+                                  <i class="material-icons  mdl-list__item-avatar">rotate_right</i>
+                                  <span>2. Finish set up</span>
+                                  <span class="mdl-list__item-text-body">
+                                      Go to the next step and enter the code provided by SMS.
+                                  </span>
+                              </span>
+                          </li>
+                      </ul>
+                  </div>
+              </div>
                 <input type="hidden" th:name="factorId" th:value="${factor.id}" />
                 <div>
                     <button type="submit" name="user_mfa_enrollment" value="false">Skip for now</button>

@@ -1,0 +1,12 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:resource:mock:MFAResourceConfiguration",
+  "properties" : {
+    "code": {
+      "title": "Code",
+      "description": "Unique code verified by this mock resource",
+      "type": "string"
+    }
+  },
+  "required": ["code"]
+}

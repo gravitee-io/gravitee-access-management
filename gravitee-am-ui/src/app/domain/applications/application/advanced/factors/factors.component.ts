@@ -27,12 +27,17 @@ import {AuthService} from '../../../../../services/auth.service';
 })
 export class ApplicationFactorsComponent implements OnInit {
   private domainId: string;
+  
   private factorTypes: any = {
-    'otp-am-factor' : 'OTP'
+    'TOTP' : 'OTP',
+    'SMS' : 'SMS'
   };
+
   private factorIcons: any = {
-    'otp-am-factor' : 'mobile_friendly'
+    'TOTP' : 'mobile_friendly',
+    'SMS' : 'sms'
   };
+  
   application: any;
   formChanged = false;
   factors: any[];
@@ -64,7 +69,7 @@ export class ApplicationFactorsComponent implements OnInit {
     if (event.checked) {
       this.application.factors.push(factorId);
     } else {
-      this.application.factors.splice(this.application.identities.indexOf(factorId), 1);
+      this.application.factors.splice(this.application.factors.indexOf(factorId), 1);
     }
     this.formChanged = true;
   }

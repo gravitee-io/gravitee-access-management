@@ -45,5 +45,6 @@ public interface EntityType {
     String FLOW = "FLOW";
     String ALERT_TRIGGER = "ALERT_TRIGGER";
     String ALERT_NOTIFIER = "ALERT_NOTIFIER";
+    String RESOURCE = "RESOURCE";
 
 }

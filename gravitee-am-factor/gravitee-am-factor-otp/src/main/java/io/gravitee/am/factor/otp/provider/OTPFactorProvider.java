@@ -17,11 +17,14 @@ package io.gravitee.am.factor.otp.provider;
 
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.factor.api.Enrollment;
+import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.otp.OTPFactorConfiguration;
 import io.gravitee.am.factor.otp.utils.QRCode;
 import io.gravitee.am.factor.otp.utils.SharedSecret;
 import io.gravitee.am.factor.otp.utils.TOTP;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -40,10 +43,13 @@ public class OTPFactorProvider implements FactorProvider {
     private OTPFactorConfiguration otpFactorConfiguration;
 
     @Override
-    public Completable verify(String secretKey, String code) {
+    public Completable verify(FactorContext context) {
+        final String code = context.getData(FactorContext.KEY_CODE, String.class);
+        final EnrolledFactor enrolledFactor = context.getData(FactorContext.KEY_ENROLLED_FACTOR, EnrolledFactor.class);
+
         return Completable.create(emitter -> {
             try {
-                final String otpCode = TOTP.generateTOTP(SharedSecret.base32Str2Hex(secretKey));
+                final String otpCode = TOTP.generateTOTP(SharedSecret.base32Str2Hex(enrolledFactor.getSecurity().getValue()));
                 if (!code.equals(otpCode)) {
                     emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
                 }
@@ -62,5 +68,26 @@ public class OTPFactorProvider implements FactorProvider {
             final String barCode = QRCode.generate(QRCode.generateURI(key, otpFactorConfiguration.getIssuer(), account), 200, 200);
             return new Enrollment(key, barCode);
         });
+    }
+
+    @Override
+    public boolean needChallengeSending() {
+        return false;
+    }
+
+    @Override
+    public Completable sendChallenge(FactorContext context) {
+        // OTP Challenge not need to be sent
+        return Completable.complete();
+    }
+
+    @Override
+    public boolean checkSecurityFactor(EnrolledFactorSecurity securityFactor) {
+        boolean valid = true;
+        if (securityFactor == null || securityFactor.getValue() == null) {
+            logger.warn("No shared secret in form - did you forget to include shared secret value ?");
+            valid = false;
+        }
+        return valid;
     }
 }
