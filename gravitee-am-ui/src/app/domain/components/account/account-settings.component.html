@@ -28,10 +28,9 @@
   </div>
 
   <div *ngIf="!inheritMode || !accountSettings.inherited">
-
     <div class="gv-form-section">
       <div class="gv-form-section-title">
-        <h5>Security</h5>
+        <h5>Login</h5>
         <mat-divider></mat-divider>
       </div>
       <div>
@@ -83,28 +82,35 @@
             </mat-select>
           </mat-form-field>
         </div>
+        <div fxLayout="column" style="margin-top: 10px;">
+          <mat-slide-toggle
+            (change)="enableSendRecoverAccountEmail($event)"
+            [checked]="isSendRecoverAccountEmailEnabled()" [disabled]="readonly">
+            Send account recovery email
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Send an email if user account has been blocked.</mat-hint>
+        </div>
       </div>
     </div>
 
     <div class="gv-form-section">
       <div class="gv-form-section-title">
-        <h5>Management</h5>
+        <h5>User registration</h5>
         <mat-divider></mat-divider>
       </div>
       <div>
-        <mat-form-field>
-        <mat-select placeholder="Identity provider" name="defaultIdentityProviderForRegistration" [(ngModel)]="accountSettings.defaultIdentityProviderForRegistration" (ngModelChange)="updateModel()">
-          <mat-option>None</mat-option>
-          <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{userProvider.name}}</mat-option>
-        </mat-select>
-        <mat-hint>Default identity provider for user registration. The user will be stored in the selected identity provider instead of the default one.</mat-hint>
-      </mat-form-field>
-    </div>
-
-    <div class="account-settings-zone">
-      <div fxLayout="column">
+        <div fxLayout="column">
+          <mat-form-field appearance="outline">
+            <mat-select placeholder="Identity provider" name="defaultIdentityProviderForRegistration" [(ngModel)]="accountSettings.defaultIdentityProviderForRegistration" (ngModelChange)="updateModel()">
+              <mat-option>None</mat-option>
+              <mat-option *ngFor="let userProvider of userProviders" [value]="userProvider.id">{{userProvider.name}}</mat-option>
+            </mat-select>
+            <mat-hint>Default identity provider for user registration. The user will be stored in the selected identity provider instead of the default one.</mat-hint>
+          </mat-form-field>
+        </div>
+        <div fxLayout="column">
           <mat-slide-toggle
-              (change)="enableDynamicUserRegistration($event)"
+            (change)="enableDynamicUserRegistration($event)"
             [checked]="isDynamicUserRegistrationEnabled()">
             Dynamic user registration
           </mat-slide-toggle>
@@ -112,9 +118,9 @@
         </div>
         <div fxLayout="column" style="margin-top: 10px;">
           <mat-slide-toggle
-          (change)="enableCompleteRegistration($event)"
+            (change)="enableCompleteRegistration($event)"
             [checked]="isCompleteRegistrationEnabled()" [disabled]="readonly">
-            Complete user registration (Reset Password)
+            Complete user registration (reset password)
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">If a user renewed his password without completing his registration, finalize the account. The default behavior is to display an error to the user.</mat-hint>
         </div>
@@ -125,30 +131,43 @@
             Auto login after user registration
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Automatically login user after registration process.</mat-hint>
+        </div>
+        <div fxLayout="column">
           <mat-form-field appearance="outline" floatLabel="always">
             <input matInput placeholder="Registration redirect URI" name="autoLoginRegistration" [(ngModel)]="accountSettings.redirectUriAfterRegistration" (ngModelChange)="updateModel()" [disabled]="readonly">
             <mat-hint>After complete its registration the user can be redirected to the specified URL. The default behavior is to display the registration confirmation page to the user.</mat-hint>
           </mat-form-field>
         </div>
-        <div fxLayout="column" style="margin-top: 20px;">
+      </div>
+    </div>
+
+    <div class="gv-form-section">
+      <div class="gv-form-section-title">
+        <h5>Reset password</h5>
+        <mat-divider></mat-divider>
+      </div>
+      <div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableDeletePasswordlessDevicesAfterResetPassword($event)"
+            [checked]="isDeletePasswordlessDevicesAfterResetPasswordEnabled()" [disabled]="readonly">
+            Delete passwordless devices
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Automatically delete passswordless devices after reset password process.</mat-hint>
+        </div>
+        <div fxLayout="column" style="margin-top: 10px;">
           <mat-slide-toggle
             (change)="enableAutoLoginAfterResetPassword($event)"
             [checked]="isAutoLoginAfterResetPasswordEnabled()" [disabled]="readonly">
             Auto login after reset password
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Automatically login user after reset password process.</mat-hint>
+        </div>
+        <div fxLayout="column">
           <mat-form-field appearance="outline" floatLabel="always">
             <input matInput placeholder="Reset password redirect URI" name="autoLoginResetPassword" [(ngModel)]="accountSettings.redirectUriAfterResetPassword" (ngModelChange)="updateModel()" [disabled]="readonly">
             <mat-hint>After reset its password the user can be redirected to the specified URL. The default behavior is to display the reset password page to the user.</mat-hint>
           </mat-form-field>
-        </div>
-        <div fxLayout="column" style="margin-top: 10px;">
-          <mat-slide-toggle
-            (change)="enableSendRecoverAccountEmail($event)"
-            [checked]="isSendRecoverAccountEmailEnabled()" [disabled]="readonly">
-            Send account recovery email
-          </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Send an email if user account has been blocked.</mat-hint>
         </div>
       </div>
     </div>

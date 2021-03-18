@@ -61,10 +61,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiat
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterAccessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationSubmissionRequestParseHandler;
@@ -115,6 +112,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_WEBAUTHN_LOGIN = "/webauthn/login";
     public static final String PATH_FORGOT_PASSWORD = "/forgotPassword";
     public static final String PATH_ERROR = "/error";
+
     @Autowired
     private Vertx vertx;
 
@@ -337,10 +335,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.GET, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
+                .handler(userTokenRequestParseHandler)
+                .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain));
         rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
+                .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new ResetPasswordSubmissionEndpoint(userService));
 
@@ -464,5 +465,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> errorHandler = new ErrorHandler(PATH_ERROR);
         router.route(PATH_FORGOT_PASSWORD).failureHandler(errorHandler);
         router.route(PATH_LOGOUT).failureHandler(errorHandler);
+        router.route(PATH_LOGIN).failureHandler(errorHandler);
     }
 }

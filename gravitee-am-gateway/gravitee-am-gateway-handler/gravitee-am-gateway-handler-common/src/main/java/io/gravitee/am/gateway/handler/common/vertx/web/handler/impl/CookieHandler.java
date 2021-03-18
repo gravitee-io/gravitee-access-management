@@ -74,7 +74,9 @@ public class CookieHandler implements Handler<RoutingContext> {
         }
 
         // Rewrite the cookie path (depends on domain path and possible X-Forwarded-Prefix request header).
-        cookie.setPath(forwardedPath);
+        // if vhost mode is enabled with a '/' path, the context.get(CONTEXT_PATH) is empty
+        // we have to force '/' path for the cookie to work
+        cookie.setPath(forwardedPath.isEmpty() ? "/" : forwardedPath);
 
         // Make sure the cookie secure attribute is set as expected.
         cookie.setSecure(cookieSecure);

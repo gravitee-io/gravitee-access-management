@@ -116,6 +116,19 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
     public Completable delete(String id) {
         return Completable.fromPublisher(credentialsCollection.deleteOne(eq(FIELD_ID, id)));
     }
+
+    @Override
+    public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
+        return Completable.fromPublisher(
+                credentialsCollection.deleteMany(
+                        and(
+                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                eq(FIELD_REFERENCE_ID, referenceId),
+                                eq(FIELD_USER_ID, userId)
+                        )
+                ));
+    }
+
     private Credential convert(CredentialMongo credentialMongo) {
         if (credentialMongo == null) {
             return null;

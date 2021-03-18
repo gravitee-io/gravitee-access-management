@@ -71,7 +71,8 @@ export class DomainService {
       'description': domain.description,
       'path': domain.path,
       'enabled': domain.enabled,
-      'tags': domain.tags
+      'tags': domain.tags,
+      'oidc': domain.oidc
     });
   }
 
