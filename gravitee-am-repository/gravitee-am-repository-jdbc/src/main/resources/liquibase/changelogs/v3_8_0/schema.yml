@@ -3,10 +3,42 @@ databaseChangeLog:
       id: 3.8.0
       author: GraviteeSource Team
       changes:
+
+        # media_resources
+        ########################
+        - createTable:
+            tableName: service_resources
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: configuration, type: clob, constraints: { nullable: true } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_service_resources
+            columnNames: id
+            tableName: service_resources
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name:  reference_type
+            indexName:  idx_service_resources_refid
+            tableName:  service_resources
+            unique:  false
+
+        # domain hrid
+        ########################
         - addColumn:
             tableName: domains
             columns:
-              - column: {name: hrid, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: hrid, type: nvarchar(255), constraints: { nullable: true } }
 
         - createIndex:
             columns:
@@ -22,3 +54,10 @@ databaseChangeLog:
 
         - sql:
             sql: "UPDATE domains SET hrid = id;"
+
+        -  addNotNullConstraint:
+            columnName:  hrid
+            columnDataType: nvarchar(255)
+            constraintName:  domain_hrid_req
+            tableName:  domains
+            validate:  true

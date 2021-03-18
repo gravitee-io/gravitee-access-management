@@ -19,13 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
-import io.gravitee.am.management.service.AuditReporterManager;
-import io.gravitee.am.management.service.CertificateManager;
-import io.gravitee.am.management.service.EmailManager;
-import io.gravitee.am.management.service.ExtensionGrantPluginService;
-import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.management.service.IdentityProviderPluginService;
-import io.gravitee.am.management.service.PermissionService;
+import io.gravitee.am.management.service.*;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.ApplicationService;
@@ -190,6 +184,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected FlowService flowService;
+
+    @Autowired
+    protected ResourcePluginService resourcePluginService;
 
     @Before
     public void init() {
@@ -368,6 +365,11 @@ public abstract class JerseySpringTest {
         @Bean
         public FlowService flowService() {
             return mock(FlowService.class);
+        }
+
+        @Bean
+        public ResourcePluginService resourcePluginService() {
+            return mock(ResourcePluginService.class);
         }
     }
 

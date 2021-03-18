@@ -92,6 +92,7 @@ public class FactorPluginServiceImpl implements FactorPluginService {
         plugin.setName(factorPlugin.manifest().name());
         plugin.setDescription(factorPlugin.manifest().description());
         plugin.setVersion(factorPlugin.manifest().version());
+        plugin.setCategory(factorPlugin.manifest().category());
         return plugin;
     }
 }

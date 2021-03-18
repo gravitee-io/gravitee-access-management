@@ -153,6 +153,11 @@ import {FactorCreationComponent} from './domain/settings/factors/creation/factor
 import {FactorComponent} from './domain/settings/factors/factor/factor.component';
 import {FactorResolver} from './resolvers/factor.resolver';
 import {EnrolledFactorsResolver} from './resolvers/enrolled-factors.resolver';
+import {DomainSettingsResourcesComponent} from './domain/settings/resources/resources.component';
+import {ResourceCreationComponent} from './domain/settings/resources/creation/resource-creation.component';
+import {ResourceComponent} from './domain/settings/resources/resource/resource.component';
+import {ResourceResolver} from './resolvers/resource.resolver';
+import {ResourcesResolver} from './resolvers/resources.resolver';
 import {NotFoundComponent} from './not-found/not-found.component';
 import {EntrypointsComponent} from './settings/management/entrypoints/entrypoints.component';
 import {EntrypointCreationComponent} from './settings/management/entrypoints/creation/entrypoint-creation.component';
@@ -191,6 +196,8 @@ import {AlertNotifierResolver} from "./resolvers/alert-notifier.resolver";
 import {DomainAlertNotifierCreationComponent} from "./domain/alerts/notifiers/creation/notifier-creation.component";
 import {DomainAlertNotifierComponent} from "./domain/alerts/notifiers/notifier/notifier.component";
 import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.resolver";
+import { FactorPluginsResolver } from './resolvers/factor-plugins.resolver';
+import { ResourcePluginsResolver } from './resolvers/resource-plugins.resolver';
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1452,6 +1459,11 @@ export const routes: Routes = [
                             path: 'new',
                             component: FactorCreationComponent,
                             canActivate: [AuthGuard],
+                            resolve: {
+                              factorPlugins: FactorPluginsResolver,
+                              resources: ResourcesResolver,
+                              resourcePlugins: ResourcePluginsResolver
+                            },
                             data: {
                               perms: {
                                 only: ['domain_factor_create']
@@ -1464,6 +1476,9 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             resolve: {
                               factor: FactorResolver,
+                              factorPlugins: FactorPluginsResolver,
+                              resources: ResourcesResolver,
+                              resourcePlugins: ResourcePluginsResolver
                             },
                             data: {
                               breadcrumb: {
@@ -1631,6 +1646,61 @@ export const routes: Routes = [
                               },
                               perms: {
                                 only: ['domain_certificate_read']
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        path: 'resources',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Services',
+                            section: 'Resources'
+                          },
+                          perms: {
+                            only: ['domain_resource_list']
+                          }
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: DomainSettingsResourcesComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_resource_read']
+                              }
+                            },
+                            resolve: {
+                              resources: ResourcesResolver
+                            }
+                          },
+                          {
+                            path: 'new',
+                            component: ResourceCreationComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              perms: {
+                                only: ['domain_resource_create']
+                              }
+                            }
+                          },
+                          {
+                            path: ':resourceId',
+                            component: ResourceComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              resource: ResourceResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: "resource.name",
+                              },
+                              perms: {
+                                only: ['domain_resource_read']
                               }
                             }
                           }
@@ -2126,7 +2196,7 @@ export const routes: Routes = [
                                 only: ['domain_alert_notifier_read']
                               }
                             }
-                          },
+                          }
                         ]
                       }
                     ]

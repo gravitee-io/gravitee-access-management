@@ -100,6 +100,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         tables.add("alert_triggers_alert_notifiers");
         tables.add("alert_triggers");
         tables.add("alert_notifiers");
+        tables.add("service_resources");
 
         io.r2dbc.spi.Connection connection = Flowable.fromPublisher(connectionFactory.create()).blockingFirst();
         connection.beginTransaction();

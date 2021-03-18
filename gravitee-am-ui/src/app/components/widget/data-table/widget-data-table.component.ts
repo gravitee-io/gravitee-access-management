@@ -25,7 +25,6 @@ import {Chart} from '../widget.model';
 })
 export class WidgetDataTableComponent implements OnInit, OnChanges {
   @Input('chart') chart: Chart;
-  @Input('domainId') domainId: string;
   rows = [];
   loadingIndicator = true;
   reorderable = true;

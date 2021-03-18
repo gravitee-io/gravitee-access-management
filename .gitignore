@@ -26,3 +26,4 @@ gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-man
 
 dependency-reduced-pom.xml
 audit-logs
+gravitee-am-ui/.vscode/

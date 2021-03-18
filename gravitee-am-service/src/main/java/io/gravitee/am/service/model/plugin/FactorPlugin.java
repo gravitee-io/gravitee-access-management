@@ -19,4 +19,14 @@ package io.gravitee.am.service.model.plugin;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FactorPlugin extends AbstractPlugin { }
+public class FactorPlugin extends AbstractPlugin {
+    private String category;
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+}

@@ -242,6 +242,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(FactorsResource.class);
     }
 
+    @Path("resources")
+    public ServiceResourcesResource getServiceResourcesResource() {
+        return resourceContext.getResource(ServiceResourcesResource.class);
+    }
+
     @Path("flows")
     public FlowsResource getFlowsResource() {
         return resourceContext.getResource(FlowsResource.class);

@@ -361,6 +361,14 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/plugins/factors/' + id + '/schema');
   }
 
+  resources(): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/plugins/resources');
+  }
+
+  resourceSchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/plugins/resources/' + id + '/schema');
+  }
+
   flowSchema(): Observable<any> {
     return this.http.get<any>(this.platformURL + '/configuration/flow/schema');
   }

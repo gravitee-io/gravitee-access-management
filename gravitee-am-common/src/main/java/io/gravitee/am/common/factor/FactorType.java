@@ -22,4 +22,5 @@ package io.gravitee.am.common.factor;
 public interface FactorType {
 
     String TOTP = "TOTP";
+    String SMS = "SMS";
 }

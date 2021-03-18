@@ -1,0 +1,23 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:factor:sms:SMSFactorConfiguration",
+  "properties" : {
+    "factorType": {
+      "title": "Factor Type",
+      "description": "Type of the factor",
+      "default": "SMS",
+      "readOnly": true
+    },
+    "countryCodes": {
+      "title": "Country Codes",
+      "description": "Comma separated list of country codes for which a phone number is accepted (ex: fr, us, ...). This is used to control the phone number validity",
+      "type" : "string"
+    },
+    "graviteeResource": {
+      "title": "Resource",
+      "description": "Resource to send SMS and to verify user code",
+      "type" : "string"
+    }
+  },
+  "required": ["countryCodes", "graviteeResource"]
+}

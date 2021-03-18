@@ -1,0 +1,22 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:resource:twilio:TwilioVerifyResourceConfiguration",
+  "properties" : {
+    "sid": {
+      "title": "Service ID",
+      "description": "Verification Service ID",
+      "type": "string"
+    },
+    "accountSid": {
+      "title": "Account ID",
+      "description": "Twilio Account ID",
+      "type": "string"
+    },
+    "authToken": {
+      "title": "Authentication Token",
+      "description": "Authentication Token linked to your account",
+      "type": "string"
+    }
+  },
+  "required": ["sid", "accountSid", "authToken"]
+}

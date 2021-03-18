@@ -20,6 +20,8 @@ import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.factor.impl.FactorManagerImpl;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.form.impl.FormManagerImpl;
+import io.gravitee.am.gateway.handler.resource.ResourceManager;
+import io.gravitee.am.gateway.handler.resource.impl.ResourceManagerImpl;
 import io.gravitee.am.gateway.handler.root.spring.RootConfiguration;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
@@ -61,6 +63,11 @@ public class HandlerConfiguration {
     @Bean
     public FactorManager factorManager() {
         return new FactorManagerImpl();
+    }
+
+    @Bean
+    public ResourceManager resourceManager() {
+        return new ResourceManagerImpl();
     }
 
     @Bean

@@ -26,18 +26,18 @@ public enum FactorEvent {
     UNDEPLOY;
 
     public static FactorEvent actionOf(Action action) {
-        FactorEvent membershipEvent = null;
+        FactorEvent factorEvent = null;
         switch (action) {
             case CREATE:
-                membershipEvent = FactorEvent.DEPLOY;
+                factorEvent = FactorEvent.DEPLOY;
                 break;
             case UPDATE:
-                membershipEvent = FactorEvent.UPDATE;
+                factorEvent = FactorEvent.UPDATE;
                 break;
             case DELETE:
-                membershipEvent = FactorEvent.UNDEPLOY;
+                factorEvent = FactorEvent.UNDEPLOY;
                 break;
         }
-        return membershipEvent;
+        return factorEvent;
     }
 }

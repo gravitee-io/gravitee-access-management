@@ -113,6 +113,11 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
         return factors.get(factorId);
     }
 
+    @Override
+    public void updateFactor(String factorId) {
+        updateFactor(factorId, FactorEvent.UPDATE);
+    }
+
     private void updateFactor(String factorId, FactorEvent factorEvent) {
         final String eventType = factorEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} factor event for {}", domain.getName(), eventType, factorId);

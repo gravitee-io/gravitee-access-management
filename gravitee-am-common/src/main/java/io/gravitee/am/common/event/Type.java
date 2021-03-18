@@ -37,6 +37,7 @@ public enum Type {
     MEMBERSHIP,
     GROUP,
     FACTOR,
+    RESOURCE,
     FLOW,
     ALERT_TRIGGER,
     ALERT_NOTIFIER,

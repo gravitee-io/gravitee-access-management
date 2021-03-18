@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.factor.api;
 
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 
@@ -24,7 +26,13 @@ import io.reactivex.Single;
  */
 public interface FactorProvider {
 
-    Completable verify(String secretKey, String code);
+    Completable verify(FactorContext context);
 
     Single<Enrollment> enroll(String account);
+
+    boolean checkSecurityFactor(EnrolledFactorSecurity securityFactor);
+
+    boolean needChallengeSending();
+
+    Completable sendChallenge(FactorContext context);
 }

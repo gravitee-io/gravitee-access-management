@@ -276,7 +276,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine));
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, applicationContext));
 
         // WebAuthn route
         Handler<RoutingContext> webAuthnAccessHandler = new WebAuthnAccessHandler(domain);
