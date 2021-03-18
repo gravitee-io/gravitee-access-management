@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "5b9a65ee-60ac-4920-be92-5e25dad2fcbf",
+		"_postman_id": "c1ada774-658d-4329-912a-1ea9e35b5441",
 		"name": "Gravitee.io - AM - Openid Discovery",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -15,7 +15,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "571e9b59-b9e7-452c-9469-9786ded290a6",
+								"id": "72c2bd38-2ce5-4daa-ba07-ec414d7bbafd",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -77,7 +77,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
+								"id": "144b087f-8d20-44ab-8f08-c981a5790e59",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -130,7 +130,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
+								"id": "5fbaad49-d354-43bc-878f-2b97e8c3eab9",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -193,7 +193,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
+								"id": "664b1327-56b9-474b-a028-82a97fa514cf",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function(){}, 10000);"
@@ -248,7 +248,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
+								"id": "2f6ecac5-73ba-4da8-9a89-67159f158ea9",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -299,7 +299,7 @@
 									"    pm.expect(body).to.have.property(\"require_request_uri_registration\");",
 									"    ",
 									"    pm.expect(body.code_challenge_methods_supported).to.eql([ 'plain','S256' ]);",
-									"    pm.expect(body.scopes_supported).to.eql([ 'address','email','groups','offline_access','openid','phone','profile','roles']);",
+									"    pm.expect(body.scopes_supported).to.eql([ 'address','email', 'full_profile', 'groups','offline_access','openid','phone','profile','roles']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -330,7 +330,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "f3428f0d-2f6c-4202-8b16-dfec99b0971a",
+								"id": "fe647cd4-ee6b-4e98-a25a-904aab169f89",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -372,7 +372,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
+						"id": "12c9fc78-8cd3-416a-a0ee-3983ec6cac4a",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",

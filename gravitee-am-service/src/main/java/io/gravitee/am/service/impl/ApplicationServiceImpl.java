@@ -557,6 +557,11 @@ public class ApplicationServiceImpl implements ApplicationService {
      * @return the application with the certificate
      */
     private Single<Application> setDefaultCertificate(Application application) {
+        // certificate might have been set via DCR, continue
+        if (application.getCertificate() != null) {
+            return Single.just(application);
+        }
+
         return certificateService
                 .findByDomain(application.getDomain())
                 .map(certificates -> {
