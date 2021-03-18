@@ -1,5 +1,22 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/354?closed=1[AM - 3.6.1 (2021-03-18)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.5.3 https://github.com/gravitee-io/issues/issues/5182[#5182]
+
+*_Management_*
+
+- On delete Application we should redirect to applications page https://github.com/gravitee-io/issues/issues/5226[#5226]
+
+*_Policies_*
+
+- Remove provided dependencies from policies bundle https://github.com/gravitee-io/issues/issues/5205[#5205]
+
+
 == https://github.com/gravitee-io/issues/milestone/346?closed=1[AM - 3.5.3 (2021-03-10)]
 
 === Bug fixes
