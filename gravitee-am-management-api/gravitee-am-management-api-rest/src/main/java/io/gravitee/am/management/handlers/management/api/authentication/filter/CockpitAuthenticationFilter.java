@@ -25,12 +25,7 @@ import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
-import io.gravitee.am.model.permissions.DefaultRole;
-import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.RoleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,9 +48,7 @@ import java.io.InputStream;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class CockpitAuthenticationFilter extends GenericFilterBean {
 
