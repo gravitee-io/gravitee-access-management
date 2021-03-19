@@ -1,5 +1,29 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/249?closed=1[AM - 3.7.0 (2021-03-19)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.6.1 https://github.com/gravitee-io/issues/issues/5210[#5210]
+
+=== Features
+
+*_Gateway_*
+
+- [management] support Kerberos (SPNEGO) https://github.com/gravitee-io/issues/issues/3555[#3555]
+- [saml] provide SAML SP metadata endpoint https://github.com/gravitee-io/issues/issues/5007[#5007]
+
+*_Management_*
+
+- Password policy management https://github.com/gravitee-io/issues/issues/5010[#5010]
+- [certificate] provide PEM format https://github.com/gravitee-io/issues/issues/5005[#5005]
+- [certificate] set default certificate for application https://github.com/gravitee-io/issues/issues/5006[#5006]
+- [cockpit] delete installation https://github.com/gravitee-io/issues/issues/5154[#5154]
+- [gateway] alert engine integration https://github.com/gravitee-io/issues/issues/5004[#5004]
+
+
 == https://github.com/gravitee-io/issues/milestone/354?closed=1[AM - 3.6.1 (2021-03-18)]
 
 === Bug fixes
