@@ -17,7 +17,7 @@ import {Component, Inject, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {SnackbarService} from "../../../../../services/snackbar.service";
 import {DialogService} from "../../../../../services/dialog.service";
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 import {RoleService} from "../../../../../services/role.service";
 import {GroupService} from "../../../../../services/group.service";
 import {OrganizationService} from "../../../../../services/organization.service";

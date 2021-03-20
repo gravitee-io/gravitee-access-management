@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {MatInput} from '@angular/material';
+import { MatInput } from '@angular/material/input';
 import {ActivatedRoute, Router} from '@angular/router';
 import {DomainService} from '../../../services/domain.service';
 import {DialogService} from '../../../services/dialog.service';

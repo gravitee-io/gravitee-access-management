@@ -27,7 +27,7 @@ import {OrganizationService} from '../../../services/organization.service';
   styleUrls: ['./roles.component.scss']
 })
 export class ManagementRolesComponent implements OnInit {
-  @ViewChild('rolesTable', { static: false }) table: any;
+  @ViewChild('rolesTable') table: any;
   roles: any[];
 
   constructor(private roleService: RoleService,

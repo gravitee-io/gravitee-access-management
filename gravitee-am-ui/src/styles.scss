@@ -1,7 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 @import '~@gravitee/ui-components/assets/css/gravitee-theme.generated.css';
-@import '~@swimlane/ngx-datatable/release/themes/material.css';
-@import '~@swimlane/ngx-datatable/release/assets/icons.css';
+@import '~@swimlane/ngx-datatable/themes/material.css';
+@import '~@swimlane/ngx-datatable/assets/icons.css';
 @import '~codemirror/lib/codemirror.css';
 @import '~@angular/material/theming';
 @include mat-core();

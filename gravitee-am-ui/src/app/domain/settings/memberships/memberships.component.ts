@@ -27,7 +27,7 @@ import {AuthService} from '../../../services/auth.service';
   styleUrls: ['./memberships.component.scss']
 })
 export class DomainSettingsMembershipsComponent implements OnInit {
-  @ViewChild('membersTable', { static: false }) table: any;
+  @ViewChild('membersTable') table: any;
   private domain: any;
   domainId: string;
   members: any;

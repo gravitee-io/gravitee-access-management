@@ -19,7 +19,7 @@ import { SnackbarService } from "../../../../services/snackbar.service";
 import { DialogService } from "../../../../services/dialog.service";
 import { EmailService } from "../../../../services/email.service";
 import { NgForm } from "@angular/forms";
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 
 export interface DialogData {
   rawTemplate: string;

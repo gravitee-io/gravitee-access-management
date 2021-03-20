@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild} from '@angular/core';
-import {MatAutocompleteSelectedEvent, MatAutocompleteTrigger} from '@angular/material';
+import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import {FormControl} from "@angular/forms";
 import {COMMA, ENTER} from "@angular/cdk/keycodes";
 import * as _ from 'lodash';

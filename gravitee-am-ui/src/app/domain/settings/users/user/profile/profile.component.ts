@@ -29,8 +29,8 @@ import {AuthService} from '../../../../../services/auth.service';
 export class UserProfileComponent implements OnInit {
   private domainId: string;
   organizationContext: boolean;
-  @ViewChild('passwordForm', { static: false }) passwordForm: any;
-  @ViewChild('dynamic', { read: ViewContainerRef, static: false }) viewContainerRef: ViewContainerRef;
+  @ViewChild('passwordForm') passwordForm: any;
+  @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
   user: any;
   userClaims: any = {};
   password: any;

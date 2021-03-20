@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {MatInput} from '@angular/material';
+import { MatInput } from '@angular/material/input';
 import {ActivatedRoute, Router} from '@angular/router';
 import {DomainService} from '../../../services/domain.service';
 import {DialogService} from '../../../services/dialog.service';
@@ -27,7 +27,7 @@ import {AuthService} from '../../../services/auth.service';
   styleUrls: ['./entrypoints.component.scss']
 })
 export class DomainSettingsEntrypointsComponent implements OnInit {
-  @ViewChild('chipInput', { static: false }) chipInput: MatInput;
+  @ViewChild('chipInput') chipInput: MatInput;
   formChanged = false;
   domain: any = {};
   entrypoint: any;

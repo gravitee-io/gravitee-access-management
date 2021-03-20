@@ -15,7 +15,9 @@
  */
 
 import {AfterViewInit, Component, OnInit, ViewChild} from "@angular/core";
-import {MatPaginator, MatSort, MatTableDataSource} from "@angular/material";
+import { MatPaginator } from "@angular/material/paginator";
+import { MatSort } from "@angular/material/sort";
+import { MatTableDataSource } from "@angular/material/table";
 import {ActivatedRoute} from "@angular/router";
 import {DomainService} from "../../../../../services/domain.service";
 import {SnackbarService} from "../../../../../services/snackbar.service";
@@ -45,8 +47,8 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
   displayedColumns: string[] = ['name', 'clientId', 'template'];
   readonly: boolean;
 
-  @ViewChild(MatSort, { static: false }) sort: MatSort;
-  @ViewChild(MatPaginator, { static: false }) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
+  @ViewChild(MatPaginator) paginator: MatPaginator;
 
   constructor(private domainService: DomainService,
               private applicationService: ApplicationService,

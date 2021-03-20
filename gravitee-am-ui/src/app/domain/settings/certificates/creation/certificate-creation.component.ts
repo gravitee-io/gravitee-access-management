@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, ViewChild} from '@angular/core';
-import {MatStepper} from '@angular/material';
+import { MatStepper } from '@angular/material/stepper';
 import {ActivatedRoute, Router} from '@angular/router';
 import {CertificateService} from '../../../../services/certificate.service';
 import {SnackbarService} from '../../../../services/snackbar.service';

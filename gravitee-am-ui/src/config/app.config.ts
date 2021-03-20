@@ -1,3 +1,4 @@
+import { Injectable } from "@angular/core";
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -13,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Injectable()
 export class AppConfig {
   public static settings: any;
 }

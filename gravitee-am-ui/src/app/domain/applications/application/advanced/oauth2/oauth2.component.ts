@@ -15,7 +15,7 @@
  */
 import {Component, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
 import {NgForm} from '@angular/forms';
-import {MatDialog} from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import {MatDialogRef} from '@angular/material/dialog';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ApplicationService} from '../../../../../services/application.service';
@@ -30,7 +30,7 @@ import moment from 'moment';
   styleUrls: ['./oauth2.component.scss']
 })
 export class ApplicationOAuth2Component implements OnInit {
-  @ViewChild('claimsTable', { static: false }) table: any;
+  @ViewChild('claimsTable') table: any;
   @ViewChild('clientOAuth2Form', { static: true }) form: any;
   private domainId: string;
   application: any;

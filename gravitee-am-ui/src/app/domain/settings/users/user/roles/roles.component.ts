@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, Inject, OnInit} from '@angular/core';
-import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material";
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
 import {ActivatedRoute, Router} from "@angular/router";
 import {SnackbarService} from "../../../../../services/snackbar.service";
 import {DialogService} from "../../../../../services/dialog.service";
