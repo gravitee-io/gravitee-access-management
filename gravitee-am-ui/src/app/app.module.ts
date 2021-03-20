@@ -57,7 +57,7 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
 import {FlexLayoutModule} from '@angular/flex-layout';
 import {NgxDatatableModule} from '@swimlane/ngx-datatable';
 import {CodemirrorModule} from 'ng2-codemirror';
-import {MaterialDesignFrameworkModule} from 'angular7-json-schema-form';
+import {MaterialDesignFrameworkModule} from '@ajsf/material';
 import {HighchartsChartModule} from 'highcharts-angular';
 import {ClipboardModule} from 'ngx-clipboard';
 import 'hammerjs';

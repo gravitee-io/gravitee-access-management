@@ -13,6 +13,8 @@
   },
   "private": true,
   "dependencies": {
+    "@ajsf/core": "^0.1.5",
+    "@ajsf/material": "^0.1.4",
     "@angular/animations": "^8.2.14",
     "@angular/cdk": "^8.2.3",
     "@angular/common": "^8.2.14",
@@ -28,7 +30,6 @@
     "@gravitee/ui-components": "^2.1.1",
     "@swimlane/ngx-datatable": "~15.0.2",
     "@types/hammerjs": "^2.0.36",
-    "angular7-json-schema-form": "^1.0.4",
     "bcryptjs": "^2.4.3",
     "codemirror": "^5.56.0",
     "core-js": "^2.6.11",
