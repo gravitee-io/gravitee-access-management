@@ -101,7 +101,6 @@ $sidenavHeaderHeight: 64px;
 }
 
 .sidenav-list {
-  overflow-y: auto;
   min-height: calc(100vh - #{$sidenavFooterHeight} - #{$sidenavHeaderHeight});
   mat-list-item {
     min-height: 40px;

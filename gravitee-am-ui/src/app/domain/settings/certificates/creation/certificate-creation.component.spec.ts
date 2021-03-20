@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { CertificateCreationComponent } from './certificate-creation.component';
 
@@ -21,7 +21,7 @@ describe('CertificateCreationComponent', () => {
   let component: CertificateCreationComponent;
   let fixture: ComponentFixture<CertificateCreationComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ CertificateCreationComponent ]
     })

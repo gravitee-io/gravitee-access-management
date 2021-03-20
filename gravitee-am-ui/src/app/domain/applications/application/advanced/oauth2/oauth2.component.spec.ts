@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { ClientOAuth2Component } from './oauth2.component';
 
@@ -21,7 +21,7 @@ describe('ClientOAuth2Component', () => {
   let component: ClientOAuth2Component;
   let fixture: ComponentFixture<ClientOAuth2Component>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ ClientOAuth2Component ]
     })

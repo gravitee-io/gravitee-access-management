@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { WidgetChartPieComponent } from './widget-chart-pie.component';
 
@@ -21,7 +21,7 @@ describe('WidgetChartPieComponent', () => {
   let component: WidgetChartPieComponent;
   let fixture: ComponentFixture<WidgetChartPieComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ WidgetChartPieComponent ]
     })

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { ManagementGeneralComponent } from './general.component';
 
@@ -21,7 +21,7 @@ describe('ManagementGeneralComponent', () => {
   let component: ManagementGeneralComponent;
   let fixture: ComponentFixture<ManagementGeneralComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ ManagementGeneralComponent ]
     })

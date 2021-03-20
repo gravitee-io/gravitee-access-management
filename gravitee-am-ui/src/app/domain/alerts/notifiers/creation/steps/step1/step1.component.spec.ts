@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import {DomainAlertNotifierCreationStep1Component} from './step1.component';
 
@@ -21,7 +21,7 @@ describe('Step1Component', () => {
   let component: DomainAlertNotifierCreationStep1Component;
   let fixture: ComponentFixture<DomainAlertNotifierCreationStep1Component>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [DomainAlertNotifierCreationStep1Component]
     })

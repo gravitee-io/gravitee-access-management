@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { ApplicationFormComponent } from './form.component';
 
@@ -21,7 +21,7 @@ describe('ApplicationFormComponent', () => {
   let component: ApplicationFormComponent;
   let fixture: ComponentFixture<ApplicationFormComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ ApplicationFormComponent ]
     })

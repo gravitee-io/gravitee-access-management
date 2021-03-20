@@ -46,6 +46,13 @@
         border: 1px solid rgba(0, 0, 0, 0.12);
         border-radius: 2px;
       }
+
+      flex-layout-root-widget {
+        flex-flow: column nowrap !important;
+        box-sizing: border-box !important;
+        display: initial !important;
+        max-height: 100% !important;
+      }
     }
   }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { WidgetChartLineComponent } from './widget-chart-line.component';
 
@@ -21,7 +21,7 @@ describe('WidgetChartLineComponent', () => {
   let component: WidgetChartLineComponent;
   let fixture: ComponentFixture<WidgetChartLineComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ WidgetChartLineComponent ]
     })
