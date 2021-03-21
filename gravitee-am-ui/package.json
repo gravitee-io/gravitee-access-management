@@ -34,7 +34,7 @@
     "bcryptjs": "^2.4.3",
     "codemirror": "^5.60.0",
     "core-js": "^2.6.11",
-    "highcharts": "8.0.4",
+    "highcharts": "8.2.2",
     "highcharts-angular": "^2.4.0",
     "jdenticon": "^2.2.0",
     "lodash": "^4.17.21",
