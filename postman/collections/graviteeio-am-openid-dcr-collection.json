@@ -23721,9 +23721,6 @@
 									}
 								}
 							],
-							"protocolProfileBehavior": {
-								"disableBodyPruning": true
-							},
 							"request": {
 								"method": "GET",
 								"header": [
@@ -23732,31 +23729,6 @@
 										"value": "Bearer {{user_access_token}}"
 									}
 								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "grant_type",
-											"value": "password",
-											"type": "text"
-										},
-										{
-											"key": "username",
-											"value": "user",
-											"type": "text"
-										},
-										{
-											"key": "password",
-											"value": "#CoMpL3X-P@SsW0Rd",
-											"type": "text"
-										},
-										{
-											"key": "scope",
-											"value": "openid",
-											"type": "text"
-										}
-									]
-								},
 								"url": {
 									"raw": "{{userinfoEndpoint}}",
 									"host": [
@@ -24127,9 +24099,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -24138,31 +24107,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -24345,9 +24289,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -24356,31 +24297,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -24563,9 +24479,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -24574,31 +24487,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -24781,9 +24669,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -24792,31 +24677,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -24999,9 +24859,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -25010,31 +24867,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -25217,9 +25049,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -25228,31 +25057,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -25450,9 +25254,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -25461,31 +25262,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -25670,9 +25446,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -25681,31 +25454,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -25890,9 +25638,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -25901,31 +25646,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -26110,9 +25830,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -26121,31 +25838,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -26330,9 +26022,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -26341,31 +26030,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -26550,9 +26214,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -26561,31 +26222,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -26775,9 +26411,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -26786,31 +26419,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -26995,9 +26603,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -27006,31 +26611,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -27215,9 +26795,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -27226,31 +26803,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -27435,9 +26987,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -27446,31 +26995,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -27655,9 +27179,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -27666,31 +27187,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -27875,9 +27371,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -27886,31 +27379,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -28100,9 +27568,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -28111,31 +27576,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -28320,9 +27760,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -28331,31 +27768,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -28540,9 +27952,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -28551,31 +27960,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -28760,9 +28144,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -28771,31 +28152,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -28980,9 +28336,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -28991,31 +28344,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -29200,9 +28528,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -29211,31 +28536,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -29425,9 +28725,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -29436,31 +28733,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -29645,9 +28917,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -29656,31 +28925,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -29865,9 +29109,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -29876,31 +29117,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -30085,9 +29301,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -30096,31 +29309,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -30305,9 +29493,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -30316,31 +29501,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -30525,9 +29685,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -30536,31 +29693,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -30810,9 +29942,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -30821,31 +29950,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -31030,9 +30134,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -31041,31 +30142,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -31250,9 +30326,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -31261,31 +30334,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -31470,9 +30518,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -31481,31 +30526,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -31690,9 +30710,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -31701,31 +30718,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -31910,9 +30902,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -31921,31 +30910,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -32135,9 +31099,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -32146,31 +31107,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -32355,9 +31291,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -32366,31 +31299,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -32575,9 +31483,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -32586,31 +31491,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -32795,9 +31675,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -32806,31 +31683,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -33015,9 +31867,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -33026,31 +31875,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -33235,9 +32059,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -33246,31 +32067,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -33460,9 +32256,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -33471,31 +32264,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -33680,9 +32448,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -33691,31 +32456,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -33900,9 +32640,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -33911,31 +32648,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -34120,9 +32832,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -34131,31 +32840,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -34340,9 +33024,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -34351,31 +33032,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -34560,9 +33216,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -34571,31 +33224,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -34785,9 +33413,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -34796,31 +33421,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -35005,9 +33605,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -35016,31 +33613,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -35225,9 +33797,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -35236,31 +33805,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -35445,9 +33989,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -35456,31 +33997,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -35665,9 +34181,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -35676,31 +34189,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -35885,9 +34373,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-												"disableBodyPruning": true
-											},
 											"request": {
 												"method": "GET",
 												"header": [
@@ -35896,31 +34381,6 @@
 														"value": "Bearer {{user_access_token}}"
 													}
 												],
-												"body": {
-													"mode": "urlencoded",
-													"urlencoded": [
-														{
-															"key": "grant_type",
-															"value": "password",
-															"type": "text"
-														},
-														{
-															"key": "username",
-															"value": "user",
-															"type": "text"
-														},
-														{
-															"key": "password",
-															"value": "#CoMpL3X-P@SsW0Rd",
-															"type": "text"
-														},
-														{
-															"key": "scope",
-															"value": "openid",
-															"type": "text"
-														}
-													]
-												},
 												"url": {
 													"raw": "{{userinfoEndpoint}}",
 													"host": [
@@ -36115,9 +34575,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -36126,31 +34583,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -36333,9 +34765,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -36344,31 +34773,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -36551,9 +34955,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -36562,31 +34963,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -36769,9 +35145,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -36780,31 +35153,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -36987,9 +35335,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -36998,31 +35343,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -37205,9 +35525,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -37216,31 +35533,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -37428,9 +35720,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -37439,31 +35728,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -37646,9 +35910,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -37657,31 +35918,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -37864,9 +36100,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -37875,31 +36108,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -38082,9 +36290,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -38093,31 +36298,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -38300,9 +36480,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -38311,31 +36488,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -38518,9 +36670,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -38529,31 +36678,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -38741,9 +36865,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -38752,31 +36873,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -38959,9 +37055,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -38970,31 +37063,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -39177,9 +37245,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -39188,31 +37253,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -39395,9 +37435,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -39406,31 +37443,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -39613,9 +37625,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -39624,31 +37633,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -39831,9 +37815,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -39842,31 +37823,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -40054,9 +38010,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -40065,31 +38018,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -40272,9 +38200,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -40283,31 +38208,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -40490,9 +38390,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -40501,31 +38398,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -40708,9 +38580,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -40719,31 +38588,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -40926,9 +38770,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -40937,31 +38778,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -41144,9 +38960,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -41155,31 +38968,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -41367,9 +39155,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -41378,31 +39163,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -41585,9 +39345,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -41596,31 +39353,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -41803,9 +39535,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -41814,31 +39543,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -42021,9 +39725,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -42032,31 +39733,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -42239,9 +39915,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -42250,31 +39923,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -42457,9 +40105,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -42468,31 +40113,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -42680,9 +40300,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -42691,31 +40308,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -42898,9 +40490,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -42909,31 +40498,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -43116,9 +40680,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -43127,31 +40688,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -43334,9 +40870,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -43345,31 +40878,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -43552,9 +41060,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -43563,31 +41068,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -43770,9 +41250,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -43781,31 +41258,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -43995,9 +41447,6 @@
 									}
 								}
 							],
-							"protocolProfileBehavior": {
-								"disableBodyPruning": true
-							},
 							"request": {
 								"method": "GET",
 								"header": [
@@ -44006,31 +41455,6 @@
 										"value": "Bearer {{user_access_token}}"
 									}
 								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "grant_type",
-											"value": "password",
-											"type": "text"
-										},
-										{
-											"key": "username",
-											"value": "user",
-											"type": "text"
-										},
-										{
-											"key": "password",
-											"value": "#CoMpL3X-P@SsW0Rd",
-											"type": "text"
-										},
-										{
-											"key": "scope",
-											"value": "openid",
-											"type": "text"
-										}
-									]
-								},
 								"url": {
 									"raw": "{{userinfoEndpoint}}",
 									"host": [
@@ -44213,9 +41637,6 @@
 									}
 								}
 							],
-							"protocolProfileBehavior": {
-								"disableBodyPruning": true
-							},
 							"request": {
 								"method": "GET",
 								"header": [
@@ -44224,31 +41645,6 @@
 										"value": "Bearer {{user_access_token}}"
 									}
 								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "grant_type",
-											"value": "password",
-											"type": "text"
-										},
-										{
-											"key": "username",
-											"value": "user",
-											"type": "text"
-										},
-										{
-											"key": "password",
-											"value": "#CoMpL3X-P@SsW0Rd",
-											"type": "text"
-										},
-										{
-											"key": "scope",
-											"value": "openid",
-											"type": "text"
-										}
-									]
-								},
 								"url": {
 									"raw": "{{userinfoEndpoint}}",
 									"host": [
@@ -44431,9 +41827,6 @@
 									}
 								}
 							],
-							"protocolProfileBehavior": {
-								"disableBodyPruning": true
-							},
 							"request": {
 								"method": "GET",
 								"header": [
@@ -44442,31 +41835,6 @@
 										"value": "Bearer {{user_access_token}}"
 									}
 								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "grant_type",
-											"value": "password",
-											"type": "text"
-										},
-										{
-											"key": "username",
-											"value": "user",
-											"type": "text"
-										},
-										{
-											"key": "password",
-											"value": "#CoMpL3X-P@SsW0Rd",
-											"type": "text"
-										},
-										{
-											"key": "scope",
-											"value": "openid",
-											"type": "text"
-										}
-									]
-								},
 								"url": {
 									"raw": "{{userinfoEndpoint}}",
 									"host": [
@@ -44649,9 +42017,6 @@
 									}
 								}
 							],
-							"protocolProfileBehavior": {
-								"disableBodyPruning": true
-							},
 							"request": {
 								"method": "GET",
 								"header": [
@@ -44660,31 +42025,6 @@
 										"value": "Bearer {{user_access_token}}"
 									}
 								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "grant_type",
-											"value": "password",
-											"type": "text"
-										},
-										{
-											"key": "username",
-											"value": "user",
-											"type": "text"
-										},
-										{
-											"key": "password",
-											"value": "#CoMpL3X-P@SsW0Rd",
-											"type": "text"
-										},
-										{
-											"key": "scope",
-											"value": "openid",
-											"type": "text"
-										}
-									]
-								},
 								"url": {
 									"raw": "{{userinfoEndpoint}}",
 									"host": [
@@ -44867,9 +42207,6 @@
 									}
 								}
 							],
-							"protocolProfileBehavior": {
-								"disableBodyPruning": true
-							},
 							"request": {
 								"method": "GET",
 								"header": [
@@ -44878,31 +42215,6 @@
 										"value": "Bearer {{user_access_token}}"
 									}
 								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "grant_type",
-											"value": "password",
-											"type": "text"
-										},
-										{
-											"key": "username",
-											"value": "user",
-											"type": "text"
-										},
-										{
-											"key": "password",
-											"value": "#CoMpL3X-P@SsW0Rd",
-											"type": "text"
-										},
-										{
-											"key": "scope",
-											"value": "openid",
-											"type": "text"
-										}
-									]
-								},
 								"url": {
 									"raw": "{{userinfoEndpoint}}",
 									"host": [
@@ -45085,9 +42397,6 @@
 									}
 								}
 							],
-							"protocolProfileBehavior": {
-								"disableBodyPruning": true
-							},
 							"request": {
 								"method": "GET",
 								"header": [
@@ -45096,31 +42405,6 @@
 										"value": "Bearer {{user_access_token}}"
 									}
 								],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "grant_type",
-											"value": "password",
-											"type": "text"
-										},
-										{
-											"key": "username",
-											"value": "user",
-											"type": "text"
-										},
-										{
-											"key": "password",
-											"value": "#CoMpL3X-P@SsW0Rd",
-											"type": "text"
-										},
-										{
-											"key": "scope",
-											"value": "openid",
-											"type": "text"
-										}
-									]
-								},
 								"url": {
 									"raw": "{{userinfoEndpoint}}",
 									"host": [
@@ -45368,9 +42652,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -45379,31 +42660,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -45588,9 +42844,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -45599,31 +42852,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -45808,9 +43036,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -45819,31 +43044,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -46028,9 +43228,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -46039,31 +43236,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -46248,9 +43420,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -46259,31 +43428,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -46468,9 +43612,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -46479,31 +43620,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -46693,9 +43809,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -46704,31 +43817,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -46913,9 +44001,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -46924,31 +44009,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -47133,9 +44193,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -47144,31 +44201,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -47353,9 +44385,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -47364,31 +44393,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -47573,9 +44577,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -47584,31 +44585,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -47793,9 +44769,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -47804,31 +44777,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -48018,9 +44966,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -48029,31 +44974,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -48238,9 +45158,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -48249,31 +45166,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -48458,9 +45350,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -48469,31 +45358,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -48678,9 +45542,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -48689,31 +45550,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -48898,9 +45734,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -48909,31 +45742,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
@@ -49118,9 +45926,6 @@
 											}
 										}
 									],
-									"protocolProfileBehavior": {
-										"disableBodyPruning": true
-									},
 									"request": {
 										"method": "GET",
 										"header": [
@@ -49129,31 +45934,6 @@
 												"value": "Bearer {{user_access_token}}"
 											}
 										],
-										"body": {
-											"mode": "urlencoded",
-											"urlencoded": [
-												{
-													"key": "grant_type",
-													"value": "password",
-													"type": "text"
-												},
-												{
-													"key": "username",
-													"value": "user",
-													"type": "text"
-												},
-												{
-													"key": "password",
-													"value": "#CoMpL3X-P@SsW0Rd",
-													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
-												}
-											]
-										},
 										"url": {
 											"raw": "{{userinfoEndpoint}}",
 											"host": [
