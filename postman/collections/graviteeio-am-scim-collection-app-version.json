@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "1e8784b9-4e71-4f44-972d-348196dfd13a",
+		"_postman_id": "025b3937-ce25-4546-8705-9dca28790e19",
 		"name": "Gravitee.io - AM - SCIM - app version",
 		"description": "Test System for Cross-domain Identity Management\nSCIM 2.0 is released as RFC7642, RFC7643 and RFC7644",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -15,7 +15,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "702efad1-64e7-473e-abb4-9116327fc2d4",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -77,7 +76,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "bf2325a8-e22d-4006-82dc-26bea43ec6f6",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -130,7 +128,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "776be139-dc72-4303-9bc7-08f41160430d",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function(){}, 10000);"
@@ -179,7 +176,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "057decc6-d12b-41d2-ad6a-b31f4d2c7ea3",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -215,8 +211,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "SCIM",
@@ -230,7 +225,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "eb7dec3b-3645-4a24-8399-c18b4b8eb278",
 										"exec": [
 											"pm.test(\"Status code is 404\", function () {",
 											"    pm.response.to.have.status(404);",
@@ -263,7 +257,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ebaf443d-cde2-4f94-bb57-90dd68930ae7",
 										"exec": [
 											"pm.test(\"Status code is 404\", function () {",
 											"    pm.response.to.have.status(404);",
@@ -296,7 +289,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d5b7265e-7e12-4f36-8605-659f3b5881cd",
 										"exec": [
 											"pm.test(\"Status code is 404\", function () {",
 											"    pm.response.to.have.status(404);",
@@ -323,9 +315,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Configure domain",
@@ -336,7 +326,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "6a01c163-ae6a-462f-8fc2-deb2a191c218",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -391,9 +380,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Service Provider Configuration",
@@ -404,7 +391,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "a3cb60ee-c3bb-428c-89d8-fe8ca8676c63",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -413,7 +399,7 @@
 											"pm.test(\"Check SCIM configuration\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig']);",
-											"    pm.expect(jsonData.patch.supported).to.eql(false);",
+											"    pm.expect(jsonData.patch.supported).to.eql(true);",
 											"    pm.expect(jsonData.bulk.supported).to.eql(false);",
 											"    pm.expect(jsonData.filter.supported).to.eql(true);",
 											"    pm.expect(jsonData.changePassword.supported).to.eql(false);",
@@ -443,9 +429,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - invalid token",
@@ -456,7 +440,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9d72f159-7a4c-4086-8eb8-c0af50a6ac5f",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -496,7 +479,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ab1176e6-a196-40d7-a73a-79822ee9b7e4",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -542,7 +524,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e2dc1b9c-4ccd-4fc3-9d27-2024d488d8bd",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -586,7 +567,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b3084f67-2776-40eb-8abe-86289a982c2d",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -636,7 +616,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "aeec2068-5950-4aab-99fc-acca6ae5f04d",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -681,7 +660,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e745e539-7ee6-4f0d-a3b4-20e1f6c3b1e9",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -732,7 +710,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f42a6710-83d9-4b8f-9005-c8d89fffe45f",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -777,7 +754,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "fb9a71a1-e099-46f8-a5e4-51f041964f3b",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -828,7 +804,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "bdc15aa0-2039-44eb-8921-dc7db89536f9",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -868,7 +843,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ffca470d-4f1d-4d0d-b09a-11f7a523a23f",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -914,7 +888,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "5a45da68-f916-4c44-81a3-1ce3183ae50c",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -959,7 +932,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "788b6789-2bb6-499b-9be3-a98797f0bd76",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1010,7 +982,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "cd2acf95-af43-47d7-9a3a-7c84bd95295a",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1054,7 +1025,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "37a9e324-b370-4f5b-8084-708b16439fa0",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1104,7 +1074,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "7075a551-1b4d-491e-ae67-f1b36dfd67cd",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1149,7 +1118,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "829aa230-7348-4dff-8440-2037124850e8",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1194,9 +1162,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Configure application",
@@ -1207,7 +1173,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "cd2c3ebc-b37e-45dc-bbcb-c5ab596b74c2",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -1263,7 +1228,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d601ea2b-3cbd-4401-9522-9cb2bb4ef419",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1318,7 +1282,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b4885851-5757-4109-ae7b-e0e8ad5ff34a",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1337,7 +1300,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "13d355fd-07ba-4249-a528-0833bf32d6d9",
 										"exec": [
 											""
 										],
@@ -1382,9 +1344,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Users",
@@ -1398,7 +1358,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fb71a0c9-0f86-4572-97ae-16f7a93e2465",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1449,7 +1408,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "76e824d0-c6e0-4be3-a68c-86cbfef6046b",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1506,7 +1464,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "bd5c98dd-707a-486c-9668-cb69192dd7e8",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1563,7 +1520,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "35fdbc31-454b-4734-b909-8ca150d5115d",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1620,7 +1576,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "173ed4b8-e7e6-44bf-8996-3fbfff285ff2",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1677,7 +1632,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "bdb2d98b-6833-4a7a-ad1f-fe28f3c5b0b5",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1734,7 +1688,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "8ddbea90-72f1-4e2f-bacc-aa15a1a28674",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -1790,7 +1743,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "964b2b95-6a73-4bf9-9348-abdfaa587322",
 												"exec": [
 													"pm.test(\"Status code is 409\", function () {",
 													"    pm.response.to.have.status(409);",
@@ -1841,9 +1793,7 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Update",
@@ -1854,7 +1804,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "a51c35e8-c748-4a70-a914-e9bc04ab48bd",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -1911,7 +1860,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "85bfbf1b-b0f1-456e-b595-65289fef1671",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -1963,7 +1911,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "584e9999-92f4-43b7-b7d5-33309a9aaa8e",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2014,9 +1961,801 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
+						},
+						{
+							"name": "Patch",
+							"item": [
+								{
+									"name": "Invalid request - user not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user unknown user\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"404\");",
+													"    pm.expect(jsonData.detail).to.eql(\"User [wrong-id] can not be found.\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"active\",\n        \"value\": true\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/wrong-id",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user malformed json\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - add operation - single attribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - add operation - single attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData.userType).to.eql('Employee');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"path\": \"userType\",\n        \"value\": \"Employee\"\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - add operation - complex attribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - add operation - complex attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData.name.middleName).to.eql('Jane');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"path\":\"name\",\n        \"value\": {\n            \"middleName\": \"Jane\"\n        }\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - add operation - multi-valued attribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - add operation - multi-valued attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData).to.have.property('emails');",
+													"    pm.expect(jsonData.emails[0].value).to.eql('bjensen@example.com');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"value\" : {\n            \"emails\": [\n                {\n                    \"value\": \"bjensen@example.com\",\n                    \"type\": \"work\",\n                    \"primary\": true\n                }\n            ]\n        }\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - replace operation - single attribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - replace operation - single attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData.active).to.eql(true);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"active\",\n        \"value\": true\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - replace operation - complex attribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - replace operation - complex attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData.name.familyName).to.eql('Jensen3');",
+													"    pm.expect(jsonData.name.middleName).to.eql('Jane3');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"name\",\n        \"value\": {\n            \"familyName\": \"Jensen3\",\n            \"middleName\": \"Jane3\"\n        }\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - replace operation - multi-valued attribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - replace operation - multi-valued attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData).to.have.property('emails');",
+													"    pm.expect(jsonData.emails[0].value).to.eql('bjensen2@example.com');",
+													"    pm.expect(jsonData.emails[1].value).to.eql('bjensen-home@example.com');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\": \"emails\",\n        \"value\": [\n            {\n                \"value\": \"bjensen2@example.com\",\n                \"type\": \"work\",\n                \"primary\": true\n            },\n            {\n                \"value\": \"bjensen-home@example.com\",\n                \"type\": \"home\"\n            }\n        ]\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - replace operation - multi-valued attribute with filter",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - replace operation - multi-valued attribute with filter\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData.emails[0].value).to.eql('bjensen2@example.com');",
+													"    pm.expect(jsonData.emails[1].value).to.eql('bjensen-home2@example.com');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"emails[type eq \\\"home\\\"]\",\n        \"value\": \n            {\n                \"value\": \"bjensen-home2@example.com\",\n                \"type\": \"home\"\n            }\n        }\n     ]\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - remove operation - single atttribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - remove operation - single attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData).to.not.have.property('userType');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"userType\"\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - remove operation - complex atttribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - remove operation - complex attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData.name).to.not.have.property('middleName');",
+													"    pm.expect(jsonData.name).to.have.property('familyName');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"name.middleName\"\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - remove operation - multi-valued atttribute with filter",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - remove operation - multi-valued attribute with filter\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData.emails.length).to.eql(1);",
+													"    pm.expect(jsonData.emails[0].type).to.eql('work');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"emails[type eq \\\"home\\\"]\"\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - remove operation - multi-valued atttribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - remove operation - multi-valued attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData).to.not.have.property('emails');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"emails\"\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch user - multiple operations",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch user - multiple operations\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.expect(jsonData).to.have.property('emails');",
+													"    pm.expect(jsonData.emails[0].value).to.eql('johndoe@mail.com');",
+													"    pm.expect(jsonData.userType).to.eql('Director');",
+													"    pm.expect(jsonData.name).to.not.have.property('middleName');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [\n         {\n            \"op\":\"Add\",\n            \"path\":\"emails\",\n            \"value\": [\n                {\n                    \"value\": \"johndoe@mail.com\",\n                    \"type\": \"home\"\n                }\n            ]\n        },\n        {\n            \"op\": \"Replace\",\n            \"path\": \"userType\",\n            \"value\": \"Director\"\n        },\n        {\n            \"op\": \"Replace\",\n            \"path\": \"name.givenName\",\n            \"value\": \"Barbara\"\n        },\n        {\n            \"op\": \"Replace\",\n            \"path\": \"active\",\n            \"value\": false\n        },\n        {\n            \"op\": \"Remove\",\n            \"path\": \"name.middleName\"\n        }\n    ]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users",
+												"{{userSCIM}}"
+											]
+										}
+									},
+									"response": []
+								}
+							]
 						},
 						{
 							"name": "List",
@@ -2027,7 +2766,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "bb757cde-314b-438d-a69e-75bbb80ec32e",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2076,7 +2814,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "45f020ac-5759-4308-9e58-a3f0e1fa240a",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -2127,7 +2864,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3e663247-dbd2-4dcf-94f0-e01868132f27",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2181,7 +2917,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "c86b4a12-606a-401a-af83-faa93ab8abad",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2235,7 +2970,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "83ae9087-dbd5-42dc-a144-40082963c43c",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2289,7 +3023,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "5b0b750b-f6fe-49fa-8849-a515551b5663",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2343,7 +3076,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "cb833f93-04a7-489d-b7da-af88502f61bd",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2391,9 +3123,7 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Delete",
@@ -2404,7 +3134,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4f4c7cd9-63a8-46fc-a4bf-f1f79948633c",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -2455,7 +3184,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "d0d71d89-a4c4-447d-874c-02979fcc0f15",
 												"exec": [
 													"pm.test(\"Status code is 204\", function () {",
 													"    pm.response.to.have.status(204);",
@@ -2499,7 +3227,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "515ee4d5-3944-40e4-9a8b-48b6b078d9d2",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2541,13 +3268,9 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Groups",
@@ -2561,7 +3284,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "65916c19-8421-4070-af52-c02073685453",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -2612,7 +3334,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "26f5545a-26b6-4649-9376-cfbdbc148d5f",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -2669,7 +3390,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "9c5703df-9041-4669-b438-a8d76aa7ad0d",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -2725,7 +3445,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "baa23664-e630-4bbf-90a4-f682c899b464",
 												"exec": [
 													"pm.test(\"Status code is 409\", function () {",
 													"    pm.response.to.have.status(409);",
@@ -2776,9 +3495,7 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Update",
@@ -2789,7 +3506,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3c2c6942-2917-46f6-93fe-d11d24b48228",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -2846,7 +3562,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "e80c87d3-9448-4540-83a3-00f096bd57c2",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -2898,7 +3613,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4dc79ae1-e9e4-422e-ad46-2a3d60223a8d",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2949,9 +3663,569 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
+						},
+						{
+							"name": "Patch",
+							"item": [
+								{
+									"name": "Create user 1",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group - create user 1\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.environment.set('userSCIM1', jsonData.id);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"externalId\": \"701984\",\n  \"userName\": \"bjensen@example.com\",\n  \"name\": {\n    \"formatted\": \"Ms. Barbara J Jensen, III\",\n    \"familyName\": \"Jensen\",\n    \"givenName\": \"Barbara\",\n    \"middleName\": \"Jane\",\n    \"honorificPrefix\": \"Ms.\",\n    \"honorificSuffix\": \"III\"\n  },\n  \"displayName\": \"Babs Jensen\",\n  \"nickName\": \"Babs\",\n  \"profileUrl\": \"https://login.example.com/bjensen\",\n  \"emails\": [\n    {\n      \"value\": \"bjensen@example.com\",\n      \"type\": \"work\",\n      \"primary\": true\n    },\n    {\n      \"value\": \"babs@jensen.org\",\n      \"type\": \"home\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"type\": \"work\",\n      \"streetAddress\": \"100 Universal City Plaza\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"100 Universal City Plaza\\nHollywood, CA 91608 USA\",\n      \"primary\": true\n    },\n    {\n      \"type\": \"home\",\n      \"streetAddress\": \"456 Hollywood Blvd\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"456 Hollywood Blvd\\nHollywood, CA 91608 USA\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"555-555-5555\",\n      \"type\": \"work\"\n    },\n    {\n      \"value\": \"555-555-4444\",\n      \"type\": \"mobile\"\n    }\n  ],\n  \"ims\": [\n    {\n      \"value\": \"someaimhandle\",\n      \"type\": \"aim\"\n    }\n  ],\n  \"photos\": [\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/F\",\n      \"type\": \"photo\"\n    },\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/T\",\n      \"type\": \"thumbnail\"\n    }\n  ],\n  \"userType\": \"Employee\",\n  \"title\": \"Tour Guide\",\n  \"preferredLanguage\": \"en-US\",\n  \"locale\": \"en-US\",\n  \"timezone\": \"America/Los_Angeles\",\n  \"active\":true,\n  \"x509Certificates\": [\n    {\n      \"value\":\n       \"MIIDQzCCAqygAwIBAgICEAAwDQ....1UEBhMCVVMx\"\n    }\n  ]\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create user 2",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group - create user 2\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:User']);",
+													"    pm.environment.set('userSCIM2', jsonData.id);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"externalId\": \"123456\",\n  \"userName\": \"mpepperidge@example.com\",\n  \"name\": {\n    \"formatted\": \"Ms. Mandy Pepperidge, III\",\n    \"familyName\": \"Pepperidge\",\n    \"givenName\": \"Mandy\",\n    \"honorificPrefix\": \"Ms.\",\n    \"honorificSuffix\": \"III\"\n  },\n  \"displayName\": \"Mandy Pepperidge\",\n  \"nickName\": \"Mandy\",\n  \"profileUrl\": \"https://login.example.com/mpepperidge\",\n  \"emails\": [\n    {\n      \"value\": \"mpepperidge@example.com\",\n      \"type\": \"work\",\n      \"primary\": true\n    },\n    {\n      \"value\": \"mandy@pepperidge.org\",\n      \"type\": \"home\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"type\": \"work\",\n      \"streetAddress\": \"100 Universal City Plaza\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"100 Universal City Plaza\\nHollywood, CA 91608 USA\",\n      \"primary\": true\n    },\n    {\n      \"type\": \"home\",\n      \"streetAddress\": \"456 Hollywood Blvd\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"456 Hollywood Blvd\\nHollywood, CA 91608 USA\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"555-555-5555\",\n      \"type\": \"work\"\n    },\n    {\n      \"value\": \"555-555-4444\",\n      \"type\": \"mobile\"\n    }\n  ],\n  \"ims\": [\n    {\n      \"value\": \"someaimhandle\",\n      \"type\": \"aim\"\n    }\n  ],\n  \"photos\": [\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/F\",\n      \"type\": \"photo\"\n    },\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/T\",\n      \"type\": \"thumbnail\"\n    }\n  ],\n  \"userType\": \"Employee\",\n  \"title\": \"Tour Guide\",\n  \"preferredLanguage\": \"en-US\",\n  \"locale\": \"en-US\",\n  \"timezone\": \"America/Los_Angeles\",\n  \"active\":true,\n  \"x509Certificates\": [\n    {\n      \"value\":\n       \"MIIDQzCCAqygAwIBAgICEAAwDQ....1UEBhMCVVMx\"\n    }\n  ]\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Users"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - group not found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group unknown group\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"404\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Group [wrong-id] can not be found.\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"active\",\n        \"value\": true\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/wrong-id",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Groups",
+												"wrong-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Invalid request - malformed json",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group malformed json\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.status).to.eql(\"400\");",
+													"    pm.expect(jsonData.scimType).to.eql(\"invalidSyntax\");",
+													"    pm.expect(jsonData.detail).to.eql(\"Unable to parse body message\");",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:api:messages:2.0:Error']);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": ""
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch group - add operation - multi-valued attribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group - add operation - multi-valued attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+													"    pm.expect(jsonData).to.have.property('members');",
+													"    pm.expect(jsonData.members.length).to.eql(2);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"value\" : {\n            \"members\": [\n                {\n                    \"value\": \"{{userSCIM1}}\",\n                    \"$ref\": \"https://example.com/v2/Users/{{userSCIM1}}\",\n                    \"display\": \"Babs Jensen\"\n                },\n                {\n                    \"value\": \"{{userSCIM2}}\",\n                    \"$ref\": \"https://example.com/v2/Users/{{userSCIM2}}\",\n                    \"display\": \"Mandy Pepperidge\"\n                }\n            ]\n        }\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch group - replace operation - single attribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group - replace operation - single attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+													"    pm.expect(jsonData.displayName).to.eql(\"Tour Guides 3\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"displayName\",\n        \"value\": \"Tour Guides 3\"\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch group - remove operation - single atttribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group - remove operation - single attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+													"    pm.expect(jsonData).to.not.have.property('displayName');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"displayName\"\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch group - remove operation - multi-valued atttribute with filter",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group - remove operation - multi-valued attribute with filter\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+													"    pm.expect(jsonData.members.length).to.eql(1);",
+													"    pm.expect(jsonData.members[0].display).to.eql('Mandy Pepperidge');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"members[display eq \\\"Babs Jensen\\\"]\"\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch group - remove operation - multi-valued atttribute",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group - remove operation - multi-valued attribute\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+													"    pm.expect(jsonData).to.not.have.property('members');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"members\"\n     }]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Patch group - multiple operations",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"SCIM patch group - multiple operations\", function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData).to.have.property('id');",
+													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
+													"    pm.expect(jsonData).to.have.property('members');",
+													"    pm.expect(jsonData.members[0].display).to.eql('Babs Jensen');",
+													"    pm.expect(jsonData.displayName).to.eql('Tour Guides 2');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"name": "Content-Type",
+												"type": "text",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [\n         {\n            \"op\":\"Add\",\n            \"path\":\"displayName\",\n            \"value\": \"Tour Guides 2\"\n        },\n        {\n            \"op\": \"Add\",\n            \"path\": \"members\",\n            \"value\": [\n                {\n                    \"value\": \"{{userSCIM1}}\",\n                    \"$ref\": \"https://example.com/v2/Users/{{userSCIM1}}\",\n                    \"display\": \"Babs Jensen\"\n                }\n            ]\n        }\n    ]\n\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domain}}",
+												"scim",
+												"Groups",
+												"{{groupSCIM}}"
+											]
+										}
+									},
+									"response": []
+								}
+							]
 						},
 						{
 							"name": "List",
@@ -2962,7 +4236,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "7d54ab43-fa08-4011-9161-52e377ff08e8",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -3004,9 +4277,7 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Delete",
@@ -3017,7 +4288,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "9122a083-8a10-4c65-b2c8-4881c76c91f1",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -3068,7 +4338,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b53a1699-fe5f-4380-be29-796d298165e9",
 												"exec": [
 													"pm.test(\"Status code is 204\", function () {",
 													"    pm.response.to.have.status(204);",
@@ -3112,7 +4381,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "6d38066c-1e79-4572-87f1-46556823ce7a",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -3154,16 +4422,11 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Delete domain",
@@ -3171,7 +4434,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "d797ca1f-8117-4437-818a-469adec6b0a8",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -3215,6 +4477,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }

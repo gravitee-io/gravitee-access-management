@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.scim.service;
 
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.reactivex.Completable;
@@ -35,6 +36,8 @@ public interface UserService {
     Single<User> create(User user, String baseUrl);
 
     Single<User> update(String userId, User user, String baseUrl);
+
+    Single<User> patch(String userId, PatchOp patchOp, String baseUrl);
 
     Completable delete(String userId);
 }

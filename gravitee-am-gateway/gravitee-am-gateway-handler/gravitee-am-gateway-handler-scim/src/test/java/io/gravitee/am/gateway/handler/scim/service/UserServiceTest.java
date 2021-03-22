@@ -15,8 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.scim.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.model.Operation;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.UserProvider;
@@ -24,9 +29,11 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.validators.PasswordValidator;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -68,6 +75,12 @@ public class UserServiceTest {
 
     @Mock
     private GroupService groupService;
+
+    @Mock
+    private PasswordValidator passwordValidator;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @Test
     public void shouldCreateUser_invalid_identity_provider() {
@@ -141,11 +154,8 @@ public class UserServiceTest {
 
     @Test
     public void shouldUpdateUser_status_enabled() {
-        final String domainId = "domain";
-
         io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
         when(existingUser.getId()).thenReturn("user-id");
-        when(existingUser.getId()).thenReturn("user-external-id");
         when(existingUser.getSource()).thenReturn("user-idp");
         when(existingUser.getUsername()).thenReturn("username");
 
@@ -171,6 +181,7 @@ public class UserServiceTest {
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.update(any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(passwordValidator.isValid("user-password")).thenReturn(true);
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, "/").test();
         testObserver.assertNoErrors();
@@ -178,6 +189,56 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).update(userCaptor.capture());
         assertTrue(userCaptor.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldPatchUser() throws Exception {
+        final String domainId = "domain";
+        final String domainName = "domainName";
+        final String userId = "userId";
+
+        ObjectNode userNode = mock(ObjectNode.class);
+        when(userNode.get("displayName")).thenReturn(new TextNode("my user"));
+
+        Operation operation = mock(Operation.class);
+        doAnswer(invocation -> {
+            ObjectNode arg0 = invocation.getArgument(0);
+            Assert.assertTrue(arg0.get("displayName").asText().equals("my user"));
+            return null;
+        }).when(operation).apply(any());
+
+        PatchOp patchOp = mock(PatchOp.class);
+        when(patchOp.getOperations()).thenReturn(Collections.singletonList(operation));
+
+        User patchUser = mock(User.class);
+        when(patchUser.getDisplayName()).thenReturn("my user 2");
+
+        io.gravitee.am.model.User patchedUser = mock(io.gravitee.am.model.User.class);
+        when(patchedUser.getId()).thenReturn(userId);
+        when(patchedUser.getSource()).thenReturn("user-idp");
+        when(patchedUser.getUsername()).thenReturn("username");
+        when(patchedUser.getDisplayName()).thenReturn("my user 2");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+
+        when(domain.getName()).thenReturn(domainName);
+        when(objectMapper.convertValue(any(), eq(ObjectNode.class))).thenReturn(userNode);
+        when(objectMapper.treeToValue(userNode, User.class)).thenReturn(patchUser);
+        when(groupService.findByMember(userId)).thenReturn(Single.just(Collections.emptyList()));
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(patchedUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        doAnswer(invocation -> {
+            io.gravitee.am.model.User userToUpdate = invocation.getArgument(0);
+            Assert.assertTrue(userToUpdate.getDisplayName().equals("my user 2"));
+            return Single.just(userToUpdate);
+        }).when(userRepository).update(any());
+
+        TestObserver<User> testObserver = userService.patch(userId, patchOp, "/").test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(g -> "my user 2".equals(g.getDisplayName()));
     }
 
 }

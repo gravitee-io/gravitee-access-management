@@ -32,7 +32,7 @@ public class ServiceProviderConfigServiceImpl implements ServiceProviderConfigSe
     @Override
     public Single<ServiceProviderConfiguration> get() {
         ServiceProviderConfiguration serviceProviderConfiguration = new ServiceProviderConfiguration();
-        serviceProviderConfiguration.setPatch(new ComplexType(false));
+        serviceProviderConfiguration.setPatch(new ComplexType(true));
         serviceProviderConfiguration.setBulk(new ComplexType(false));
         serviceProviderConfiguration.setFilter(new ComplexType(true));
         serviceProviderConfiguration.setChangePassword(new ComplexType(false));

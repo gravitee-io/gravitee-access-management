@@ -15,13 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.scim.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
-import io.gravitee.am.gateway.handler.scim.model.Group;
-import io.gravitee.am.gateway.handler.scim.model.ListResponse;
-import io.gravitee.am.gateway.handler.scim.model.Member;
-import io.gravitee.am.gateway.handler.scim.model.Meta;
+import io.gravitee.am.gateway.handler.scim.model.*;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -60,6 +59,9 @@ public class GroupServiceImpl implements GroupService {
 
     @Autowired
     private Domain domain;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public Single<ListResponse<Group>> list(int page, int size, String baseUrl) {
@@ -127,7 +129,7 @@ public class GroupServiceImpl implements GroupService {
                     return true;
                 })
                 // set members
-                .flatMap(irrelevant -> setMembers(group, baseUrl))
+                .flatMap(__ -> setMembers(group, baseUrl))
                 .flatMap(group1 -> {
                     io.gravitee.am.model.Group groupModel = convert(group1);
                     // set technical ID
@@ -153,7 +155,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public Single<Group> update(String groupId, Group group, String baseUrl) {
-        LOGGER.debug("Update a group {} for domain {}", group.getDisplayName(), domain.getName());
+        LOGGER.debug("Update a group {} for domain {}", groupId, domain.getName());
         return groupRepository.findById(groupId)
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
                 .flatMapSingle(existingGroup -> groupRepository.findByDomainAndName(domain.getId(), group.getDisplayName())
@@ -191,6 +193,27 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    public Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl) {
+        LOGGER.debug("Patch a group {} for domain {}", groupId, domain.getName());
+        return get(groupId, baseUrl)
+                .switchIfEmpty(Single.error(new GroupNotFoundException(groupId)))
+                .flatMap(group -> {
+                    ObjectNode node = objectMapper.convertValue(group, ObjectNode.class);
+                    patchOp.getOperations().forEach(operation -> operation.apply(node));
+                    return update(groupId, objectMapper.treeToValue(node, Group.class), baseUrl);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    } else {
+                        LOGGER.error("An error has occurred when trying to delete group: {}", groupId, ex);
+                        return Single.error(new TechnicalManagementException(
+                                String.format("An error has occurred when trying to delete group: %s", groupId), ex));
+                    }
+                });
+    }
+
+    @Override
     public Completable delete(String groupId) {
         LOGGER.debug("Delete group {}", groupId);
         return groupRepository.findById(groupId)
@@ -209,7 +232,7 @@ public class GroupServiceImpl implements GroupService {
 
     private Single<Group> setMembers(Group group, String baseUrl) {
         Set<Member> members = group.getMembers() != null ? new HashSet<>(group.getMembers()) : null;
-        if (members != null) {
+        if (members != null && !members.isEmpty()) {
             List<String> memberIds = group.getMembers().stream().map(Member::getValue).collect(Collectors.toList());
             return userRepository.findByIdIn(memberIds)
                     .map(users -> {

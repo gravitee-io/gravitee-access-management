@@ -19,13 +19,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +32,6 @@ import java.util.Set;
  */
 public class AbstractGroupEndpoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractGroupEndpoint.class);
     protected GroupService groupService;
     protected ObjectMapper objectMapper;
 
@@ -49,7 +44,7 @@ public class AbstractGroupEndpoint {
         return UriBuilderRequest.resolveProxyRequest(request, request.path());
     }
 
-    protected void checkSchemas(List<String> schemas) throws Exception {
+    protected void checkSchemas(List<String> schemas, List<String> restrictedSchemas) {
         if (schemas == null || schemas.isEmpty()) {
             throw new InvalidValueException("Field [schemas] is required");
         }
@@ -59,7 +54,7 @@ public class AbstractGroupEndpoint {
             if (!schemaSet.add(schema)) {
                 throw new InvalidSyntaxException("Duplicate 'schemas' values are forbidden");
             }
-            if (!Group.SCHEMAS.contains(schema)) {
+            if (!restrictedSchemas.contains(schema)) {
                 throw new InvalidSyntaxException("The 'schemas' attribute MUST only contain values defined as 'schema' and schemaExtensions' for the resource's defined User type");
             }
         });

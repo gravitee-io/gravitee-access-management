@@ -19,16 +19,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.model.EntrepriseUser;
-import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.validators.PasswordValidator;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -39,15 +34,13 @@ public class AbstractUserEndpoint {
 
     protected UserService userService;
     protected ObjectMapper objectMapper;
-    protected PasswordValidator passwordValidator;
 
-    public AbstractUserEndpoint(UserService userService, ObjectMapper objectMapper, PasswordValidator passwordValidator) {
+    public AbstractUserEndpoint(UserService userService, ObjectMapper objectMapper) {
         this.userService = userService;
         this.objectMapper = objectMapper;
-        this.passwordValidator = passwordValidator;
     }
 
-    protected void checkSchemas(List<String> schemas) {
+    protected void checkSchemas(List<String> schemas, List<String> restrictedSchemas) {
         if (schemas == null || schemas.isEmpty()) {
             throw new InvalidValueException("Field [schemas] is required");
         }
@@ -57,23 +50,13 @@ public class AbstractUserEndpoint {
             if (!schemaSet.add(schema)) {
                 throw new InvalidSyntaxException("Duplicate 'schemas' values are forbidden");
             }
-            if (!EntrepriseUser.SCHEMAS.contains(schema)) {
-                throw new InvalidSyntaxException("The 'schemas' attribute MUST only contain values defined as 'schema' and schemaExtensions' for the resource's defined User type");
+            if (!restrictedSchemas.contains(schema)) {
+                throw new InvalidSyntaxException("The 'schemas' attribute MUST only contain values defined as 'schema' and 'schemaExtensions' for the resource's defined type");
             }
         });
     }
 
     protected String location(HttpServerRequest request) {
         return UriBuilderRequest.resolveProxyRequest(request, request.path());
-    }
-
-    protected boolean isInvalidUserPassword(User user, Domain domain) {
-        String password = user.getPassword();
-        if (password == null) {
-            return false;
-        }
-        return Optional.ofNullable(domain.getPasswordSettings())
-                .map(ps -> !passwordValidator.isValid(password, ps))
-                .orElseGet(() -> !passwordValidator.isValid(password));
     }
 }

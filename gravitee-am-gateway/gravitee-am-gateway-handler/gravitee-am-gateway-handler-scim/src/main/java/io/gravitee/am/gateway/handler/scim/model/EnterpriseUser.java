@@ -26,7 +26,7 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EntrepriseUser extends User {
+public class EnterpriseUser extends User {
 
     public static final List<String> SCHEMAS = Arrays.asList("urn:ietf:params:scim:schemas:core:2.0:User",
             "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User");
