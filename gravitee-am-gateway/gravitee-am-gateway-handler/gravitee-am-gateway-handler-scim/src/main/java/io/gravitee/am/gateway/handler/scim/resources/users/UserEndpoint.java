@@ -18,11 +18,11 @@ package io.gravitee.am.gateway.handler.scim.resources.users;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.DecodeException;
@@ -35,11 +35,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class UserEndpoint extends AbstractUserEndpoint {
 
-    private final Domain domain;
-
-    public UserEndpoint(UserService userService, ObjectMapper objectMapper, PasswordValidator passwordValidator, Domain domain) {
-        super(userService, objectMapper, passwordValidator);
-        this.domain = domain;
+    public UserEndpoint(UserService userService, ObjectMapper objectMapper) {
+        super(userService, objectMapper);
     }
 
     public void get(RoutingContext context) {
@@ -89,6 +86,7 @@ public class UserEndpoint extends AbstractUserEndpoint {
      * If an attribute is "required", clients MUST specify the attribute in
      * the PUT request.
      * <p>
+     *
      * See <a href="https://tools.ietf.org/html/rfc7644#section-3.5.1">3.5.1. Replacing with PUT</a>
      */
     public void update(RoutingContext context) {
@@ -104,19 +102,71 @@ public class UserEndpoint extends AbstractUserEndpoint {
 
             // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
             try {
-                checkSchemas(user.getSchemas());
+                checkSchemas(user.getSchemas(), EnterpriseUser.SCHEMAS);
             } catch (Exception ex) {
                 context.fail(ex);
                 return;
             }
 
-            // password policy
-            if (isInvalidUserPassword(user, this.domain)) {
-                context.fail(new InvalidValueException("Field [password] is invalid"));
+            userService.update(userId, user, location(context.request()))
+                    .subscribe(
+                            user1 -> context.response()
+                                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                                    .putHeader(HttpHeaders.LOCATION, user1.getMeta().getLocation())
+                                    .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user1)),
+                            context::fail);
+        } catch (DecodeException ex) {
+            context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
+        }
+    }
+
+    /**
+     * HTTP PATCH is an OPTIONAL server function that enables clients to
+     * update one or more attributes of a SCIM resource using a sequence of
+     * operations to "add", "remove", or "replace" values.  Clients may
+     * discover service provider support for PATCH by querying the service
+     * provider configuration (see Section 4).
+     *
+     * The general form of the SCIM PATCH request is based on JSON Patch
+     * [RFC6902].  One difference between SCIM PATCH and JSON Patch is that
+     * SCIM servers do not support array indexing and do not support
+     * [RFC6902] operation types relating to array element manipulation,
+     * such as "move".
+     *
+     * The body of each request MUST contain the "schemas" attribute with
+     * the URI value of "urn:ietf:params:scim:api:messages:2.0:PatchOp".
+     *
+     * The body of an HTTP PATCH request MUST contain the attribute
+     * "Operations", whose value is an array of one or more PATCH
+     * operations.  Each PATCH operation object MUST have exactly one "op"
+     * member, whose value indicates the operation to perform and MAY be one
+     * of "add", "remove", or "replace".  The semantics of each operation
+     * are defined in the following subsections.
+     *
+     * See <a href="https://tools.ietf.org/html/rfc7644#section-3.5.2">3.5.2.  Modifying with PATCH</a>
+     */
+    public void patch(RoutingContext context) {
+        try {
+            final PatchOp patchOp = Json.decodeValue(context.getBodyAsString(), PatchOp.class);
+            final String userId = context.request().getParam("id");
+
+            // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
+            try {
+                checkSchemas(patchOp.getSchemas(), PatchOp.SCHEMAS);
+            } catch (Exception ex) {
+                context.fail(ex);
                 return;
             }
 
-            userService.update(userId, user, location(context.request()))
+            // check operations
+            if (patchOp.getOperations() == null || patchOp.getOperations().isEmpty()) {
+                context.fail(new InvalidValueException("Field [Operations] is required"));
+                return;
+            }
+
+            userService.patch(userId, patchOp, location(context.request()))
                     .subscribe(
                             user1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

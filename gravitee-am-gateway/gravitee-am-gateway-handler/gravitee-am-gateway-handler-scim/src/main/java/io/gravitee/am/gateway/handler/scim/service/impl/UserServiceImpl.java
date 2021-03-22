@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.scim.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
@@ -34,6 +36,7 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -69,6 +72,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private PasswordValidator passwordValidator;
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
@@ -118,6 +127,11 @@ public class UserServiceImpl implements UserService {
 
         // set user idp source
         final String source = user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource();
+
+        // check password
+        if (isInvalidUserPassword(user)) {
+            return Single.error(new InvalidValueException("Field [password] is invalid"));
+        }
 
         // check if user is unique
         return userRepository.findByDomainAndUsernameAndSource(domain.getId(), user.getUserName(), source)
@@ -180,6 +194,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<User> update(String userId, User user, String baseUrl) {
         LOGGER.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
+
+        // check password
+        if (isInvalidUserPassword(user)) {
+            return Single.error(new InvalidValueException("Field [password] is invalid"));
+        }
+
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapSingle(existingUser -> {
@@ -253,6 +273,34 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Single<User> patch(String userId, PatchOp patchOp, String baseUrl) {
+        LOGGER.debug("Patch user {}", userId);
+        return get(userId, baseUrl)
+                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                .flatMap(user -> {
+                    ObjectNode node = objectMapper.convertValue(user, ObjectNode.class);
+                    patchOp.getOperations().forEach(operation -> operation.apply(node));
+                    User userToPatch = objectMapper.treeToValue(node, User.class);
+
+                    // check password
+                    if (isInvalidUserPassword(userToPatch)) {
+                        return Single.error(new InvalidValueException("Field [password] is invalid"));
+                    }
+
+                    return update(userId, userToPatch, baseUrl);
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    } else {
+                        LOGGER.error("An error has occurred when trying to patch user: {}", userId, ex);
+                        return Single.error(new TechnicalManagementException(
+                                String.format("An error has occurred when trying to patch user: %s", userId), ex));
+                    }
+                });
+    }
+
+    @Override
     public Completable delete(String userId) {
         LOGGER.debug("Delete user {}", userId);
         return userRepository.findById(userId)
@@ -279,6 +327,15 @@ public class UserServiceImpl implements UserService {
                         }));
     }
 
+    private boolean isInvalidUserPassword(User user) {
+        String password = user.getPassword();
+        if (password == null) {
+            return false;
+        }
+        return Optional.ofNullable(domain.getPasswordSettings())
+                .map(ps -> !passwordValidator.isValid(password, ps))
+                .orElseGet(() -> !passwordValidator.isValid(password));
+    }
 
     private Single<User> setGroups(User scimUser) {
         // fetch groups
@@ -330,7 +387,7 @@ public class UserServiceImpl implements UserService {
         name.setGivenName(user.getFirstName());
         name.setFamilyName(user.getLastName());
         name.setMiddleName(get(additionalInformation, StandardClaims.MIDDLE_NAME, String.class));
-        scimUser.setName(name);
+        scimUser.setName(name.isNull() ? null : name);
         scimUser.setDisplayName(user.getDisplayName());
         scimUser.setNickName(user.getNickName());
 

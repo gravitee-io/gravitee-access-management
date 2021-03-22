@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.Group;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
@@ -99,7 +100,7 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
 
             // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
             try {
-                checkSchemas(group.getSchemas());
+                checkSchemas(group.getSchemas(), Group.SCHEMAS);
             } catch (Exception ex) {
                 context.fail(ex);
                 return;
@@ -118,6 +119,65 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }
     }
+
+    /**
+     * HTTP PATCH is an OPTIONAL server function that enables clients to
+     * update one or more attributes of a SCIM resource using a sequence of
+     * operations to "add", "remove", or "replace" values.  Clients may
+     * discover service provider support for PATCH by querying the service
+     * provider configuration (see Section 4).
+     *
+     * The general form of the SCIM PATCH request is based on JSON Patch
+     * [RFC6902].  One difference between SCIM PATCH and JSON Patch is that
+     * SCIM servers do not support array indexing and do not support
+     * [RFC6902] operation types relating to array element manipulation,
+     * such as "move".
+     *
+     * The body of each request MUST contain the "schemas" attribute with
+     * the URI value of "urn:ietf:params:scim:api:messages:2.0:PatchOp".
+     *
+     * The body of an HTTP PATCH request MUST contain the attribute
+     * "Operations", whose value is an array of one or more PATCH
+     * operations.  Each PATCH operation object MUST have exactly one "op"
+     * member, whose value indicates the operation to perform and MAY be one
+     * of "add", "remove", or "replace".  The semantics of each operation
+     * are defined in the following subsections.
+     *
+     * See <a href="https://tools.ietf.org/html/rfc7644#section-3.5.2">3.5.2.  Modifying with PATCH</a>
+     */
+    public void patch(RoutingContext context) {
+        try {
+            final PatchOp patchOp = Json.decodeValue(context.getBodyAsString(), PatchOp.class);
+            final String groupId = context.request().getParam("id");
+
+            // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
+            try {
+                checkSchemas(patchOp.getSchemas(), PatchOp.SCHEMAS);
+            } catch (Exception ex) {
+                context.fail(ex);
+                return;
+            }
+
+            // check operations
+            if (patchOp.getOperations() == null || patchOp.getOperations().isEmpty()) {
+                context.fail(new InvalidValueException("Field [Operations] is required"));
+                return;
+            }
+
+            groupService.patch(groupId, patchOp, location(context.request()))
+                    .subscribe(
+                            group1 -> context.response()
+                                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                                    .putHeader(HttpHeaders.LOCATION, group1.getMeta().getLocation())
+                                    .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group1)),
+                            context::fail);
+        } catch (DecodeException ex) {
+            context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
+        }
+    }
+
 
     /**
      * Clients request resource removal via DELETE.  Service providers MAY

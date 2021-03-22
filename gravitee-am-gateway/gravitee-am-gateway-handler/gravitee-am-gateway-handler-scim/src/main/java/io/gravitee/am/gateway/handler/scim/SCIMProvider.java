@@ -29,7 +29,6 @@ import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
@@ -53,9 +52,6 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private PasswordValidator passwordValidator;
 
     @Autowired
     private ServiceProviderConfigService serviceProviderConfigService;
@@ -95,13 +91,14 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             scimRouter.route().handler(OAuth2AuthHandler.create(oAuth2AuthProvider, "scim"));
 
             // Users resource
-            UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper, passwordValidator,domain);
-            UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper, passwordValidator,domain);
+            UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper);
+            UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper);
 
             scimRouter.get("/Users").handler(usersEndpoint::list);
             scimRouter.get("/Users/:id").handler(userEndpoint::get);
             scimRouter.post("/Users").handler(usersEndpoint::create);
             scimRouter.put("/Users/:id").handler(userEndpoint::update);
+            scimRouter.patch("/Users/:id").handler(userEndpoint::patch);
             scimRouter.delete("/Users/:id").handler(userEndpoint::delete);
 
             // Groups resource
@@ -112,6 +109,7 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             scimRouter.get("/Groups/:id").handler(groupEndpoint::get);
             scimRouter.post("/Groups").handler(groupsEndpoint::create);
             scimRouter.put("/Groups/:id").handler(groupEndpoint::update);
+            scimRouter.patch("/Groups/:id").handler(groupEndpoint::patch);
             scimRouter.delete("/Groups/:id").handler(groupEndpoint::delete);
 
             // error handler

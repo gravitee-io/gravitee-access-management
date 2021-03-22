@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.scim.service;
 
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -38,6 +39,8 @@ public interface GroupService {
     Single<Group> create(Group group, String baseUrl);
 
     Single<Group> update(String groupId, Group group, String baseUrl);
+
+    Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl);
 
     Completable delete(String groupId);
 }

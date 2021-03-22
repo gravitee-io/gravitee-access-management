@@ -19,7 +19,7 @@ info:
   description: >-
     Gravitee.io - Access Management - SCIM 2.0 API.
     Defines The SCIM 2.0 Endpoints exposed by AM server.
-  version: 2.10.x
+  version: 3.8.x
   title: Gravitee.io - Access Management - SCIM 2.0 API
   contact:
     email: contact@graviteesource.com
@@ -56,8 +56,7 @@ paths:
       - in: query
         name: filter
         type: string
-        description: Filter expression used to restrict results to one or more specific resource types.
-        example: userName eq "john"
+        description: Filter expression used to restrict results to one or more specific resource types (userName eq "john").
       - in: query
         name: startIndex
         type: integer
@@ -141,6 +140,37 @@ paths:
         description: The user's attributes to update.
         schema:
           $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: A JSON object that represents the user updated
+          schema:
+            $ref: '#/definitions/User'
+        '401':
+          description: Invalid Token
+        '400':
+          description: Bad request
+        '404':
+          description: User not found
+    patch:
+      tags:
+        - SCIM 2.0
+      summary: Modify User resource
+      description: SCIM 2.0 endpoint to modify User's attributes
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: userId
+          type: string
+          required: true
+          description: Unique identifier for the User
+        - in: body
+          name: patchOp
+          description: The patch operations to apply.
+          schema:
+            $ref: '#/definitions/PatchOp'
       responses:
         '200':
           description: A JSON object that represents the user updated
@@ -273,6 +303,37 @@ paths:
           description: Bad request
         '404':
           description: Group not found
+    patch:
+      tags:
+        - SCIM 2.0
+      summary: Modify Group resource
+      description: SCIM 2.0 endpoint to modify Group's attributes
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: groupId
+          type: string
+          required: true
+          description: Unique identifier for the Group
+        - in: body
+          name: patchOp
+          description: The patch operations to apply.
+          schema:
+            $ref: '#/definitions/PatchOp'
+      responses:
+        '200':
+          description: A JSON object that represents the group updated
+          schema:
+            $ref: '#/definitions/Group'
+        '401':
+          description: Invalid Token
+        '400':
+          description: Bad request
+        '404':
+          description: User not found
     delete:
       tags:
       - SCIM 2.0
@@ -294,7 +355,7 @@ paths:
 securityDefinitions:
   bearerAuth:
     type: oauth2
-    flow: client_credentials
+    flow: application
     tokenUrl: https://auth.gravitee.io/{domain}/oauth/token
     scopes:
       scim: Grants SCIM access
@@ -601,7 +662,7 @@ definitions:
         type: string
         description: The URI of a SCIM resource.
       display:
-        trype: string
+        type: string
         description: A human-readable name for the member
   Certificate:
     type: object
@@ -609,3 +670,34 @@ definitions:
       value:
         type: string
         description: DER-encoded X.509 certificate
+  PatchOp:
+    type: object
+    properties:
+      schemas:
+        type: array
+        description: REQUIRED. Array of Strings containing URIs that are used to indicate the namespaces of the SCIM schemas.
+        items:
+          type: string
+          enum: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"]
+        default: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"]
+      Operations:
+        type: array
+        description: REQUIRED. An array of one or more PATCH operations.
+        items:
+          $ref: '#/definitions/Operation'
+  Operation:
+    type: object
+    properties:
+      op:
+        type: string
+        description: Value indicates the operation to perform.
+        enum: ["add", "replace", "remove"]
+      path:
+        type: string
+        description: String containing an attribute path describing the target of the operation. The "path" attribute is OPTIONAL for "add" and "replace" and is REQUIRED for "remove" operations.
+        example: "addresses[type eq \"work\"]"
+      value:
+        type: object
+        description: Member whose content specifies the value to be added or replaced.
+
+

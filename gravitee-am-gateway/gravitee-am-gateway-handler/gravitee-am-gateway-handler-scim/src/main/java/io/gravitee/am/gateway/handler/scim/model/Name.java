@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.scim.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.lang.reflect.Field;
+
 /**
  * The components of the user's name.
  *
@@ -101,5 +105,19 @@ public class Name {
 
     public void setHonorificSuffix(String honorificSuffix) {
         this.honorificSuffix = honorificSuffix;
+    }
+
+    @JsonIgnore
+    public boolean isNull() {
+        try {
+            for (Field f : getClass().getDeclaredFields()) {
+                if (f.get(this) != null) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (Exception ex) {
+            return true;
+        }
     }
 }

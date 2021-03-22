@@ -328,7 +328,11 @@ public class User {
         if (picture == null) {
             if (photos != null && !photos.isEmpty()) {
                 // fall back to SCIM photos
-                picture = photos.stream().filter(Attribute::isPrimary).map(Attribute::getValue).findFirst().orElse(photos.get(0).getValue());
+                picture = photos.stream()
+                        .filter(p -> Boolean.TRUE.equals(p.isPrimary()))
+                        .map(Attribute::getValue)
+                        .findFirst()
+                        .orElse(photos.get(0).getValue());
             } else if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.PICTURE) != null) {
                 // fall back to OIDC standard claims
                 picture = (String) getAdditionalInformation().get(StandardClaims.PICTURE);

@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.scim.resources.users;
+package io.gravitee.am.gateway.handler.scim.resources.groups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
@@ -38,10 +37,10 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class UsersEndpointTest extends RxWebTestBase {
+public class GroupsEndpointTest extends RxWebTestBase {
 
     @Mock
-    private UserService userService;
+    private GroupService groupService;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -50,60 +49,30 @@ public class UsersEndpointTest extends RxWebTestBase {
     private ObjectWriter objectWriter;
 
     @InjectMocks
-    private UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper);
+    private GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper);
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         // object mapper
-        when(objectWriter.writeValueAsString(any())).thenReturn("UserObject");
+        when(objectWriter.writeValueAsString(any())).thenReturn("GroupObject");
         when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
 
-        router.get("/Users")
-                .handler(usersEndpoint::list)
+        router.get("/Groups")
+                .handler(groupsEndpoint::list)
                 .failureHandler(new ErrorHandler());
     }
 
     @Test
-    public void shouldListUsers() throws Exception {
-        when(userService.list(eq(null), eq(0), eq(100), anyString())).thenReturn(Single.just(new ListResponse<>()));
+    public void shouldListGroups() throws Exception {
+        when(groupService.list(eq(0), eq(100), anyString())).thenReturn(Single.just(new ListResponse<>()));
         testRequest(
                 HttpMethod.GET,
-                "/Users",
+                "/Groups",
                 req -> {},
                 200,
                 "OK",
-                "UserObject");
-    }
-
-    @Test
-    public void shouldNotListUsers_invalidFilter() throws Exception {
-        testRequest(
-                HttpMethod.GET,
-                "/Users?filter=wrong",
-                req -> {},
-                400,
-                "Bad Request",
-                "{\n" +
-                        "  \"status\" : \"400\",\n" +
-                        "  \"scimType\" : \"invalidSyntax\",\n" +
-                        "  \"detail\" : \"Invalid filter 'wrong': End of input at position 5 but expected an attribute operator\",\n" +
-                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
-                        "}");
-    }
-
-    @Test
-    public void shouldListUsers_validFilter() throws Exception {
-        when(userService.list(any(Filter.class), eq(0), eq(100), anyString())).thenReturn(Single.just(new ListResponse<>()));
-        testRequest(
-                HttpMethod.GET,
-                "/Users?filter=userName%20eq%20%22bjensen%22",
-                request -> {
-                    request.query();
-                },
-                200,
-                "OK",
-                "UserObject");
+                "GroupObject");
     }
 }

@@ -126,7 +126,7 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
 
             // schemas field is REQUIRED and MUST contain valid values and MUST not contain duplicate values
             try {
-                checkSchemas(group.getSchemas());
+                checkSchemas(group.getSchemas(), Group.SCHEMAS);
             } catch (Exception ex) {
                 context.fail(ex);
                 return;
