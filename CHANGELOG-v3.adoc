@@ -1,5 +1,14 @@
 # Change Log
 
+== https://github.com/gravitee-io/issues/milestone/362?closed=1[AM - 3.7.1 (2021-03-24)]
+
+=== Bug fixes
+
+*_Idp_*
+
+- [LDAP] Class not found https://github.com/gravitee-io/issues/issues/5277[#5277]
+
+
 == https://github.com/gravitee-io/issues/milestone/249?closed=1[AM - 3.7.0 (2021-03-19)]
 
 === Bug fixes
