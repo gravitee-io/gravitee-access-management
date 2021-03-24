@@ -30,7 +30,7 @@ export class GroupRolesResolver implements Resolve<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.groupRoles(groupId);
     }
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.groupService.roles(domainId, groupId);
   }
 

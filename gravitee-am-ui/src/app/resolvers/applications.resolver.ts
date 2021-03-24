@@ -27,10 +27,10 @@ export class ApplicationsResolver implements Resolve<any> {
   constructor(private applicationService: ApplicationService, private dashboardService: DashboardService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = route.paramMap.get('domainId');
+    let domain = route.parent.data['domain'];
 
-    if (domainId) {
-      return this.applicationService.findByDomain(domainId, this.default_page, this.default_size);
+    if (domain) {
+      return this.applicationService.findByDomain(domain.id, this.default_page, this.default_size);
     } else {
       return this.dashboardService.findApplications(null);
     }

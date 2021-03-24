@@ -44,8 +44,8 @@ export class ApplicationFlowsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.data['domain'].id;
+    this.application = this.route.snapshot.data['application'];
     this.policies = this.route.snapshot.data['policies'] || [];
     this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
     this.definition.flows = this.route.snapshot.data['flows'] || [];

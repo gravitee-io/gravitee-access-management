@@ -30,7 +30,7 @@ export class UserRolesResolver implements Resolve<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.userRoles(userId);
     }
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.userService.roles(domainId, userId);
   }
 

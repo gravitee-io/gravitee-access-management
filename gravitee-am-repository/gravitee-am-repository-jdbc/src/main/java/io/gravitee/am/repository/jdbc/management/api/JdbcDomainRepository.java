@@ -20,7 +20,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcAlertNotifier;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcDomain;
 import io.gravitee.am.repository.jdbc.management.api.spring.domain.SpringDomainIdentitiesRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.domain.SpringDomainRepository;
@@ -107,25 +106,6 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .doOnError(error -> LOGGER.error("Unable to retrieve Domain with criteria {}", criteria, error));
     }
 
-    private Flowable<Domain> completeDomain(Domain entity) {
-        return Flowable.just(entity).flatMap(domain ->
-                identitiesRepository.findAllByDomainId(domain.getId()).map(JdbcDomain.Identity::getIdentity).toList().toFlowable().map(idps -> {
-                    domain.setIdentities(new HashSet<>(idps));
-                    return domain;
-                })
-        ).flatMap(domain ->
-                tagRepository.findAllByDomainId(domain.getId()).map(JdbcDomain.Tag::getTag).toList().toFlowable().map(tags -> {
-                    domain.setTags(new HashSet<>(tags));
-                    return domain;
-                })
-        ).flatMap(domain ->
-                vHostsRepository.findAllByDomainId(domain.getId()).map(this::toVirtualHost).toList().toFlowable().map(vhosts -> {
-                    domain.setVhosts(vhosts);
-                    return domain;
-                })
-        );
-    }
-
     @Override
     public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
@@ -154,6 +134,13 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     }
 
     @Override
+    public Maybe<Domain> findByHrid(ReferenceType referenceType, String referenceId, String hrid) {
+        LOGGER.debug("findByHrid({})", hrid);
+        Flowable<Domain> domains = domainRepository.findByHrid(referenceId, referenceType.name(), hrid).map(this::toDomain).toFlowable();
+        return domains.flatMap(this::completeDomain).doOnError((error) -> LOGGER.error("unable to retrieve domain with hrid {}", hrid, error)).firstElement();
+    }
+
+    @Override
     public Single<Domain> create(Domain item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create Domain with id {}", item.getId());
@@ -163,11 +150,63 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .into(JdbcDomain.class)
                 .using(toJdbcDomain(item))
                 .fetch().rowsUpdated();
-
         insertAction = persistChildEntities(insertAction, item);
 
-        return monoToSingle(insertAction.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle())
+        return monoToSingle(insertAction
+                .as(trx::transactional)
+                .then(maybeToMono(findById(item.getId()))))
                 .doOnError((error) -> LOGGER.error("unable to create domain with id {}", item.getId(), error));
+    }
+
+    @Override
+    public Single<Domain> update(Domain item) {
+        LOGGER.debug("update Domain with id {}", item.getId());
+
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+        Mono<Integer> updateAction = dbClient.update()
+                .table(JdbcDomain.class)
+                .using(toJdbcDomain(item))
+                .fetch().rowsUpdated();
+
+        updateAction = updateAction.then(deleteChildEntities(item.getId()));
+        updateAction = persistChildEntities(updateAction, item);
+
+        return monoToSingle(updateAction
+                .as(trx::transactional)
+                .then(maybeToMono(findById(item.getId()))))
+                .doOnError((error) -> LOGGER.error("unable to update domain with id {}", item.getId(), error));
+    }
+
+    @Override
+    public Completable delete(String domainId) {
+        LOGGER.debug("delete Domain with id {}", domainId);
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+        return monoToCompletable(dbClient.delete()
+                .from(JdbcDomain.class)
+                .matching(from(where("id").is(domainId)))
+                .fetch().rowsUpdated()
+                .then(deleteChildEntities(domainId))
+                .as(trx::transactional))
+                .doOnError((error) -> LOGGER.error("unable to delete Domain with id {}", domainId, error));
+    }
+
+    private Flowable<Domain> completeDomain(Domain entity) {
+        return Flowable.just(entity).flatMap(domain ->
+                identitiesRepository.findAllByDomainId(domain.getId()).map(JdbcDomain.Identity::getIdentity).toList().toFlowable().map(idps -> {
+                    domain.setIdentities(new HashSet<>(idps));
+                    return domain;
+                })
+        ).flatMap(domain ->
+                tagRepository.findAllByDomainId(domain.getId()).map(JdbcDomain.Tag::getTag).toList().toFlowable().map(tags -> {
+                    domain.setTags(new HashSet<>(tags));
+                    return domain;
+                })
+        ).flatMap(domain ->
+                vHostsRepository.findAllByDomainId(domain.getId()).map(this::toVirtualHost).toList().toFlowable().map(vhosts -> {
+                    domain.setVhosts(vhosts);
+                    return domain;
+                })
+        );
     }
 
     private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Domain item) {
@@ -202,40 +241,10 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
         return actionFlow;
     }
 
-    @Override
-    public Single<Domain> update(Domain item) {
-        LOGGER.debug("update Domain with id {}", item.getId());
-
-        TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> updateAction = dbClient.update()
-                .table(JdbcDomain.class)
-                .using(toJdbcDomain(item))
-                .fetch().rowsUpdated();
-
-        updateAction = updateAction.then(deleteChildEntities(item.getId()));
-        updateAction = persistChildEntities(updateAction, item);
-
-        return monoToSingle(updateAction.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update domain with id {}", item.getId(), error));
-    }
-
     private Mono<Integer> deleteChildEntities(String domainId) {
         Mono<Integer> deleteVirtualHosts = dbClient.delete().from(JdbcDomain.Vhost.class).matching(from(where("domain_id").is(domainId))).fetch().rowsUpdated();
         Mono<Integer> deleteIdentities = dbClient.delete().from(JdbcDomain.Identity.class).matching(from(where("domain_id").is(domainId))).fetch().rowsUpdated();
         Mono<Integer> deleteTags = dbClient.delete().from(JdbcDomain.Tag.class).matching(from(where("domain_id").is(domainId))).fetch().rowsUpdated();
         return deleteVirtualHosts.then(deleteIdentities).then(deleteTags);
-    }
-
-    @Override
-    public Completable delete(String domainId) {
-        LOGGER.debug("delete Domain with id {}", domainId);
-        TransactionalOperator trx = TransactionalOperator.create(tm);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcDomain.class)
-                .matching(from(where("id").is(domainId)))
-                .fetch().rowsUpdated()
-                .then(deleteChildEntities(domainId))
-                .as(trx::transactional))
-                .doOnError((error) -> LOGGER.error("unable to delete Domain with id {}", domainId, error));
     }
 }

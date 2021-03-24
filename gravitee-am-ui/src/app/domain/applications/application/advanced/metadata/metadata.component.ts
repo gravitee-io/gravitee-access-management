@@ -40,7 +40,7 @@ export class ApplicationMetadataComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.application = this.route.snapshot.data['application'];
     this.initMetadata();
   }

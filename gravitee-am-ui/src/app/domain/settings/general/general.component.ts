@@ -35,6 +35,7 @@ export interface Tag {
 })
 export class DomainSettingsGeneralComponent implements OnInit {
   @ViewChild('chipInput', { static: true }) chipInput: MatInput;
+  private envId: string;
   formChanged = false;
   domain: any = {};
   domainOIDCSettings: any = {};
@@ -54,6 +55,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.envId = this.route.snapshot.params['envHrid'];
     this.domain = this.route.snapshot.data['domain'];
     this.domainOIDCSettings = this.domain.oidc || {};
     this.logoutRedirectUris = _.map(this.domainOIDCSettings.postLogoutRedirectUris, function (item) { return { value: item }; });
@@ -122,10 +124,15 @@ export class DomainSettingsGeneralComponent implements OnInit {
   update() {
     this.domain.oidc = { 'postLogoutRedirectUris' : _.map(this.logoutRedirectUris, 'value') };
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe(response => {
-      this.domain = response;
-      this.domainService.notify(this.domain);
+      this.domainService.notify(response);
       this.formChanged = false;
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
+      // if hrid has changed, reload the page
+      if (response.hrid !== this.domain.hrid) {
+        this.router.navigate(['/environments', this.envId, 'domains', response.hrid, 'settings', 'general']);
+      } else {
+        this.domain = response;
+      }
     });
   }
 

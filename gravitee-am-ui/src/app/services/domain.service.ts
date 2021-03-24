@@ -32,8 +32,8 @@ export class DomainService {
     return this.http.get<any>(this.domainsURL);
   }
 
-  get(id: string): Observable<any> {
-    return this.http.get<any>(this.domainsURL + id);
+  get(hrid: string): Observable<any> {
+    return this.http.get<any>(this.domainsURL + '_hrid/' + hrid);
   }
 
   getEntrypoints(id: string): Observable<any> {

@@ -29,7 +29,7 @@ export class ProvidersResolver implements Resolve<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.identityProviders();
     }
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.providerService.findByDomain(domainId);
   }
 

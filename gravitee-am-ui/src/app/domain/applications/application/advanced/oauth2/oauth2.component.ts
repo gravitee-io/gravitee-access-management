@@ -68,7 +68,7 @@ export class ApplicationOAuth2Component implements OnInit {
               public dialog: MatDialog) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.application = this.route.snapshot.data['application'];
     this.customGrantTypes = this.route.snapshot.data['domainGrantTypes'];
     this.scopes = this.route.snapshot.data['scopes'];

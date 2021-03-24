@@ -32,7 +32,7 @@ export class AuditsResolver implements Resolve<any> {
       return this.organizationService.audits(this.default_page, this.default_size);
     }
 
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.auditService.findByDomain(domainId, this.default_page, this.default_size);
   }
 

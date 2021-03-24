@@ -50,7 +50,7 @@ export class RoleComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.role = this.route.snapshot.data['role'];
     this.scopes = this.route.snapshot.data['scopes'];
     this.editMode = this.authService.hasPermissions(['domain_role_update']);

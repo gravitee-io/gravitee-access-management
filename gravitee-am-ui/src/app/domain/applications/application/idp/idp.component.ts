@@ -42,7 +42,7 @@ export class ApplicationIdPComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.parent.data['domain'].id;
     this.application = this.route.snapshot.data['application'];
     this.identities = this.route.snapshot.data['identities'];
     this.application.identities = this.application.identities || [];

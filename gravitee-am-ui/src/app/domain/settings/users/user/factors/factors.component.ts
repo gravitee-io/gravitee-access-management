@@ -40,7 +40,7 @@ export class UserFactorsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.user = this.route.snapshot.data['user'];
     this.factors = this.route.snapshot.data['factors'];
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);

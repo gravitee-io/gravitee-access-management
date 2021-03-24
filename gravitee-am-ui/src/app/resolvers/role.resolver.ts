@@ -34,7 +34,7 @@ export class RoleResolver implements Resolve<any> {
       return this.organizationService.role(roleId);
     }
 
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.roleService.get(domainId, roleId);
   }
 

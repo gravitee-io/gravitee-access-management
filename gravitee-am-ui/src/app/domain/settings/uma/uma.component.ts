@@ -38,8 +38,8 @@ export class UmaComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
     this.domain = this.route.snapshot.data['domain'];
+    this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_uma_update']);
   }
 

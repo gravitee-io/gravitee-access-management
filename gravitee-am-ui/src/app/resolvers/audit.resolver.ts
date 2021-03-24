@@ -31,7 +31,7 @@ export class AuditResolver implements Resolve<any> {
       return this.organizationService.audit(auditId);
     }
 
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.auditService.get(domainId, auditId);
   }
 

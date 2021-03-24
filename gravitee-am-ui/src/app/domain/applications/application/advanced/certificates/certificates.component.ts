@@ -38,7 +38,7 @@ export class ApplicationCertificatesComponent implements OnInit {
               private certificateService: CertificateService) { }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.parent.data['domain'].id;
     this.application = this.route.snapshot.data['application'];
     this.certificates = this.route.snapshot.data['certificates'];
     if (this.application.certificate) {

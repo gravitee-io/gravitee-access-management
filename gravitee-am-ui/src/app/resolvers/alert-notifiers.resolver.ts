@@ -26,7 +26,7 @@ export class AlertNotifiersResolver implements Resolve<any> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any[]> | Promise<any[]> | any[] {
     // For now we only handle alert notifiers at domain level.
-    let domainId: string = route.paramMap.get('domainId');
+    let domainId: string = route.parent.data['domain'].id;
     return this.alertService.getAlertNotifiers(domainId);
   }
 }

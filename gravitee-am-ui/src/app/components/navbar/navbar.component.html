@@ -42,7 +42,7 @@
       <div class="userAccountActions first" *ngIf="hasCurrentEnvironment()">
         <mat-list>
           <h3 matSubheader>Domains</h3>
-          <a [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.id]" *ngFor="let domain of domains" mat-menu-item>
+          <a [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.hrid]" *ngFor="let domain of domains" mat-menu-item>
             <mat-list-item [ngClass]="{'domain-disabled':!domain.enabled}">
                 <mat-icon mat-list-icon>domain</mat-icon>
                 <h4 matLine >{{domain.name}}</h4>

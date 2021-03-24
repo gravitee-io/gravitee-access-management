@@ -17,12 +17,11 @@ package io.gravitee.am.repository.jdbc.management.api.spring.domain;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcDomain;
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava2CrudRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -30,6 +29,9 @@ import java.util.List;
  */
 @Repository
 public interface SpringDomainRepository extends RxJava2CrudRepository<JdbcDomain, String> {
-    @Query("select * from domains d where d.reference_id = :refId and d.reference_type = :refType  ")
+    @Query("select * from domains d where d.reference_id = :refId and d.reference_type = :refType")
     Flowable<JdbcDomain> findAllByReferenceId(@Param("refId") String refId, @Param("refType") String refType);
+
+    @Query("select * from domains d where d.reference_id = :refId and d.reference_type = :refType and d.hrid = :hrid")
+    Maybe<JdbcDomain> findByHrid(@Param("refId") String refId, @Param("refType") String refType, @Param("hrid") String hrid);
 }

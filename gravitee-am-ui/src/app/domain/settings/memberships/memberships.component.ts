@@ -45,7 +45,7 @@ export class DomainSettingsMembershipsComponent implements OnInit {
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.domain.id
     this.members = this.route.snapshot.data['members'];
     this.createMode = this.authService.hasPermissions(['domain_member_create']);
     this.editMode = this.authService.hasPermissions(['domain_member_update']);

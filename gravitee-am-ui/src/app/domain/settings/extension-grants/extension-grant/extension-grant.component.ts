@@ -48,7 +48,7 @@ export class ExtensionGrantComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.extensionGrant = this.route.snapshot.data['extensionGrant'];
     this.identityProviders = this.route.snapshot.data['identityProviders'];
     this.extensionGrantConfiguration = JSON.parse(this.extensionGrant.configuration);

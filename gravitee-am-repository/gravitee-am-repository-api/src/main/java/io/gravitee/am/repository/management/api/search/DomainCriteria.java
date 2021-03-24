@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.management.api.search;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -26,11 +25,20 @@ import java.util.Optional;
 public class DomainCriteria {
 
     private boolean logicalOR;
-
     private Boolean alertEnabled;
+    private String name;
+    private String hrid;
+
+    public DomainCriteria() {
+    }
+
+    private DomainCriteria(Builder builder) {
+        logicalOR = builder.logicalOR;
+        name = builder.name;
+        hrid = builder.hrid;
+    }
 
     public Optional<Boolean> isAlertEnabled() {
-
         return Optional.ofNullable(alertEnabled);
     }
 
@@ -44,6 +52,43 @@ public class DomainCriteria {
 
     public void setLogicalOR(boolean logicalOR) {
         this.logicalOR = logicalOR;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getHrid() {
+        return hrid;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private boolean logicalOR;
+        private String hrid;
+        private String name;
+
+        public Builder logicalOR(boolean logicalOR) {
+            this.logicalOR = logicalOR;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder hrid(String hrid) {
+            this.hrid = hrid;
+            return this;
+        }
+
+        public DomainCriteria build() {
+            return new DomainCriteria(this);
+        }
     }
 
     @Override

@@ -26,7 +26,7 @@ export class UserCredentialResolver implements Resolve<any> {
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     const credentialId = route.paramMap.get('credentialId');
     const userId = route.parent.paramMap.get('userId');
-    const domainId = route.parent.parent.parent.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.userService.credential(domainId, userId, credentialId);
   }
 

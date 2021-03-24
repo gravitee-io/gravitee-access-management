@@ -31,7 +31,7 @@ export class GroupComponent implements OnInit {
               private router: Router) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.group = this.route.snapshot.data['group'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;

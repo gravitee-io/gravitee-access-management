@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.PathUtils;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
@@ -41,6 +42,7 @@ import io.gravitee.am.service.validators.DomainValidator;
 import io.gravitee.am.service.validators.VirtualHostValidator;
 import io.gravitee.common.utils.IdGenerator;
 import io.reactivex.*;
+import io.reactivex.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,10 +51,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -148,6 +147,22 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
+    public Single<Domain> findByHrid(String environmentId, String hrid) {
+        LOGGER.debug("Find domain by hrid: {}", hrid);
+        return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
+                .switchIfEmpty(Single.error(new DomainNotFoundException(hrid)))
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error has occurred when trying to find a domain using its hrid: {}", hrid, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error has occurred when trying to find a domain using its hrid: %s", hrid), ex));
+                });
+    }
+
+    @Override
     public Flowable<Domain> findAllByEnvironment(String organizationId, String environmentId) {
 
         LOGGER.debug("Find all domains of environment {} (organization {})", environmentId, organizationId);
@@ -186,18 +201,18 @@ public class DomainServiceImpl implements DomainService {
     @Override
     public Single<Domain> create(String organizationId, String environmentId, NewDomain newDomain, User principal) {
         LOGGER.debug("Create a new domain: {}", newDomain);
-        String id = IdGenerator.generate(newDomain.getName());
-        String path = generateContextPath(newDomain.getName());
-
-        return domainRepository.findById(id)
+        // generate hrid
+        String hrid = IdGenerator.generate(newDomain.getName());
+        return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
                 .isEmpty()
                 .flatMap(empty -> {
                     if (!empty) {
                         throw new DomainAlreadyExistsException(newDomain.getName());
                     } else {
                         Domain domain = new Domain();
-                        domain.setId(id);
-                        domain.setPath(path);
+                        domain.setId(RandomString.generate());
+                        domain.setHrid(hrid);
+                        domain.setPath(generateContextPath(newDomain.getName()));
                         domain.setName(newDomain.getName());
                         domain.setDescription(newDomain.getDescription());
                         domain.setEnabled(false);
@@ -260,9 +275,10 @@ public class DomainServiceImpl implements DomainService {
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapSingle(__ -> {
+                    domain.setHrid(IdGenerator.generate(domain.getName()));
                     domain.setUpdatedAt(new Date());
                     return validateDomain(domain)
-                            .andThen(domainRepository.update(domain));
+                            .andThen(Single.defer(() -> domainRepository.update(domain)));
                 })
                 // create event for sync process
                 .flatMap(domain1 -> {
@@ -285,10 +301,10 @@ public class DomainServiceImpl implements DomainService {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapSingle(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
-
+                    toPatch.setHrid(IdGenerator.generate(toPatch.getName()));
                     toPatch.setUpdatedAt(new Date());
                     return validateDomain(toPatch)
-                            .andThen(domainRepository.update(toPatch))
+                            .andThen(Single.defer(() -> domainRepository.update(toPatch)))
                             // create event for sync process
                             .flatMap(domain1 -> {
                                 Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
@@ -504,14 +520,23 @@ public class DomainServiceImpl implements DomainService {
     }
 
     private Completable validateDomain(Domain domain) {
-
         if (domain.getReferenceType() != ReferenceType.ENVIRONMENT) {
             return Completable.error(new InvalidDomainException("Domain must be attached to an environment"));
         }
 
-        // Get environment domain restrictions and validate all data are correctly defined.
-        return environmentService.findById(domain.getReferenceId())
-                .flatMapCompletable(environment -> validateDomain(domain, environment));
+        // check the uniqueness of the domain
+        return domainRepository.findByHrid(domain.getReferenceType(), domain.getReferenceId(), domain.getHrid())
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty())
+                .flatMapCompletable(optDomain -> {
+                    if (optDomain.isPresent() && !optDomain.get().getId().equals(domain.getId())) {
+                        return Completable.error(new DomainAlreadyExistsException(domain.getName()));
+                    } else {
+                        // Get environment domain restrictions and validate all data are correctly defined.
+                        return environmentService.findById(domain.getReferenceId())
+                                .flatMapCompletable(environment -> validateDomain(domain, environment));
+                    }
+                });
     }
 
     private Completable validateDomain(Domain domain, Environment environment) {

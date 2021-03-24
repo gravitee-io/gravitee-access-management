@@ -39,6 +39,11 @@ public class Domain implements Resource {
     private String id;
 
     /**
+     * Domain human readable identifier.
+     */
+    private String hrid;
+
+    /**
      * Domain name.
      */
     private String name;
@@ -122,6 +127,7 @@ public class Domain implements Resource {
 
     public Domain(Domain other) {
         this.id = other.id;
+        this.hrid = other.hrid;
         this.name = other.name;
         this.description = other.description;
         this.enabled = other.enabled;
@@ -149,6 +155,14 @@ public class Domain implements Resource {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getHrid() {
+        return hrid;
+    }
+
+    public void setHrid(String hrid) {
+        this.hrid = hrid;
     }
 
     public String getName() {

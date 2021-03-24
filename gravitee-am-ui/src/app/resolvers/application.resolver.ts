@@ -24,8 +24,8 @@ export class ApplicationResolver implements Resolve<any> {
   constructor(private applicationService: ApplicationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId: string = route.paramMap.get('domainId');
-    let appId: string = route.paramMap.get('appId');
+    const domainId = route.parent.data['domain'].id;
+    const appId = route.paramMap.get('appId');
     return this.applicationService.get(domainId, appId);
   }
 }

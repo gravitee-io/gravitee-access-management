@@ -24,8 +24,8 @@ export class FactorResolver implements Resolve<any> {
   constructor(private factorService: FactorService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const domainId: string = route.paramMap.get('domainId');
-    const factorId: string = route.paramMap.get('factorId');
+    const domainId = route.parent.data['domain'].id;
+    const factorId = route.paramMap.get('factorId');
     return this.factorService.get(domainId, factorId);
   }
 

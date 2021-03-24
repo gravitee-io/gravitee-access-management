@@ -29,7 +29,7 @@ export class FormResolver implements Resolve<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.forms(template);
     }
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     const appId = route.paramMap.get('appId');
     return this.formService.get(domainId, appId, template);
   }

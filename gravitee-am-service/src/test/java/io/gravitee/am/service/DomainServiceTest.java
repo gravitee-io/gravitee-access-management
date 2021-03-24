@@ -271,13 +271,13 @@ public class DomainServiceTest {
     public void shouldCreate() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         Domain domain = new Domain();
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
         when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
@@ -291,7 +291,7 @@ public class DomainServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain");
         verify(domainRepository, times(1)).create(any(Domain.class));
         verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
         verify(certificateService).create(eq(domain.getId()));
@@ -303,7 +303,7 @@ public class DomainServiceTest {
     public void shouldCreate_technicalException() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.error(TechnicalException::new));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
         domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain).subscribe(testObserver);
@@ -318,7 +318,7 @@ public class DomainServiceTest {
     public void shouldCreate2_technicalException() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.empty());
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when((domainRepository.findAll())).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.error(TechnicalException::new));
@@ -329,14 +329,14 @@ public class DomainServiceTest {
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
-        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain");
     }
 
     @Test
     public void shouldCreate_existingDomain() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
-        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.just(new Domain()));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
         domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain).subscribe(testObserver);
@@ -364,12 +364,15 @@ public class DomainServiceTest {
     public void shouldPatch() {
         PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
         Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setName("my-domain");
         domain.setPath("/test");
         when(patchDomain.patch(any())).thenReturn(domain);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
@@ -384,6 +387,39 @@ public class DomainServiceTest {
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
         verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldPatch_hrid_already_exists() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+
+        Domain otherDomain = new Domain();
+        otherDomain.setId("my-domain-2");
+        otherDomain.setHrid("my-domain");
+        otherDomain.setName("my-domain");
+        otherDomain.setPath("/test2");
+        otherDomain.setReferenceType(ReferenceType.ENVIRONMENT);
+        otherDomain.setReferenceId(ENVIRONMENT_ID);
+
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(otherDomain));
+
+        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        testObserver.assertError(DomainAlreadyExistsException.class);
+        testObserver.assertNotComplete();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+        verify(eventService, never()).create(any());
     }
 
     @Test

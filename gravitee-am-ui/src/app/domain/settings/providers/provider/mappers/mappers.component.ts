@@ -47,7 +47,7 @@ export class ProviderMappersComponent implements OnInit {
               private dialog: MatDialog) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.provider = this.route.snapshot.data['provider'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;

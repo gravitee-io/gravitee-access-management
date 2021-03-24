@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.8.0
+      author: GraviteeSource Team
+      changes:
+        - addColumn:
+            tableName: domains
+            columns:
+              - column: {name: hrid, type: nvarchar(255), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: hrid
+            indexName:  idx_domains_ref_hrid
+            tableName:  domains
+            unique:  false
+
+        - sql:
+            sql: "UPDATE domains SET hrid = id;"

@@ -37,7 +37,7 @@ export class ApplicationAccountSettingsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.application = this.route.snapshot.data['application'];
     this.accountSettings = this.application.settings.account || { 'inherited' : true };
     this.readonly = !this.authService.hasPermissions(['application_settings_update']);
