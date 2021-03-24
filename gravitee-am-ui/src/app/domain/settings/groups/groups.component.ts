@@ -47,7 +47,7 @@ export class GroupsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.createMode = this.authService.hasPermissions(['organization_group_create']);

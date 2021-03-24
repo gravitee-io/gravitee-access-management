@@ -34,6 +34,8 @@ public class DomainMongo extends Auditable {
     @BsonId
     private String id;
 
+    private String hrid;
+
     private String name;
 
     private String description;
@@ -76,6 +78,14 @@ public class DomainMongo extends Auditable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getHrid() {
+        return hrid;
+    }
+
+    public void setHrid(String hrid) {
+        this.hrid = hrid;
     }
 
     public String getName() {

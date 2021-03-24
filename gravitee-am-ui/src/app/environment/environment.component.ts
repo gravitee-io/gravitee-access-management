@@ -55,7 +55,7 @@ export class EnvironmentComponent implements OnInit, OnDestroy {
     // redirect user to the first domain, if any.
     this.domainService.list().subscribe(response => {
       if (response && response.length > 0) {
-        this.router.navigate(['domains', response[0].id], {relativeTo: this.route});
+        this.router.navigate(['domains', response[0].hrid], {relativeTo: this.route});
       } else {
         this.isLoading = false;
         this.readonly = !this.authService.hasPermissions(['domain_create']);

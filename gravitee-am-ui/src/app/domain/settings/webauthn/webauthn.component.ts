@@ -44,8 +44,8 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
               private entrypointService: EntrypointService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
     this.domain = this.route.snapshot.data['domain'];
+    this.domainId = this.domain.id;
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain);
     this.domain.webAuthnSettings = this.domain.webAuthnSettings || {};

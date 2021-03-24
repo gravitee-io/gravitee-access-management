@@ -24,7 +24,7 @@ export class ScopeResolver implements Resolve<any> {
   constructor(private scopeService: ScopeService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     const scopeId = route.paramMap.get('scopeId');
     return this.scopeService.get(domainId, scopeId);
   }

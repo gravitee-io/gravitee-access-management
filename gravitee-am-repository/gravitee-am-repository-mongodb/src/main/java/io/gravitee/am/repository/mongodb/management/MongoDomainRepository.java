@@ -38,6 +38,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSett
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
 import io.reactivex.*;
 import org.bson.BsonDocument;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
@@ -57,11 +58,13 @@ import static com.mongodb.client.model.Filters.*;
 public class MongoDomainRepository extends AbstractManagementMongoRepository implements DomainRepository {
 
     private MongoCollection<DomainMongo> domainsCollection;
+    private static final String FIELD_HRID = "hrid";
 
     @PostConstruct
     public void init() {
         domainsCollection = mongoOperations.getCollection("domains", DomainMongo.class);
         super.init(domainsCollection);
+        super.createIndex(domainsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_HRID, 1));
     }
 
     @Override
@@ -72,6 +75,18 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     @Override
     public Maybe<Domain> findById(String id) {
         return Observable.fromPublisher(domainsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(MongoDomainRepository::convert);
+    }
+
+    @Override
+    public Maybe<Domain> findByHrid(ReferenceType referenceType, String referenceId, String hrid) {
+        return Observable.fromPublisher(
+                domainsCollection.find(
+                        and(
+                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                eq(FIELD_REFERENCE_ID, referenceId),
+                                eq(FIELD_HRID, hrid)
+                        )
+                )).firstElement().map(MongoDomainRepository::convert);
     }
 
     @Override
@@ -121,6 +136,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         Domain domain = new Domain();
         domain.setId(domainMongo.getId());
+        domain.setHrid(domainMongo.getHrid());
         domain.setPath(domainMongo.getPath());
         domain.setVhostMode(domainMongo.isVhostMode());
         domain.setVhosts(domainMongo.getVhosts());
@@ -151,6 +167,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         DomainMongo domainMongo = new DomainMongo();
         domainMongo.setId(domain.getId());
+        domainMongo.setHrid(domain.getHrid());
         domainMongo.setPath(domain.getPath());
         domainMongo.setVhostMode(domain.isVhostMode());
         domainMongo.setVhosts(domain.getVhosts());

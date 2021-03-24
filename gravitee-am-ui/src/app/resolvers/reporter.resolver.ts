@@ -31,7 +31,7 @@ export class ReporterResolver implements Resolve<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.reporter(reporterId);
     }
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.reporterService.get(domainId, reporterId);
   }
 

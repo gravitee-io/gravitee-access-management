@@ -30,7 +30,7 @@ export class UserResolver implements Resolve<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.user(userId);
     }
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.userService.get(domainId, userId);
   }
 

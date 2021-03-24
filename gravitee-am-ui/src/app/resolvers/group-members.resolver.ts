@@ -30,7 +30,7 @@ export class GroupMembersResolver implements Resolve<any> {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.groupMembers(groupId);
     }
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.groupService.findMembers(domainId, groupId, 0,  25);
   }
 

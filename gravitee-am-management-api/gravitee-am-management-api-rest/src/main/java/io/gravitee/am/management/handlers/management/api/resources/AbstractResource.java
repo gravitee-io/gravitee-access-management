@@ -62,33 +62,41 @@ public abstract class AbstractResource {
 
     protected Completable checkPermission(ReferenceType referenceType, String referenceId, Permission permission, Acl... acls) {
 
-        return checkPermissions(Permissions.of(referenceType, referenceId, permission, acls));
+        return checkPermissions(getAuthenticatedUser(), Permissions.of(referenceType, referenceId, permission, acls));
     }
 
     protected Completable checkAnyPermission(String organizationId, String environmentId, String domainId, String applicationId, Permission permission, Acl... acls) {
 
-        return checkPermissions(or(of(ReferenceType.APPLICATION, applicationId, permission, acls),
+        return checkPermissions(getAuthenticatedUser(), or(of(ReferenceType.APPLICATION, applicationId, permission, acls),
                 of(ReferenceType.DOMAIN, domainId, permission, acls),
+                of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
+                of(ReferenceType.ORGANIZATION, organizationId, permission, acls)));
+    }
+
+
+    protected Completable checkAnyPermission(User authenticatedUser, String organizationId, String environmentId, String domainId, Permission permission, Acl... acls) {
+
+        return checkPermissions(authenticatedUser, or(of(ReferenceType.DOMAIN, domainId, permission, acls),
                 of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
                 of(ReferenceType.ORGANIZATION, organizationId, permission, acls)));
     }
 
     protected Completable checkAnyPermission(String organizationId, String environmentId, String domainId, Permission permission, Acl... acls) {
 
-        return checkPermissions(or(of(ReferenceType.DOMAIN, domainId, permission, acls),
+        return checkPermissions(getAuthenticatedUser(), or(of(ReferenceType.DOMAIN, domainId, permission, acls),
                 of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
                 of(ReferenceType.ORGANIZATION, organizationId, permission, acls)));
     }
 
     protected Completable checkAnyPermission(String organizationId, String environmentId, Permission permission, Acl... acls) {
 
-        return checkPermissions(or(of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
+        return checkPermissions(getAuthenticatedUser(), or(of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
                 of(ReferenceType.ORGANIZATION, organizationId, permission, acls)));
     }
 
-    private Completable checkPermissions(PermissionAcls permissionAcls) {
+    private Completable checkPermissions(User authenticatedUser, PermissionAcls permissionAcls) {
 
-        return hasPermission(getAuthenticatedUser(), permissionAcls)
+        return hasPermission(authenticatedUser, permissionAcls)
                 .flatMapCompletable(this::checkPermission);
     }
 

@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 public class JdbcDomain {
     @Id
     private String id;
+    private String hrid;
     private String name;
     private String description;
     private boolean enabled;
@@ -62,6 +63,14 @@ public class JdbcDomain {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getHrid() {
+        return hrid;
+    }
+
+    public void setHrid(String hrid) {
+        this.hrid = hrid;
     }
 
     public String getName() {
@@ -300,5 +309,4 @@ public class JdbcDomain {
             this.overrideEntrypoint = overrideEntrypoint;
         }
     }
-
 }

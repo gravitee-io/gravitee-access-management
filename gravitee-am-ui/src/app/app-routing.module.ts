@@ -734,8 +734,8 @@ export const routes: Routes = [
                 path: ':domainId',
                 component: DomainComponent,
                 resolve: {
-                  domain: DomainResolver,
-                  permissions: DomainPermissionsResolver
+                  domain: DomainResolver
+                  //permissions: DomainPermissionsResolver
                 },
                 data: {
                   breadcrumb: {

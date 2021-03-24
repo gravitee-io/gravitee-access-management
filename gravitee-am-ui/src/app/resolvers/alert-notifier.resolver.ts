@@ -25,7 +25,7 @@ export class AlertNotifierResolver implements Resolve<any> {
   }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
-    let domainId: string = route.paramMap.get('domainId');
+    let domainId: string = route.parent.data['domain'].id;
     let alertNotifierId: string = route.paramMap.get('alertNotifierId');
 
     return this.alertService.getAlertNotifier(domainId, alertNotifierId);

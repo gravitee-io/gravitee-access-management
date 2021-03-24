@@ -16,13 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Entrypoint;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchDomain;
@@ -37,22 +34,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PATCH;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -61,13 +47,7 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DomainResource extends AbstractResource {
-
-    @Autowired
-    private DomainService domainService;
-
-    @Context
-    private ResourceContext resourceContext;
+public class DomainResource extends AbstractDomainResource {
 
     @Autowired
     private EntrypointService entrypointService;
@@ -289,51 +269,6 @@ public class DomainResource extends AbstractResource {
                                     .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
                     .subscribe(response::resume, response::resume);
         }
-    }
-
-    private Domain filterDomainInfos(Domain domain, Map<ReferenceType, Map<Permission, Set<Acl>>> userPermissions) {
-
-        Domain filteredDomain = new Domain();
-
-        if (hasAnyPermission(userPermissions, Permission.DOMAIN, Acl.READ)) {
-            filteredDomain.setId(domain.getId());
-            filteredDomain.setName(domain.getName());
-            filteredDomain.setDescription(domain.getDescription());
-            filteredDomain.setEnabled(domain.isEnabled());
-            filteredDomain.setCreatedAt(domain.getCreatedAt());
-            filteredDomain.setUpdatedAt(domain.getUpdatedAt());
-            filteredDomain.setPath(domain.getPath());
-            filteredDomain.setVhostMode(domain.isVhostMode());
-            filteredDomain.setVhosts(domain.getVhosts());
-            filteredDomain.setReferenceType(domain.getReferenceType());
-            filteredDomain.setReferenceId(domain.getReferenceId());
-            filteredDomain.setPasswordSettings(domain.getPasswordSettings());
-        }
-
-        if(hasAnyPermission(userPermissions, Permission.DOMAIN_ALERT, Acl.READ)) {
-            filteredDomain.setAlertEnabled(domain.isAlertEnabled());
-        }
-
-        if (hasAnyPermission(userPermissions, Permission.DOMAIN_OPENID, Acl.READ)) {
-            filteredDomain.setOidc(domain.getOidc());
-        }
-
-        if (hasAnyPermission(userPermissions, Permission.DOMAIN_UMA, Acl.READ)) {
-            filteredDomain.setUma(domain.getUma());
-        }
-
-        if (hasAnyPermission(userPermissions, Permission.DOMAIN_SCIM, Acl.READ)) {
-            filteredDomain.setScim(domain.getScim());
-        }
-
-        if (hasAnyPermission(userPermissions, Permission.DOMAIN_SETTINGS, Acl.READ)) {
-            filteredDomain.setLoginSettings(domain.getLoginSettings());
-            filteredDomain.setWebAuthnSettings(domain.getWebAuthnSettings());
-            filteredDomain.setAccountSettings(domain.getAccountSettings());
-            filteredDomain.setTags(domain.getTags());
-        }
-
-        return filteredDomain;
     }
 
     /**

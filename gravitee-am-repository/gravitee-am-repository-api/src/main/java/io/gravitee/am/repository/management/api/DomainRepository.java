@@ -16,9 +16,11 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.Collection;
@@ -29,6 +31,8 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface DomainRepository extends CrudRepository<Domain, String> {
+
+    Maybe<Domain> findByHrid(ReferenceType referenceType, String referenceId, String hrid);
 
     Single<Set<Domain>> findAll();
 

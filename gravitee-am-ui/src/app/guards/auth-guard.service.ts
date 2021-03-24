@@ -16,7 +16,7 @@
 import {Injectable} from '@angular/core';
 import {ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot} from '@angular/router';
 import {combineLatest, Observable, of} from 'rxjs';
-import {catchError, map} from 'rxjs/operators';
+import {catchError, map, mergeMap} from 'rxjs/operators';
 import {AuthService} from './../services/auth.service';
 import {DomainService} from '../services/domain.service';
 import {ApplicationService} from '../services/application.service';
@@ -45,19 +45,23 @@ export class AuthGuard implements CanActivate {
     if ((requiredPerms[0].startsWith('domain') || requiredPerms[0].startsWith('application')) && requiredPerms[0] !== 'domain_create') {
       // check if the authenticated user can navigate to the next route (domain settings or application settings)
       const environmentId = route.paramMap.get('envHrid');
-      const domainId = route.paramMap.get('domainId');
+      const domainHrid = route.paramMap.get('domainId');
       const appId = route.paramMap.get('appId');
 
       if(environmentId && !this.authService.environmentPermissionsLoaded()) {
         combineSources.push(this.environmentService.permissions(environmentId));
       }
 
-      if(domainId && !this.authService.domainPermissionsLoaded()) {
-        combineSources.push(this.domainService.permissions(domainId));
-      }
-
-      if (appId && !this.authService.applicationPermissionsLoaded()) {
-        combineSources.push(this.applicationService.permissions(domainId, appId));
+      if(domainHrid && !this.authService.domainPermissionsLoaded()) {
+        combineSources.push(this.domainService.get(domainHrid)
+          .pipe(mergeMap(domain => this.domainService.permissions(domain.id)
+            .pipe(mergeMap(__ => {
+              if (appId && !this.authService.applicationPermissionsLoaded()) {
+                return this.applicationService.permissions(domainHrid, appId)
+              } else {
+                return of([]);
+              }
+            })))));
       }
     }
     // check permissions

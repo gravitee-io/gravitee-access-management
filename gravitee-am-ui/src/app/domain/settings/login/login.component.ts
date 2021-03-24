@@ -36,8 +36,8 @@ export class DomainSettingsLoginComponent implements OnInit {
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = this.route.snapshot.data['domain']
+    this.domainId = this.domain.id;
     this.domain.loginSettings = this.domain.loginSettings || {};
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
   }

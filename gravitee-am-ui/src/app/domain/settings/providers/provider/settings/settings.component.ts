@@ -67,8 +67,8 @@ export class ProviderSettingsComponent implements OnInit {
       this.entrypoint = { url: AppConfig.settings.baseURL};
       this.redirectUri = this.entrypoint.url + '/auth/login/callback?provider=' + this.provider.id;
     } else {
-      this.domainId = this.route.snapshot.params['domainId'];
       this.domain = this.route.snapshot.data['domain'];
+      this.domainId = this.domain.id;
       this.domainService.getEntrypoint(this.domainId).subscribe(data => {
         this.entrypoint = data;
         this.redirectUri = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain) + '/login/callback';

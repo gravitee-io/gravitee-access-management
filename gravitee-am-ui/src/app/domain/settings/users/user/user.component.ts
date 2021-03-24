@@ -37,7 +37,7 @@ export class UserComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.user = this.route.snapshot.data['user'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;

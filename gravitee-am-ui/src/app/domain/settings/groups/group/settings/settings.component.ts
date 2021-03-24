@@ -41,7 +41,7 @@ export class GroupSettingsComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.editMode = this.authService.hasPermissions(['organization_group_update']);

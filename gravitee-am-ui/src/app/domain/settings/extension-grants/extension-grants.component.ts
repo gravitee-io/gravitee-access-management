@@ -37,7 +37,7 @@ export class DomainSettingsExtensionGrantsComponent implements OnInit {
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.extensionGrants = this.route.snapshot.data['extensionGrants'];
   }
 

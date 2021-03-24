@@ -39,7 +39,7 @@ export class DomainCreationComponent implements OnInit {
   create() {
     this.domainService.create(this.domain).subscribe(data => {
       this.snackbarService.open('Domain ' + data.name + ' created');
-      this.router.navigate(['..', data.id], { relativeTo: this.route })
+      this.router.navigate(['..', data.hrid], { relativeTo: this.route })
     });
   }
 }

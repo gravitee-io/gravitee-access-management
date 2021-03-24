@@ -45,7 +45,7 @@ export class ApplicationFactorsComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     this.application = this.route.snapshot.data['application'];
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);

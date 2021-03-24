@@ -33,7 +33,7 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
   }
 
   ngOnChanges(changes: SimpleChanges): void {

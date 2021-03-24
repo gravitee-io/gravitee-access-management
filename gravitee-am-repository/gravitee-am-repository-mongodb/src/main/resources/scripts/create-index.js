@@ -175,3 +175,8 @@ db.webauthn_credentials.reIndex();
 db.auth_flow_ctx.dropIndexes();
 db.auth_flow_ctx.createIndex({ "transactionId" : 1, "version": -1 });
 db.auth_flow_ctx.reIndex();
+
+// "domains" collection
+db.domains.dropIndexes();
+db.domains.createIndex( { "referenceType" : 1, "referenceId": 1, "hrid": 1 } );
+db.domains.reIndex();

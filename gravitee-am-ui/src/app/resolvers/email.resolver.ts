@@ -25,7 +25,7 @@ export class EmailResolver implements Resolve<any> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     const emailTemplate = route.queryParams['template'];
-    const domainId = route.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     const appId = route.paramMap.get('appId');
 
     return this.emailService.get(domainId, appId, emailTemplate);

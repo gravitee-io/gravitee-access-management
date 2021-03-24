@@ -38,7 +38,7 @@ export class RoleCreationComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }

@@ -25,7 +25,7 @@ export class DomainFlowsResolver implements Resolve<any> {
   }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
-    const domainId = route.parent.parent.paramMap.get('domainId');
+    const domainId = route.parent.data['domain'].id;
     return this.domainService.flows(domainId);
   }
 

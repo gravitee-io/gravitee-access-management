@@ -28,7 +28,6 @@ export class ApplicationsComponent implements OnInit {
   private applications: any[];
   private searchValue: string;
   domainId: string;
-  newApplicationRouterLink: any[] = ['/dashboard', 'applications', 'new'];
   page: any = {};
 
   constructor(private dialogService: DialogService,
@@ -40,13 +39,10 @@ export class ApplicationsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.params['domainId'];
+    this.domainId = this.route.snapshot.data['domain'].id;
     const pagedApps = this.route.snapshot.data['applications'];
     this.applications = pagedApps.data;
     this.page.totalElements = pagedApps.totalCount;
-    if (this.domainId) {
-      this.newApplicationRouterLink = ['/domains', this.domainId, 'applications', 'new'];
-    }
   }
 
   onSearch(event) {

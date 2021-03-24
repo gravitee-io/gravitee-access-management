@@ -16,28 +16,23 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 
@@ -50,22 +45,13 @@ import static io.gravitee.am.management.service.permissions.Permissions.or;
  * @author GraviteeSource Team
  */
 @Api(tags = {"domain"})
-public class DomainsResource extends AbstractResource {
-
-    @Autowired
-    private DomainService domainService;
+public class DomainsResource extends AbstractDomainResource {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
     @Autowired
     private ReporterService reporterService;
-
-    @Context
-    private ResourceContext resourceContext;
-
-    @Autowired
-    private Environment environment;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -128,18 +114,34 @@ public class DomainsResource extends AbstractResource {
                         .entity(domain).build()), response::resume);
     }
 
+    @GET
+    @Path("_hrid/{hrid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get a security domain by hrid",
+            notes = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
+                    "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
+                    "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Domain", response = Domain.class),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void get(@PathParam("organizationId") String organizationId,
+                    @PathParam("environmentId") String environmentId,
+                    @PathParam("hrid") String hrid,
+                    @Suspended final AsyncResponse response) {
+        final User authenticatedUser = getAuthenticatedUser();
+
+        domainService.findByHrid(environmentId, hrid)
+                .flatMap(domain ->
+                        checkAnyPermission(authenticatedUser, organizationId, environmentId, domain.getId(), Permission.DOMAIN, Acl.READ)
+                                .andThen(Single.defer(() ->
+                                        findAllPermissions(authenticatedUser, organizationId, environmentId, domain.getId())
+                                                .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
+                ).subscribe(response::resume, response::resume);
+    }
+
+
     @Path("{domain}")
     public DomainResource getDomainResource() {
         return resourceContext.getResource(DomainResource.class);
-    }
-
-    private Domain filterDomainInfos(Domain domain) {
-        Domain filteredDomain = new Domain();
-        filteredDomain.setId(domain.getId());
-        filteredDomain.setName(domain.getName());
-        filteredDomain.setDescription(domain.getDescription());
-        filteredDomain.setEnabled(domain.isEnabled());
-
-        return filteredDomain;
     }
 }

@@ -57,8 +57,8 @@ export class UserHistoryComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.user = this.route.snapshot.parent.data['user'];
+    this.domainId = this.route.snapshot.data['domain'].id;
+    this.user = this.route.snapshot.data['user'];
 
     this.eventTypes$ = this.organizationService.auditEventTypes();
     this.search();
