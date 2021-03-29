@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "bf9d28e5-c306-455e-83fc-9a3d0eaa7a94",
+		"_postman_id": "14842779-da82-43d6-b059-4f721e97ea14",
 		"name": "Gravitee.io - AM - Flows",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -14,7 +14,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "bca3353a-7cf9-4848-bde3-a2e2727f7d67",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -76,14 +75,14 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "10ae7cef-c14d-457f-90f2-f339f144d4ee",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
 									"});",
 									"",
 									"var jsonData = pm.response.json();",
-									"pm.environment.set('domain', jsonData.id);"
+									"pm.environment.set('domain', jsonData.id);",
+									"pm.environment.set('domainHrid', jsonData.hrid);"
 								],
 								"type": "text/javascript"
 							}
@@ -129,7 +128,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "3c8adb86-02a8-4194-8c92-9d78d7e1a38a",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -183,7 +181,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "7d7c160b-2520-4a8d-9994-4f20d96da27b",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -237,7 +234,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "8e9adfc4-1d0d-4c44-8011-c3f705941ab3",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -289,7 +285,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "65050ae5-625f-45ad-9556-33a22b58dd3e",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function(){}, 10000);"
@@ -332,8 +327,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Pre Consent",
@@ -344,7 +338,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "8737ba53-f806-4097-bdf5-ddec4c2500f6",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -405,7 +398,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "63fc3a15-5879-4113-8f58-3cd2af1182f1",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -418,7 +410,7 @@
 									"",
 									"pm.test(\"Should be a redirection to login page\", function() {",
 									"    var location = postman.getResponseHeader('Location');",
-									"    let domain = pm.environment.get(\"domain\");",
+									"    let domain = pm.environment.get(\"domainHrid\");",
 									"    ",
 									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client');",
 									"    ",
@@ -431,7 +423,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "f3084ae9-7ab9-4af7-a1d1-6a76e5b6f5e6",
 								"exec": [
 									""
 								],
@@ -443,12 +434,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
+							"raw": "{{gateway_url}}/{{domainHrid}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"{{domain}}",
+								"{{domainHrid}}",
 								"oauth",
 								"authorize",
 								""
@@ -485,7 +476,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "c010c2c5-c5ca-4c39-a5b2-1f0f00177f6b",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -508,7 +498,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "3d1a39a8-88a3-4966-ad96-0961b7fa4acb",
 								"exec": [
 									""
 								],
@@ -535,7 +524,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "987a361a-1d2f-4b38-9a4a-27d7d144fc2e",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -556,7 +544,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "dea4a976-c669-40a8-9038-6d97b49deb54",
 								"exec": [
 									""
 								],
@@ -613,7 +600,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "a9f72a9e-4364-4baa-b4e0-db183f5be147",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -634,7 +620,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "c4817b7b-61b7-44a4-a005-380b0c6b5444",
 								"exec": [
 									""
 								],
@@ -661,7 +646,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "05d6f3da-27df-4ea5-b81c-73fd3632e925",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -682,7 +666,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "fff9ef0d-9370-4455-b33f-079336abd6b1",
 								"exec": [
 									""
 								],
@@ -709,7 +692,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "15280d12-d9a4-4782-be5b-71624ed6a8a9",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -728,7 +710,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "4883a209-d5bb-45cc-ac11-ddfe246fd2b1",
 								"exec": [
 									""
 								],
@@ -740,12 +721,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/logout",
+							"raw": "{{gateway_url}}/{{domainHrid}}/logout",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"{{domain}}",
+								"{{domainHrid}}",
 								"logout"
 							]
 						},
@@ -759,7 +740,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "65c5fe0a-211b-490c-89bd-832422556c98",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -817,7 +797,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "62a05790-5b37-472c-996c-d82a04e15cb2",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -830,7 +809,7 @@
 									"",
 									"pm.test(\"Should be a redirection to login page\", function() {",
 									"    var location = postman.getResponseHeader('Location');",
-									"    let domain = pm.environment.get(\"domain\");",
+									"    let domain = pm.environment.get(\"domainHrid\");",
 									"    ",
 									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=my-client');",
 									"    ",
@@ -843,7 +822,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "4a4b34dc-86b3-4e8f-8a6b-a0533096605c",
 								"exec": [
 									""
 								],
@@ -855,12 +833,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
+							"raw": "{{gateway_url}}/{{domainHrid}}/oauth/authorize/?response_type=code&client_id=my-client&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"{{domain}}",
+								"{{domainHrid}}",
 								"oauth",
 								"authorize",
 								""
@@ -897,7 +875,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "7e2bb1c7-7009-4959-8992-37882ab2f74b",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -920,7 +897,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "26e93b33-9feb-473c-92f0-09398d6fc340",
 								"exec": [
 									""
 								],
@@ -947,7 +923,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "c0d584ba-e064-4222-8de0-cd03dce709af",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -968,7 +943,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "8242ca2a-af6f-48bf-bfea-da82fb2f1fc6",
 								"exec": [
 									""
 								],
@@ -1025,7 +999,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "d6800ae3-0973-4de3-bbf3-b653959014f9",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -1046,7 +1019,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "1500edda-ad71-4655-b00c-44f18621c5a7",
 								"exec": [
 									""
 								],
@@ -1073,7 +1045,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "3474e535-d1a3-4cc2-8c6a-fef42a45171b",
 								"exec": [
 									"pm.test(\"Status code is 302\", function () {",
 									"    pm.response.to.have.status(302);",
@@ -1092,7 +1063,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "7863be14-2044-46cf-b1fc-6ec16f7db287",
 								"exec": [
 									""
 								],
@@ -1104,12 +1074,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/logout",
+							"raw": "{{gateway_url}}/{{domainHrid}}/logout",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"{{domain}}",
+								"{{domainHrid}}",
 								"logout"
 							]
 						},
@@ -1117,8 +1087,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Delete domain",
@@ -1126,7 +1095,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "e10060e6-cf07-4b97-9c0a-8d9b2245f2eb",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -1170,6 +1138,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }

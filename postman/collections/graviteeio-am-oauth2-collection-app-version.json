@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "d1cbdd26-0b3a-4660-9fcc-fe31926dd54f",
+		"_postman_id": "eab6a23c-219f-4cf6-b991-643743a55e97",
 		"name": "Gravitee.io - AM - Oauth2 - app version",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -15,7 +15,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "49037399-f727-4787-aec6-ad27b141e48c",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -77,14 +76,14 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "f79a29d5-7c80-4b84-8c1e-d0ee967ad665",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
 									"});",
 									"",
 									"var jsonData = pm.response.json();",
-									"pm.environment.set('domain', jsonData.id);"
+									"pm.environment.set('domain', jsonData.id);",
+									"pm.environment.set('domainHrid', jsonData.hrid);"
 								],
 								"type": "text/javascript"
 							}
@@ -130,7 +129,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "78b30bb5-16d8-4e6c-81c8-44ad3eb08ef7",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -192,7 +190,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "47716d75-7976-4e07-9504-a04665ee8478",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(204);",
@@ -244,7 +241,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "d75f41a9-cbc8-44ba-9484-88af5d96cf65",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -298,7 +294,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "4067e03f-0bdc-4d98-a5f1-92e2c64397d4",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -349,7 +344,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "f9899d3b-e1dd-4f77-b165-6d1f08317eaa",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -409,7 +403,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "7ed436aa-0087-4465-b249-8ff7dca18e80",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -465,7 +458,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "36897401-b652-4e25-9194-4e125732a9cc",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -517,7 +509,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "e682116c-3843-4056-ab84-38a8ba09f8be",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -573,7 +564,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "b7788dc2-c4bf-4b0e-8767-7c2d76892817",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -625,7 +615,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "6eb34ebf-1766-422a-b45e-fbbf24ce0fbc",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function(){}, 10000);"
@@ -674,7 +663,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "327f7f65-7746-4199-8f6f-97cb22036e51",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -709,12 +697,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+							"raw": "{{gateway_url}}/{{domainHrid}}/oidc/.well-known/openid-configuration",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"{{domain}}",
+								"{{domainHrid}}",
 								"oidc",
 								".well-known",
 								"openid-configuration"
@@ -723,8 +711,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "OAuth2 - RFC 6749",
@@ -738,7 +725,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "513332ea-2c69-4190-a413-0afff7abcc6c",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
@@ -756,7 +742,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "46d506cb-15ef-430e-8c7d-c2f5ceb1672b",
 										"exec": [
 											"setTimeout(function() {}, 5000);"
 										],
@@ -806,7 +791,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "44acf11a-d813-420e-8343-f165c6699571",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -816,16 +800,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "a587ba09-c9a4-402a-81a6-ccecf605b5e8",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Resource Owner Password Credentials Grant",
@@ -836,7 +817,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "fdc22409-a61a-4898-bb56-9923bd540b5b",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -894,7 +874,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "a5b17512-aad0-4297-bf37-b6f8713fe965",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -952,7 +931,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "cd3d3d55-bcde-476c-95e4-a3553adc097c",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -975,7 +953,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "a7f188e2-8b65-4429-95b8-b0605ccb0f8c",
 										"exec": [
 											""
 										],
@@ -1036,7 +1013,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "c35ddd56-f02c-4af4-ad05-d4a422c5219d",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
@@ -1054,7 +1030,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "8b9cdf7e-9ea6-4475-83ba-16f3dd7955a9",
 										"exec": [
 											""
 										],
@@ -1120,7 +1095,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "01f348e7-90d0-48e2-aac2-0b6687eb033c",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1132,7 +1106,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "8bceb8fa-ca4f-45aa-b250-171340d96f6e",
 										"exec": [
 											""
 										],
@@ -1198,7 +1171,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "8535c252-d49b-4512-80ad-beba2cb62bf8",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
@@ -1272,7 +1244,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "078ad292-4e9c-41dc-a363-5e0f908dd666",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1353,7 +1324,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "935044e7-15b0-4900-a11d-1c736df2363d",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1433,7 +1403,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "30d03c81-b8e3-4f43-9f6d-4352b0da1118",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -1443,16 +1412,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "e814c25c-d99e-48b0-9cc0-d51465c6f614",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Client Credentials Grant",
@@ -1466,7 +1432,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "9ce9f977-1fe0-4443-b58a-1cb17898bd6a",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -1522,7 +1487,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fecbb6ea-5e18-4c6f-9c83-b02c5b50bd93",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -1577,7 +1541,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4e2c579d-e926-4b30-b731-d6eeefb61314",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -1598,7 +1561,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "a7f9c2bb-a04f-40b3-9d3e-42fb6239a451",
 												"exec": [
 													""
 												],
@@ -1649,7 +1611,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3910c9d4-a129-46f7-aa47-87aad8618aa2",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -1706,7 +1667,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "100daceb-c914-4bc4-b6b3-05f08528a3dc",
 												"exec": [
 													"pm.test(\"Status code is 401\", function () {",
 													"    pm.response.to.have.status(401);",
@@ -1718,7 +1678,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "fb7d8fdf-1982-4f0b-93bb-e189e3c5ce65",
 												"exec": [
 													""
 												],
@@ -1769,7 +1728,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "555beffe-7342-4660-9f41-c916ee6535e3",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -1781,7 +1739,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "1ba3faec-3e4d-4247-bb9f-e3dea97555a0",
 												"exec": [
 													""
 												],
@@ -1826,9 +1783,7 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Invalid application",
@@ -1836,7 +1791,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1da17f68-b384-46c8-aced-d0f827f104d3",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -1848,7 +1802,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "63b8f2ae-9b25-4f46-86c2-b5eae91681d3",
 										"exec": [
 											""
 										],
@@ -1899,7 +1852,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e3bcb4d7-4dc3-4b81-bd2a-11427f7e4959",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1923,7 +1875,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "6eb05f87-85f1-4094-994e-0c64d572b893",
 										"exec": [
 											""
 										],
@@ -1974,7 +1925,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "6ac8c7bd-0bd6-44c6-b441-b0f37697dbf2",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1986,7 +1936,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "477ec461-2db9-4a1b-8454-c79bcdb58bb2",
 										"exec": [
 											""
 										],
@@ -2042,7 +1991,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "00981afe-3529-4cfd-8321-7e70bf98f356",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -2066,7 +2014,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "c9a75068-7dff-49ce-9767-d8990bbcec32",
 										"exec": [
 											""
 										],
@@ -2127,7 +2074,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1423a87f-2675-4f60-995d-e2c62834113e",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -2175,7 +2121,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "3fb572c7-b9da-4b33-8419-1eb40d5e5771",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -2185,16 +2130,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "adc67f33-68f4-4a7c-ad6d-55cbe7aa270c",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Authorization Code Grant",
@@ -2208,7 +2150,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "97561b42-cf72-4d52-8944-8d2503e25ad0",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -2221,7 +2162,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -2234,7 +2175,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "43b2840d-2c18-482b-ae40-fd4938f10c71",
 												"exec": [
 													""
 												],
@@ -2278,7 +2218,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2e0e3d6a-d7a7-4cd7-86ad-8d6f94c3b98f",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -2295,19 +2234,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "f603992f-1c10-415a-9e32-1bc680d56aa7",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -2330,7 +2266,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "66746562-0e7b-4b88-b4c5-30fdc8966cdf",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -2349,7 +2284,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "9656700a-c683-47de-9a2b-d9e7ed5aa564",
 												"exec": [
 													""
 												],
@@ -2406,7 +2340,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ee676ddb-09a0-4a1e-96a9-0056659b6f12",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -2431,7 +2364,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "11b2712e-1f73-4c96-8c9e-587c356805b3",
 												"exec": [
 													""
 												],
@@ -2457,7 +2389,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b48609fb-fe13-45af-a036-f740d6dd04b3",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -2476,7 +2407,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "270ea46f-8429-4e17-92c7-dffd979898d5",
 												"exec": [
 													""
 												],
@@ -2502,7 +2432,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "d6630667-066b-412e-ba21-0362893a21e5",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -2512,16 +2441,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "43260d70-5c45-46ee-ada0-4f644c461677",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - With consent",
@@ -2532,7 +2458,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "bcba66e5-f875-42ea-a4ee-87e3d0a6cdfd",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -2545,7 +2470,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -2558,7 +2483,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "bdf93f7a-4765-4459-8fe4-e30c73281c71",
 												"exec": [
 													""
 												],
@@ -2598,7 +2522,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "cbe9e139-a81e-4174-92c5-53bd5d65ca51",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -2615,19 +2538,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c458f142-5062-4893-a1a7-472f47743bbb",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -2650,7 +2570,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "98297d1f-e84c-41f4-9c71-842e3680373a",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -2669,7 +2588,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "850f763a-8cab-4113-b32b-a4648d92671b",
 												"exec": [
 													""
 												],
@@ -2726,7 +2644,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "c5db15e0-7725-4bf2-896a-6060f7e58e0e",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -2742,7 +2659,7 @@
 													"",
 													"pm.test(\"Should be redirected to consent page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"",
@@ -2755,7 +2672,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "4b756ee5-0e17-4831-92ff-ebaa93c21162",
 												"exec": [
 													""
 												],
@@ -2782,7 +2698,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f8c4a79e-8462-4fc5-b471-d0aa1a71f841",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -2799,19 +2714,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "17cb1ca0-761f-4790-979e-533d41e09268",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -2834,7 +2746,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "da17014d-4f13-47c4-a04a-0142b3376001",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -2853,7 +2764,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "663c8f6d-b7d9-4b12-9db8-2008c2e0cc24",
 												"exec": [
 													""
 												],
@@ -2905,7 +2815,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fd1defd1-aad1-42c6-8258-e9897b84df70",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -2930,7 +2839,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "bab7f632-b5ca-4680-8842-bc5ad7ab8e4a",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -2957,7 +2865,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "8fbcf4ea-f8d7-41f9-8d1f-272e4e395823",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -2976,7 +2883,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "cda4bc1e-4e60-4548-9fc3-466b96c229df",
 												"exec": [
 													""
 												],
@@ -3002,7 +2908,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "a1c30b54-3004-4a20-88a8-4529b2af1c1b",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -3012,16 +2917,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "bc259a5a-7c8c-4eac-9708-31a158f94719",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - With consent - scope expiry",
@@ -3032,7 +2934,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "98c0d464-3bff-49d5-a92a-c5e3fbafde37",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -3086,7 +2987,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b39d0895-9f0b-4485-a87b-26c19a749484",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -3144,7 +3044,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ba06ca62-4fb2-4881-9223-cc9326d44963",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -3157,7 +3056,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -3170,7 +3069,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "442755ce-4b3a-4188-b9f0-a144515c563e",
 												"exec": [
 													""
 												],
@@ -3210,7 +3108,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "187f303a-5899-44e9-a268-f3860dbdd835",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -3227,19 +3124,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "9380759f-a090-4002-be94-bd8748aa86e4",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -3262,7 +3156,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "c0c2f5b9-e55f-457e-aca6-4fd2553c64b5",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -3281,7 +3174,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "6c68edfe-33e7-48ef-91da-4f738d0ae78f",
 												"exec": [
 													""
 												],
@@ -3338,7 +3230,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "6e17a817-124f-404c-972f-e974236fccf2",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -3354,7 +3245,7 @@
 													"",
 													"pm.test(\"Should be redirected to consent page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"    ",
@@ -3367,7 +3258,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c29853ec-b256-4ecb-876b-70bcb23bacdd",
 												"exec": [
 													""
 												],
@@ -3394,7 +3284,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "153b3d27-c71c-4272-9b5a-2cd31de41d8f",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -3425,7 +3314,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "d2aa6f32-9a60-4c46-8350-514728be4c2f",
 												"exec": [
 													""
 												],
@@ -3452,7 +3340,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "bdd326cc-8aa1-4bf6-a965-6a546dd70bc7",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -3471,7 +3358,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "7a6947ac-0c39-4ced-9ec7-355a244867d1",
 												"exec": [
 													""
 												],
@@ -3528,7 +3414,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "271fc728-f189-45af-8af3-8dc41d59a2ac",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -3556,7 +3441,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "0445351b-5a44-49e2-aae3-32bfcaa40177",
 												"exec": [
 													""
 												],
@@ -3583,7 +3467,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "5430ef20-3163-4381-8774-2bec24503057",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -3596,7 +3479,7 @@
 													"",
 													"pm.test(\"Should be redirected to consent page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"    ",
@@ -3609,7 +3492,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "955b5376-4f35-4024-8a70-48f0648bdde1",
 												"exec": [
 													""
 												],
@@ -3649,7 +3531,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "64e227d6-0b3e-4c93-9c26-f6fb9d907567",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -3678,7 +3559,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "153c9588-c1c2-4bdd-89b3-1fcfeea63d2c",
 												"exec": [
 													""
 												],
@@ -3705,7 +3585,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "77ddfdfe-a8c5-4c33-9031-9655ba9212e3",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -3724,7 +3603,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "ec620ba0-131b-453b-ba13-68df2d3ec05b",
 												"exec": [
 													""
 												],
@@ -3751,7 +3629,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "0ef3b4a7-eb32-47b0-a388-2cbc06307dd8",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -3808,7 +3685,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "648fccc2-c069-4590-8d30-3b531f9fb204",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -3818,16 +3694,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "dcceac05-364c-494f-80c2-e8139d136896",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - Get token - Invalid Client",
@@ -3838,7 +3711,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "699cbace-3a3e-4a01-bb28-c97f0fd5a647",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -3851,7 +3723,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -3864,7 +3736,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "77e0da02-90ee-4bd5-a62d-84f55897cc46",
 												"exec": [
 													""
 												],
@@ -3904,7 +3775,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f3456f8c-d680-4381-9eac-883b07dec306",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -3921,19 +3791,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "6da2a15c-dcfd-4ac5-91b1-7197feedc71c",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -3956,7 +3823,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ef746b46-e369-41e4-87e3-0fc73717b682",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -3975,7 +3841,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "66708512-b559-497e-bf83-78c18f6693e8",
 												"exec": [
 													""
 												],
@@ -4032,7 +3897,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "a0db27af-ae90-4d35-a809-a9e5473accca",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -4059,7 +3923,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "5fc24b3e-f61b-46b4-a8fe-dea56d1c698e",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -4086,7 +3949,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "206e898f-61ee-444b-8afb-aeb94201a239",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -4104,7 +3966,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "8a23cf3a-ba47-455c-a879-bd9f82438bdc",
 												"exec": [
 													""
 												],
@@ -4163,7 +4024,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2f7af314-6dff-4f1d-8200-a43d5c7069fc",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -4182,7 +4042,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "2423b43b-d3e9-4f9b-97ac-881d51c81de1",
 												"exec": [
 													""
 												],
@@ -4208,7 +4067,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "23359fab-22b5-4d5a-a97b-ebf730f8d713",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -4218,16 +4076,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "4d57453e-0984-4efa-bdd7-71fdc09cf14d",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - Get token - Invalid Redirect URI",
@@ -4238,7 +4093,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "06dfbd02-222e-4ce5-a074-9aef61e51092",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -4251,7 +4105,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -4264,7 +4118,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "4ea3f5f6-26b2-481b-853e-c15e50f68be9",
 												"exec": [
 													""
 												],
@@ -4304,7 +4157,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "1c3c2c13-e378-451b-a8c6-5094333a1d89",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -4321,19 +4173,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c97885d7-221d-4630-ac5a-d529430e1696",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -4356,7 +4205,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "80b36d51-6e66-41d7-9743-f05a6876faa2",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -4375,7 +4223,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "14a05ed3-9139-4397-9220-f0cb6650c0b3",
 												"exec": [
 													""
 												],
@@ -4432,7 +4279,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "8aab1948-c7dc-4d00-9fd3-a486de644826",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -4459,7 +4305,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "65106e10-e722-4ee2-9374-8d0024f82088",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -4486,7 +4331,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "5a9a98a1-6087-4453-9c4f-c64054a1455b",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -4505,7 +4349,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "934df114-4555-4b6d-bb9f-5b6a8ec464f2",
 												"exec": [
 													""
 												],
@@ -4564,7 +4407,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "6d45a21f-1f9d-4fd2-8740-73b63d194db7",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -4583,7 +4425,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "1975bba2-43d6-41d1-8629-19e3d03422fb",
 												"exec": [
 													""
 												],
@@ -4615,7 +4456,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "99a2ab97-5513-4f37-b0e7-1ab5247b5a1c",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -4625,16 +4465,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "90a843a4-4542-4cc9-9449-a128c7226518",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - With state parameter",
@@ -4645,7 +4482,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3e3c41bf-1fbe-4176-9e31-5c1be8031b8b",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -4658,7 +4494,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -4671,7 +4507,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "b1ffa911-7c6d-489f-b5e6-e1e94fe8a132",
 												"exec": [
 													""
 												],
@@ -4715,7 +4550,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "522bce1f-612c-468e-b9bb-7b228ffb61e2",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -4732,19 +4566,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "b434c69d-1fa5-42be-be48-38152b48fb4d",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -4767,7 +4598,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "81d7d62f-9432-4527-9656-e4c0246880db",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -4786,7 +4616,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "633f5ba5-9b23-4a95-b8ca-cded0349e13b",
 												"exec": [
 													""
 												],
@@ -4843,7 +4672,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "bcea85ad-1bb0-4ecc-a74c-1eba2b69c904",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -4871,7 +4699,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "30e54d34-3d96-448c-9197-788cf1f6a77f",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -4898,7 +4725,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "e07e97ef-3e7a-438b-994b-84fd24d97fb6",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -4920,7 +4746,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "4d684ce5-3a48-4d5b-8a39-3ef1b8e076a3",
 												"exec": [
 													""
 												],
@@ -4979,7 +4804,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "62d65f64-f058-4973-b3a0-d9e83745a757",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -4998,7 +4822,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "5298eca6-41fb-4bc4-8c6e-0cf4bff0874a",
 												"exec": [
 													""
 												],
@@ -5024,7 +4847,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "d5337bc0-d7b0-4413-9e61-a0ac9f99ee72",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -5034,16 +4856,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e69dcc0b-efb2-4d28-a8af-ee10b1eb9b69",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - With state parameter - Multiple clients",
@@ -5054,7 +4873,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3acc5f48-8ae0-4d1a-b05f-2821544905e6",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -5067,7 +4885,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -5080,7 +4898,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "36295b33-ce14-4a81-a186-a6e7a59c899f",
 												"exec": [
 													""
 												],
@@ -5124,7 +4941,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "cf7c91a9-e11c-4e11-ad7d-8dc99351c352",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -5141,19 +4957,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "fdb3f455-b08a-481c-84fc-8734e71d33eb",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -5176,7 +4989,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b75a4020-063c-47e7-8588-03de680083e2",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -5195,7 +5007,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "bd9ecf81-ecad-40dc-b727-2847261a89b9",
 												"exec": [
 													""
 												],
@@ -5252,7 +5063,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "deaeeb36-62bf-45a2-a5d5-6f6ff9e1472b",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -5280,7 +5090,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "cdcab50b-f50a-451a-a743-07a87a30cb4a",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -5307,7 +5116,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "db6626c5-bf6f-4f70-9310-888c275b55fe",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -5320,7 +5128,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"    ",
@@ -5333,7 +5141,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "47affa50-b0c5-4953-a1de-4b1154976a2f",
 												"exec": [
 													""
 												],
@@ -5377,7 +5184,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "72779cb6-0c57-43c8-83fc-d38c5fae96d2",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -5394,19 +5200,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "21eebdf2-b6e1-4add-bd72-d4fcaf010381",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -5429,7 +5232,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "9c646340-325d-4016-bcfd-33991e7256e6",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -5448,7 +5250,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c567cdae-9d1d-444d-b237-db0b5045321f",
 												"exec": [
 													""
 												],
@@ -5505,7 +5306,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "295b2537-19c0-4866-99ab-d0653b43b633",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -5533,7 +5333,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "16166bbe-e2f7-4a50-831b-9fb2b9debae6",
 												"exec": [
 													""
 												],
@@ -5560,7 +5359,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ee5fc94a-8ea6-4ad9-9fed-55ab5d17152b",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -5579,7 +5377,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "5e932e66-fc35-48cf-8584-23ac7d3bf09e",
 												"exec": [
 													""
 												],
@@ -5605,7 +5402,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "85abd2cd-634f-40d4-8c86-cd497c338e96",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -5615,16 +5411,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9608aa6b-e65f-4b81-a1c2-8512ba478c93",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - PKCE S256 - Missing Code Verifier",
@@ -5635,7 +5428,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4018cf44-8f33-42fd-9969-e8fbcd15ada6",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -5648,7 +5440,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -5661,7 +5453,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "5dc57bb7-99de-4843-8bfa-a7520f3ca427",
 												"exec": [
 													""
 												],
@@ -5713,7 +5504,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ea384609-0977-4409-9e23-e44edabe267d",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -5730,19 +5520,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "6098f264-3a49-4ab7-b840-0622c2336b66",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -5765,7 +5552,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "1b162808-a37e-4a90-90ac-ab9c2367cda2",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -5784,7 +5570,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "779471fa-5bfc-4dc5-b3a2-55d469cc8093",
 												"exec": [
 													""
 												],
@@ -5841,7 +5626,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b5405dc1-da3b-4205-9ef3-57722e04bce0",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -5869,7 +5653,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "3792ef18-9623-4875-a2f3-f4ebe865e8ef",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -5896,7 +5679,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3d4686d7-ebef-4a01-8cb8-82e25d0db0ce",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -5915,7 +5697,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c152c11a-9b0e-4363-b7b4-35c3ffb68925",
 												"exec": [
 													""
 												],
@@ -5974,7 +5755,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b89cdd66-bf13-4641-b664-2f684972c04d",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -5993,7 +5773,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "ee5fa5fc-7c86-49e3-a2e7-5ae7bebdf1d2",
 												"exec": [
 													""
 												],
@@ -6019,7 +5798,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "adc87b24-fe42-4782-84b4-e9e208b37968",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -6029,16 +5807,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "dfbfcf8e-dd9d-4c98-a5b0-ca6c2768a2ca",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - PKCE PLAIN - Missing Code Verifier",
@@ -6049,7 +5824,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "6737c073-7c91-439b-a90e-ee1007be77d4",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -6062,7 +5836,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -6075,7 +5849,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "57357a0f-10cc-47b8-b162-e7a945d0933b",
 												"exec": [
 													""
 												],
@@ -6127,7 +5900,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ee472a5f-3c09-4262-ab99-c8f34092dd29",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -6144,19 +5916,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "093eccb3-f7f3-4697-a9ec-c077085b95fd",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -6179,7 +5948,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "c80998b8-82c8-4b99-9ee6-e077fb67b837",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -6198,7 +5966,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "09c9586b-e62e-465d-a470-375896fc5a09",
 												"exec": [
 													""
 												],
@@ -6255,7 +6022,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f85a4d91-3c24-4c77-9173-811f499aae2d",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -6283,7 +6049,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "94992ace-9d9e-4441-8b94-aa9bc6b286e4",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -6310,7 +6075,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "68a73e76-f1e4-471a-a556-c7643565b3cd",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -6329,7 +6093,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "51d964b5-d597-4e10-a0a4-6d26043a6b66",
 												"exec": [
 													""
 												],
@@ -6388,7 +6151,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "8ab77884-2e6a-4914-ad99-608827a0a196",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -6407,7 +6169,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "4bf0e3e4-6355-4dc5-a284-5156a034e8b6",
 												"exec": [
 													""
 												],
@@ -6433,7 +6194,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "cbf9e9d4-86c4-4898-bca1-f65a7c02a14f",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -6443,16 +6203,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "062fa977-1e7e-4b05-b61d-09b940de8a59",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - PKCE S256 - Invalid Code Verifier",
@@ -6463,7 +6220,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "44441db8-5108-4f84-bd2a-b93a7a303ab3",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -6476,7 +6232,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -6489,7 +6245,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "6bf92f76-b233-4ab9-a5c7-34f93ecab50c",
 												"exec": [
 													""
 												],
@@ -6541,7 +6296,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "46641a6a-b774-4b36-9035-b4c629971451",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -6558,19 +6312,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "1a8b42f4-51a4-40da-b692-54c6c4a6c2a4",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -6593,7 +6344,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "45d6e040-80d5-4bdd-8355-3b156805a890",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -6612,7 +6362,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "8e79e93d-980f-4521-b136-97cdf744a7c4",
 												"exec": [
 													""
 												],
@@ -6669,7 +6418,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "7948098e-7367-4008-9232-ec22c40a0cc1",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -6697,7 +6445,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "20a5daa1-8b5f-407a-87d9-5a0d6cf2d6ea",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -6724,7 +6471,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "088f2edf-de79-4bd1-838e-060134e1d9b4",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -6743,7 +6489,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "42cda98c-f65f-41d3-a484-d36c200d1edc",
 												"exec": [
 													""
 												],
@@ -6806,7 +6551,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "8b058367-4603-4042-9176-a5f7cc0c3582",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -6825,7 +6569,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "2ce430b2-27c1-48b9-a7e4-e987738274bc",
 												"exec": [
 													""
 												],
@@ -6851,7 +6594,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "7de4cc1a-735c-4a75-8ab2-542bfc5bba07",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -6861,16 +6603,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "05744d22-5b70-4c2a-8b67-74783b8a3482",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - PKCE PLAIN - Invalid Code Verifier",
@@ -6881,7 +6620,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2e94f9f4-b3c5-4f26-b336-34ab925eca45",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -6894,7 +6632,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -6907,7 +6645,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "72d8942c-ac99-45c2-9778-145acf76a9a0",
 												"exec": [
 													""
 												],
@@ -6959,7 +6696,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3d76dca4-8930-43fc-8be5-07789d9f952f",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -6976,19 +6712,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "66f82bfe-1abd-4706-8b58-b89674935fb5",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -7011,7 +6744,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f40bb3c0-036a-41d7-a23e-337be8475a1e",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -7030,7 +6762,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "2da0d073-bd48-4a00-9918-e3e6e5c7e2c3",
 												"exec": [
 													""
 												],
@@ -7087,7 +6818,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "715026c8-cd69-48b5-8693-9abd2f977a1c",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -7115,7 +6845,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "a7433cad-1f26-4a06-bc12-3c1ef9772f5e",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -7142,7 +6871,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "23351935-d50e-4123-ba7f-0a4d2fd1204a",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -7161,7 +6889,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "9aad09f2-29d8-4865-bcb9-f260f6074ea1",
 												"exec": [
 													""
 												],
@@ -7224,7 +6951,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "896eae95-9c97-4ab0-ac2a-29a67ed4eba3",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -7243,7 +6969,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c6328098-23a3-47ca-805b-d1546082c79d",
 												"exec": [
 													""
 												],
@@ -7269,7 +6994,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "db2c058d-b18d-4455-ac94-42f0e85ea194",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -7279,16 +7003,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "6906ecc0-1dce-4ea9-a6aa-e06f6e428358",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - PKCE S256 - Valid Code Verifier",
@@ -7299,7 +7020,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "608d944b-dd1b-4320-adbe-dc11f8c38bb5",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -7312,7 +7032,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -7325,7 +7045,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "6cafac60-fa69-4181-9751-e0a025860d36",
 												"exec": [
 													""
 												],
@@ -7377,7 +7096,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fd1ea1cb-40b7-4bae-9133-d160c43ac893",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -7394,19 +7112,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "ea248720-ff29-491c-919b-1da6b443918a",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -7429,7 +7144,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "7b758afb-ce6d-43bf-8233-123187239721",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -7448,7 +7162,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "3c617a54-9ccd-4b7d-a4d5-4cd334d44638",
 												"exec": [
 													""
 												],
@@ -7505,7 +7218,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b46c4d68-269f-467c-a54c-96de6b9da632",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -7533,7 +7245,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "4151b0aa-a775-4a08-a215-aeb4223a5cf4",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -7560,7 +7271,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "50ad694d-8191-49f6-85a6-bb50babce4f9",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -7582,7 +7292,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c3ff9a69-2bdc-4ba4-94fc-0292542cb273",
 												"exec": [
 													""
 												],
@@ -7645,7 +7354,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "bef3f9f5-3108-4dc2-984c-9c4c957557d5",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -7664,7 +7372,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "3a88658f-896b-4823-b944-2768fadbdf98",
 												"exec": [
 													""
 												],
@@ -7690,7 +7397,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "1083a71b-a3a0-48a6-b16b-1a2e1f05213b",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -7700,16 +7406,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "723e6804-3f14-42a9-980a-fc0613997b05",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - PKCE PLAIN - Valid Code Verifier",
@@ -7720,7 +7423,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "972248e8-0335-4e7e-adbf-872a18fd7482",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -7733,7 +7435,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -7746,7 +7448,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "b49b1054-33ca-46e1-9605-e2e6de0c71db",
 												"exec": [
 													""
 												],
@@ -7798,7 +7499,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "373a0965-9b39-47d0-883b-fef61227647b",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -7815,19 +7515,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "fa58243a-0063-4cd4-a7c6-1d3cb91cc4df",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -7850,7 +7547,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "37697b6c-5a69-42d8-8e19-de47cc0903b7",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -7869,7 +7565,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "3a7dec3b-d5c5-460d-8a2d-37e85e2ef301",
 												"exec": [
 													""
 												],
@@ -7926,7 +7621,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "8cd52dff-d359-4f18-842e-4195968a2055",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -7954,7 +7648,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "04f2d730-df13-4226-b549-0221c4aba5b1",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -7981,7 +7674,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "57ceb482-0ec7-49b3-8125-f06345285497",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -8003,7 +7695,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "64355808-f96a-4596-8f8c-e71d28855ec4",
 												"exec": [
 													""
 												],
@@ -8066,7 +7757,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "56ef7fe8-c581-4674-bdc3-ae18c46c77a3",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8085,7 +7775,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "19000f5e-b430-4c5a-afb9-497d98ad6a5a",
 												"exec": [
 													""
 												],
@@ -8111,7 +7800,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "dbb2df86-7750-4fd8-bc1b-294c56ac81db",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -8121,16 +7809,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "46b51724-6af8-45ac-b2f7-f0dd47201a9d",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Authorize - Invalid requests",
@@ -8141,7 +7826,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "9342d143-b7ad-4026-a3bc-920242ecfd61",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8155,7 +7839,7 @@
 													"",
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=unsupported_response_type');",
@@ -8168,7 +7852,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "e097db0b-d7a0-4b21-a2b9-429537194201",
 												"exec": [
 													""
 												],
@@ -8205,7 +7888,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "051f4447-d23a-448b-88cb-bfa3dad4fb52",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8219,7 +7901,7 @@
 													"",
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request');",
@@ -8232,7 +7914,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "751fcac6-534a-4543-bc89-4dbdc12ec898",
 												"exec": [
 													""
 												],
@@ -8273,7 +7954,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "e6fdda5f-09eb-4b61-b5c7-9b16a13a7da0",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8287,7 +7967,7 @@
 													"",
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
@@ -8300,7 +7980,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "3753996b-d91c-406a-9822-635859704189",
 												"exec": [
 													""
 												],
@@ -8332,7 +8011,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b14db5db-d85b-4c0f-a985-04b77cf94f98",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8346,7 +8024,7 @@
 													"",
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request');",
@@ -8359,7 +8037,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "0fc8dad0-8922-4a42-a5f1-431c2252b30f",
 												"exec": [
 													""
 												],
@@ -8395,7 +8072,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "8c3c8f95-beec-43e9-a072-c86d78348a3e",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8409,7 +8085,7 @@
 													"",
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request');",
@@ -8422,7 +8098,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "da4a69d4-f25c-4541-92e4-8c7e15accde7",
 												"exec": [
 													""
 												],
@@ -8458,7 +8133,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "18e6fb38-65db-4545-aac1-df39ce466929",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8471,7 +8145,7 @@
 													"",
 													"pm.test(\"Should be redirected to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId1'));",
 													"});"
@@ -8482,7 +8156,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "408925ea-79b8-43a2-bfcc-828fd4fe7427",
 												"exec": [
 													""
 												],
@@ -8523,7 +8196,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "1773ae79-ddc0-460b-a845-4ce7df4d9bd2",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8547,7 +8219,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "7520677e-f12a-4d1b-804c-4698b6f6cb6d",
 												"exec": [
 													""
 												],
@@ -8588,7 +8259,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "afaa9045-4f9d-4575-a79b-f993b7bee3cb",
 												"exec": [
 													"// wait for sync process",
 													"setTimeout(function(){}, 10000);"
@@ -8637,7 +8307,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "a79f39f2-f961-4e79-ae20-3f45225b40b4",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8661,7 +8330,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "ecfdac69-ed68-4a3a-8ac7-264cc7c6247c",
 												"exec": [
 													""
 												],
@@ -8702,7 +8370,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2b4f641b-0d88-46f4-8eae-e029c752c058",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -8727,7 +8394,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "89050871-e0e9-4597-ac0c-59d31d44b3d2",
 												"exec": [
 													""
 												],
@@ -8771,7 +8437,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "d8f07ae2-76ef-4342-9a67-f90fc5c8b470",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -8781,16 +8446,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "a8fdb5ed-9e02-415f-8c61-987fba0605c7",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Token - Invalid requests",
@@ -8801,7 +8463,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "1b72c537-3618-4b9e-b21d-9f0e87254fa6",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -8820,7 +8481,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "8d36ee7b-b417-4112-843d-b52681c5e2a6",
 												"exec": [
 													""
 												],
@@ -8875,7 +8535,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "a274ee7b-3c78-406e-ae26-7ef0e8200009",
 												"exec": [
 													"pm.test(\"Status code is 401\", function () {",
 													"    pm.response.to.have.status(401);",
@@ -8894,7 +8553,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "481d5145-a17a-4b6a-860b-06038bc9d5a8",
 												"exec": [
 													""
 												],
@@ -8933,7 +8591,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "0fb01f74-35fc-4bc3-973f-62819c9590c2",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -8943,23 +8600,19 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e63c8cdc-c455-475d-b029-0353fc9976b7",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
 					],
 					"event": [
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "b0c619f3-0575-4eec-9264-b9f07ca7b1a8",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -8969,16 +8622,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "3df2c58d-058b-4842-9745-34e2b11ab42f",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Implicit Grant",
@@ -8992,7 +8642,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "a64ce550-8e81-4b63-b1f0-e76db8ca6a98",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -9047,7 +8696,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2d0efd8f-1351-4580-a242-5ff84f436cfd",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9061,7 +8709,7 @@
 													"",
 													"pm.test(\"Should be a location error\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to error page'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 													"    tests['Contains an error query-parameter'] = location.includes('?error=invalid_request');",
@@ -9074,7 +8722,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "298a65ba-bade-49ba-80ee-6b93c2872582",
 												"exec": [
 													""
 												],
@@ -9100,9 +8747,7 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - Unknown scope",
@@ -9113,7 +8758,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "067b609c-6588-4979-a6fe-a7f31cc7ad8f",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9126,7 +8770,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -9139,7 +8783,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "e5887117-c811-4cf1-9fd2-1de66dcb85ac",
 												"exec": [
 													""
 												],
@@ -9183,7 +8826,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f3db1d3b-4121-4838-affe-7342cde70fe5",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -9200,19 +8842,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "0fa77168-93ac-400b-b208-0cbdbabec31b",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -9235,7 +8874,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4bfcf2af-90d6-4610-aa00-ec766c995c2f",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9254,7 +8892,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "f49e2009-651e-4e2e-9f3c-395f06446192",
 												"exec": [
 													""
 												],
@@ -9311,7 +8948,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b7dad243-4f14-4954-98ea-a970574c9fae",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9337,7 +8973,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "82b1841c-a18c-4be9-93d1-9592eae14b25",
 												"exec": [
 													""
 												],
@@ -9363,7 +8998,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "1e3fbaec-ca63-4ac6-8b91-5f23494eb696",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9382,7 +9016,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "616451af-7459-40d3-b4dd-71794c050815",
 												"exec": [
 													""
 												],
@@ -9408,7 +9041,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "7fe2be79-0640-46eb-bcfe-81a5bb786bb3",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -9418,16 +9050,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "5e027fc9-8bdc-4759-93f6-eeeff164617b",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - Get Access Token",
@@ -9438,7 +9067,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "11d870af-b30f-49e0-bc81-bc9150874be1",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9451,7 +9079,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -9464,7 +9092,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "2d1fe4fe-707e-4dbd-9042-67d76babfd83",
 												"exec": [
 													""
 												],
@@ -9504,7 +9131,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "0e735fdb-9481-4c77-904a-8e229409b669",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -9521,19 +9147,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "213b683b-3002-4465-b9c0-7d9bcdc4542a",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -9556,7 +9179,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "cc3c088a-2fe9-4aaf-994c-138687dc90a5",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9575,7 +9197,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "85587c44-a2f4-4f19-9fad-da57af35a14b",
 												"exec": [
 													""
 												],
@@ -9632,7 +9253,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "164b298b-5399-4b6f-b56b-bb12cd099fac",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -9659,7 +9279,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c3a5ebe2-1f30-4388-b423-56dab4fc07b2",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -9686,7 +9305,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b5ef5859-5f6b-44f4-8aa2-329d9c4a2188",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9705,7 +9323,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "bd9c0d5c-3bab-4cb0-8392-39787fa99b7d",
 												"exec": [
 													""
 												],
@@ -9731,7 +9348,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "ae73db5a-ea04-425b-9a20-5f1678d9f226",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -9741,16 +9357,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "4905bb78-4ec1-47de-864a-f23b6fdbda7c",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - With state parameter",
@@ -9761,7 +9374,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "1ffc4fbf-e8c3-43a8-8918-2774ac57cf55",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9774,7 +9386,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -9787,7 +9399,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "28532b87-7842-4e82-8db6-5364091b97e6",
 												"exec": [
 													""
 												],
@@ -9831,7 +9442,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "af849a9a-79a8-43e5-b424-1de745031d7f",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -9848,19 +9458,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "f2f481fa-5504-47e1-9c65-8b5aab98de4f",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -9883,7 +9490,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "bdcf27ca-20f2-4c87-bccf-2456bcf66409",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -9902,7 +9508,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "1db6eb4b-8e9d-4f9c-aa9f-7ec78a061bad",
 												"exec": [
 													""
 												],
@@ -9959,7 +9564,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "37972b46-693c-4fe3-ad98-338fadb5b770",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
@@ -9987,7 +9591,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c2f985cd-5d35-4d13-bb2e-17a2c25a03ef",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -10014,7 +9617,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f7ba101d-6e43-443e-ba14-7c4105f4e2b3",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -10033,7 +9635,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "bf90f5a9-ebf9-429e-bc08-902844c9e5d1",
 												"exec": [
 													""
 												],
@@ -10059,7 +9660,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "630a6a55-c202-4958-bcd6-9cf6e539e03d",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -10069,16 +9669,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "06151728-4cec-43d0-b70d-670f349d66c5",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Case - revoke consent",
@@ -10089,7 +9686,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "d5be040c-c06a-41a6-8dc3-728b9862a1e6",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -10102,7 +9698,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId2'));",
 													"    ",
@@ -10115,7 +9711,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "325a9f45-d62d-4e7f-b5dd-632536782d2f",
 												"exec": [
 													""
 												],
@@ -10155,7 +9750,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "85f1a10c-a327-4e16-a07c-a89e1f08a647",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -10172,19 +9766,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "8ac8b157-dbe9-4690-80d5-ef807bf5b8c3",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -10207,7 +9798,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "19f12655-774d-4428-9f56-5490ba85ae94",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -10226,7 +9816,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "77a5f7bd-f09f-4245-94e6-952410fe9b67",
 												"exec": [
 													""
 												],
@@ -10283,7 +9872,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "908cc9b2-3537-479f-bc42-8e56803dec2c",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -10330,7 +9918,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "60e0ff6e-f8bb-4c03-9011-fc15f8ca8b82",
 												"exec": [
 													""
 												],
@@ -10357,7 +9944,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "a1220b1a-9389-4726-8ce3-26b66fb4b442",
 												"exec": [
 													"pm.test(\"Status code is 204\", function () {",
 													"    pm.response.to.have.status(204);",
@@ -10381,12 +9967,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/users/{{consentUserId}}/consents",
+											"raw": "{{gateway_url}}/{{domainHrid}}/users/{{consentUserId}}/consents",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"users",
 												"{{consentUserId}}",
 												"consents"
@@ -10401,7 +9987,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b2ac622a-4f1f-473c-a8df-9eb103626ebb",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -10417,7 +10002,7 @@
 													"",
 													"pm.test(\"Should be redirected to consent page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"    ",
@@ -10430,7 +10015,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "0f561f2e-402f-41c1-85f8-77f222f352c7",
 												"exec": [
 													""
 												],
@@ -10470,7 +10054,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "9782aab0-207a-49d4-a077-fdfba2cc902c",
 												"type": "text/javascript",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
@@ -10487,19 +10070,16 @@
 													"    pm.environment.set('xsrf', xsrfToken);",
 													"    pm.environment.set('action', action);",
 													"});"
-												],
-												"type": "text/javascript"
+												]
 											}
 										},
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "266adcdd-23ee-4d61-b93e-73f09368547b",
 												"type": "text/javascript",
 												"exec": [
 													""
-												],
-												"type": "text/javascript"
+												]
 											}
 										}
 									],
@@ -10522,7 +10102,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "81bf00cd-6612-44c7-bd7c-ffbe903e1ee4",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -10541,7 +10120,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "c040cd7a-56b3-4beb-b9a4-ea31efb4ade4",
 												"exec": [
 													""
 												],
@@ -10593,7 +10171,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "e6a17022-4c90-4f59-a487-9aa3a740586d",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -10620,7 +10197,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "8b20f1c5-81dd-4270-8600-471af7ed7feb",
 												"exec": [
 													""
 												],
@@ -10647,7 +10223,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "6e7ebd58-4846-4444-91e9-546b07ec60ff",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -10666,7 +10241,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "0914e292-a927-4d57-b7a6-77a8d6cd8e4d",
 												"exec": [
 													""
 												],
@@ -10687,13 +10261,9 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Extension grant",
@@ -10707,7 +10277,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f5807d7e-b943-46ca-a5e3-bae65b5e66e7",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -10773,7 +10342,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "cb091e85-9df0-4833-90bf-e0c60dbc6ead",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -10832,7 +10400,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "9d806af8-a328-47fe-8eff-8abc4cde4484",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -10847,7 +10414,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "a2c1f8ee-4195-41e6-8738-02c29b74cc42",
 												"exec": [
 													""
 												],
@@ -10897,7 +10463,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "85f7d76f-3b0d-4fbc-88f5-ea4c337219ea",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -10915,7 +10480,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "d06fee78-95e4-4e10-b2f1-bda095d485bc",
 												"exec": [
 													"pm.environment.set('assertionToken', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbm9ueW1vdXMtdXNlciIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJpYXQiOjE1MTYyMzkwMjJ9.ALneslMoGJc4l0EEaH4JDHkZeG6nneBe1tD0IOyo9xXC6zs8HPd6RVr3lYgMsQxRVg8V1pZMvfxCHqqopHoirCgoklpnsM7Kcjve8c4KROrWMk5nbcjG5rozsO1hhJWWEtSCZeZ14GpDewM41StUSliOb9c-j5khSxJ-AD-F1zpOM1O7HwxzflOUvO_7BbYSOv1K768EBljXTIeVojniLa0griDMIzlX4YxF-OR1qoANtA6Bpj5jlGi722LsSKKJ-bldy2pURf-Z8-vk5RYcGvcTBjXp2ulMU_S8X0QKzMJ0wjLFofoZ-kY12WgoOejAF1cVTUGZ8KHSA1b8GRKCcQ');",
 													"",
@@ -11029,7 +10593,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f8e5bacb-4373-4a69-a68c-26ff6cd7b511",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -11054,7 +10617,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "cefb5d2a-1f1d-4c21-8423-2c3b781dcde3",
 												"exec": [
 													"pm.environment.set('assertionToken', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZW5zZW4uYmFyYmFyYSIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJtYWlsIjoiamVuc2VuLmJhcmJhcmFAbWFpbC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.oUvmrRITBVrrWBRQAIKSkDbpwwombEbDp24PXrx9s111o3M2dTQ7bcrIkXWhgiWGdoIYVhZEaYV3bTXmv2fHH80DLAOstq-ibkiKmPkoPWn7ea1VpLixcVCft_YSO_mtf4YMxdY-WFFB896z0Y_5M5S2iMvx4HKj7OCxKZqF1jkxeNCSMqI1KbMketk7SZxFlycgTXJBx5ysQ-z9VfGck3Vnf_pGV_RYPMgOMp0zqvPBPIbtOj1viFQ3lSNBss98OInnsecsaCQcFJGshVG-MNLGWDwljsz5-Rozckveg9g5orWTS86jjEqrNTQmA0alvLEnXnmJVaGJyTrW_2Qwng');",
 													"",
@@ -11168,7 +10730,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "703d6823-5d68-46fa-86fd-79d369e14985",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -11223,7 +10784,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "5b91bfa7-7b62-499b-a8fb-341703519cb3",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -11248,7 +10808,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "4070abea-1bd9-4fe7-ba09-49e49bfe1657",
 												"exec": [
 													"pm.environment.set('assertionToken', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqZW5zZW4uYmFyYmFyYSIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJtYWlsIjoiamVuc2VuLmJhcmJhcmFAbWFpbC5jb20iLCJpYXQiOjE1MTYyMzkwMjJ9.oUvmrRITBVrrWBRQAIKSkDbpwwombEbDp24PXrx9s111o3M2dTQ7bcrIkXWhgiWGdoIYVhZEaYV3bTXmv2fHH80DLAOstq-ibkiKmPkoPWn7ea1VpLixcVCft_YSO_mtf4YMxdY-WFFB896z0Y_5M5S2iMvx4HKj7OCxKZqF1jkxeNCSMqI1KbMketk7SZxFlycgTXJBx5ysQ-z9VfGck3Vnf_pGV_RYPMgOMp0zqvPBPIbtOj1viFQ3lSNBss98OInnsecsaCQcFJGshVG-MNLGWDwljsz5-Rozckveg9g5orWTS86jjEqrNTQmA0alvLEnXnmJVaGJyTrW_2Qwng');",
 													"",
@@ -11362,7 +10921,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "5281e28e-a48a-4259-84a6-6e3c3f61d49a",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -11426,7 +10984,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "6da01ef7-0977-411b-9b50-3232631f8c2c",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -11451,7 +11008,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "11134ad5-a790-45c9-8465-4581a1150e0a",
 												"exec": [
 													"pm.environment.set('assertionToken', 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbm9ueW1vdXMtdXNlciIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjp0cnVlLCJpYXQiOjE1MTYyMzkwMjIsImVtYWlsIjoiam9obi5kb2VAZ21haWwuY29tIn0.dDmLFEfCDtxHUF771Q8AWQs4AoImZSZKlnlEp91iT2K0d7glZHMasE8HsfU7ozL-T9SATSQi_xvsc3Uitabna95v_nbOmu9fLeodmzYkPgXoD4Fxk8wPtHqTETHNN_kDbCxBXX0iqGhB-Et-9QJ2rGUDmMCXcj-K1PwsuBYYch0G3Zc60HM8hM3mm51pH8j1vKUr1pBSrAudPANhhQof_sOwohRiiubJIT4qDpjKxp6IvqmVusAU4SDeAPaoQDdr3KH2Hd29TWviB8OGw8pj3SLxKkaMKG0u94HBPcOaC-v0p-afq7N0jgoS2KfO9CtpmEMiItfLKWqkEFggWJtL4w');",
 													"",
@@ -11559,13 +11115,9 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - custom claims",
@@ -11576,7 +11128,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "8bdb5f0a-54e3-40a1-ba09-44eb948452a1",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -11631,7 +11182,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d58bf76b-76a9-438f-803b-455ace223f06",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -11651,7 +11201,7 @@
 											"    ",
 											"    let jwt = parseJwt(body.access_token);",
 											"    let origin = pm.environment.get(\"gateway_url\");",
-											"    let domain = pm.environment.get(\"domain\");",
+											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
 											"    tests['Contains an iss claim'] = jwt.iss === origin + '/' + domain + '/oidc';",
 											"    tests['Contains a sub claim'] = jwt.sub !== undefined;",
@@ -11730,7 +11280,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1ff37a9e-8e2c-474d-ad2e-0b96d8bda35b",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -11785,7 +11334,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b7e79ce5-5703-4ac5-959b-8fbf8e404d3f",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -11805,7 +11353,7 @@
 											"    ",
 											"    let jwt = parseJwt(body.id_token);",
 											"    let origin = pm.environment.get(\"gateway_url\");",
-											"    let domain = pm.environment.get(\"domain\");",
+											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
 											"    tests['Contains an iss claim'] = jwt.iss === origin + '/' + domain + '/oidc';",
 											"    tests['Contains a sub claim'] = jwt.sub !== undefined;",
@@ -11884,7 +11432,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "a379c2fb-78ca-4c8d-9150-73be2c0e01c7",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -11939,7 +11486,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "3f074954-8070-4247-a99c-cf1ef5336235",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -11959,7 +11505,7 @@
 											"    ",
 											"    let jwt = parseJwt(body.id_token);",
 											"    let origin = pm.environment.get(\"gateway_url\");",
-											"    let domain = pm.environment.get(\"domain\");",
+											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
 											"    tests['Contains an iss claim'] = jwt.iss === origin + '/' + domain + '/oidc';",
 											"    tests['Contains a sub claim'] = jwt.sub !== undefined;",
@@ -12040,7 +11586,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "50aa56f3-dbb2-4354-9093-0a31b3b56598",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -12100,7 +11645,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "8622baa1-34ba-4daa-8b59-338d69b4e68c",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -12158,7 +11702,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "7b7e77d5-5424-4eb2-83ad-06f49477eb38",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -12213,7 +11756,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "174298a8-6f73-40a6-a785-751cd413dfbb",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -12233,7 +11775,7 @@
 											"    ",
 											"    let jwt = parseJwt(body.id_token);",
 											"    let origin = pm.environment.get(\"gateway_url\");",
-											"    let domain = pm.environment.get(\"domain\");",
+											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
 											"    tests['Contains an iss claim'] = jwt.iss === origin + '/' + domain + '/oidc';",
 											"    tests['Contains a sub claim'] = jwt.sub !== undefined;",
@@ -12306,9 +11848,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Template client",
@@ -12319,7 +11859,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "2d0438f0-52aa-45b1-bd3c-632d208834b1",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -12375,7 +11914,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "77841548-3fe3-4dd0-aaf1-038bbbb6d8e9",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -12439,7 +11977,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ef5d8de2-dd27-47c4-ba51-1d461342b32f",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -12460,7 +11997,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "687cdf72-97e8-4a59-9719-a3c87afd3a1c",
 										"exec": [
 											""
 										],
@@ -12511,7 +12047,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f42313d6-9ca0-4a88-a710-428bca832398",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -12554,9 +12089,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - public client",
@@ -12567,7 +12100,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "52cf69f1-63cd-4153-9c6e-21fa5a3054d5",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -12623,7 +12155,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "176aa821-7616-47c1-b771-8f37a0f1692a",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -12678,7 +12209,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "8048059a-6f5f-4a06-b2e9-ea549e435806",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -12734,7 +12264,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "eca28973-9398-4287-8cc4-0e88f413a664",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -12800,7 +12329,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ef1eee02-d17d-47b4-8a49-51ba4aa548c0",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -12843,12 +12371,9 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Oauth2 Token Introspection - RFC 7662",
@@ -12862,7 +12387,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d3a9b7b9-ad4b-4064-9033-b958ebc968e1",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -12921,7 +12445,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "cc4b4a00-ff22-4a45-9b62-5e466cab24ae",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -12965,9 +12488,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - Nominal case 1",
@@ -12978,7 +12499,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9b953672-71a2-43e1-ac29-776571f5bda3",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13059,7 +12579,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "7cd7a77a-d2b4-4f12-82cf-a2381056a812",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13116,9 +12635,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - Nominal case 2",
@@ -13129,7 +12646,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f7db68ba-c532-44e4-bab3-2a3149aaa138",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13210,7 +12726,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "feaa6b8f-c012-4330-8a25-a2558fdb665a",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13267,9 +12782,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - Cross domains",
@@ -13280,14 +12793,14 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "74672e5a-cead-4bb6-a7c6-fb54e66c7263",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
 											"});",
 											"",
 											"var jsonData = pm.response.json();",
-											"pm.environment.set('crossDomain', jsonData.id);"
+											"pm.environment.set('crossDomain', jsonData.id);",
+											"pm.environment.set('crossDomainHrid', jsonData.hrid);"
 										],
 										"type": "text/javascript"
 									}
@@ -13333,7 +12846,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "0288f255-89a9-4b51-b073-ae55913c00e1",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -13389,7 +12901,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "6463c101-d842-47ef-ac3d-5dcc804feced",
 										"exec": [
 											"// wait for sync process",
 											"setTimeout(function(){}, 10000);"
@@ -13438,7 +12949,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "610d95ce-6787-481d-8480-df21a5379fca",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13468,12 +12978,12 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{gateway_url}}/{{crossDomain}}/oidc/.well-known/openid-configuration",
+									"raw": "{{gateway_url}}/{{crossDomainHrid}}/oidc/.well-known/openid-configuration",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{crossDomain}}",
+										"{{crossDomainHrid}}",
 										"oidc",
 										".well-known",
 										"openid-configuration"
@@ -13488,7 +12998,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "43cd6b6d-c00f-4e48-9d93-3c4b6c663118",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13551,7 +13060,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "10dc5ec6-48f8-46f6-8aa2-417763cfd3b8",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13612,7 +13120,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b1f37dca-7de4-404b-afb2-91915ee0d48c",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13673,7 +13180,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "dbc37b48-d9dd-4433-8d47-df83e093b31d",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13719,7 +13225,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "47fcbc78-dca0-48e8-a218-f19dea341b61",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13774,7 +13279,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f817419e-4bfd-45a7-adb6-ee1adabd9755",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13837,7 +13341,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "0dd0a57e-920c-4a4d-a097-f2b28fa10259",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13899,7 +13402,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1c737b94-ecd9-4099-9945-1bde69258adc",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -13961,7 +13463,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "be11a00b-fd7e-4783-88ff-f67acacc08fd",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -14010,7 +13511,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "6a8b1124-dc27-496d-9566-ffbcd4f67b19",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -14020,16 +13520,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "e14ac0bd-3e97-4835-b500-4a9823f7fd31",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - Custom claims",
@@ -14040,7 +13537,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f0a47759-8288-4a77-a68e-e0268dc95280",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -14095,7 +13591,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "04335669-b5c9-423d-8bed-3f44f8a681f4",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -14178,7 +13673,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f3bdf40e-f71b-49fa-8455-3d62bea1b1a0",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -14241,7 +13735,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "066e0901-05f0-478f-a8e6-80bad3ad05fd",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -14251,16 +13744,13 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "df72ac5f-5734-41f2-8640-df34b2d5eb83",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - Invalid tokens",
@@ -14271,7 +13761,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ea98bf01-fa1b-4c2d-90ff-a94c912fd648",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -14325,7 +13814,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "2fb41be8-062f-48d3-8996-b13bbf20844e",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -14380,7 +13868,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "96422269-aca8-418a-9ff1-3a20ee80bff6",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -14439,7 +13926,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "328d92f8-2a88-42fd-ab74-75e53672cbbd",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -14492,16 +13978,13 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
 			],
 			"event": [
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "9dcc3f2d-c478-457a-8ae4-ce7d6d8f55db",
 						"type": "text/javascript",
 						"exec": [
 							""
@@ -14511,15 +13994,13 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "15ebf39e-4f29-47f5-9d69-ded6607fe6fd",
 						"type": "text/javascript",
 						"exec": [
 							""
 						]
 					}
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Oauth2 Token Revocation - RFC7009",
@@ -14533,7 +14014,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "20cf9d80-79f3-42cd-982b-cd9b83941d2e",
 										"exec": [
 											"function parseJwt (token) {",
 											"            var base64Url = token.split('.')[1];",
@@ -14551,7 +14031,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "f4f50556-5c6d-4cfc-b5b5-7605f8228647",
 										"exec": [
 											""
 										],
@@ -14602,7 +14081,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "8cbd8c9d-3657-41a8-a109-ec4a55d86640",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -14621,7 +14099,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "81b52a89-5a3d-465e-a536-88476225c97b",
 										"exec": [
 											""
 										],
@@ -14657,7 +14134,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "4743aaef-a968-4958-9bee-1a16405903da",
 										"exec": [
 											"pm.test(\"Status code is 401\", function () {",
 											"    pm.response.to.have.status(401);",
@@ -14676,7 +14152,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "ecf37f2a-6962-4116-807e-83ecab3c253c",
 										"exec": [
 											""
 										],
@@ -14712,9 +14187,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - Nominal case",
@@ -14725,7 +14198,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "4bab0b01-95c4-4424-b84c-856367386763",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -14812,7 +14284,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f8460cd3-7497-4281-b746-be3eb639d38b",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -14897,7 +14368,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b4f5aa7f-3ab1-4a5d-b2ed-a64cae76c7ee",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -14966,7 +14436,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "ef763827-b624-495d-9232-7c965113e82b",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -15035,7 +14504,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "275b1209-768f-4477-ab1a-93440d164178",
 										"exec": [
 											"function parseJwt (token) {",
 											"            var base64Url = token.split('.')[1];",
@@ -15057,7 +14525,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "b0182ddc-fd78-4672-86da-f20132c8eb87",
 										"exec": [
 											""
 										],
@@ -15108,7 +14575,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "501dcd2d-b572-4bde-a0f0-98cba69e6694",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -15177,7 +14643,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "fab8290b-b0da-4301-adee-d8607861b265",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -15235,9 +14700,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - Bad client",
@@ -15248,7 +14711,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "4ce284b0-f166-471d-8dda-564c094e22aa",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -15332,7 +14794,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b89a1785-a58e-4c77-9dbf-a1b00cfabcf1",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
@@ -15351,7 +14812,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "d0f5bbe3-31c5-4918-b3e0-d84ea353e76c",
 										"exec": [
 											""
 										],
@@ -15396,9 +14856,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Case - revoke consent",
@@ -15409,7 +14867,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "02cd0c07-3550-4352-9430-0c31c994c92e",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -15467,7 +14924,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d2cdcb43-68b0-49bc-93bc-96db2c0f7d4e",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -15480,7 +14936,7 @@
 											"",
 											"pm.test(\"Should be a redirection to login page\", function() {",
 											"    var location = postman.getResponseHeader('Location');",
-											"    let domain = pm.environment.get(\"domain\");",
+											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
 											"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get(\"clientId2\"));",
 											"    ",
@@ -15493,7 +14949,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "08f667fe-191b-4a96-bcbd-d87bd59691de",
 										"exec": [
 											""
 										],
@@ -15533,7 +14988,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "da4a9c70-c7cd-40cb-8eb3-07d2fdec4080",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -15550,19 +15004,16 @@
 											"    pm.environment.set('xsrf', xsrfToken);",
 											"    pm.environment.set('action', action);",
 											"});"
-										],
-										"type": "text/javascript"
+										]
 									}
 								},
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "99c7ed21-e8ef-445f-8efa-ff9402e7a463",
 										"type": "text/javascript",
 										"exec": [
 											""
-										],
-										"type": "text/javascript"
+										]
 									}
 								}
 							],
@@ -15585,7 +15036,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "0d1ced4c-d797-40c7-b0da-386375611083",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -15604,7 +15054,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "387f71e8-f9fc-4670-ab84-dd0843f955cd",
 										"exec": [
 											""
 										],
@@ -15661,7 +15110,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f5ed09d0-1130-4051-bf37-927d13a5ef55",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -15677,7 +15125,7 @@
 											"",
 											"pm.test(\"Should be redirected to consent page\", function() {",
 											"    var location = postman.getResponseHeader('Location');",
-											"    let domain = pm.environment.get(\"domain\");",
+											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
 											"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 											"    ",
@@ -15690,7 +15138,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "8f16a35d-19cf-4930-b17c-1ab1d0616e3a",
 										"exec": [
 											""
 										],
@@ -15717,7 +15164,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "293bda5b-5ff5-4e2a-bac2-ee892b59970f",
 										"type": "text/javascript",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
@@ -15734,19 +15180,16 @@
 											"    pm.environment.set('xsrf', xsrfToken);",
 											"    pm.environment.set('action', action);",
 											"});"
-										],
-										"type": "text/javascript"
+										]
 									}
 								},
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "e70fd703-1780-4704-a910-8e388023103e",
 										"type": "text/javascript",
 										"exec": [
 											""
-										],
-										"type": "text/javascript"
+										]
 									}
 								}
 							],
@@ -15769,7 +15212,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9f8cc1ee-f2fe-4b91-ac6e-c0236208a299",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -15788,7 +15230,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "b77c6f36-b667-45b4-890a-c05309423b61",
 										"exec": [
 											""
 										],
@@ -15850,7 +15291,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1224eeae-109a-4991-adc2-4a71a80043b1",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -15875,7 +15315,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "67e21532-c682-4891-b25d-879ff95b874d",
 										"exec": [
 											""
 										],
@@ -15902,7 +15341,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "5e3e1448-cfc8-4226-b293-19eee88ef642",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -15923,7 +15361,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "4275ca49-1626-46d0-bdc6-8f5934a163d3",
 										"exec": [
 											""
 										],
@@ -15980,12 +15417,12 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/oauth/token",
+									"raw": "{{gateway_url}}/{{domainHrid}}/oauth/token",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"oauth",
 										"token"
 									]
@@ -16000,7 +15437,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "dfd24ed3-861c-4977-ae99-90f8f0c8df9e",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -16061,7 +15497,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "4e04a48e-5fbb-4058-a97f-82857068ee7c",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -16117,7 +15552,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "0ec5033d-e24d-4367-89c4-2ffaa7f54e8c",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -16171,7 +15605,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9971e266-5740-4fb8-9cd2-9f6a84d9f219",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -16230,7 +15663,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "bb600c46-ac69-4d0d-900c-7a2fe9636974",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
@@ -16288,7 +15720,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "22256f26-7e49-4d29-a2b3-6da27490631b",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -16370,7 +15801,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "a3347dd8-4b25-4d83-8f99-b45e687d4022",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -16423,7 +15853,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e5f37adc-89b4-43c5-bc5d-4cfd028a4b45",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -16482,7 +15911,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "00f0df5b-5bb5-4dcc-a32c-4a94ee092c74",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
@@ -16540,7 +15968,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "24d23e41-d1f8-4725-b1be-4290970893d4",
 										"exec": [
 											"pm.test(\"Status code is 302\", function () {",
 											"    pm.response.to.have.status(302);",
@@ -16559,7 +15986,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "754aacec-8a56-4914-8a9b-1a5fd9cb76a1",
 										"exec": [
 											""
 										],
@@ -16585,7 +16011,6 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "66b7db8e-8f34-4603-bc27-f2b6c936e880",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -16595,23 +16020,19 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "2a7aae30-6257-49ed-abc1-69db1beb4abb",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
 			],
 			"event": [
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "c4945aa6-67f8-4bf5-bbeb-2690d95c7350",
 						"type": "text/javascript",
 						"exec": [
 							""
@@ -16621,15 +16042,13 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "39ce81a1-c211-42ff-9d97-11a5859050e5",
 						"type": "text/javascript",
 						"exec": [
 							""
 						]
 					}
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Delete domain",
@@ -16637,7 +16056,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "204c7331-bac5-4bde-950d-7d92832fc8cc",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -16681,6 +16099,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }

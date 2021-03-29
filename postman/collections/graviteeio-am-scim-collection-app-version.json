@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "025b3937-ce25-4546-8705-9dca28790e19",
+		"_postman_id": "b4b3fa55-c732-4105-b79e-8a24f8fe875d",
 		"name": "Gravitee.io - AM - SCIM - app version",
 		"description": "Test System for Cross-domain Identity Management\nSCIM 2.0 is released as RFC7642, RFC7643 and RFC7644",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -82,7 +82,8 @@
 									"});",
 									"",
 									"var jsonData = pm.response.json();",
-									"pm.environment.set('domain', jsonData.id);"
+									"pm.environment.set('domain', jsonData.id);",
+									"pm.environment.set('domainHrid', jsonData.hrid);"
 								],
 								"type": "text/javascript"
 							}
@@ -197,12 +198,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+							"raw": "{{gateway_url}}/{{domainHrid}}/oidc/.well-known/openid-configuration",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"{{domain}}",
+								"{{domainHrid}}",
 								"oidc",
 								".well-known",
 								"openid-configuration"
@@ -238,12 +239,12 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/ServiceProviderConfig",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/ServiceProviderConfig",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"ServiceProviderConfig"
 									]
@@ -270,12 +271,12 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Users"
 									]
@@ -302,12 +303,12 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Groups"
 									]
@@ -416,12 +417,12 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/ServiceProviderConfig",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/ServiceProviderConfig",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"ServiceProviderConfig"
 									]
@@ -460,12 +461,12 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Users"
 									]
@@ -505,12 +506,12 @@
 									}
 								],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Users"
 									]
@@ -548,12 +549,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Users"
 									]
@@ -597,12 +598,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Users"
 									]
@@ -640,12 +641,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/test-id",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Users",
 										"test-id"
@@ -690,12 +691,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/test-id",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Users",
 										"test-id"
@@ -734,12 +735,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/test-id",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Users",
 										"test-id"
@@ -784,12 +785,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Users/test-id",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/test-id",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Users",
 										"test-id"
@@ -824,12 +825,12 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Groups"
 									]
@@ -869,12 +870,12 @@
 									}
 								],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Groups"
 									]
@@ -912,12 +913,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/test-id",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Groups",
 										"test-id"
@@ -962,12 +963,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/test-id",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Groups",
 										"test-id"
@@ -1006,12 +1007,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Groups"
 									]
@@ -1055,12 +1056,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Groups"
 									]
@@ -1098,12 +1099,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/test-id",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Groups",
 										"test-id"
@@ -1148,12 +1149,12 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/scim/Groups/test-id",
+									"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/test-id",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"scim",
 										"Groups",
 										"test-id"
@@ -1389,12 +1390,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -1445,12 +1446,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -1501,12 +1502,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"userName\": \"&Invalid\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -1557,12 +1558,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"userName\": \"bjensen@example.com\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"#Invalid\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -1613,12 +1614,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"userName\": \"bjensen@example.com\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\": \"Jensen\",\n       \"givenName\":\"#Invalid\"\n     }\n   }"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -1669,12 +1670,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"externalId\":\"bjensen\",\n     \"userName\": \"bjensen@example.com\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\": \"Jensen\",\n       \"givenName\": \"Barbara\"\n     },\n     \"emails\": [\n\t    {\n\t      \"value\": \"#Invalid\",\n\t      \"type\": \"work\",\n\t      \"primary\": true\n\t    }\n\t  ]\n   }"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -1724,12 +1725,12 @@
 											"raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"externalId\": \"701984\",\n  \"userName\": \"bjensen@example.com\",\n  \"name\": {\n    \"formatted\": \"Ms. Barbara J Jensen, III\",\n    \"familyName\": \"Jensen\",\n    \"givenName\": \"Barbara\",\n    \"middleName\": \"Jane\",\n    \"honorificPrefix\": \"Ms.\",\n    \"honorificSuffix\": \"III\"\n  },\n  \"displayName\": \"Babs Jensen\",\n  \"nickName\": \"Babs\",\n  \"profileUrl\": \"https://login.example.com/bjensen\",\n  \"emails\": [\n    {\n      \"value\": \"bjensen@example.com\",\n      \"type\": \"work\",\n      \"primary\": true\n    },\n    {\n      \"value\": \"babs@jensen.org\",\n      \"type\": \"home\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"type\": \"work\",\n      \"streetAddress\": \"100 Universal City Plaza\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"100 Universal City Plaza\\nHollywood, CA 91608 USA\",\n      \"primary\": true\n    },\n    {\n      \"type\": \"home\",\n      \"streetAddress\": \"456 Hollywood Blvd\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"456 Hollywood Blvd\\nHollywood, CA 91608 USA\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"555-555-5555\",\n      \"type\": \"work\"\n    },\n    {\n      \"value\": \"555-555-4444\",\n      \"type\": \"mobile\"\n    }\n  ],\n  \"ims\": [\n    {\n      \"value\": \"someaimhandle\",\n      \"type\": \"aim\"\n    }\n  ],\n  \"photos\": [\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/F\",\n      \"type\": \"photo\"\n    },\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/T\",\n      \"type\": \"thumbnail\"\n    }\n  ],\n  \"userType\": \"Employee\",\n  \"title\": \"Tour Guide\",\n  \"preferredLanguage\": \"en-US\",\n  \"locale\": \"en-US\",\n  \"timezone\": \"America/Los_Angeles\",\n  \"active\":true,\n  \"x509Certificates\": [\n    {\n      \"value\":\n       \"MIIDQzCCAqygAwIBAgICEAAwDQ....1UEBhMCVVMx\"\n    }\n  ]\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -1780,12 +1781,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen@example.com\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -1840,12 +1841,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/wrong-id",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/wrong-id",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"wrong-id"
@@ -1891,12 +1892,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -1947,12 +1948,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n     \"userName\":\"bjensen\",\n     \"externalId\":\"bjensen\",\n     \"name\":{\n       \"formatted\":\"Ms. Barbara J Jensen III\",\n       \"familyName\":\"Jensen2\",\n       \"givenName\":\"Barbara\"\n     }\n   }"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2008,12 +2009,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"active\",\n        \"value\": true\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/wrong-id",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/wrong-id",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"wrong-id"
@@ -2059,12 +2060,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2115,12 +2116,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"path\": \"userType\",\n        \"value\": \"Employee\"\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2171,12 +2172,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"path\":\"name\",\n        \"value\": {\n            \"middleName\": \"Jane\"\n        }\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2228,12 +2229,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"value\" : {\n            \"emails\": [\n                {\n                    \"value\": \"bjensen@example.com\",\n                    \"type\": \"work\",\n                    \"primary\": true\n                }\n            ]\n        }\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2284,12 +2285,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"active\",\n        \"value\": true\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2341,12 +2342,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"name\",\n        \"value\": {\n            \"familyName\": \"Jensen3\",\n            \"middleName\": \"Jane3\"\n        }\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2399,12 +2400,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\": \"emails\",\n        \"value\": [\n            {\n                \"value\": \"bjensen2@example.com\",\n                \"type\": \"work\",\n                \"primary\": true\n            },\n            {\n                \"value\": \"bjensen-home@example.com\",\n                \"type\": \"home\"\n            }\n        ]\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2456,12 +2457,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"emails[type eq \\\"home\\\"]\",\n        \"value\": \n            {\n                \"value\": \"bjensen-home2@example.com\",\n                \"type\": \"home\"\n            }\n        }\n     ]\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2512,12 +2513,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"userType\"\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2569,12 +2570,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"name.middleName\"\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2626,12 +2627,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"emails[type eq \\\"home\\\"]\"\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2682,12 +2683,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"emails\"\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2741,12 +2742,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [\n         {\n            \"op\":\"Add\",\n            \"path\":\"emails\",\n            \"value\": [\n                {\n                    \"value\": \"johndoe@mail.com\",\n                    \"type\": \"home\"\n                }\n            ]\n        },\n        {\n            \"op\": \"Replace\",\n            \"path\": \"userType\",\n            \"value\": \"Director\"\n        },\n        {\n            \"op\": \"Replace\",\n            \"path\": \"name.givenName\",\n            \"value\": \"Barbara\"\n        },\n        {\n            \"op\": \"Replace\",\n            \"path\": \"active\",\n            \"value\": false\n        },\n        {\n            \"op\": \"Remove\",\n            \"path\": \"name.middleName\"\n        }\n    ]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -2795,12 +2796,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -2839,12 +2840,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=invalid",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users?filter=invalid",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											],
@@ -2892,12 +2893,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=userName eq \"invalid\"",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users?filter=userName eq \"invalid\"",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											],
@@ -2945,12 +2946,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=userName eq \"bjensen@example.com\"",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users?filter=userName eq \"bjensen@example.com\"",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											],
@@ -2998,12 +2999,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=userName co \"bjensen\"",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users?filter=userName co \"bjensen\"",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											],
@@ -3051,12 +3052,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=userName eq \"invalid\" or name.givenName eq \"Barbara\"",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users?filter=userName eq \"invalid\" or name.givenName eq \"Barbara\"",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											],
@@ -3104,12 +3105,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users?filter=name.givenName eq \"Barbara\" and active eq false and meta.created ge \"2020-10-14T20:18:43.048Z\"",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users?filter=name.givenName eq \"Barbara\" and active eq false and meta.created ge \"2020-10-14T20:18:43.048Z\"",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											],
@@ -3164,12 +3165,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/wrong-id",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/wrong-id",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"wrong-id"
@@ -3207,12 +3208,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users/{{userSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users/{{userSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users",
 												"{{userSCIM}}"
@@ -3255,12 +3256,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -3315,12 +3316,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups"
 											]
@@ -3371,12 +3372,12 @@
 											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"]\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups"
 											]
@@ -3426,12 +3427,12 @@
 											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups"
 											]
@@ -3482,12 +3483,12 @@
 											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups"
 											]
@@ -3542,12 +3543,12 @@
 											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides 2\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/wrong-id",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/wrong-id",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"wrong-id"
@@ -3593,12 +3594,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -3649,12 +3650,12 @@
 											"raw": "{\n   \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:Group\"],\n   \"displayName\": \"Tour Guides 2\"\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -3710,12 +3711,12 @@
 											"raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"externalId\": \"701984\",\n  \"userName\": \"bjensen@example.com\",\n  \"name\": {\n    \"formatted\": \"Ms. Barbara J Jensen, III\",\n    \"familyName\": \"Jensen\",\n    \"givenName\": \"Barbara\",\n    \"middleName\": \"Jane\",\n    \"honorificPrefix\": \"Ms.\",\n    \"honorificSuffix\": \"III\"\n  },\n  \"displayName\": \"Babs Jensen\",\n  \"nickName\": \"Babs\",\n  \"profileUrl\": \"https://login.example.com/bjensen\",\n  \"emails\": [\n    {\n      \"value\": \"bjensen@example.com\",\n      \"type\": \"work\",\n      \"primary\": true\n    },\n    {\n      \"value\": \"babs@jensen.org\",\n      \"type\": \"home\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"type\": \"work\",\n      \"streetAddress\": \"100 Universal City Plaza\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"100 Universal City Plaza\\nHollywood, CA 91608 USA\",\n      \"primary\": true\n    },\n    {\n      \"type\": \"home\",\n      \"streetAddress\": \"456 Hollywood Blvd\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"456 Hollywood Blvd\\nHollywood, CA 91608 USA\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"555-555-5555\",\n      \"type\": \"work\"\n    },\n    {\n      \"value\": \"555-555-4444\",\n      \"type\": \"mobile\"\n    }\n  ],\n  \"ims\": [\n    {\n      \"value\": \"someaimhandle\",\n      \"type\": \"aim\"\n    }\n  ],\n  \"photos\": [\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/F\",\n      \"type\": \"photo\"\n    },\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/T\",\n      \"type\": \"thumbnail\"\n    }\n  ],\n  \"userType\": \"Employee\",\n  \"title\": \"Tour Guide\",\n  \"preferredLanguage\": \"en-US\",\n  \"locale\": \"en-US\",\n  \"timezone\": \"America/Los_Angeles\",\n  \"active\":true,\n  \"x509Certificates\": [\n    {\n      \"value\":\n       \"MIIDQzCCAqygAwIBAgICEAAwDQ....1UEBhMCVVMx\"\n    }\n  ]\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -3765,12 +3766,12 @@
 											"raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"externalId\": \"123456\",\n  \"userName\": \"mpepperidge@example.com\",\n  \"name\": {\n    \"formatted\": \"Ms. Mandy Pepperidge, III\",\n    \"familyName\": \"Pepperidge\",\n    \"givenName\": \"Mandy\",\n    \"honorificPrefix\": \"Ms.\",\n    \"honorificSuffix\": \"III\"\n  },\n  \"displayName\": \"Mandy Pepperidge\",\n  \"nickName\": \"Mandy\",\n  \"profileUrl\": \"https://login.example.com/mpepperidge\",\n  \"emails\": [\n    {\n      \"value\": \"mpepperidge@example.com\",\n      \"type\": \"work\",\n      \"primary\": true\n    },\n    {\n      \"value\": \"mandy@pepperidge.org\",\n      \"type\": \"home\"\n    }\n  ],\n  \"addresses\": [\n    {\n      \"type\": \"work\",\n      \"streetAddress\": \"100 Universal City Plaza\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"100 Universal City Plaza\\nHollywood, CA 91608 USA\",\n      \"primary\": true\n    },\n    {\n      \"type\": \"home\",\n      \"streetAddress\": \"456 Hollywood Blvd\",\n      \"locality\": \"Hollywood\",\n      \"region\": \"CA\",\n      \"postalCode\": \"91608\",\n      \"country\": \"USA\",\n      \"formatted\": \"456 Hollywood Blvd\\nHollywood, CA 91608 USA\"\n    }\n  ],\n  \"phoneNumbers\": [\n    {\n      \"value\": \"555-555-5555\",\n      \"type\": \"work\"\n    },\n    {\n      \"value\": \"555-555-4444\",\n      \"type\": \"mobile\"\n    }\n  ],\n  \"ims\": [\n    {\n      \"value\": \"someaimhandle\",\n      \"type\": \"aim\"\n    }\n  ],\n  \"photos\": [\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/F\",\n      \"type\": \"photo\"\n    },\n    {\n      \"value\":\n        \"https://photos.example.com/profilephoto/72930000000Ccne/T\",\n      \"type\": \"thumbnail\"\n    }\n  ],\n  \"userType\": \"Employee\",\n  \"title\": \"Tour Guide\",\n  \"preferredLanguage\": \"en-US\",\n  \"locale\": \"en-US\",\n  \"timezone\": \"America/Los_Angeles\",\n  \"active\":true,\n  \"x509Certificates\": [\n    {\n      \"value\":\n       \"MIIDQzCCAqygAwIBAgICEAAwDQ....1UEBhMCVVMx\"\n    }\n  ]\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Users",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Users",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Users"
 											]
@@ -3820,12 +3821,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"active\",\n        \"value\": true\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/wrong-id",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/wrong-id",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"wrong-id"
@@ -3871,12 +3872,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -3928,12 +3929,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Add\",\n        \"value\" : {\n            \"members\": [\n                {\n                    \"value\": \"{{userSCIM1}}\",\n                    \"$ref\": \"https://example.com/v2/Users/{{userSCIM1}}\",\n                    \"display\": \"Babs Jensen\"\n                },\n                {\n                    \"value\": \"{{userSCIM2}}\",\n                    \"$ref\": \"https://example.com/v2/Users/{{userSCIM2}}\",\n                    \"display\": \"Mandy Pepperidge\"\n                }\n            ]\n        }\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -3984,12 +3985,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Replace\",\n        \"path\":\"displayName\",\n        \"value\": \"Tour Guides 3\"\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -4040,12 +4041,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"displayName\"\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -4097,12 +4098,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"members[display eq \\\"Babs Jensen\\\"]\"\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -4153,12 +4154,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"members\"\n     }]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -4211,12 +4212,12 @@
 											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [\n         {\n            \"op\":\"Add\",\n            \"path\":\"displayName\",\n            \"value\": \"Tour Guides 2\"\n        },\n        {\n            \"op\": \"Add\",\n            \"path\": \"members\",\n            \"value\": [\n                {\n                    \"value\": \"{{userSCIM1}}\",\n                    \"$ref\": \"https://example.com/v2/Users/{{userSCIM1}}\",\n                    \"display\": \"Babs Jensen\"\n                }\n            ]\n        }\n    ]\n\n}"
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -4264,12 +4265,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups"
 											]
@@ -4318,12 +4319,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/wrong-id",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/wrong-id",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"wrong-id"
@@ -4361,12 +4362,12 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups/{{groupSCIM}}",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups",
 												"{{groupSCIM}}"
@@ -4409,12 +4410,12 @@
 											}
 										],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/scim/Groups",
+											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"scim",
 												"Groups"
 											]
