@@ -45,7 +45,7 @@ public class CustomBlockingConnectionPool extends BlockingConnectionPool {
         super(pc, cf);
     }
 
-    public CustomBlockingConnectionPool(PoolConfig pc, DefaultConnectionFactory cf, int maxRetryOnFailure) {
+    public CustomBlockingConnectionPool(PoolConfig pc, DefaultConnectionFactory cf, int maxRetries) {
         this(pc, cf);
         this.maxRetries = maxRetries;
     }

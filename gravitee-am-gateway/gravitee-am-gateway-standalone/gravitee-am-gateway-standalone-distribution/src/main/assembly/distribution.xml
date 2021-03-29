@@ -80,6 +80,9 @@
             <includes>
                 <include>io.gravitee.*:*:jar</include>
             </includes>
+            <excludes>
+                <exclude>io.gravitee.am.identityprovider:gravitee-am-identityprovider-ldap-common:jar</exclude>
+            </excludes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
         <dependencySet>
