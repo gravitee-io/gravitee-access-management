@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "66bc895e-10c0-4986-8ef0-851e53d147c9",
+		"_postman_id": "37845475-431f-4496-b7b8-dcaf09af5cf1",
 		"name": "Gravitee.io - AM - Openid JARM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -14,7 +14,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "571e9b59-b9e7-452c-9469-9786ded290a6",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -76,7 +75,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -91,6 +89,7 @@
 									"    pm.expect(jsonData.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled).to.eql(false);",
 									"    ",
 									"    pm.environment.set('domain', jsonData.id);",
+									"    pm.environment.set('domainHrid', jsonData.hrid);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -137,7 +136,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "286df3a2-0e06-4b00-9614-3b0fd9ceecb9",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -198,7 +196,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(204);",
@@ -250,7 +247,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -304,7 +300,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -353,7 +348,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "2e92f1ea-5d06-4aa3-9ddc-95b0359a8f20",
 								"exec": [
 									"pm.test(\"Status code is 204\", function () {",
 									"    pm.response.to.have.status(204);",
@@ -405,7 +399,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -465,7 +458,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -528,7 +520,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function(){}, 10000);"
@@ -577,7 +568,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -616,12 +606,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+							"raw": "{{gateway_url}}/{{domainHrid}}/oidc/.well-known/openid-configuration",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"{{domain}}",
+								"{{domainHrid}}",
 								"oidc",
 								".well-known",
 								"openid-configuration"
@@ -636,7 +626,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "fbe2362d-ad75-4baa-8825-b74218b047c7",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -690,7 +679,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "1c063d6b-7120-4fd1-8aea-b04f7defc4d0",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -742,8 +730,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Case - Signing authorization",
@@ -757,7 +744,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "462b93ec-a015-41b8-a1bf-8d5446fc31aa",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -777,7 +763,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "904f0113-b2b9-4645-9511-48bb10791506",
 										"exec": [
 											""
 										],
@@ -823,7 +808,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -882,9 +866,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Authorization Code Flow",
@@ -898,7 +880,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -911,7 +892,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientIdJarm'));",
 													"    ",
@@ -924,7 +905,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -972,7 +952,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "67df9bf8-89a2-4c95-9728-097aad6d2be4",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -995,7 +974,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1022,7 +1000,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4afec9f2-a5ba-4647-9a78-6d74cb9c157c",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -1041,7 +1018,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1098,7 +1074,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4fd643c0-c11e-41ee-b85f-87a7d89fdebe",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -1114,7 +1089,7 @@
 													"",
 													"pm.test(\"Should be redirected to consent page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.startsWith(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
 													"",
@@ -1127,7 +1102,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1154,7 +1128,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "3b80138d-68ff-4dc5-a6b3-ff08ab98e89a",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -1177,7 +1150,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1203,7 +1175,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "dd53996a-9c23-4eaf-b618-1be0ca5fca63",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -1222,7 +1193,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1274,7 +1244,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "368681d3-a8c7-4036-980e-9f5117e71036",
 												"exec": [
 													"function parseJwt (token) {",
 													"    var base64Url = token.split('.')[1];",
@@ -1303,7 +1272,7 @@
 													"    ",
 													"    let jwt = parseJwt(response);",
 													"    let origin = pm.environment.get(\"gateway_url\");",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Contains a code claim'] = jwt.code !== undefined;",
 													"    tests['Contains an iss claim'] = jwt.iss === origin + '/' + domain + '/oidc';",
@@ -1318,7 +1287,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1345,7 +1313,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ba6b6fb1-32ac-46d5-8e2d-f97961029a05",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -1364,7 +1331,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1390,7 +1356,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "ae919f0d-445b-4485-ab01-2cf571fa4193",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -1400,16 +1365,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "422e1c9e-b7a0-4d79-9a28-eee3a081cfc2",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Redirect URI mismatch",
@@ -1420,7 +1382,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
 												"exec": [
 													"function parseJwt (token) {",
 													"    var base64Url = token.split('.')[1];",
@@ -1440,7 +1401,7 @@
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let origin = pm.environment.get(\"gateway_url\");",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to default error page'] = location.includes(origin + '/' + domain + '/oauth/error');",
 													"    tests['Contains a response'] = location.includes('?response=');",
@@ -1465,7 +1426,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1513,7 +1473,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
 												"exec": [
 													"function parseJwt (token) {",
 													"    var base64Url = token.split('.')[1];",
@@ -1533,7 +1492,7 @@
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let origin = pm.environment.get(\"gateway_url\");",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to default error page'] = location.includes(origin + '/' + domain + '/oauth/error');",
 													"    tests['Contains a response'] = location.includes('#response=');",
@@ -1558,7 +1517,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1605,7 +1563,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "ae919f0d-445b-4485-ab01-2cf571fa4193",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -1615,20 +1572,15 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "422e1c9e-b7a0-4d79-9a28-eee3a081cfc2",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Implicit Flow",
@@ -1642,7 +1594,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -1655,7 +1606,7 @@
 													"",
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientIdJarm'));",
 													"    ",
@@ -1668,7 +1619,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1720,7 +1670,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "67df9bf8-89a2-4c95-9728-097aad6d2be4",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -1743,7 +1692,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1770,7 +1718,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4afec9f2-a5ba-4647-9a78-6d74cb9c157c",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -1789,7 +1736,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1846,7 +1792,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "368681d3-a8c7-4036-980e-9f5117e71036",
 												"exec": [
 													"function parseJwt (token) {",
 													"    var base64Url = token.split('.')[1];",
@@ -1875,7 +1820,7 @@
 													"    ",
 													"    let jwt = parseJwt(response);",
 													"    let origin = pm.environment.get(\"gateway_url\");",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Contains an access_token claim'] = jwt.access_token !== undefined;",
 													"    tests['Contains an iss claim'] = jwt.iss === origin + '/' + domain + '/oidc';",
@@ -1890,7 +1835,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1917,7 +1861,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ba6b6fb1-32ac-46d5-8e2d-f97961029a05",
 												"exec": [
 													"pm.test(\"Status code is 302\", function () {",
 													"    pm.response.to.have.status(302);",
@@ -1936,7 +1879,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -1962,7 +1904,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "ae919f0d-445b-4485-ab01-2cf571fa4193",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -1972,16 +1913,13 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "422e1c9e-b7a0-4d79-9a28-eee3a081cfc2",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Redirect URI mismatch",
@@ -1992,7 +1930,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
 												"exec": [
 													"function parseJwt (token) {",
 													"    var base64Url = token.split('.')[1];",
@@ -2012,7 +1949,7 @@
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let origin = pm.environment.get(\"gateway_url\");",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to default error page'] = location.includes(origin + '/' + domain + '/oauth/error');",
 													"    tests['Contains a response'] = location.includes('#response=');",
@@ -2037,7 +1974,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -2089,7 +2025,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
 												"exec": [
 													"function parseJwt (token) {",
 													"    var base64Url = token.split('.')[1];",
@@ -2109,7 +2044,7 @@
 													"pm.test(\"Should be a redirection to login page\", function() {",
 													"    var location = postman.getResponseHeader('Location');",
 													"    let origin = pm.environment.get(\"gateway_url\");",
-													"    let domain = pm.environment.get(\"domain\");",
+													"    let domain = pm.environment.get(\"domainHrid\");",
 													"    ",
 													"    tests['Redirect to default error page'] = location.includes(origin + '/' + domain + '/oauth/error');",
 													"    tests['Contains a response'] = location.includes('?response=');",
@@ -2134,7 +2069,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "904f0113-b2b9-4645-9511-48bb10791506",
 												"exec": [
 													""
 												],
@@ -2185,7 +2119,6 @@
 								{
 									"listen": "prerequest",
 									"script": {
-										"id": "ae919f0d-445b-4485-ab01-2cf571fa4193",
 										"type": "text/javascript",
 										"exec": [
 											""
@@ -2195,23 +2128,19 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "422e1c9e-b7a0-4d79-9a28-eee3a081cfc2",
 										"type": "text/javascript",
 										"exec": [
 											""
 										]
 									}
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
 					],
 					"event": [
 						{
 							"listen": "prerequest",
 							"script": {
-								"id": "340917cd-1f7b-4a39-ba87-ffe70987b355",
 								"type": "text/javascript",
 								"exec": [
 									""
@@ -2221,19 +2150,15 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "e55af275-9b72-4f13-bd23-78f9b32b8a3e",
 								"type": "text/javascript",
 								"exec": [
 									""
 								]
 							}
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Case - Encrypt authorization",
@@ -2250,7 +2175,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "d83b2401-3844-4147-bbb3-abe08b43a342",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -2302,9 +2226,7 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Authorization Code Flow",
@@ -2318,7 +2240,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
 														"exec": [
 															"pm.test(\"Status code is 302\", function () {",
 															"    pm.response.to.have.status(302);",
@@ -2331,7 +2252,7 @@
 															"",
 															"pm.test(\"Should be a redirection to login page\", function() {",
 															"    var location = postman.getResponseHeader('Location');",
-															"    let domain = pm.environment.get(\"domain\");",
+															"    let domain = pm.environment.get(\"domainHrid\");",
 															"    ",
 															"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientIdJarm'));",
 															"    ",
@@ -2344,7 +2265,6 @@
 												{
 													"listen": "prerequest",
 													"script": {
-														"id": "904f0113-b2b9-4645-9511-48bb10791506",
 														"exec": [
 															""
 														],
@@ -2392,7 +2312,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "67df9bf8-89a2-4c95-9728-097aad6d2be4",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2415,7 +2334,6 @@
 												{
 													"listen": "prerequest",
 													"script": {
-														"id": "904f0113-b2b9-4645-9511-48bb10791506",
 														"exec": [
 															""
 														],
@@ -2442,7 +2360,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "4afec9f2-a5ba-4647-9a78-6d74cb9c157c",
 														"exec": [
 															"pm.test(\"Status code is 302\", function () {",
 															"    pm.response.to.have.status(302);",
@@ -2461,7 +2378,6 @@
 												{
 													"listen": "prerequest",
 													"script": {
-														"id": "904f0113-b2b9-4645-9511-48bb10791506",
 														"exec": [
 															""
 														],
@@ -2518,7 +2434,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "368681d3-a8c7-4036-980e-9f5117e71036",
 														"exec": [
 															"function parseJweHeader (token) {",
 															"    var base64Url = token.split('.')[0];",
@@ -2558,7 +2473,6 @@
 												{
 													"listen": "prerequest",
 													"script": {
-														"id": "904f0113-b2b9-4645-9511-48bb10791506",
 														"exec": [
 															""
 														],
@@ -2585,7 +2499,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "ba6b6fb1-32ac-46d5-8e2d-f97961029a05",
 														"exec": [
 															"pm.test(\"Status code is 302\", function () {",
 															"    pm.response.to.have.status(302);",
@@ -2604,7 +2517,6 @@
 												{
 													"listen": "prerequest",
 													"script": {
-														"id": "904f0113-b2b9-4645-9511-48bb10791506",
 														"exec": [
 															""
 														],
@@ -2630,7 +2542,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "ae919f0d-445b-4485-ab01-2cf571fa4193",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -2640,16 +2551,13 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "422e1c9e-b7a0-4d79-9a28-eee3a081cfc2",
 												"type": "text/javascript",
 												"exec": [
 													""
 												]
 											}
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								},
 								{
 									"name": "Redirect URI mismatch",
@@ -2660,7 +2568,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
 														"exec": [
 															"function parseJweHeader (token) {",
 															"    var base64Url = token.split('.')[0];",
@@ -2680,7 +2587,7 @@
 															"pm.test(\"Should be a redirection to login page\", function() {",
 															"    var location = postman.getResponseHeader('Location');",
 															"    let origin = pm.environment.get(\"gateway_url\");",
-															"    let domain = pm.environment.get(\"domain\");",
+															"    let domain = pm.environment.get(\"domainHrid\");",
 															"    ",
 															"    tests['Redirect to default error page'] = location.includes(origin + '/' + domain + '/oauth/error');",
 															"    tests['Contains a response'] = location.includes('?response=');",
@@ -2702,7 +2609,6 @@
 												{
 													"listen": "prerequest",
 													"script": {
-														"id": "904f0113-b2b9-4645-9511-48bb10791506",
 														"exec": [
 															""
 														],
@@ -2750,7 +2656,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "fb56a849-b090-4e80-9c8c-eca9f4d72e85",
 														"exec": [
 															"function parseJweHeader (token) {",
 															"    var base64Url = token.split('.')[0];",
@@ -2770,7 +2675,7 @@
 															"pm.test(\"Should be a redirection to login page\", function() {",
 															"    var location = postman.getResponseHeader('Location');",
 															"    let origin = pm.environment.get(\"gateway_url\");",
-															"    let domain = pm.environment.get(\"domain\");",
+															"    let domain = pm.environment.get(\"domainHrid\");",
 															"    ",
 															"    tests['Redirect to default error page'] = location.includes(origin + '/' + domain + '/oauth/error');",
 															"    tests['Contains a response'] = location.includes('#response=');",
@@ -2792,7 +2697,6 @@
 												{
 													"listen": "prerequest",
 													"script": {
-														"id": "904f0113-b2b9-4645-9511-48bb10791506",
 														"exec": [
 															""
 														],
@@ -2839,7 +2743,6 @@
 										{
 											"listen": "prerequest",
 											"script": {
-												"id": "ae919f0d-445b-4485-ab01-2cf571fa4193",
 												"type": "text/javascript",
 												"exec": [
 													""
@@ -2849,27 +2752,19 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "422e1c9e-b7a0-4d79-9a28-eee3a081cfc2",
 												"type": "text/javascript",
 												"exec": [
 													""
 												]
 											}
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Delete domain",
@@ -2877,7 +2772,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -2921,6 +2815,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }

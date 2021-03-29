@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "f4218895-bd5f-49f3-9922-f28d4d68da84",
+		"_postman_id": "b5ab30a3-6091-4101-ae5b-9a8676901983",
 		"name": "Gravitee.io - AM - Application Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -14,7 +14,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "450d08b7-6a1f-4f86-8264-5671bb4e42c6",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -76,7 +75,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "4eca35c1-ddaa-4435-a9f1-b943785cd093",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -123,8 +121,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Application Management",
@@ -138,7 +135,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9ffde25c-c153-4d61-9436-f52330de7474",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -202,7 +198,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "94ead822-dbd7-4b44-8734-581ca695b4a0",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
@@ -261,7 +256,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "bde7de91-a6a2-470e-ab5f-d255bf29425d",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
@@ -320,7 +314,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e3be55e0-7aea-445b-878b-8b87259627de",
 										"exec": [
 											"pm.test(\"Status code is 400\", function () {",
 											"    pm.response.to.have.status(400);",
@@ -379,7 +372,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "b2eb2eb5-9432-4572-b083-9c905d2743ec",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -422,9 +414,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Nominal Case",
@@ -435,7 +425,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "d8d2df6a-b432-4e28-9395-463ef5ee677b",
 										"exec": [
 											"pm.test(\"Status code is 201\", function () {",
 											"    pm.response.to.have.status(201);",
@@ -512,7 +501,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9b373174-52ba-44c1-990e-3803c4ecf2cd",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -578,7 +566,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "a0a16528-e37a-440a-b62e-fb44055c198d",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -645,7 +632,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "8418b7b7-9bfd-4005-acec-629ba4e71f40",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -711,7 +697,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "beb4ccb1-1d67-4631-8306-ecbd1976190b",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -774,7 +759,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "dbca6407-b027-4875-b72b-a25df609ce12",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -840,7 +824,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "692c2d5b-b66c-410a-a038-9b1c2aa15530",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -908,7 +891,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "fd7447fe-9e75-4970-94fb-04a107060b67",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -974,7 +956,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "f6ee6bb2-ced6-4bf4-989c-2c87da939d65",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1042,7 +1023,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "9a9f6d5e-dd41-45b5-a722-3db5f7552d2e",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -1101,7 +1081,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "e3f6af51-b06c-4a95-9224-57048c3679ec",
 										"exec": [
 											"pm.test(\"Status code is 204\", function () {",
 											"    pm.response.to.have.status(204);",
@@ -1148,12 +1127,9 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Delete domain",
@@ -1161,7 +1137,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "fe70e410-8bb2-4ffb-a4e9-8d4999613337",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -1205,6 +1180,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }

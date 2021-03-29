@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c1ada774-658d-4329-912a-1ea9e35b5441",
+		"_postman_id": "7bbfec89-c5fd-4b9b-95f1-0a94753f6e61",
 		"name": "Gravitee.io - AM - Openid Discovery",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -15,7 +15,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "72c2bd38-2ce5-4daa-ba07-ec414d7bbafd",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -77,14 +76,14 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "144b087f-8d20-44ab-8f08-c981a5790e59",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
 									"});",
 									"",
 									"var jsonData = pm.response.json();",
-									"pm.environment.set('domain', jsonData.id);"
+									"pm.environment.set('domain', jsonData.id);",
+									"pm.environment.set('domainHrid', jsonData.hrid);"
 								],
 								"type": "text/javascript"
 							}
@@ -130,7 +129,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "5fbaad49-d354-43bc-878f-2b97e8c3eab9",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -193,7 +191,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "664b1327-56b9-474b-a028-82a97fa514cf",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function(){}, 10000);"
@@ -236,8 +233,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Discovery",
@@ -248,7 +244,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "2f6ecac5-73ba-4da8-9a89-67159f158ea9",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -310,12 +305,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+							"raw": "{{gateway_url}}/{{domainHrid}}/oidc/.well-known/openid-configuration",
 							"host": [
 								"{{gateway_url}}"
 							],
 							"path": [
-								"{{domain}}",
+								"{{domainHrid}}",
 								"oidc",
 								".well-known",
 								"openid-configuration"
@@ -330,7 +325,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "fe647cd4-ee6b-4e98-a25a-904aab169f89",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -363,8 +357,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Delete domain",
@@ -372,7 +365,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "12c9fc78-8cd3-416a-a0ee-3983ec6cac4a",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -416,6 +408,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "721037fe-e84d-4321-ba2e-fe4f8f2b8ac0",
+		"_postman_id": "c8334b83-058d-46ed-925c-9818a776be33",
 		"name": "Gravitee.io - AM - UMA 2.0 - app version",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -15,7 +15,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "1ed5e423-7918-4d55-8469-4770bdc5a8a3",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -55,10 +54,7 @@
 									"value": "adminadmin",
 									"type": "text"
 								}
-							],
-							"options": {
-								"urlencoded": {}
-							}
+							]
 						},
 						"url": {
 							"raw": "{{management_url}}/management/auth/token",
@@ -80,14 +76,14 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "a3552b80-9704-44e1-859c-763c91318276",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
 									"});",
 									"",
 									"var jsonData = pm.response.json();",
-									"pm.environment.set('domain', jsonData.id);"
+									"pm.environment.set('domain', jsonData.id);",
+									"pm.environment.set('domainHrid', jsonData.hrid);"
 								],
 								"type": "text/javascript"
 							}
@@ -107,10 +103,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"uma2_postman\", \n\t\"description\": \"test user-managed access specifications\"\n}",
-							"options": {
-								"raw": {}
-							}
+							"raw": "{\n\t\"name\": \"uma2_postman\", \n\t\"description\": \"test user-managed access specifications\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
@@ -136,7 +129,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "f0fbd02e-178c-4477-94de-205c7ccccbf9",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(204);",
@@ -160,10 +152,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}",
-							"options": {
-								"raw": {}
-							}
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities/default-idp-{{domain}}",
@@ -191,7 +180,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "804cf20e-4360-4723-b446-84c0155ee898",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -218,10 +206,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"Alice\\\",\\\"lastname\\\":\\\"Doe\\\",\\\"username\\\":\\\"alice\\\",\\\"password\\\":\\\"password\\\"},{\\\"firstname\\\":\\\"Bob\\\",\\\"lastname\\\":\\\"Doe\\\",\\\"username\\\":\\\"bob\\\",\\\"email\\\":\\\"bob.doe@mail.com\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}",
-							"options": {
-								"raw": {}
-							}
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"Alice\\\",\\\"lastname\\\":\\\"Doe\\\",\\\"username\\\":\\\"alice\\\",\\\"password\\\":\\\"password\\\"},{\\\"firstname\\\":\\\"Bob\\\",\\\"lastname\\\":\\\"Doe\\\",\\\"username\\\":\\\"bob\\\",\\\"email\\\":\\\"bob.doe@mail.com\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities",
@@ -248,7 +233,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "2009540a-f82a-4070-b9e3-618dbc51ce52",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -287,10 +271,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"RS-client\",\n  \"type\": \"RESOURCE_SERVER\"\n}",
-							"options": {
-								"raw": {}
-							}
+							"raw": "{\n  \"name\": \"RS-client\",\n  \"type\": \"RESOURCE_SERVER\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -317,7 +298,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "5d60572a-01d8-4f87-8d2b-6ae400519a91",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -347,10 +327,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"scopes\": [\"uma_protection\"],\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\"]\n\t}\n  }\n}\n",
-							"options": {
-								"raw": {}
-							}
+							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"scopes\": [\"uma_protection\"],\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\"]\n\t}\n  }\n}\n"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{rs_app}}",
@@ -378,7 +355,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "6c72f67a-1630-4a93-b293-b3ab75759a4c",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -417,10 +393,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"RQP-client\",\n  \"type\": \"WEB\"\n}",
-							"options": {
-								"raw": {}
-							}
+							"raw": "{\n  \"name\": \"RQP-client\",\n  \"type\": \"WEB\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
@@ -447,7 +420,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "d76c8ad6-55b6-4b07-aacc-6823efa3a067",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -476,10 +448,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:uma-ticket\"],\n\t\t\"scopes\": [\"openid\",\"profile\",\"email\",\"phone\",\"address\"]\n\t}\n  }\n}\n",
-							"options": {
-								"raw": {}
-							}
+							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:uma-ticket\"],\n\t\t\"scopes\": [\"openid\",\"profile\",\"email\",\"phone\",\"address\"]\n\t}\n  }\n}\n"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{rqp_app}}",
@@ -507,7 +476,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "8d3c0b46-1bc6-431b-a23b-12038111c03c",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function () { }, 10000);"
@@ -530,10 +498,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"enabled\": true\n}",
-							"options": {
-								"raw": {}
-							}
+							"raw": "{\n  \"enabled\": true\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
@@ -553,8 +518,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "UMA_2.0",
@@ -571,7 +535,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "35cdbd9f-12d5-42fe-ba24-c3410deb6148",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -593,12 +556,12 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/.well-known",
+											"raw": "{{gateway_url}}/{{domainHrid}}/.well-known",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												".well-known"
 											]
 										}
@@ -611,7 +574,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "5372fb1f-54fd-4ed2-9426-2349a468672f",
 												"exec": [
 													"pm.test(\"Status code is 404\", function () {",
 													"    pm.response.to.have.status(404);",
@@ -626,12 +588,12 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/uma/.well-known/uma2-configuration",
+											"raw": "{{gateway_url}}/{{domainHrid}}/uma/.well-known/uma2-configuration",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"uma",
 												".well-known",
 												"uma2-configuration"
@@ -646,7 +608,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2f3b1f1f-4696-4a1f-8f5e-c098df67e283",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -669,12 +630,12 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{gateway_url}}/{{domain}}/oidc/.well-known/openid-configuration",
+											"raw": "{{gateway_url}}/{{domainHrid}}/oidc/.well-known/openid-configuration",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
-												"{{domain}}",
+												"{{domainHrid}}",
 												"oidc",
 												".well-known",
 												"openid-configuration"
@@ -689,7 +650,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "5cb78219-bf3e-4011-b55f-5543dc1bc772",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -732,10 +692,7 @@
 													"value": "must_fail_before",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{oidcTokenEndpoint}}",
@@ -746,13 +703,9 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "Enable UMA 2.0",
@@ -763,7 +716,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "80afe5ef-0b06-424d-9da7-be805dbcdf50",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -798,10 +750,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"uma\": {\n    \"enabled\": true\n  }\n}",
-									"options": {
-										"raw": {}
-									}
+									"raw": "{\n  \"uma\": {\n    \"enabled\": true\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
@@ -827,7 +776,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "332ce953-5ce9-468a-9c5e-6f53c9904eae",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -836,7 +784,7 @@
 											"pm.test(\"Check uma is enabled\", function () {",
 											"    pm.response.to.be.header('Content-Type', 'application/json');",
 											"    let body = pm.response.json();",
-											"    let expected_endpoint = pm.environment.get('gateway_url') + \"/\" + pm.environment.get('domain') + \"/uma/.well-known/uma2-configuration\";",
+											"    let expected_endpoint = pm.environment.get('gateway_url') + \"/\" + pm.environment.get('domainHrid') + \"/uma/.well-known/uma2-configuration\";",
 											"",
 											"    pm.expect(body).to.have.property(\"openid-configuration\");",
 											"    pm.expect(body).to.have.property(\"uma2-configuration\");",
@@ -852,12 +800,12 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/.well-known",
+									"raw": "{{gateway_url}}/{{domainHrid}}/.well-known",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										".well-known"
 									]
 								}
@@ -870,7 +818,6 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "0ae6a9fd-12ea-4cb9-81f5-479a9dd1e031",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -906,12 +853,12 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{gateway_url}}/{{domain}}/uma/.well-known/uma2-configuration",
+									"raw": "{{gateway_url}}/{{domainHrid}}/uma/.well-known/uma2-configuration",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
-										"{{domain}}",
+										"{{domainHrid}}",
 										"uma",
 										".well-known",
 										"uma2-configuration"
@@ -920,9 +867,7 @@
 							},
 							"response": []
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "UMA Protection API",
@@ -942,7 +887,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "396fcf8c-b88f-4149-bda0-f856ead2464b",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -988,10 +932,7 @@
 																	"value": "password",
 																	"type": "text"
 																}
-															],
-															"options": {
-																"urlencoded": {}
-															}
+															]
 														},
 														"url": {
 															"raw": "{{tokenEndpoint}}",
@@ -1002,9 +943,7 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										},
 										{
 											"name": "Resource Registration",
@@ -1015,7 +954,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "79aba7e5-1b48-4ba4-ac5d-d7b4e839f211",
 																"exec": [
 																	"pm.test(\"Status code is 401\", function () {",
 																	"    pm.response.to.have.status(401);",
@@ -1044,7 +982,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "d4f146b5-437d-4caa-8c52-bc6f4edbd109",
 																"exec": [
 																	"pm.test(\"Status code is 405\", function () {",
 																	"    pm.response.to.have.status(405);",
@@ -1081,7 +1018,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "e1028c87-f30d-4d6f-bce6-30ff88fc2be1",
 																"exec": [
 																	"pm.test(\"Status code is 403\", function () {",
 																	"    pm.response.to.have.status(403);",
@@ -1118,9 +1054,7 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										},
 										{
 											"name": "Permission Ticket",
@@ -1131,7 +1065,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "96fc8a1a-002c-40cc-8cea-6b00ae8762b5",
 																"exec": [
 																	"pm.test(\"Status code is 401\", function () {",
 																	"    pm.response.to.have.status(401);",
@@ -1166,7 +1099,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "61b1f0d9-84e1-44b5-a194-cf7f3e5bbedd",
 																"exec": [
 																	"pm.test(\"Status code is 405\", function () {",
 																	"    pm.response.to.have.status(405);",
@@ -1203,7 +1135,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "95da5a50-c2b3-4363-aef6-5f098e8dc490",
 																"exec": [
 																	"pm.test(\"Status code is 401\", function () {",
 																	"    pm.response.to.have.status(401);",
@@ -1247,13 +1178,9 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								},
 								{
 									"name": "With a PAT (Protection Api Token)",
@@ -1267,7 +1194,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "22c65180-b986-4510-ad42-618600d27ded",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -1320,10 +1246,7 @@
 																	"value": "uma_protection",
 																	"type": "text"
 																}
-															],
-															"options": {
-																"urlencoded": {}
-															}
+															]
 														},
 														"url": {
 															"raw": "{{tokenEndpoint}}",
@@ -1334,9 +1257,7 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										},
 										{
 											"name": "Resource Registration",
@@ -1347,7 +1268,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "ad72ee6b-79d1-458e-8043-ef6e311c70f0",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1366,8 +1286,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -1404,7 +1322,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "d54e038d-b628-4c12-9a57-eeabc236b04d",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1423,8 +1340,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -1455,9 +1370,7 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										},
 										{
 											"name": "Permission Ticket",
@@ -1468,7 +1381,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "21fd4201-562f-4fb7-aba4-7e1bb9297a46",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -1511,10 +1423,7 @@
 																	"value": "uma_protection",
 																	"type": "text"
 																}
-															],
-															"options": {
-																"urlencoded": {}
-															}
+															]
 														},
 														"url": {
 															"raw": "{{tokenEndpoint}}",
@@ -1531,7 +1440,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "55768af4-9909-4ab0-ba05-058447af6b42",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1583,7 +1491,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "8cc2f75d-f6be-49b6-9ed8-94ba813a99ca",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1635,7 +1542,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "e72a770a-85aa-4103-b90a-11775b9c4657",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1687,7 +1593,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "1867bb4f-cb32-4ea6-8104-6726f82f573f",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -1711,8 +1616,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -1749,7 +1652,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "d4cd085a-0b6b-48e1-a522-941ee47f0d25",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1801,7 +1703,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "362b576b-f7dd-43d7-b498-c24f2617b195",
 																"exec": [
 																	"pm.test(\"Status code is 204\", function () {",
 																	"    pm.response.to.have.status(204);",
@@ -1812,8 +1713,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -1841,7 +1740,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "92cf3775-397f-4adb-9d3e-e96035285080",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -1887,18 +1785,12 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								}
 							],
-							"description": "Case when user bearer called Protected Access Token (PAT) does not contains uma_protected scope.",
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							"description": "Case when user bearer called Protected Access Token (PAT) does not contains uma_protected scope."
 						},
 						{
 							"name": "Nominal case",
@@ -1912,7 +1804,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "7ded48b4-aade-402a-8a79-b552b5d34094",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -1965,10 +1856,7 @@
 															"value": "uma_protection",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -1979,9 +1867,7 @@
 											},
 											"response": []
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								},
 								{
 									"name": "Resource Registration",
@@ -1992,7 +1878,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "2f537e99-cd2e-4c70-871b-c4c7ee0a789d",
 														"exec": [
 															"pm.test(\"Status code is 204\", function () {",
 															"    pm.response.to.have.status(204);",
@@ -2002,8 +1887,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2031,7 +1914,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "07c4c6b7-1661-4520-be21-afe4b61f8f71",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -2055,8 +1937,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2093,7 +1973,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "328db8e3-f003-48c2-b234-0fb17d625404",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2109,8 +1988,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2138,7 +2015,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "383fa4d2-610c-46b9-9240-9af7342b97e9",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2158,8 +2034,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2196,7 +2070,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "f4426382-8732-4a60-bba0-896c32f542e8",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2213,8 +2086,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2242,7 +2113,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "834774a9-b611-48db-94df-c07de4b4cf28",
 														"exec": [
 															"pm.test(\"Status code is 204\", function () {",
 															"    pm.response.to.have.status(204);",
@@ -2253,8 +2123,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2276,9 +2144,7 @@
 											},
 											"response": []
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								},
 								{
 									"name": "Resource Access Policies",
@@ -2289,7 +2155,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "a0a729e9-0f33-427c-a204-57bd36be0f49",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    var body = pm.response.json();",
@@ -2302,8 +2167,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2340,7 +2203,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "6fc10fa7-f382-4c4e-9bf3-b93b178a9107",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2356,8 +2218,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2388,7 +2248,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "0c35dfbb-4349-4b60-8719-d294cd859a9e",
 														"exec": [
 															"pm.test(\"Status code is 204\", function () {",
 															"    pm.response.to.have.status(204);",
@@ -2399,8 +2258,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2432,7 +2289,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "460851f4-cc74-4bb3-8eeb-dcddca9466f9",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -2456,8 +2312,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2497,7 +2351,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "30082c06-d479-410e-b8ff-bd7b2d827c7d",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2513,8 +2366,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2542,7 +2393,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "f7aa1ead-7159-4b27-89c6-739db7b478e2",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2560,8 +2410,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2598,7 +2446,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "d138baf8-934a-4da2-8283-1f7820f00912",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2613,8 +2460,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2645,7 +2490,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "4d6eeaaa-dc0f-40ca-ab4d-340b6a339c96",
 														"exec": [
 															"pm.test(\"Status code is 204\", function () {",
 															"    pm.response.to.have.status(204);",
@@ -2656,8 +2500,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2685,7 +2527,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "8e3eb9d1-4119-478b-8377-bd5f81235d81",
 														"exec": [
 															"pm.test(\"Status code is 204\", function () {",
 															"    pm.response.to.have.status(204);",
@@ -2696,8 +2537,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2719,9 +2558,7 @@
 											},
 											"response": []
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								},
 								{
 									"name": "Permission Ticket",
@@ -2732,7 +2569,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "526cb85d-fec9-4293-82a8-20fcbbbc661b",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -2756,8 +2592,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2794,7 +2628,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "a1cb0b1b-905c-4e25-a8e2-67165968fac3",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2810,8 +2643,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2842,7 +2673,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "ada6e376-cfae-4a0a-ada9-a8c443204aff",
 														"exec": [
 															"pm.test(\"Status code is 204\", function () {",
 															"    pm.response.to.have.status(204);",
@@ -2853,8 +2683,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2886,7 +2714,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "cb17e4a1-3ea1-43d5-b9e2-ad46704d7e1c",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -2910,8 +2737,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2948,7 +2773,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "2c4cfdcb-13db-4b79-8697-f254c8cc2e20",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -2964,8 +2788,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -2996,7 +2818,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "699d6d2b-d329-4c1f-94a4-d7fb01a4bff4",
 														"exec": [
 															"pm.test(\"Status code is 204\", function () {",
 															"    pm.response.to.have.status(204);",
@@ -3007,8 +2828,6 @@
 													}
 												}
 											],
-											"protocolProfileBehavior": {
-											},
 											"request": {
 												"auth": {
 													"type": "noauth"
@@ -3040,7 +2859,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "6528c793-79aa-4e1c-9cac-73139c10a6ba",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -3083,10 +2901,7 @@
 															"value": "uma_protection",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -3103,7 +2918,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "05a49b0c-a17f-4f44-a36a-6cd100cc3b89",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -3154,7 +2968,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "c89ea4f4-1d20-402b-b941-10943002748d",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -3199,17 +3012,11 @@
 											},
 											"response": []
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				},
 				{
 					"name": "UMA Grant",
@@ -3223,7 +3030,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "8437edab-50a6-4469-8722-a4c6e8ecf58d",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -3277,10 +3083,7 @@
 													"value": "openid",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3297,7 +3100,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "95c08629-3ebf-41e6-af1d-d5f64d72ace3",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -3340,10 +3142,7 @@
 													"value": "uma_protection",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3360,7 +3159,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ad9ee91c-348f-4913-a9c9-b0a984a67db4",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -3405,9 +3203,7 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Invalid Case",
@@ -3418,7 +3214,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2f6fa2bc-b116-4bf5-9bbc-4c8b99c0a13e",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -3452,10 +3247,7 @@
 													"value": "urn:ietf:params:oauth:grant-type:uma-ticket",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3472,7 +3264,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f61cfd3d-75f9-4cd7-b4c9-e27124ad272c",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -3511,10 +3302,7 @@
 													"value": "notfound",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3531,7 +3319,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "2933546e-a6a5-401f-a252-0aac2a6898b1",
 												"exec": [
 													"pm.test(\"Status code is 403\", function () {",
 													"    pm.response.to.have.status(403);",
@@ -3575,10 +3362,7 @@
 													"value": "missingClaimToken",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3595,7 +3379,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f66137f2-cf6b-4dc7-bf35-93adbe603588",
 												"exec": [
 													"pm.test(\"Status code is 403\", function () {",
 													"    pm.response.to.have.status(403);",
@@ -3639,10 +3422,7 @@
 													"value": "missingClaimTokenFormat",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3659,7 +3439,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "d24d5a4c-6dd9-41a8-9fb2-eb55cf184a61",
 												"exec": [
 													"pm.test(\"Status code is 403\", function () {",
 													"    pm.response.to.have.status(403);",
@@ -3708,10 +3487,7 @@
 													"value": "missingClaimTokenFormat",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3728,7 +3504,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "6475ff1f-dd87-4c52-b9eb-417fb6a9b07c",
 												"exec": [
 													"pm.test(\"Status code is 403\", function () {",
 													"    pm.response.to.have.status(403);",
@@ -3777,10 +3552,7 @@
 													"value": "malformedClaimToken",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3797,7 +3569,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "001ad5cb-c07d-43f8-954c-ff54c148f105",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -3854,10 +3625,7 @@
 													"value": "profile:unknown",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3874,7 +3642,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "f0396042-9349-4db5-aeab-a47168a603b6",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -3931,10 +3698,7 @@
 													"value": "phone:write",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -3951,7 +3715,6 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "4906b7bb-27f8-4fa7-a4c8-182af176f5a9",
 												"exec": [
 													"pm.test(\"Status code is 400\", function () {",
 													"    pm.response.to.have.status(400);",
@@ -4013,10 +3776,7 @@
 													"value": "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiIwMzQ4NDFmNC00ZjAwLTQwODYtODg0MS1mNDRmMDA2MDg2ODEiLCJhdWQiOiI5ZjA5Yzc1Ni00MjhkLTQ5MTgtODljNy01NjQyOGRhOTE4NmYiLCJwZXJtaXNzaW9ucyI6W3sicmVzb3VyY2VJZCI6Ijc3ZWEwZTk2LTBiMGMtNDBlNy1hYTBlLTk2MGIwYzQwZTcxNiIsInJlc291cmNlU2NvcGVzIjpbInZpZXciLCJkb3dubG9hZCJdfSx7InJlc291cmNlSWQiOiJhMzE5MjcwOC04NDllLTQwNDgtOTkyNy0wODg0OWVlMDQ4YWEiLCJyZXNvdXJjZVNjb3BlcyI6WyJ2aWV3IiwiZG93bmxvYWQiLCJlZGl0Il19XSwiZG9tYWluIjoidW1hMl9wb3N0bWFuIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDkyL3VtYTJfcG9zdG1hbi9vaWRjIiwiZXhwIjoxNTkxMDM3NDkwLCJpYXQiOjE1OTEwMzAyOTAsImp0aSI6Im5nR2FqbHVqaVF3cTVSQlJSaWF5LVJfeFJJOVBPSVliWmplNy16Ri14YlUifQ.xINS0vIiVAQ3bKl09SdrFiJIwBCl6B0sY5k31fWXVnU",
 													"type": "text"
 												}
-											],
-											"options": {
-												"urlencoded": {}
-											}
+											]
 										},
 										"url": {
 											"raw": "{{tokenEndpoint}}",
@@ -4027,9 +3787,7 @@
 									},
 									"response": []
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						},
 						{
 							"name": "Valid Cases",
@@ -4043,7 +3801,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "c1bd8025-3868-4f65-ba20-dd95feafb3df",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -4094,7 +3851,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "150f4067-500c-42bc-a7d1-de17aa126fdc",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4171,10 +3927,7 @@
 															"value": "urn:ietf:params:oauth:token-type:id_token",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -4191,7 +3944,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "0730696d-6c0d-4902-90c7-a93f3d90bfb0",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -4234,10 +3986,7 @@
 															"value": "{{rqp_token}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{introspectionEndpoint}}",
@@ -4254,7 +4003,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "035aa117-6c40-4ae1-b2f8-40aa81d8c905",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4302,10 +4050,7 @@
 															"value": "{{rqp_refresh_token}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -4322,7 +4067,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "85242611-987b-447a-8ea8-b1dbb9373f89",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -4373,7 +4117,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "dfa041bd-10d8-46a5-b251-6f884a343c49",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4453,10 +4196,7 @@
 															"value": "phone address",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -4473,7 +4213,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "525f1a4f-516e-45da-bfec-22f5ca885486",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -4524,7 +4263,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "2b760fa6-1898-4d28-a996-5252cc8bc4d5",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4619,10 +4357,7 @@
 															"value": "{{rqp_token}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -4639,7 +4374,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "195c2180-a4e4-4b99-a425-c576da42b2e9",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -4686,10 +4420,7 @@
 															"value": "{{extended_rpt}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{introspectionEndpoint}}",
@@ -4706,7 +4437,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "e831ce0e-95f3-4b98-afc2-d6d6d72f87e2",
 														"exec": [
 															"pm.test(\"Status code is 400\", function () {",
 															"    pm.response.to.have.status(400);",
@@ -4766,10 +4496,7 @@
 															"value": "{{rqp_token}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -4780,9 +4507,7 @@
 											},
 											"response": []
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								},
 								{
 									"name": "Requesting Party - Client",
@@ -4793,7 +4518,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "6b9d8a99-8c01-4326-b417-38da4536787c",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -4844,7 +4568,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "64904058-6217-41f6-9dd3-0a30d8a85be0",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -4906,10 +4629,7 @@
 															"value": "{{permission_ticket_simple}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -4926,7 +4646,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "f1a7bc26-bf6d-4c26-b7b6-be4e88730c42",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -4969,10 +4688,7 @@
 															"value": "{{rqp_token}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{introspectionEndpoint}}",
@@ -4989,7 +4705,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "d5f6d55d-0120-4d0b-954c-79a9ddc44b03",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -5040,7 +4755,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "ed4e2999-24f8-4938-9734-a0db49bbea54",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -5110,10 +4824,7 @@
 															"value": "phone address",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -5130,7 +4841,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "b393fa9f-4fc8-4332-84d8-46242d57e8f0",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -5181,7 +4891,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "35384af0-d6df-424c-ac63-b862fe213895",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -5266,10 +4975,7 @@
 															"value": "{{rqp_token}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -5286,7 +4992,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "9f56f466-5794-48b1-b2fe-66ad0628b3d1",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -5333,10 +5038,7 @@
 															"value": "{{extended_rpt}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{introspectionEndpoint}}",
@@ -5353,7 +5055,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "549261f8-8bd7-491c-8dcd-0870960ad5e3",
 														"exec": [
 															"pm.test(\"Status code is 400\", function () {",
 															"    pm.response.to.have.status(400);",
@@ -5403,10 +5104,7 @@
 															"value": "{{rqp_token}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -5417,9 +5115,7 @@
 											},
 											"response": []
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								},
 								{
 									"name": "Duplicated resource_id Request",
@@ -5430,7 +5126,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "33a5ef9d-2028-4254-a41b-fe8007406cb4",
 														"exec": [
 															"pm.test(\"Status code is 201\", function () {",
 															"    pm.response.to.have.status(201);",
@@ -5481,7 +5176,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "ceffcd37-68c0-4001-8108-e750813c3e12",
 														"exec": [
 															"function parseJwtPayload (token) {",
 															"    var base64Url = token.split('.')[1];",
@@ -5559,10 +5253,7 @@
 															"value": "urn:ietf:params:oauth:token-type:id_token",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{tokenEndpoint}}",
@@ -5579,7 +5270,6 @@
 												{
 													"listen": "test",
 													"script": {
-														"id": "76931933-84a0-41cb-8426-0a3df36f45f3",
 														"exec": [
 															"pm.test(\"Status code is 200\", function () {",
 															"    pm.response.to.have.status(200);",
@@ -5626,10 +5316,7 @@
 															"value": "{{rqp_token}}",
 															"type": "text"
 														}
-													],
-													"options": {
-														"urlencoded": {}
-													}
+													]
 												},
 												"url": {
 													"raw": "{{introspectionEndpoint}}",
@@ -5640,9 +5327,7 @@
 											},
 											"response": []
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								},
 								{
 									"name": "Requesting Party - Access Policies",
@@ -5656,7 +5341,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "3ed37092-927f-41b9-8521-64de95e558ee",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -5673,8 +5357,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -5714,7 +5396,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "7144d720-c4ce-4dcc-a00c-2152e21f50f3",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -5765,7 +5446,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "1121f93c-457c-4e5a-a676-a2acd0062ef8",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -5825,9 +5505,7 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										},
 										{
 											"name": "Case - grant all",
@@ -5838,7 +5516,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "3759c0d0-8979-49e5-87ea-28d4b3f6bdd2",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -5848,8 +5525,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -5886,7 +5561,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "7ea6f4a4-01d1-48e0-ad3f-497e6ddca28f",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -5937,7 +5611,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "02b86adb-e862-4a8c-8f89-ce0f3d15661e",
 																"exec": [
 																	"function parseJwtPayload(token) {",
 																	"    var base64Url = token.split('.')[1];",
@@ -6009,9 +5682,7 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										},
 										{
 											"name": "Case - grant client",
@@ -6022,7 +5693,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "94e8ed79-882f-4962-85ad-ad880d0eaf53",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -6032,8 +5702,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -6070,7 +5738,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "be4c8547-86ce-46d1-9679-8b9adde08204",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -6121,7 +5788,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "38a79327-905d-4c55-9912-1ea46625995a",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -6187,7 +5853,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "cf70e667-f609-4c84-aca5-49147d7432e5",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -6197,8 +5862,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -6235,7 +5898,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "78365597-d13d-42d8-9ff3-0888d5bfd64a",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -6286,7 +5948,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "9a6331cd-a664-4290-8650-e20421589b05",
 																"exec": [
 																	"function parseJwtPayload(token) {",
 																	"    var base64Url = token.split('.')[1];",
@@ -6358,9 +6019,7 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										},
 										{
 											"name": "Case - grant user",
@@ -6371,7 +6030,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "8015e8e2-967e-4e6f-8063-d7f0d0cd7107",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -6381,8 +6039,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -6419,7 +6075,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "6566200a-eb70-4b7a-ae03-11340dd85fb0",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -6470,7 +6125,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "6ae72874-c855-4359-83e7-5fd24b32471d",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -6537,7 +6191,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "13fc7264-8d71-4bf1-a035-b28f8c676fbe",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -6547,8 +6200,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -6585,7 +6236,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "57973d7a-9985-4b46-aa89-8da3cb6ca6c9",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -6636,7 +6286,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "5fd70bed-a9d3-4575-9042-89c8124e2a8d",
 																"exec": [
 																	"function parseJwtPayload(token) {",
 																	"    var base64Url = token.split('.')[1];",
@@ -6708,9 +6357,7 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										},
 										{
 											"name": "Case - grant permission request",
@@ -6721,7 +6368,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "1034b813-a5d8-4a20-abd2-638196684f90",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -6731,8 +6377,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -6769,7 +6413,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "5edac664-e444-4c03-b9e4-79c35359ec49",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -6820,7 +6463,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "e8760969-24b9-432c-ac66-82e2917b5b85",
 																"exec": [
 																	"pm.test(\"Status code is 400\", function () {",
 																	"    pm.response.to.have.status(400);",
@@ -6886,7 +6528,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "44f185bf-30ed-4a08-9624-530851f396f4",
 																"exec": [
 																	"pm.test(\"Status code is 200\", function () {",
 																	"    pm.response.to.have.status(200);",
@@ -6896,8 +6537,6 @@
 															}
 														}
 													],
-													"protocolProfileBehavior": {
-													},
 													"request": {
 														"auth": {
 															"type": "noauth"
@@ -6934,7 +6573,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "fdd09bf0-b1b3-4e54-8e02-44fae4c05f96",
 																"exec": [
 																	"pm.test(\"Status code is 201\", function () {",
 																	"    pm.response.to.have.status(201);",
@@ -6985,7 +6623,6 @@
 														{
 															"listen": "test",
 															"script": {
-																"id": "051b9869-2345-4cf6-987a-7c6ca8d9d77d",
 																"exec": [
 																	"function parseJwtPayload(token) {",
 																	"    var base64Url = token.split('.')[1];",
@@ -7057,24 +6694,15 @@
 													},
 													"response": []
 												}
-											],
-											"protocolProfileBehavior": {},
-											"_postman_isSubFolder": true
+											]
 										}
-									],
-									"protocolProfileBehavior": {},
-									"_postman_isSubFolder": true
+									]
 								}
-							],
-							"protocolProfileBehavior": {},
-							"_postman_isSubFolder": true
+							]
 						}
-					],
-					"protocolProfileBehavior": {},
-					"_postman_isSubFolder": true
+					]
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Delete domain",
@@ -7082,7 +6710,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "8550f2ab-ddbe-409f-8a74-b6079aab53ae",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -7106,10 +6733,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {}
-					}
+					"raw": ""
 				},
 				"url": {
 					"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
@@ -7134,7 +6758,6 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "e0c3dd6d-a15a-4ca5-b616-b8954b2c0f02",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -7144,13 +6767,11 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "f4aa9510-daf0-4270-9b49-930ab67dfdd6",
 				"type": "text/javascript",
 				"exec": [
 					""
 				]
 			}
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }
