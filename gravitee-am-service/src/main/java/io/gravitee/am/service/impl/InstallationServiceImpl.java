@@ -82,15 +82,7 @@ public class InstallationServiceImpl implements InstallationService {
     @Override
     public Completable delete() {
         return this.installationRepository.find()
-                .switchIfEmpty(Single.error(new InstallationNotFoundException()))
-                .flatMapCompletable(installation -> installationRepository.delete(installation.getId()))
-                .onErrorResumeNext(ex -> {
-                    // installation already deleted, continue
-                    if (ex instanceof InstallationNotFoundException) {
-                        return Completable.complete();
-                    }
-                    return Completable.error(ex);
-                });
+                .flatMapCompletable(installation -> installationRepository.delete(installation.getId()));
     }
 
     private Single<Installation> createInternal() {

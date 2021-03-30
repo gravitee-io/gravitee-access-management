@@ -66,7 +66,10 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
                 return eq(name, ((Enum<?>) value).name());
             }
 
-            if(value instanceof Collection) {
+            if (value instanceof Collection) {
+                if (((Collection<?>) value).isEmpty()) {
+                    return null;
+                }
                 return in(name, (Collection<?>) value);
             }
 

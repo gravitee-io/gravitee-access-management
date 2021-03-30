@@ -118,6 +118,12 @@ services:
     prometheus:
       enabled: true
 
+  # Gateway monitoring service.
+  # This service retrieves metrics like os / process / jvm metrics.
+  monitoring:
+    delay: 5000
+    unit: MILLISECONDS
+
 # OAuth2 repository is used to store OAuth2 tokens: access_token, refresh_token
 oauth2:
   type: mongodb

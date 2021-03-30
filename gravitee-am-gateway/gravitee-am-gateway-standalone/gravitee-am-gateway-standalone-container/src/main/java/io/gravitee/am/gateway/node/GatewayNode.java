@@ -21,7 +21,9 @@ import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.container.AbstractNode;
 import io.gravitee.plugin.alert.AlertEventProducerManager;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -49,5 +51,11 @@ public class GatewayNode extends AbstractNode {
         components.add(AlertEventProducerManager.class);
 
         return components;
+    }
+
+    @Override
+    public Map<String, Object> metadata() {
+        Map<String, Object> metadata = new HashMap<>();
+        return metadata;
     }
 }

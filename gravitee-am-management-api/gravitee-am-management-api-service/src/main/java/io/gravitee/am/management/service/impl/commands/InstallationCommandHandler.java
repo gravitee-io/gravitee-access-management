@@ -15,27 +15,18 @@
  */
 package io.gravitee.am.management.service.impl.commands;
 
-import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.Installation;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.InstallationService;
-import io.gravitee.am.service.model.NewUser;
 import io.gravitee.cockpit.api.command.Command;
 import io.gravitee.cockpit.api.command.CommandHandler;
 import io.gravitee.cockpit.api.command.CommandStatus;
-import io.gravitee.cockpit.api.command.hello.HelloCommand;
 import io.gravitee.cockpit.api.command.installation.InstallationCommand;
 import io.gravitee.cockpit.api.command.installation.InstallationPayload;
 import io.gravitee.cockpit.api.command.installation.InstallationReply;
-import io.gravitee.cockpit.api.command.user.UserCommand;
-import io.gravitee.cockpit.api.command.user.UserPayload;
-import io.gravitee.cockpit.api.command.user.UserReply;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
