@@ -75,3 +75,31 @@ databaseChangeLog:
             indexName:  idx_webauthn_credentials_ref_aaguid
             tableName:  webauthn_credentials
             unique:  false
+
+        # node_monitoring
+        ########################
+        - createTable:
+            tableName: node_monitoring
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: node_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: payload, type: nclob, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: evaluated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_node_monitoring
+            columnNames: id
+            tableName: node_monitoring
+
+        - createIndex:
+            columns:
+              - column:
+                  name: updated_at
+              - column:
+                  name: type
+            indexName: idx_node_monitoring_updated_at_type
+            tableName: node_monitoring
+            unique: false

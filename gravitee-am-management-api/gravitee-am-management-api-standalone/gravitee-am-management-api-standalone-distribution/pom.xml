@@ -237,22 +237,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.node.services</groupId>
-            <artifactId>gravitee-node-services-healthcheck</artifactId>
-            <version>${gravitee-node.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.node.services</groupId>
-            <artifactId>gravitee-node-services-monitoring</artifactId>
-            <version>${gravitee-node.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
             <groupId>io.gravitee.am.factor</groupId>
             <artifactId>gravitee-am-factor-otp</artifactId>
             <version>${project.version}</version>
@@ -534,20 +518,6 @@
                                     <groupId>io.gravitee.am.management</groupId>
                                     <artifactId>gravitee-am-management-api-services-purge</artifactId>
                                     <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
-                                <artifactItem>
-                                    <groupId>io.gravitee.node.services</groupId>
-                                    <artifactId>gravitee-node-services-healthcheck</artifactId>
-                                    <version>${gravitee-node.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
-                                <artifactItem>
-                                    <groupId>io.gravitee.node.services</groupId>
-                                    <artifactId>gravitee-node-services-monitoring</artifactId>
-                                    <version>${gravitee-node.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
 
