@@ -118,7 +118,7 @@ export class ApplicationGeneralComponent implements OnInit {
         if (res) {
           this.applicationService.delete(this.domainId, this.application.id).subscribe(response => {
             this.snackbarService.open('Application deleted');
-            this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domainId, 'applications']);
+            this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.hrid, 'applications']);
           });
         }
       });
@@ -148,7 +148,7 @@ export class ApplicationGeneralComponent implements OnInit {
             this.application = data;
             this.snackbarService.open('Application type changed');
             this.router.navigateByUrl('/dummy', { skipLocationChange: true })
-              .then(() => this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domainId, 'applications', this.application.id]));
+              .then(() => this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.hrid, 'applications', this.application.id]));
           });
         }
       });
