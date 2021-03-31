@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.model.factor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Enrolled factor for a specific user
  *
@@ -27,6 +30,8 @@ public class EnrolledFactorSecurity {
 
     private String value;
 
+    private Map<String, Object> additionalData = new HashMap<>();
+
     public EnrolledFactorSecurity() {
     }
 
@@ -35,9 +40,16 @@ public class EnrolledFactorSecurity {
         this.value = value;
     }
 
+    public EnrolledFactorSecurity(String type, String value, Map<String, Object> additionalData) {
+        this.type = type;
+        this.value = value;
+        this.additionalData = additionalData;
+    }
+
     public EnrolledFactorSecurity(EnrolledFactorSecurity other) {
         this.type = other.type;
         this.value = other.value;
+        this.additionalData = other.additionalData;
     }
 
     public String getType() {
@@ -54,5 +66,21 @@ public class EnrolledFactorSecurity {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public Map<String, Object> getAdditionalData() {
+        return additionalData;
+    }
+
+    public void setAdditionalData(Map<String, Object> additionalData) {
+        this.additionalData = additionalData;
+    }
+
+    public <T> T getData(String key, Class<T> dataType) {
+        return dataType.cast(this.additionalData.get(key));
+    }
+
+    public void putData(String key, Object value) {
+        this.additionalData.put(key, value);
     }
 }

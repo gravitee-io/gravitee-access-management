@@ -23,4 +23,5 @@ public interface FactorType {
 
     String TOTP = "TOTP";
     String SMS = "SMS";
+    String EMAIL = "EMAIL";
 }

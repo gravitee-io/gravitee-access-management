@@ -33,6 +33,8 @@ public class EnrolledFactor {
 
     private EnrolledFactorSecurity security;
 
+    private EnrolledFactorChannel channel;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -45,6 +47,7 @@ public class EnrolledFactor {
         this.appId = other.appId;
         this.status = other.status;
         this.security = new EnrolledFactorSecurity(other.security);
+        this.channel = other.channel;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -79,6 +82,14 @@ public class EnrolledFactor {
 
     public void setSecurity(EnrolledFactorSecurity security) {
         this.security = security;
+    }
+
+    public EnrolledFactorChannel getChannel() {
+        return channel;
+    }
+
+    public void setChannel(EnrolledFactorChannel channel) {
+        this.channel = channel;
     }
 
     public Date getCreatedAt() {

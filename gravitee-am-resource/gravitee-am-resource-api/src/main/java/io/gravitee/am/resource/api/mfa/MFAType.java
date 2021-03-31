@@ -20,5 +20,6 @@ package io.gravitee.am.resource.api.mfa;
  * @author GraviteeSource Team
  */
 public enum MFAType {
-    SMS
+    SMS,
+    EMAIL
 }

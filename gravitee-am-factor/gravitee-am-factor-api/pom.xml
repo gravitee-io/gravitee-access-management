@@ -43,6 +43,20 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.el</groupId>
+            <artifactId>gravitee-expression-language</artifactId>
+            <version>${gravitee-expression-language.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.gateway.handler</groupId>
+            <artifactId>gravitee-am-gateway-handler-common</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Spring -->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -55,5 +69,13 @@
             <groupId>io.reactivex.rxjava2</groupId>
             <artifactId>rxjava</artifactId>
         </dependency>
+
+        <!-- vertx -->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-rx-java2</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
 </project>

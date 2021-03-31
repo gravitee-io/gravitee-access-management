@@ -15,9 +15,18 @@
  */
 package io.gravitee.am.factor.api;
 
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.context.EvaluableRequest;
+import io.gravitee.el.TemplateContext;
+import io.gravitee.el.TemplateEngine;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.Session;
 import org.springframework.context.ApplicationContext;
 
+import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -27,20 +36,22 @@ public class FactorContext {
     public static final String KEY_ENROLLED_FACTOR = "enrolledFactor";
     public static final String KEY_CODE = "code";
 
-    private final ApplicationContext context;
+    private final ApplicationContext appContext;
+    private final RoutingContext routingContext;
+    private final Map<String, Object> data;
+    private TemplateEngine templateEngine;
 
-    private final Map<String, ?> data;
-
-    public FactorContext(ApplicationContext context, Map<String, ?> data) {
-        this.context = context;
+    public FactorContext(ApplicationContext appContext, RoutingContext routingContext, Map<String, Object> data) {
+        this.routingContext = routingContext;
+        this.appContext = appContext;
         this.data = data;
     }
 
     public <T> T getComponent(Class<T> componentClass) {
-        return context.getBean(componentClass);
+        return appContext.getBean(componentClass);
     }
 
-    public Map<String, ?> getData() {
+    public Map<String, Object> getData() {
         return data;
     }
 
@@ -49,5 +60,46 @@ public class FactorContext {
             return type.cast(getData().get(key));
         }
         return null;
+    }
+
+    public <V> void registerData(String key, V value) {
+        this.data.put(key, value);
+    }
+
+    public Session getSession() {
+        return routingContext.session();
+    }
+
+    public TemplateEngine getTemplateEngine() {
+        if (templateEngine == null) {
+            templateEngine = TemplateEngine.templateEngine();
+
+            TemplateContext templateContext = templateEngine.getTemplateContext();
+            templateContext.setVariable("request", new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
+            templateContext.setVariable("context", new EvaluableFactorContext(this));
+
+        }
+
+        return templateEngine;
+    }
+
+    Map<String, Object> getAttributes() {
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.putAll(this.getData());
+        attributes.putAll(getEvaluableAttributes(this.routingContext));
+        attributes.put("user", ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser());
+        return attributes;
+    }
+}
+
+class EvaluableFactorContext {
+    private final FactorContext evaluatedContext;
+
+    public EvaluableFactorContext(FactorContext evaluatedContext) {
+        this.evaluatedContext = evaluatedContext;
+    }
+
+    public Map<String, Object> getAttributes() {
+        return evaluatedContext.getAttributes();
     }
 }

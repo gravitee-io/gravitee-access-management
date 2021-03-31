@@ -1,0 +1,60 @@
+{
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:resource:smtp:SmtpResourceConfiguration",
+  "properties": {
+    "host": {
+      "type": "string",
+      "title": "Hostname",
+      "description": "Hostname or IP of the SMTP Server"
+    },
+    "port": {
+      "type": "integer",
+      "title": "Port",
+      "description": "Port of the SMTP Server",
+      "default": 587,
+      "minimum": 25
+    },
+    "from": {
+      "type": "string",
+      "title": "From",
+      "description": "Email address used as From value"
+    },
+    "protocol": {
+      "type": "string",
+      "title": "Protocol",
+      "description": "Protocol used to send email",
+      "default": "smtp",
+      "enum" : ["smtp", "smtps"]
+    },
+    "authentication": {
+      "type": "boolean",
+      "title": "Authentication",
+      "description": "Does the SMTP server requires authentication",
+      "default": false
+    },
+    "username": {
+      "type": "string",
+      "title": "Username",
+      "description": "Username used for authentication",
+      "condition": "model.authentication"
+    },
+    "password": {
+      "type": "string",
+      "title": "Password",
+      "description": "Password used for authentication",
+      "condition": "model.authentication"
+    },
+    "startTls": {
+      "type": "boolean",
+      "title": "Start TLS",
+      "description": "Does the SMTP server uses StartTLS",
+      "default": false
+    },
+    "sslTrust": {
+      "type": "string",
+      "title": "SSL Trust",
+      "description": "Trusted domains. If set to \"*\", all hosts are trusted. If set to a whitespace separated list of hosts, those hosts are trusted.(ex: smtp.gmail.com)"
+    }
+  },
+  "required": ["host", "port", "from", "protocol"]
+}

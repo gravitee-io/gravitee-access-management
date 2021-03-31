@@ -1,0 +1,63 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:factor:email:EmailFactorConfiguration",
+  "properties" : {
+    "factorType": {
+      "title": "Factor Type",
+      "description": "Type of the factor",
+      "default": "EMAIL",
+      "readOnly": true
+    },
+    "graviteeResource": {
+      "title": "Resource",
+      "description": "Resource to send Email and to verify user code",
+      "type" : "string"
+    },
+    "mfaResource" : {
+      "title": "MFA Resource",
+      "description": "Specify if the selected resource is a MFA resource able to generate and send the email, if true configuration fields excepted the resource once are ignored",
+      "type": "boolean",
+      "default": false
+    },
+    "subject": {
+      "title": "Email Subject",
+      "description": "Subject of the email containing the factor code (Support Expression Language)",
+      "type": "string",
+      "default": "Your {#context.attributes['client']['clientName']} code"
+    },
+    "template": {
+      "title": "Email Template",
+      "description": "Body of the email containing the factor code (Support Expression Language)",
+      "type": "string",
+      "default": "Your {#context.attributes['client']['clientName']} verification code is {#context.attributes['code']}",
+      "x-schema-form" : {
+        "type" : "textarea"
+      }
+    },
+    "contentType" : {
+      "title": "Content Type",
+      "description": "Content Type of the message body",
+      "type": "string",
+      "default": "text/plain",
+      "enum" : [
+        "text/plain",
+        "text/html"
+      ]
+    },
+    "returnDigits": {
+      "title": "Number of digits",
+      "description": "Number of digits the user needs to enter",
+      "type": "integer",
+      "default": 6,
+      "enum": [6, 8, 10]
+    },
+    "ttl": {
+      "title": "Time to live",
+      "description": "Code validity duration (in minutes)",
+      "type": "integer",
+      "default": 10,
+      "minimum": 1
+    }
+  },
+  "required": ["graviteeResource", "subject", "template", "returnDigits", "contentType"]
+}

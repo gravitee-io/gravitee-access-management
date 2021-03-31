@@ -23,7 +23,8 @@ import { OrganizationService } from "../../../../../../services/organization.ser
 })
 export class ResourceCreationStep1Component implements OnInit {
   private resourceTypes: any = {
-    'twilio-verify-am-resource' : 'Twilio Verify'
+    'twilio-verify-am-resource' : 'Twilio Verify',
+    'smtp-am-resource' : 'SMTP'
   };
   @Input() resource: any;
   resources: any[];

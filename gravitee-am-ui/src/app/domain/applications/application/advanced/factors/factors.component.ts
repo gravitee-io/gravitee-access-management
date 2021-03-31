@@ -30,12 +30,14 @@ export class ApplicationFactorsComponent implements OnInit {
   
   private factorTypes: any = {
     'TOTP' : 'OTP',
-    'SMS' : 'SMS'
+    'SMS' : 'SMS',
+    'EMAIL' : 'EMAIL'
   };
 
   private factorIcons: any = {
     'TOTP' : 'mobile_friendly',
-    'SMS' : 'sms'
+    'SMS' : 'sms',
+    'EMAIL' : 'email'
   };
   
   application: any;

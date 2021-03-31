@@ -30,9 +30,17 @@ public interface FactorProvider {
 
     Single<Enrollment> enroll(String account);
 
-    boolean checkSecurityFactor(EnrolledFactorSecurity securityFactor);
+    boolean checkSecurityFactor(EnrolledFactor securityFactor);
 
     boolean needChallengeSending();
 
     Completable sendChallenge(FactorContext context);
+
+    default boolean useVariableFactorSecurity() {
+        return false;
+    }
+
+    default Single<EnrolledFactor> changeVariableFactorSecurity(EnrolledFactor factor) {
+        return Single.just(factor);
+    }
 }

@@ -25,6 +25,8 @@ import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
@@ -101,12 +103,14 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
                 List<Factor> factorsToRender = h.result();
                 routingContext.put("factors", factorsToRender);
 
-                // put CountryCodes in context to internationalize phone number
-                List<String> countries = factorsToRender.stream().flatMap(f -> f.enrollment.getCountries().stream()).distinct().collect(Collectors.toList());
-
-                routingContext.put("countries", countries);
                 if (endUser.getPhoneNumbers() != null && !endUser.getPhoneNumbers().isEmpty()) {
-                    routingContext.put("phoneNumber", endUser.getPhoneNumbers().get(0).getValue());
+                    routingContext.put("phoneNumber", endUser.getPhoneNumbers().stream()
+                            .filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary()))
+                            .findFirst()
+                            .orElse(endUser.getPhoneNumbers().get(0)).getValue());
+                }
+                if (endUser.getEmail() != null && !endUser.getEmail().isEmpty()) {
+                    routingContext.put("emailAddress", endUser.getEmail());
                 }
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
@@ -132,6 +136,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
         final String factorId = params.get("factorId");
         final String sharedSecret = params.get("sharedSecret");
         final String phoneNumber = params.get("phone");
+        final String emailAddress = params.get("email");
 
         if (factorId == null) {
             logger.warn("No factor id in form - did you forget to include factor id value ?");
@@ -163,6 +168,9 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
                 if (phoneNumber != null) {
                     routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER, phoneNumber);
                 }
+                if (emailAddress != null) {
+                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, emailAddress);
+                }
             } else {
                 // parameters are invalid
                 routingContext.fail(400);
@@ -174,15 +182,21 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
         doRedirect(routingContext.response(), returnURL);
     }
 
-    private EnrolledFactorSecurity getSecurityFactor(MultiMap params, io.gravitee.am.model.Factor factor) {
+    private EnrolledFactor getSecurityFactor(MultiMap params, io.gravitee.am.model.Factor factor) {
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
         switch (factor.getFactorType()) {
-            case "TOTP":
-                return new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret"));
-            case "SMS":
-                return new EnrolledFactorSecurity(FactorSecurityType.MOBILE_PHONE, params.get("phone"));
-            default:
-                return null;
+            case FactorTypes.TYPE_TOTP:
+                enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
+                break;
+            case FactorTypes.TYPE_SMS:
+                enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, params.get("phone")));
+                break;
+            case FactorTypes.TYPE_EMAIL:
+                enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
+                enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, params.get("email")));
+                break;
         }
+        return enrolledFactor;
     }
 
     private void load(Map<io.gravitee.am.model.Factor, FactorProvider> providers, User user, Handler<AsyncResult<List<Factor>>> handler) {

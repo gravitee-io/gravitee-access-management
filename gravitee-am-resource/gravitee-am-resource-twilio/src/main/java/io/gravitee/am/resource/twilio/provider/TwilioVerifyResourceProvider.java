@@ -62,6 +62,9 @@ public class TwilioVerifyResourceProvider implements MFAResourceProvider {
             case SMS:
                 channel = "sms";
                 break;
+            case EMAIL:
+                channel = "email";
+                break;
             default:
                 return Completable.error(new IllegalArgumentException("Unsupported verification channel '" + target.getChannel() + "'"));
         }

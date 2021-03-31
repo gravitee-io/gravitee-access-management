@@ -82,12 +82,16 @@ public class OTPFactorProvider implements FactorProvider {
     }
 
     @Override
-    public boolean checkSecurityFactor(EnrolledFactorSecurity securityFactor) {
+    public boolean checkSecurityFactor(EnrolledFactor factor) {
         boolean valid = true;
-        if (securityFactor == null || securityFactor.getValue() == null) {
-            logger.warn("No shared secret in form - did you forget to include shared secret value ?");
-            valid = false;
+        if (factor != null) {
+            EnrolledFactorSecurity securityFactor = factor.getSecurity();
+            if (securityFactor == null || securityFactor.getValue() == null) {
+                logger.warn("No shared secret in form - did you forget to include shared secret value ?");
+                valid = false;
+            }
         }
         return valid;
     }
+
 }
