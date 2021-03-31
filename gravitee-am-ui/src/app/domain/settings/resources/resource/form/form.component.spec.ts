@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { FactorFormComponent } from './form.component';
+import { ResourceFormComponent } from './form.component';
 
 describe('FactorFormComponent', () => {
-  let component: FactorFormComponent;
-  let fixture: ComponentFixture<FactorFormComponent>;
+  let component: ResourceFormComponent;
+  let fixture: ComponentFixture<ResourceFormComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ FactorFormComponent ]
+      declarations: [ ResourceFormComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FactorFormComponent);
+    fixture = TestBed.createComponent(ResourceFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

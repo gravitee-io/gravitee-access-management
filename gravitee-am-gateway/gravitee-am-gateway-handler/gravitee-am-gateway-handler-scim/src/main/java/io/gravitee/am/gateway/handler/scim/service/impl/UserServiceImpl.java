@@ -36,6 +36,7 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
@@ -217,6 +218,9 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setSource(existingUser.getSource());
                                 userToUpdate.setCreatedAt(existingUser.getCreatedAt());
                                 userToUpdate.setUpdatedAt(new Date());
+                                userToUpdate.setFactors(existingUser.getFactors());
+
+                                UserFactorUpdater.updateFactors(existingUser.getFactors(), existingUser, userToUpdate);
 
                                 return UserValidator.validate(userToUpdate).andThen(identityProviderManager.getUserProvider(userToUpdate.getSource())
                                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))

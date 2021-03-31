@@ -15,9 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.common.email;
 
+import freemarker.template.TemplateException;
+import io.gravitee.am.common.email.Email;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -26,4 +32,27 @@ import io.gravitee.am.model.oidc.Client;
 public interface EmailService {
 
     void send(Template template, User user, Client client);
+
+    EmailWrapper createEmail(io.gravitee.am.model.Template template, Client client, List<String> recipients, Map<String, Object> params) throws IOException, TemplateException;
+
+    final class EmailWrapper {
+        final io.gravitee.am.common.email.Email email;
+        long expireAt;
+
+        public EmailWrapper(Email email) {
+            this.email = email;
+        }
+
+        public Email getEmail() {
+            return email;
+        }
+
+        public long getExpireAt() {
+            return expireAt;
+        }
+
+        public void setExpireAt(long expireAt) {
+            this.expireAt = expireAt;
+        }
+    }
 }

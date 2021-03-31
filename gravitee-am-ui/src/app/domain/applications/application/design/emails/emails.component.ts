@@ -56,6 +56,13 @@ export class ApplicationEmailsComponent {
         'template': 'BLOCKED_ACCOUNT',
         'icon': 'person_add_disabled',
         'enabled': this.applicationSettingsValid()
+      },
+      {
+        'name': 'MFA Challenge',
+        'description': 'Multi-factor authentication verification code',
+        'template': 'MFA_CHALLENGE',
+        'icon': 'check_circle_outline',
+        'enabled': this.applicationSettingsValid()
       }
     ]
   }

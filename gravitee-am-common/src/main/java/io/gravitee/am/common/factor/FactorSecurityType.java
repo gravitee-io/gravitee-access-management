@@ -22,5 +22,5 @@ package io.gravitee.am.common.factor;
 public interface FactorSecurityType {
 
     String SHARED_SECRET = "SHARED_SECRET";
-    String MOBILE_PHONE = "MOBILE_PHONE";
+
 }

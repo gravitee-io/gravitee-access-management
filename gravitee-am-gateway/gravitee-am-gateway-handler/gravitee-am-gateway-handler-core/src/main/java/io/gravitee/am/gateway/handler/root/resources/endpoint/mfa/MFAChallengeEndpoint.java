@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
-import io.gravitee.am.common.factor.FactorSecurityType;
+import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
@@ -28,6 +28,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.FactorNotFoundException;
@@ -35,6 +36,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.util.Maps;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -48,12 +50,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -105,6 +108,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
 
             final FactorProvider factorProvider = factorManager.get(factor.getId());
+
             // send challenge
             sendChallenge(factorProvider, routingContext, factor, endUser, resChallenge -> {
                 if (resChallenge.failed()) {
@@ -148,7 +152,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
         }
         FactorProvider factorProvider = factorManager.get(factorId);
         EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factor, endUser);
-        final FactorContext factorCtx = new FactorContext(applicationContext, new Maps.MapBuilder(new HashMap())
+        final FactorContext factorCtx = new FactorContext(applicationContext, routingContext, new Maps.MapBuilder(new HashMap())
                 .put(FactorContext.KEY_CODE, code)
                 .put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor)
                 .build());
@@ -162,8 +166,9 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
             final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
-            if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null) {
-                saveFactor(endUser.getId(), enrolledFactor, fh -> {
+
+            if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity()) {
+                saveFactor(endUser.getId(), factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
                         logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
                         handleException(routingContext);
@@ -174,6 +179,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
                     routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
                     routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);
                     routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER);
+                    routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS);
 
                     // update user strong auth status
                     routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
@@ -194,8 +200,8 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
                         error -> handler.handle(Future.failedFuture(error)));
     }
 
-    private void saveFactor(String userId, EnrolledFactor enrolledFactor, Handler<AsyncResult<User>> handler) {
-        userService.addFactor(userId, enrolledFactor)
+    private void saveFactor(String userId, Single<EnrolledFactor> enrolledFactor, Handler<AsyncResult<User>> handler) {
+        enrolledFactor.flatMap(factor -> userService.addFactor(userId, factor))
                 .subscribe(
                         user -> handler.handle(Future.succeededFuture(user)),
                         error -> handler.handle(Future.failedFuture(error))
@@ -203,15 +209,17 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     }
 
     private void sendChallenge(FactorProvider factorProvider, RoutingContext routingContext, Factor factor, User endUser, Handler<AsyncResult<Void>> handler) {
-        if (!factorProvider.needChallengeSending()) {
+        if (!factorProvider.needChallengeSending() || routingContext.get(ConstantKeys.ERROR_PARAM_KEY) != null) {
+            // do not send challenge in case of error param to avoid useless code generation
             handler.handle(Future.succeededFuture());
             return;
         }
 
         EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factor, endUser);
-        FactorContext factorContext = new FactorContext(applicationContext, new Maps.MapBuilder(new HashMap())
+        FactorContext factorContext = new FactorContext(applicationContext, routingContext, new Maps.MapBuilder(new HashMap())
                 .put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor)
                 .build());
+
         factorProvider.sendChallenge(factorContext)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
@@ -243,11 +251,28 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             EnrolledFactor enrolledFactor = new EnrolledFactor();
             enrolledFactor.setFactorId(factor.getId());
             switch (factor.getFactorType()) {
-                case "TOTP":
-                    enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
+                case FactorTypes.TYPE_TOTP:
+                    enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
+                            routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
                     break;
-                case "SMS":
-                    enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.MOBILE_PHONE, routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER)));
+                case FactorTypes.TYPE_SMS:
+                    enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS,
+                            routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER)));
+                    break;
+                case FactorTypes.TYPE_EMAIL:
+                    Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
+                        .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(endUser))
+                        .build();
+                    // For email even if the endUser will contains all relevant information, we extract only the Expiration Date of the code.
+                    // this is done only to enforce the other parameter (shared secret and initialMovingFactor)
+                    getEnrolledFactor(factor, endUser).ifPresent(ef -> {
+                        additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
+                    });
+                    enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
+                            routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY),
+                            additionalData));
+                    enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL,
+                            routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS)));
                     break;
             }
             enrolledFactor.setCreatedAt(new Date());
@@ -255,11 +280,25 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             return enrolledFactor;
         }
 
+        return getEnrolledFactor(factor, endUser)
+                .orElseThrow(() -> new FactorNotFoundException("No enrolled factor found for the end user"));
+    }
+
+    private Optional<EnrolledFactor> getEnrolledFactor(Factor factor, User endUser) {
         return endUser.getFactors()
                 .stream()
                 .filter(f -> factor.getId().equals(f.getFactorId()))
-                .findFirst()
-                .orElseThrow(() -> new FactorNotFoundException("No enrolled factor found for the end user"));
+                .findFirst();
+    }
+
+    private int generateInitialMovingFactor(User endUser) {
+        try {
+            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+            secureRandom.setSeed(endUser.getUsername().getBytes(StandardCharsets.UTF_8));
+            return secureRandom.nextInt(1000) + 1;
+        } catch (NoSuchAlgorithmException e) {
+            return 0;
+        }
     }
 
     private String getTemplateFileName(Client client) {

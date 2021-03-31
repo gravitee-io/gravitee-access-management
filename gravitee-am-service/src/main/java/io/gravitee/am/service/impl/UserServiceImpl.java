@@ -34,6 +34,7 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -281,6 +282,11 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(referenceType, referenceId, id)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
                 .flatMapSingle(oldUser -> {
+                    User tmpUser = new User();
+                    tmpUser.setEmail(updateUser.getEmail());
+                    tmpUser.setAdditionalInformation(updateUser.getAdditionalInformation());
+                    UserFactorUpdater.updateFactors(oldUser.getFactors(), oldUser, tmpUser);
+
                     oldUser.setClient(updateUser.getClient());
                     oldUser.setExternalId(updateUser.getExternalId());
                     oldUser.setFirstName(updateUser.getFirstName());
@@ -291,6 +297,7 @@ public class UserServiceImpl implements UserService {
                     oldUser.setLoginsCount(updateUser.getLoginsCount());
                     oldUser.setUpdatedAt(new Date());
                     oldUser.setAdditionalInformation(updateUser.getAdditionalInformation());
+
                     return update(oldUser);
                 })
                 .onErrorResumeNext(ex -> {

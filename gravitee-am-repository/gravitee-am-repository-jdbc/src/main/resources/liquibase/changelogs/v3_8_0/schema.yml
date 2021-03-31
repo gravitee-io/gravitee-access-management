@@ -40,6 +40,16 @@ databaseChangeLog:
             columns:
               - column: {name: hrid, type: nvarchar(255), constraints: { nullable: true } }
 
+        - sql:
+            sql: "UPDATE domains SET hrid = id;"
+
+        -  addNotNullConstraint:
+             columnName:  hrid
+             columnDataType: nvarchar(255)
+             constraintName:  domain_hrid_req
+             tableName:  domains
+             validate:  true
+
         - createIndex:
             columns:
               - column:
@@ -51,16 +61,6 @@ databaseChangeLog:
             indexName:  idx_domains_ref_hrid
             tableName:  domains
             unique:  false
-
-        - sql:
-            sql: "UPDATE domains SET hrid = id;"
-
-        -  addNotNullConstraint:
-            columnName:  hrid
-            columnDataType: nvarchar(255)
-            constraintName:  domain_hrid_req
-            tableName:  domains
-            validate:  true
 
         # webauthn_credentials aaguid index
         ########################

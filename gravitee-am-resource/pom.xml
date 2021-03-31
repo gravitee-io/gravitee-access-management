@@ -37,5 +37,6 @@
         <module>gravitee-am-resource-api</module>
         <module>gravitee-am-resource-twilio</module>
         <module>gravitee-am-resource-mfa-mock</module>
+        <module>gravitee-am-resource-smtp</module>
     </modules>
 </project>

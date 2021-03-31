@@ -1,0 +1,25 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:factor:email:EmailFactorConfiguration",
+  "properties" : {
+    "factorType": {
+      "title": "Factor Type",
+      "description": "Type of the factor",
+      "default": "EMAIL",
+      "readOnly": true
+    },
+    "graviteeResource": {
+      "title": "Resource",
+      "description": "Resource to send Email and to verify user code",
+      "type" : "string"
+    },
+    "returnDigits": {
+      "title": "Number of digits",
+      "description": "Number of digits the user needs to enter",
+      "type": "integer",
+      "default": 6,
+      "enum": [6, 8, 10]
+    }
+  },
+  "required": ["graviteeResource", "returnDigits"]
+}

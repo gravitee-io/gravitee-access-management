@@ -52,7 +52,7 @@
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Expires after</mat-label>
         <input matInput type="number" placeholder="Expires after" name="expiresAfter" [(ngModel)]="email.expiresAfter" required [disabled]="!isEnabled()" [readonly]="!canEdit()">
-        <mat-hint>The email link will be expired after the specified time (in seconds). Default: 86400 seconds (1 day).</mat-hint>
+        <mat-hint>{{email.template == 'MFA_CHALLENGE' ? 'The code will be expired after the specified time (in seconds). Default: 600 seconds (10 minutes).' : 'The email link will be expired after the specified time (in seconds). Default: 86400 seconds (1 day).'}}</mat-hint>
       </mat-form-field>
     </div>
   </form>

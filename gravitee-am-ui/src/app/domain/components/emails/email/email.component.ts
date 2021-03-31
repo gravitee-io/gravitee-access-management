@@ -71,7 +71,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
     } else {
       this.email = {};
       this.email.template = this.rawTemplate
-      this.email.expiresAfter = 86400;
+      this.email.expiresAfter = (this.email.template === 'MFA_CHALLENGE' ? 600 : 86400);
     }
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.emailName = this.template.charAt(0).toUpperCase() + this.template.slice(1);

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.factor.api;
 
-import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -34,6 +33,10 @@ public class Enrollment {
 
     public Enrollment(List<String> countries) {
         this.countries = countries;
+    }
+
+    public Enrollment(String key) {
+        this.key = key;
     }
 
     public Enrollment(String key, String barCode) {

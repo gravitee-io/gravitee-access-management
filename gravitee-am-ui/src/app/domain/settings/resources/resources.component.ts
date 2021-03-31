@@ -23,7 +23,8 @@ import {ActivatedRoute} from '@angular/router';
 })
 export class DomainSettingsResourcesComponent implements OnInit {
   private resourceTypes: any = {
-    'twilio-verify-am-resource' : 'Twilio Verify'
+    'twilio-verify-am-resource' : 'Twilio Verify',
+    'smtp-am-resource' : 'SMTP'
   };
   resources: any[];
   domainId: any;
