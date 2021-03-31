@@ -15,9 +15,20 @@
  */
 package io.gravitee.am.factor.api;
 
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.context.EvaluableRequest;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.el.TemplateContext;
+import io.gravitee.el.TemplateEngine;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.Session;
 import org.springframework.context.ApplicationContext;
 
+import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -27,20 +38,22 @@ public class FactorContext {
     public static final String KEY_ENROLLED_FACTOR = "enrolledFactor";
     public static final String KEY_CODE = "code";
 
-    private final ApplicationContext context;
+    private final ApplicationContext appContext;
+    private final RoutingContext routingContext;
+    private final Map<String, Object> data;
+    private TemplateEngine templateEngine;
 
-    private final Map<String, ?> data;
-
-    public FactorContext(ApplicationContext context, Map<String, ?> data) {
-        this.context = context;
+    public FactorContext(ApplicationContext appContext, RoutingContext routingContext, Map<String, Object> data) {
+        this.routingContext = routingContext;
+        this.appContext = appContext;
         this.data = data;
     }
 
     public <T> T getComponent(Class<T> componentClass) {
-        return context.getBean(componentClass);
+        return appContext.getBean(componentClass);
     }
 
-    public Map<String, ?> getData() {
+    public Map<String, Object> getData() {
         return data;
     }
 
@@ -50,4 +63,30 @@ public class FactorContext {
         }
         return null;
     }
+
+    public <V> void registerData(String key, V value) {
+        this.data.put(key, value);
+    }
+
+    public Session getSession() {
+        return routingContext.session();
+    }
+
+    public Client getClient() {
+        return (Client) routingContext.get("client");
+    }
+
+    public User getUser() {
+        return ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+    }
+
+    public Map<String, Object> getTemplateValues() {
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.putAll(this.getData());
+        attributes.putAll(getEvaluableAttributes(this.routingContext));
+        attributes.put("user", ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser());
+        attributes.put("request", new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
+        return attributes;
+    }
 }
+

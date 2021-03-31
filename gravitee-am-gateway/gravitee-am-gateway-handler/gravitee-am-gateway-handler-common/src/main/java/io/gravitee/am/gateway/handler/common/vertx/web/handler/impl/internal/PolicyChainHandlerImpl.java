@@ -42,6 +42,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -142,10 +144,7 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
             ExecutionContext simpleExecutionContext = new SimpleExecutionContext(serverRequest, serverResponse);
             ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
             // add current context attributes
-            Map<String, Object> contextData = new HashMap<>(routingContext.data());
-            // remove technical attributes
-            BLACKLIST_CONTEXT_ATTRIBUTES.forEach(attribute -> contextData.remove(attribute));
-            executionContext.getAttributes().putAll(contextData);
+            executionContext.getAttributes().putAll(getEvaluableAttributes(routingContext));
 
             handler.handle(Future.succeededFuture(executionContext));
         } catch (Exception ex) {

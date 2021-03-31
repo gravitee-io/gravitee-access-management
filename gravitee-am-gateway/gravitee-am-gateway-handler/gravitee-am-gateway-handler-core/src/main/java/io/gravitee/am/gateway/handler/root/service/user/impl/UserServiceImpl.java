@@ -17,8 +17,6 @@ package io.gravitee.am.gateway.handler.root.service.user.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
-import io.gravitee.am.common.factor.FactorSecurityType;
-import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -36,6 +34,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
@@ -365,23 +364,56 @@ public class UserServiceImpl implements UserService {
                     if (enrolledFactors == null || enrolledFactors.isEmpty()) {
                         enrolledFactors = Collections.singletonList(enrolledFactor);
                     } else {
-                        enrolledFactors.add(enrolledFactor);
+                        // if the Factor already exists, update the target and the security value
+                        Optional<EnrolledFactor> optFactor = enrolledFactors.stream()
+                                .filter(existingFactor -> existingFactor.getFactorId().equals(enrolledFactor.getFactorId()))
+                                .findFirst();
+                        if (optFactor.isPresent()) {
+                            EnrolledFactor existingFactor = optFactor.get();
+                            existingFactor.setChannel(enrolledFactor.getChannel());
+                            existingFactor.setSecurity(enrolledFactor.getSecurity());
+                        } else {
+                            enrolledFactors.add(enrolledFactor);
+                        }
                     }
                     user.setFactors(enrolledFactors);
 
-                    if (FactorSecurityType.MOBILE_PHONE.equals(enrolledFactor.getSecurity().getType())) {
+                    if (enrolledFactor.getChannel() != null && EnrolledFactorChannel.Type.SMS.equals(enrolledFactor.getChannel().getType())) {
                         // MFA SMS currently used, preserve the phone number into the user profile if not yet present
                         List<Attribute> phoneNumbers = user.getPhoneNumbers();
                         if (phoneNumbers == null) {
                             phoneNumbers = new ArrayList<>();
                             user.setPhoneNumbers(phoneNumbers);
                         }
-                        if (!phoneNumbers.stream().filter(p -> p.getValue().equals(enrolledFactor.getSecurity().getValue())).findFirst().isPresent()) {
+                        String enrolledPhoneNumber = enrolledFactor.getChannel().getTarget();
+                        if (!phoneNumbers.stream().filter(p -> p.getValue().equals(enrolledPhoneNumber)).findFirst().isPresent()) {
                             Attribute newPhoneNumber = new Attribute();
                             newPhoneNumber.setType("mobile");
                             newPhoneNumber.setPrimary(phoneNumbers.isEmpty());
-                            newPhoneNumber.setValue(enrolledFactor.getSecurity().getValue());
+                            newPhoneNumber.setValue(enrolledPhoneNumber);
                             phoneNumbers.add(newPhoneNumber);
+                        }
+                    }
+                    if (enrolledFactor.getChannel() != null && EnrolledFactorChannel.Type.EMAIL.equals(enrolledFactor.getChannel().getType())) {
+                        // MFA EMAIL currently used, preserve the email into the user profile if not yet present
+                        String email = user.getEmail();
+                        String enrolledEmail = enrolledFactor.getChannel().getTarget();
+                        if (email == null) {
+                            user.setEmail(enrolledEmail);
+                        } else if (!email.equals(enrolledEmail)){
+                            // an email is already present but doesn't match the one provided as security factor
+                            // register this email in the user profile.
+                            List<Attribute> emails = user.getEmails();
+                            if (emails == null) {
+                                emails = new ArrayList<>();
+                                user.setEmails(emails);
+                            }
+                            if (!emails.stream().filter(p -> p.getValue().equals(enrolledEmail)).findFirst().isPresent()) {
+                                Attribute additionalEmail = new Attribute();
+                                additionalEmail.setPrimary(false);
+                                additionalEmail.setValue(enrolledEmail);
+                                emails.add(additionalEmail);
+                            }
                         }
                     }
                     return userService.update(user);

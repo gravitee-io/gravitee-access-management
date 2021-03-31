@@ -268,6 +268,14 @@
             <scope>runtime</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.factor</groupId>
+            <artifactId>gravitee-am-factor-email</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- AM Policies -->
         <dependency>
             <groupId>io.gravitee.am.policy</groupId>
@@ -288,6 +296,13 @@
         <dependency>
             <groupId>io.gravitee.am.resource</groupId>
             <artifactId>gravitee-am-resource-twilio</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.resource</groupId>
+            <artifactId>gravitee-am-resource-smtp</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
@@ -551,6 +566,13 @@
                                     <type>zip</type>
                                 </artifactItem>
 
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-email</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
                                 <!-- AM Policies -->
                                 <artifactItem>
                                     <groupId>io.gravitee.am.policy</groupId>
@@ -569,6 +591,12 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.resource</groupId>
                                     <artifactId>gravitee-am-resource-twilio</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.resource</groupId>
+                                    <artifactId>gravitee-am-resource-smtp</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

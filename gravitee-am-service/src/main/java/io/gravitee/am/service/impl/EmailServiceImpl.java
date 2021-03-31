@@ -18,11 +18,13 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.utils.EmailSender;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -46,7 +48,7 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Component
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImpl implements EmailService, InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailServiceImpl.class);
 
@@ -56,86 +58,15 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    private EmailSender emailSender;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.emailSender = new EmailSender(mailSender, templatesPath);
+    }
+
     @Override
     public void send(Email email) {
-        try {
-            final MimeMessageHelper mailMessage = new MimeMessageHelper(mailSender.createMimeMessage(), true, StandardCharsets.UTF_8.name());
-            final String subject = email.getSubject();
-            final String content = email.getContent();
-            final String from = email.getFrom();
-            final String[] to = email.getTo();
-
-            String fromName = email.getFromName();
-            if (fromName == null || fromName.isEmpty()) {
-                mailMessage.setFrom(from);
-            } else {
-                mailMessage.setFrom(from, fromName);
-            }
-
-            mailMessage.setTo(to);
-            mailMessage.setSubject(subject);
-
-            final String html = addResourcesInMessage(mailMessage, content);
-            LOGGER.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
-            mailSender.send(mailMessage.getMimeMessage());
-        } catch (final Exception ex) {
-            LOGGER.error("Error while sending email", ex);
-            throw new TechnicalManagementException("Error while sending email", ex);
-        }
-    }
-
-    private String addResourcesInMessage(final MimeMessageHelper mailMessage, final String htmlText) throws Exception {
-        final Document document = Jsoup.parse(htmlText);
-
-        final List<String> resources = new ArrayList<>();
-
-        final Elements imageElements = document.getElementsByTag("img");
-        resources.addAll(imageElements.stream()
-                .filter(imageElement -> imageElement.hasAttr("src"))
-                .filter(imageElement -> !imageElement.attr("src").startsWith("http"))
-                .map(imageElement -> {
-                    final String src = imageElement.attr("src");
-                    imageElement.attr("src", "cid:" + src);
-                    return src;
-                })
-                .collect(Collectors.toList()));
-
-        final String html = document.html();
-        mailMessage.setText(html, true);
-
-        for (final String res : resources) {
-            if (res.startsWith("data:image/")) {
-                final String value = res.replaceFirst("^data:image/[^;]*;base64,?", "");
-                byte[] bytes = Base64.getDecoder().decode(value.getBytes("UTF-8"));
-                mailMessage.addInline(res, new ByteArrayResource(bytes), extractMimeType(res));
-            } else {
-                final FileSystemResource templateResource = new FileSystemResource(new File(templatesPath, res));
-                mailMessage.addInline(res, templateResource, getContentTypeByFileName(res));
-            }
-        }
-
-        return html;
-    }
-
-    private String getContentTypeByFileName(final String fileName) {
-        if (fileName == null) {
-            return "";
-        } else if (fileName.endsWith(".png")) {
-            return "image/png";
-        }
-        return MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fileName);
-    }
-
-    /**
-     * Extract the MIME type from a base64 string
-     * @param encoded Base64 string
-     * @return MIME type string
-     */
-    private static String extractMimeType(final String encoded) {
-        final Pattern mime = Pattern.compile("^data:([a-zA-Z0-9]+/[a-zA-Z0-9]+).*,.*");
-        final Matcher matcher = mime.matcher(encoded);
-        if (!matcher.find())
-            return "";
-        return matcher.group(1).toLowerCase();
+        this.emailSender.send(email);
     }
 }

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.factor.otp.utils;
+package io.gravitee.am.factor.utils;
 
+import com.google.common.io.BaseEncoding;
 import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Hex;
 
@@ -40,6 +41,10 @@ public final class SharedSecret {
         byte[] buffer = new byte[20];
         random.nextBytes(buffer);
         return encoder.encodeToString(buffer);
+    }
+
+    public static byte[] base32Str2Bytes(String secret) {
+        return BaseEncoding.base32().decode(secret);
     }
 
     public static String base32Str2Hex(String secret) {

@@ -22,6 +22,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
@@ -177,6 +178,8 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getX509Certificates().size() == 1);
         testObserver.assertValue(u -> u.getAdditionalInformation().size() == 1);
         testObserver.assertValue(u -> u.getFactors().size() == 1);
+        testObserver.assertValue(u -> u.getFactors().get(0).getChannel() != null);
+        testObserver.assertValue(u -> u.getFactors().get(0).getSecurity() != null);
     }
 
     @Test
@@ -243,7 +246,8 @@ public class UserRepositoryTest extends AbstractManagementTest {
 
         EnrolledFactor fact = new EnrolledFactor();
         fact.setAppId("app"+random);
-        fact.setSecurity(new EnrolledFactorSecurity("a", "b"));
+        fact.setSecurity(new EnrolledFactorSecurity("a", "b", Collections.singletonMap("a", "b")));
+        fact.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, "e@e"));
         user.setFactors(Arrays.asList(fact));
 
         Map<String, Object> info = new HashMap<>();

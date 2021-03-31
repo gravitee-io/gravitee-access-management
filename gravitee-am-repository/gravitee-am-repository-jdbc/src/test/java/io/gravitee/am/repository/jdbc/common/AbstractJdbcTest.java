@@ -100,6 +100,7 @@ public abstract class AbstractJdbcTest {
             tables.add("alert_triggers_alert_notifiers");
             tables.add("alert_triggers");
             tables.add("alert_notifiers");
+            tables.add("service_resources");
 
             Connection connection = Flowable.fromPublisher(cnxFact.create()).blockingFirst();
             connection.beginTransaction();

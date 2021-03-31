@@ -24,7 +24,7 @@ import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.sms.SMSFactorConfiguration;
 import io.gravitee.am.gateway.handler.resource.ResourceManager;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.api.mfa.MFAChallenge;
@@ -58,7 +58,7 @@ public class SMSFactorProvider implements FactorProvider {
         ResourceProvider provider = component.getResourceProvider(configuration.getGraviteeResource());
         if (provider instanceof MFAResourceProvider) {
             MFAResourceProvider mfaProvider = (MFAResourceProvider)provider;
-            MFAChallenge challenge = new MFAChallenge(enrolledFactor.getSecurity().getValue(), code);
+            MFAChallenge challenge = new MFAChallenge(enrolledFactor.getChannel().getTarget(), code);
             return mfaProvider.verify(challenge);
         } else {
             return Completable.error(new TechnicalException("Resource referenced can't be used for MultiFactor Authentication  with type SMS"));
@@ -82,7 +82,7 @@ public class SMSFactorProvider implements FactorProvider {
         ResourceProvider provider = component.getResourceProvider(configuration.getGraviteeResource());
         if (provider instanceof MFAResourceProvider) {
             MFAResourceProvider mfaProvider = (MFAResourceProvider)provider;
-            MFALink link = new MFALink(MFAType.SMS, enrolledFactor.getSecurity().getValue());
+            MFALink link = new MFALink(MFAType.SMS, enrolledFactor.getChannel().getTarget());
             return mfaProvider.send(link);
         } else {
             return Completable.error(new TechnicalException("Resource referenced can't be used for MultiFactor Authentication  with type SMS"));
@@ -90,29 +90,33 @@ public class SMSFactorProvider implements FactorProvider {
     }
 
     @Override
-    public boolean checkSecurityFactor(EnrolledFactorSecurity securityFactor) {
+    public boolean checkSecurityFactor(EnrolledFactor factor) {
         boolean valid = false;
-        if (securityFactor == null || securityFactor.getValue() == null) {
-            logger.warn("No phone number in form");
-        } else {
-            // check phone format according to Factor configuration
-            final PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
-            try {
-                Phonenumber.PhoneNumber phone = phoneNumberUtil.parse(securityFactor.getValue(), Phonenumber.PhoneNumber.CountryCodeSource.UNSPECIFIED.name());
-                for (String country : configuration.countries()) {
-                    if (phoneNumberUtil.isValidNumberForRegion(phone, country.toUpperCase(Locale.ROOT))) {
-                        valid = true;
-                        break;
+        if (factor != null) {
+            EnrolledFactorChannel enrolledFactorChannel = factor.getChannel();
+            if (enrolledFactorChannel == null || enrolledFactorChannel.getTarget() == null) {
+                logger.warn("No phone number in form");
+            } else {
+                // check phone format according to Factor configuration
+                final PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
+                try {
+                    Phonenumber.PhoneNumber phone = phoneNumberUtil.parse(enrolledFactorChannel.getTarget(), Phonenumber.PhoneNumber.CountryCodeSource.UNSPECIFIED.name());
+                    for (String country : configuration.countries()) {
+                        if (phoneNumberUtil.isValidNumberForRegion(phone, country.toUpperCase(Locale.ROOT))) {
+                            valid = true;
+                            break;
+                        }
                     }
-                }
 
-                if (!valid) {
-                    logger.warn("Invalid phone number");
+                    if (!valid) {
+                        logger.warn("Invalid phone number");
+                    }
+                } catch (NumberParseException e) {
+                    logger.warn("Invalid phone number", e);
                 }
-            } catch (NumberParseException e) {
-                logger.warn("Invalid phone number", e);
             }
         }
         return valid;
     }
+
 }

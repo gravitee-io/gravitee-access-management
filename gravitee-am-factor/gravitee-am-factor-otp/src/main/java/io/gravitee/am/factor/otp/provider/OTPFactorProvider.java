@@ -21,8 +21,8 @@ import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.otp.OTPFactorConfiguration;
 import io.gravitee.am.factor.otp.utils.QRCode;
-import io.gravitee.am.factor.otp.utils.SharedSecret;
 import io.gravitee.am.factor.otp.utils.TOTP;
+import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.reactivex.Completable;
@@ -82,12 +82,16 @@ public class OTPFactorProvider implements FactorProvider {
     }
 
     @Override
-    public boolean checkSecurityFactor(EnrolledFactorSecurity securityFactor) {
+    public boolean checkSecurityFactor(EnrolledFactor factor) {
         boolean valid = true;
-        if (securityFactor == null || securityFactor.getValue() == null) {
-            logger.warn("No shared secret in form - did you forget to include shared secret value ?");
-            valid = false;
+        if (factor != null) {
+            EnrolledFactorSecurity securityFactor = factor.getSecurity();
+            if (securityFactor == null || securityFactor.getValue() == null) {
+                logger.warn("No shared secret in form - did you forget to include shared secret value ?");
+                valid = false;
+            }
         }
         return valid;
     }
+
 }

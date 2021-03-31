@@ -25,6 +25,7 @@ import io.gravitee.am.resource.twilio.provider.TwilioVerifyResourceProvider;
  * @author GraviteeSource Team
  */
 public class TwilioVerifyResource implements Resource {
+
     @Override
     public Class<? extends ResourceConfiguration> configuration() {
         return TwilioVerifyResourceConfiguration.class;

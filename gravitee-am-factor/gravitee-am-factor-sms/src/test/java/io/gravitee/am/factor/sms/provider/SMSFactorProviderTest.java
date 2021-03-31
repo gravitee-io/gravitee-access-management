@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.factor.sms.provider;
 
-import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.factor.sms.SMSFactorConfiguration;
-import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -46,21 +46,24 @@ public class SMSFactorProviderTest {
     @Test
     public void shouldValidatePhoneNumber() {
         when(configuration.countries()).thenReturn(Arrays.asList("fr"));
-        EnrolledFactorSecurity factorSecurity = new EnrolledFactorSecurity(FactorSecurityType.MOBILE_PHONE, "+33615492508");
-        assertTrue(provider.checkSecurityFactor(factorSecurity));
+        EnrolledFactor factor = new EnrolledFactor();
+        factor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, "+33615492508"));
+        assertTrue(provider.checkSecurityFactor(factor));
     }
 
     @Test
     public void shouldNotBeValidePhoneNumber_WrongCountry() {
         when(configuration.countries()).thenReturn(Arrays.asList("US", "GB"));
-        EnrolledFactorSecurity factorSecurity = new EnrolledFactorSecurity(FactorSecurityType.MOBILE_PHONE, "+33615492508");
-        assertFalse(provider.checkSecurityFactor(factorSecurity));
+        EnrolledFactor factor = new EnrolledFactor();
+        factor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, "+33615492508"));
+        assertFalse(provider.checkSecurityFactor(factor));
     }
 
     @Test
     public void shouldValidatePhoneNumber_MultipleCountries() {
         when(configuration.countries()).thenReturn(Arrays.asList("US", "FR", "GB"));
-        EnrolledFactorSecurity factorSecurity = new EnrolledFactorSecurity(FactorSecurityType.MOBILE_PHONE, "+33615492508");
-        assertTrue(provider.checkSecurityFactor(factorSecurity));
+        EnrolledFactor factor = new EnrolledFactor();
+        factor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, "+33615492508"));
+        assertTrue(provider.checkSecurityFactor(factor));
     }
 }
