@@ -356,6 +356,7 @@ public class MembershipServiceImpl implements MembershipService {
                         MembershipCriteria criteria = new MembershipCriteria();
                         criteria.setRoleId(membership.getRoleId());
                         return membershipRepository.findByCriteria(membership.getReferenceType(), membership.getReferenceId(), criteria)
+                                .filter(existingMembership -> !existingMembership.isMember(membership.getMemberType(), membership.getMemberId())) // Exclude the member himself if he is already the primary owner.
                                 .count()
                                 .flatMapMaybe(count -> count >= 1 ? Maybe.error(new SinglePrimaryOwnerException(membership.getReferenceType())) : Maybe.just(role));
                     }
