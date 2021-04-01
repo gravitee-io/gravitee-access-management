@@ -4,7 +4,7 @@ databaseChangeLog:
       author: GraviteeSource Team
       changes:
 
-        # media_resources
+        # service_resources
         ########################
         - createTable:
             tableName: service_resources
@@ -61,3 +61,17 @@ databaseChangeLog:
             constraintName:  domain_hrid_req
             tableName:  domains
             validate:  true
+
+        # webauthn_credentials aaguid index
+        ########################
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: aaguid
+            indexName:  idx_webauthn_credentials_ref_aaguid
+            tableName:  webauthn_credentials
+            unique:  false

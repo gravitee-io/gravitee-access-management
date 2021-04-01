@@ -28,6 +28,7 @@ public class WebAuthnSettingsMongo {
     private String userVerification;
     private String authenticatorAttachment;
     private String attestationConveyancePreference;
+    private boolean forceRegistration;
 
     public String getOrigin() {
         return origin;
@@ -83,5 +84,13 @@ public class WebAuthnSettingsMongo {
 
     public void setAttestationConveyancePreference(String attestationConveyancePreference) {
         this.attestationConveyancePreference = attestationConveyancePreference;
+    }
+
+    public boolean isForceRegistration() {
+        return forceRegistration;
+    }
+
+    public void setForceRegistration(boolean forceRegistration) {
+        this.forceRegistration = forceRegistration;
     }
 }

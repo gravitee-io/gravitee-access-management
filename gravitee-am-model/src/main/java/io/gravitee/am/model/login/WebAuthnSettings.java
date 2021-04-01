@@ -70,6 +70,13 @@ public class WebAuthnSettings {
      */
     private AttestationConveyancePreference attestationConveyancePreference = AttestationConveyancePreference.NONE;
 
+    /**
+     * Check that the credentialId is not yet registered to any other user.
+     * If registration is requested for a credential that is already registered to a different user,
+     * the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.
+     */
+    private boolean forceRegistration;
+
     public String getOrigin() {
         return origin;
     }
@@ -124,5 +131,13 @@ public class WebAuthnSettings {
 
     public void setAttestationConveyancePreference(AttestationConveyancePreference attestationConveyancePreference) {
         this.attestationConveyancePreference = attestationConveyancePreference;
+    }
+
+    public boolean isForceRegistration() {
+        return forceRegistration;
+    }
+
+    public void setForceRegistration(boolean forceRegistration) {
+        this.forceRegistration = forceRegistration;
     }
 }

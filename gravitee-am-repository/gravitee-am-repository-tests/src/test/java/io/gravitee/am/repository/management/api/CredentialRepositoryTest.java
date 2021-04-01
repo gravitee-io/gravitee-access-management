@@ -236,4 +236,34 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
         testObserver2.assertNoErrors();
         testObserver.assertValue(l -> l.size() == 1 && l.get(0).getCredentialId().equals(credentialCreated.getCredentialId()));
     }
+
+    @Test
+    public void testDeleteByAaguid() throws TechnicalException {
+        // create credential
+        Credential credential = new Credential();
+        credential.setCredentialId("credentialId");
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId("domain-id");
+        credential.setUserId("user-id");
+        credential.setAaguid("aaguid");
+        Credential credentialCreated = credentialRepository.create(credential).blockingGet();
+
+        // fetch credential
+        TestObserver<List<Credential>> testObserver = credentialRepository.findByUserId(ReferenceType.DOMAIN, "domain-id", "user-id").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(l -> l.size() == 1 && l.get(0).getCredentialId().equals(credentialCreated.getCredentialId()));
+
+        // delete credential
+        TestObserver testObserver1 = credentialRepository.deleteByAaguid(ReferenceType.DOMAIN, "domain-id", "aaguid").test();
+        testObserver1.awaitTerminalEvent();
+
+        // fetch credential
+        TestObserver<List<Credential>> testObserver2 = credentialRepository.findByUserId(ReferenceType.DOMAIN, "domain-id", "user-id").test();
+        testObserver2.awaitTerminalEvent();
+        testObserver2.assertComplete();
+        testObserver2.assertNoErrors();
+        testObserver2.assertValue(l -> l.isEmpty());
+    }
 }

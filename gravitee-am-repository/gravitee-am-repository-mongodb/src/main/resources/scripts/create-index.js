@@ -169,6 +169,7 @@ db.webauthn_credentials.dropIndexes();
 db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "userId": 1 } );
 db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "username": 1 } );
 db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "credentialId": 1 } );
+db.webauthn_credentials.createIndex( { "referenceType" : 1, "referenceId": 1, "aaguid": 1 } );
 db.webauthn_credentials.reIndex();
 
 // "auth_flow_ctx" collection
