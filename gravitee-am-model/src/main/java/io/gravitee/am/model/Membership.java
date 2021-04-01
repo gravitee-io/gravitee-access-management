@@ -50,13 +50,15 @@ public class Membership {
     }
 
     public boolean isUserMember(String userId) {
-
-        return memberType == MemberType.USER && memberId.equals(userId);
+        return this.isMember(MemberType.USER, userId);
     }
 
     public boolean isGroupMember(String groupId) {
+        return this.isMember(MemberType.GROUP, groupId);
+    }
 
-        return memberType == MemberType.GROUP && memberId.equals(groupId);
+    public boolean isMember(MemberType memberType, String memberId) {
+        return this.memberType == memberType && this.memberId.equals(memberId);
     }
 
     public String getId() {
