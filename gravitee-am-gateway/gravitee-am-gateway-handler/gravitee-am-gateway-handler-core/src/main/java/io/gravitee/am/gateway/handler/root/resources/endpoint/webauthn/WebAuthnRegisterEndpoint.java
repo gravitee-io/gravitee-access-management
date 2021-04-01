@@ -199,6 +199,11 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
                 // force user id with our own user id
                 credentialsOptions.getJsonObject("user").put("id", user.getId());
 
+                // force registration if option is enabled
+                if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
+                    credentialsOptions.remove("excludeCredentials");
+                }
+
                 // save challenge to the session
                 ctx.session()
                         .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, credentialsOptions.getString("challenge"))

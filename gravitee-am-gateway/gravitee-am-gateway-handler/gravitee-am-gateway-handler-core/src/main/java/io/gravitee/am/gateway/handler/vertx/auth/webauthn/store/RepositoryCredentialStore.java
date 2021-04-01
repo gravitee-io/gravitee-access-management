@@ -126,37 +126,46 @@ public class RepositoryCredentialStore {
         Promise<Void> promise = Promise.promise();
 
         credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), authenticator.getCredID())
-                .flatMapObservable(credentials -> Observable.fromIterable(credentials))
-                .flatMapSingle(credential -> {
-                    credential.setCounter(authenticator.getCounter());
-                    credential.setUpdatedAt(new Date());
-                    return credentialService.update(credential);
-                })
-                .toList()
                 .flatMapCompletable(credentials -> {
-                    if (!credentials.isEmpty()) {
-                        return Completable.complete();
+                    if (credentials.isEmpty()) {
+                        // no credential found, create it
+                        // if force registration option is enabled, remove existing credentials with the same aaguid
+                        if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
+                            return credentialService.deleteByAaguid(ReferenceType.DOMAIN, domain.getId(), authenticator.getAaguid())
+                                    .andThen(create(authenticator));
+                        }
+                        return create(authenticator);
+                    } else {
+                        // update current credentials
+                        return Observable.fromIterable(credentials)
+                                .flatMapCompletable(credential -> {
+                                    credential.setCounter(authenticator.getCounter());
+                                    credential.setUpdatedAt(new Date());
+                                    return credentialService.update(credential).ignoreElement();
+                                });
                     }
-                    // no credential found, create it
-                    Credential credential = new Credential();
-                    credential.setReferenceType(ReferenceType.DOMAIN);
-                    credential.setReferenceId(domain.getId());
-                    credential.setUsername(authenticator.getUserName());
-                    credential.setCredentialId(authenticator.getCredID());
-                    credential.setPublicKey(authenticator.getPublicKey());
-                    credential.setCounter(authenticator.getCounter());
-                    credential.setAaguid(authenticator.getAaguid());
-                    credential.setAttestationStatementFormat(authenticator.getAttestationStatementFormat());
-                    credential.setAttestationStatement(authenticator.getAttestationStatement());
-                    credential.setCreatedAt(new Date());
-                    credential.setUpdatedAt(credential.getCreatedAt());
-                    return credentialService.create(credential).ignoreElement();
                 })
                 .subscribe(
                         () ->  promise.complete(),
                         error -> promise.fail(error.getMessage())
                 );
         return promise.future();
+    }
+
+    private Completable create(Authenticator authenticator) {
+        Credential credential = new Credential();
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId(domain.getId());
+        credential.setUsername(authenticator.getUserName());
+        credential.setCredentialId(authenticator.getCredID());
+        credential.setPublicKey(authenticator.getPublicKey());
+        credential.setCounter(authenticator.getCounter());
+        credential.setAaguid(authenticator.getAaguid());
+        credential.setAttestationStatementFormat(authenticator.getAttestationStatementFormat());
+        credential.setAttestationStatement(authenticator.getAttestationStatement());
+        credential.setCreatedAt(new Date());
+        credential.setUpdatedAt(credential.getCreatedAt());
+        return credentialService.create(credential).ignoreElement();
     }
 
     private Authenticator convert(Credential credential) {

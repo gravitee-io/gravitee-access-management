@@ -36,4 +36,6 @@ public interface CredentialRepository extends CrudRepository<Credential, String>
     Single<List<Credential>> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId);
 
     Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId);
+
+    Completable deleteByAaguid(ReferenceType referenceType, String referenceId, String aaguid);
 }

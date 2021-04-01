@@ -44,6 +44,7 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_CREDENTIAL_ID = "credentialId";
+    private static final String FIELD_AAGUID = "aaguid";
     private MongoCollection<CredentialMongo> credentialsCollection;
 
     @PostConstruct
@@ -125,6 +126,18 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                                 eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_USER_ID, userId)
+                        )
+                ));
+    }
+
+    @Override
+    public Completable deleteByAaguid(ReferenceType referenceType, String referenceId, String aaguid) {
+        return Completable.fromPublisher(
+                credentialsCollection.deleteMany(
+                        and(
+                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                eq(FIELD_REFERENCE_ID, referenceId),
+                                eq(FIELD_AAGUID, aaguid)
                         )
                 ));
     }

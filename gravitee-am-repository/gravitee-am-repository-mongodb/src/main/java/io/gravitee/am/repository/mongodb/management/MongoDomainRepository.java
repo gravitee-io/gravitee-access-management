@@ -319,6 +319,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
                 AuthenticatorAttachment.fromString(webAuthnSettingsMongo.getAuthenticatorAttachment()) : null);
         webAuthnSettings.setAttestationConveyancePreference(webAuthnSettingsMongo.getAttestationConveyancePreference() != null ?
                 AttestationConveyancePreference.fromString(webAuthnSettingsMongo.getAttestationConveyancePreference()) : null);
+        webAuthnSettings.setForceRegistration(webAuthnSettingsMongo.isForceRegistration());
         return webAuthnSettings;
     }
 
@@ -335,6 +336,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         webAuthnSettingsMongo.setUserVerification(webAuthnSettings.getUserVerification() != null ? webAuthnSettings.getUserVerification().getValue() : null);
         webAuthnSettingsMongo.setAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment() != null ? webAuthnSettings.getAuthenticatorAttachment().getValue() : null);
         webAuthnSettingsMongo.setAttestationConveyancePreference(webAuthnSettings.getAttestationConveyancePreference() != null ? webAuthnSettings.getAttestationConveyancePreference().getValue() : null);
+        webAuthnSettingsMongo.setForceRegistration(webAuthnSettings.isForceRegistration());
         return webAuthnSettingsMongo;
     }
 

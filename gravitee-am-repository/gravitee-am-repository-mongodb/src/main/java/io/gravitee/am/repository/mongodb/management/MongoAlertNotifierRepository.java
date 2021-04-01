@@ -23,11 +23,12 @@ import io.gravitee.am.repository.management.api.AlertNotifierRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.AlertNotifierMongo;
 import io.reactivex.*;
-import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -69,14 +70,19 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
 
     @Override
     public Flowable<AlertNotifier> findByCriteria(ReferenceType referenceType, String referenceId, AlertNotifierCriteria criteria) {
-
         Bson eqReference = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
-        Bson eqEnabled = toBsonFilter("enabled", criteria.isEnabled());
-        Bson inIds = toBsonFilter("_id", criteria.getIds());
 
-        return toBsonFilter(criteria.isLogicalOR(), eqEnabled, inIds)
-                .switchIfEmpty(Single.just(new BsonDocument()))
-                .flatMapPublisher(filter -> Flowable.fromPublisher(collection.find(and(eqReference, filter)))).map(this::convert);
+        List<Bson> filters = new ArrayList<>();
+        if (criteria.isEnabled().isPresent()) {
+            filters.add(eq("enabled", criteria.isEnabled().get()));
+        }
+
+        if (criteria.getIds().isPresent() && !criteria.getIds().get().isEmpty()) {
+            filters.add(in("_id", criteria.getIds().get()));
+        }
+
+        Bson query = criteria.isLogicalOR() ? or(filters) : and(filters);
+        return Flowable.fromPublisher(collection.find(and(eqReference, query))).map(this::convert);
     }
 
     @Override

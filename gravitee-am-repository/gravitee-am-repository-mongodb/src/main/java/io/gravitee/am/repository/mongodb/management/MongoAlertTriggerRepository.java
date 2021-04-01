@@ -24,14 +24,14 @@ import io.gravitee.am.repository.management.api.AlertTriggerRepository;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.AlertTriggerMongo;
 import io.reactivex.*;
-import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -70,15 +70,24 @@ public class MongoAlertTriggerRepository extends AbstractManagementMongoReposito
 
     @Override
     public Flowable<AlertTrigger> findByCriteria(ReferenceType referenceType, String referenceId, AlertTriggerCriteria criteria) {
-
         Bson eqReference = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
-        Bson eqEnabled = toBsonFilter("enabled", criteria.isEnabled());
-        Bson eqType = toBsonFilter("type", criteria.getType());
-        Bson eqAlertNotifierIdsType = toBsonFilter("alertNotifiers", criteria.getAlertNotifierIds());
 
-        return toBsonFilter(criteria.isLogicalOR(), eqEnabled, eqType, eqAlertNotifierIdsType)
-                .switchIfEmpty(Single.just(new BsonDocument()))
-                .flatMapPublisher(filter -> Flowable.fromPublisher(collection.find(and(eqReference, filter)))).map(this::convert);
+        List<Bson> filters = new ArrayList<>();
+        if (criteria.isEnabled().isPresent()) {
+            filters.add(eq("enabled", criteria.isEnabled().get()));
+        }
+
+        if (criteria.getType().isPresent()) {
+            filters.add(eq("type", criteria.getType().get()));
+        }
+
+        if (criteria.getAlertNotifierIds().isPresent() && !criteria.getAlertNotifierIds().get().isEmpty()) {
+            filters.add(in("alertNotifiers", criteria.getAlertNotifierIds().get()));
+        }
+
+        Bson query = criteria.isLogicalOR() ? or(filters) : and(filters);
+
+        return Flowable.fromPublisher(collection.find(and(eqReference, query))).map(this::convert);
     }
 
     @Override
