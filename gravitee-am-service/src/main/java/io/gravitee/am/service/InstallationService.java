@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Installation;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 import java.util.Map;
@@ -49,4 +50,20 @@ public interface InstallationService {
      * @return the updated installation
      */
     Single<Installation> setAdditionalInformation(Map<String, String> additionalInformation);
+
+    /**
+     * Add or update the additional information of the current installation.
+     *
+     * @param additionalInformation the list of additional information to add or update on the existing installation.
+     *
+     * @return the updated installation.
+     */
+    Single<Installation> addAdditionalInformation(Map<String, String> additionalInformation);
+
+    /**
+     * Delete the current installation.
+     *
+     * @return the operation status
+     */
+    Completable delete();
 }
