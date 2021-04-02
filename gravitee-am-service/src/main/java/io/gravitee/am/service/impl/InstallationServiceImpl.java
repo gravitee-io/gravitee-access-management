@@ -32,6 +32,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.model.Installation.COCKPIT_INSTALLATION_STATUS;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -68,6 +70,13 @@ public class InstallationServiceImpl implements InstallationService {
 
                     return updateInternal(toUpdate);
                 });
+    }
+
+    @Override
+    public Single<Installation> addAdditionalInformation(Map<String, String> additionalInformation) {
+        return getOrInitialize()
+                .doOnSuccess(installation -> installation.getAdditionalInformation().putAll(additionalInformation))
+                .flatMap(this::updateInternal);
     }
 
     @Override
