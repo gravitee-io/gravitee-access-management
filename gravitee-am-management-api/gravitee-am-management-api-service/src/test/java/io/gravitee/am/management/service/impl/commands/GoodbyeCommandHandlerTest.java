@@ -15,22 +15,26 @@
  */
 package io.gravitee.am.management.service.impl.commands;
 
+import io.gravitee.am.model.Installation;
 import io.gravitee.am.service.InstallationService;
 import io.gravitee.cockpit.api.command.Command;
 import io.gravitee.cockpit.api.command.CommandStatus;
 import io.gravitee.cockpit.api.command.goodbye.GoodbyeCommand;
 import io.gravitee.cockpit.api.command.goodbye.GoodbyeReply;
-import io.reactivex.Completable;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.HashMap;
+import java.util.Map;
 
+import static io.gravitee.am.management.service.impl.commands.GoodbyeCommandHandler.DELETED_STATUS;
+import static io.gravitee.am.model.Installation.COCKPIT_INSTALLATION_STATUS;
 import static org.mockito.Mockito.*;
 
 /**
@@ -58,22 +62,25 @@ public class GoodbyeCommandHandlerTest extends TestCase {
     @Test
     public void handle() {
         GoodbyeCommand command = new GoodbyeCommand();
-        when(installationService.delete()).thenReturn(Completable.complete());
+        final Installation installation = new Installation();
+        when(installationService.addAdditionalInformation(any(Map.class))).thenReturn(Single.just(installation));
 
         TestObserver<GoodbyeReply> obs = cut.handle(command).test();
 
         obs.awaitTerminalEvent();
         obs.assertValue(reply -> reply.getCommandId().equals(command.getId()) && reply.getCommandStatus().equals(CommandStatus.SUCCEEDED));
 
-        final HashMap<String, String> expectedAdditionalInfos = new HashMap<>();
-        verify(installationService, times(1)).delete();
+        final ArgumentCaptor<Map<String, String>> expectedAdditionalInfos = ArgumentCaptor.forClass(Map.class);
+        verify(installationService, times(1)).addAdditionalInformation(expectedAdditionalInfos.capture());
+
+        assertEquals(DELETED_STATUS, expectedAdditionalInfos.getValue().get(COCKPIT_INSTALLATION_STATUS));
     }
 
     @Test
     public void handleWithException() {
         GoodbyeCommand command = new GoodbyeCommand();
 
-        when(installationService.delete()).thenReturn(Completable.error(new RuntimeException("Unexpected error")));
+        when(installationService.addAdditionalInformation(any(Map.class))).thenReturn(Single.error(new RuntimeException("Unexpected error")));
 
         TestObserver<GoodbyeReply> obs = cut.handle(command).test();
 
