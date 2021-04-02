@@ -20,6 +20,7 @@ import io.gravitee.am.model.Installation;
 import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InstallationNotFoundException;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,8 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.model.Installation.COCKPIT_INSTALLATION_STATUS;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -66,6 +69,27 @@ public class InstallationServiceImpl implements InstallationService {
                     toUpdate.setAdditionalInformation(additionalInformation);
 
                     return updateInternal(toUpdate);
+                });
+    }
+
+    @Override
+    public Single<Installation> addAdditionalInformation(Map<String, String> additionalInformation) {
+        return getOrInitialize()
+                .doOnSuccess(installation -> installation.getAdditionalInformation().putAll(additionalInformation))
+                .flatMap(this::updateInternal);
+    }
+
+    @Override
+    public Completable delete() {
+        return this.installationRepository.find()
+                .switchIfEmpty(Single.error(new InstallationNotFoundException()))
+                .flatMapCompletable(installation -> installationRepository.delete(installation.getId()))
+                .onErrorResumeNext(ex -> {
+                    // installation already deleted, continue
+                    if (ex instanceof InstallationNotFoundException) {
+                        return Completable.complete();
+                    }
+                    return Completable.error(ex);
                 });
     }
 
