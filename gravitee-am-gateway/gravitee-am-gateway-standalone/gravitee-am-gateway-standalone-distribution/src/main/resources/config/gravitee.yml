@@ -39,6 +39,7 @@
 #  alpn: false
 #  ssl:
 #    clientAuth: request # Supports none, request, required
+#    tlsProtocols: TLSv1.2, TLSv1.3
 #    keystore:
 #      type: jks # Supports jks, pem, pkcs12
 #      path: ${gravitee.home}/security/keystore.jks

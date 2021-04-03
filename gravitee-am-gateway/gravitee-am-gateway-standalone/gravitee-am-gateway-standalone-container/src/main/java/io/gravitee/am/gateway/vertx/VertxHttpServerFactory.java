@@ -26,6 +26,9 @@ import io.vertx.reactivex.core.http.HttpServer;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -35,7 +38,7 @@ public class VertxHttpServerFactory implements FactoryBean<HttpServer> {
     private static final String CERTIFICATE_FORMAT_JKS = "JKS";
     private static final String CERTIFICATE_FORMAT_PEM = "PEM";
     private static final String CERTIFICATE_FORMAT_PKCS12 = "PKCS12";
-    
+
     @Autowired
     private Vertx vertx;
 
@@ -56,6 +59,11 @@ public class VertxHttpServerFactory implements FactoryBean<HttpServer> {
         if (httpServerConfiguration.isSecured()) {
             options.setSsl(httpServerConfiguration.isSecured());
             options.setUseAlpn(httpServerConfiguration.isAlpn());
+
+            // TLS protocol support
+            if (httpServerConfiguration.getTlsProtocols() != null) {
+                options.setEnabledSecureTransportProtocols(new HashSet<>(Arrays.asList(httpServerConfiguration.getTlsProtocols().split("\\s*,\\s*"))));
+            }
 
             if (httpServerConfiguration.getClientAuth() == VertxHttpServerConfiguration.ClientAuthMode.NONE) {
                 options.setClientAuth(ClientAuth.NONE);
