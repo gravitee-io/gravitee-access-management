@@ -27,4 +27,5 @@ public interface ApplicationType {
 
     String WEB = "web";
     String NATIVE = "native";
+    String BROWSER = "browser";
 }
