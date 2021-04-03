@@ -42,6 +42,9 @@ public class VertxHttpServerConfiguration implements InitializingBean {
     @Value("${http.alpn:false}")
     private boolean alpn;
 
+    @Value("${http.ssl.tlsProtocols:#{null}}")
+    private String tlsProtocols;
+
     @Value("${http.ssl.keystore.path:#{null}}")
     private String keyStorePath;
 
@@ -181,6 +184,14 @@ public class VertxHttpServerConfiguration implements InitializingBean {
 
     public void setClientAuth(ClientAuthMode clientAuth) {
         this.clientAuth = clientAuth;
+    }
+
+    public String getTlsProtocols() {
+        return tlsProtocols;
+    }
+
+    public void setTlsProtocols(String tlsProtocols) {
+        this.tlsProtocols = tlsProtocols;
     }
 
     @Override
