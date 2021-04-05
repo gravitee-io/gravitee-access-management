@@ -15,7 +15,7 @@
  */
 import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
 import '@gravitee/ui-components/wc/gv-newsletter-subscription';
-import {Router} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {AuthService} from "../services/auth.service";
 import {SnackbarService} from "../services/snackbar.service";
 
@@ -28,12 +28,18 @@ export class NewsletterComponent implements OnInit {
 
   @ViewChild('newsletter', {static: true}) newsletter;
   email: string = '';
+  taglines : string[];
 
-  constructor(private router: Router,
+  constructor(private route: ActivatedRoute,
+              private router: Router,
               private snackbarService: SnackbarService,
               private authService: AuthService) { }
 
   ngOnInit() {
+    this.taglines = this.route.snapshot.data['taglines'];
+    if (this.taglines && this.taglines.length > 0) {
+      this.newsletter.nativeElement.taglines = this.taglines;
+    }
     this.authService.userInfo().subscribe(user => {
         this.email = user.email || '';
     });

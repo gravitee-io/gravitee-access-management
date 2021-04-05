@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+import {Injectable} from '@angular/core';
+import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
+import {Observable} from 'rxjs';
+import {AuthService} from "../services/auth.service";
 
-import io.reactivex.Single;
+@Injectable()
+export class NewsletterResolver implements Resolve<any> {
 
-import java.util.List;
+  constructor(private authService: AuthService) {
+  }
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface NewsletterService {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+    return this.authService.newsletterTaglines();
+  }
 
-    /**
-     * Subscribe to newsletters.
-     * @param user a user with email, firstname and lastname.
-     */
-    void subscribe(Object user);
-
-    /**
-     * Get tag lines
-     * @return tag lines
-     */
-    Single<List<String>> getTaglines();
 }

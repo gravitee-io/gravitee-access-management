@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,27 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+import { TestBed, inject } from '@angular/core/testing';
 
-import io.reactivex.Single;
+import { NewsletterResolver } from './newsletter.resolver';
 
-import java.util.List;
+describe('NewsletterResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [NewsletterResolver]
+    });
+  });
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface NewsletterService {
-
-    /**
-     * Subscribe to newsletters.
-     * @param user a user with email, firstname and lastname.
-     */
-    void subscribe(Object user);
-
-    /**
-     * Get tag lines
-     * @return tag lines
-     */
-    Single<List<String>> getTaglines();
-}
+  it('should ...', inject([NewsletterResolver], (service: NewsletterResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});
