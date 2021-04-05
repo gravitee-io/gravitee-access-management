@@ -291,6 +291,7 @@ import { IdentitiesResolver } from './resolvers/identities.resolver';
 import { PluginPoliciesResolver } from './resolvers/plugin-policies.resolver';
 import { PlatformFlowSchemaResolver } from './resolvers/platform-flow-schema.resolver';
 import { NewsletterComponent } from "./newsletter/newsletter.component";
+import { NewsletterResolver } from "./resolvers/newsletter.resolver";
 
 @NgModule({
   declarations: [
@@ -560,6 +561,7 @@ import { NewsletterComponent } from "./newsletter/newsletter.component";
     IdentitiesResolver,
     PluginPoliciesResolver,
     PlatformFlowSchemaResolver,
+    NewsletterResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,
