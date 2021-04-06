@@ -25,6 +25,7 @@ import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
+import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Single;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -123,6 +124,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected PasswordValidator passwordValidator;
+
+    @Autowired
+    protected UserValidator userValidator;
 
     @Autowired
     protected ScopeApprovalService scopeApprovalService;
@@ -278,6 +282,11 @@ public abstract class JerseySpringTest {
         @Bean
         public PasswordValidator passwordValidator() {
             return mock(PasswordValidator.class);
+        }
+
+        @Bean
+        public UserValidator userValidator() {
+            return mock(UserValidator.class);
         }
 
         @Bean

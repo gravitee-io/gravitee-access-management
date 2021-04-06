@@ -25,6 +25,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.validators.UserValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -59,6 +60,9 @@ public class UsersResource extends AbstractUsersResource {
 
     @Autowired
     private PasswordValidator passwordValidator;
+
+    @Autowired
+    private UserValidator userValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -119,13 +123,14 @@ public class UsersResource extends AbstractUsersResource {
             }
         }
 
-        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.CREATE)
+        userValidator.validate(newUser)
+                .andThen(checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.CREATE))
                 .andThen(userService.create(ReferenceType.ORGANIZATION, organizationId, newUser, authenticatedUser)
                         .map(user -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/users/" + user.getId()))
                                 .entity(user)
                                 .build()))
-                .subscribe(response::resume, response::resume);
+        .subscribe(response::resume, response::resume);
     }
 
     @Path("{user}")

@@ -70,6 +70,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
+    @Autowired
+    private UserValidator userValidator;
+
     @Override
     public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
         LOGGER.debug("Find users by domain: {}", domain.getId());
@@ -146,7 +149,7 @@ public class UserServiceImpl implements UserService {
                     userModel.setEnabled(userModel.getPassword() != null);
 
                     // store user in its identity provider
-                    return UserValidator.validate(userModel).andThen(userProvider.create(convert(userModel))
+                    return userValidator.validate(userModel).andThen(userProvider.create(convert(userModel))
                             .flatMap(idpUser -> {
                                 // AM 'users' collection is not made for authentication (but only management stuff)
                                 // clear password
@@ -198,7 +201,7 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setCreatedAt(existingUser.getCreatedAt());
                                 userToUpdate.setUpdatedAt(new Date());
 
-                                return UserValidator.validate(userToUpdate).andThen(identityProviderManager.getUserProvider(userToUpdate.getSource())
+                                return userValidator.validate(userToUpdate).andThen(identityProviderManager.getUserProvider(userToUpdate.getSource())
                                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))
                                         .flatMapSingle(userProvider -> {
                                             // no idp user check if we need to create it
