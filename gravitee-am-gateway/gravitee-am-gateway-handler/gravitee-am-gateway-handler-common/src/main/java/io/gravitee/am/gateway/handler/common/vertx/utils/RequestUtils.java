@@ -82,8 +82,17 @@ public class RequestUtils {
      * @return all cleaned query parameters as a {@link MultiMap}.
      */
     public static MultiMap getCleanedQueryParams(HttpServerRequest httpServerRequest) {
+        return getCleanedQueryParams(httpServerRequest.uri());
+    }
 
-        final MultiMap queryParams = getQueryParams(httpServerRequest.uri());
+    /**
+     * Same as {@link #getQueryParams(HttpServerRequest)} but removes some query parameters used internally (eg: error, error_description, success, ...).
+     *
+     * @param uri the request uri from which extract the query parameters.
+     * @return all cleaned query parameters as a {@link MultiMap}.
+     */
+    public static MultiMap getCleanedQueryParams(String uri) {
+        final MultiMap queryParams = getQueryParams(uri);
         queryParams.remove(ConstantKeys.ERROR_PARAM_KEY);
         queryParams.remove(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
         queryParams.remove(ConstantKeys.WARNING_PARAM_KEY);
