@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "5b9a65ee-60ac-4920-be92-5e25dad2fcbf",
+		"_postman_id": "6960dba0-faef-42ba-b20c-1df7ad5c845d",
 		"name": "Gravitee.io - AM - Openid Discovery",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -15,7 +15,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "571e9b59-b9e7-452c-9469-9786ded290a6",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -77,7 +76,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "b286f0fa-cfcc-45b9-863a-1dbc87fdf835",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -130,7 +128,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "a1ab79e9-b254-47f9-8af9-e6ab3e47ab58",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -193,7 +190,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "bfe78ac1-144a-4bbd-abf9-55e160e723bf",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function(){}, 10000);"
@@ -236,8 +232,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Discovery",
@@ -248,7 +243,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "5332b6f5-7419-4792-a30f-cce968d3d67e",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -299,7 +293,7 @@
 									"    pm.expect(body).to.have.property(\"require_request_uri_registration\");",
 									"    ",
 									"    pm.expect(body.code_challenge_methods_supported).to.eql([ 'plain','S256' ]);",
-									"    pm.expect(body.scopes_supported).to.eql([ 'address','email','groups','offline_access','openid','phone','profile','roles']);",
+									"    pm.expect(body.scopes_supported).to.eql([ 'address','email','full_profile','groups','offline_access','openid','phone','profile','roles']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -330,7 +324,6 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "f3428f0d-2f6c-4202-8b16-dfec99b0971a",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -363,8 +356,7 @@
 					},
 					"response": []
 				}
-			],
-			"protocolProfileBehavior": {}
+			]
 		},
 		{
 			"name": "Delete domain",
@@ -372,7 +364,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "abfa8366-3ee2-45b0-b658-0040b79d565c",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -416,6 +407,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }

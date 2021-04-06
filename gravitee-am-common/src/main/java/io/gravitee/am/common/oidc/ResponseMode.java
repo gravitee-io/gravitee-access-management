@@ -64,6 +64,7 @@ public interface ResponseMode {
         return Arrays.asList(
                 io.gravitee.am.common.oauth2.ResponseMode.QUERY,
                 io.gravitee.am.common.oauth2.ResponseMode.FRAGMENT,
+                io.gravitee.am.common.oauth2.ResponseMode.FORM_POST,
                 QUERY_JWT,
                 FRAGMENT_JWT,
                 JWT);

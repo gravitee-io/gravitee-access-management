@@ -46,6 +46,7 @@ import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.SessionHandler;
 import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
+import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -88,11 +89,14 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     @Mock
     private JWEService jweService;
 
+    @Mock
+    private ThymeleafTemplateEngine thymeleafTemplateEngine;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow);
+        AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow, thymeleafTemplateEngine);
 
         // set openid provider service
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
