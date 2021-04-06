@@ -207,6 +207,16 @@ user:
         #(?=\S+$)          # no whitespace allowed in the entire string
         #.{8,}             # anything, at least eight places though
       #$                 # end-of-string
+  name:
+    strict:
+      policy:
+        pattern: ^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\/<>?:;|=.,]{0,100}$
+    lax:
+      policy:
+        pattern: ^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?|=]{0,100}$
+  username:
+    policy:
+      pattern: ^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;|=,]{1,100}$
   registration:
     email:
       #subject: New user registration

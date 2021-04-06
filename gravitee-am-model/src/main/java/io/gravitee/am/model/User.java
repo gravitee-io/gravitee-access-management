@@ -28,7 +28,7 @@ import java.util.*;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class User {
+public class User implements IUser {
 
     private String id;
 

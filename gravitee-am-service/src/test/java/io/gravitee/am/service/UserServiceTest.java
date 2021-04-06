@@ -26,16 +26,20 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.Set;
@@ -53,6 +57,9 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService = new UserServiceImpl();
 
+    @Spy
+    private UserValidator userValidator = new UserValidator();
+
     @Mock
     private UserRepository userRepository;
 
@@ -63,6 +70,13 @@ public class UserServiceTest {
     private CredentialService credentialService;
 
     private final static String DOMAIN = "domain1";
+
+    /*
+    @Before
+    public void setUp() {
+        doReturn(Completable.complete()).when(userValidator).validate(any());
+    }
+     */
 
     @Test
     public void shouldFindById() {
