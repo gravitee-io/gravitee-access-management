@@ -45,10 +45,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static java.nio.charset.Charset.defaultCharset;
 
@@ -209,16 +206,27 @@ public class FlowServiceImpl implements FlowService {
     public Single<List<Flow>> createOrUpdate(ReferenceType referenceType, String referenceId, List<Flow> flows, User principal) {
         LOGGER.debug("Create or update flows {} for domain {}", flows, referenceId);
         return Observable.fromIterable(flows)
-            .flatMapSingle(flow -> flow.getId() == null ? create(referenceType, referenceId, flow) : update(referenceType, referenceId, flow.getId(), flow))
-            .sorted(getFlowComparator())
-            .toList()
-            .onErrorResumeNext(ex -> {
-                if (ex instanceof AbstractManagementException) {
-                    return Single.error(ex);
-                }
-                LOGGER.error("An error has occurred while trying to update flows", ex);
-                return Single.error(new TechnicalManagementException("An error has occurred while trying to update flows", ex));
-            });
+                .flatMapSingle(flow -> {
+                    return flowRepository.findByType(referenceType, referenceId, flow.getType())
+                            .map(Optional::ofNullable)
+                            .defaultIfEmpty(Optional.empty())
+                            .flatMapSingle(optFlow -> {
+                                if (!optFlow.isPresent()) {
+                                    return create(referenceType, referenceId, flow);
+                                }
+                                Flow flowToUpdate = optFlow.get();
+                                return update(referenceType, referenceId, flowToUpdate.getId(), flow);
+                            });
+                })
+                .sorted(getFlowComparator())
+                .toList()
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error has occurred while trying to update flows", ex);
+                    return Single.error(new TechnicalManagementException("An error has occurred while trying to update flows", ex));
+                });
     }
 
     private Comparator<Flow> getFlowComparator() {
