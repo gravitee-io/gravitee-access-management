@@ -86,8 +86,9 @@ export class DomainPasswordPolicyComponent implements OnInit {
       'maxConsecutiveLetters': this.maxConsecutiveLetters,
     };
     this.domainService.patchPasswordSettings(this.domainId, data).subscribe(data => {
-      this.domain = data;
-      this.form.reset(data.passwordSettings);
+      this.passwordSettings = data.passwordSettings;
+      this.domain['passwordSettings'] = this.passwordSettings;
+      this.form.reset(this.passwordSettings);
       this.formChanged = false;
       this.snackbarService.open('Password settings configuration updated');
     });
