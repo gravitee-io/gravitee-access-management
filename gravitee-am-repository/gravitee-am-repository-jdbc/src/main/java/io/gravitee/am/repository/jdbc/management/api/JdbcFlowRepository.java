@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Step;
+import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcFlow;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringFlowRepository;
@@ -205,6 +206,16 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
                 .flatMap(flow -> completeFlow(flow).toMaybe())
                 .doOnError(error -> LOGGER.error("Unable to find flow with referenceType '{}', referenceId '{}' and id '{}'",
                         referenceType, referenceId, id));
+    }
+
+    @Override
+    public Maybe<Flow> findByType(ReferenceType referenceType, String referenceId, Type type) {
+        LOGGER.debug("findByType({}, {}, {})", referenceType, referenceId, type);
+        return flowRepository.findByType(referenceType.name(), referenceId, type.name())
+                .map(this::toEntity)
+                .flatMap(flow -> completeFlow(flow).toMaybe())
+                .doOnError(error -> LOGGER.error("Unable to find flow with referenceType '{}', referenceId '{}' and type '{}'",
+                        referenceType, referenceId, type));
     }
 
     @Override

@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
+import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -30,6 +31,8 @@ import java.util.List;
 public interface FlowRepository extends CrudRepository<Flow, String> {
 
     Maybe<Flow> findById(ReferenceType referenceType, String referenceId, String id);
+
+    Maybe<Flow> findByType(ReferenceType referenceType, String referenceId, Type type);
 
     Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId);
 }

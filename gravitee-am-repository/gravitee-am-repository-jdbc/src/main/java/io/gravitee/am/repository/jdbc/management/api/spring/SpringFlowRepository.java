@@ -33,6 +33,9 @@ public interface SpringFlowRepository extends RxJava2CrudRepository<JdbcFlow, St
     @Query("SELECT * FROM flows f WHERE f.reference_type = :refType AND f.reference_id = :refId AND f.id = :id")
     Maybe<JdbcFlow> findById(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("id") String id);
 
+    @Query("SELECT * FROM flows f WHERE f.reference_type = :refType AND f.reference_id = :refId AND f.type = :type")
+    Maybe<JdbcFlow> findByType(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("type") String type);
+
     @Query("SELECT * FROM flows f WHERE f.reference_type = :refType AND f.reference_id = :refId")
     Flowable<JdbcFlow> findAll(@Param("refType")String referenceType, @Param("refId") String referenceId);
 

@@ -44,6 +44,7 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoFlowRepository extends AbstractManagementMongoRepository implements FlowRepository {
 
     private MongoCollection<FlowMongo> flowsCollection;
+    private static final String FIELD_TYPE = "type";
 
     @PostConstruct
     public void init() {
@@ -67,6 +68,18 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                                 eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_ID, id)
+                        )
+                ).first()).firstElement().map(this::convert);
+    }
+
+    @Override
+    public Maybe<Flow> findByType(ReferenceType referenceType, String referenceId, Type type) {
+        return Observable.fromPublisher(
+                flowsCollection.find(
+                        and(
+                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                                eq(FIELD_REFERENCE_ID, referenceId),
+                                eq(FIELD_TYPE, type.name())
                         )
                 ).first()).firstElement().map(this::convert);
     }

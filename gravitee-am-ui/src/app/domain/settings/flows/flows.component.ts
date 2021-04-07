@@ -81,8 +81,9 @@ export class DomainSettingsFlowsComponent implements OnInit {
       return flow;
     });
 
-    this.domainService.updateFlows(this.domainId, flows).subscribe(() => {
+    this.domainService.updateFlows(this.domainId, flows).subscribe((updatedFlows) => {
       this.studio.nativeElement.saved();
+      this.definition = { ...this.definition, flows:  updatedFlows};
       this.snackbarService.open('Flows updated');
     });
 
