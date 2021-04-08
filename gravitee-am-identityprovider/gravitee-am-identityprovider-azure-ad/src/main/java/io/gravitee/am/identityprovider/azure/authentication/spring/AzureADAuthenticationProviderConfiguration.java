@@ -54,6 +54,6 @@ public class AzureADAuthenticationProviderConfiguration {
                 .setConnectTimeout(configuration.getConnectTimeout())
                 .setMaxPoolSize(configuration.getMaxPoolSize());
 
-        return webClientBuilder.createWebClient(vertx, httpClientOptions);
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
     }
 }

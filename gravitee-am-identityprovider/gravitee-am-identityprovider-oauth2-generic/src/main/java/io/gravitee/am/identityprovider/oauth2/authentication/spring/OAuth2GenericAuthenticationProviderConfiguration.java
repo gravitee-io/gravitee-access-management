@@ -56,7 +56,7 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
                 .setMaxPoolSize(configuration.getMaxPoolSize())
                 .setSsl(isTLS());
 
-        return webClientBuilder.createWebClient(vertx, httpClientOptions);
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
     }
 
     /**

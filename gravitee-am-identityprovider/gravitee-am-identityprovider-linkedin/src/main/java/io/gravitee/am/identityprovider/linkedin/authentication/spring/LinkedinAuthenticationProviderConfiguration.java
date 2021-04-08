@@ -49,6 +49,6 @@ public class LinkedinAuthenticationProviderConfiguration {
                 .setConnectTimeout(configuration.getConnectTimeout())
                 .setMaxPoolSize(configuration.getMaxPoolSize());
 
-        return new WebClientBuilder().createWebClient(vertx, httpClientOptions);
+        return new WebClientBuilder().createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
     }
 }
