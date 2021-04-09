@@ -1,5 +1,46 @@
 # Change Log
 
+
+== https://github.com/gravitee-io/issues/milestone/360?closed=1[AM - 3.5.4 (2021-04-09)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Missing POST_REGISTER flow for registration confirmation https://github.com/gravitee-io/issues/issues/5370[#5370]
+
+*_Management_*
+
+- Flow duplication https://github.com/gravitee-io/issues/issues/5366[#5366]
+- [JDBC] Domain creation fails on reporter https://github.com/gravitee-io/issues/issues/5350[#5350]
+
+*_Oidc_*
+
+- Can not create SPA application through DCR https://github.com/gravitee-io/issues/issues/3934[#3934]
+
+=== Features
+
+*_Gateway_*
+
+- [oauth2] form post response mode https://github.com/gravitee-io/issues/issues/5211[#5211]
+
+=== Improvements
+
+*_Gateway_*
+
+- Add the ability to customize the user's fields validation https://github.com/gravitee-io/issues/issues/5262[#5262]
+- Support for TLS 1.3 https://github.com/gravitee-io/issues/issues/5355[#5355]
+
+*_Helm_*
+
+- Support jdbc config https://github.com/gravitee-io/issues/issues/5261[#5261]
+
+*_Management_*
+
+- Dynamic newsletter taglines https://github.com/gravitee-io/issues/issues/5270[#5270]
+
+ 
+ 
 == https://github.com/gravitee-io/issues/milestone/362?closed=1[AM - 3.7.1 (2021-03-24)]
 
 === Bug fixes
