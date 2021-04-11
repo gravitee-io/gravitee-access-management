@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.oidc;
+package io.gravitee.am.model;
 
 /**
- * OpenID Connect Application Types
- *
- * See <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">Client metadata</a>
- *
- * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ApplicationType {
+public interface IUser {
 
-    String WEB = "web";
-    String NATIVE = "native";
-    String BROWSER = "browser";
+    String getUsername();
+
+    String getEmail();
+
+    String getFirstName();
+
+    String getLastName();
+
+    String getDisplayName();
+
+    String getNickName();
+
+    String getExternalId();
 }

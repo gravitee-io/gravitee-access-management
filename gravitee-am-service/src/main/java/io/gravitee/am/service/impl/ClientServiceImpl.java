@@ -371,13 +371,21 @@ public class ClientServiceImpl implements ClientService {
                 return ApplicationType.BROWSER;
             }
         }
-        if (client.getApplicationType() == null || client.getApplicationType().equals(io.gravitee.am.common.oidc.ApplicationType.WEB)) {
+        // if not application type, set WEB app type
+        if (client.getApplicationType() == null) {
             return ApplicationType.WEB;
         }
-        if (client.getApplicationType() != null && client.getApplicationType().equals(io.gravitee.am.common.oidc.ApplicationType.NATIVE)) {
-            return ApplicationType.NATIVE;
+        // check application type
+        switch (client.getApplicationType()) {
+            case io.gravitee.am.common.oidc.ApplicationType.WEB :
+                return ApplicationType.WEB;
+            case io.gravitee.am.common.oidc.ApplicationType.NATIVE :
+                return ApplicationType.NATIVE;
+            case io.gravitee.am.common.oidc.ApplicationType.BROWSER :
+                return ApplicationType.BROWSER;
+            default :
+                return ApplicationType.SERVICE;
         }
-        return ApplicationType.SERVICE;
     }
 
     private ApplicationSettings getSettings(Client client) {

@@ -302,6 +302,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new RegisterConfirmationSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
                 .handler(passwordPolicyRequestParseHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.POST_REGISTER))
                 .handler(new RegisterConfirmationSubmissionEndpoint(userService));
 
         // Forgot password route

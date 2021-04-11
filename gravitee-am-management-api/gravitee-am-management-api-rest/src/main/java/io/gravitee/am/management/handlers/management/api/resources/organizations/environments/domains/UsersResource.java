@@ -27,6 +27,7 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.validators.UserValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -63,6 +64,9 @@ public class UsersResource extends AbstractUsersResource {
 
     @Autowired
     private PasswordValidator passwordValidator;
+
+    @Autowired
+    private UserValidator userValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -134,7 +138,8 @@ public class UsersResource extends AbstractUsersResource {
             }
         }
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.CREATE)
+        userValidator.validate(newUser)
+                .andThen(checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.CREATE))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(userProvider -> userService.create(domain, newUser, authenticatedUser))

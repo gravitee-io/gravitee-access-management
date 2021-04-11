@@ -154,7 +154,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 return userService.countByDomain(query.getDomain()).map(value -> new AnalyticsCountResponse(value));
             default :
                 return auditService.aggregate(query.getDomain(), queryBuilder.build(), query.getType())
-                        .map(values -> new AnalyticsCountResponse((Long) values.values().iterator().next()));
+                        .map(values -> values.values().isEmpty() ? new AnalyticsCountResponse(0l) : new AnalyticsCountResponse((Long) values.values().iterator().next()));
         }
     }
 

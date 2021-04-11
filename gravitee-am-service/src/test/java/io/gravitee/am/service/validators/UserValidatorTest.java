@@ -28,12 +28,14 @@ import static org.junit.Assert.*;
  */
 public class UserValidatorTest {
 
+    private final UserValidator userValidator = new UserValidator();
+
     @Test
     public void validate() {
 
         User user = getValidUser();
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNull(throwable);
     }
@@ -44,7 +46,7 @@ public class UserValidatorTest {
         User user = getValidUser();
         user.setUsername("user.valid+1-test@gravitee.io");
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNull(throwable);
     }
@@ -55,7 +57,7 @@ public class UserValidatorTest {
         User user = getValidUser();
         user.setDisplayName("user.valid+1-test@gravitee.io");
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNull(throwable);
     }
@@ -66,7 +68,7 @@ public class UserValidatorTest {
         User user = getValidUser();
         user.setUsername("user#gravitee.io");
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNull(throwable);
     }
@@ -77,7 +79,7 @@ public class UserValidatorTest {
         User user = getValidUser();
         user.setEmail("invalid");
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof EmailFormatInvalidException);
@@ -89,7 +91,7 @@ public class UserValidatorTest {
         User user = getValidUser();
         user.setFirstName("$¨¨^invalid");
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof InvalidUserException);
@@ -101,7 +103,7 @@ public class UserValidatorTest {
         User user = getValidUser();
         user.setLastName("$¨¨^invalid");
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof InvalidUserException);
@@ -113,7 +115,7 @@ public class UserValidatorTest {
         User user = getValidUser();
         user.setNickName("$¨¨^invalid");
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof InvalidUserException);
@@ -125,7 +127,7 @@ public class UserValidatorTest {
         User user = getValidUser();
         user.setDisplayName("$¨¨^invalid");
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof InvalidUserException);
@@ -137,7 +139,7 @@ public class UserValidatorTest {
         User user = getValidUser();
         user.setUsername("$¨¨^invalid");
 
-        Throwable throwable = UserValidator.validate(user).blockingGet();
+        Throwable throwable = userValidator.validate(user).blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof InvalidUserException);

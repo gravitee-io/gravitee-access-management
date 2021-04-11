@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.service.NewsletterService;
+import io.reactivex.Single;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -42,6 +48,12 @@ public class NewsletterServiceImpl implements NewsletterService, InitializingBea
     @Value("${newsletter.url:https://newsletter.gravitee.io}")
     private String newsletterURI;
 
+    @Value("${newsletter.enabled:true}")
+    private boolean newsletterEnabled = true;
+
+    @Autowired
+    private ObjectMapper mapper;
+
     @Autowired
     @Qualifier("newsletterWebClient")
     private WebClient client;
@@ -55,6 +67,29 @@ public class NewsletterServiceImpl implements NewsletterService, InitializingBea
                 }
             });
         });
+    }
+
+    @Override
+    public Single<List<String>> getTaglines() {
+        if (!newsletterEnabled) {
+            return Single.just(Collections.emptyList());
+        }
+
+        String taglinesPath = "taglines";
+        if (newsletterURI.lastIndexOf('/') != newsletterURI.length() - 1) {
+            taglinesPath = "/" + taglinesPath;
+        }
+
+        return client
+                .getAbs(newsletterURI + taglinesPath)
+                .rxSend()
+                .map(res -> {
+                    if (res.statusCode() != 200) {
+                        LOGGER.error("An error has occurred when reading the newsletter taglines response: " + res.statusMessage());
+                        return Collections.emptyList();
+                    }
+                    return mapper.readValue(res.bodyAsString(), List.class);
+                });
     }
 
     @Override
