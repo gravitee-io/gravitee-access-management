@@ -510,7 +510,6 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
                         .doOnTerminate(() -> {
                             // init bulk processor
                             initializeBulkProcessor();
-                            ready = true;
                         }).subscribe();
 
             } catch (Exception e) {
@@ -518,19 +517,22 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
             }
         } else {
             initializeBulkProcessor();
-            ready = true;
         }
     }
 
     protected void initializeBulkProcessor() {
-        disposable = bulkProcessor.buffer(
-                configuration.getFlushInterval(),
-                TimeUnit.SECONDS,
-                configuration.getBulkActions())
-                .flatMap(JdbcAuditReporter.this::bulk)
-                .doOnError(error -> LOGGER.error("An error occurs while indexing data into report_audits_{} table of {} database",
-                        configuration.getTableSuffix(), configuration.getDatabase(), error))
-                .subscribe();
+        if (!lifecycle.stopped()) {
+            disposable = bulkProcessor.buffer(
+                    configuration.getFlushInterval(),
+                    TimeUnit.SECONDS,
+                    configuration.getBulkActions())
+                    .flatMap(JdbcAuditReporter.this::bulk)
+                    .doOnError(error -> LOGGER.error("An error occurs while indexing data into report_audits_{} table of {} database",
+                            configuration.getTableSuffix(), configuration.getDatabase(), error))
+                    .subscribe();
+
+            ready = true;
+        }
     }
 
     @Override
@@ -543,16 +545,18 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
         super.doStop();
         try {
             ready = false;
-            if (!disposable.isDisposed()) {
+            if (disposable != null && !disposable.isDisposed()) {
                 disposable.dispose();
             }
 
             // we wait until the bulk processor has stopped
-            while (bulkProcessor.hasSubscribers()) {
-                LOGGER.debug("The bulk processor is processing data, wait.");
+            if (bulkProcessor != null) {
+                while (bulkProcessor.hasSubscribers()) {
+                    LOGGER.debug("The bulk processor is processing data, wait.");
+                }
             }
 
-            if (this.connectionFactory instanceof ConnectionPool) {
+            if (this.connectionFactory != null && this.connectionFactory instanceof ConnectionPool) {
                 ConnectionPool connectionFactory = (ConnectionPool) this.connectionFactory;
                 if (!connectionFactory.isDisposed()) {
                     // dispose is a blocking call, use the non blocking one to avoid error
