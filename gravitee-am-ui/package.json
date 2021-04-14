@@ -28,7 +28,7 @@
     "@angular/platform-browser-dynamic": "^11.2.6",
     "@angular/platform-server": "^11.2.6",
     "@angular/router": "^11.2.6",
-    "@gravitee/ui-components": "^2.1.1",
+    "@gravitee/ui-components": "^2.3.1",
     "@swimlane/ngx-datatable": "^19.0.0",
     "@types/hammerjs": "^2.0.36",
     "bcryptjs": "^2.4.3",
