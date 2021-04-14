@@ -18,26 +18,18 @@ package io.gravitee.am.resource.smtp.provider;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.api.email.EmailSenderProvider;
-import io.gravitee.am.resource.api.email.Message;
 import io.gravitee.am.resource.smtp.SmtpResourceConfiguration;
-import io.gravitee.am.service.EmailService;
-import io.gravitee.am.service.impl.EmailServiceImpl;
 import io.gravitee.am.service.utils.EmailSender;
 import io.reactivex.Completable;
-import jdk.internal.joptsimple.internal.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.util.StringUtils;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Properties;
-
-import static io.gravitee.am.resource.api.email.Message.TEXT_HTML;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
