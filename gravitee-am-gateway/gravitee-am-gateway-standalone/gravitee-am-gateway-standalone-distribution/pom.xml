@@ -210,22 +210,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.node.services</groupId>
-            <artifactId>gravitee-node-services-healthcheck</artifactId>
-            <version>${gravitee-node.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.node.services</groupId>
-            <artifactId>gravitee-node-services-monitoring</artifactId>
-            <version>${gravitee-node.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
             <groupId>io.gravitee.am.reporter</groupId>
             <artifactId>gravitee-am-reporter-mongodb</artifactId>
             <version>${project.version}</version>
@@ -481,20 +465,6 @@
                                     <groupId>io.gravitee.am.gateway</groupId>
                                     <artifactId>gravitee-am-gateway-services-sync</artifactId>
                                     <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
-                                <artifactItem>
-                                    <groupId>io.gravitee.node.services</groupId>
-                                    <artifactId>gravitee-node-services-healthcheck</artifactId>
-                                    <version>${gravitee-node.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
-                                <artifactItem>
-                                    <groupId>io.gravitee.node.services</groupId>
-                                    <artifactId>gravitee-node-services-monitoring</artifactId>
-                                    <version>${gravitee-node.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
 

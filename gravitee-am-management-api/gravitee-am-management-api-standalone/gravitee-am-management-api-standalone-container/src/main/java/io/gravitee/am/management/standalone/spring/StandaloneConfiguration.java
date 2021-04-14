@@ -28,7 +28,9 @@ import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.el.ExpressionLanguageInitializer;
+import io.gravitee.node.api.NodeMonitoringRepository;
 import io.gravitee.node.container.NodeFactory;
+import io.gravitee.node.monitoring.NoOpNodeMonitoringRepository;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
@@ -90,5 +92,11 @@ public class StandaloneConfiguration {
     @Bean
     public RepositoryScopeProvider repositoryScopeProvider() {
         return new io.gravitee.am.repository.RepositoryScopeProvider();
+    }
+
+    // TODO : do not merge for version >= 3.8.x
+    @Bean
+    public NodeMonitoringRepository nodeMonitoringRepository() {
+        return new NoOpNodeMonitoringRepository();
     }
 }
