@@ -61,7 +61,6 @@
 			<outputDirectory>lib</outputDirectory>
 			<useProjectArtifact>false</useProjectArtifact>
 			<excludes>
-				<exclude>io.projectreactor.netty:reactor-netty</exclude>
 				<exclude>io.projectreactor:reactor-core</exclude>
 				<exclude>org.reactivestreams:reactive-streams</exclude>
 				<exclude>io.netty:netty-codec</exclude>
