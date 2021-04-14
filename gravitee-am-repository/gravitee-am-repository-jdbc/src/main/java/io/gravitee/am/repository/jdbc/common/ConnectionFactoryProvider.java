@@ -76,13 +76,12 @@ public class ConnectionFactoryProvider {
                     .option(USER, user)
                     .option(DATABASE, db)
                     .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, Integer.parseInt(environment.getProperty(prefix+"acquireRetry", "1")))
-                    .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, Integer.parseInt(environment.getProperty(prefix+"initialSize", "10")))
+                    .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, Integer.parseInt(environment.getProperty(prefix+"initialSize", "0")))
                     .option(PoolingConnectionFactoryProvider.MAX_SIZE, Integer.parseInt(environment.getProperty(prefix+"maxSize", "10")))
-                    .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxIdleTime", "1800000")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxLifeTime", "0")), ChronoUnit.MILLIS))
+                    .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxIdleTime", "30000")), ChronoUnit.MILLIS))
+                    .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxLifeTime", "30000")), ChronoUnit.MILLIS))
                     .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxAcquireTime", "0")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", "0")), ChronoUnit.MILLIS))
-                    .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.valueOf(environment.getProperty(prefix+"validationDepth", "LOCAL")));
+                    .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Long.parseLong(environment.getProperty(prefix+"maxCreateConnectionTime", "0")), ChronoUnit.MILLIS));
 
             if (port != null) {
                 builder.option(PORT, Integer.parseInt(port));
@@ -90,8 +89,12 @@ public class ConnectionFactoryProvider {
 
             final String validationQuery = environment.getProperty(prefix + "validationQuery");
             if (validationQuery != null) {
-                builder.option(PoolingConnectionFactoryProvider.VALIDATION_QUERY, validationQuery);
+                builder.option(PoolingConnectionFactoryProvider.VALIDATION_QUERY, validationQuery)
+                        .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.REMOTE);
+            } else {
+                builder.option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
             }
+
             if (pwd != null) {
                 builder.option(PASSWORD, pwd);
             }

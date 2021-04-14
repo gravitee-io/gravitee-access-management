@@ -188,9 +188,10 @@ public class ReporterServiceImpl implements ReporterService {
                 "\"username\":\"" + jdbcUser+ "\"," +
                 "\"password\":"+ (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
                 "\"tableSuffix\":\"" + tableSuffix + "\"," +
-                "\"initialSize\":5," +
+                "\"initialSize\":0," +
                 "\"maxSize\":10," +
-                "\"maxIdleTime\":180000," +
+                "\"maxIdleTime\":30000," +
+                "\"maxLifeTime\":30000," +
                 "\"bulkActions\":1000," +
                 "\"flushInterval\":5}");
 

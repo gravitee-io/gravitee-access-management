@@ -125,9 +125,10 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                     "\"username\":\"" + jdbcUser+ "\"," +
                     "\"password\":\"" + jdbcPwd + "\"," +
                     "\"tableSuffix\":\"\"," + // empty domain
-                    "\"initialSize\":5," +
+                    "\"initialSize\":0," +
                     "\"maxSize\":10," +
-                    "\"maxIdleTime\":180000," +
+                    "\"maxIdleTime\":30000," +
+                    "\"maxLifeTime\":30000," +
                     "\"bulkActions\":1000," +
                     "\"flushInterval\":5}";
 
