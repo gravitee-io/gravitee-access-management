@@ -50,6 +50,9 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
     @Override
     public Maybe<AuthenticationFlowContext> findById(String id) {
         LOGGER.debug("findById({})", id);
+        if (id == null) {
+            return Maybe.empty();
+        }
         return monoToMaybe(dbClient.select()
                 .from(JdbcAuthenticationFlowContext.class)
                 .matching(from(where("id").is(id)))
@@ -60,6 +63,10 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
     @Override
     public Maybe<AuthenticationFlowContext> findLastByTransactionId(String transactionId) {
         LOGGER.debug("findLastByTransactionId({})", transactionId);
+        if (transactionId == null) {
+            return Maybe.empty();
+        }
+        
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToMaybe(dbClient.select()
                 .from(JdbcAuthenticationFlowContext.class)
@@ -72,6 +79,10 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
     @Override
     public Flowable<AuthenticationFlowContext> findByTransactionId(String transactionId) {
         LOGGER.debug("findByTransactionId({})", transactionId);
+        if (transactionId == null) {
+            return Flowable.empty();
+        }
+
         LocalDateTime now = LocalDateTime.now(UTC);
         return fluxToFlowable(dbClient.select()
                 .from(JdbcAuthenticationFlowContext.class)
