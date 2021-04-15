@@ -240,6 +240,10 @@ ngx-datatable {
   }
 }
 
+.ngx-datatable.material .datatable-header .datatable-header-cell {
+  background: transparent;
+}
+
 mat-horizontal-stepper {
   border: 1px solid #e2e5e7;
   margin: 5px;
