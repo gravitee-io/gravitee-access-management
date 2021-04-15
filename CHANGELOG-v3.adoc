@@ -1,6 +1,22 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/369?closed=1[AM - 3.6.2 (2021-04-15)]
+
+=== Bug fixes
+
+*_Cockpit_*
+
+- Backport #5325 (delete installation) https://github.com/gravitee-io/issues/issues/5429[#5429]
+- Backport #5339 (SinglePrimaryOwnerException) https://github.com/gravitee-io/issues/issues/5428[#5428]
+
+*_General_*
+
+- Merge 3.5.4 https://github.com/gravitee-io/issues/issues/5394[#5394]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/360?closed=1[AM - 3.5.4 (2021-04-09)]
 
 === Bug fixes
