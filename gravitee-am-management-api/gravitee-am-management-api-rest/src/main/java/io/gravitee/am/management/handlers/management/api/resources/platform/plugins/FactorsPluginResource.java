@@ -19,7 +19,8 @@ import io.gravitee.am.management.service.FactorPluginService;
 import io.gravitee.am.service.model.plugin.FactorPlugin;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
+import java.util.Comparator;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -29,14 +30,12 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.Comparator;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Factor"})
+@Api(tags = { "Plugin", "Factor" })
 public class FactorsPluginResource {
 
     @Context
@@ -47,15 +46,15 @@ public class FactorsPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List factor plugins",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @ApiOperation(value = "List factor plugins", notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
-
-        authenticatorPluginService.findAll()
-                .map(authenticatorPlugins -> authenticatorPlugins.stream()
-                        .sorted(Comparator.comparing(FactorPlugin::getName))
-                        .collect(Collectors.toList()))
-                .subscribe(response::resume, response::resume);
+        authenticatorPluginService
+            .findAll()
+            .map(
+                authenticatorPlugins ->
+                    authenticatorPlugins.stream().sorted(Comparator.comparing(FactorPlugin::getName)).collect(Collectors.toList())
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{factor}")

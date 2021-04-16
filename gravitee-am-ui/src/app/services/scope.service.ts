@@ -14,45 +14,44 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
-import { Observable } from "rxjs";
+import { HttpClient } from '@angular/common/http';
+import { AppConfig } from '../../config/app.config';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class ScopeService {
   private scopes = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   findByDomain(domainId): Observable<any> {
-    return this.http.get<any>(this.scopes + domainId + "/scopes");
+    return this.http.get<any>(this.scopes + domainId + '/scopes');
   }
 
   get(domainId, id): Observable<any> {
-    return this.http.get<any>(this.scopes + domainId + "/scopes/" + id);
+    return this.http.get<any>(this.scopes + domainId + '/scopes/' + id);
   }
 
   create(domainId, scope): Observable<any> {
-    return this.http.post<any>(this.scopes + domainId + "/scopes", scope);
+    return this.http.post<any>(this.scopes + domainId + '/scopes', scope);
   }
 
   update(domainId, id, scope): Observable<any> {
-    return this.http.put<any>(this.scopes + domainId + "/scopes/" + id, {
-      'name' : scope.name,
-      'description' : scope.description,
-      'expiresIn' : scope.expiresIn,
-      'discovery' : scope.discovery
+    return this.http.put<any>(this.scopes + domainId + '/scopes/' + id, {
+      name: scope.name,
+      description: scope.description,
+      expiresIn: scope.expiresIn,
+      discovery: scope.discovery,
     });
   }
 
   patchDiscovery(domainId, id, discovery): Observable<any> {
-    return this.http.patch<any>(this.scopes + domainId + "/scopes/" + id, {
-      'discovery' : discovery
+    return this.http.patch<any>(this.scopes + domainId + '/scopes/' + id, {
+      discovery: discovery,
     });
   }
 
   delete(domainId, id): Observable<any> {
-    return this.http.delete<any>(this.scopes + domainId + "/scopes/" + id);
+    return this.http.delete<any>(this.scopes + domainId + '/scopes/' + id);
   }
-
 }

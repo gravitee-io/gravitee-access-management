@@ -23,9 +23,8 @@ describe('WidgetDataTableComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetDataTableComponent ]
-    })
-    .compileComponents();
+      declarations: [WidgetDataTableComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

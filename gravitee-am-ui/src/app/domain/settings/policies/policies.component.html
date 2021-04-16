@@ -29,30 +29,53 @@
               <mat-icon>add_circle_outline</mat-icon>
             </button>
             <mat-menu #menu="matMenu">
-              <button mat-menu-item  *ngFor="let policy of policyPlugins" (click)="addPolicy(extensionPoint.value, policy.id)">
+              <button mat-menu-item *ngFor="let policy of policyPlugins" (click)="addPolicy(extensionPoint.value, policy.id)">
                 <mat-icon>shuffle</mat-icon>
-                <span>{{policy.name}}</span>
+                <span>{{ policy.name }}</span>
               </button>
             </mat-menu>
             <mat-expansion-panel [expanded]="extensionPoint.expanded">
               <mat-expansion-panel-header>
-                <mat-panel-title><pre matBadge="{{getPolicies(extensionPoint.value)?.length}}" matBadgeOverlap="false" matBadgeColor="primary">{{extensionPoint.stage}}</pre></mat-panel-title>
+                <mat-panel-title>
+                  <pre matBadge="{{ getPolicies(extensionPoint.value)?.length }}" matBadgeOverlap="false" matBadgeColor="primary">{{
+                    extensionPoint.stage
+                  }}</pre>
+                </mat-panel-title>
               </mat-expansion-panel-header>
               <div cdkDropList class="policy-list" (cdkDropListDropped)="drop($event, extensionPoint.value)">
-                <div class="policy-box" [class.active]="policy.id === selectedPolicyId" *ngFor="let policy of getPolicies(extensionPoint.value)" cdkDrag>
+                <div
+                  class="policy-box"
+                  [class.active]="policy.id === selectedPolicyId"
+                  *ngFor="let policy of getPolicies(extensionPoint.value)"
+                  cdkDrag
+                >
                   <div fxLayout="column" fxFlex="70">
-                    <span fxFlex>{{policy.name}}</span>
-                    <small style="font-size: 75%; color:grey;">{{policy.type}}</small>
+                    <span fxFlex>{{ policy.name }}</span>
+                    <small style="font-size: 75%; color: grey">{{ policy.type }}</small>
                   </div>
                   <div class="policy-actions">
-                    <mat-slide-toggle matTooltip="{{policy.enabled ? 'Disable policy ?' : 'Enable policy ?'}}"
+                    <mat-slide-toggle
+                      matTooltip="{{ policy.enabled ? 'Disable policy ?' : 'Enable policy ?' }}"
                       (change)="enablePolicy($event, policy)"
-                      [checked]="isPolicyEnabled(policy)" [disabled]="readonly">
+                      [checked]="isPolicyEnabled(policy)"
+                      [disabled]="readonly"
+                    >
                     </mat-slide-toggle>
-                    <button style="margin-left: 5px;" mat-icon-button matTooltip="Settings" (click)="loadPolicy($event, policy)" *hasPermission="['domain_extension_point_read']">
+                    <button
+                      style="margin-left: 5px"
+                      mat-icon-button
+                      matTooltip="Settings"
+                      (click)="loadPolicy($event, policy)"
+                      *hasPermission="['domain_extension_point_read']"
+                    >
                       <mat-icon>settings</mat-icon>
                     </button>
-                    <button mat-icon-button matTooltip="Delete" (click)="deletePolicy($event, policy)" *hasPermission="['domain_extension_point_delete']">
+                    <button
+                      mat-icon-button
+                      matTooltip="Delete"
+                      (click)="deletePolicy($event, policy)"
+                      *hasPermission="['domain_extension_point_delete']"
+                    >
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
@@ -79,7 +102,7 @@
           <mat-card>
             <mat-card-content>
               <mat-form-field>
-                <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="policy.name" required>
+                <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="policy.name" required />
                 <mat-hint>A name for your policy.</mat-hint>
               </mat-form-field>
             </mat-card-content>
@@ -89,21 +112,35 @@
           <mat-card>
             <mat-card-content>
               <div class="policy-configuration">
-                <policy-form *ngIf="policy" [policyConfiguration]="policyConfiguration" [policySchema]="policySchema" (configurationCompleted)="enablePolicyUpdate($event)"></policy-form>
+                <policy-form
+                  *ngIf="policy"
+                  [policyConfiguration]="policyConfiguration"
+                  [policySchema]="policySchema"
+                  (configurationCompleted)="enablePolicyUpdate($event)"
+                ></policy-form>
               </div>
             </mat-card-content>
           </mat-card>
           <div class="form-actions" fxLayout="row" fxLayoutAlign="end end" *hasPermission="['domain_extension_point_update']">
-            <button mat-raised-button [disabled]="((!policyForm.valid || !configurationIsValid) || (policyForm.pristine && configurationPristine))" (click)="save()">SAVE</button>
+            <button
+              mat-raised-button
+              [disabled]="!policyForm.valid || !configurationIsValid || (policyForm.pristine && configurationPristine)"
+              (click)="save()"
+            >
+              SAVE
+            </button>
           </div>
         </form>
       </div>
       <div *ngIf="isLoading" fxLayoutAlign="center center" fxFlex><gv-loader></gv-loader></div>
       <div *ngIf="!policy" fxFlex>
         <app-emptystate
-                      [message]="'Extension Point Management'"
-                      [subMessage]="'Extension Points allow you to extend the behavior of the Gateway Server by executing policies on specific stages. <br /> Policies can be added by clicking on the (+) button available for each extension point.'"
-                      [icon]="'extension'"></app-emptystate>
+          [message]="'Extension Point Management'"
+          [subMessage]="
+            'Extension Points allow you to extend the behavior of the Gateway Server by executing policies on specific stages. <br /> Policies can be added by clicking on the (+) button available for each extension point.'
+          "
+          [icon]="'extension'"
+        ></app-emptystate>
       </div>
     </mat-drawer-content>
   </mat-drawer-container>

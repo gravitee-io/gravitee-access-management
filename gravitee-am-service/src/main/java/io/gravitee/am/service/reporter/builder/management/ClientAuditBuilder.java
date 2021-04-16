@@ -35,7 +35,14 @@ public class ClientAuditBuilder extends ManagementAuditBuilder<ClientAuditBuilde
             setNewValue(client);
         }
         domain(client.getDomain());
-        setTarget(client.getId(), EntityType.CLIENT, client.getClientId(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
+        setTarget(
+            client.getId(),
+            EntityType.CLIENT,
+            client.getClientId(),
+            client.getClientName(),
+            ReferenceType.DOMAIN,
+            client.getDomain()
+        );
         return this;
     }
 }

@@ -13,48 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {ApplicationService} from '../../../../../services/application.service';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {FactorService} from '../../../../../services/factor.service';
-import {AuthService} from '../../../../../services/auth.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ApplicationService } from '../../../../../services/application.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { FactorService } from '../../../../../services/factor.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-factors',
   templateUrl: './factors.component.html',
-  styleUrls: ['./factors.component.scss']
+  styleUrls: ['./factors.component.scss'],
 })
 export class ApplicationFactorsComponent implements OnInit {
   private domainId: string;
   private factorTypes: any = {
-    'otp-am-factor' : 'OTP'
+    'otp-am-factor': 'OTP',
   };
   private factorIcons: any = {
-    'otp-am-factor' : 'mobile_friendly'
+    'otp-am-factor': 'mobile_friendly',
   };
   application: any;
   formChanged = false;
   factors: any[];
   editMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private applicationService: ApplicationService,
-              private factorService: FactorService,
-              private authService: AuthService,
-              private snackbarService: SnackbarService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private applicationService: ApplicationService,
+    private factorService: FactorService,
+    private authService: AuthService,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
+    this.application = this.route.snapshot.parent.parent.data.application;
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
-    this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);
+    this.factorService.findByDomain(this.domainId).subscribe((response) => (this.factors = [...response]));
   }
 
   patch(): void {
-    this.applicationService.patch(this.domainId, this.application.id, { 'factors': this.application.factors }).subscribe(data => {
+    this.applicationService.patch(this.domainId, this.application.id, { factors: this.application.factors }).subscribe((data) => {
       this.application = data;
-      this.route.snapshot.parent.parent.data['application'] = this.application;
+      this.route.snapshot.parent.parent.data.application = this.application;
       this.formChanged = false;
       this.snackbarService.open('Application updated');
     });

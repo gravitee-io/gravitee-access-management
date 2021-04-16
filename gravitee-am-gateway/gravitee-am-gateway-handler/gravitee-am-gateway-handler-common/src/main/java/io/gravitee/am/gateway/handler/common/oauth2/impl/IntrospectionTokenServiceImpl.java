@@ -24,13 +24,12 @@ import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.time.Instant;
+import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-
-import java.time.Instant;
-import java.util.Date;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,28 +52,50 @@ public class IntrospectionTokenServiceImpl implements IntrospectionTokenService 
 
     @Override
     public Single<JWT> introspect(String token, boolean offlineVerification) {
-        return jwtService.decode(token)
-                .flatMapMaybe(jwt -> clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud()))
-                .switchIfEmpty(Maybe.error(new InvalidTokenException("Invalid or unknown client for this token")))
-                .flatMapSingle(client -> jwtService.decodeAndVerify(token, client))
-                .flatMap(jwt -> {
+        return jwtService
+            .decode(token)
+            .flatMapMaybe(jwt -> clientService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud()))
+            .switchIfEmpty(Maybe.error(new InvalidTokenException("Invalid or unknown client for this token")))
+            .flatMapSingle(client -> jwtService.decodeAndVerify(token, client))
+            .flatMap(
+                jwt -> {
                     // Just check the JWT signature and JWT validity if offline verification option is enabled
                     // or if the token has just been created (could not be in database so far because of async database storing process delay)
-                    if (offlineVerification || Instant.now().isBefore(Instant.ofEpochSecond(jwt.getIat() + OFFLINE_VERIFICATION_TIMER_SECONDS))) {
+                    if (
+                        offlineVerification ||
+                        Instant.now().isBefore(Instant.ofEpochSecond(jwt.getIat() + OFFLINE_VERIFICATION_TIMER_SECONDS))
+                    ) {
                         return Single.just(jwt);
                     }
 
                     // check if token is not revoked
-                    return accessTokenRepository.findByToken(jwt.getJti())
-                            .switchIfEmpty(Single.error(new InvalidTokenException("The token is invalid", "Token with JTI [" + jwt.getJti() + "] not found in the database", jwt)))
-                            .map(accessToken -> {
+                    return accessTokenRepository
+                        .findByToken(jwt.getJti())
+                        .switchIfEmpty(
+                            Single.error(
+                                new InvalidTokenException(
+                                    "The token is invalid",
+                                    "Token with JTI [" + jwt.getJti() + "] not found in the database",
+                                    jwt
+                                )
+                            )
+                        )
+                        .map(
+                            accessToken -> {
                                 if (accessToken.getExpireAt().before(new Date())) {
-                                    throw new InvalidTokenException("The token expired", "Token with JTI [" + jwt.getJti() + "] is expired", jwt);
+                                    throw new InvalidTokenException(
+                                        "The token expired",
+                                        "Token with JTI [" + jwt.getJti() + "] is expired",
+                                        jwt
+                                    );
                                 }
                                 return jwt;
-                            });
-                })
-                .onErrorResumeNext(ex -> {
+                            }
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof JWTException) {
                         LOGGER.debug("An error occurs while decoding JWT access token : {}", token, ex);
                         return Single.error(new InvalidTokenException(ex.getMessage(), ex));
@@ -83,10 +104,16 @@ public class IntrospectionTokenServiceImpl implements IntrospectionTokenService 
                         InvalidTokenException invalidTokenException = (InvalidTokenException) ex;
                         String details = invalidTokenException.getDetails();
                         JWT jwt = invalidTokenException.getJwt();
-                        LOGGER.debug("An error occurs while checking JWT access token validity: {}\n\t - details: {}\n\t - decoded jwt: {}",
-                                token, details != null ? details : "none", jwt != null ? jwt.toString() : "{}", invalidTokenException);
+                        LOGGER.debug(
+                            "An error occurs while checking JWT access token validity: {}\n\t - details: {}\n\t - decoded jwt: {}",
+                            token,
+                            details != null ? details : "none",
+                            jwt != null ? jwt.toString() : "{}",
+                            invalidTokenException
+                        );
                     }
                     return Single.error(ex);
-                });
+                }
+            );
     }
 }

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -22,12 +24,9 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKSetDeseriali
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
-import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -528,7 +527,7 @@ public class DynamicClientRegistrationRequest {
 
     @Override
     public String toString() {
-        return "ClientPayload{clientName='" + (clientName!=null?clientName.orElse(""):"") + "\'}";
+        return "ClientPayload{clientName='" + (clientName != null ? clientName.orElse("") : "") + "\'}";
     }
 
     public Client patch(Client client) {
@@ -637,4 +636,3 @@ public class DynamicClientRegistrationRequest {
         return client;
     }
 }
-

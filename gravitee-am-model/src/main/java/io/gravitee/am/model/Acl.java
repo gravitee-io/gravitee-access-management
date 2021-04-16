@@ -37,7 +37,6 @@ public enum Acl {
     }
 
     public static Set<Acl> of(Acl... acls) {
-
         return Arrays.stream(acls).collect(Collectors.toSet());
     }
 }

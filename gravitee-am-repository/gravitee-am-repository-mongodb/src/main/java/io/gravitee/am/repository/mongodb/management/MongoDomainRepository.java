@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.*;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Domain;
@@ -29,14 +31,11 @@ import io.gravitee.am.repository.mongodb.management.internal.model.*;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.reactivex.*;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.mongodb.client.model.Filters.*;
+import javax.annotation.PostConstruct;
+import org.springframework.stereotype.Component;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -72,8 +71,13 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Domain> findAllByEnvironment(String environmentId) {
-
-        return Flowable.fromPublisher(domainsCollection.find(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()), eq(FIELD_REFERENCE_ID, environmentId)))).map(this::convert);
+        return Flowable
+            .fromPublisher(
+                domainsCollection.find(
+                    and(eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()), eq(FIELD_REFERENCE_ID, environmentId))
+                )
+            )
+            .map(this::convert);
     }
 
     @Override
@@ -91,7 +95,9 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Domain> update(Domain item) {
         DomainMongo domain = convert(item);
-        return Single.fromPublisher(domainsCollection.replaceOne(eq(FIELD_ID, domain.getId()), domain)).flatMap(updateResult -> findById(domain.getId()).toSingle());
+        return Single
+            .fromPublisher(domainsCollection.replaceOne(eq(FIELD_ID, domain.getId()), domain))
+            .flatMap(updateResult -> findById(domain.getId()).toSingle());
     }
 
     @Override
@@ -260,5 +266,4 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     private AccountSettingsMongo convert(AccountSettings accountSettings) {
         return AccountSettingsMongo.convert(accountSettings);
     }
-
 }

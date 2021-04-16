@@ -16,52 +16,55 @@
 
 -->
 <div>
-    <div fxFlex="70">
-      <div fxLayout="row" fxLayoutAlign="center">
-        <div fxFlex><span *ngIf="isEmpty">There are no</span><b *ngIf="!isEmpty">{{groupRoles.length}}</b> role(s) assigned to this group.</div>
-        <div style="height: 40px;">
-          <button *ngIf="editMode" color="primary" mat-stroked-button (click)="add()">Assign roles</button>
-        </div>
+  <div fxFlex="70">
+    <div fxLayout="row" fxLayoutAlign="center">
+      <div fxFlex>
+        <span *ngIf="isEmpty">There are no</span><b *ngIf="!isEmpty">{{ groupRoles.length }}</b> role(s) assigned to this group.
       </div>
-      <mat-divider *ngIf="isEmpty" style="margin-bottom: 20px;"></mat-divider>
-      <ngx-datatable *ngIf="!isEmpty" class="material"
-                     [columnMode]="'flex'"
-                     [headerHeight]="40"
-                     [footerHeight]="40"
-                     [rowHeight]="50"
-                     [rows]='groupRoles'>
-        <ngx-datatable-column name="Name" [flexGrow]="2">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.name}}
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="Description" [flexGrow]="4">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.description}}
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <div fxLayout="row" class="gv-table-cell-actions">
-              <button mat-icon-button (click)="revoke($event, row)"><mat-icon matTooltip="Revoke role">highlight_off</mat-icon></button>
-            </div>
-          </ng-template>
-        </ngx-datatable-column>
-      </ngx-datatable>
-
-      <app-emptystate *ngIf="isEmpty"
-                      [message]="'No roles assigned'"
-                      [subMessage]="'No data to display'"
-                      [icon]="'perm_contact_calendar'"></app-emptystate>
-
-    </div>
-    <div class="gv-page-description" fxFlex>
-      <h3>Group roles</h3>
-      <div class="gv-page-description-content">
-        <p>
-          Roles allow members of this group to sign in and access any protected resources that match roles' permissions requirements.
-        </p>
+      <div style="height: 40px">
+        <button *ngIf="editMode" color="primary" mat-stroked-button (click)="add()">Assign roles</button>
       </div>
     </div>
+    <mat-divider *ngIf="isEmpty" style="margin-bottom: 20px"></mat-divider>
+    <ngx-datatable
+      *ngIf="!isEmpty"
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="groupRoles"
+    >
+      <ngx-datatable-column name="Name" [flexGrow]="2">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.name }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Description" [flexGrow]="4">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.description }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="gv-table-cell-actions">
+            <button mat-icon-button (click)="revoke($event, row)"><mat-icon matTooltip="Revoke role">highlight_off</mat-icon></button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+
+    <app-emptystate
+      *ngIf="isEmpty"
+      [message]="'No roles assigned'"
+      [subMessage]="'No data to display'"
+      [icon]="'perm_contact_calendar'"
+    ></app-emptystate>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>Group roles</h3>
+    <div class="gv-page-description-content">
+      <p>Roles allow members of this group to sign in and access any protected resources that match roles' permissions requirements.</p>
+    </div>
+  </div>
 </div>
-

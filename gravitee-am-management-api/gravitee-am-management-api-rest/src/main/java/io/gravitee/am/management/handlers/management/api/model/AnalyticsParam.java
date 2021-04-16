@@ -19,7 +19,6 @@ import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.audit.EventType;
 import io.swagger.annotations.ApiParam;
-
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -47,11 +46,7 @@ public class AnalyticsParam {
     private int size;
 
     @QueryParam("type")
-    @ApiParam(
-            value = "The type of data to retrieve",
-            required = true,
-            allowableValues = "group_by,date_histo,count"
-    )
+    @ApiParam(value = "The type of data to retrieve", required = true, allowableValues = "group_by,date_histo,count")
     private AnalyticsTypeParam type;
 
     @QueryParam("field")
@@ -107,54 +102,50 @@ public class AnalyticsParam {
 
     public void validate() throws WebApplicationException {
         if (type.getValue() == null) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'type' is not valid")
-                    .build());
+            throw new WebApplicationException(
+                Response.status(Response.Status.BAD_REQUEST).entity("Query parameter 'type' is not valid").build()
+            );
         }
 
         if (from == -1) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'from' is not valid")
-                    .build());
+            throw new WebApplicationException(
+                Response.status(Response.Status.BAD_REQUEST).entity("Query parameter 'from' is not valid").build()
+            );
         }
 
         if (to == -1) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'to' is not valid")
-                    .build());
+            throw new WebApplicationException(
+                Response.status(Response.Status.BAD_REQUEST).entity("Query parameter 'to' is not valid").build()
+            );
         }
 
         if (interval == -1) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'interval' is not valid")
-                    .build());
+            throw new WebApplicationException(
+                Response.status(Response.Status.BAD_REQUEST).entity("Query parameter 'interval' is not valid").build()
+            );
         }
 
         if (interval < 1_000 || interval > 1_000_000_000) {
-            throw new WebApplicationException(Response
+            throw new WebApplicationException(
+                Response
                     .status(Response.Status.BAD_REQUEST)
                     .entity("Query parameter 'interval' is not valid. 'interval' must be >= 1000 and <= 1000000000")
-                    .build());
+                    .build()
+            );
         }
 
         if (from >= to) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("'from' query parameter value must be greater than 'to'")
-                    .build());
+            throw new WebApplicationException(
+                Response.status(Response.Status.BAD_REQUEST).entity("'from' query parameter value must be greater than 'to'").build()
+            );
         }
 
         if (field != null && !field.isEmpty()) {
             // check if field is valid
             if (!EventType.types().contains(field.toUpperCase()) && !Field.types().contains(field.toLowerCase())) {
-                throw new WebApplicationException(Response
-                        .status(Response.Status.BAD_REQUEST)
-                        .entity("'field' query parameter is invalid")
-                        .build());
+                throw new WebApplicationException(
+                    Response.status(Response.Status.BAD_REQUEST).entity("'field' query parameter is invalid").build()
+                );
             }
         }
     }

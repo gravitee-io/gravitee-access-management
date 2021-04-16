@@ -47,8 +47,6 @@ public class UpdateCertificate {
 
     @Override
     public String toString() {
-        return "UpdateCertificate{" +
-                ", name='" + name + '\'' +
-                '}';
+        return "UpdateCertificate{" + ", name='" + name + '\'' + '}';
     }
 }

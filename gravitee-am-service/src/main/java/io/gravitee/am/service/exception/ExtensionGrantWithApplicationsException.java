@@ -33,4 +33,3 @@ public class ExtensionGrantWithApplicationsException extends AbstractManagementE
         return "You can't delete an extension grant with existing applications.";
     }
 }
-

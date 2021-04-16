@@ -28,7 +28,6 @@ import io.reactivex.Single;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.net.SocketAddress;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,25 +56,31 @@ public class AbstractUserConsentEndpointHandler {
 
         // end user
         if (!token.getSub().equals(token.getAud())) {
-            return userService.findById(token.getSub())
-                    .map(user -> {
+            return userService
+                .findById(token.getSub())
+                .map(
+                    user -> {
                         User principal = new DefaultUser(user.getUsername());
                         ((DefaultUser) principal).setId(user.getId());
-                        Map<String, Object> additionalInformation =
-                                user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) :  new HashMap<>();
+                        Map<String, Object> additionalInformation = user.getAdditionalInformation() != null
+                            ? new HashMap<>(user.getAdditionalInformation())
+                            : new HashMap<>();
                         // add ip address and user agent
                         additionalInformation.put(Claims.ip_address, remoteAddress(context.request()));
                         additionalInformation.put(Claims.user_agent, userAgent(context.request()));
                         additionalInformation.put(Claims.domain, domain.getId());
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;
-                    })
-                    .defaultIfEmpty(defaultPrincipal(context, token))
-                    .toSingle();
+                    }
+                )
+                .defaultIfEmpty(defaultPrincipal(context, token))
+                .toSingle();
         } else {
             // revocation made oauth2 clients
-            return clientSyncService.findByClientId(token.getAud())
-                    .map(client -> {
+            return clientSyncService
+                .findByClientId(token.getAud())
+                .map(
+                    client -> {
                         User principal = new DefaultUser(client.getClientId());
                         ((DefaultUser) principal).setId(client.getId());
                         Map<String, Object> additionalInformation = new HashMap<>();
@@ -85,11 +90,11 @@ public class AbstractUserConsentEndpointHandler {
                         additionalInformation.put(Claims.domain, domain.getId());
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;
-                    })
-                    .defaultIfEmpty(defaultPrincipal(context, token))
-                    .toSingle();
+                    }
+                )
+                .defaultIfEmpty(defaultPrincipal(context, token))
+                .toSingle();
         }
-
     }
 
     private User defaultPrincipal(RoutingContext context, JWT token) {
@@ -109,7 +114,7 @@ public class AbstractUserConsentEndpointHandler {
         String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;

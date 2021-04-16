@@ -18,16 +18,14 @@ import { Component, OnInit, Input } from '@angular/core';
 @Component({
   selector: 'app-emptystate',
   templateUrl: './emptystate.component.html',
-  styleUrls: ['./emptystate.component.scss']
+  styleUrls: ['./emptystate.component.scss'],
 })
 export class EmptystateComponent implements OnInit {
   @Input() message: string;
   @Input() subMessage: string;
   @Input() icon: string;
 
-  constructor() { }
+  constructor() {}
 
-  ngOnInit() {
-  }
-
+  ngOnInit() {}
 }

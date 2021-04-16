@@ -19,5 +19,4 @@ package io.gravitee.am.reporter.api;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ReporterConfiguration {
-}
+public interface ReporterConfiguration {}

@@ -40,7 +40,11 @@ public class UserConsentPostEndpoint implements Handler<RoutingContext> {
 
         // consent has been processed, replay authorization request
         try {
-            final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(), authorizationRequest.path(), authorizationRequest.parameters().toSingleValueMap());
+            final String authorizationRequestUrl = UriBuilderRequest.resolveProxyRequest(
+                routingContext.request(),
+                authorizationRequest.path(),
+                authorizationRequest.parameters().toSingleValueMap()
+            );
             doRedirect(routingContext.response(), authorizationRequestUrl);
         } catch (Exception e) {
             LOGGER.error("An error occurs while handling authorization approval request", e);

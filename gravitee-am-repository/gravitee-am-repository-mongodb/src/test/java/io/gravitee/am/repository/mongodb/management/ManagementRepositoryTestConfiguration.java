@@ -38,5 +38,4 @@ public class ManagementRepositoryTestConfiguration {
     public MongoDatabase mongoOperations() {
         return embeddedClient().mongoDatabase();
     }
-
 }

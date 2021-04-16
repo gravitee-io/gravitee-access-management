@@ -20,9 +20,8 @@ import io.vertx.core.net.ProxyType;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import org.springframework.beans.factory.annotation.Value;
-
 import java.net.URL;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -66,29 +65,26 @@ public class WebClientBuilder {
     private boolean isProxyConfigured;
 
     public WebClient createWebClient(Vertx vertx, URL url) {
-
         final int port = url.getPort() != -1 ? url.getPort() : (HTTPS_SCHEME.equals(url.getProtocol()) ? 443 : 80);
 
         WebClientOptions options = new WebClientOptions()
-                .setDefaultPort(port)
-                .setDefaultHost(url.getHost())
-                .setKeepAlive(true)
-                .setMaxPoolSize(10)
-                .setTcpKeepAlive(true)
-                .setConnectTimeout(httpClientTimeout)
-                .setSsl(url.getProtocol().equals(HTTPS_SCHEME));
+            .setDefaultPort(port)
+            .setDefaultHost(url.getHost())
+            .setKeepAlive(true)
+            .setMaxPoolSize(10)
+            .setTcpKeepAlive(true)
+            .setConnectTimeout(httpClientTimeout)
+            .setSsl(url.getProtocol().equals(HTTPS_SCHEME));
 
         return createWebClient(vertx, options);
     }
 
     public WebClient createWebClient(Vertx vertx, WebClientOptions options) {
-
         setProxySettings(options);
         return WebClient.create(vertx, options);
     }
 
     private void setProxySettings(WebClientOptions options) {
-
         if (this.isProxyConfigured) {
             ProxyOptions proxyOptions = new ProxyOptions();
             proxyOptions.setType(ProxyType.valueOf(httpClientProxyType));

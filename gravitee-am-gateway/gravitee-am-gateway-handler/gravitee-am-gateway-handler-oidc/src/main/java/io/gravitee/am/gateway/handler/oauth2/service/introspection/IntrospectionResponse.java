@@ -27,6 +27,7 @@ import io.gravitee.am.common.jwt.JWT;
  * @author GraviteeSource Team
  */
 public class IntrospectionResponse extends JWT {
+
     private static final String ACTIVE = "active";
     private static final String CLIENT_ID = "client_id";
     private static final String USERNAME = "username";

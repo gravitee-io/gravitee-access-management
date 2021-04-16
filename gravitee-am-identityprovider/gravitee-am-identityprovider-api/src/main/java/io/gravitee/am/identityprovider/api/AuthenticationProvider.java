@@ -25,7 +25,6 @@ import io.reactivex.Maybe;
  * @author GraviteeSource Team
  */
 public interface AuthenticationProvider extends Service<AuthenticationProvider> {
-
     Maybe<User> loadUserByUsername(Authentication authentication);
 
     Maybe<User> loadUserByUsername(String username);

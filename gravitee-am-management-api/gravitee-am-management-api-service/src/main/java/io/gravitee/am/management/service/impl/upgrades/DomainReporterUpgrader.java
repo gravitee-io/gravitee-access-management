@@ -46,24 +46,24 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Applying domain reporter upgrade");
-        domainService.findAll()
-                .flatMapObservable(Observable::fromIterable)
-                .flatMapCompletable(this::updateDefaultReporter)
-                .subscribe();
+        domainService.findAll().flatMapObservable(Observable::fromIterable).flatMapCompletable(this::updateDefaultReporter).subscribe();
         return true;
     }
 
     private Completable updateDefaultReporter(Domain domain) {
-        return reporterService.findByDomain(domain.getId())
-                .flatMapCompletable(reporters -> {
+        return reporterService
+            .findByDomain(domain.getId())
+            .flatMapCompletable(
+                reporters -> {
                     if (reporters == null || reporters.isEmpty()) {
                         logger.info("No default reporter found for domain {}, update domain", domain.getName());
-                        return reporterService.createDefault(domain.getId())
-                                .ignoreElement();
+                        return reporterService.createDefault(domain.getId()).ignoreElement();
                     }
                     return Completable.complete();
-                });
+                }
+            );
     }
+
     @Override
     public int getOrder() {
         return 8;

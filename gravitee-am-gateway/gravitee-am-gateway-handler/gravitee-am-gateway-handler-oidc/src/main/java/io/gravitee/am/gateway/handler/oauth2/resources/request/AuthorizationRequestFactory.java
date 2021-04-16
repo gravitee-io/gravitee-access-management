@@ -26,15 +26,14 @@ import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -89,11 +88,17 @@ public final class AuthorizationRequestFactory {
     }
 
     private MultiValueMap<String, String> extractAdditionalParameters(HttpServerRequest request) {
-        final Set<String> restrictedParameters = Stream.concat(Parameters.values.stream(),
-                io.gravitee.am.common.oidc.Parameters.values.stream()).collect(Collectors.toSet());
+        final Set<String> restrictedParameters = Stream
+            .concat(Parameters.values.stream(), io.gravitee.am.common.oidc.Parameters.values.stream())
+            .collect(Collectors.toSet());
 
         MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
-        request.params().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
+        request
+            .params()
+            .entries()
+            .stream()
+            .filter(entry -> !restrictedParameters.contains(entry.getKey()))
+            .forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
         return additionalParameters;
     }
 

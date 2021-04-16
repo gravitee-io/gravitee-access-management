@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
@@ -34,20 +37,16 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -469,7 +468,8 @@ public class DomainServiceTest {
         when(policyService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(policy)));
         when(policyService.delete(anyString())).thenReturn(Completable.complete());
         when(membership.getId()).thenReturn(MEMBERSHIP_ID);
-        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singletonList(membership)));
+        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN))
+            .thenReturn(Single.just(Collections.singletonList(membership)));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
         when(factor.getId()).thenReturn(FACTOR_ID);
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(factor)));

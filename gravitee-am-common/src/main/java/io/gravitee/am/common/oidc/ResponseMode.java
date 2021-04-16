@@ -24,7 +24,6 @@ package io.gravitee.am.common.oidc;
  * @author GraviteeSource Team
  */
 public interface ResponseMode {
-
     /**
      * The response mode "query.jwt" causes the authorization server to send the authorization response as HTTP
      * redirect to the redirect URI of the client. The authorization server adds the parameter response containing the

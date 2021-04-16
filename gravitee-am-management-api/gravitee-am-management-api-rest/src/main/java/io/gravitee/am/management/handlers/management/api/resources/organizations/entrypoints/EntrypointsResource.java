@@ -26,8 +26,7 @@ import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.net.URI;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -36,13 +35,13 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.net.URI;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"entrypoints"})
+@Api(tags = { "entrypoints" })
 public class EntrypointsResource extends AbstractResource {
 
     @Autowired
@@ -54,46 +53,57 @@ public class EntrypointsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List entrypoints",
-            notes = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
-                    "Each returned entrypoint is filtered and contains only basic information such as id and name.")
-    @ApiResponses({
+        value = "List entrypoints",
+        notes = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
+        "Each returned entrypoint is filtered and contains only basic information such as id and name."
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "List all the entrypoints", response = Domain.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
-    public void list(
-            @PathParam("organizationId") String organizationId,
-            @Suspended final AsyncResponse response) {
-
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
+    public void list(@PathParam("organizationId") String organizationId, @Suspended final AsyncResponse response) {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ENTRYPOINT, Acl.LIST)
-                .andThen(entrypointService.findAll(organizationId))
-                .map(this::filterEntrypointInfos)
-                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                .toList()
-                .subscribe(response::resume, response::resume);
+            .andThen(entrypointService.findAll(organizationId))
+            .map(this::filterEntrypointInfos)
+            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+            .toList()
+            .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a entrypoint",
-            notes = "User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Create a entrypoint",
+        notes = "User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 201, message = "Entrypoint successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void create(
-            @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "entrypoint", required = true)
-            @Valid @NotNull final NewEntrypoint newEntrypoint,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @ApiParam(name = "entrypoint", required = true) @Valid @NotNull final NewEntrypoint newEntrypoint,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ENTRYPOINT, Acl.CREATE)
-                .andThen(entrypointService.create(organizationId, newEntrypoint, authenticatedUser))
-                .subscribe(entrypoint -> response.resume(Response
-                                .created(URI.create("/organizations/" + organizationId + "/entrypoints/" + entrypoint.getId()))
-                                .entity(entrypoint)
-                                .build()),
-                        response::resume);
+            .andThen(entrypointService.create(organizationId, newEntrypoint, authenticatedUser))
+            .subscribe(
+                entrypoint ->
+                    response.resume(
+                        Response
+                            .created(URI.create("/organizations/" + organizationId + "/entrypoints/" + entrypoint.getId()))
+                            .entity(entrypoint)
+                            .build()
+                    ),
+                response::resume
+            );
     }
 
     @Path("{entrypointId}")

@@ -32,7 +32,6 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.net.SocketAddress;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,6 +40,7 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 public class UserConsentProcessHandler implements Handler<RoutingContext> {
+
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String REQUESTED_CONSENT_CONTEXT_KEY = "requestedConsent";
     private static final String USER_CONSENT_COMPLETED_CONTEXT_KEY = "userConsentCompleted";
@@ -65,9 +65,11 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
 
         // get user consent
         MultiMap params = routingContext.request().formAttributes();
-        Map<String, String> userConsent = params.entries().stream()
-                .filter(entry -> entry.getKey().startsWith(SCOPE_PREFIX))
-                .collect(Collectors.toMap(scopeEntry -> scopeEntry.getKey(), scopeEntry -> params.get(USER_OAUTH_APPROVAL)));
+        Map<String, String> userConsent = params
+            .entries()
+            .stream()
+            .filter(entry -> entry.getKey().startsWith(SCOPE_PREFIX))
+            .collect(Collectors.toMap(scopeEntry -> scopeEntry.getKey(), scopeEntry -> params.get(USER_OAUTH_APPROVAL)));
 
         // compute user consent that have been approved / denied
         Set<String> approvedConsent = new HashSet<>();
@@ -78,37 +80,65 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
             value = value == null ? "" : value.toLowerCase();
             if ("true".equals(value) || value.startsWith("approve")) {
                 approvedConsent.add(requestedScope);
-                approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getId(), client.getClientId(), domain.getId(),
-                        requestedScope, ScopeApproval.ApprovalStatus.APPROVED));
-            }
-            else {
-                approvals.add(new ScopeApproval(authorizationRequest.transactionId(), user.getId(), client.getClientId(), domain.getId(),
-                        requestedScope, ScopeApproval.ApprovalStatus.DENIED));
+                approvals.add(
+                    new ScopeApproval(
+                        authorizationRequest.transactionId(),
+                        user.getId(),
+                        client.getClientId(),
+                        domain.getId(),
+                        requestedScope,
+                        ScopeApproval.ApprovalStatus.APPROVED
+                    )
+                );
+            } else {
+                approvals.add(
+                    new ScopeApproval(
+                        authorizationRequest.transactionId(),
+                        user.getId(),
+                        client.getClientId(),
+                        domain.getId(),
+                        requestedScope,
+                        ScopeApproval.ApprovalStatus.DENIED
+                    )
+                );
             }
         }
 
         // save consent
-        saveConsent(request, user, client, approvals, h -> {
-            if (h.failed()) {
-                routingContext.fail(h.cause());
-                return;
-            }
+        saveConsent(
+            request,
+            user,
+            client,
+            approvals,
+            h -> {
+                if (h.failed()) {
+                    routingContext.fail(h.cause());
+                    return;
+                }
 
-            boolean approved = (approvedConsent.isEmpty() && !requestedConsent.isEmpty()) ? false : true;
-            authorizationRequest.setApproved(approved);
-            authorizationRequest.setScopes(approvedConsent);
-            authorizationRequest.setConsents(h.result());
-            session.put(USER_CONSENT_COMPLETED_CONTEXT_KEY, true);
-            routingContext.next();
-        });
+                boolean approved = (approvedConsent.isEmpty() && !requestedConsent.isEmpty()) ? false : true;
+                authorizationRequest.setApproved(approved);
+                authorizationRequest.setScopes(approvedConsent);
+                authorizationRequest.setConsents(h.result());
+                session.put(USER_CONSENT_COMPLETED_CONTEXT_KEY, true);
+                routingContext.next();
+            }
+        );
     }
 
-    private void saveConsent(HttpServerRequest request, io.gravitee.am.model.User endUser, Client client, List<ScopeApproval> approvals, Handler<AsyncResult<List<ScopeApproval>>> handler) {
-        userConsentService.saveConsent(client, approvals, getAuthenticatedUser(request, endUser))
-                .subscribe(
-                        approvals1 -> handler.handle(Future.succeededFuture(approvals1)),
-                        error -> handler.handle(Future.failedFuture(error))
-                );
+    private void saveConsent(
+        HttpServerRequest request,
+        io.gravitee.am.model.User endUser,
+        Client client,
+        List<ScopeApproval> approvals,
+        Handler<AsyncResult<List<ScopeApproval>>> handler
+    ) {
+        userConsentService
+            .saveConsent(client, approvals, getAuthenticatedUser(request, endUser))
+            .subscribe(
+                approvals1 -> handler.handle(Future.succeededFuture(approvals1)),
+                error -> handler.handle(Future.failedFuture(error))
+            );
     }
 
     private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(HttpServerRequest request, io.gravitee.am.model.User user) {
@@ -127,7 +157,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         String xForwardedFor = httpServerRequest.getHeader(io.gravitee.common.http.HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;

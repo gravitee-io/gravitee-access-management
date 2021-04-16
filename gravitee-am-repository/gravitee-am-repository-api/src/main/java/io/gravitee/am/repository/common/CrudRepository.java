@@ -24,7 +24,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface CrudRepository<T, ID> {
-
     Maybe<T> findById(ID id);
 
     Single<T> create(T item);

@@ -23,7 +23,6 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
-
 import java.util.Collections;
 
 /**
@@ -67,7 +66,9 @@ public class ApplicationServiceTemplate implements ApplicationTemplate {
         // assign values
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
         oAuthSettings.setClientId(oAuthSettings.getClientId() == null ? RandomString.generate() : oAuthSettings.getClientId());
-        oAuthSettings.setClientSecret(oAuthSettings.getClientSecret() == null ? SecureRandomString.generate() : oAuthSettings.getClientSecret());
+        oAuthSettings.setClientSecret(
+            oAuthSettings.getClientSecret() == null ? SecureRandomString.generate() : oAuthSettings.getClientSecret()
+        );
         oAuthSettings.setClientName(oAuthSettings.getClientName() == null ? application.getName() : oAuthSettings.getClientName());
         oAuthSettings.setClientType(ClientType.CONFIDENTIAL);
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);

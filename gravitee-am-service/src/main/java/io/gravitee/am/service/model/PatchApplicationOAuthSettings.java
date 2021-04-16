@@ -19,7 +19,6 @@ import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Map;

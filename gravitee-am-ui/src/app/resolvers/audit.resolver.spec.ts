@@ -15,12 +15,12 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import {AuditResolver} from "./audit.resolver";
+import { AuditResolver } from './audit.resolver';
 
 describe('AuditResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AuditResolver]
+      providers: [AuditResolver],
     });
   });
 

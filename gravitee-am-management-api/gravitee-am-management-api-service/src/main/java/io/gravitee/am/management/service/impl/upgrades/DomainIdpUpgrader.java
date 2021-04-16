@@ -52,23 +52,23 @@ public class DomainIdpUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Applying domain idp upgrade");
-        domainService.findAll()
-                .flatMapObservable(Observable::fromIterable)
-                .flatMapSingle(this::updateDefaultIdp)
-                .subscribe();
+        domainService.findAll().flatMapObservable(Observable::fromIterable).flatMapSingle(this::updateDefaultIdp).subscribe();
         return true;
     }
 
     private Single<IdentityProvider> updateDefaultIdp(Domain domain) {
-        return identityProviderService.findById(DEFAULT_IDP_PREFIX + domain.getId())
-                .isEmpty()
-                .flatMap(isEmpty -> {
+        return identityProviderService
+            .findById(DEFAULT_IDP_PREFIX + domain.getId())
+            .isEmpty()
+            .flatMap(
+                isEmpty -> {
                     if (isEmpty) {
                         logger.info("No default idp found for domain {}, update domain", domain.getName());
                         return identityProviderManager.create(domain.getId());
                     }
                     return Single.just(new IdentityProvider());
-                });
+                }
+            );
     }
 
     @Override

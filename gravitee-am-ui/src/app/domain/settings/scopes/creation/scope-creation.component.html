@@ -23,26 +23,27 @@
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Key</mat-label>
-          <input matInput type="text" placeholder="Key" name="key" [(ngModel)]="scope.key" required>
+          <input matInput type="text" placeholder="Key" name="key" [(ngModel)]="scope.key" required />
           <mat-hint>A key for your scope.</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="scope.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="scope.name" required />
           <mat-hint>A name for your scope.</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Description</mat-label>
-          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="scope.description" required>
+          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="scope.description" required />
           <mat-hint>A description for your scope.</mat-hint>
         </mat-form-field>
         <div fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableScopeDiscovery($event)"
-            [checked]="isDiscovery()">
+          <mat-slide-toggle (change)="enableScopeDiscovery($event)" [checked]="isDiscovery()">
             Display scope into openid discovery endpoint
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Enable scope to be displayed into the openid discovery endpoint under <i>:domain/oidc/.well-known/openid-configuration</i></mat-hint>
+          <mat-hint style="font-size: 75%"
+            >Enable scope to be displayed into the openid discovery endpoint under
+            <i>:domain/oidc/.well-known/openid-configuration</i></mat-hint
+          >
         </div>
       </div>
 
@@ -53,16 +54,16 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <p fxLayout="row" style="align-items: center; font-size: 90%;">
+          <p fxLayout="row" style="align-items: center; font-size: 90%">
             <mat-icon mat-list-icon>alarm</mat-icon>
             <span>Current period :&nbsp;</span>
-            <span *ngIf="!scope.expiresIn" style="color: grey; font-style: italic;">No time set</span>
+            <span *ngIf="!scope.expiresIn" style="color: grey; font-style: italic">No time set</span>
             <span *ngIf="scope.expiresIn">{{ getScopeExpiry() }}</span>
           </p>
           <div fxLayout="row" fxLayoutGap="20px">
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Duration time</mat-label>
-              <input matInput type="number" placeholder="Duration time" name="expiresIn" min="0" [min]="0" [(ngModel)]="expiresIn">
+              <input matInput type="number" placeholder="Duration time" name="expiresIn" min="0" [min]="0" [(ngModel)]="expiresIn" />
               <mat-hint>The duration for the user consent.</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline" floatLabel="always">
@@ -83,19 +84,17 @@
       </div>
 
       <div fxLayout="row" fxLayoutAlign="end">
-        <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
-        <button mat-raised-button [disabled]="(!scopeForm.valid || scopeForm.pristine) || formIsInvalid()" type="submit">CREATE</button>
+        <a mat-button [routerLink]="['..']" style="margin-right: 20px">CANCEL</a>
+        <button mat-raised-button [disabled]="!scopeForm.valid || scopeForm.pristine || formIsInvalid()" type="submit">CREATE</button>
       </div>
     </form>
     <div class="gv-page-description" fxFlex>
       <h3>Scope ?</h3>
       <div class="gv-page-description-content">
+        <p>Scopes provide a way to limit the amount of access to a resource.</p>
         <p>
-          Scopes provide a way to limit the amount of access to a resource.
-        </p>
-        <p>
-          For example, users or client apps may be granted <code>WRITE</code> access to restricted
-          resources, or just <code>READ</code> access to public resources.
+          For example, users or client apps may be granted <code>WRITE</code> access to restricted resources, or just
+          <code>READ</code> access to public resources.
         </p>
       </div>
     </div>

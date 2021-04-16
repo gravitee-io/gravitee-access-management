@@ -50,10 +50,10 @@ public class GithubAuthenticationProviderConfiguration {
     public WebClient httpClient(WebClientBuilder webClientBuilder) {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
-                .setUserAgent(DEFAULT_USER_AGENT)
-                .setConnectTimeout(configuration.getConnectTimeout())
-                .setMaxPoolSize(configuration.getMaxPoolSize())
-                .setSsl(true); // TLS is mandatory for GitHub IdP.
+            .setUserAgent(DEFAULT_USER_AGENT)
+            .setConnectTimeout(configuration.getConnectTimeout())
+            .setMaxPoolSize(configuration.getMaxPoolSize())
+            .setSsl(true); // TLS is mandatory for GitHub IdP.
 
         return webClientBuilder.createWebClient(vertx, httpClientOptions);
     }

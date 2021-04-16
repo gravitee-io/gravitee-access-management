@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.mongo;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
-
 import java.util.Map;
 
 /**
@@ -24,6 +23,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class MongoIdentityProviderMapper implements IdentityProviderMapper {
+
     private Map<String, String> mappers;
 
     public Map<String, String> getMappers() {

@@ -27,11 +27,9 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface EnvironmentService {
-
     Single<Environment> findById(String id, String organizationId);
 
     Maybe<Environment> createDefault();
 
     Single<Environment> createOrUpdate(String organizationId, String environmentId, NewEnvironment newEnvironment, User createdBy);
 }
- 

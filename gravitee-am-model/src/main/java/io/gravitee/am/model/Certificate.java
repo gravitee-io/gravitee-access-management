@@ -40,8 +40,7 @@ public class Certificate {
 
     private Date updatedAt;
 
-    public Certificate() {
-    }
+    public Certificate() {}
 
     public Certificate(Certificate other) {
         this.id = other.id;

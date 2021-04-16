@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {forkJoin, Observable} from "rxjs";
-import {map} from "rxjs/operators";
-import {AnalyticsService} from '../../../services/analytics.service';
+import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { forkJoin, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { AnalyticsService } from '../../../services/analytics.service';
 import * as Highcharts from 'highcharts';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 
 Highcharts.setOptions({
   credits: {
-    enabled: false
+    enabled: false,
   },
   title: {
-    text: null
+    text: null,
   },
-  colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4']
+  colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
 });
 
 @Component({
   selector: 'gv-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
   @Input('dashboard') dashboard: any;
@@ -46,54 +46,53 @@ export class DashboardComponent implements OnInit {
   isLoading: boolean;
   timeRanges: any[] = [
     {
-      'id': '1h',
-      'name': 'Last hour',
-      'value': 1,
-      'unit': 'hours',
-      'interval' : 1000 * 60
+      id: '1h',
+      name: 'Last hour',
+      value: 1,
+      unit: 'hours',
+      interval: 1000 * 60,
     },
     {
-      'id': '12h',
-      'name': 'Last 12 hours',
-      'value': 12,
-      'unit': 'hours',
-      'interval' : 1000 * 60 * 60
+      id: '12h',
+      name: 'Last 12 hours',
+      value: 12,
+      unit: 'hours',
+      interval: 1000 * 60 * 60,
     },
     {
-      'id': '1d',
-      'name': 'Today',
-      'value': 1,
-      'unit': 'days',
-      'interval' : 1000 * 60 * 60
+      id: '1d',
+      name: 'Today',
+      value: 1,
+      unit: 'days',
+      interval: 1000 * 60 * 60,
     },
     {
-      'id': '7d',
-      'name': 'This week',
-      'value': 1,
-      'unit': 'weeks',
-      'interval' : 1000 * 60 * 60 * 24
+      id: '7d',
+      name: 'This week',
+      value: 1,
+      unit: 'weeks',
+      interval: 1000 * 60 * 60 * 24,
     },
     {
-      'id': '30d',
-      'name': 'This month',
-      'value': 1,
-      'unit': 'months',
-      'interval' : 1000 * 60 * 60 * 24
+      id: '30d',
+      name: 'This month',
+      value: 1,
+      unit: 'months',
+      interval: 1000 * 60 * 60 * 24,
     },
     {
-      'id': '90d',
-      'name': 'Last 90 days',
-      'value': 3,
-      'unit': 'months',
-      'interval' : 1000 * 60 * 60 * 24
-    }
+      id: '90d',
+      name: 'Last 90 days',
+      value: 3,
+      unit: 'months',
+      interval: 1000 * 60 * 60 * 24,
+    },
   ];
 
-  constructor(private analyticsService: AnalyticsService,
-              private route: ActivatedRoute) { }
+  constructor(private analyticsService: AnalyticsService, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.params.domainId;
     this.fetch();
   }
 
@@ -102,28 +101,29 @@ export class DashboardComponent implements OnInit {
   }
 
   private query(widget): Observable<any> {
-    const selectedTimeRange = _.find(this.timeRanges, { id : this.selectedTimeRange });
+    const selectedTimeRange = _.find(this.timeRanges, { id: this.selectedTimeRange });
     const from = moment().subtract(selectedTimeRange.value, selectedTimeRange.unit);
     const to = moment().valueOf();
     const interval = selectedTimeRange.interval;
     return this.analyticsService
       .search(this.domainId, widget.chart.request.type, widget.chart.request.field, interval, from, to, widget.chart.request.size)
-      .pipe(map(response => {
-        widget.chart.response = response
-        return widget;
-      }));
+      .pipe(
+        map((response) => {
+          widget.chart.response = response;
+          return widget;
+        }),
+      );
   }
 
   private fetch() {
     const dashboard = Object.assign({}, this.dashboard);
     this.widgets = [];
     this.isLoading = true;
-    forkJoin(_.map(dashboard.widgets, widget => this.query(widget)))
-      .subscribe(widgets => {
-        this.widgets = [...widgets];
-        setTimeout(() => {
-          this.isLoading = false;
-        }, 1500);
-      });
+    forkJoin(_.map(dashboard.widgets, (widget) => this.query(widget))).subscribe((widgets) => {
+      this.widgets = [...widgets];
+      setTimeout(() => {
+        this.isLoading = false;
+      }, 1500);
+    });
   }
 }

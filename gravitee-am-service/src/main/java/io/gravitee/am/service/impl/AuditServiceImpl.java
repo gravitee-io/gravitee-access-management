@@ -19,13 +19,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.AuditReporterService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,5 +57,4 @@ public class AuditServiceImpl implements AuditService, InitializingBean, Disposa
             executorService.shutdown();
         }
     }
-
 }

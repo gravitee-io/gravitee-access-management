@@ -35,8 +35,7 @@ public class Group {
     private Date createdAt;
     private Date updatedAt;
 
-    public Group() {
-    }
+    public Group() {}
 
     public Group(Group other) {
         this.id = other.id;

@@ -23,9 +23,8 @@ describe('UserApplicationsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ UserApplicationsComponent ]
-    })
-      .compileComponents();
+      declarations: [UserApplicationsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

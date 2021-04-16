@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -27,17 +30,13 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -77,13 +76,17 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
     public Single<LoginAttempt> create(LoginAttempt item) {
         LoginAttemptMongo loginAttempt = convert(item);
         loginAttempt.setId(loginAttempt.getId() == null ? RandomString.generate() : loginAttempt.getId());
-        return Single.fromPublisher(loginAttemptsCollection.insertOne(loginAttempt)).flatMap(success -> findById(loginAttempt.getId()).toSingle());
+        return Single
+            .fromPublisher(loginAttemptsCollection.insertOne(loginAttempt))
+            .flatMap(success -> findById(loginAttempt.getId()).toSingle());
     }
 
     @Override
     public Single<LoginAttempt> update(LoginAttempt item) {
         LoginAttemptMongo loginAttempt = convert(item);
-        return Single.fromPublisher(loginAttemptsCollection.replaceOne(eq(FIELD_ID, loginAttempt.getId()), loginAttempt)).flatMap(success -> findById(loginAttempt.getId()).toSingle());
+        return Single
+            .fromPublisher(loginAttemptsCollection.replaceOne(eq(FIELD_ID, loginAttempt.getId()), loginAttempt))
+            .flatMap(success -> findById(loginAttempt.getId()).toSingle());
     }
 
     @Override

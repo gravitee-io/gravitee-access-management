@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.model.jose;
 
+import static org.junit.Assert.fail;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.junit.Assert.fail;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -31,10 +31,10 @@ public class KeyTypeTest {
 
     @Test
     public void parse() {
-        Assert.assertTrue("Unable to parse RSA key", KeyType.parse("RSA").getName()!=null);
-        Assert.assertTrue("Unable to parse EC key", KeyType.parse("EC").getName()!=null);
-        Assert.assertTrue("Unable to parse OCT key", KeyType.parse("oct").getName()!=null);
-        Assert.assertTrue("Unable to parse OKP key", KeyType.parse("OKP").getName()!=null);
+        Assert.assertTrue("Unable to parse RSA key", KeyType.parse("RSA").getName() != null);
+        Assert.assertTrue("Unable to parse EC key", KeyType.parse("EC").getName() != null);
+        Assert.assertTrue("Unable to parse OCT key", KeyType.parse("oct").getName() != null);
+        Assert.assertTrue("Unable to parse OKP key", KeyType.parse("OKP").getName() != null);
     }
 
     @Test(expected = NullPointerException.class)

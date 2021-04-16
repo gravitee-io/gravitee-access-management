@@ -25,6 +25,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class DynamicClientRegistrationTemplateHandler implements Handler<RoutingContext> {
+
     private Domain domain;
 
     public DynamicClientRegistrationTemplateHandler(Domain domain) {
@@ -34,7 +35,7 @@ public class DynamicClientRegistrationTemplateHandler implements Handler<Routing
     @Override
     public void handle(RoutingContext context) {
         //Only allow access if dcr & template are enabled
-        if(domain.isDynamicClientRegistrationEnabled() && domain.isDynamicClientRegistrationTemplateEnabled()) {
+        if (domain.isDynamicClientRegistrationEnabled() && domain.isDynamicClientRegistrationTemplateEnabled()) {
             context.next();
             return;
         }

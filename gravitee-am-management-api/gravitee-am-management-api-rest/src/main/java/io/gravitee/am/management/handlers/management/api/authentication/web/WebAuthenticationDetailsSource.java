@@ -15,16 +15,14 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.web;
 
-import org.springframework.security.authentication.AuthenticationDetailsSource;
-
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class WebAuthenticationDetailsSource implements
-        AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> {
+public class WebAuthenticationDetailsSource implements AuthenticationDetailsSource<HttpServletRequest, WebAuthenticationDetails> {
 
     @Override
     public WebAuthenticationDetails buildDetails(HttpServletRequest context) {

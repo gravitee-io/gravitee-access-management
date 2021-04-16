@@ -23,7 +23,6 @@ import java.lang.reflect.Method;
  * @author GraviteeSource Team
  */
 public interface PolicyMetadata {
-
     String id();
 
     Class<?> policy();

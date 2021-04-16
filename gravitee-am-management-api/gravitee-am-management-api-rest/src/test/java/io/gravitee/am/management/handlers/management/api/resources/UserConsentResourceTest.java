@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -25,14 +30,8 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
-import org.junit.Test;
-
 import javax.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -62,20 +61,19 @@ public class UserConsentResourceTest extends JerseySpringTest {
         scopeApproval.setScope("scope");
         scopeApproval.setDomain(domainId);
 
-
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockClient)).when(applicationService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
         doReturn(Maybe.just(mockScope)).when(scopeService).findByDomainAndKey(domainId, scopeApproval.getScope());
         doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findById(scopeApproval.getId());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .path(mockUser.getId())
-                .path("consents")
-                .path(scopeApproval.getId())
-                .request()
-                .get();
+            .path(domainId)
+            .path("users")
+            .path(mockUser.getId())
+            .path("consents")
+            .path(scopeApproval.getId())
+            .request()
+            .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
@@ -86,12 +84,13 @@ public class UserConsentResourceTest extends JerseySpringTest {
         doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(domainService).findById(domainId);
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .path("user1")
-                .path("consents")
-                .path("consent1")
-                .request().get();
+            .path(domainId)
+            .path("users")
+            .path("user1")
+            .path("consents")
+            .path("consent1")
+            .request()
+            .get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
@@ -105,16 +104,18 @@ public class UserConsentResourceTest extends JerseySpringTest {
         mockUser.setId("user-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(scopeApprovalService).revokeByConsent(eq(domainId), eq(mockUser.getId()), eq("consent1"), any());
+        doReturn(Completable.complete())
+            .when(scopeApprovalService)
+            .revokeByConsent(eq(domainId), eq(mockUser.getId()), eq("consent1"), any());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .path(mockUser.getId())
-                .path("consents")
-                .path("consent1")
-                .request()
-                .delete();
+            .path(domainId)
+            .path("users")
+            .path(mockUser.getId())
+            .path("consents")
+            .path("consent1")
+            .request()
+            .delete();
 
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
     }

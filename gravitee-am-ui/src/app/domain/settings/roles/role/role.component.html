@@ -17,20 +17,27 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to roles</small></a>
-  <h1>{{role.name}}</h1>
+  <h1>{{ role.name }}</h1>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
-      <form (keydown.enter)="false" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column">
+      <form (keydown.enter)="(false)" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required [readonly]="!editMode">
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required [readonly]="!editMode" />
             <mat-hint>A name for your role.</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
-            <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description" [readonly]="!editMode">
+            <input
+              matInput
+              type="text"
+              placeholder="Description"
+              name="description"
+              [(ngModel)]="role.description"
+              [readonly]="!editMode"
+            />
             <mat-hint>A description for your role.</mat-hint>
           </mat-form-field>
         </div>
@@ -41,26 +48,33 @@
             <mat-divider></mat-divider>
           </div>
           <mat-form-field appearance="outline" floatLabel="always">
-            <mat-chip-list style="margin-top: 10px; margin-bottom: 10px;" #chipListPermissions>
-              <mat-chip *ngFor="let permission of selectedPermissions" color="primary"
-                        selected="true" (removed)="removePermission(permission)">
-                <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
-                &nbsp;<span>{{permission.key}}</span>&nbsp;|&nbsp;<small>{{permission.name}}</small>
+            <mat-chip-list style="margin-top: 10px; margin-bottom: 10px" #chipListPermissions>
+              <mat-chip
+                *ngFor="let permission of selectedPermissions"
+                color="primary"
+                selected="true"
+                (removed)="removePermission(permission)"
+              >
+                <mat-icon style="vertical-align: middle">donut_large</mat-icon>
+                &nbsp;<span>{{ permission.key }}</span
+                >&nbsp;|&nbsp;<small>{{ permission.name }}</small>
                 <mat-icon matChipRemove>cancel</mat-icon>
               </mat-chip>
-              <input matInput
-                     placeholder="Permissions"
-                     aria-label="Permissions"
-                     [matAutocomplete]="auto"
-                     [matChipInputFor]="chipListPermissions"
-                     [readonly]="!editMode"
-                     #chipInput>
+              <input
+                matInput
+                placeholder="Permissions"
+                aria-label="Permissions"
+                [matAutocomplete]="auto"
+                [matChipInputFor]="chipListPermissions"
+                [readonly]="!editMode"
+                #chipInput
+              />
             </mat-chip-list>
 
             <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addPermission($event)">
               <mat-option *ngFor="let scope of scopes" [value]="scope.key">
-                <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
-                <span>{{ scope.key }}</span> | <small>{{scope.name}}</small>
+                <mat-icon style="vertical-align: middle">donut_large</mat-icon>
+                <span>{{ scope.key }}</span> | <small>{{ scope.name }}</small>
               </mat-option>
             </mat-autocomplete>
             <mat-hint>Role's permissions</mat-hint>
@@ -84,13 +98,14 @@
       <h3>Manage role</h3>
       <div class="gv-page-description-content">
         <p>
-          Configure your role's name, description and permissions. Permissions can be used to configure access scopes to grant specific access to a your APIs.
+          Configure your role's name, description and permissions. Permissions can be used to configure access scopes to grant specific
+          access to a your APIs.
         </p>
         <p>
-          For example you can create a <code>member</code> role with <code>read</code> permission to grant readonly access to your protected resources.
+          For example you can create a <code>member</code> role with <code>read</code> permission to grant readonly access to your protected
+          resources.
         </p>
       </div>
     </div>
   </div>
 </div>
-

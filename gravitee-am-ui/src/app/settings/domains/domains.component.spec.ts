@@ -23,9 +23,8 @@ describe('DomainsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainsComponent ]
-    })
-    .compileComponents();
+      declarations: [DomainsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

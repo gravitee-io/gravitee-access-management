@@ -56,8 +56,6 @@ public class NewClient {
 
     @Override
     public String toString() {
-        return "NewClient{" +
-                "clientId='" + clientId + '\'' +
-                '}';
+        return "NewClient{" + "clientId='" + clientId + '\'' + '}';
     }
 }

@@ -22,29 +22,28 @@ import { AppConfig } from '../../config/app.config';
 export class FactorService {
   private factorsURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  findByDomain(domainId): Observable<any>  {
+  findByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.factorsURL + domainId + '/factors');
   }
 
-  get(domainId, id): Observable<any>  {
+  get(domainId, id): Observable<any> {
     return this.http.get<any>(this.factorsURL + domainId + '/factors/' + id);
   }
 
-  create(domainId, factor): Observable<any>  {
+  create(domainId, factor): Observable<any> {
     return this.http.post<any>(this.factorsURL + domainId + '/factors', factor);
   }
 
-  update(domainId, id, factor): Observable<any>  {
+  update(domainId, id, factor): Observable<any> {
     return this.http.put<any>(this.factorsURL + domainId + '/factors/' + id, {
-      'name' : factor.name,
-      'configuration' : factor.configuration
+      name: factor.name,
+      configuration: factor.configuration,
     });
   }
 
-  delete(domainId, id): Observable<any>  {
+  delete(domainId, id): Observable<any> {
     return this.http.delete<any>(this.factorsURL + domainId + '/factors/' + id);
   }
-
 }

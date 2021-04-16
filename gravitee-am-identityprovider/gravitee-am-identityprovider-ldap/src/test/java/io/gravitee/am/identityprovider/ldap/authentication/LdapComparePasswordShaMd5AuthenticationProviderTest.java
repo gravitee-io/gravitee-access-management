@@ -33,8 +33,12 @@ import org.springframework.test.context.ContextConfiguration;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@ContextConfiguration(classes = { LdapAuthenticationProviderConfiguration.class,
-        LdapComparePasswordShaMd5AuthenticationProviderTest.LdapAuthenticationConfiguration.class })
+@ContextConfiguration(
+    classes = {
+        LdapAuthenticationProviderConfiguration.class,
+        LdapComparePasswordShaMd5AuthenticationProviderTest.LdapAuthenticationConfiguration.class,
+    }
+)
 public class LdapComparePasswordShaMd5AuthenticationProviderTest extends LdapAuthenticationProviderTest {
 
     @Test
@@ -44,22 +48,26 @@ public class LdapComparePasswordShaMd5AuthenticationProviderTest extends LdapAut
         String credentials = "Monmotdepasse01*";
         String principal = "john";
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return credentials;
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return credentials;
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return principal;
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return principal;
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
 

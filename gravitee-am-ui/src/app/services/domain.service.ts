@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {AuthService} from './auth.service';
-import {AppConfig} from '../../config/app.config';
-import {Observable, Subject} from 'rxjs';
-import {map} from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from './auth.service';
+import { AppConfig } from '../../config/app.config';
+import { Observable, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class DomainService {
@@ -41,20 +41,20 @@ export class DomainService {
   }
 
   getEntrypoint(id: string): Observable<any> {
-    return this.getEntrypoints(id)
-      .pipe(map(entrypoints => {
+    return this.getEntrypoints(id).pipe(
+      map((entrypoints) => {
         let entrypoint;
 
-        if (entrypoints.length == 1) {
+        if (entrypoints.length === 1) {
           entrypoint = entrypoints[0];
         } else {
-          entrypoint = entrypoints.filter(e => !e.defaultEntrypoint)[0];
+          entrypoint = entrypoints.filter((e) => !e.defaultEntrypoint)[0];
         }
 
         return entrypoint;
-      }));
+      }),
+    );
   }
-
 
   create(domain): Observable<any> {
     return this.http.post<any>(this.domainsURL, domain);
@@ -62,41 +62,41 @@ export class DomainService {
 
   enable(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
-      'enabled': domain.enabled,
+      enabled: domain.enabled,
     });
   }
 
   patchGeneralSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
-      'name': domain.name,
-      'description': domain.description,
-      'path': domain.path,
-      'enabled': domain.enabled,
-      'tags': domain.tags
+      name: domain.name,
+      description: domain.description,
+      path: domain.path,
+      enabled: domain.enabled,
+      tags: domain.tags,
     });
   }
 
   patchOpenidDCRSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
-       'oidc': domain.oidc
+      oidc: domain.oidc,
     });
   }
 
   patchScimSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
-      'scim': domain.scim
+      scim: domain.scim,
     });
   }
 
   patchLoginSettings(id, domain): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
-      'loginSettings': domain.loginSettings
+      loginSettings: domain.loginSettings,
     });
   }
 
   patchAccountSettings(id, accountSettings): Observable<any> {
     return this.http.patch<any>(this.domainsURL + id, {
-      'accountSettings': accountSettings
+      accountSettings: accountSettings,
     });
   }
 
@@ -109,28 +109,29 @@ export class DomainService {
   }
 
   members(id): Observable<any> {
-    return this.http.get<any>(this.domainsURL + id + '/members')
-      .pipe(map(response => {
+    return this.http.get<any>(this.domainsURL + id + '/members').pipe(
+      map((response) => {
         const memberships = response.memberships;
         const metadata = response.metadata;
-        const members = memberships.map(m => {
-          m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
+        const members = memberships.map((m) => {
+          m.roleName = metadata.roles[m.roleId] ? metadata.roles[m.roleId].name : 'Unknown role';
           if (m.memberType === 'user') {
-            m.name = (metadata['users'][m.memberId]) ? metadata['users'][m.memberId].displayName : 'Unknown user';
+            m.name = metadata.users[m.memberId] ? metadata.users[m.memberId].displayName : 'Unknown user';
           } else if (m.memberType === 'group') {
-            m.name = (metadata['groups'][m.memberId]) ? metadata['groups'][m.memberId].displayName : 'Unknown group';
+            m.name = metadata.groups[m.memberId] ? metadata.groups[m.memberId].displayName : 'Unknown group';
           }
           return m;
         });
         return members;
-      }));
+      }),
+    );
   }
 
   addMember(id, memberId, memberType, role) {
     return this.http.post<any>(this.domainsURL + id + '/members', {
-      'memberId': memberId,
-      'memberType': memberType,
-      'role': role
+      memberId: memberId,
+      memberType: memberType,
+      role: role,
     });
   }
 
@@ -139,10 +140,11 @@ export class DomainService {
   }
 
   permissions(id): Observable<any> {
-    return this.http.get<any>(this.domainsURL + id + '/members/permissions')
-      .pipe(map(perms => {
+    return this.http.get<any>(this.domainsURL + id + '/members/permissions').pipe(
+      map((perms) => {
         this.authService.reloadDomainPermissions(perms);
         return perms;
-      }));
+      }),
+    );
   }
 }

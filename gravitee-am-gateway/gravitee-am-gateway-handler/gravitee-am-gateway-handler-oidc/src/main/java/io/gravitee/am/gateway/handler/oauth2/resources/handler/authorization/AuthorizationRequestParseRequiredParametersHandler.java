@@ -15,19 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
-import io.gravitee.am.common.oauth2.Parameters;
+import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
+
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseModeException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.List;
 import java.util.Set;
-
-import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 
 /**
  * The authorization server validates the request to ensure that all required parameters are present and valid.
@@ -79,12 +78,14 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
         // invalid parameter value, includes a parameter more than once, or is otherwise malformed.
         MultiMap requestParameters = context.request().params();
         Set<String> requestParametersNames = requestParameters.names();
-        requestParametersNames.forEach(requestParameterName -> {
-            List<String> requestParameterValue = requestParameters.getAll(requestParameterName);
-            if (requestParameterValue.size() > 1) {
-                throw new InvalidRequestException("Parameter [" + requestParameterName + "] is included more than once");
+        requestParametersNames.forEach(
+            requestParameterName -> {
+                List<String> requestParameterValue = requestParameters.getAll(requestParameterName);
+                if (requestParameterValue.size() > 1) {
+                    throw new InvalidRequestException("Parameter [" + requestParameterName + "] is included more than once");
+                }
             }
-        });
+        );
     }
 
     private void parseResponseTypeParameter(RoutingContext context) {

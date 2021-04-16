@@ -19,17 +19,13 @@ import { MatDialogRef } from '@angular/material/dialog';
 @Component({
   selector: 'app-confirm',
   templateUrl: './confirm.component.html',
-  styleUrls: ['./confirm.component.scss']
+  styleUrls: ['./confirm.component.scss'],
 })
 export class ConfirmComponent implements OnInit {
-
   public title: string;
   public message: string;
 
-  constructor(public dialogRef: MatDialogRef<ConfirmComponent>) {
-  }
+  constructor(public dialogRef: MatDialogRef<ConfirmComponent>) {}
 
-  ngOnInit() {
-  }
-
+  ngOnInit() {}
 }

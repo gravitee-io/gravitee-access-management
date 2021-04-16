@@ -54,8 +54,8 @@ public class ThymeleafConfiguration {
     @Bean
     public ITemplateResolver overrideTemplateResolver() {
         return new TemplateResolver();
-
     }
+
     private ITemplateResolver defaultTemplateResolver() {
         ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
         templateResolver.setPrefix("/views/");

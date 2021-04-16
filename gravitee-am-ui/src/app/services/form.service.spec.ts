@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {FormService} from "./form.service";
+import { inject, TestBed } from '@angular/core/testing';
+import { FormService } from './form.service';
 
 describe('FormService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [FormService]
+      providers: [FormService],
     });
   });
 

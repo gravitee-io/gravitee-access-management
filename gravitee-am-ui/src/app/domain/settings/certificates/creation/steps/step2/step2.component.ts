@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {OrganizationService} from '../../../../../../services/organization.service';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'certificate-creation-step2',
   templateUrl: './step2.component.html',
-  styleUrls: ['./step2.component.scss']
+  styleUrls: ['./step2.component.scss'],
 })
 export class CertificateCreationStep2Component implements OnInit {
   @Input('certificate') certificate: any;
@@ -28,10 +28,10 @@ export class CertificateCreationStep2Component implements OnInit {
   configuration: any;
   certificateSchema: any = {};
 
-  constructor(private organizationService: OrganizationService) { }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.certificateSchema(this.certificate.type).subscribe(data => this.certificateSchema = data);
+    this.organizationService.certificateSchema(this.certificate.type).subscribe((data) => (this.certificateSchema = data));
   }
 
   enableCertificateCreation(configurationWrapper) {

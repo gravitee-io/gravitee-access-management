@@ -18,8 +18,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Entrypoint;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.exception.EntrypointNotFoundException;
@@ -30,8 +30,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -40,6 +38,7 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -55,54 +54,72 @@ public class EntrypointResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a sharding entrypoint",
-            notes = "User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Get a sharding entrypoint",
+        notes = "User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Sharding entrypoint", response = Entrypoint.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void get(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("entrypointId") String entrypointId, @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("entrypointId") String entrypointId,
+        @Suspended final AsyncResponse response
+    ) {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ENTRYPOINT, Acl.READ)
-                .andThen(entrypointService.findById(entrypointId, organizationId))
-                .subscribe(response::resume, response::resume);
+            .andThen(entrypointService.findById(entrypointId, organizationId))
+            .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update the sharding entrypoint",
-            notes = "User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Update the sharding entrypoint",
+        notes = "User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Sharding entrypoint successfully updated", response = Entrypoint.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void update(
-            @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "entrypoint", required = true) @Valid @NotNull final UpdateEntrypoint entrypointToUpdate,
-            @PathParam("entrypointId") String entrypointId,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @ApiParam(name = "entrypoint", required = true) @Valid @NotNull final UpdateEntrypoint entrypointToUpdate,
+        @PathParam("entrypointId") String entrypointId,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ENTRYPOINT, Acl.UPDATE)
-                .andThen(entrypointService.update(entrypointId, organizationId, entrypointToUpdate, authenticatedUser))
-                .subscribe(response::resume, response::resume);
+            .andThen(entrypointService.update(entrypointId, organizationId, entrypointToUpdate, authenticatedUser))
+            .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete the sharding entrypoint",
-            notes = "User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Delete the sharding entrypoint",
+        notes = "User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 204, message = "Sharding entrypoint successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void delete(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("entrypointId") String entrypointId,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("entrypointId") String entrypointId,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_ENTRYPOINT, Acl.DELETE)
-                .andThen(entrypointService.delete(entrypointId, organizationId, authenticatedUser))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+            .andThen(entrypointService.delete(entrypointId, organizationId, authenticatedUser))
+            .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

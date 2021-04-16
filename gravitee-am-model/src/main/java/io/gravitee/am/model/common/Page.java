@@ -22,6 +22,7 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public class Page<T> {
+
     private final Collection<T> data;
     private final int currentPage;
     private final long totalCount;

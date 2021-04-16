@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.scope;
 
 import io.gravitee.am.model.oauth2.Scope;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +25,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ScopeService {
-
     Single<Set<Scope>> getAll();
 
     Scope findByKey(String key);

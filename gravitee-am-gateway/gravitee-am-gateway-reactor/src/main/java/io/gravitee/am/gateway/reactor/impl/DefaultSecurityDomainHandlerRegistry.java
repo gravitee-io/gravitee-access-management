@@ -20,13 +20,12 @@ import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.model.Domain;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -96,14 +95,16 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
 
     @Override
     public void clear() {
-        handlers.forEach((s, handler) -> {
-            try {
-                handler.stop();
-                handlers.remove(handler.contextPath());
-            } catch (Exception e) {
-                logger.error("Unable to un-register handler", e);
+        handlers.forEach(
+            (s, handler) -> {
+                try {
+                    handler.stop();
+                    handlers.remove(handler.contextPath());
+                } catch (Exception e) {
+                    logger.error("Unable to un-register handler", e);
+                }
             }
-        });
+        );
         contextPaths.clear();
     }
 
@@ -115,5 +116,4 @@ public class DefaultSecurityDomainHandlerRegistry implements SecurityDomainHandl
     private VertxSecurityDomainHandler create0(Domain domain) {
         return securityDomainRouterFactory.create(domain);
     }
-
 }

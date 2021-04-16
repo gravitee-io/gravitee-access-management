@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
+import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
+
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
@@ -37,17 +40,13 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
-import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * If the request fails due to a missing, invalid, or mismatching redirection URI, or if the client identifier is missing or invalid,
@@ -76,10 +75,12 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     private JWEService jweService;
     private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public AuthorizationRequestFailureHandler(final Domain domain,
-                                              final OpenIDDiscoveryService openIDDiscoveryService,
-                                              final JWTService jwtService,
-                                              final JWEService jweService) {
+    public AuthorizationRequestFailureHandler(
+        final Domain domain,
+        final OpenIDDiscoveryService openIDDiscoveryService,
+        final JWTService jwtService,
+        final JWEService jweService
+    ) {
         this.openIDDiscoveryService = openIDDiscoveryService;
         this.jwtService = jwtService;
         this.jweService = jweService;
@@ -97,32 +98,35 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                 if (throwable instanceof OAuth2Exception) {
                     OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
                     // Manage exception
-                    processOAuth2Exception(request, oAuth2Exception, client, defaultErrorURL, h -> {
-                        if (h.failed()) {
-                            logger.error("An errors has occurred while handling authorization error response", h.cause());
-                            routingContext.response().setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
-                            return;
+                    processOAuth2Exception(
+                        request,
+                        oAuth2Exception,
+                        client,
+                        defaultErrorURL,
+                        h -> {
+                            if (h.failed()) {
+                                logger.error("An errors has occurred while handling authorization error response", h.cause());
+                                routingContext.response().setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
+                                return;
+                            }
+                            // redirect user to the error page with error code and description
+                            doRedirect(routingContext.response(), h.result());
                         }
-                        // redirect user to the error page with error code and description
-                        doRedirect(routingContext.response(), h.result());
-                    });
+                    );
                 } else if (throwable instanceof HttpStatusException) {
                     // in case of http status exception, go to the default error page
                     request.setRedirectUri(defaultErrorURL);
                     HttpStatusException httpStatusException = (HttpStatusException) throwable;
-                    doRedirect(routingContext.response(), buildRedirectUri(httpStatusException.getMessage(), httpStatusException.getPayload(), request));
+                    doRedirect(
+                        routingContext.response(),
+                        buildRedirectUri(httpStatusException.getMessage(), httpStatusException.getPayload(), request)
+                    );
                 } else {
                     logger.error("An exception has occurred while handling authorization request", throwable);
                     if (routingContext.statusCode() != -1) {
-                        routingContext
-                                .response()
-                                .setStatusCode(routingContext.statusCode())
-                                .end();
+                        routingContext.response().setStatusCode(routingContext.statusCode()).end();
                     } else {
-                        routingContext
-                                .response()
-                                .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
-                                .end();
+                        routingContext.response().setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
                     }
                 }
             } catch (Exception e) {
@@ -135,11 +139,13 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         }
     }
 
-    private void processOAuth2Exception(AuthorizationRequest authorizationRequest,
-                                        OAuth2Exception oAuth2Exception,
-                                        Client client,
-                                        String defaultErrorURL,
-                                        Handler<AsyncResult<String>> handler) {
+    private void processOAuth2Exception(
+        AuthorizationRequest authorizationRequest,
+        OAuth2Exception oAuth2Exception,
+        Client client,
+        String defaultErrorURL,
+        Handler<AsyncResult<String>> handler
+    ) {
         final String clientId = authorizationRequest.getClientId();
 
         // no client available or missing redirect_uri, go to default error page
@@ -154,9 +160,15 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         // Process error response
         try {
             // Response Mode is not supplied by the client, process the response as usual
-            if (client == null || authorizationRequest.getResponseMode() == null || !authorizationRequest.getResponseMode().endsWith("jwt")) {
+            if (
+                client == null || authorizationRequest.getResponseMode() == null || !authorizationRequest.getResponseMode().endsWith("jwt")
+            ) {
                 // redirect user
-                handler.handle(Future.succeededFuture(buildRedirectUri(oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage(), authorizationRequest)));
+                handler.handle(
+                    Future.succeededFuture(
+                        buildRedirectUri(oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage(), authorizationRequest)
+                    )
+                );
                 return;
             }
 
@@ -169,23 +181,31 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
             jwtException.setExp(Instant.now().plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());
 
             // Sign if needed, else return unsigned JWT
-            jwtService.encodeAuthorization(jwtException.build(), client)
-                    // Encrypt if needed, else return JWT
-                    .flatMap(authorization -> jweService.encryptAuthorization(authorization, client))
-                    .subscribe(
-                            jwt -> handler.handle(Future.succeededFuture(
-                                    jwtException.buildRedirectUri(
-                                            authorizationRequest.getRedirectUri(),
-                                            authorizationRequest.getResponseType(),
-                                            authorizationRequest.getResponseMode(),
-                                            jwt))),
-                            ex -> handler.handle(Future.failedFuture(ex)));
+            jwtService
+                .encodeAuthorization(jwtException.build(), client)
+                // Encrypt if needed, else return JWT
+                .flatMap(authorization -> jweService.encryptAuthorization(authorization, client))
+                .subscribe(
+                    jwt ->
+                        handler.handle(
+                            Future.succeededFuture(
+                                jwtException.buildRedirectUri(
+                                    authorizationRequest.getRedirectUri(),
+                                    authorizationRequest.getResponseType(),
+                                    authorizationRequest.getResponseMode(),
+                                    jwt
+                                )
+                            )
+                        ),
+                    ex -> handler.handle(Future.failedFuture(ex))
+                );
         } catch (Exception e) {
             handler.handle(Future.failedFuture(e));
         }
     }
 
-    private String buildRedirectUri(String error, String errorDescription, AuthorizationRequest authorizationRequest) throws URISyntaxException {
+    private String buildRedirectUri(String error, String errorDescription, AuthorizationRequest authorizationRequest)
+        throws URISyntaxException {
         // prepare query
         Map<String, String> query = new LinkedHashMap<>();
         // put client_id parameter for the default error page for branding/custom html purpose
@@ -197,8 +217,9 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         query.computeIfAbsent("error_description", val -> errorDescription);
         query.computeIfAbsent(Parameters.STATE, val -> authorizationRequest.getState());
 
-        boolean fragment = !isDefaultErrorPage(authorizationRequest.getRedirectUri()) &&
-                (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
+        boolean fragment =
+            !isDefaultErrorPage(authorizationRequest.getRedirectUri()) &&
+            (isImplicitFlow(authorizationRequest.getResponseType()) || isHybridFlow(authorizationRequest.getResponseType()));
         return append(authorizationRequest.getRedirectUri(), query, fragment);
     }
 
@@ -211,11 +232,12 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         URI redirectUri = builder.build();
 
         // create final redirect uri
-        template.scheme(redirectUri.getScheme())
-                .host(redirectUri.getHost())
-                .port(redirectUri.getPort())
-                .userInfo(redirectUri.getUserInfo())
-                .path(redirectUri.getPath());
+        template
+            .scheme(redirectUri.getScheme())
+            .host(redirectUri.getHost())
+            .port(redirectUri.getPort())
+            .userInfo(redirectUri.getUserInfo())
+            .path(redirectUri.getPath());
 
         // append error parameters in "application/x-www-form-urlencoded" format
         if (fragment) {

@@ -23,7 +23,6 @@ package io.gravitee.am.service.authentication.crypto.password;
  * @author Keith Donald
  */
 public interface PasswordEncoder {
-
     /**
      * Encode the raw password. Generally, a good encoding algorithm applies a SHA-1 or
      * greater hash combined with an 8-byte or greater randomly generated salt.
@@ -41,5 +40,4 @@ public interface PasswordEncoder {
      * storage
      */
     boolean matches(CharSequence rawPassword, String encodedPassword);
-
 }

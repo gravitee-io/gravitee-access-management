@@ -21,7 +21,7 @@ package io.gravitee.am.common.exception.authentication;
  */
 public class UsernameNotFoundException extends AuthenticationException {
 
-    public UsernameNotFoundException() { }
+    public UsernameNotFoundException() {}
 
     public UsernameNotFoundException(String msg) {
         super(msg);

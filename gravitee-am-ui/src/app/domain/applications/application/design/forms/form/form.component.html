@@ -18,20 +18,16 @@
 <div fxFlex="70" class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to forms</small></a>
   <div>
-    <app-form [createMode]="createMode"
-              [editMode]="editMode"
-              [deleteMode]="deleteMode"></app-form>
+    <app-form [createMode]="createMode" [editMode]="editMode" [deleteMode]="deleteMode"></app-form>
   </div>
 </div>
 <div class="gv-page-description" fxFlex>
   <h3>Application's form template</h3>
   <div class="gv-page-description-content">
-    <p>
-      You can customize the whole page's content from the editor for each form template.
-    </p>
+    <p>You can customize the whole page's content from the editor for each form template.</p>
     <p>
       You can use <code>Thymeleaf</code> syntax to dynamically generate content and access User attributes like :
-      <small fxLayout="column" style="margin-top: 10px;">
+      <small fxLayout="column" style="margin-top: 10px">
         <code><![CDATA[<p th:text="${user.firstName}"></p>]]></code>
         <code><![CDATA[<p th:text="${user.lastName}"></p>]]></code>
       </small>

@@ -29,11 +29,10 @@ package io.gravitee.am.model.jose;
  * @author GraviteeSource Team
  */
 public enum KeyType {
-
-    EC("EC","Elliptic Curve"),
-    RSA("RSA","RSA"),
-    OCT("oct","Octet sequence"),
-    OKP("OKP","Octet key pair");
+    EC("EC", "Elliptic Curve"),
+    RSA("RSA", "RSA"),
+    OCT("oct", "Octet sequence"),
+    OKP("OKP", "Octet key pair");
 
     private String keyType;
     private String name;
@@ -43,24 +42,26 @@ public enum KeyType {
         this.name = name;
     }
 
-    public String getKeyType() { return keyType; }
-    public String getName() { return name;}
+    public String getKeyType() {
+        return keyType;
+    }
+
+    public String getName() {
+        return name;
+    }
 
     public static KeyType parse(String keyType) {
         if (keyType == null) {
             throw new NullPointerException("KeyType name is null");
         }
 
-        if(keyType.equals(RSA.getKeyType())) {
+        if (keyType.equals(RSA.getKeyType())) {
             return RSA;
-        }
-        else if(keyType.equals(EC.getKeyType())) {
+        } else if (keyType.equals(EC.getKeyType())) {
             return EC;
-        }
-        else if(keyType.equals(OCT.getKeyType())) {
+        } else if (keyType.equals(OCT.getKeyType())) {
             return OCT;
-        }
-        else if(keyType.equals(OKP.getKeyType())) {
+        } else if (keyType.equals(OKP.getKeyType())) {
             return OKP;
         }
 

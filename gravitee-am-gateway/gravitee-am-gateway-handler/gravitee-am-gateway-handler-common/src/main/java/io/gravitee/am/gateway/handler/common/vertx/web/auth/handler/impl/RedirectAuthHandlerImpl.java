@@ -24,11 +24,10 @@ import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Extends default {@link io.vertx.ext.web.handler.RedirectAuthHandler} with X-Forwarded Strategy
@@ -55,8 +54,14 @@ public class RedirectAuthHandlerImpl extends io.vertx.ext.web.handler.impl.Redir
         if (session != null) {
             try {
                 // Save current request in session - we'll get redirected back here after successful login
-                io.vertx.reactivex.core.http.HttpServerRequest request = new io.vertx.reactivex.core.http.HttpServerRequest(context.request());
-                Map<String, String> requestParameters = request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                io.vertx.reactivex.core.http.HttpServerRequest request = new io.vertx.reactivex.core.http.HttpServerRequest(
+                    context.request()
+                );
+                Map<String, String> requestParameters = request
+                    .params()
+                    .entries()
+                    .stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
                 session.put(returnURLParam, UriBuilderRequest.resolveProxyRequest(request, request.path(), requestParameters));
 

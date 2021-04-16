@@ -38,5 +38,4 @@ public class FactorConfiguration {
     public FactorConfigurationFactory factorConfigurationFactory() {
         return new FactorConfigurationFactoryImpl();
     }
-
 }

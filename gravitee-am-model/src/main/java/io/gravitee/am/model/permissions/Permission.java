@@ -17,7 +17,6 @@ package io.gravitee.am.model.permissions;
 
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
-
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,7 +26,6 @@ import java.util.stream.Stream;
  * @author GraviteeSource Team
  */
 public enum Permission {
-
     ORGANIZATION(ReferenceType.PLATFORM, ReferenceType.ORGANIZATION),
     ORGANIZATION_SETTINGS(ReferenceType.ORGANIZATION),
     ORGANIZATION_IDENTITY_PROVIDER(ReferenceType.ORGANIZATION),
@@ -82,12 +80,10 @@ public enum Permission {
     }
 
     public boolean isRelevantWith(ReferenceType referenceType) {
-
         return this.relevantTypes.contains(referenceType);
     }
 
     public static Map<Permission, Set<Acl>> of(Permission permission, Acl... acls) {
-
         HashMap<Permission, Set<Acl>> permissions = new HashMap<>();
         permissions.put(permission, Acl.of(acls));
 
@@ -95,44 +91,47 @@ public enum Permission {
     }
 
     public static Map<Permission, Set<Acl>> allPermissionAcls(ReferenceType referenceType) {
-
         Map<Permission, Set<Acl>> allPermissionAcls = new HashMap<>();
 
-        Stream.of(Permission.values())
-                .filter(permission -> permission.relevantTypes.contains(referenceType))
-                .forEach(permission -> allPermissionAcls.put(permission, Acl.all()));
+        Stream
+            .of(Permission.values())
+            .filter(permission -> permission.relevantTypes.contains(referenceType))
+            .forEach(permission -> allPermissionAcls.put(permission, Acl.all()));
 
         return allPermissionAcls;
     }
 
     public static List<Permission> allPermissions(ReferenceType referenceType) {
-
-        return Stream.of(Permission.values())
-                .filter(permission -> permission.relevantTypes.contains(referenceType)).collect(Collectors.toList());
+        return Stream
+            .of(Permission.values())
+            .filter(permission -> permission.relevantTypes.contains(referenceType))
+            .collect(Collectors.toList());
     }
 
     public static List<String> flatten(Map<Permission, Set<Acl>> permissions) {
-
         List<String> flattenedPermissions = new ArrayList<>();
 
         if (permissions != null) {
-            permissions.forEach((key, value) -> value.forEach(acl -> flattenedPermissions.add(key.name().toLowerCase() + "_" + acl.name().toLowerCase())));
+            permissions.forEach(
+                (key, value) -> value.forEach(acl -> flattenedPermissions.add(key.name().toLowerCase() + "_" + acl.name().toLowerCase()))
+            );
         }
 
         return flattenedPermissions;
     }
 
     public static Map<Permission, Set<Acl>> unflatten(List<String> flatPermissions) {
-
         Map<Permission, Set<Acl>> permissions = new HashMap<>();
 
         if (flatPermissions != null) {
-            flatPermissions.stream().map(String::toUpperCase)
-                    .forEach(flatPermission -> {
+            flatPermissions
+                .stream()
+                .map(String::toUpperCase)
+                .forEach(
+                    flatPermission -> {
                         int i = flatPermission.lastIndexOf('_');
                         Acl acl = Acl.valueOf(flatPermission.substring(i + 1));
                         Permission permission = Permission.valueOf(flatPermission.substring(0, i));
-
 
                         if (permissions.containsKey(permission)) {
                             permissions.get(permission).add(acl);
@@ -141,7 +140,8 @@ public enum Permission {
                             acls.add(acl);
                             permissions.put(permission, acls);
                         }
-                    });
+                    }
+                );
         }
 
         return permissions;

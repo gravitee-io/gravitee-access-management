@@ -20,7 +20,7 @@ import { TagsResolver } from './tags.resolver';
 describe('TagsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [TagsResolver]
+      providers: [TagsResolver],
     });
   });
 

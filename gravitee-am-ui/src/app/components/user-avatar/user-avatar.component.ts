@@ -17,7 +17,7 @@ import { Component, OnInit, Input } from '@angular/core';
 
 @Component({
   selector: 'app-user-avatar',
-  templateUrl: './user-avatar.component.html'
+  templateUrl: './user-avatar.component.html',
 })
 export class UserAvatarComponent implements OnInit {
   @Input() user: any;
@@ -25,7 +25,7 @@ export class UserAvatarComponent implements OnInit {
   url: string;
   username: string;
 
-  constructor() { }
+  constructor() {}
 
   ngOnInit() {
     this.username = this.user.username ? this.user.username : this.user.name;
@@ -35,5 +35,4 @@ export class UserAvatarComponent implements OnInit {
       this.url = 'assets/material-letter-icons/' + this.username.charAt(0).toUpperCase() + '.png';
     }
   }
-
 }

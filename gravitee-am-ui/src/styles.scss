@@ -12,7 +12,7 @@ $graviteeio-am-primary-palette: (
   200: #b0bec5,
   300: #90a4ae,
   400: #78909c,
-  500: #28444F,
+  500: #28444f,
   600: #546e7a,
   700: #455a64,
   800: #37474f,
@@ -36,7 +36,7 @@ $graviteeio-am-primary-palette: (
     A200: $dark-primary-text,
     A400: $light-primary-text,
     A700: $light-primary-text,
-  )
+  ),
 );
 
 $graviteeio-am-accent-palette: (
@@ -45,7 +45,7 @@ $graviteeio-am-accent-palette: (
   200: #90caf9,
   300: #64b5f6,
   400: #42a5f5,
-  500: #86C3D0,
+  500: #86c3d0,
   600: #1e88e5,
   700: #1976d2,
   800: #1565c0,
@@ -69,12 +69,12 @@ $graviteeio-am-accent-palette: (
     A200: $light-primary-text,
     A400: $light-primary-text,
     A700: $light-primary-text,
-  )
+  ),
 );
 
 /* Configure theme */
 $graviteeio-am-primary: mat-palette($graviteeio-am-primary-palette);
-$graviteeio-am-accent:  mat-palette($graviteeio-am-accent-palette);
+$graviteeio-am-accent: mat-palette($graviteeio-am-accent-palette);
 $graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-am-accent);
 @mixin graviteeio-am-theme($theme) {
   $primary: map-get($theme, primary);
@@ -82,7 +82,9 @@ $graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-a
   .gv-sidenav {
     background-color: mat-color($primary, 500);
   }
-  .mat-step-header .mat-step-icon-selected, .mat-step-header .mat-step-icon-state-edit, .mat-step-header .mat-step-icon-state-done {
+  .mat-step-header .mat-step-icon-selected,
+  .mat-step-header .mat-step-icon-state-edit,
+  .mat-step-header .mat-step-icon-state-done {
     background-color: mat-color($primary, 500);
   }
   material-add-reference-widget {
@@ -92,7 +94,8 @@ $graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-a
   }
   a {
     color: mat-color($primary, 500);
-    &.active, &:hover {
+    &.active,
+    &:hover {
       color: mat-color($accent, 500);
     }
     &.gv-accent-link {
@@ -108,17 +111,18 @@ $graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-a
   .application-creation-step1-container {
     .application-creation-step1-content {
       mat-card {
-        &.selected, i.selected {
+        &.selected,
+        i.selected {
           border: 1px solid mat-color($accent, 500);
         }
       }
     }
   }
   .not-found-content-description {
-    border-top: 8px solid mat-color($primary, 500);;
+    border-top: 8px solid mat-color($primary, 500);
   }
   .gv-splash-screen {
-    background: #fdfdfd
+    background: #fdfdfd;
   }
 }
 @include angular-material-theme($graviteeio-am-main-theme);
@@ -130,18 +134,15 @@ $graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-a
   font-style: normal;
   font-weight: 400;
   src: url(assets/iconfont/MaterialIcons-Regular.eot); /* For IE6-8 */
-  src: local('Material Icons'),
-  local('MaterialIcons-Regular'),
-  url(assets/iconfont/MaterialIcons-Regular.woff2) format('woff2'),
-  url(assets/iconfont/MaterialIcons-Regular.woff) format('woff'),
-  url(assets/iconfont/MaterialIcons-Regular.ttf) format('truetype');
+  src: local('Material Icons'), local('MaterialIcons-Regular'), url(assets/iconfont/MaterialIcons-Regular.woff2) format('woff2'),
+    url(assets/iconfont/MaterialIcons-Regular.woff) format('woff'), url(assets/iconfont/MaterialIcons-Regular.ttf) format('truetype');
 }
 
 .material-icons {
   font-family: 'Material Icons';
   font-weight: normal;
   font-style: normal;
-  font-size: 24px;  /* Preferred icon size */
+  font-size: 24px; /* Preferred icon size */
   display: inline-block;
   line-height: 1;
   text-transform: none;
@@ -159,14 +160,17 @@ $graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-a
   font-feature-settings: 'liga';
 }
 
-html, body, app-root, mat-sidenav-container {
+html,
+body,
+app-root,
+mat-sidenav-container {
   margin: 0;
   width: 100%;
   height: 100%;
 }
 
 body {
-  font-family: Roboto,Helvetica Neue Light,Helvetica Neue,Helvetica,Arial,Lucida Grande,sans-serif;
+  font-family: Roboto, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;
 }
 
 mat-sidenav-container {
@@ -184,7 +188,8 @@ mat-sidenav-container {
   background-color: #ffffff !important;
 }
 
-.mat-list .mat-list-item .mat-list-item-content, .mat-nav-list .mat-list-item .mat-list-item-content {
+.mat-list .mat-list-item .mat-list-item-content,
+.mat-nav-list .mat-list-item .mat-list-item-content {
   position: inherit !important;
 }
 
@@ -212,13 +217,14 @@ mat-form-field {
 }
 
 .mat-form-field-appearance-outline.mat-form-field-disabled .mat-form-field-outline {
-  background: #F1F1F1;
+  background: #f1f1f1;
 }
 
 ngx-datatable {
   .gv-table-cell-actions {
     margin-left: -10px;
-    button, a {
+    button,
+    a {
       top: -9px;
       color: grey;
     }
@@ -325,7 +331,8 @@ mat-horizontal-stepper {
   margin-bottom: 20px;
   .gv-form-section-title {
     margin-bottom: 10px;
-    h5, h4 {
+    h5,
+    h4 {
       margin: 0px 0px 5px 0px;
     }
     small {

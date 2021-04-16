@@ -43,7 +43,14 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
 
     public T principal(User principal) {
         if (principal != null) {
-            setActor(principal.getId(), EntityType.USER, principal.getUsername(), getDisplayName(principal), getReferenceType(principal), getReferenceId(principal));
+            setActor(
+                principal.getId(),
+                EntityType.USER,
+                principal.getUsername(),
+                getDisplayName(principal),
+                getReferenceType(principal),
+                getReferenceId(principal)
+            );
             if (principal.getAdditionalInformation() != null) {
                 if (principal.getAdditionalInformation().containsKey(Claims.ip_address)) {
                     ipAddress((String) principal.getAdditionalInformation().get(Claims.ip_address));
@@ -58,15 +65,13 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
 
     private String getDisplayName(User user) {
         final String displayName =
-                // display name
-                user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
-                        (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
-                        // default to username
-                        user.getUsername();
+            // display name
+            user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME)
+                ? (String) user.getAdditionalInformation().get(StandardClaims.NAME)
+                : user.getUsername(); // default to username
 
         return displayName;
     }
-
 
     private ReferenceType getReferenceType(User user) {
         if (user.getAdditionalInformation() == null) {
@@ -85,7 +90,6 @@ public abstract class ManagementAuditBuilder<T> extends AuditBuilder<T> {
     }
 
     private String getReferenceId(User user) {
-
         if (user.getAdditionalInformation() == null) {
             return null;
         }

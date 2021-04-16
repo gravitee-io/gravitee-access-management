@@ -20,7 +20,6 @@ package io.gravitee.am.certificate.api;
  * @author GraviteeSource Team
  */
 public interface Certificate {
-
     Class<? extends CertificateConfiguration> configuration();
 
     Class<? extends CertificateProvider> certificateProvider();

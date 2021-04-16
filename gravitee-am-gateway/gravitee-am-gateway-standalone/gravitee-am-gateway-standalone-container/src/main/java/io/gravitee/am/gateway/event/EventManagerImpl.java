@@ -25,12 +25,11 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.impl.SimpleEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Override default event manager to enable concurrent access
@@ -55,24 +54,24 @@ public class EventManagerImpl implements EventManager {
         String domain = null;
         if (event.content() != null) {
             Object content = event.content();
-            if (content instanceof Payload && ((Payload)content).getReferenceType() == ReferenceType.DOMAIN) {
-                domain = ((Payload)content).getReferenceId();
+            if (content instanceof Payload && ((Payload) content).getReferenceType() == ReferenceType.DOMAIN) {
+                domain = ((Payload) content).getReferenceId();
             } else if (content instanceof Domain) {
-                domain = ((Domain)content).getId();
-            } else if (content instanceof AuthenticationDetails && ((AuthenticationDetails)content).getDomain() != null) {
-                domain = ((AuthenticationDetails)content).getDomain().getId();
+                domain = ((Domain) content).getId();
+            } else if (content instanceof AuthenticationDetails && ((AuthenticationDetails) content).getDomain() != null) {
+                domain = ((AuthenticationDetails) content).getDomain().getId();
             }
         }
         List<EventListenerWrapper> listeners = getEventListeners(event.type().getClass(), domain);
         List<EventListenerWrapper> safeConcurrentListeners = Lists.newArrayList(listeners.iterator());
 
-        for(EventListenerWrapper listener : safeConcurrentListeners) {
+        for (EventListenerWrapper listener : safeConcurrentListeners) {
             listener.eventListener().onEvent(event);
         }
     }
 
     public <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, T... events) {
-        for( T event : events) {
+        for (T event : events) {
             addEventListener(eventListener, (Class<T>) event.getClass(), Arrays.asList(events), null);
         }
     }
@@ -81,7 +80,12 @@ public class EventManagerImpl implements EventManager {
         addEventListener(eventListener, events, EnumSet.allOf(events), null);
     }
 
-    private <T extends Enum> void addEventListener(EventListener<T, ?> eventListener, Class<T> enumClass, Collection<T> events, String domain) {
+    private <T extends Enum> void addEventListener(
+        EventListener<T, ?> eventListener,
+        Class<T> enumClass,
+        Collection<T> events,
+        String domain
+    ) {
         LOGGER.info("Register new listener {} for event type {}", eventListener.getClass().getSimpleName(), enumClass);
 
         List<EventListenerWrapper> listeners = getEventListeners(enumClass, domain);

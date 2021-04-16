@@ -23,7 +23,7 @@ import java.util.Set;
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class Organization implements Resource{
+public class Organization implements Resource {
 
     public static final String DEFAULT = "DEFAULT";
 
@@ -38,7 +38,7 @@ public class Organization implements Resource{
     private List<String> identities;
 
     private Date createdAt;
-    
+
     private Date updatedAt;
 
     public Organization() {

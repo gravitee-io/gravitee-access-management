@@ -24,7 +24,6 @@ import io.gravitee.common.service.Service;
  * @author GraviteeSource Team
  */
 public interface AuditReporterManager extends Service<AuditReporterManager> {
-
     Reporter getReporter(ReferenceType referenceType, String referenceId);
 
     Reporter getReporter(String domain);

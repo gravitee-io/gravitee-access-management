@@ -15,13 +15,15 @@
     limitations under the License.
 
 -->
-<h5 matDialogTitle>
-  Assign roles
-</h5>
+<h5 matDialogTitle>Assign roles</h5>
 <mat-dialog-content>
-  <role-selection [roles]="roles" [initialSelectedRoles]="initialSelectedRoles" (onRoleSelection)="onRoleSelectionChanges($event)"></role-selection>
+  <role-selection
+    [roles]="roles"
+    [initialSelectedRoles]="initialSelectedRoles"
+    (onRoleSelection)="onRoleSelectionChanges($event)"
+  ></role-selection>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button type="button" mat-raised-button (click)="dialogRef.close(assignedRoles)" color="primary" [disabled]="!hasChanged">Assign</button>
-  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
+  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px">Cancel</button>
 </mat-dialog-actions>

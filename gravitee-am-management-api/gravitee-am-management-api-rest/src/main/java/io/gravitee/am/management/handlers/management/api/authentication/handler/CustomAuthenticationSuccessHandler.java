@@ -18,6 +18,11 @@ package io.gravitee.am.management.handlers.management.api.authentication.handler
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
+import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,17 +34,12 @@ import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class CustomAuthenticationSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
+
     protected final Logger logger = LoggerFactory.getLogger(CustomAuthenticationSuccessHandler.class);
     private static final String SAVED_REQUEST = "GRAVITEEIO_AM_SAVED_REQUEST";
     private RequestCache requestCache = new HttpSessionRequestCache();
@@ -54,8 +54,8 @@ public class CustomAuthenticationSuccessHandler extends SavedRequestAwareAuthent
     private boolean newsletterEnabled;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws ServletException, IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
+        throws ServletException, IOException {
         SavedRequest savedRequest = requestCache.getRequest(request, response);
 
         if (savedRequest == null) {
@@ -80,7 +80,9 @@ public class CustomAuthenticationSuccessHandler extends SavedRequestAwareAuthent
         response.addCookie(jwtAuthenticationCookie);
 
         String targetUrlParameter = getTargetUrlParameter();
-        if (isAlwaysUseDefaultTargetUrl() || (targetUrlParameter != null && StringUtils.hasText(request.getParameter(targetUrlParameter)))) {
+        if (
+            isAlwaysUseDefaultTargetUrl() || (targetUrlParameter != null && StringUtils.hasText(request.getParameter(targetUrlParameter)))
+        ) {
             requestCache.removeRequest(request, response);
             super.onAuthenticationSuccess(request, response, authentication);
 

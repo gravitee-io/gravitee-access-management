@@ -29,8 +29,8 @@ import org.springframework.context.annotation.Import;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@ComponentScan({"io.gravitee.am.management.handlers.management.api.resources.enhancer"})
-@Import({WebMvcConfiguration.class, SecurityConfiguration.class})
+@ComponentScan({ "io.gravitee.am.management.handlers.management.api.resources.enhancer" })
+@Import({ WebMvcConfiguration.class, SecurityConfiguration.class })
 public class ManagementConfiguration {
 
     @Bean

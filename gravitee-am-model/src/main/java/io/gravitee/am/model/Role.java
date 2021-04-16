@@ -17,7 +17,6 @@ package io.gravitee.am.model;
 
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.permissions.SystemRole;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +41,7 @@ public class Role {
     private Date createdAt;
     private Date updatedAt;
 
-    public Role() {
-    }
+    public Role() {}
 
     public Role(Role other) {
         this.id = other.id;
@@ -105,7 +103,6 @@ public class Role {
     }
 
     public boolean isInternalOnly() {
-
         return isSystem() && SystemRole.valueOf(name).isInternalOnly();
     }
 

@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public abstract class AccountStatusException extends AuthenticationException {
 
-    public AccountStatusException() { }
+    public AccountStatusException() {}
 
     public AccountStatusException(String msg) {
         super(msg);

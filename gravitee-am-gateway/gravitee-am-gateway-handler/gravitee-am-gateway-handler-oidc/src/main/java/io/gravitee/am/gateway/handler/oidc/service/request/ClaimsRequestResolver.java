@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oidc.service.request;
 
 import io.gravitee.am.gateway.handler.oidc.exception.ClaimsRequestSyntaxException;
 import io.vertx.core.json.JsonObject;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,7 +56,9 @@ public final class ClaimsRequestResolver {
         JsonObject claimsParameterValue = claimsRequest.getJsonObject(parameterName);
         if (claimsParameterValue != null) {
             Map<String, Object> claimsParameter = new HashMap<>();
-            claimsParameterValue.iterator().forEachRemaining(entry -> resolveIndividualClaimsRequests(entry.getKey(), entry.getValue(), claimsParameter));
+            claimsParameterValue
+                .iterator()
+                .forEachRemaining(entry -> resolveIndividualClaimsRequests(entry.getKey(), entry.getValue(), claimsParameter));
             return claimsParameter;
         }
         return null;
@@ -79,26 +80,29 @@ public final class ClaimsRequestResolver {
         } else {
             if (claimValue instanceof JsonObject) {
                 JsonObject individualClaim = (JsonObject) claimValue;
-                individualClaim.iterator().forEachRemaining(entry -> {
-                    // 3 possible value (essential, value and values)
-                    switch (entry.getKey()) {
-                        case ClaimsRequest.ESSENTIAL:
-                            // essential must be a boolean value
-                            if (entry.getValue() != null && entry.getValue() instanceof Boolean) {
-                                // no value to check (essential) set to null
-                                claimsParameter.put(claimName, new ClaimsRequest.Essential((boolean) entry.getValue()));
+                individualClaim
+                    .iterator()
+                    .forEachRemaining(
+                        entry -> {
+                            // 3 possible value (essential, value and values)
+                            switch (entry.getKey()) {
+                                case ClaimsRequest.ESSENTIAL:
+                                    // essential must be a boolean value
+                                    if (entry.getValue() != null && entry.getValue() instanceof Boolean) {
+                                        // no value to check (essential) set to null
+                                        claimsParameter.put(claimName, new ClaimsRequest.Essential((boolean) entry.getValue()));
+                                    }
+                                    break;
+                                case ClaimsRequest.VALUE:
+                                case ClaimsRequest.VALUES:
+                                    // TODO
+                                    break;
+                                default:
+                                // Any members used that are not understood MUST be ignored.
                             }
-                            break;
-                        case ClaimsRequest.VALUE:
-                        case ClaimsRequest.VALUES:
-                            // TODO
-                            break;
-                        default:
-                            // Any members used that are not understood MUST be ignored.
-                    }
-                });
+                        }
+                    );
             }
         }
-
     }
 }

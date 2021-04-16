@@ -27,15 +27,15 @@ import io.vertx.reactivex.ext.web.handler.AuthHandler;
  * @author GraviteeSource Team
  */
 public interface RedirectAuthHandler {
-
     String DEFAULT_RETURN_URL_PARAM = "return_url";
 
     static AuthHandler create(AuthProvider authProvider, Domain domain) {
-        return AuthHandler.newInstance(new RedirectAuthHandlerImpl(authProvider,  '/' + domain.getPath() + "/login", DEFAULT_RETURN_URL_PARAM));
+        return AuthHandler.newInstance(
+            new RedirectAuthHandlerImpl(authProvider, '/' + domain.getPath() + "/login", DEFAULT_RETURN_URL_PARAM)
+        );
     }
 
     static AuthHandler create(AuthProvider authProvider, String loginRedirectURL) {
         return AuthHandler.newInstance(new RedirectAuthHandlerImpl(authProvider, loginRedirectURL, DEFAULT_RETURN_URL_PARAM));
     }
-
 }

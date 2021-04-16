@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.service.model;
 
-import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -27,6 +27,7 @@ public class NewGroup {
 
     @NotNull
     private String name;
+
     private String description;
     private List<String> members;
 
@@ -56,10 +57,17 @@ public class NewGroup {
 
     @Override
     public String toString() {
-        return "{\"_class\":\"NewGroup\", " +
-                "\"name\":" + (name == null ? "null" : "\"" + name + "\"") + ", " +
-                "\"description\":" + (description == null ? "null" : "\"" + description + "\"") + ", " +
-                "\"members\":" + (members == null ? "null" : Arrays.toString(members.toArray())) +
-                "}";
+        return (
+            "{\"_class\":\"NewGroup\", " +
+            "\"name\":" +
+            (name == null ? "null" : "\"" + name + "\"") +
+            ", " +
+            "\"description\":" +
+            (description == null ? "null" : "\"" + description + "\"") +
+            ", " +
+            "\"members\":" +
+            (members == null ? "null" : Arrays.toString(members.toArray())) +
+            "}"
+        );
     }
 }

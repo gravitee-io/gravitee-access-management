@@ -23,7 +23,6 @@ import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -32,7 +31,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderService {
-
     Single<List<IdentityProvider>> findAll();
 
     Single<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String id);
@@ -43,11 +41,22 @@ public interface IdentityProviderService {
 
     Single<List<IdentityProvider>> findByDomain(String domain);
 
-    Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal);
+    Single<IdentityProvider> create(
+        ReferenceType referenceType,
+        String referenceId,
+        NewIdentityProvider newIdentityProvider,
+        User principal
+    );
 
     Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider, User principal);
 
-    Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal);
+    Single<IdentityProvider> update(
+        ReferenceType referenceType,
+        String referenceId,
+        String id,
+        UpdateIdentityProvider updateIdentityProvider,
+        User principal
+    );
 
     Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal);
 

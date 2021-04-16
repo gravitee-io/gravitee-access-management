@@ -23,7 +23,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface DynamicClientRegistrationService {
-
     Single<Client> create(DynamicClientRegistrationRequest request, String basePath);
 
     Single<Client> patch(Client toPatch, DynamicClientRegistrationRequest request, String basePath);

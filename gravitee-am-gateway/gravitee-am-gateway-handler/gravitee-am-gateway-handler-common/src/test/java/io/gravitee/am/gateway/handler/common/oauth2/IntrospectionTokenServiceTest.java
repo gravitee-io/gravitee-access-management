@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.oauth2;
 
-import io.gravitee.am.common.jwt.JWT;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
@@ -27,17 +29,14 @@ import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -17,7 +17,6 @@ package io.gravitee.am.management.standalone.container;
 
 import io.gravitee.am.management.standalone.spring.StandaloneConfiguration;
 import io.gravitee.node.container.spring.SpringBasedContainer;
-
 import java.util.List;
 
 /**

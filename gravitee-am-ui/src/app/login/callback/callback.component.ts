@@ -14,28 +14,31 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { Router } from "@angular/router";
-import { AuthService } from "../../services/auth.service";
-import { SnackbarService } from "../../services/snackbar.service";
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { SnackbarService } from '../../services/snackbar.service';
 
 @Component({
   selector: 'app-login-callback',
-  template: ``
+  template: '',
 })
 export class LoginCallbackComponent implements OnInit {
-  constructor(private router: Router, private authService: AuthService, private snackbarService: SnackbarService) { }
+  constructor(private router: Router, private authService: AuthService, private snackbarService: SnackbarService) {}
 
   ngOnInit() {
-    this.authService.handleAuthentication().subscribe(authentSuccess => {
-      if (authentSuccess) {
-        this.authService.userInfo().subscribe(res => {
-          this.snackbarService.open('Login successful');
-          this.router.navigate(['/']);
-        });
-      }
-    }, error => {
-      this.snackbarService.open(error.replace(/%20/g, ' '));
-      this.router.navigate(['/logout']);
-    });
+    this.authService.handleAuthentication().subscribe(
+      (authentSuccess) => {
+        if (authentSuccess) {
+          this.authService.userInfo().subscribe((res) => {
+            this.snackbarService.open('Login successful');
+            this.router.navigate(['/']);
+          });
+        }
+      },
+      (error) => {
+        this.snackbarService.open(error.replace(/%20/g, ' '));
+        this.router.navigate(['/logout']);
+      },
+    );
   }
 }

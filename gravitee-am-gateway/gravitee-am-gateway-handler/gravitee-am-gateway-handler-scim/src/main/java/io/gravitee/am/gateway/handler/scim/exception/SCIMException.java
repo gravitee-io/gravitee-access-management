@@ -43,6 +43,6 @@ public abstract class SCIMException extends RuntimeException {
 
     @Override
     public String toString() {
-        return "{\"error\":\""+ getScimType() + "\"}";
+        return "{\"error\":\"" + getScimType() + "\"}";
     }
 }

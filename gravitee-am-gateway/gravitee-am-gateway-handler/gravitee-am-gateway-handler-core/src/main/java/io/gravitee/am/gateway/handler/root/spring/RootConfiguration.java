@@ -27,11 +27,10 @@ import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.security.Key;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.security.Key;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

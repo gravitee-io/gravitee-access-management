@@ -43,6 +43,6 @@ public abstract class OAuth2Exception extends RuntimeException {
 
     @Override
     public String toString() {
-        return "{\"error\":\""+ getOAuth2ErrorCode() + "\"}";
+        return "{\"error\":\"" + getOAuth2ErrorCode() + "\"}";
     }
 }

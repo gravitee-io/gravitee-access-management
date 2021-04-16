@@ -15,10 +15,13 @@
     limitations under the License.
 
 -->
-<json-schema-form *ngIf="displayForm"
-  [schema]="providerSchema" [data]="data"
-  [options]="{'formDefaults' : { 'orderable' : false}, 'addSubmit' : false}"
+<json-schema-form
+  *ngIf="displayForm"
+  [schema]="providerSchema"
+  [data]="data"
+  [options]="{ formDefaults: { orderable: false }, addSubmit: false }"
   (isValid)="isValid($event)"
   (onChanges)="onChanges($event)"
-  framework="material-design">
+  framework="material-design"
+>
 </json-schema-form>

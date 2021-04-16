@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.common.vertx.web.endpoint;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -28,13 +28,12 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -67,18 +66,21 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
         }
 
         // fetch client to display its own custom page
-        resolveClient(clientId, handler -> {
-            if (handler.failed()) {
-                // an error occurs while fetching the client
-                // we will display the domain error page
-                // log this error for the prosperity
-                logger.debug("An error occurs while fetching client {}", clientId, handler.cause());
-                renderErrorPage(routingContext, null);
-                return;
-            }
+        resolveClient(
+            clientId,
+            handler -> {
+                if (handler.failed()) {
+                    // an error occurs while fetching the client
+                    // we will display the domain error page
+                    // log this error for the prosperity
+                    logger.debug("An error occurs while fetching client {}", clientId, handler.cause());
+                    renderErrorPage(routingContext, null);
+                    return;
+                }
 
-            renderErrorPage(routingContext, handler.result());
-        });
+                renderErrorPage(routingContext, handler.result());
+            }
+        );
     }
 
     private void renderErrorPage(RoutingContext routingContext, Client client) {
@@ -101,14 +103,18 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
         params.put(ERROR_DESCRIPTION_PARAM, errorDescription);
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                routingContext.fail(res.cause());
+        engine.render(
+            routingContext.data(),
+            getTemplateFileName(client),
+            res -> {
+                if (res.succeeded()) {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(res.result());
+                } else {
+                    routingContext.fail(res.cause());
+                }
             }
-        });
+        );
     }
 
     private String getTemplateFileName(Client client) {
@@ -116,11 +122,12 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
     }
 
     private void resolveClient(String clientId, Handler<AsyncResult<Client>> handler) {
-        clientSyncService.findByDomainAndClientId(domain, clientId)
-                .subscribe(
-                        client -> handler.handle(Future.succeededFuture(client)),
-                        error -> handler.handle(Future.failedFuture(error)),
-                        () -> handler.handle(Future.failedFuture(new ClientNotFoundException(clientId)))
-                );
+        clientSyncService
+            .findByDomainAndClientId(domain, clientId)
+            .subscribe(
+                client -> handler.handle(Future.succeededFuture(client)),
+                error -> handler.handle(Future.failedFuture(error)),
+                () -> handler.handle(Future.failedFuture(new ClientNotFoundException(clientId)))
+            );
     }
 }

@@ -22,7 +22,6 @@ package io.gravitee.am.common.oauth2;
  * @author GraviteeSource Team
  */
 public interface CodeChallengeMethod {
-
     /**
      * code_challenge = code_verifier
      */

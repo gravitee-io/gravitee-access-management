@@ -19,5 +19,4 @@ package io.gravitee.am.extensiongrant.api;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ExtensionGrantConfiguration {
-}
+public interface ExtensionGrantConfiguration {}

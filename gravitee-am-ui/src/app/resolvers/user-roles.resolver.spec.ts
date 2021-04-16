@@ -15,12 +15,12 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import {UserRolesResolver} from "./user-roles.resolver";
+import { UserRolesResolver } from './user-roles.resolver';
 
 describe('UserRolesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [UserRolesResolver]
+      providers: [UserRolesResolver],
     });
   });
 

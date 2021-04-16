@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.factor.EnrolledFactor;
-
 import java.util.Date;
 
 /**
@@ -31,8 +30,7 @@ public class EnrolledFactorEntity {
     private Date createdAt;
     private Date updatedAt;
 
-    public EnrolledFactorEntity() {
-    }
+    public EnrolledFactorEntity() {}
 
     public EnrolledFactorEntity(EnrolledFactor enrolledFactor) {
         id = enrolledFactor.getFactorId();

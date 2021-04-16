@@ -26,7 +26,6 @@ import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jose.util.X509CertUtils;
 import io.gravitee.am.identityprovider.oauth2.jwt.jwks.JWKSourceResolver;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
@@ -53,20 +52,20 @@ public class RSAJWKSourceResolver<C extends SecurityContext> implements JWKSourc
     }
 
     private static RSAKey parse(final X509Certificate cert) {
-        if (! (cert.getPublicKey() instanceof RSAPublicKey)) {
+        if (!(cert.getPublicKey() instanceof RSAPublicKey)) {
             throw new IllegalStateException("The public key of the X.509 certificate is not RSA");
         }
 
-        RSAPublicKey publicKey = (RSAPublicKey)cert.getPublicKey();
+        RSAPublicKey publicKey = (RSAPublicKey) cert.getPublicKey();
 
         try {
             MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
 
             return new RSAKey.Builder(publicKey)
-                    .keyUse(KeyUse.SIGNATURE)
-                    .x509CertChain(Collections.singletonList(Base64.encode(cert.getEncoded())))
-                    .x509CertSHA256Thumbprint(Base64URL.encode(sha256.digest(cert.getEncoded())))
-                    .build();
+                .keyUse(KeyUse.SIGNATURE)
+                .x509CertChain(Collections.singletonList(Base64.encode(cert.getEncoded())))
+                .x509CertSHA256Thumbprint(Base64URL.encode(sha256.digest(cert.getEncoded())))
+                .build();
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("Couldn't encode x5t parameter: " + e.getMessage(), e);
         } catch (CertificateEncodingException e) {

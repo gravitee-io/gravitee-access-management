@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import static java.lang.String.format;
+
 import freemarker.cache.StringTemplateLoader;
 import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
@@ -29,19 +31,16 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Completable;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
-
-import static java.lang.String.format;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -110,7 +109,13 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
 
         if (templateFound) {
             Email customEmail = emailTemplates.get(template);
-            return create(template, customEmail.getFrom(), customEmail.getFromName(), customEmail.getSubject(), customEmail.getExpiresAfter());
+            return create(
+                template,
+                customEmail.getFrom(),
+                customEmail.getFromName(),
+                customEmail.getSubject(),
+                customEmail.getExpiresAfter()
+            );
         } else {
             // template not found, return default template
             template = templateParts[0];
@@ -120,11 +125,13 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
 
     private void deployEmail(String emailId) {
         logger.info("Management API has received a deploy email event for {}", emailId);
-        emailTemplateService.findById(emailId)
-                .subscribe(
-                        email -> loadEmail(email),
-                        error -> logger.error("Unable to deploy email {}", emailId, error),
-                        () -> logger.error("No email found with id {}", emailId));
+        emailTemplateService
+            .findById(emailId)
+            .subscribe(
+                email -> loadEmail(email),
+                error -> logger.error("Unable to deploy email {}", emailId, error),
+                () -> logger.error("No email found with id {}", emailId)
+            );
     }
 
     private void removeEmail(String email) {
@@ -165,10 +172,13 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
     }
 
     private String getTemplateName(Email email) {
-        return email.getTemplate()
-                + TEMPLATE_NAME_SEPARATOR
-                + email.getReferenceType() + email.getReferenceId()
-                + ((email.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + email.getClient() : "");
+        return (
+            email.getTemplate() +
+            TEMPLATE_NAME_SEPARATOR +
+            email.getReferenceType() +
+            email.getReferenceId() +
+            ((email.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + email.getClient() : "")
+        );
     }
 
     public void setDefaultFrom(String defaultFrom) {

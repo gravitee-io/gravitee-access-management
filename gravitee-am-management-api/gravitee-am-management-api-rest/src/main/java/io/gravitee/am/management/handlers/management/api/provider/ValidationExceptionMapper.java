@@ -17,15 +17,14 @@ package io.gravitee.am.management.handlers.management.api.provider;
 
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.common.http.HttpStatusCode;
-import org.hibernate.validator.internal.engine.path.PathImpl;
-
+import java.util.stream.Collectors;
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-import java.util.stream.Collectors;
+import org.hibernate.validator.internal.engine.path.PathImpl;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -39,17 +38,21 @@ public class ValidationExceptionMapper implements ExceptionMapper<ValidationExce
         if (e instanceof ConstraintViolationException) {
             ConstraintViolationException constraintViolationException = (ConstraintViolationException) e;
             return buildResponse(
-                    "[" +
-                            constraintViolationException
-                                    .getConstraintViolations()
-                                    .stream()
-                                    .map(constraint -> {
-                                        Object value = constraint.getInvalidValue() == null ? ((PathImpl) constraint.getPropertyPath()).getLeafNode().asString() : constraint.getInvalidValue();
-                                        return value + ": " + constraint.getMessage();
-                                    })
-                                    .collect(Collectors.joining(","))
-                        +
-                    "]");
+                "[" +
+                constraintViolationException
+                    .getConstraintViolations()
+                    .stream()
+                    .map(
+                        constraint -> {
+                            Object value = constraint.getInvalidValue() == null
+                                ? ((PathImpl) constraint.getPropertyPath()).getLeafNode().asString()
+                                : constraint.getInvalidValue();
+                            return value + ": " + constraint.getMessage();
+                        }
+                    )
+                    .collect(Collectors.joining(",")) +
+                "]"
+            );
         } else {
             return buildResponse(e.getMessage());
         }
@@ -57,9 +60,9 @@ public class ValidationExceptionMapper implements ExceptionMapper<ValidationExce
 
     private Response buildResponse(String message) {
         return Response
-                .status(Response.Status.BAD_REQUEST)
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(new ErrorEntity(message, HttpStatusCode.BAD_REQUEST_400))
-                .build();
+            .status(Response.Status.BAD_REQUEST)
+            .type(MediaType.APPLICATION_JSON_TYPE)
+            .entity(new ErrorEntity(message, HttpStatusCode.BAD_REQUEST_400))
+            .build();
     }
 }

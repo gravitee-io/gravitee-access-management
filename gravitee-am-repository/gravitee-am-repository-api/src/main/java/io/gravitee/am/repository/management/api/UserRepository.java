@@ -15,14 +15,13 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +31,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface UserRepository extends CrudRepository<User, String> {
-
     Single<Set<User>> findByDomain(String domain);
 
     Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);

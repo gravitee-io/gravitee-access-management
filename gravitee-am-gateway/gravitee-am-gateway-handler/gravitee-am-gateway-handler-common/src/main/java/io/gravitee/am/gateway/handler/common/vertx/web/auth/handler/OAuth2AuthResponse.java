@@ -27,7 +27,7 @@ public class OAuth2AuthResponse {
     private JWT token;
     private Client client;
 
-    public OAuth2AuthResponse() { }
+    public OAuth2AuthResponse() {}
 
     public OAuth2AuthResponse(JWT token, Client client) {
         this.token = token;

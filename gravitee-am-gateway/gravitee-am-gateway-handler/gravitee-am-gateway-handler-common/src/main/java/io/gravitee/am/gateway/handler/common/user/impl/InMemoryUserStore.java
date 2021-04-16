@@ -19,7 +19,6 @@ import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.model.User;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.Vertx;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -77,12 +76,12 @@ public class InMemoryUserStore implements UserStore, Handler<Long> {
     public void handle(Long event) {
         long now = System.currentTimeMillis();
         Set<String> toRemove = new HashSet<>();
-        for (io.gravitee.am.gateway.handler.common.user.impl.User user: users.values()) {
+        for (io.gravitee.am.gateway.handler.common.user.impl.User user : users.values()) {
             if (now - user.getLastAccessed() > timeout) {
                 toRemove.add(user.getUser().getId());
             }
         }
-        for (String id: toRemove) {
+        for (String id : toRemove) {
             users.remove(id);
         }
         if (!closed) {

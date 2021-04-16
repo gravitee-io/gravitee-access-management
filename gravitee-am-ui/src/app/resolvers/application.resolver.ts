@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { ApplicationService } from "../services/application.service";
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { ApplicationService } from '../services/application.service';
 
 @Injectable()
 export class ApplicationResolver implements Resolve<any> {
+  constructor(private applicationService: ApplicationService) {}
 
-  constructor(private applicationService: ApplicationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId');
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+    let domainId = route.paramMap.get('domainId') ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId');
 
     // try access domainId from higher levels
     if (!domainId && route.parent.parent) {
-      domainId = route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : (route.parent.parent.parent && route.parent.parent.parent.paramMap.get('domainId')) ? route.parent.parent.parent.paramMap.get('domainId') : null;
+      domainId = route.parent.parent.paramMap.get('domainId')
+        ? route.parent.parent.paramMap.get('domainId')
+        : route.parent.parent.parent && route.parent.parent.parent.paramMap.get('domainId')
+        ? route.parent.parent.parent.paramMap.get('domainId')
+        : null;
     }
 
     let appId: string = route.paramMap.get('appId');

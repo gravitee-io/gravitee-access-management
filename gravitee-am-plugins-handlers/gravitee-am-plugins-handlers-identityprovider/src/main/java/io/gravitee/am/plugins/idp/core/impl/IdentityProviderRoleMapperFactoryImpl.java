@@ -17,10 +17,9 @@ package io.gravitee.am.plugins.idp.core.impl;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.plugins.idp.core.IdentityProviderRoleMapperFactory;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -16,10 +16,9 @@
 package io.gravitee.am.management.handlers.management.api.authentication.web;
 
 import io.gravitee.common.http.HttpHeaders;
-
+import java.io.Serializable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.io.Serializable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,6 +52,7 @@ public class WebAuthenticationDetails implements Serializable {
     public String getRemoteAddress() {
         return remoteAddress;
     }
+
     public String getSessionId() {
         return sessionId;
     }
@@ -72,7 +72,7 @@ public class WebAuthenticationDetails implements Serializable {
         String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;

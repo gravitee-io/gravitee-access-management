@@ -26,11 +26,10 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.core.net.SocketAddress;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,12 +60,14 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
         if (user != null) {
             User authenticatedUser = new DefaultUser(user.getUsername());
             ((DefaultUser) authenticatedUser).setId(user.getId());
-            Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
+            Map<String, Object> additionalInformation = user.getAdditionalInformation() != null
+                ? new HashMap<>(user.getAdditionalInformation())
+                : new HashMap<>();
             // add ip address and user agent
             additionalInformation.put(Claims.ip_address, remoteAddress(routingContext.request()));
             additionalInformation.put(Claims.user_agent, userAgent(routingContext.request()));
 
-            if(user.getReferenceType() == ReferenceType.DOMAIN) {
+            if (user.getReferenceType() == ReferenceType.DOMAIN) {
                 additionalInformation.put(Claims.domain, user.getReferenceId());
             }
 
@@ -84,7 +85,7 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
         String xForwardedFor = httpServerRequest.getHeader(io.gravitee.common.http.HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;

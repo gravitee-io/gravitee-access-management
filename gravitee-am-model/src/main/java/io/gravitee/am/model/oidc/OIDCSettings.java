@@ -30,7 +30,7 @@ public class OIDCSettings {
     private boolean redirectUriStrictMatching;
 
     public ClientRegistrationSettings getClientRegistrationSettings() {
-        return clientRegistrationSettings!=null?clientRegistrationSettings: ClientRegistrationSettings.defaultSettings();
+        return clientRegistrationSettings != null ? clientRegistrationSettings : ClientRegistrationSettings.defaultSettings();
     }
 
     public void setClientRegistrationSettings(ClientRegistrationSettings clientRegistrationSettings) {
@@ -51,5 +51,4 @@ public class OIDCSettings {
         defaultSettings.setRedirectUriStrictMatching(false);
         return defaultSettings;
     }
-
 }

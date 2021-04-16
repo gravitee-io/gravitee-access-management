@@ -13,55 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {EntrypointService} from "../../../services/entrypoint.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {DialogService} from "../../../services/dialog.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {AuthService} from "../../../services/auth.service";
+import { Component, OnInit } from '@angular/core';
+import { EntrypointService } from '../../../services/entrypoint.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-entrypoints',
   templateUrl: './entrypoints.component.html',
-  styleUrls: ['./entrypoints.component.scss']
+  styleUrls: ['./entrypoints.component.scss'],
 })
 export class EntrypointsComponent implements OnInit {
   private entrypoints: any[];
 
-  constructor(private entrypointService: EntrypointService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private authService: AuthService) {
-  }
+  constructor(
+    private entrypointService: EntrypointService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.entrypoints = this.route.snapshot.data['entrypoints'];
+    this.entrypoints = this.route.snapshot.data.entrypoints;
   }
 
   get isEmpty() {
-    return !this.entrypoints || this.entrypoints.length == 0
+    return !this.entrypoints || this.entrypoints.length === 0;
   }
 
   loadEntrypoints() {
-    this.entrypointService.list().subscribe(response => this.entrypoints = response);
+    this.entrypointService.list().subscribe((response) => (this.entrypoints = response));
   }
 
   delete(id, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Entrypoint', 'Are you sure you want to delete this entrypoint ?')
-      .subscribe(res => {
-        if (res) {
-          this.entrypointService.delete(id).subscribe(response => {
-            this.snackbarService.open("Entrypoint deleted");
-            this.loadEntrypoints();
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Entrypoint', 'Are you sure you want to delete this entrypoint ?').subscribe((res) => {
+      if (res) {
+        this.entrypointService.delete(id).subscribe((response) => {
+          this.snackbarService.open('Entrypoint deleted');
+          this.loadEntrypoints();
+        });
+      }
+    });
   }
 
   canDelete(entrypoint) {
-    return !entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete'])
+    return !entrypoint.defaultEntrypoint && this.authService.hasPermissions(['organization_entrypoint_delete']);
   }
 }

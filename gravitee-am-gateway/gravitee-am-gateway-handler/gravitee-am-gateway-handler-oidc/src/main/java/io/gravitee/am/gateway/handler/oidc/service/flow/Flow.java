@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.oidc.service.flow;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 
 /**
@@ -39,7 +39,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface Flow {
-
     boolean handle(String responseType);
 
     Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, Client client, User endUser);

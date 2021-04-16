@@ -21,50 +21,70 @@
   <div *ngIf="!isEmpty" class="users-search">
     <mat-form-field>
       <mat-icon matPrefix="">search</mat-icon>
-      <input type="text" matInput placeholder="Search" (input)="onSearch($event)">
+      <input type="text" matInput placeholder="Search" (input)="onSearch($event)" />
       <mat-hint align="end">By username</mat-hint>
     </mat-form-field>
   </div>
 
   <div class="users-content" *ngIf="!isEmpty">
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='users'
-                   [externalPaging]="true"
-                   [count]="page.totalElements"
-                   [offset]="page.pageNumber"
-                   [limit]="page.size"
-                   (page)='setPage($event)'>
+    <ngx-datatable
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="users"
+      [externalPaging]="true"
+      [count]="page.totalElements"
+      [offset]="page.pageNumber"
+      [limit]="page.size"
+      (page)="setPage($event)"
+    >
       <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'user-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="user-header" fxLayout="row">
-            <div class="user-avatar"
-                 matBadge="&#8288;"
-                 matBadgeSize="small"
-                 [ngClass]="(row.enabled && !accountLocked(row)) ? 'user-enabled': (!row.enabled ? 'user-disabled' : accountLocked(row) ? 'user-locked' : '')"
-                 [matTooltip]="(row.enabled && !accountLocked(row)) ? 'User enabled': (!row.enabled ? 'User disabled' : accountLocked(row) ? 'User locked' : '')">
+            <div
+              class="user-avatar"
+              matBadge="&#8288;"
+              matBadgeSize="small"
+              [ngClass]="
+                row.enabled && !accountLocked(row)
+                  ? 'user-enabled'
+                  : !row.enabled
+                  ? 'user-disabled'
+                  : accountLocked(row)
+                  ? 'user-locked'
+                  : ''
+              "
+              [matTooltip]="
+                row.enabled && !accountLocked(row)
+                  ? 'User enabled'
+                  : !row.enabled
+                  ? 'User disabled'
+                  : accountLocked(row)
+                  ? 'User locked'
+                  : ''
+              "
+            >
               <app-user-avatar [user]="row" [width]="'40'"></app-user-avatar>
             </div>
             <div class="user-information" fxLayout="column">
-              <a [routerLink]="[row.id]" *ngIf="hasReadPermissions()">{{row.displayName}}</a>
-              <span *ngIf="!hasReadPermissions()">{{row.displayName}}</span>
-              <small>{{row.username}}</small>
+              <a [routerLink]="[row.id]" *ngIf="hasReadPermissions()">{{ row.displayName }}</a>
+              <span *ngIf="!hasReadPermissions()">{{ row.displayName }}</span>
+              <small>{{ row.username }}</small>
             </div>
           </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Identity Provider" [flexGrow]="2" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.source}}
+          {{ row.source }}
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Last login" [flexGrow]="2" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <span *ngIf="(row.loggedAt)">{{row.loggedAt | humanDate}}</span>
-          <span *ngIf="!(row.loggedAt)">Never logged in</span>
+          <span *ngIf="row.loggedAt">{{ row.loggedAt | humanDate }}</span>
+          <span *ngIf="!row.loggedAt">Never logged in</span>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Actions" [flexGrow]="1" *hasPermission="[requiredReadPermission]">
@@ -77,12 +97,14 @@
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Users will appear here'"
-                  [subMessage]="'No data to display'"
-                  [icon]="'person'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Users will appear here'"
+    [subMessage]="'No data to display'"
+    [icon]="'person'"
+  ></app-emptystate>
 
-  <div *ngIf="createMode" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *ngIf="createMode" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

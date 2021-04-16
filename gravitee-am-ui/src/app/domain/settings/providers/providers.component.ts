@@ -14,58 +14,59 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ProviderService } from "../../../services/provider.service";
-import { SnackbarService } from "../../../services/snackbar.service";
-import { DialogService } from "../../../services/dialog.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import { AppConfig } from "../../../../config/app.config";
-import {OrganizationService} from "../../../services/organization.service";
+import { ProviderService } from '../../../services/provider.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AppConfig } from '../../../../config/app.config';
+import { OrganizationService } from '../../../services/organization.service';
 
 @Component({
   selector: 'app-providers',
   templateUrl: './providers.component.html',
-  styleUrls: ['./providers.component.scss']
+  styleUrls: ['./providers.component.scss'],
 })
 export class DomainSettingsProvidersComponent implements OnInit {
   private providers: any[];
   private organizationContext = false;
   private identityProviderTypes: any = {
-    'ldap-am-idp' : 'LDAP / AD',
-    'mongo-am-idp' : 'MongoDB',
+    'ldap-am-idp': 'LDAP / AD',
+    'mongo-am-idp': 'MongoDB',
     'inline-am-idp': 'Inline',
     'oauth2-generic-am-idp': 'OpenID Connect',
-    'github-am-idp': 'GitHub'
+    'github-am-idp': 'GitHub',
   };
   private identityProviderIcons: any = {
-    'ldap-am-idp' : 'device_hub',
-    'mongo-am-idp' : 'storage',
+    'ldap-am-idp': 'device_hub',
+    'mongo-am-idp': 'storage',
     'inline-am-idp': 'insert_drive_file',
     'oauth2-generic-am-idp': 'cloud_queue',
-    'github-am-idp': 'cloud_queue'
+    'github-am-idp': 'cloud_queue',
   };
   domainId: string;
 
-  constructor(private providerService: ProviderService,
-              private organizationService: OrganizationService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router) {
-  }
+  constructor(
+    private providerService: ProviderService,
+    private organizationService: OrganizationService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
-    this.providers = this.route.snapshot.data['providers'];
+    this.providers = this.route.snapshot.data.providers;
   }
 
   loadProviders() {
     if (this.organizationContext) {
-      this.organizationService.identityProviders().subscribe(response => this.providers = response);
+      this.organizationService.identityProviders().subscribe((response) => (this.providers = response));
     } else {
-      this.providerService.findByDomain(this.domainId).subscribe(response => this.providers = response);
+      this.providerService.findByDomain(this.domainId).subscribe((response) => (this.providers = response));
     }
   }
 
@@ -89,16 +90,13 @@ export class DomainSettingsProvidersComponent implements OnInit {
 
   delete(id, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Provider', 'Are you sure you want to delete this provider ?')
-      .subscribe(res => {
-        if (res) {
-          this.providerService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
-            this.snackbarService.open('Provider deleted');
-            this.loadProviders();
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Provider', 'Are you sure you want to delete this provider ?').subscribe((res) => {
+      if (res) {
+        this.providerService.delete(this.domainId, id, this.organizationContext).subscribe((response) => {
+          this.snackbarService.open('Provider deleted');
+          this.loadProviders();
+        });
+      }
+    });
   }
-
 }

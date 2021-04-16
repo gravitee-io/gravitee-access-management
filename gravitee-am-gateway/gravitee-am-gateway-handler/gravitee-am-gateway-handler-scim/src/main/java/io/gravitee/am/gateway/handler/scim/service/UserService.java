@@ -26,7 +26,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface UserService {
-
     Single<ListResponse<User>> list(int page, int size, String baseUrl);
 
     Maybe<User> get(String userId, String baseUrl);

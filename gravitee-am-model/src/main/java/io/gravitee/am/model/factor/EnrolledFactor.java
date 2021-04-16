@@ -37,8 +37,7 @@ public class EnrolledFactor {
 
     private Date updatedAt;
 
-    public EnrolledFactor() {
-    }
+    public EnrolledFactor() {}
 
     public EnrolledFactor(EnrolledFactor other) {
         this.factorId = other.factorId;

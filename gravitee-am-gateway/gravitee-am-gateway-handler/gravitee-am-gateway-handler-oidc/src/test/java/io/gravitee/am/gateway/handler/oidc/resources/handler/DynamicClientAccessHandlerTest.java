@@ -26,8 +26,7 @@ import io.gravitee.am.gateway.handler.vertx.handler.oidc.handler.DynamicClientAc
  */
 //@RunWith(MockitoJUnitRunner.class)
 public class DynamicClientAccessHandlerTest {
-
-   /* @Mock
+    /* @Mock
     private ClientSyncService clientSyncService;
 
     @Mock

@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.Membership;
-
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +28,7 @@ public class MembershipListItem {
     private List<Membership> memberships;
     private Map<String, Map<String, Object>> metadata;
 
-    public MembershipListItem() { }
+    public MembershipListItem() {}
 
     public MembershipListItem(List<Membership> memberships, Map<String, Map<String, Object>> metadata) {
         this.memberships = memberships;

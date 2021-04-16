@@ -24,7 +24,6 @@ import io.gravitee.am.model.IdentityProvider;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderManager {
-
     AuthenticationProvider get(String id);
 
     IdentityProvider getIdentityProvider(String id);

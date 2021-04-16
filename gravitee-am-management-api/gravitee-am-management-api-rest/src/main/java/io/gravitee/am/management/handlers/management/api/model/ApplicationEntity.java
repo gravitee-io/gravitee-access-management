@@ -35,7 +35,11 @@ public class ApplicationEntity {
 
     public ApplicationEntity(Application application) {
         setId(application.getId());
-        setClientId((application.getSettings() != null && application.getSettings().getOauth() != null) ? application.getSettings().getOauth().getClientId() : null);
+        setClientId(
+            (application.getSettings() != null && application.getSettings().getOauth() != null)
+                ? application.getSettings().getOauth().getClientId()
+                : null
+        );
         setName(application.getName());
     }
 

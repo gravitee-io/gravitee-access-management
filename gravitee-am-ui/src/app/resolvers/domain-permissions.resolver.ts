@@ -20,12 +20,16 @@ import { DomainService } from '../services/domain.service';
 
 @Injectable()
 export class DomainPermissionsResolver implements Resolve<any> {
+  constructor(private domainService: DomainService) {}
 
-  constructor(private domainService: DomainService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+    const domainId = route.paramMap.get('domainId')
+      ? route.paramMap.get('domainId')
+      : route.parent.paramMap.get('domainId')
+      ? route.parent.paramMap.get('domainId')
+      : route.parent.parent.paramMap.get('domainId')
+      ? route.parent.parent.paramMap.get('domainId')
+      : route.parent.parent.parent.paramMap.get('domainId');
     return this.domainService.permissions(domainId);
   }
-
 }

@@ -15,19 +15,18 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.Schedulers;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,7 +45,7 @@ public class MongoEventRepositoryTest extends AbstractManagementRepositoryTest {
     @Test
     public void testFindByTimeFrame() throws TechnicalException {
         final long from = 1571214259000l;
-        final long to =  1571214281000l;
+        final long to = 1571214281000l;
         // create event
         Event event = new Event();
         event.setType(Type.DOMAIN);

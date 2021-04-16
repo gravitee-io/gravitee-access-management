@@ -23,6 +23,5 @@ import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
  * @author GraviteeSource Team
  */
 public interface KeyProcessor {
-
     JWTProcessor create(Signature signature);
 }

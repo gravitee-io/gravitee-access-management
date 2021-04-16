@@ -25,49 +25,49 @@ public abstract class Event {
         Enum event1 = null;
         switch (type) {
             case DOMAIN:
-                event1 =  DomainEvent.actionOf(action);
+                event1 = DomainEvent.actionOf(action);
                 break;
             case APPLICATION:
-                event1 =  ApplicationEvent.actionOf(action);
+                event1 = ApplicationEvent.actionOf(action);
                 break;
             case CERTIFICATE:
-                event1 =  CertificateEvent.actionOf(action);
+                event1 = CertificateEvent.actionOf(action);
                 break;
             case EXTENSION_GRANT:
-                event1 =  ExtensionGrantEvent.actionOf(action);
+                event1 = ExtensionGrantEvent.actionOf(action);
                 break;
             case IDENTITY_PROVIDER:
-                event1 =  IdentityProviderEvent.actionOf(action);
+                event1 = IdentityProviderEvent.actionOf(action);
                 break;
             case ROLE:
-                event1 =  RoleEvent.actionOf(action);
+                event1 = RoleEvent.actionOf(action);
                 break;
             case SCOPE:
-                event1 =  ScopeEvent.actionOf(action);
+                event1 = ScopeEvent.actionOf(action);
                 break;
             case FORM:
-                event1 =  FormEvent.actionOf(action);
+                event1 = FormEvent.actionOf(action);
                 break;
             case EMAIL:
-                event1 =  EmailEvent.actionOf(action);
+                event1 = EmailEvent.actionOf(action);
                 break;
             case REPORTER:
-                event1 =  ReporterEvent.actionOf(action);
+                event1 = ReporterEvent.actionOf(action);
                 break;
             case POLICY:
-                event1 =  PolicyEvent.actionOf(action);
+                event1 = PolicyEvent.actionOf(action);
                 break;
             case USER:
-                event1 =  UserEvent.actionOf(action);
+                event1 = UserEvent.actionOf(action);
                 break;
             case GROUP:
-                event1 =  GroupEvent.actionOf(action);
+                event1 = GroupEvent.actionOf(action);
                 break;
             case MEMBERSHIP:
-                event1 =  MembershipEvent.actionOf(action);
+                event1 = MembershipEvent.actionOf(action);
                 break;
             case FACTOR:
-                event1 =  FactorEvent.actionOf(action);
+                event1 = FactorEvent.actionOf(action);
                 break;
         }
 

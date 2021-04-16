@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.identityprovider.http.user;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -33,15 +36,15 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { HttpUserProviderTestConfiguration.class, HttpUserProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(
+    classes = { HttpUserProviderTestConfiguration.class, HttpUserProviderConfiguration.class },
+    loader = AnnotationConfigContextLoader.class
+)
 public class HttpUserProviderTest {
 
     @Autowired
@@ -54,10 +57,12 @@ public class HttpUserProviderTest {
     public void shouldCreateUser() {
         DefaultUser user = new DefaultUser("johndoe");
 
-        stubFor(post(urlPathEqualTo("/api/users"))
+        stubFor(
+            post(urlPathEqualTo("/api/users"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
                 .withRequestBody(matching(".*"))
-                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}"))
+        );
 
         TestObserver<User> testObserver = userProvider.create(user).test();
         testObserver.awaitTerminalEvent();
@@ -71,10 +76,12 @@ public class HttpUserProviderTest {
     public void shouldCreateUser_id_number_type() {
         DefaultUser user = new DefaultUser("johndoe");
 
-        stubFor(post(urlPathEqualTo("/api/users"))
+        stubFor(
+            post(urlPathEqualTo("/api/users"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
                 .withRequestBody(matching(".*"))
-                .willReturn(okJson("{\"id\" : 80100, \"username\" : \"johndoe\"}")));
+                .willReturn(okJson("{\"id\" : 80100, \"username\" : \"johndoe\"}"))
+        );
 
         TestObserver<User> testObserver = userProvider.create(user).test();
         testObserver.awaitTerminalEvent();
@@ -88,10 +95,12 @@ public class HttpUserProviderTest {
     public void shouldCreateUser_userAlreadyExists() {
         DefaultUser user = new DefaultUser("johndoe");
 
-        stubFor(post(urlPathEqualTo("/api/users"))
+        stubFor(
+            post(urlPathEqualTo("/api/users"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
                 .withRequestBody(matching(".*"))
-                .willReturn(badRequest()));
+                .willReturn(badRequest())
+        );
 
         TestObserver<User> testObserver = userProvider.create(user).test();
         testObserver.awaitTerminalEvent();
@@ -100,9 +109,11 @@ public class HttpUserProviderTest {
 
     @Test
     public void shouldFindUserByUsername() {
-        stubFor(get(urlPathEqualTo("/api/users"))
+        stubFor(
+            get(urlPathEqualTo("/api/users"))
                 .withQueryParam("username", new EqualToPattern("johndoe"))
-                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}"))
+        );
 
         TestObserver<User> testObserver = userProvider.findByUsername("johndoe").test();
         testObserver.awaitTerminalEvent();
@@ -114,9 +125,11 @@ public class HttpUserProviderTest {
 
     @Test
     public void shouldFindUserByUsername_arrayResponse() {
-        stubFor(get(urlPathEqualTo("/api/users"))
+        stubFor(
+            get(urlPathEqualTo("/api/users"))
                 .withQueryParam("username", new EqualToPattern("johndoe"))
-                .willReturn(okJson("[{\"id\" : \"123456789\", \"username\" : \"johndoe\"}]")));
+                .willReturn(okJson("[{\"id\" : \"123456789\", \"username\" : \"johndoe\"}]"))
+        );
 
         TestObserver<User> testObserver = userProvider.findByUsername("johndoe").test();
         testObserver.awaitTerminalEvent();
@@ -128,9 +141,11 @@ public class HttpUserProviderTest {
 
     @Test
     public void shouldFindUserByEmail() {
-        stubFor(get(urlPathEqualTo("/api/users"))
+        stubFor(
+            get(urlPathEqualTo("/api/users"))
                 .withQueryParam("email", new EqualToPattern("johndoe@mail.com"))
-                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}"))
+        );
 
         TestObserver<User> testObserver = userProvider.findByEmail("johndoe@mail.com").test();
         testObserver.awaitTerminalEvent();
@@ -142,9 +157,11 @@ public class HttpUserProviderTest {
 
     @Test
     public void shouldFindUserByEmail_arrayResponse() {
-        stubFor(get(urlPathEqualTo("/api/users"))
+        stubFor(
+            get(urlPathEqualTo("/api/users"))
                 .withQueryParam("email", new EqualToPattern("johndoe@mail.com"))
-                .willReturn(okJson("[{\"id\" : \"123456789\", \"username\" : \"johndoe\"}]")));
+                .willReturn(okJson("[{\"id\" : \"123456789\", \"username\" : \"johndoe\"}]"))
+        );
 
         TestObserver<User> testObserver = userProvider.findByEmail("johndoe@mail.com").test();
         testObserver.awaitTerminalEvent();
@@ -158,10 +175,12 @@ public class HttpUserProviderTest {
     public void shouldUpdateUser() {
         DefaultUser user = new DefaultUser("johndoe");
 
-        stubFor(put(urlPathEqualTo("/api/users/123456789"))
+        stubFor(
+            put(urlPathEqualTo("/api/users/123456789"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
                 .withRequestBody(matching(".*"))
-                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}"))
+        );
 
         TestObserver<User> testObserver = userProvider.update("123456789", user).test();
         testObserver.awaitTerminalEvent();
@@ -175,10 +194,12 @@ public class HttpUserProviderTest {
     public void shouldUpdateUser_userNotFound() {
         DefaultUser user = new DefaultUser("johndoe");
 
-        stubFor(put(urlPathEqualTo("/api/users/123456789"))
+        stubFor(
+            put(urlPathEqualTo("/api/users/123456789"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
                 .withRequestBody(matching(".*"))
-                .willReturn(notFound()));
+                .willReturn(notFound())
+        );
 
         TestObserver<User> testObserver = userProvider.update("123456789", user).test();
         testObserver.awaitTerminalEvent();
@@ -187,8 +208,7 @@ public class HttpUserProviderTest {
 
     @Test
     public void shouldDeleteUser() {
-        stubFor(delete(urlPathEqualTo("/api/users/123456789"))
-                .willReturn(ok()));
+        stubFor(delete(urlPathEqualTo("/api/users/123456789")).willReturn(ok()));
 
         TestObserver testObserver = userProvider.delete("123456789").test();
         testObserver.awaitTerminalEvent();
@@ -198,8 +218,7 @@ public class HttpUserProviderTest {
 
     @Test
     public void shouldDeleteUser_userNotFound() {
-        stubFor(delete(urlPathEqualTo("/api/users/123456789"))
-                .willReturn(notFound()));
+        stubFor(delete(urlPathEqualTo("/api/users/123456789")).willReturn(notFound()));
 
         TestObserver testObserver = userProvider.delete("123456789").test();
         testObserver.awaitTerminalEvent();

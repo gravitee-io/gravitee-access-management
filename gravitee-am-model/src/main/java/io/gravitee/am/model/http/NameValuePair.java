@@ -20,9 +20,7 @@ package io.gravitee.am.model.http;
  * @author GraviteeSource Team
  */
 public interface NameValuePair {
-
     String getName();
 
     String getValue();
-
 }

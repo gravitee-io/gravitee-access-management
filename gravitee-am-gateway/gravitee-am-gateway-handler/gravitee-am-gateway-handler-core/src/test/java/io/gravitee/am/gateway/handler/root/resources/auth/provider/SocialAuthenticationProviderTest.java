@@ -15,32 +15,31 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -72,7 +71,7 @@ public class SocialAuthenticationProviderTest {
         credentials.put("provider", "idp");
         credentials.put("additionalParameters", Collections.emptyMap());
 
-        io.gravitee.am.identityprovider.api.User user  = new io.gravitee.am.identityprovider.api.DefaultUser("username");
+        io.gravitee.am.identityprovider.api.User user = new io.gravitee.am.identityprovider.api.DefaultUser("username");
 
         Client client = new Client();
 
@@ -85,16 +84,19 @@ public class SocialAuthenticationProviderTest {
         when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertNotNull(userAsyncResult.result());
-        });
+        authProvider.authenticate(
+            routingContext,
+            credentials,
+            userAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(userAsyncResult);
+                Assert.assertNotNull(userAsyncResult.result());
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
         verify(userAuthenticationManager, times(1)).connect(any());
     }
-
 
     @Test
     public void shouldNotAuthenticateUser_badCredentials() throws Exception {
@@ -105,19 +107,24 @@ public class SocialAuthenticationProviderTest {
 
         Client client = new Client();
 
-        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.error(BadCredentialsException::new));
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class)))
+            .thenReturn(Maybe.error(BadCredentialsException::new));
         when(routingContext.get("client")).thenReturn(client);
         when(routingContext.get("provider")).thenReturn(authenticationProvider);
         when(routingContext.request()).thenReturn(httpServerRequest);
         when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.failed());
-            Assert.assertTrue(userAsyncResult.cause() instanceof BadCredentialsException);
-        });
+        authProvider.authenticate(
+            routingContext,
+            credentials,
+            userAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(userAsyncResult);
+                Assert.assertTrue(userAsyncResult.failed());
+                Assert.assertTrue(userAsyncResult.cause() instanceof BadCredentialsException);
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
         verify(userAuthenticationManager, never()).connect(any());
@@ -139,16 +146,18 @@ public class SocialAuthenticationProviderTest {
         when(httpServerRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.failed());
-            Assert.assertTrue(userAsyncResult.cause() instanceof BadCredentialsException);
-        });
+        authProvider.authenticate(
+            routingContext,
+            credentials,
+            userAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(userAsyncResult);
+                Assert.assertTrue(userAsyncResult.failed());
+                Assert.assertTrue(userAsyncResult.cause() instanceof BadCredentialsException);
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
         verify(userAuthenticationManager, never()).connect(any());
     }
-
-
 }

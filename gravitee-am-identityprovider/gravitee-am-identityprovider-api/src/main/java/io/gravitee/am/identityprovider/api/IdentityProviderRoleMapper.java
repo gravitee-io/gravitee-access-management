@@ -23,7 +23,6 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderRoleMapper {
-
     Map<String, String[]> getRoles();
 
     void setRoles(Map<String, String[]> roles);

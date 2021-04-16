@@ -15,12 +15,12 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import { ExtensionGrantResolver } from "./extension-grant.resolver";
+import { ExtensionGrantResolver } from './extension-grant.resolver';
 
 describe('ExtensionGrantResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ExtensionGrantResolver]
+      providers: [ExtensionGrantResolver],
     });
   });
 

@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.oauth2.utils;
 
 import io.gravitee.am.model.http.NameValuePair;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -56,5 +55,4 @@ public class URLEncodedUtils {
         }
         return queryPairs;
     }
-
 }

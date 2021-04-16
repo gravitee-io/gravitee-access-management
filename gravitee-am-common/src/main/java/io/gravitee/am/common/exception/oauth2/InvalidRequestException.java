@@ -43,5 +43,4 @@ public class InvalidRequestException extends OAuth2Exception {
     public String getOAuth2ErrorCode() {
         return "invalid_request";
     }
-
 }

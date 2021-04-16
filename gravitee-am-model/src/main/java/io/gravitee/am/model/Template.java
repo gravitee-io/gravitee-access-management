@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 public enum Template {
-
     LOGIN("login"),
     REGISTRATION("registration"),
     REGISTRATION_CONFIRMATION("registration_confirmation"),
@@ -47,14 +46,15 @@ public enum Template {
     }
 
     public static Template parse(String toParse) {
-        if(toParse==null || toParse.trim().isEmpty()) {
+        if (toParse == null || toParse.trim().isEmpty()) {
             throw new IllegalArgumentException("template must not be null");
         }
-        List<Template> matchingTemplate = Arrays.stream(Template.values())
-                .filter(template -> template.template().equals(toParse))
-                .collect(Collectors.toList());
+        List<Template> matchingTemplate = Arrays
+            .stream(Template.values())
+            .filter(template -> template.template().equals(toParse))
+            .collect(Collectors.toList());
 
-        if(matchingTemplate.size()==1) {
+        if (matchingTemplate.size() == 1) {
             return matchingTemplate.get(0);
         }
 

@@ -22,7 +22,6 @@ import io.gravitee.am.model.Application;
  * @author GraviteeSource Team
  */
 public interface ApplicationTemplateManager {
-
     void apply(Application application);
 
     void changeType(Application application);

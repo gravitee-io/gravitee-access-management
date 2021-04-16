@@ -21,7 +21,6 @@ package io.gravitee.am.identityprovider.api;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderConfiguration {
-
     default boolean userProvider() {
         return false;
     }

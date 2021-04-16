@@ -18,7 +18,6 @@ package io.gravitee.am.management.service;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -27,7 +26,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderPluginService {
-
     Single<List<IdentityProviderPlugin>> findAll(Boolean external);
 
     Maybe<IdentityProviderPlugin> findById(String identityProviderPlugin);

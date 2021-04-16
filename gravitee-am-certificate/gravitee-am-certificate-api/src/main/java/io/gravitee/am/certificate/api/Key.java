@@ -22,7 +22,6 @@ package io.gravitee.am.certificate.api;
  * @author GraviteeSource Team
  */
 public interface Key {
-
     /**
      * Get key id
      * @return key id

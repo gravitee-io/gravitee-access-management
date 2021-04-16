@@ -20,7 +20,6 @@ package io.gravitee.am.common.event;
  * @author GraviteeSource Team
  */
 public enum Type {
-
     DOMAIN,
     CLIENT,
     APPLICATION,
@@ -36,5 +35,5 @@ public enum Type {
     USER,
     MEMBERSHIP,
     GROUP,
-    FACTOR
+    FACTOR,
 }

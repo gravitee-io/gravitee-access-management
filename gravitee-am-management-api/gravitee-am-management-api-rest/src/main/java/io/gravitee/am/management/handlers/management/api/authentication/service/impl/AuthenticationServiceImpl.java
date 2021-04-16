@@ -37,10 +37,9 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.AuthenticationAuditBuilder;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
-
-import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,16 +69,32 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public User onAuthenticationSuccess(Authentication auth) {
         final DefaultUser principal = (DefaultUser) auth.getPrincipal();
 
-        final EndUserAuthentication authentication = new EndUserAuthentication(principal.getUsername(), null, new SimpleAuthenticationContext());
+        final EndUserAuthentication authentication = new EndUserAuthentication(
+            principal.getUsername(),
+            null,
+            new SimpleAuthenticationContext()
+        );
         Map<String, String> details = auth.getDetails() == null ? new HashMap<>() : new HashMap<>((Map) auth.getDetails());
         details.forEach(authentication.getContext()::set);
         authentication.getContext().set(Claims.organization, Organization.DEFAULT);
 
         final String source = details.get(SOURCE);
-        io.gravitee.am.model.User endUser = userService.findByExternalIdAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, principal.getId(), source)
-                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, principal.getUsername(), source)))
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
-                .flatMapSingle(existingUser -> {
+        io.gravitee.am.model.User endUser = userService
+            .findByExternalIdAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, principal.getId(), source)
+            .switchIfEmpty(
+                Maybe.defer(
+                    () ->
+                        userService.findByUsernameAndSource(
+                            ReferenceType.ORGANIZATION,
+                            Organization.DEFAULT,
+                            principal.getUsername(),
+                            source
+                        )
+                )
+            )
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
+            .flatMapSingle(
+                existingUser -> {
                     existingUser.setSource(details.get(SOURCE));
                     existingUser.setClient(CLIENT_ID);
                     existingUser.setLoggedAt(new Date());
@@ -94,8 +109,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     }
                     existingUser.setAdditionalInformation(principal.getAdditionalInformation());
                     return userService.update(existingUser);
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof UserNotFoundException) {
                         final io.gravitee.am.model.User newUser = new io.gravitee.am.model.User();
                         newUser.setInternal(false);
@@ -107,15 +124,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         newUser.setLoggedAt(new Date());
                         newUser.setLoginsCount(1l);
                         newUser.setAdditionalInformation(principal.getAdditionalInformation());
-                        return userService.create(newUser)
-                                .flatMap(user -> setRoles(principal, user)
-                                        .map(membership -> user));
+                        return userService.create(newUser).flatMap(user -> setRoles(principal, user).map(membership -> user));
                     }
                     return Single.error(ex);
-                })
-                .flatMap(userService::enhance)
-                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).referenceType(ReferenceType.ORGANIZATION).referenceId(Organization.DEFAULT).client(CLIENT_ID).user(user)))
-                .blockingGet();
+                }
+            )
+            .flatMap(userService::enhance)
+            .doOnSuccess(
+                user ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(AuthenticationAuditBuilder.class)
+                            .principal(authentication)
+                            .referenceType(ReferenceType.ORGANIZATION)
+                            .referenceId(Organization.DEFAULT)
+                            .client(CLIENT_ID)
+                            .user(user)
+                    )
+            )
+            .blockingGet();
 
         principal.setId(endUser.getId());
         principal.getAdditionalInformation().put(StandardClaims.SUB, endUser.getId());
@@ -139,25 +166,34 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * will be handled https://github.com/gravitee-io/issues/issues/3323
      */
     private Single<Membership> setRoles(User principal, io.gravitee.am.model.User user) {
-
-        final Maybe<Role> defaultRoleObs = roleService.findDefaultRole(user.getReferenceId(), DefaultRole.ORGANIZATION_USER, ReferenceType.ORGANIZATION);
+        final Maybe<Role> defaultRoleObs = roleService.findDefaultRole(
+            user.getReferenceId(),
+            DefaultRole.ORGANIZATION_USER,
+            ReferenceType.ORGANIZATION
+        );
         Maybe<Role> roleObs = defaultRoleObs;
 
         if (principal.getRoles() != null && !principal.getRoles().isEmpty()) {
             // We allow only one role in AM portal. Get the first (should not append).
             String roleId = principal.getRoles().get(0);
 
-            roleObs = roleService.findById(user.getReferenceType(), user.getReferenceId(), roleId)
+            roleObs =
+                roleService
+                    .findById(user.getReferenceType(), user.getReferenceId(), roleId)
                     .toMaybe()
-                    .onErrorResumeNext(throwable -> {
-                        if (throwable instanceof RoleNotFoundException) {
-                            return roleService.findById(ReferenceType.PLATFORM, Platform.DEFAULT, roleId).toMaybe()
+                    .onErrorResumeNext(
+                        throwable -> {
+                            if (throwable instanceof RoleNotFoundException) {
+                                return roleService
+                                    .findById(ReferenceType.PLATFORM, Platform.DEFAULT, roleId)
+                                    .toMaybe()
                                     .switchIfEmpty(defaultRoleObs)
                                     .onErrorResumeNext(defaultRoleObs);
-                        } else {
-                            return defaultRoleObs;
+                            } else {
+                                return defaultRoleObs;
+                            }
                         }
-                    });
+                    );
         }
 
         Membership membership = new Membership();
@@ -166,10 +202,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         membership.setReferenceType(user.getReferenceType());
         membership.setReferenceId(user.getReferenceId());
 
-        return roleObs.switchIfEmpty(Maybe.error(new TechnicalManagementException(String.format("Cannot add user membership to organization %s. Unable to find ORGANIZATION_USER role", user.getReferenceId()))))
-                .flatMapSingle(role -> {
+        return roleObs
+            .switchIfEmpty(
+                Maybe.error(
+                    new TechnicalManagementException(
+                        String.format(
+                            "Cannot add user membership to organization %s. Unable to find ORGANIZATION_USER role",
+                            user.getReferenceId()
+                        )
+                    )
+                )
+            )
+            .flatMapSingle(
+                role -> {
                     membership.setRoleId(role.getId());
                     return membershipService.addOrUpdate(user.getReferenceId(), membership);
-                });
+                }
+            );
     }
 }

@@ -23,7 +23,6 @@ import io.gravitee.am.service.model.UpdateEmail;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -32,7 +31,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface EmailTemplateService {
-
     Single<List<Email>> findAll();
 
     Single<List<Email>> findAll(ReferenceType referenceType, String referenceId);
@@ -66,7 +64,7 @@ public interface EmailTemplateService {
     Completable delete(String emailId, User principal);
 
     default Single<Email> create(String domain, NewEmail newEmail) {
-        return create(domain, newEmail,  null);
+        return create(domain, newEmail, null);
     }
 
     default Single<Email> create(String domain, String client, NewEmail newEmail) {
@@ -74,7 +72,7 @@ public interface EmailTemplateService {
     }
 
     default Single<Email> update(String domain, String id, UpdateEmail updateEmail) {
-        return update(domain, id, updateEmail,  null);
+        return update(domain, id, updateEmail, null);
     }
 
     default Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail) {
@@ -84,5 +82,4 @@ public interface EmailTemplateService {
     default Completable delete(String emailId) {
         return delete(emailId, null);
     }
-
 }

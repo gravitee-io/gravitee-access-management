@@ -22,7 +22,6 @@ import io.gravitee.am.model.Application;
  * @author GraviteeSource Team
  */
 public interface ApplicationTemplate {
-
     boolean canHandle(Application application);
 
     void handle(Application application);

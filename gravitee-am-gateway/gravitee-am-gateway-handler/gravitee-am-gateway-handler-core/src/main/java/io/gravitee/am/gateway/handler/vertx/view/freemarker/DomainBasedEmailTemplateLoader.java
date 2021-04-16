@@ -21,5 +21,4 @@ import freemarker.cache.StringTemplateLoader;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DomainBasedEmailTemplateLoader extends StringTemplateLoader {
-}
+public class DomainBasedEmailTemplateLoader extends StringTemplateLoader {}

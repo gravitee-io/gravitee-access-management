@@ -23,6 +23,5 @@ import com.nimbusds.jose.proc.SecurityContext;
  * @author GraviteeSource Team
  */
 public interface JWKSourceResolver<C extends SecurityContext> {
-
     JWKSource<C> resolve();
 }

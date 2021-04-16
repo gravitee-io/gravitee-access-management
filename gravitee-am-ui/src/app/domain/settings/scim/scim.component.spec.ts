@@ -23,9 +23,8 @@ describe('ScimComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ScimComponent ]
-    })
-    .compileComponents();
+      declarations: [ScimComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.Parameters;
@@ -53,6 +55,9 @@ import io.reactivex.Maybe;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -60,12 +65,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.Assert;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -112,7 +111,10 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
                 builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
             }
             // append redirect_uri
-            builder.addParameter(Parameters.REDIRECT_URI, configuration.isEncodeRedirectUri() ? UriBuilder.encodeURIComponent(redirectUri) : redirectUri);
+            builder.addParameter(
+                Parameters.REDIRECT_URI,
+                configuration.isEncodeRedirectUri() ? UriBuilder.encodeURIComponent(redirectUri) : redirectUri
+            );
 
             Request request = new Request();
             request.setMethod(HttpMethod.GET);
@@ -126,13 +128,14 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
 
     @Override
     public AuthenticationFlow authenticationFlow() {
-        return io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType()) ? AuthenticationFlow.AUTHORIZATION_CODE_FLOW : AuthenticationFlow.IMPLICIT_FLOW;
+        return io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())
+            ? AuthenticationFlow.AUTHORIZATION_CODE_FLOW
+            : AuthenticationFlow.IMPLICIT_FLOW;
     }
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        return authenticate(authentication)
-                .flatMap(token -> profile(token, authentication));
+        return authenticate(authentication).flatMap(token -> profile(token, authentication));
     }
 
     @Override
@@ -142,7 +145,7 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
 
     private Maybe<Token> authenticate(Authentication authentication) {
         // implicit flow, retrieve the hashValue of the URL (#access_token=....&token_type=...)
-        if (AuthenticationFlow.IMPLICIT_FLOW.equals(authenticationFlow())){
+        if (AuthenticationFlow.IMPLICIT_FLOW.equals(authenticationFlow())) {
             final String hashValue = authentication.getContext().request().parameters().getFirst(HASH_VALUE_PARAMETER);
             Map<String, String> hashValues = getParams(hashValue.substring(1));
 
@@ -171,17 +174,21 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
         List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_ID, configuration.getClientId()));
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_SECRET, configuration.getClientSecret()));
-        urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, (String) authentication.getContext().get(Parameters.REDIRECT_URI)));
+        urlParameters.add(
+            new BasicNameValuePair(Parameters.REDIRECT_URI, (String) authentication.getContext().get(Parameters.REDIRECT_URI))
+        );
         urlParameters.add(new BasicNameValuePair(Parameters.CODE, authorizationCode));
         urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, "authorization_code"));
         String bodyRequest = URLEncodedUtils.format(urlParameters);
 
-        return client.postAbs(configuration.getAccessTokenUri())
-                .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))
-                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
-                .rxSendBuffer(Buffer.buffer(bodyRequest))
-                .toMaybe()
-                .map(httpResponse -> {
+        return client
+            .postAbs(configuration.getAccessTokenUri())
+            .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))
+            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
+            .rxSendBuffer(Buffer.buffer(bodyRequest))
+            .toMaybe()
+            .map(
+                httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
@@ -194,8 +201,8 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
                         authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
                     }
                     return new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
-                });
-
+                }
+            );
     }
 
     private Maybe<User> profile(Token token, Authentication authentication) {
@@ -216,25 +223,31 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
         }
 
         // retrieve user claims from the UserInfo Endpoint
-        return client.getAbs(configuration.getUserProfileUri())
-                .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token.getValue())
-                .rxSend()
-                .toMaybe()
-                .map(httpClientResponse -> {
+        return client
+            .getAbs(configuration.getUserProfileUri())
+            .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token.getValue())
+            .rxSend()
+            .toMaybe()
+            .map(
+                httpClientResponse -> {
                     if (httpClientResponse.statusCode() != 200) {
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
 
                     return createUser(httpClientResponse.bodyAsJsonObject().getMap());
-                });
+                }
+            );
     }
 
     private Maybe<User> retrieveUserFromIdToken(String idToken) {
-        return Maybe.fromCallable(() -> jwtProcessor.process(idToken, null))
-                .onErrorResumeNext(ex -> {
+        return Maybe
+            .fromCallable(() -> jwtProcessor.process(idToken, null))
+            .onErrorResumeNext(
+                ex -> {
                     return Maybe.error(new BadCredentialsException(ex.getMessage()));
-                })
-                .map(jwtClaimsSet -> createUser(jwtClaimsSet.getClaims()));
+                }
+            )
+            .map(jwtClaimsSet -> createUser(jwtClaimsSet.getClaims()));
     }
 
     private User createUser(Map<String, Object> attributes) {
@@ -263,8 +276,10 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
 
         // check configuration
         // a client secret is required if authorization code flow is used
-        if (io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())
-                && (configuration.getClientSecret() == null || configuration.getClientSecret().isEmpty())) {
+        if (
+            io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType()) &&
+            (configuration.getClientSecret() == null || configuration.getClientSecret().isEmpty())
+        ) {
             throw new IllegalArgumentException("A client_secret must be supplied in order to use the Authorization Code flow");
         }
 
@@ -279,14 +294,20 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
         // fetch OpenID Provider information
         if (configuration.getWellKnownUri() != null && !configuration.getWellKnownUri().isEmpty()) {
             try {
-                Map<String, Object> providerConfiguration = client.getAbs(configuration.getWellKnownUri())
-                        .rxSend()
-                        .map(httpClientResponse -> {
+                Map<String, Object> providerConfiguration = client
+                    .getAbs(configuration.getWellKnownUri())
+                    .rxSend()
+                    .map(
+                        httpClientResponse -> {
                             if (httpClientResponse.statusCode() != 200) {
-                                throw new IllegalArgumentException("Invalid OIDC Well-Known Endpoint : " + httpClientResponse.statusMessage());
+                                throw new IllegalArgumentException(
+                                    "Invalid OIDC Well-Known Endpoint : " + httpClientResponse.statusMessage()
+                                );
                             }
                             return httpClientResponse.bodyAsJsonObject().getMap();
-                        }).blockingGet();
+                        }
+                    )
+                    .blockingGet();
 
                 if (providerConfiguration.containsKey(AUTHORIZATION_ENDPOINT)) {
                     configuration.setUserAuthorizationUri((String) providerConfiguration.get(AUTHORIZATION_ENDPOINT));
@@ -301,7 +322,10 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
                 // configuration verification
                 Assert.notNull(configuration.getUserAuthorizationUri(), "OAuth 2.0 Authoriziation endpoint is required");
 
-                if (configuration.getAccessTokenUri() == null && io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())) {
+                if (
+                    configuration.getAccessTokenUri() == null &&
+                    io.gravitee.am.common.oauth2.ResponseType.CODE.equals(configuration.getResponseType())
+                ) {
                     throw new IllegalStateException("OAuth 2.0 token endpoint is required for the Authorization code flow");
                 }
 
@@ -364,17 +388,21 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
     private Map<String, Object> applyUserMapping(Map<String, Object> attributes) {
         if (!mappingEnabled()) {
             // set default standard claims
-            return Stream.concat(StandardClaims.claims().stream(), CustomClaims.claims().stream())
-                    .filter(claimName -> attributes.containsKey(claimName))
-                    .collect(Collectors.toMap(claimName -> claimName, claimName -> attributes.get(claimName)));
+            return Stream
+                .concat(StandardClaims.claims().stream(), CustomClaims.claims().stream())
+                .filter(claimName -> attributes.containsKey(claimName))
+                .collect(Collectors.toMap(claimName -> claimName, claimName -> attributes.get(claimName)));
         }
 
         Map<String, Object> claims = new HashMap<>();
-        this.mapper.getMappers().forEach((k, v) -> {
-            if (attributes.containsKey(v)) {
-                claims.put(k, attributes.get(v));
-            }
-        });
+        this.mapper.getMappers()
+            .forEach(
+                (k, v) -> {
+                    if (attributes.containsKey(v)) {
+                        claims.put(k, attributes.get(v));
+                    }
+                }
+            );
         return claims;
     }
 
@@ -384,23 +412,31 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
         }
 
         Set<String> roles = new HashSet<>();
-        roleMapper.getRoles().forEach((role, users) -> {
-            Arrays.asList(users).forEach(u -> {
-                // role mapping have the following syntax userAttribute=userValue
-                String[] roleMapping = u.split("=",2);
-                String userAttribute = roleMapping[0];
-                String userValue = roleMapping[1];
-                if (attributes.containsKey(userAttribute)) {
-                    Object attribute = attributes.get(userAttribute);
-                    // attribute is a list
-                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
-                        roles.add(role);
-                    } else if (userValue.equals(attributes.get(userAttribute))) {
-                        roles.add(role);
-                    }
+        roleMapper
+            .getRoles()
+            .forEach(
+                (role, users) -> {
+                    Arrays
+                        .asList(users)
+                        .forEach(
+                            u -> {
+                                // role mapping have the following syntax userAttribute=userValue
+                                String[] roleMapping = u.split("=", 2);
+                                String userAttribute = roleMapping[0];
+                                String userValue = roleMapping[1];
+                                if (attributes.containsKey(userAttribute)) {
+                                    Object attribute = attributes.get(userAttribute);
+                                    // attribute is a list
+                                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
+                                        roles.add(role);
+                                    } else if (userValue.equals(attributes.get(userAttribute))) {
+                                        roles.add(role);
+                                    }
+                                }
+                            }
+                        );
                 }
-            });
-        });
+            );
 
         return new ArrayList<>(roles);
     }
@@ -414,6 +450,7 @@ public class OAuth2GenericAuthenticationProvider implements OpenIDConnectAuthent
     }
 
     private class Token {
+
         private String value;
         private TokenTypeHint typeHint;
 

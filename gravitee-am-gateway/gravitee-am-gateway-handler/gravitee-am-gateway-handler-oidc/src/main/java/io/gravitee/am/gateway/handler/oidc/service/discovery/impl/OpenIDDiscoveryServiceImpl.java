@@ -27,13 +27,12 @@ import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -75,25 +74,44 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setIntrospectionEndpoint(getEndpointAbsoluteURL(basePath, INTROSPECTION_ENDPOINT));
         openIDProviderMetadata.setEndSessionEndpoint(getEndpointAbsoluteURL(basePath, ENDSESSION_ENDPOINT));
         openIDProviderMetadata.setRegistrationEndpoint(getEndpointAbsoluteURL(basePath, REGISTRATION_ENDPOINT));
-        openIDProviderMetadata.setRegistrationRenewSecretEndpoint(openIDProviderMetadata.getRegistrationEndpoint()+"/:client_id/renew_secret");
-        if(domain.isDynamicClientRegistrationTemplateEnabled()) {
-            openIDProviderMetadata.setRegistrationTemplatesEndpoint(openIDProviderMetadata.getRegistrationEndpoint()+"_templates");
+        openIDProviderMetadata.setRegistrationRenewSecretEndpoint(
+            openIDProviderMetadata.getRegistrationEndpoint() + "/:client_id/renew_secret"
+        );
+        if (domain.isDynamicClientRegistrationTemplateEnabled()) {
+            openIDProviderMetadata.setRegistrationTemplatesEndpoint(openIDProviderMetadata.getRegistrationEndpoint() + "_templates");
         }
         openIDProviderMetadata.setRequestObjectEndpoint(getEndpointAbsoluteURL(basePath, REQUEST_OBJECT_ENDPOINT));
 
         // supported parameters
         openIDProviderMetadata.setScopesSupported(scopeService.getDiscoveryScope());
         openIDProviderMetadata.setResponseTypesSupported(ResponseTypeUtils.getSupportedResponseTypes());
-        openIDProviderMetadata.setResponseModesSupported(Arrays.asList(ResponseMode.QUERY, ResponseMode.FRAGMENT,
-                io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT, io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT,
-                io.gravitee.am.common.oidc.ResponseMode.JWT));
+        openIDProviderMetadata.setResponseModesSupported(
+            Arrays.asList(
+                ResponseMode.QUERY,
+                ResponseMode.FRAGMENT,
+                io.gravitee.am.common.oidc.ResponseMode.QUERY_JWT,
+                io.gravitee.am.common.oidc.ResponseMode.FRAGMENT_JWT,
+                io.gravitee.am.common.oidc.ResponseMode.JWT
+            )
+        );
         openIDProviderMetadata.setGrantTypesSupported(GrantTypeUtils.getSupportedGrantTypes());
         openIDProviderMetadata.setIdTokenSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenSigningAlg());
         openIDProviderMetadata.setIdTokenEncryptionAlgValuesSupported(JWAlgorithmUtils.getSupportedIdTokenResponseAlg());
         openIDProviderMetadata.setIdTokenEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedIdTokenResponseEnc());
-        openIDProviderMetadata.setTokenEndpointAuthMethodsSupported(Arrays.asList(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, ClientAuthenticationMethod.CLIENT_SECRET_POST, ClientAuthenticationMethod.PRIVATE_KEY_JWT, ClientAuthenticationMethod.CLIENT_SECRET_JWT, ClientAuthenticationMethod.TLS_CLIENT_AUTH, ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH));
+        openIDProviderMetadata.setTokenEndpointAuthMethodsSupported(
+            Arrays.asList(
+                ClientAuthenticationMethod.CLIENT_SECRET_BASIC,
+                ClientAuthenticationMethod.CLIENT_SECRET_POST,
+                ClientAuthenticationMethod.PRIVATE_KEY_JWT,
+                ClientAuthenticationMethod.CLIENT_SECRET_JWT,
+                ClientAuthenticationMethod.TLS_CLIENT_AUTH,
+                ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH
+            )
+        );
         openIDProviderMetadata.setClaimTypesSupported(Collections.singletonList(ClaimType.NORMAL));
-        openIDProviderMetadata.setClaimsSupported(Stream.of(Scope.values()).map(Scope::getClaims).flatMap(Collection::stream).distinct().collect(Collectors.toList()));
+        openIDProviderMetadata.setClaimsSupported(
+            Stream.of(Scope.values()).map(Scope::getClaims).flatMap(Collection::stream).distinct().collect(Collectors.toList())
+        );
         openIDProviderMetadata.setCodeChallengeMethodsSupported(Arrays.asList(CodeChallengeMethod.PLAIN, CodeChallengeMethod.S256));
         openIDProviderMetadata.setClaimsParameterSupported(true);
         openIDProviderMetadata.setUserinfoSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedUserinfoSigningAlg());

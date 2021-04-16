@@ -19,12 +19,11 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -51,14 +50,19 @@ public class UserBodyRequestParseHandler extends UserRequestHandler {
             }
             // check required parameters
             MultiMap params = req.formAttributes();
-            Optional<String> missingParameter = requiredParams.stream().filter(param -> {
-                String paramValue = params.get(param);
-                if (paramValue == null) {
-                    logger.warn("No {} provided in form - did you forget to include a BodyHandler?", param);
-                    return true;
-                }
-                return false;
-            }).findFirst();
+            Optional<String> missingParameter = requiredParams
+                .stream()
+                .filter(
+                    param -> {
+                        String paramValue = params.get(param);
+                        if (paramValue == null) {
+                            logger.warn("No {} provided in form - did you forget to include a BodyHandler?", param);
+                            return true;
+                        }
+                        return false;
+                    }
+                )
+                .findFirst();
 
             if (missingParameter.isPresent()) {
                 redirectToPage(context, Collections.singletonMap(ERROR_PARAM, "missing_required_parameters"));
@@ -66,6 +70,5 @@ public class UserBodyRequestParseHandler extends UserRequestHandler {
                 context.next();
             }
         }
-
     }
 }

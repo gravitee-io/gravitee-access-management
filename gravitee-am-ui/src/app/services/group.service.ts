@@ -13,39 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {AppConfig} from "../../config/app.config";
-import {HttpClient} from "@angular/common/http";
-import {Observable} from "rxjs";
-import {OrganizationService} from "./organization.service";
+import { Injectable } from '@angular/core';
+import { AppConfig } from '../../config/app.config';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { OrganizationService } from './organization.service';
 
 @Injectable()
 export class GroupService {
   private groupsURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient,
-              private organizationService: OrganizationService) { }
+  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
 
   findByDomain(domainId, page, size): Observable<any> {
-    return this.http.get<any>(this.groupsURL + domainId + "/groups?page=" + page + "&size=" + size);
+    return this.http.get<any>(this.groupsURL + domainId + '/groups?page=' + page + '&size=' + size);
   }
 
   get(domainId, id): Observable<any> {
-    return this.http.get<any>(this.groupsURL + domainId + "/groups/" + id);
+    return this.http.get<any>(this.groupsURL + domainId + '/groups/' + id);
   }
 
   create(domainId, user): Observable<any> {
-    return this.http.post<any>(this.groupsURL + domainId + "/groups", user);
+    return this.http.post<any>(this.groupsURL + domainId + '/groups', user);
   }
 
   update(domainId, id, group, organizationContext): Observable<any> {
     if (organizationContext) {
       return this.organizationService.updateGroup(id, group);
     }
-    return this.http.put<any>(this.groupsURL + domainId + "/groups/" + id, {
-      'name' : group.name,
-      'description' : group.description,
-      'members' : group.members
+    return this.http.put<any>(this.groupsURL + domainId + '/groups/' + id, {
+      name: group.name,
+      description: group.description,
+      members: group.members,
     });
   }
 
@@ -53,29 +52,28 @@ export class GroupService {
     if (organizationContext) {
       return this.organizationService.deleteGroup(id);
     }
-    return this.http.delete<any>(this.groupsURL + domainId + "/groups/" + id);
+    return this.http.delete<any>(this.groupsURL + domainId + '/groups/' + id);
   }
 
   findMembers(domainId, groupId, page, size): Observable<any> {
-    return this.http.get<any>(this.groupsURL + domainId + "/groups/" + groupId + "/members?page=" + page + "&size=" + size);
+    return this.http.get<any>(this.groupsURL + domainId + '/groups/' + groupId + '/members?page=' + page + '&size=' + size);
   }
 
   roles(domainId, groupId): Observable<any> {
-    return this.http.get<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles");
+    return this.http.get<any>(this.groupsURL + domainId + '/groups/' + groupId + '/roles');
   }
 
   revokeRole(domainId, groupId, roleId, organizationContext): Observable<any> {
     if (organizationContext) {
       return this.organizationService.revokeGroupRole(groupId, roleId);
     }
-    return this.http.delete<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles/" + roleId);
+    return this.http.delete<any>(this.groupsURL + domainId + '/groups/' + groupId + '/roles/' + roleId);
   }
 
   assignRoles(domainId, groupId, roles, organizationContext): Observable<any> {
     if (organizationContext) {
       return this.organizationService.assignGroupRoles(groupId, roles);
     }
-    return this.http.post<any>(this.groupsURL + domainId + "/groups/" + groupId + "/roles", roles);
+    return this.http.post<any>(this.groupsURL + domainId + '/groups/' + groupId + '/roles', roles);
   }
-
 }

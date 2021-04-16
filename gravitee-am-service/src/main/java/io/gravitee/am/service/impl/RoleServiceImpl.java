@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.impl;
 
+import static io.gravitee.am.model.Acl.*;
+
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
@@ -38,17 +40,14 @@ import io.gravitee.am.service.model.NewRole;
 import io.gravitee.am.service.model.UpdateRole;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.RoleAuditBuilder;
-import io.reactivex.Observable;
 import io.reactivex.*;
+import io.reactivex.Observable;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
-
-import static io.gravitee.am.model.Acl.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -74,76 +73,145 @@ public class RoleServiceImpl implements RoleService {
         LOGGER.debug("Find roles by {}: {} assignable to {}", referenceType, referenceId, assignableType);
 
         // Organization roles must be zipped with system roles to get a complete list of all roles.
-        return Flowable.merge(findAllSystem(assignableType), roleRepository.findAll(referenceType, referenceId))
-                .filter(role -> assignableType == null || assignableType == role.getAssignableType())
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find roles by {}: {} assignable to {}", referenceType, referenceId, assignableType, ex);
-                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find roles by %s %s assignable to %s", referenceType, referenceId, assignableType), ex));
-                });
+        return Flowable
+            .merge(findAllSystem(assignableType), roleRepository.findAll(referenceType, referenceId))
+            .filter(role -> assignableType == null || assignableType == role.getAssignableType())
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find roles by {}: {} assignable to {}",
+                        referenceType,
+                        referenceId,
+                        assignableType,
+                        ex
+                    );
+                    return Flowable.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find roles by %s %s assignable to %s",
+                                referenceType,
+                                referenceId,
+                                assignableType
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<Set<Role>> findByDomain(String domain) {
-        return roleRepository.findAll(ReferenceType.DOMAIN, domain)
-                .collect(HashSet::new, Set::add);
+        return roleRepository.findAll(ReferenceType.DOMAIN, domain).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Role> findById(ReferenceType referenceType, String referenceId, String id) {
         LOGGER.debug("Find role by ID: {}", id);
 
-        return roleRepository.findById(referenceType, referenceId, id)
-                .onErrorResumeNext(ex -> {
+        return roleRepository
+            .findById(referenceType, referenceId, id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a role using its ID: {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a role using its ID: %s", id), ex));
-                })
-                .switchIfEmpty(Single.error(new RoleNotFoundException(id)));
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a role using its ID: %s", id),
+                            ex
+                        )
+                    );
+                }
+            )
+            .switchIfEmpty(Single.error(new RoleNotFoundException(id)));
     }
 
     @Override
     public Maybe<Role> findById(String id) {
         LOGGER.debug("Find role by ID: {}", id);
-        return roleRepository.findById(id)
-                .onErrorResumeNext(ex -> {
+        return roleRepository
+            .findById(id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a role using its ID: {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a role using its ID: %s", id), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a role using its ID: %s", id),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<Role> findSystemRole(SystemRole systemRole, ReferenceType assignableType) {
         LOGGER.debug("Find system role : {} for the type : {}", systemRole.name(), assignableType);
-        return roleRepository.findByNameAndAssignableType(ReferenceType.PLATFORM, Platform.DEFAULT, systemRole.name(), assignableType)
-                .filter(Role::isSystem)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find system role : {} for type : {}", systemRole.name(), assignableType, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find system role : %s for type : %s", systemRole.name(), assignableType), ex));
-                });
+        return roleRepository
+            .findByNameAndAssignableType(ReferenceType.PLATFORM, Platform.DEFAULT, systemRole.name(), assignableType)
+            .filter(Role::isSystem)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find system role : {} for type : {}",
+                        systemRole.name(),
+                        assignableType,
+                        ex
+                    );
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find system role : %s for type : %s",
+                                systemRole.name(),
+                                assignableType
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<Role> findDefaultRole(String organizationId, DefaultRole defaultRole, ReferenceType assignableType) {
         LOGGER.debug("Find default role {} of organization {} for the type {}", defaultRole.name(), organizationId, assignableType);
-        return roleRepository.findByNameAndAssignableType(ReferenceType.ORGANIZATION, organizationId, defaultRole.name(), assignableType)
-                .filter(Role::isDefaultRole)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find default role {} of organization {} for the type {}", defaultRole.name(), organizationId, assignableType, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find default role %s of organization %s for type %s", defaultRole.name(), organizationId, assignableType), ex));
-                });
+        return roleRepository
+            .findByNameAndAssignableType(ReferenceType.ORGANIZATION, organizationId, defaultRole.name(), assignableType)
+            .filter(Role::isDefaultRole)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find default role {} of organization {} for the type {}",
+                        defaultRole.name(),
+                        organizationId,
+                        assignableType,
+                        ex
+                    );
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find default role %s of organization %s for type %s",
+                                defaultRole.name(),
+                                organizationId,
+                                assignableType
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<Set<Role>> findByIdIn(List<String> ids) {
         LOGGER.debug("Find roles by ids: {}", ids);
-        return roleRepository.findByIdIn(ids)
-                .onErrorResumeNext(ex -> {
+        return roleRepository
+            .findByIdIn(ids)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find roles by ids", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find roles by ids", ex));
-                });
+                }
+            );
     }
 
     @Override
@@ -154,7 +222,8 @@ public class RoleServiceImpl implements RoleService {
 
         // check if role name is unique
         return checkRoleUniqueness(newRole.getName(), roleId, referenceType, referenceId)
-                .flatMap(__ -> {
+            .flatMap(
+                __ -> {
                     Role role = new Role();
                     role.setId(roleId);
                     role.setReferenceType(referenceType);
@@ -167,27 +236,44 @@ public class RoleServiceImpl implements RoleService {
                     role.setCreatedAt(new Date());
                     role.setUpdatedAt(role.getCreatedAt());
                     return roleRepository.create(role);
-                })
-                // create event for sync process
-                .flatMap(role -> {
-                    Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.CREATE));
+                }
+            )
+            // create event for sync process
+            .flatMap(
+                role -> {
+                    Event event = new Event(
+                        Type.ROLE,
+                        new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.CREATE)
+                    );
                     return eventService.create(event).flatMap(__ -> Single.just(role));
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to create a role", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a role", ex));
-                })
-                .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).role(role)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).throwable(throwable)));
+                }
+            )
+            .doOnSuccess(
+                role ->
+                    auditService.report(
+                        AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).role(role)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_CREATED).throwable(throwable)
+                    )
+            );
     }
 
     @Override
     public Single<Role> create(String domain, NewRole newRole, User principal) {
-
         return create(ReferenceType.DOMAIN, domain, newRole, principal);
     }
 
@@ -196,123 +282,212 @@ public class RoleServiceImpl implements RoleService {
         LOGGER.debug("Update a role {} for {} {}", id, referenceType, referenceId);
 
         return findById(referenceType, referenceId, id)
-                .flatMap(role -> {
+            .flatMap(
+                role -> {
                     if (role.isSystem()) {
                         return Single.error(new SystemRoleUpdateException(role.getName()));
                     }
 
-                    if(role.isDefaultRole() && !role.getName().equals(updateRole.getName())) {
+                    if (role.isDefaultRole() && !role.getName().equals(updateRole.getName())) {
                         return Single.error(new DefaultRoleUpdateException(role.getName()));
                     }
 
                     return Single.just(role);
-                })
-                .flatMap(oldRole -> {
+                }
+            )
+            .flatMap(
+                oldRole -> {
                     // check if role name is unique
                     return checkRoleUniqueness(updateRole.getName(), oldRole.getId(), referenceType, referenceId)
-                            .flatMap(irrelevant -> {
+                        .flatMap(
+                            irrelevant -> {
                                 Role roleToUpdate = new Role(oldRole);
                                 roleToUpdate.setName(updateRole.getName());
                                 roleToUpdate.setDescription(updateRole.getDescription());
                                 roleToUpdate.setPermissionAcls(Permission.unflatten(updateRole.getPermissions()));
                                 roleToUpdate.setOauthScopes(updateRole.getOauthScopes());
                                 roleToUpdate.setUpdatedAt(new Date());
-                                return roleRepository.update(roleToUpdate)
-                                        // create event for sync process
-                                        .flatMap(role -> {
-                                            Event event = new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.UPDATE));
+                                return roleRepository
+                                    .update(roleToUpdate)
+                                    // create event for sync process
+                                    .flatMap(
+                                        role -> {
+                                            Event event = new Event(
+                                                Type.ROLE,
+                                                new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.UPDATE)
+                                            );
                                             return eventService.create(event).flatMap(__ -> Single.just(role));
-                                        })
-                                        .doOnSuccess(role -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).oldValue(oldRole).role(role)))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_UPDATED).throwable(throwable)));
-                            });
-                })
-                .onErrorResumeNext(ex -> {
+                                        }
+                                    )
+                                    .doOnSuccess(
+                                        role ->
+                                            auditService.report(
+                                                AuditBuilder
+                                                    .builder(RoleAuditBuilder.class)
+                                                    .principal(principal)
+                                                    .type(EventType.ROLE_UPDATED)
+                                                    .oldValue(oldRole)
+                                                    .role(role)
+                                            )
+                                    )
+                                    .doOnError(
+                                        throwable ->
+                                            auditService.report(
+                                                AuditBuilder
+                                                    .builder(RoleAuditBuilder.class)
+                                                    .principal(principal)
+                                                    .type(EventType.ROLE_UPDATED)
+                                                    .throwable(throwable)
+                                            )
+                                    );
+                            }
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to update a role", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a role", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Role> update(String domain, String id, UpdateRole updateRole, User principal) {
-
         return update(ReferenceType.DOMAIN, domain, id, updateRole, principal);
     }
 
     @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String roleId, User principal) {
         LOGGER.debug("Delete role {}", roleId);
-        return roleRepository.findById(referenceType, referenceId, roleId)
-                .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
-                .map(role -> {
+        return roleRepository
+            .findById(referenceType, referenceId, roleId)
+            .switchIfEmpty(Maybe.error(new RoleNotFoundException(roleId)))
+            .map(
+                role -> {
                     if (role.isSystem()) {
                         throw new SystemRoleDeleteException(roleId);
                     }
                     return role;
-                })
-                .flatMapCompletable(role -> roleRepository.delete(roleId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.ROLE, new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.DELETE)))))
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).role(role)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).principal(principal).type(EventType.ROLE_DELETED).throwable(throwable)))
-                )
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .flatMapCompletable(
+                role ->
+                    roleRepository
+                        .delete(roleId)
+                        .andThen(
+                            Completable.fromSingle(
+                                eventService.create(
+                                    new Event(
+                                        Type.ROLE,
+                                        new Payload(role.getId(), role.getReferenceType(), role.getReferenceId(), Action.DELETE)
+                                    )
+                                )
+                            )
+                        )
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(RoleAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.ROLE_DELETED)
+                                        .role(role)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(RoleAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.ROLE_DELETED)
+                                        .throwable(throwable)
+                                )
+                        )
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete role: {}", roleId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete role: %s", roleId), ex));
-                });
+                    return Completable.error(
+                        new TechnicalManagementException(String.format("An error occurs while trying to delete role: %s", roleId), ex)
+                    );
+                }
+            );
     }
 
     @Override
     public Completable createOrUpdateSystemRoles() {
-
         List<Role> roles = buildSystemRoles();
 
-        return Observable.fromIterable(roles)
-                .flatMapCompletable(this::upsert);
+        return Observable.fromIterable(roles).flatMapCompletable(this::upsert);
     }
 
     @Override
     public Completable createDefaultRoles(String organizationId) {
-
         List<Role> roles = buildDefaultRoles(organizationId);
 
-        return Observable.fromIterable(roles)
-                .flatMapCompletable(this::upsert);
+        return Observable.fromIterable(roles).flatMapCompletable(this::upsert);
     }
 
-
     private Completable upsert(Role role) {
-        return roleRepository.findByNameAndAssignableType(role.getReferenceType(), role.getReferenceId(), role.getName(), role.getAssignableType())
-                .map(Optional::ofNullable)
-                .defaultIfEmpty(Optional.empty())
-                .flatMapCompletable(optRole -> {
+        return roleRepository
+            .findByNameAndAssignableType(role.getReferenceType(), role.getReferenceId(), role.getName(), role.getAssignableType())
+            .map(Optional::ofNullable)
+            .defaultIfEmpty(Optional.empty())
+            .flatMapCompletable(
+                optRole -> {
                     if (!optRole.isPresent()) {
                         LOGGER.debug("Create a system role {}", role.getAssignableType() + ":" + role.getName());
                         role.setCreatedAt(new Date());
                         role.setUpdatedAt(role.getCreatedAt());
-                        return roleRepository.create(role)
-                                .flatMap(role1 -> {
-                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType(), role1.getReferenceId(), Action.CREATE));
+                        return roleRepository
+                            .create(role)
+                            .flatMap(
+                                role1 -> {
+                                    Event event = new Event(
+                                        Type.ROLE,
+                                        new Payload(role1.getId(), role1.getReferenceType(), role1.getReferenceId(), Action.CREATE)
+                                    );
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
-                                })
-                                .onErrorResumeNext(ex -> {
+                                }
+                            )
+                            .onErrorResumeNext(
+                                ex -> {
                                     if (ex instanceof AbstractManagementException) {
                                         return Single.error(ex);
                                     }
-                                    LOGGER.error("An error occurs while trying to create a system role {}", role.getAssignableType() + ":" + role.getName(), ex);
-                                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a role", ex));
-                                })
-                                .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).role(role1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).throwable(throwable)))
-                                .toCompletable();
+                                    LOGGER.error(
+                                        "An error occurs while trying to create a system role {}",
+                                        role.getAssignableType() + ":" + role.getName(),
+                                        ex
+                                    );
+                                    return Single.error(
+                                        new TechnicalManagementException("An error occurs while trying to create a role", ex)
+                                    );
+                                }
+                            )
+                            .doOnSuccess(
+                                role1 ->
+                                    auditService.report(
+                                        AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).role(role1)
+                                    )
+                            )
+                            .doOnError(
+                                throwable ->
+                                    auditService.report(
+                                        AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_CREATED).throwable(throwable)
+                                    )
+                            )
+                            .toCompletable();
                     } else {
                         // check if permission set has changed
                         Role currentRole = optRole.get();
@@ -324,57 +499,86 @@ public class RoleServiceImpl implements RoleService {
                         role.setId(currentRole.getId());
                         role.setPermissionAcls(role.getPermissionAcls());
                         role.setUpdatedAt(new Date());
-                        return roleRepository.update(role)
-                                .flatMap(role1 -> {
-                                    Event event = new Event(Type.ROLE, new Payload(role1.getId(), role1.getReferenceType(), role1.getReferenceId(), Action.UPDATE));
+                        return roleRepository
+                            .update(role)
+                            .flatMap(
+                                role1 -> {
+                                    Event event = new Event(
+                                        Type.ROLE,
+                                        new Payload(role1.getId(), role1.getReferenceType(), role1.getReferenceId(), Action.UPDATE)
+                                    );
                                     return eventService.create(event).flatMap(__ -> Single.just(role1));
-                                })
-                                .onErrorResumeNext(ex -> {
+                                }
+                            )
+                            .onErrorResumeNext(
+                                ex -> {
                                     if (ex instanceof AbstractManagementException) {
                                         return Single.error(ex);
                                     }
-                                    LOGGER.error("An error occurs while trying to update a system role {}", role.getAssignableType() + ":" + role.getName(), ex);
-                                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a role", ex));
-                                })
-                                .doOnSuccess(role1 -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).oldValue(currentRole).role(role1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).throwable(throwable)))
-                                .toCompletable();
+                                    LOGGER.error(
+                                        "An error occurs while trying to update a system role {}",
+                                        role.getAssignableType() + ":" + role.getName(),
+                                        ex
+                                    );
+                                    return Single.error(
+                                        new TechnicalManagementException("An error occurs while trying to update a role", ex)
+                                    );
+                                }
+                            )
+                            .doOnSuccess(
+                                role1 ->
+                                    auditService.report(
+                                        AuditBuilder
+                                            .builder(RoleAuditBuilder.class)
+                                            .type(EventType.ROLE_UPDATED)
+                                            .oldValue(currentRole)
+                                            .role(role1)
+                                    )
+                            )
+                            .doOnError(
+                                throwable ->
+                                    auditService.report(
+                                        AuditBuilder.builder(RoleAuditBuilder.class).type(EventType.ROLE_UPDATED).throwable(throwable)
+                                    )
+                            )
+                            .toCompletable();
                     }
-                });
-
+                }
+            );
     }
 
     private Single<Set<Role>> checkRoleUniqueness(String roleName, String roleId, ReferenceType referenceType, String referenceId) {
-        return roleRepository.findAll(referenceType, referenceId)
-                .collect(HashSet<Role>::new, Set::add)
-                .flatMap(roles -> {
-                    if (roles.stream()
-                            .filter(role -> !role.getId().equals(roleId))
-                            .anyMatch(role -> role.getName().equals(roleName))) {
+        return roleRepository
+            .findAll(referenceType, referenceId)
+            .collect(HashSet<Role>::new, Set::add)
+            .flatMap(
+                roles -> {
+                    if (roles.stream().filter(role -> !role.getId().equals(roleId)).anyMatch(role -> role.getName().equals(roleName))) {
                         throw new RoleAlreadyExistsException(roleName);
                     }
                     return Single.just(roles);
-                });
+                }
+            );
     }
 
     private boolean permissionsAreEquals(Role role1, Role role2) {
-
-        return Objects.equals(role1.getPermissionAcls(), role2.getPermissionAcls())
-                && Objects.equals(role1.getOauthScopes(), role2.getOauthScopes());
+        return (
+            Objects.equals(role1.getPermissionAcls(), role2.getPermissionAcls()) &&
+            Objects.equals(role1.getOauthScopes(), role2.getOauthScopes())
+        );
     }
 
     private Flowable<Role> findAllSystem(ReferenceType assignableType) {
-
         LOGGER.debug("Find all global system roles");
 
         // Exclude roles internal only and non assignable roles.
-        return roleRepository.findAll(ReferenceType.PLATFORM, Platform.DEFAULT)
-                .filter(role -> role.isSystem() && !role.isInternalOnly())
-                .filter(role -> assignableType == null || role.getAssignableType() == assignableType);
+        return roleRepository
+            .findAll(ReferenceType.PLATFORM, Platform.DEFAULT)
+            .filter(role -> role.isSystem() && !role.isInternalOnly())
+            .filter(role -> assignableType == null || role.getAssignableType() == assignableType);
     }
 
     private static List<Role> buildSystemRoles() {
-
         List<Role> roles = new ArrayList<>();
 
         // Create PRIMARY_OWNER roles and PLATFORM_ADMIN role.
@@ -400,7 +604,6 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private List<Role> buildDefaultRoles(String organizationId) {
-
         List<Role> roles = new ArrayList<>();
 
         // Create OWNER and USER roles.
@@ -416,9 +619,18 @@ public class RoleServiceImpl implements RoleService {
         domainOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE));
         domainOwnerPermissions.put(Permission.DOMAIN_AUDIT, Acl.of(READ, LIST));
 
-        roles.add(buildDefaultRole(DefaultRole.ORGANIZATION_OWNER.name(), ReferenceType.ORGANIZATION, organizationId, organizationOwnerPermissions));
+        roles.add(
+            buildDefaultRole(
+                DefaultRole.ORGANIZATION_OWNER.name(),
+                ReferenceType.ORGANIZATION,
+                organizationId,
+                organizationOwnerPermissions
+            )
+        );
         roles.add(buildDefaultRole(DefaultRole.DOMAIN_OWNER.name(), ReferenceType.DOMAIN, organizationId, domainOwnerPermissions));
-        roles.add(buildDefaultRole(DefaultRole.APPLICATION_OWNER.name(), ReferenceType.APPLICATION, organizationId, applicationOwnerPermissions));
+        roles.add(
+            buildDefaultRole(DefaultRole.APPLICATION_OWNER.name(), ReferenceType.APPLICATION, organizationId, applicationOwnerPermissions)
+        );
 
         // Create USER roles.
         Map<Permission, Set<Acl>> organizationUserPermissions = new HashMap<>();
@@ -442,31 +654,43 @@ public class RoleServiceImpl implements RoleService {
 
         applicationUserPermissions.put(Permission.APPLICATION, Acl.of(READ));
 
-        roles.add(buildDefaultRole(DefaultRole.ORGANIZATION_USER.name(), ReferenceType.ORGANIZATION, organizationId, organizationUserPermissions));
+        roles.add(
+            buildDefaultRole(DefaultRole.ORGANIZATION_USER.name(), ReferenceType.ORGANIZATION, organizationId, organizationUserPermissions)
+        );
         roles.add(buildDefaultRole(DefaultRole.DOMAIN_USER.name(), ReferenceType.DOMAIN, organizationId, domainUserPermissions));
-        roles.add(buildDefaultRole(DefaultRole.APPLICATION_USER.name(), ReferenceType.APPLICATION, organizationId, applicationUserPermissions));
+        roles.add(
+            buildDefaultRole(DefaultRole.APPLICATION_USER.name(), ReferenceType.APPLICATION, organizationId, applicationUserPermissions)
+        );
 
         return roles;
     }
 
     private static Role buildSystemRole(String name, ReferenceType assignableType, Map<Permission, Set<Acl>> permissions) {
-
         Role systemRole = buildRole(name, assignableType, ReferenceType.PLATFORM, Platform.DEFAULT, permissions);
         systemRole.setSystem(true);
 
         return systemRole;
     }
 
-    private static Role buildDefaultRole(String name, ReferenceType assignableType, String organizationId, Map<Permission, Set<Acl>> permissions) {
-
+    private static Role buildDefaultRole(
+        String name,
+        ReferenceType assignableType,
+        String organizationId,
+        Map<Permission, Set<Acl>> permissions
+    ) {
         Role defaultRole = buildRole(name, assignableType, ReferenceType.ORGANIZATION, organizationId, permissions);
         defaultRole.setDefaultRole(true);
 
         return defaultRole;
     }
 
-    private static Role buildRole(String name, ReferenceType assignableType, ReferenceType referenceType, String referenceId, Map<Permission, Set<Acl>> permissions) {
-
+    private static Role buildRole(
+        String name,
+        ReferenceType assignableType,
+        ReferenceType referenceType,
+        String referenceId,
+        Map<Permission, Set<Acl>> permissions
+    ) {
         Role role = new Role();
         role.setId(RandomString.generate());
         role.setName(name);

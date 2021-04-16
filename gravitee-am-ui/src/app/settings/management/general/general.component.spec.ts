@@ -23,9 +23,8 @@ describe('ManagementGeneralComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ManagementGeneralComponent ]
-    })
-      .compileComponents();
+      declarations: [ManagementGeneralComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

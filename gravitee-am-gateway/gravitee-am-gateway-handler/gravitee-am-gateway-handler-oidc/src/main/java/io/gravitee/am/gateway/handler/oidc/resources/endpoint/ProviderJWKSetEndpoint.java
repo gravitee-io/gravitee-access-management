@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
-import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
@@ -44,12 +44,18 @@ public class ProviderJWKSetEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        jwkService.getKeys()
-                .map(JWKConverter::convert)
-                .subscribe(keys -> context.response()
-                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                .putHeader(HttpHeaders.CONTENT_TYPE, "application/jwk-set+json; charset=UTF-8")
-                .end(Json.encodePrettily(keys)), error -> context.response().setStatusCode(500).end());
+        jwkService
+            .getKeys()
+            .map(JWKConverter::convert)
+            .subscribe(
+                keys ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, "application/jwk-set+json; charset=UTF-8")
+                        .end(Json.encodePrettily(keys)),
+                error -> context.response().setStatusCode(500).end()
+            );
     }
 }

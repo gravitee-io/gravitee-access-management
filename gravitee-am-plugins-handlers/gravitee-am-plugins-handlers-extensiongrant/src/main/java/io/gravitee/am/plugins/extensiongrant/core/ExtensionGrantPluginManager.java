@@ -18,7 +18,6 @@ package io.gravitee.am.plugins.extensiongrant.core;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.plugin.core.api.Plugin;
-
 import java.io.IOException;
 import java.util.Collection;
 
@@ -27,7 +26,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface ExtensionGrantPluginManager {
-
     void register(ExtensionGrantDefinition extensionGrantDefinition);
 
     Collection<Plugin> getAll();

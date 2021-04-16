@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.mongo;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
-
 import java.util.Map;
 
 /**
@@ -24,6 +23,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class MongoIdentityProviderRoleMapper implements IdentityProviderRoleMapper {
+
     private Map<String, String[]> roles;
 
     public Map<String, String[]> getRoles() {

@@ -20,7 +20,6 @@ package io.gravitee.am.gateway.handler.common.auth.event;
  * @author GraviteeSource Team
  */
 public enum AuthenticationEvent {
-
     SUCCESS,
-    FAILURE
+    FAILURE,
 }

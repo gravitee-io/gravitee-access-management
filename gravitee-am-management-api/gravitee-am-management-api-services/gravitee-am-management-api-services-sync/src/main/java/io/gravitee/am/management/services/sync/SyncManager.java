@@ -15,18 +15,17 @@
  */
 package io.gravitee.am.management.services.sync;
 
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toMap;
+
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.service.EventService;
 import io.gravitee.common.event.EventManager;
+import java.util.*;
+import java.util.function.BinaryOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.*;
-import java.util.function.BinaryOperator;
-
-import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -57,7 +56,6 @@ public class SyncManager {
     }
 
     private void processEvents() {
-
         long nextLastRefreshAt = System.currentTimeMillis();
 
         // search for events and compute them
@@ -67,23 +65,37 @@ public class SyncManager {
         if (events != null && !events.isEmpty()) {
             // Extract only the latest events by type and id
             Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
-                    .stream()
-                    .collect(
-                            toMap(
-                                    event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
-                                    event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
+                .stream()
+                .collect(
+                    toMap(
+                        event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
+                        event -> event,
+                        BinaryOperator.maxBy(comparing(Event::getCreatedAt)),
+                        LinkedHashMap::new
+                    )
+                );
             computeEvents(sortedEvents.values());
         }
 
         lastRefreshAt = nextLastRefreshAt;
         lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
-
     }
 
     private void computeEvents(Collection<Event> events) {
-        events.forEach(event -> {
-            logger.debug("Compute event id : {}, with type : {} and timestamp : {} and payload : {}", event.getId(), event.getType(), event.getCreatedAt(), event.getPayload());
-            eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
-        });
+        events.forEach(
+            event -> {
+                logger.debug(
+                    "Compute event id : {}, with type : {} and timestamp : {} and payload : {}",
+                    event.getId(),
+                    event.getType(),
+                    event.getCreatedAt(),
+                    event.getPayload()
+                );
+                eventManager.publishEvent(
+                    io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()),
+                    event.getPayload()
+                );
+            }
+        );
     }
 }

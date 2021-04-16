@@ -34,8 +34,7 @@ public class MembershipHelper {
     private final MembershipService membershipService;
     private final RoleService roleService;
 
-    public MembershipHelper(MembershipService membershipService,
-                            RoleService roleService) {
+    public MembershipHelper(MembershipService membershipService, RoleService roleService) {
         this.membershipService = membershipService;
         this.roleService = roleService;
     }
@@ -47,7 +46,6 @@ public class MembershipHelper {
      * @param user the user to define the role on.
      */
     public void setOrganizationPrimaryOwnerRole(User user) {
-
         Role adminRole = roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION).blockingGet();
 
         setRole(user, adminRole);
@@ -60,14 +58,16 @@ public class MembershipHelper {
      * @param user the user to define the role on.
      */
     public void setRole(User user, Role role) {
-
         MembershipCriteria criteria = new MembershipCriteria();
         criteria.setUserId(user.getId());
-        Boolean alreadyHasMembership = membershipService.findByCriteria(ReferenceType.ORGANIZATION, Organization.DEFAULT, criteria).count().map(count -> count > 0).blockingGet();
+        Boolean alreadyHasMembership = membershipService
+            .findByCriteria(ReferenceType.ORGANIZATION, Organization.DEFAULT, criteria)
+            .count()
+            .map(count -> count > 0)
+            .blockingGet();
 
         // If admin user already has a role on the default organization no need to do anything (either he is already admin, either someone decided to change his role).
         if (!alreadyHasMembership) {
-
             Membership membership = new Membership();
             membership.setRoleId(role.getId());
             membership.setMemberType(MemberType.USER);

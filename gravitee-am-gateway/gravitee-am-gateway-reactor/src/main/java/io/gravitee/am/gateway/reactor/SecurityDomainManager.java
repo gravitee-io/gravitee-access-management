@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.reactor;
 
 import io.gravitee.am.model.Domain;
-
 import java.util.Collection;
 
 /**
@@ -27,7 +26,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface SecurityDomainManager {
-
     /**
      * Deploy a security domain.
      * @param domain security domain to deploy.
@@ -58,5 +56,4 @@ public interface SecurityDomainManager {
      * @return A deployed {@link Domain}
      */
     Domain get(String domainId);
-
 }

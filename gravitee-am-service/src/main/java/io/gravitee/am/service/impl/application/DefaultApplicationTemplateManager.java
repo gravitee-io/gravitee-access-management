@@ -17,11 +17,10 @@ package io.gravitee.am.service.impl.application;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.service.ApplicationTemplateManager;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,18 +33,17 @@ public class DefaultApplicationTemplateManager implements ApplicationTemplateMan
 
     @Override
     public void apply(Application application) {
-        templates.stream()
-                .filter(applicationTemplate -> applicationTemplate.canHandle(application))
-                .findFirst()
-                .get().handle(application);
+        templates.stream().filter(applicationTemplate -> applicationTemplate.canHandle(application)).findFirst().get().handle(application);
     }
 
     @Override
     public void changeType(Application application) {
-        templates.stream()
-                .filter(applicationTemplate -> applicationTemplate.canHandle(application))
-                .findFirst()
-                .get().changeType(application);
+        templates
+            .stream()
+            .filter(applicationTemplate -> applicationTemplate.canHandle(application))
+            .findFirst()
+            .get()
+            .changeType(application);
     }
 
     @Override

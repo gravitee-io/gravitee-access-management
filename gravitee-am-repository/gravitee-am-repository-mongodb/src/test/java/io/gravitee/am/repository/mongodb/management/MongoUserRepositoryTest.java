@@ -16,19 +16,18 @@
 package io.gravitee.am.repository.mongodb.management;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.reactivex.observers.TestObserver;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,6 +36,7 @@ import java.util.Set;
 public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
 
     public static final String ORGANIZATION_ID = "orga#1";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -191,7 +191,6 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(users -> users.getData().size() == 1);
         testObserver.assertValue(users -> users.getData().iterator().next().getUsername().equals(user.getUsername()));
-
     }
 
     @Test
@@ -248,10 +247,12 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         testObserverP0.assertComplete();
         testObserverP0.assertNoErrors();
         testObserverP0.assertValue(users -> users.getData().size() == 2);
-        testObserverP0.assertValue(users -> {
-        	Iterator<User> it = users.getData().iterator();
-        	return it.next().getUsername().equals(user1.getUsername()) && it.next().getUsername().equals(user2.getUsername());
-        });
+        testObserverP0.assertValue(
+            users -> {
+                Iterator<User> it = users.getData().iterator();
+                return it.next().getUsername().equals(user1.getUsername()) && it.next().getUsername().equals(user2.getUsername());
+            }
+        );
 
         // fetch user (page 1)
         TestObserver<Page<User>> testObserverP1 = userRepository.search(domain, "testUsername*", 1, 2).test();
@@ -311,5 +312,4 @@ public class MongoUserRepositoryTest extends AbstractManagementRepositoryTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(users -> users.size() == 2);
     }
-
 }

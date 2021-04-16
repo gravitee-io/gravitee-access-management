@@ -25,10 +25,9 @@ import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.processors.PublishProcessor;
 import io.reactivex.schedulers.Schedulers;
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -57,38 +56,28 @@ public class TokenManagerImpl extends AbstractService implements TokenManager {
 
         // init bulk processors
         bulkProcessorAccessToken
-                .onBackpressureBuffer()
-                .observeOn(Schedulers.io())
-                .buffer(
-                        flushInterval,
-                        TimeUnit.SECONDS,
-                        bulkActions
-                )
-                .filter(accessTokens -> accessTokens != null && !accessTokens.isEmpty())
-                .subscribe(new AccessTokenBulkProcessor(accessTokenRepository));
+            .onBackpressureBuffer()
+            .observeOn(Schedulers.io())
+            .buffer(flushInterval, TimeUnit.SECONDS, bulkActions)
+            .filter(accessTokens -> accessTokens != null && !accessTokens.isEmpty())
+            .subscribe(new AccessTokenBulkProcessor(accessTokenRepository));
 
         // init bulk processors
         bulkProcessorRefreshToken
-                .onBackpressureBuffer()
-                .observeOn(Schedulers.io())
-                .buffer(
-                        flushInterval,
-                        TimeUnit.SECONDS,
-                        bulkActions
-                )
-                .filter(refreshTokens -> refreshTokens != null && !refreshTokens.isEmpty())
-                .subscribe(new RefreshTokenBulkProcessor(refreshTokenRepository));
+            .onBackpressureBuffer()
+            .observeOn(Schedulers.io())
+            .buffer(flushInterval, TimeUnit.SECONDS, bulkActions)
+            .filter(refreshTokens -> refreshTokens != null && !refreshTokens.isEmpty())
+            .subscribe(new RefreshTokenBulkProcessor(refreshTokenRepository));
     }
 
     @Override
     public void storeAccessToken(AccessToken accessToken) {
-        bulkProcessorAccessToken
-                .onNext(accessToken);
+        bulkProcessorAccessToken.onNext(accessToken);
     }
 
     @Override
     public void storeRefreshToken(RefreshToken refreshToken) {
-        bulkProcessorRefreshToken
-                .onNext(refreshToken);
+        bulkProcessorRefreshToken.onNext(refreshToken);
     }
 }

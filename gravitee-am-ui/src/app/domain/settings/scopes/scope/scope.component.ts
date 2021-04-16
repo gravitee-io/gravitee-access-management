@@ -26,7 +26,7 @@ import * as moment from 'moment';
 @Component({
   selector: 'app-scope',
   templateUrl: './scope.component.html',
-  styleUrls: ['./scope.component.scss']
+  styleUrls: ['./scope.component.scss'],
 })
 export class ScopeComponent implements OnInit {
   private domainId: string;
@@ -38,17 +38,19 @@ export class ScopeComponent implements OnInit {
   deleteMode: boolean;
   @ViewChild('scopeForm') public scopeForm: NgForm;
 
-  constructor(private scopeService: ScopeService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private scopeService: ScopeService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private breadcrumbService: BreadcrumbService,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.scope = this.route.snapshot.data['scope'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.scope = this.route.snapshot.data.scope;
     this.editMode = this.authService.hasPermissions(['domain_scope_update']);
     this.deleteMode = this.authService.hasPermissions(['domain_scope_delete']);
     this.initBreadcrumb();
@@ -61,7 +63,7 @@ export class ScopeComponent implements OnInit {
     if (this.expiresIn && this.unitTime) {
       this.scope.expiresIn = moment.duration(this.expiresIn, this.unitTime).asSeconds();
     }
-    this.scopeService.update(this.domainId, this.scope.id, this.scope).subscribe(data => {
+    this.scopeService.update(this.domainId, this.scope.id, this.scope).subscribe((data) => {
       this.scope = data;
       this.initBreadcrumb();
       this.formChanged = false;
@@ -73,7 +75,10 @@ export class ScopeComponent implements OnInit {
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/scopes/' + this.scope.id + '$', this.scope.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/settings/scopes/' + this.scope.id + '$',
+      this.scope.name,
+    );
   }
 
   formIsInvalid() {
@@ -81,7 +86,7 @@ export class ScopeComponent implements OnInit {
   }
 
   getScopeExpiry() {
-    return (this.scope.expiresIn) ? moment.duration(this.scope.expiresIn, 'seconds').humanize() : 'no time set';
+    return this.scope.expiresIn ? moment.duration(this.scope.expiresIn, 'seconds').humanize() : 'no time set';
   }
 
   clearExpiry() {
@@ -100,15 +105,13 @@ export class ScopeComponent implements OnInit {
 
   delete(event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Scope', 'Are you sure you want to delete this scope ?')
-      .subscribe(res => {
-        if (res) {
-          this.scopeService.delete(this.domainId, this.scope.id).subscribe(() => {
-            this.snackbarService.open('Scope deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'scopes']);
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Scope', 'Are you sure you want to delete this scope ?').subscribe((res) => {
+      if (res) {
+        this.scopeService.delete(this.domainId, this.scope.id).subscribe(() => {
+          this.snackbarService.open('Scope deleted');
+          this.router.navigate(['/domains', this.domainId, 'settings', 'scopes']);
+        });
+      }
+    });
   }
 }

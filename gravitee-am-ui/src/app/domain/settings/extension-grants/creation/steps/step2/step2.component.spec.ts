@@ -15,7 +15,7 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {ExtensionGrantCreationStep2Component} from './step2.component';
+import { ExtensionGrantCreationStep2Component } from './step2.component';
 
 describe('ExtensionGrantCreationStep2Component', () => {
   let component: ExtensionGrantCreationStep2Component;
@@ -23,9 +23,8 @@ describe('ExtensionGrantCreationStep2Component', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ExtensionGrantCreationStep2Component ]
-    })
-    .compileComponents();
+      declarations: [ExtensionGrantCreationStep2Component],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

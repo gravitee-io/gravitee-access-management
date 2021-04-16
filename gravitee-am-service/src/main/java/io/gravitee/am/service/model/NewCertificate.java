@@ -58,9 +58,6 @@ public class NewCertificate {
 
     @Override
     public String toString() {
-        return "NewCertificate{" +
-                "type='" + type + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+        return "NewCertificate{" + "type='" + type + '\'' + ", name='" + name + '\'' + '}';
     }
 }

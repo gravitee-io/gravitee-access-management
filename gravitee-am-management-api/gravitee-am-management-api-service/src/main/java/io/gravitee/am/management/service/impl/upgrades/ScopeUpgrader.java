@@ -24,15 +24,14 @@ import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.model.NewScope;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -62,49 +61,56 @@ public class ScopeUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Applying scope upgrade");
-        domainService.findAll()
-                .flatMapObservable(domains -> Observable.fromIterable(domains))
-                .flatMapSingle(domain -> upgradeDomain(domain))
-                .subscribe();
+        domainService
+            .findAll()
+            .flatMapObservable(domains -> Observable.fromIterable(domains))
+            .flatMapSingle(domain -> upgradeDomain(domain))
+            .subscribe();
         return true;
     }
 
     private Single<List<Scope>> upgradeDomain(Domain domain) {
         logger.info("Looking for scopes for domain id[{}] name[{}]", domain.getId(), domain.getName());
-        return scopeService.findByDomain(domain.getId())
-                .flatMap(scopes -> {
+        return scopeService
+            .findByDomain(domain.getId())
+            .flatMap(
+                scopes -> {
                     if (scopes.isEmpty()) {
                         logger.info("No scope found for domain id[{}] name[{}]. Upgrading...", domain.getId(), domain.getName());
-                        return createClientScopes(domain)
-                                .flatMap(irrelevant -> createRoleScopes(domain));
+                        return createClientScopes(domain).flatMap(irrelevant -> createRoleScopes(domain));
                     }
                     return Single.just(new ArrayList<>(scopes));
-                });
+                }
+            );
     }
 
     private Single<List<Scope>> createClientScopes(Domain domain) {
-        return clientService.findByDomain(domain.getId())
-                .filter(clients -> clients != null)
-                .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .filter(client -> client.getScopes() != null)
-                .flatMap(client -> Observable.fromIterable(client.getScopes()))
-                .flatMapSingle(scope -> createScope(domain.getId(), scope))
-                .toList();
+        return clientService
+            .findByDomain(domain.getId())
+            .filter(clients -> clients != null)
+            .flatMapObservable(clients -> Observable.fromIterable(clients))
+            .filter(client -> client.getScopes() != null)
+            .flatMap(client -> Observable.fromIterable(client.getScopes()))
+            .flatMapSingle(scope -> createScope(domain.getId(), scope))
+            .toList();
     }
 
     private Single<List<Scope>> createRoleScopes(Domain domain) {
-        return roleService.findByDomain(domain.getId())
-                .filter(roles -> roles != null)
-                .flatMapObservable(roles -> Observable.fromIterable(roles))
-                .filter(role -> role.getOauthScopes() != null)
-                .flatMap(role -> Observable.fromIterable(role.getOauthScopes()))
-                .flatMapSingle(scope -> createScope(domain.getId(), scope))
-                .toList();
+        return roleService
+            .findByDomain(domain.getId())
+            .filter(roles -> roles != null)
+            .flatMapObservable(roles -> Observable.fromIterable(roles))
+            .filter(role -> role.getOauthScopes() != null)
+            .flatMap(role -> Observable.fromIterable(role.getOauthScopes()))
+            .flatMapSingle(scope -> createScope(domain.getId(), scope))
+            .toList();
     }
 
     private Single<Scope> createScope(String domain, String scopeKey) {
-        return scopeService.findByDomain(domain)
-                .flatMap(scopes -> {
+        return scopeService
+            .findByDomain(domain)
+            .flatMap(
+                scopes -> {
                     Optional<Scope> optScope = scopes.stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
                     if (!optScope.isPresent()) {
                         logger.info("Create a new scope key[{}] for domain[{}]", scopeKey, domain);
@@ -115,7 +121,8 @@ public class ScopeUpgrader implements Upgrader, Ordered {
                         return scopeService.create(domain, scope);
                     }
                     return Single.just(optScope.get());
-                });
+                }
+            );
     }
 
     @Override

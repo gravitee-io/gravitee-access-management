@@ -21,9 +21,7 @@
       <form (ngSubmit)="patch()" #allowedScopeForm="ngForm" fxLayout="column">
         <div class="gv-form-section">
           <div fxLayout="column">
-            <mat-slide-toggle
-              (change)="enableAllowedScopesFilter($event)"
-              [checked]="isAllowedScopesEnabled" [disabled]="readonly">
+            <mat-slide-toggle (change)="enableAllowedScopesFilter($event)" [checked]="isAllowedScopesEnabled" [disabled]="readonly">
               Enable scopes restriction on client registration
             </mat-slide-toggle>
           </div>
@@ -31,11 +29,14 @@
             [initialSelectedScopes]="initialSelectedScopes"
             [readonly]="readonly"
             (onScopeSelection)="onChange($event)"
-            *ngIf="isAllowedScopesEnabled">
+            *ngIf="isAllowedScopesEnabled"
+          >
           </scope-selection>
         </div>
         <div *ngIf="!readonly">
-          <button mat-raised-button [disabled]="(!allowedScopeForm.valid || allowedScopeForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button [disabled]="(!allowedScopeForm.valid || allowedScopeForm.pristine) && !formChanged" type="submit">
+            SAVE
+          </button>
         </div>
       </form>
     </div>
@@ -43,15 +44,22 @@
       <h3>Allowed scopes</h3>
       <div class="gv-page-description-content">
         <p>
-          This section is used to define which scopes can be selected by third parties when they register a client through the Openid Connect Dynamic Client Registration endpoint.
+          This section is used to define which scopes can be selected by third parties when they register a client through the Openid
+          Connect Dynamic Client Registration endpoint.
         </p>
-        <small><i>On the client registration process, access management will only retain the allowed scopes (if enabled).<br>
-          After applying this filter, if there is no more requested scopes, access management may add some default scopes.</i></small>
+        <small
+          ><i
+            >On the client registration process, access management will only retain the allowed scopes (if enabled).<br />
+            After applying this filter, if there is no more requested scopes, access management may add some default scopes.</i
+          ></small
+        >
       </div>
     </div>
   </div>
-  <app-emptystate *ngIf="!dcrIsEnabled"
-                  [message]="'Openid Connect Dynamic Client Registration is disabled.'"
-                  [subMessage]="'This feature can be enable through the Settings tab.'">
+  <app-emptystate
+    *ngIf="!dcrIsEnabled"
+    [message]="'Openid Connect Dynamic Client Registration is disabled.'"
+    [subMessage]="'This feature can be enable through the Settings tab.'"
+  >
   </app-emptystate>
 </div>

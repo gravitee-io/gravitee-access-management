@@ -22,7 +22,5 @@ import io.gravitee.policy.api.PolicyConfiguration;
  * @author GraviteeSource Team
  */
 public interface PolicyConfigurationFactory {
-
     <T extends PolicyConfiguration> T create(Class<T> clazz, String content);
-
 }

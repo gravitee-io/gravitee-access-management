@@ -19,10 +19,9 @@ import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.reactivex.observers.TestObserver;
+import java.util.Set;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -130,5 +129,4 @@ public class MongoExtensionGrantRepositoryTest extends AbstractManagementReposit
         // fetch extension grant
         extensionGrantRepository.findById(extensionGrantCreated.getId()).test().assertEmpty();
     }
-
 }

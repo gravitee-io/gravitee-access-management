@@ -15,27 +15,26 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
+import static org.mockito.Mockito.when;
+
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.JWTProcessor;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.reactivex.observers.TestObserver;
+import java.text.ParseException;
+import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.text.ParseException;
-import java.util.Collections;
-
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,24 +59,28 @@ public class OAuth2GenericAuthenticationProviderTest_idToken {
         when(configuration.getResponseType()).thenReturn(ResponseType.ID_TOKEN);
         when(jwtProcessor.process("test", null)).thenReturn(claims);
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "__social__";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "__social__";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "__social__";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "__social__";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                DummyRequest dummyRequest = new DummyRequest();
-                dummyRequest.setParameters(Collections.singletonMap("urlHash", Collections.singletonList("#id_token=test")));
-                return new DummyAuthenticationContext(Collections.singletonMap("id_token", "test"), dummyRequest);
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        DummyRequest dummyRequest = new DummyRequest();
+                        dummyRequest.setParameters(Collections.singletonMap("urlHash", Collections.singletonList("#id_token=test")));
+                        return new DummyAuthenticationContext(Collections.singletonMap("id_token", "test"), dummyRequest);
+                    }
+                }
+            )
+            .test();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -89,24 +92,28 @@ public class OAuth2GenericAuthenticationProviderTest_idToken {
         when(jwtProcessor.process("test", null)).thenThrow(new JOSEException("jose exception"));
 
         when(configuration.getResponseType()).thenReturn(ResponseType.ID_TOKEN);
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "__social__";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "__social__";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "__social__";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "__social__";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                DummyRequest dummyRequest = new DummyRequest();
-                dummyRequest.setParameters(Collections.singletonMap("urlHash", Collections.singletonList("#id_token=test")));
-                return new DummyAuthenticationContext(Collections.singletonMap("id_token", "test"), dummyRequest);
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        DummyRequest dummyRequest = new DummyRequest();
+                        dummyRequest.setParameters(Collections.singletonMap("urlHash", Collections.singletonList("#id_token=test")));
+                        return new DummyAuthenticationContext(Collections.singletonMap("id_token", "test"), dummyRequest);
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertError(BadCredentialsException.class);

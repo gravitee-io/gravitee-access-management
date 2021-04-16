@@ -27,8 +27,7 @@ public class EnrolledFactorSecurity {
 
     private String value;
 
-    public EnrolledFactorSecurity() {
-    }
+    public EnrolledFactorSecurity() {}
 
     public EnrolledFactorSecurity(String type, String value) {
         this.type = type;

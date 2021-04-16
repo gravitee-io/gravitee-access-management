@@ -19,4 +19,4 @@ package io.gravitee.am.service.model.plugin;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ExtensionGrantPlugin extends AbstractPlugin { }
+public class ExtensionGrantPlugin extends AbstractPlugin {}

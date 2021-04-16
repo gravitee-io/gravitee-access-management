@@ -18,34 +18,79 @@
 <div>
   <div>
     <div fxFlex="70">
-      <form (ngSubmit)="update()" (keydown.enter)="false" fxLayout="column" #applicationForm="ngForm">
+      <form (ngSubmit)="update()" (keydown.enter)="(false)" fxLayout="column" #applicationForm="ngForm">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Enter the application name" name="name" [(ngModel)]="application.name" required [disabled]="!editMode">
+            <input
+              matInput
+              type="text"
+              placeholder="Enter the application name"
+              name="name"
+              [(ngModel)]="application.name"
+              required
+              [disabled]="!editMode"
+            />
             <mat-hint>The application's name</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Domain</mat-label>
-            <input matInput type="text" name="domain" [value]="domain.path" disabled>
+            <input matInput type="text" name="domain" [value]="domain.path" disabled />
             <mat-hint>The application's domain</mat-hint>
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="domain.path" (cbOnSuccess)="valueCopied('Domain copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+            <button
+              mat-icon-button
+              matSuffix
+              matTooltip="Copy to clipboard"
+              ngxClipboard
+              [cbContent]="domain.path"
+              (cbOnSuccess)="valueCopied('Domain copied to the clipboard')"
+              (click)="$event.preventDefault()"
+            >
+              <mat-icon>content_copy</mat-icon>
+            </button>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always" *hasPermission="['application_openid_read']">
             <mat-label>Client ID</mat-label>
-            <input matInput type="text" name="clientId" [value]="application.settings?.oauth?.clientId" disabled>
+            <input matInput type="text" name="clientId" [value]="application.settings?.oauth?.clientId" disabled />
             <mat-hint>The application's client ID (OAuth 2.0)</mat-hint>
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="application.settings?.oauth?.clientId" (cbOnSuccess)="valueCopied('Client ID copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+            <button
+              mat-icon-button
+              matSuffix
+              matTooltip="Copy to clipboard"
+              ngxClipboard
+              [cbContent]="application.settings?.oauth?.clientId"
+              (cbOnSuccess)="valueCopied('Client ID copied to the clipboard')"
+              (click)="$event.preventDefault()"
+            >
+              <mat-icon>content_copy</mat-icon>
+            </button>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always" *hasPermission="['application_openid_read']">
             <mat-label>Client Secret</mat-label>
-            <input matInput type="password" name="clientSecret" [value]="application.settings?.oauth?.clientSecret" disabled>
+            <input matInput type="password" name="clientSecret" [value]="application.settings?.oauth?.clientSecret" disabled />
             <mat-hint>The application's client secret (OAuth 2.0)</mat-hint>
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="application.settings?.oauth?.clientSecret" (cbOnSuccess)="valueCopied('Client Secret copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+            <button
+              mat-icon-button
+              matSuffix
+              matTooltip="Copy to clipboard"
+              ngxClipboard
+              [cbContent]="application.settings?.oauth?.clientSecret"
+              (cbOnSuccess)="valueCopied('Client Secret copied to the clipboard')"
+              (click)="$event.preventDefault()"
+            >
+              <mat-icon>content_copy</mat-icon>
+            </button>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
-            <textarea matInput type="text" placeholder="Enter the application description" name="description" [(ngModel)]="application.description" [disabled]="!editMode"></textarea>
+            <textarea
+              matInput
+              type="text"
+              placeholder="Enter the application description"
+              name="description"
+              [(ngModel)]="application.description"
+              [disabled]="!editMode"
+            ></textarea>
             <mat-hint>The application's description</mat-hint>
           </mat-form-field>
         </div>
@@ -53,31 +98,45 @@
         <div *ngIf="displaySection()" class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Redirect URIs</h5>
-            <small>List of allowed URLs where the user will be redirected after successfully login to your application.
-              It prevents some vulnerabilities like being redirected to unsafe websites.</small>
+            <small
+              >List of allowed URLs where the user will be redirected after successfully login to your application. It prevents some
+              vulnerabilities like being redirected to unsafe websites.</small
+            >
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
             <div fxLayout="row" fxLayoutGap="10px" *ngIf="editMode">
               <div fxFlex="90">
                 <mat-form-field appearance="outline" floatLabel="always">
-                  <input matInput type="text" placeholder="Enter a redirect URI" name="redirectUri" (keydown.enter)="addRedirectUris($event)" [value]="redirectUri || ''" (input)='redirectUri = $event.target.value'>
+                  <input
+                    matInput
+                    type="text"
+                    placeholder="Enter a redirect URI"
+                    name="redirectUri"
+                    (keydown.enter)="addRedirectUris($event)"
+                    [value]="redirectUri || ''"
+                    (input)="redirectUri = $event.target.value"
+                  />
                 </mat-form-field>
               </div>
               <div>
-                <button mat-stroked-button style="margin-top: 7px;" (click)="addRedirectUris($event)" [disabled]="!redirectUri">+ ADD</button>
+                <button mat-stroked-button style="margin-top: 7px" (click)="addRedirectUris($event)" [disabled]="!redirectUri">
+                  + ADD
+                </button>
               </div>
             </div>
-            <ngx-datatable class="material"
-                           [columnMode]="'flex'"
-                           [headerHeight]="40"
-                           [footerHeight]="40"
-                           [rowHeight]="50"
-                           [messages]="{emptyMessage:'There is no redirect URIs'}"
-                           [rows]="redirectUris">
+            <ngx-datatable
+              class="material"
+              [columnMode]="'flex'"
+              [headerHeight]="40"
+              [footerHeight]="40"
+              [rowHeight]="50"
+              [messages]="{ emptyMessage: 'There is no redirect URIs' }"
+              [rows]="redirectUris"
+            >
               <ngx-datatable-column name="Redirect URIs" [flexGrow]="4">
                 <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{row.value}}
+                  {{ row.value }}
                 </ng-template>
               </ngx-datatable-column>
               <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['application_settings_update']">
@@ -99,15 +158,19 @@
           <div fxLayout="column">
             <mat-slide-toggle
               (change)="enableAutoApprove($event)"
-              [checked]="this.applicationAdvancedSettings.skipConsent" [disabled]="!editMode">
+              [checked]="this.applicationAdvancedSettings.skipConsent"
+              [disabled]="!editMode"
+            >
               Skip user approval
             </mat-slide-toggle>
-            <mat-hint style="font-size: 75%;">Generally used for internal trusted service applications.</mat-hint>
+            <mat-hint style="font-size: 75%">Generally used for internal trusted service applications.</mat-hint>
           </div>
         </div>
 
         <div fxLayout="row" *ngIf="editMode">
-          <button mat-raised-button [disabled]="(!applicationForm.valid || applicationForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button [disabled]="(!applicationForm.valid || applicationForm.pristine) && !formChanged" type="submit">
+            SAVE
+          </button>
         </div>
       </form>
       <div class="application-settings-delete-zone" fxLayout="column" *ngIf="deleteMode || renewSecretMode">
@@ -115,16 +178,26 @@
           <mat-list-item *ngIf="editMode">
             <h3 matLine>Change application type</h3>
             <p matLine>By changing the application type, some default values and options will be updated.</p>
-            <mat-form-field appearance="outline" class="mat-select-change-app" style="width: auto;">
-              <mat-select placeholder="Change the application type" name="type" [(ngModel)]="applicationType" (ngModelChange)="changeApplicationType()">
-                <mat-option *ngFor="let applicationType of applicationTypes" [value]="applicationType.type">{{ applicationType.name }}</mat-option>
+            <mat-form-field appearance="outline" class="mat-select-change-app" style="width: auto">
+              <mat-select
+                placeholder="Change the application type"
+                name="type"
+                [(ngModel)]="applicationType"
+                (ngModelChange)="changeApplicationType()"
+              >
+                <mat-option *ngFor="let applicationType of applicationTypes" [value]="applicationType.type">{{
+                  applicationType.name
+                }}</mat-option>
               </mat-select>
             </mat-form-field>
           </mat-list-item>
           <mat-divider *ngIf="editMode"></mat-divider>
           <mat-list-item *ngIf="renewSecretMode">
             <h3 matLine>Renew secret</h3>
-            <p matLine>All applications using this OAuth 2.0 client secret will need to be updated to be able to request for tokens and access protected resources.</p>
+            <p matLine>
+              All applications using this OAuth 2.0 client secret will need to be updated to be able to request for tokens and access
+              protected resources.
+            </p>
             <button mat-stroked-button color="warn" (click)="renewClientSecret($event)">RENEW</button>
           </mat-list-item>
           <mat-divider *ngIf="renewSecretMode && deleteMode"></mat-divider>
@@ -140,9 +213,13 @@
       <h3>Manage application</h3>
       <div class="gv-page-description-content">
         <p>
-          Configure your application's settings to interact with the authorization server to request for access tokens and gain access to protected resources.
+          Configure your application's settings to interact with the authorization server to request for access tokens and gain access to
+          protected resources.
         </p>
-        <small>The authorization server relies on OAuth 2.0/OpenID Connect protocols. Check out those configurations for more advanced features.</small>
+        <small
+          >The authorization server relies on OAuth 2.0/OpenID Connect protocols. Check out those configurations for more advanced
+          features.</small
+        >
       </div>
     </div>
   </div>

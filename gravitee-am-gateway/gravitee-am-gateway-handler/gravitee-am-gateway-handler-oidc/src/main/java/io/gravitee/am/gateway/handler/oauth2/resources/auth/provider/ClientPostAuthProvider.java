@@ -41,8 +41,11 @@ public class ClientPostAuthProvider implements ClientAuthProvider {
         if (client != null && ClientAuthenticationMethod.CLIENT_SECRET_POST.equals(client.getTokenEndpointAuthMethod())) {
             return true;
         }
-        if ((client != null && (client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty()))
-                && getClientId(request) != null && getClientSecret(request) != null) {
+        if (
+            (client != null && (client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty())) &&
+            getClientId(request) != null &&
+            getClientSecret(request) != null
+        ) {
             return true;
         }
         return false;

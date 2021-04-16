@@ -15,6 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.Scope;
@@ -23,20 +29,13 @@ import io.gravitee.am.service.model.NewScope;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -79,7 +78,6 @@ public class ScopesResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
-
     @Test
     public void shouldCreate() {
         final String domainId = "domain-1";
@@ -99,10 +97,7 @@ public class ScopesResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(scope)).when(scopeService).create(eq(domainId), any(NewScope.class), any());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("scopes")
-                .request().post(Entity.json(newScope));
+        final Response response = target("domains").path(domainId).path("scopes").request().post(Entity.json(newScope));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

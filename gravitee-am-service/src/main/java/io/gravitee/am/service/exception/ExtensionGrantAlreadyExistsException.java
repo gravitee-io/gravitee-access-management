@@ -39,4 +39,3 @@ public class ExtensionGrantAlreadyExistsException extends AbstractManagementExce
         return "A extension grant with name : " + grantType + " already exists";
     }
 }
-

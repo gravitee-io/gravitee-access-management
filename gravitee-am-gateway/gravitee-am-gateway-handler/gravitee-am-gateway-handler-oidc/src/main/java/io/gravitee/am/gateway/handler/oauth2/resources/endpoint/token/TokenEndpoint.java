@@ -37,11 +37,12 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class TokenEndpoint implements Handler<RoutingContext> {
+
     private static final String CLIENT_CONTEXT_KEY = "client";
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
     private TokenGranter tokenGranter;
 
-    public TokenEndpoint() { }
+    public TokenEndpoint() {}
 
     public TokenEndpoint(TokenGranter tokenGranter) {
         this.tokenGranter = tokenGranter;
@@ -73,12 +74,17 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             throw new InvalidClientException("Invalid client: client must at least have one grant type configured");
         }
 
-        tokenGranter.grant(tokenRequest, client)
-                .subscribe(accessToken -> context.response()
+        tokenGranter
+            .grant(tokenRequest, client)
+            .subscribe(
+                accessToken ->
+                    context
+                        .response()
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
                         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .end(Json.encodePrettily(accessToken))
-                        , error -> context.fail(error));
+                        .end(Json.encodePrettily(accessToken)),
+                error -> context.fail(error)
+            );
     }
 }

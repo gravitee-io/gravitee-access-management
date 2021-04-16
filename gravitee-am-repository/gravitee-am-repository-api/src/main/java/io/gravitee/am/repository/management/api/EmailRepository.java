@@ -20,7 +20,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -28,7 +27,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface EmailRepository extends CrudRepository<Email, String> {
-
     Single<List<Email>> findAll();
 
     Single<List<Email>> findAll(ReferenceType referenceType, String referenceId);

@@ -39,14 +39,13 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -79,16 +78,20 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public Maybe<Membership> findById(String id) {
         LOGGER.debug("Find membership by ID {}", id);
-        return membershipRepository.findById(id)
-                .onErrorResumeNext(ex -> {
+        return membershipRepository
+            .findById(id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find membership by ID", id, ex);
-                    return Maybe.error(new TechnicalManagementException(String.format("An error occurs while trying to find membership by ID %s", id), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(String.format("An error occurs while trying to find membership by ID %s", id), ex)
+                    );
+                }
+            );
     }
 
     @Override
     public Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria) {
-
         LOGGER.debug("Find memberships by reference type {} and reference id {} and criteria {}", referenceType, referenceId, criteria);
 
         return membershipRepository.findByCriteria(referenceType, referenceId, criteria);
@@ -97,23 +100,55 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     public Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType) {
         LOGGER.debug("Find memberships by reference id {} and reference type {}", referenceId, referenceType);
-        return membershipRepository.findByReference(referenceId, referenceType)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find memberships by reference id {} and reference type {}", referenceId, referenceType, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find memberships by reference id %s and reference type %s", referenceId, referenceType), ex));
-                });
+        return membershipRepository
+            .findByReference(referenceId, referenceType)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find memberships by reference id {} and reference type {}",
+                        referenceId,
+                        referenceType,
+                        ex
+                    );
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find memberships by reference id %s and reference type %s",
+                                referenceId,
+                                referenceType
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<List<Membership>> findByMember(String memberId, MemberType memberType) {
         LOGGER.debug("Find memberships by member id {} and member type {}", memberId, memberType);
-        return membershipRepository.findByMember(memberId, memberType)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find memberships by member id {} and member type {}", memberId, memberType, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find memberships by member id %s and member type %s", memberId, memberType), ex));
-                });
+        return membershipRepository
+            .findByMember(memberId, memberType)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find memberships by member id {} and member type {}",
+                        memberId,
+                        memberType,
+                        ex
+                    );
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find memberships by member id %s and member type %s",
+                                memberId,
+                                memberType
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
@@ -121,11 +156,19 @@ public class MembershipServiceImpl implements MembershipService {
         LOGGER.debug("Add or update membership {}", membership);
 
         return checkMember(organizationId, membership)
-                .andThen(checkRole(organizationId, membership))
-                .andThen(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())
-                        .map(Optional::of)
-                        .defaultIfEmpty(Optional.empty())
-                        .flatMapSingle(optMembership -> {
+            .andThen(checkRole(organizationId, membership))
+            .andThen(
+                membershipRepository
+                    .findByReferenceAndMember(
+                        membership.getReferenceType(),
+                        membership.getReferenceId(),
+                        membership.getMemberType(),
+                        membership.getMemberId()
+                    )
+                    .map(Optional::of)
+                    .defaultIfEmpty(Optional.empty())
+                    .flatMapSingle(
+                        optMembership -> {
                             if (!optMembership.isPresent()) {
                                 // add membership
                                 Membership newMembership = new Membership();
@@ -138,45 +181,119 @@ public class MembershipServiceImpl implements MembershipService {
                                 newMembership.setRoleId(membership.getRoleId());
                                 newMembership.setCreatedAt(new Date());
                                 newMembership.setUpdatedAt(newMembership.getCreatedAt());
-                                return membershipRepository.create(newMembership)
-                                        // create event for sync process
-                                        .flatMap(membership1 -> {
-                                            Event event = new Event(Type.MEMBERSHIP, new Payload(membership1.getId(), membership1.getReferenceType(), membership1.getReferenceId(), Action.CREATE));
+                                return membershipRepository
+                                    .create(newMembership)
+                                    // create event for sync process
+                                    .flatMap(
+                                        membership1 -> {
+                                            Event event = new Event(
+                                                Type.MEMBERSHIP,
+                                                new Payload(
+                                                    membership1.getId(),
+                                                    membership1.getReferenceType(),
+                                                    membership1.getReferenceId(),
+                                                    Action.CREATE
+                                                )
+                                            );
                                             return eventService.create(event).flatMap(__ -> Single.just(membership1));
-                                        })
-                                        .onErrorResumeNext(ex -> {
+                                        }
+                                    )
+                                    .onErrorResumeNext(
+                                        ex -> {
                                             if (ex instanceof AbstractManagementException) {
                                                 return Single.error(ex);
                                             }
                                             LOGGER.error("An error occurs while trying to create membership {}", membership, ex);
-                                            return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to create membership %s", membership), ex));
-                                        })
-                                        .doOnSuccess(membership1 -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).membership(membership1)))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_CREATED).throwable(throwable)));
+                                            return Single.error(
+                                                new TechnicalManagementException(
+                                                    String.format("An error occurs while trying to create membership %s", membership),
+                                                    ex
+                                                )
+                                            );
+                                        }
+                                    )
+                                    .doOnSuccess(
+                                        membership1 ->
+                                            auditService.report(
+                                                AuditBuilder
+                                                    .builder(MembershipAuditBuilder.class)
+                                                    .principal(principal)
+                                                    .type(EventType.MEMBERSHIP_CREATED)
+                                                    .membership(membership1)
+                                            )
+                                    )
+                                    .doOnError(
+                                        throwable ->
+                                            auditService.report(
+                                                AuditBuilder
+                                                    .builder(DomainAuditBuilder.class)
+                                                    .principal(principal)
+                                                    .type(EventType.MEMBERSHIP_CREATED)
+                                                    .throwable(throwable)
+                                            )
+                                    );
                             } else {
                                 // update membership
                                 Membership oldMembership = optMembership.get();
                                 Membership updateMembership = new Membership(oldMembership);
                                 updateMembership.setRoleId(membership.getRoleId());
                                 updateMembership.setUpdatedAt(new Date());
-                                return membershipRepository.update(updateMembership)
-                                        // create event for sync process
-                                        .flatMap(membership1 -> {
-                                            Event event = new Event(Type.MEMBERSHIP, new Payload(membership1.getId(), membership1.getReferenceType(), membership1.getReferenceId(), Action.UPDATE));
+                                return membershipRepository
+                                    .update(updateMembership)
+                                    // create event for sync process
+                                    .flatMap(
+                                        membership1 -> {
+                                            Event event = new Event(
+                                                Type.MEMBERSHIP,
+                                                new Payload(
+                                                    membership1.getId(),
+                                                    membership1.getReferenceType(),
+                                                    membership1.getReferenceId(),
+                                                    Action.UPDATE
+                                                )
+                                            );
                                             return eventService.create(event).flatMap(__ -> Single.just(membership1));
-                                        })
-                                        .onErrorResumeNext(ex -> {
+                                        }
+                                    )
+                                    .onErrorResumeNext(
+                                        ex -> {
                                             if (ex instanceof AbstractManagementException) {
                                                 return Single.error(ex);
                                             }
                                             LOGGER.error("An error occurs while trying to update membership {}", oldMembership, ex);
-                                            return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to update membership %s", oldMembership), ex));
-                                        })
-                                        .doOnSuccess(membership1 -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_UPDATED).oldValue(oldMembership).membership(membership1)))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_UPDATED).throwable(throwable)));
+                                            return Single.error(
+                                                new TechnicalManagementException(
+                                                    String.format("An error occurs while trying to update membership %s", oldMembership),
+                                                    ex
+                                                )
+                                            );
+                                        }
+                                    )
+                                    .doOnSuccess(
+                                        membership1 ->
+                                            auditService.report(
+                                                AuditBuilder
+                                                    .builder(MembershipAuditBuilder.class)
+                                                    .principal(principal)
+                                                    .type(EventType.MEMBERSHIP_UPDATED)
+                                                    .oldValue(oldMembership)
+                                                    .membership(membership1)
+                                            )
+                                    )
+                                    .doOnError(
+                                        throwable ->
+                                            auditService.report(
+                                                AuditBuilder
+                                                    .builder(DomainAuditBuilder.class)
+                                                    .principal(principal)
+                                                    .type(EventType.MEMBERSHIP_UPDATED)
+                                                    .throwable(throwable)
+                                            )
+                                    );
                             }
-                        })
-                );
+                        }
+                    )
+            );
     }
 
     @Override
@@ -185,38 +302,95 @@ public class MembershipServiceImpl implements MembershipService {
             return Single.just(Collections.emptyMap());
         }
 
-        List<String> userIds = memberships.stream().filter(membership -> MemberType.USER.equals(membership.getMemberType())).map(Membership::getMemberId).distinct().collect(Collectors.toList());
-        List<String> groupIds = memberships.stream().filter(membership -> MemberType.GROUP.equals(membership.getMemberType())).map(Membership::getMemberId).distinct().collect(Collectors.toList());
+        List<String> userIds = memberships
+            .stream()
+            .filter(membership -> MemberType.USER.equals(membership.getMemberType()))
+            .map(Membership::getMemberId)
+            .distinct()
+            .collect(Collectors.toList());
+        List<String> groupIds = memberships
+            .stream()
+            .filter(membership -> MemberType.GROUP.equals(membership.getMemberType()))
+            .map(Membership::getMemberId)
+            .distinct()
+            .collect(Collectors.toList());
         List<String> roleIds = memberships.stream().map(Membership::getRoleId).distinct().collect(Collectors.toList());
 
-        return Single.zip(userService.findByIdIn(userIds), groupService.findByIdIn(groupIds), roleService.findByIdIn(roleIds), (users, groups, roles) -> {
-            Map<String, Map<String, Object>> metadata = new HashMap<>();
-            metadata.put("users", users.stream().collect(Collectors.toMap(io.gravitee.am.model.User::getId, this::convert)));
-            metadata.put("groups", groups.stream().collect(Collectors.toMap(Group::getId, this::convert)));
-            metadata.put("roles", roles.stream().collect(Collectors.toMap(Role::getId, this::filter)));
-            return metadata;
-        });
+        return Single.zip(
+            userService.findByIdIn(userIds),
+            groupService.findByIdIn(groupIds),
+            roleService.findByIdIn(roleIds),
+            (users, groups, roles) -> {
+                Map<String, Map<String, Object>> metadata = new HashMap<>();
+                metadata.put("users", users.stream().collect(Collectors.toMap(io.gravitee.am.model.User::getId, this::convert)));
+                metadata.put("groups", groups.stream().collect(Collectors.toMap(Group::getId, this::convert)));
+                metadata.put("roles", roles.stream().collect(Collectors.toMap(Role::getId, this::filter)));
+                return metadata;
+            }
+        );
     }
 
     @Override
     public Completable delete(String membershipId, User principal) {
         LOGGER.debug("Delete membership {}", membershipId);
 
-        return membershipRepository.findById(membershipId)
-                .switchIfEmpty(Maybe.error(new MembershipNotFoundException(membershipId)))
-                .flatMapCompletable(membership -> membershipRepository.delete(membershipId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.MEMBERSHIP, new Payload(membership.getId(), membership.getReferenceType(), membership.getReferenceId(), Action.DELETE)))))
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_DELETED).membership(membership)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(MembershipAuditBuilder.class).principal(principal).type(EventType.MEMBERSHIP_DELETED).throwable(throwable)))
-                )
-                .onErrorResumeNext(ex -> {
+        return membershipRepository
+            .findById(membershipId)
+            .switchIfEmpty(Maybe.error(new MembershipNotFoundException(membershipId)))
+            .flatMapCompletable(
+                membership ->
+                    membershipRepository
+                        .delete(membershipId)
+                        .andThen(
+                            Completable.fromSingle(
+                                eventService.create(
+                                    new Event(
+                                        Type.MEMBERSHIP,
+                                        new Payload(
+                                            membership.getId(),
+                                            membership.getReferenceType(),
+                                            membership.getReferenceId(),
+                                            Action.DELETE
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(MembershipAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.MEMBERSHIP_DELETED)
+                                        .membership(membership)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(MembershipAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.MEMBERSHIP_DELETED)
+                                        .throwable(throwable)
+                                )
+                        )
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to delete membership: {}", membershipId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete membership: %s", membershipId), ex));
-                });
+                    return Completable.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete membership: %s", membershipId),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     private Member convert(io.gravitee.am.model.User user) {
@@ -246,13 +420,10 @@ public class MembershipServiceImpl implements MembershipService {
      * @return
      */
     private Completable checkMember(String organizationId, Membership membership) {
-
         if (MemberType.USER.equals(membership.getMemberType())) {
-            return userService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
-                    .ignoreElement();
+            return userService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId()).ignoreElement();
         } else {
-            return groupService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
-                    .ignoreElement();
+            return groupService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId()).ignoreElement();
         }
     }
 
@@ -262,32 +433,48 @@ public class MembershipServiceImpl implements MembershipService {
      * @return
      */
     private Completable checkRole(String organizationId, Membership membership) {
-        return roleService.findById(membership.getRoleId())
-                .switchIfEmpty(Maybe.error(new RoleNotFoundException(membership.getRoleId())))
-                .flatMap(role -> {
+        return roleService
+            .findById(membership.getRoleId())
+            .switchIfEmpty(Maybe.error(new RoleNotFoundException(membership.getRoleId())))
+            .flatMap(
+                role -> {
                     // If role is a 'PRIMARY_OWNER' role, need to check if it is already assigned or not.
                     if (role.isSystem() && role.getName().endsWith("_PRIMARY_OWNER")) {
-
-                        if(membership.getMemberType() == MemberType.GROUP) {
+                        if (membership.getMemberType() == MemberType.GROUP) {
                             return Maybe.error(new InvalidRoleException("This role cannot be assigned to a group"));
                         }
 
                         MembershipCriteria criteria = new MembershipCriteria();
                         criteria.setRoleId(membership.getRoleId());
-                        return membershipRepository.findByCriteria(membership.getReferenceType(), membership.getReferenceId(), criteria)
-                                .count()
-                                .flatMapMaybe(count -> count >= 1 ? Maybe.error(new SinglePrimaryOwnerException(membership.getReferenceType())) : Maybe.just(role));
+                        return membershipRepository
+                            .findByCriteria(membership.getReferenceType(), membership.getReferenceId(), criteria)
+                            .count()
+                            .flatMapMaybe(
+                                count ->
+                                    count >= 1
+                                        ? Maybe.error(new SinglePrimaryOwnerException(membership.getReferenceType()))
+                                        : Maybe.just(role)
+                            );
                     }
 
                     return Maybe.just(role);
-                })
-                // Role must be set on the right entity type.
-                .filter(role1 -> role1.getAssignableType().equals(membership.getReferenceType()) &&
-                        // Role can be either a system role, either an organization role, either a domain role.
-                        (role1.isSystem()
-                                || (role1.getReferenceType() == ReferenceType.ORGANIZATION && organizationId.equals(role1.getReferenceId()))
-                                || (role1.getReferenceType() == membership.getReferenceType() && membership.getReferenceId().equals(role1.getReferenceId()))))
-                .switchIfEmpty(Single.error(new InvalidRoleException("Invalid role")))
-                .ignoreElement();
+                }
+            )
+            // Role must be set on the right entity type.
+            .filter(
+                role1 ->
+                    role1.getAssignableType().equals(membership.getReferenceType()) &&
+                    // Role can be either a system role, either an organization role, either a domain role.
+                    (
+                        role1.isSystem() ||
+                        (role1.getReferenceType() == ReferenceType.ORGANIZATION && organizationId.equals(role1.getReferenceId())) ||
+                        (
+                            role1.getReferenceType() == membership.getReferenceType() &&
+                            membership.getReferenceId().equals(role1.getReferenceId())
+                        )
+                    )
+            )
+            .switchIfEmpty(Single.error(new InvalidRoleException("Invalid role")))
+            .ignoreElement();
     }
 }

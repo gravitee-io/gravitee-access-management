@@ -29,13 +29,19 @@ import org.springframework.context.annotation.Configuration;
 public class WebConfiguration {
 
     @Bean
-    public CorsHandlerFactory corsHandler() { return new CorsHandlerFactory(); }
+    public CorsHandlerFactory corsHandler() {
+        return new CorsHandlerFactory();
+    }
 
     @Bean
-    public SessionHandlerFactory sessionHandler() { return new SessionHandlerFactory(); }
+    public SessionHandlerFactory sessionHandler() {
+        return new SessionHandlerFactory();
+    }
 
     @Bean
-    public SSOSessionHandlerFactory ssoSessionHandler() { return new SSOSessionHandlerFactory(); }
+    public SSOSessionHandlerFactory ssoSessionHandler() {
+        return new SSOSessionHandlerFactory();
+    }
 
     @Bean
     public CookieHandlerFactory cookieHandler() {

@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.service;
 
+import static io.gravitee.am.service.impl.ClientServiceImpl.DEFAULT_CLIENT_NAME;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Form;
@@ -32,6 +37,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,13 +46,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.*;
-
-import static io.gravitee.am.service.impl.ClientServiceImpl.DEFAULT_CLIENT_NAME;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -62,7 +61,7 @@ public class ClientServiceTest {
     @Mock
     private ApplicationService applicationService;
 
-    private final static String DOMAIN = "domain1";
+    private static final String DOMAIN = "domain1";
 
     @Test
     public void shouldFindById() {
@@ -148,8 +147,8 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindByDomainPagination() {
-        Page pageClients = new Page(Collections.singleton(new Application()), 1 , 1);
-        when(applicationService.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.just(pageClients));
+        Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
+        when(applicationService.findByDomain(DOMAIN, 1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Client>> testObserver = clientService.findByDomain(DOMAIN, 1, 1).test();
         testObserver.awaitTerminalEvent();
 
@@ -160,10 +159,10 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindByDomainPagination_technicalException() {
-        when(applicationService.findByDomain(DOMAIN, 1 , 1)).thenReturn(Single.error(TechnicalManagementException::new));
+        when(applicationService.findByDomain(DOMAIN, 1, 1)).thenReturn(Single.error(TechnicalManagementException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        clientService.findByDomain(DOMAIN, 1 , 1).subscribe(testObserver);
+        clientService.findByDomain(DOMAIN, 1, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -193,8 +192,8 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindAllPagination() {
-        Page pageClients = new Page(Collections.singleton(new Application()), 1 , 1);
-        when(applicationService.findAll(1 , 1)).thenReturn(Single.just(pageClients));
+        Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
+        when(applicationService.findAll(1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Client>> testObserver = clientService.findAll(1, 1).test();
         testObserver.awaitTerminalEvent();
 
@@ -205,10 +204,10 @@ public class ClientServiceTest {
 
     @Test
     public void shouldFindAllPagination_technicalException() {
-        when(applicationService.findAll(1 , 1)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationService.findAll(1, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        clientService.findAll(1 , 1).subscribe(testObserver);
+        clientService.findAll(1, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -382,8 +381,8 @@ public class ClientServiceTest {
 
         ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
         verify(applicationService, times(1)).create(captor.capture());
-        Assert.assertTrue("client_id must be generated",captor.getValue().getSettings().getOauth().getClientId()!=null);
-        Assert.assertTrue("client_secret must be generated",captor.getValue().getSettings().getOauth().getClientSecret()!=null);
+        Assert.assertTrue("client_id must be generated", captor.getValue().getSettings().getOauth().getClientId() != null);
+        Assert.assertTrue("client_secret must be generated", captor.getValue().getSettings().getOauth().getClientSecret() != null);
     }
 
     @Test
@@ -497,7 +496,7 @@ public class ClientServiceTest {
     }
 
     @Test
-    public void   update_clientCredentials_ok() {
+    public void update_clientCredentials_ok() {
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
 
         Client toUpdate = new Client();
@@ -654,7 +653,8 @@ public class ClientServiceTest {
 
     @Test
     public void shouldRenewSecret_clientNotFound() {
-        when(applicationService.renewClientSecret(DOMAIN, "my-client", null)).thenReturn(Single.error(new ClientNotFoundException("my-client")));
+        when(applicationService.renewClientSecret(DOMAIN, "my-client", null))
+            .thenReturn(Single.error(new ClientNotFoundException("my-client")));
 
         TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
         testObserver.awaitTerminalEvent();

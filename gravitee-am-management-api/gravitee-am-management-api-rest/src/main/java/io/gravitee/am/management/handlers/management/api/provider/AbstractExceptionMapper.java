@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.provider;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.service.exception.AbstractManagementException;
-
 import javax.ws.rs.ext.ExceptionMapper;
 
 /**

@@ -44,34 +44,33 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
         Integer page = DEFAULT_START_INDEX;
         Integer size = MAX_ITEMS_PER_PAGE;
 
-
         // The 1-based index of the first query result.
         // A value less than 1 SHALL be interpreted as 1.
         try {
             final String startIndex = context.request().getParam("startIndex");
             page = Integer.valueOf(startIndex);
-        } catch (Exception ex) {
-        }
+        } catch (Exception ex) {}
         // Non-negative integer. Specifies the desired  results per page, e.g., 10.
         // A negative value SHALL be interpreted as "0".
         // A value of "0"  indicates that no resource results are to be returned except for "totalResults".
         try {
             final String count = context.request().getParam("count");
             size = Integer.min(Integer.valueOf(count), MAX_ITEMS_PER_PAGE);
-        } catch (Exception ex) {
-
-        }
+        } catch (Exception ex) {}
 
         // group service use 0-based index
-        groupService.list(page - 1, size, location(context.request()))
-                .subscribe(
-                        groups -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(groups)),
-                        error -> context.fail(error));
-
+        groupService
+            .list(page - 1, size, location(context.request()))
+            .subscribe(
+                groups ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(groups)),
+                error -> context.fail(error)
+            );
     }
 
     /**
@@ -132,16 +131,20 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
                 return;
             }
 
-            groupService.create(group, location(context.request()))
-                    .subscribe(
-                            group1 -> context.response()
-                                    .setStatusCode(201)
-                                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                    .putHeader(HttpHeaders.LOCATION, group1.getMeta().getLocation())
-                                    .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group1)),
-                            error -> context.fail(error));
+            groupService
+                .create(group, location(context.request()))
+                .subscribe(
+                    group1 ->
+                        context
+                            .response()
+                            .setStatusCode(201)
+                            .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .putHeader(HttpHeaders.LOCATION, group1.getMeta().getLocation())
+                            .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group1)),
+                    error -> context.fail(error)
+                );
         } catch (DecodeException ex) {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }

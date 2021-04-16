@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Subject } from "rxjs";
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class SidenavService {
   private resizeSidenav = new Subject<boolean>();
   public resizeSidenavObservable = this.resizeSidenav.asObservable();
 
-  constructor() { }
+  constructor() {}
 
   resize(reducedMode) {
     this.resizeSidenav.next(reducedMode);

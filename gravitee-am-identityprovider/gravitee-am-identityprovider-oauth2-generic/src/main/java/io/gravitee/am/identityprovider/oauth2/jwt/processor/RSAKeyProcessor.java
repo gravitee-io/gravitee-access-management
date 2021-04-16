@@ -37,18 +37,20 @@ public class RSAKeyProcessor<C extends SecurityContext> extends AbstractKeyProce
         return new JWSVerificationKeySelector<C>(signature.getAlg(), jwkSource) {
             @Override
             protected JWKMatcher createJWKMatcher(final JWSHeader jwsHeader) {
-
-                if (! getExpectedJWSAlgorithm().equals(jwsHeader.getAlgorithm())) {
+                if (!getExpectedJWSAlgorithm().equals(jwsHeader.getAlgorithm())) {
                     // Unexpected JWS alg
                     return null;
-                } else if (JWSAlgorithm.Family.RSA.contains(getExpectedJWSAlgorithm()) || JWSAlgorithm.Family.EC.contains(getExpectedJWSAlgorithm())) {
+                } else if (
+                    JWSAlgorithm.Family.RSA.contains(getExpectedJWSAlgorithm()) ||
+                    JWSAlgorithm.Family.EC.contains(getExpectedJWSAlgorithm())
+                ) {
                     // RSA or EC key matcher
                     return new JWKMatcher.Builder()
-                            .keyType(KeyType.forAlgorithm(getExpectedJWSAlgorithm()))
-                            .keyUses(KeyUse.SIGNATURE, null)
-                            .algorithms(getExpectedJWSAlgorithm(), null)
-                            .x509CertSHA256Thumbprint(jwsHeader.getX509CertSHA256Thumbprint())
-                            .build();
+                        .keyType(KeyType.forAlgorithm(getExpectedJWSAlgorithm()))
+                        .keyUses(KeyUse.SIGNATURE, null)
+                        .algorithms(getExpectedJWSAlgorithm(), null)
+                        .x509CertSHA256Thumbprint(jwsHeader.getX509CertSHA256Thumbprint())
+                        .build();
                 } else {
                     return null; // Unsupported algorithm
                 }

@@ -33,4 +33,3 @@ public class FactorWithApplicationsException extends AbstractManagementException
         return "You can't delete a factor with existing applications.";
     }
 }
-

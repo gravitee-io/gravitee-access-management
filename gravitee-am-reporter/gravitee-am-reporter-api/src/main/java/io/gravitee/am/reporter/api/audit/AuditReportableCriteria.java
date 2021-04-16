@@ -16,7 +16,6 @@
 package io.gravitee.am.reporter.api.audit;
 
 import io.gravitee.am.reporter.api.provider.ReportableCriteria;
-
 import java.util.List;
 
 /**
@@ -80,6 +79,7 @@ public class AuditReportableCriteria implements ReportableCriteria {
     }
 
     public static class Builder {
+
         private long from;
         private long to;
         private long interval;

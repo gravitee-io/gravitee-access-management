@@ -20,7 +20,7 @@ import { GroupService } from './group.service';
 describe('GroupService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [GroupService]
+      providers: [GroupService],
     });
   });
 

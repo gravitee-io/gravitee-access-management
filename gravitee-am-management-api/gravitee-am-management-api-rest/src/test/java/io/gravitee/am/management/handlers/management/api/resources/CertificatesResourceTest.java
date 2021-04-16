@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
@@ -23,17 +28,11 @@ import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -97,10 +96,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
         doReturn(Maybe.just("certificate-schema")).when(certificatePluginService).getSchema(anyString());
         doReturn(Single.just(certificate)).when(certificateService).create(eq(domainId), any(), any());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("certificates")
-                .request().post(Entity.json(newCertificate));
+        final Response response = target("domains").path(domainId).path("certificates").request().post(Entity.json(newCertificate));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

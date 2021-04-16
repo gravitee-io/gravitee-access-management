@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.members;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
@@ -26,16 +29,12 @@ import io.reactivex.Maybe;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -50,20 +49,29 @@ public class MemberResource extends AbstractResource {
     private MembershipService membershipService;
 
     @DELETE
-    @ApiOperation(value = "Remove a membership of the organization",
-            notes = "User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Remove a membership of the organization",
+        notes = "User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 204, message = "Membership successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void removeMember(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("member") String membershipId,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("member") String membershipId,
+        @Suspended final AsyncResponse response
+    ) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_MEMBER, Acl.DELETE)
-                .andThen(organizationService.findById(organizationId)
-                        .flatMapCompletable(irrelevant -> membershipService.delete(membershipId, authenticatedUser)))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+            .andThen(
+                organizationService
+                    .findById(organizationId)
+                    .flatMapCompletable(irrelevant -> membershipService.delete(membershipId, authenticatedUser))
+            )
+            .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

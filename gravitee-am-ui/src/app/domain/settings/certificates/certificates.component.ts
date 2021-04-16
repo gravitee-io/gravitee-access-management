@@ -23,26 +23,31 @@ import { SnackbarService } from '../../../services/snackbar.service';
 @Component({
   selector: 'app-certificates',
   templateUrl: './certificates.component.html',
-  styleUrls: ['./certificates.component.scss']
+  styleUrls: ['./certificates.component.scss'],
 })
 export class DomainSettingsCertificatesComponent implements OnInit {
   private certificateTypes: any = {
-    'javakeystore-am-certificate' : 'Java Keystore (.jks)',
-    'pkcs12-am-certificate' : 'PKCS#12 (.p12)'
+    'javakeystore-am-certificate': 'Java Keystore (.jks)',
+    'pkcs12-am-certificate': 'PKCS#12 (.p12)',
   };
   private certificateIcons: any = {
-    'javakeystore-am-certificate' : 'security',
-    'pkcs12-am-certificate' : 'security'
+    'javakeystore-am-certificate': 'security',
+    'pkcs12-am-certificate': 'security',
   };
   certificates: any[];
   domainId: string;
 
-  constructor(private certificateService: CertificateService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute, private dialog: MatDialog) { }
+  constructor(
+    private certificateService: CertificateService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.certificates = this.route.snapshot.data['certificates'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.certificates = this.route.snapshot.data.certificates;
   }
 
   get isEmpty() {
@@ -50,16 +55,19 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   }
 
   loadCertificates() {
-    this.certificateService.findByDomain(this.domainId).subscribe(response => this.certificates = response);
+    this.certificateService.findByDomain(this.domainId).subscribe((response) => (this.certificates = response));
   }
 
   publicKey(id, event) {
     event.preventDefault();
-    this.certificateService.publicKey(this.domainId, id).subscribe(response => {
-      this.openPublicKeyInfo(response, false);
-    }, error => {
-      this.openPublicKeyInfo('Failed to load public key', true);
-    });
+    this.certificateService.publicKey(this.domainId, id).subscribe(
+      (response) => {
+        this.openPublicKeyInfo(response, false);
+      },
+      (error) => {
+        this.openPublicKeyInfo('Failed to load public key', true);
+      },
+    );
   }
 
   getCertificateTypeIcon(type) {
@@ -78,16 +86,14 @@ export class DomainSettingsCertificatesComponent implements OnInit {
 
   delete(id, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Certificate', 'Are you sure you want to delete this certificate ?')
-      .subscribe(res => {
-        if (res) {
-          this.certificateService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open('Certificate deleted');
-            this.loadCertificates();
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Certificate', 'Are you sure you want to delete this certificate ?').subscribe((res) => {
+      if (res) {
+        this.certificateService.delete(this.domainId, id).subscribe((response) => {
+          this.snackbarService.open('Certificate deleted');
+          this.loadCertificates();
+        });
+      }
+    });
   }
 
   openPublicKeyInfo(publicKey, error) {
@@ -101,7 +107,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
 @Component({
   selector: 'certificate-public-key-dialog',
   templateUrl: './dialog/public-key.component.html',
-  styleUrls: ['./dialog/public-key.component.scss']
+  styleUrls: ['./dialog/public-key.component.scss'],
 })
 export class CertitificatePublicKeyDialog {
   public title: string;

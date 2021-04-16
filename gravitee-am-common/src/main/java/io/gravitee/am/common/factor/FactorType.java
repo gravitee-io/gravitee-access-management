@@ -20,6 +20,5 @@ package io.gravitee.am.common.factor;
  * @author GraviteeSource Team
  */
 public interface FactorType {
-
     String TOTP = "TOTP";
 }

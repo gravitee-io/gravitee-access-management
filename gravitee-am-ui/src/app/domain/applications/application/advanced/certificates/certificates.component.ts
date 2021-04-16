@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {SnackbarService} from "../../../../../services/snackbar.service";
-import {ApplicationService} from "../../../../../services/application.service";
-import {CertificateService} from "../../../../../services/certificate.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ApplicationService } from '../../../../../services/application.service';
+import { CertificateService } from '../../../../../services/certificate.service';
 
 @Component({
   selector: 'app-application-certificates',
   templateUrl: './certificates.component.html',
-  styleUrls: ['./certificates.component.scss']
+  styleUrls: ['./certificates.component.scss'],
 })
 export class ApplicationCertificatesComponent implements OnInit {
   private domainId: string;
@@ -32,15 +32,17 @@ export class ApplicationCertificatesComponent implements OnInit {
   certificatePublicKey: string;
   selectedCertificate: string;
 
-  constructor(private route: ActivatedRoute,
-              private snackbarService: SnackbarService,
-              private applicationService: ApplicationService,
-              private certificateService: CertificateService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+    private applicationService: ApplicationService,
+    private certificateService: CertificateService,
+  ) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
-    this.certificates = this.route.snapshot.data['certificates'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
+    this.application = this.route.snapshot.parent.parent.data.application;
+    this.certificates = this.route.snapshot.data.certificates;
     if (this.application.certificate) {
       this.selectedCertificate = this.application.certificate;
       this.publicKey(this.application.certificate);
@@ -48,10 +50,10 @@ export class ApplicationCertificatesComponent implements OnInit {
   }
 
   patch(): void {
-    let data = {'certificate': (this.selectedCertificate) ? this.selectedCertificate : null };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
+    let data = { certificate: this.selectedCertificate ? this.selectedCertificate : null };
+    this.applicationService.patch(this.domainId, this.application.id, data).subscribe((data) => {
       this.application = data;
-      this.route.snapshot.parent.parent.data['application'] = this.application;
+      this.route.snapshot.parent.parent.data.application = this.application;
       this.certificatePublicKey = null;
       this.formChanged = false;
       this.snackbarService.open('Application updated');
@@ -70,7 +72,7 @@ export class ApplicationCertificatesComponent implements OnInit {
   }
 
   private publicKey(certificateId) {
-    this.certificateService.publicKey(this.domainId, certificateId).subscribe(response => {
+    this.certificateService.publicKey(this.domainId, certificateId).subscribe((response) => {
       this.certificatePublicKey = response;
     });
   }

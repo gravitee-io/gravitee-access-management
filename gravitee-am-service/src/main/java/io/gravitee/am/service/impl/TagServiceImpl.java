@@ -31,16 +31,15 @@ import io.gravitee.am.service.model.UpdateTag;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.TagAuditBuilder;
 import io.reactivex.*;
+import java.text.Normalizer;
+import java.util.Date;
+import java.util.Set;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.text.Normalizer;
-import java.util.Date;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -64,22 +63,32 @@ public class TagServiceImpl implements TagService {
     @Override
     public Maybe<Tag> findById(String id, String organizationId) {
         LOGGER.debug("Find tag by ID: {}", id);
-        return tagRepository.findById(id, organizationId)
-                .onErrorResumeNext(ex -> {
+        return tagRepository
+            .findById(id, organizationId)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a tag using its ID: {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a tag using its ID: %s", id), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a tag using its ID: %s", id),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Flowable<Tag> findAll(String organizationId) {
         LOGGER.debug("Find all tags");
-        return tagRepository.findAll(organizationId)
-                .onErrorResumeNext(ex -> {
+        return tagRepository
+            .findAll(organizationId)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find all tags", ex);
                     return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all tags", ex));
-                });
+                }
+            );
     }
 
     @Override
@@ -87,9 +96,11 @@ public class TagServiceImpl implements TagService {
         LOGGER.debug("Create a new tag: {}", newTag);
         String id = humanReadableId(newTag.getName());
 
-        return tagRepository.findById(id, organizationId)
-                .isEmpty()
-                .flatMap(empty -> {
+        return tagRepository
+            .findById(id, organizationId)
+            .isEmpty()
+            .flatMap(
+                empty -> {
                     if (!empty) {
                         throw new TagAlreadyExistsException(newTag.getName());
                     } else {
@@ -102,25 +113,45 @@ public class TagServiceImpl implements TagService {
                         tag.setUpdatedAt(tag.getCreatedAt());
                         return tagRepository.create(tag);
                     }
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to create a tag", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a tag", ex));
-                })
-                .doOnSuccess(tag -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).tag(tag).principal(principal).type(EventType.TAG_CREATED)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).referenceId(organizationId).principal(principal).type(EventType.TAG_CREATED).throwable(throwable)));
+                }
+            )
+            .doOnSuccess(
+                tag ->
+                    auditService.report(
+                        AuditBuilder.builder(TagAuditBuilder.class).tag(tag).principal(principal).type(EventType.TAG_CREATED)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(TagAuditBuilder.class)
+                            .referenceId(organizationId)
+                            .principal(principal)
+                            .type(EventType.TAG_CREATED)
+                            .throwable(throwable)
+                    )
+            );
     }
 
     @Override
     public Single<Tag> update(String tagId, String organizationId, UpdateTag updateTag, User principal) {
         LOGGER.debug("Update an existing tag: {}", updateTag);
-        return tagRepository.findById(tagId, organizationId)
-                .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
-                .flatMapSingle(oldTag -> {
+        return tagRepository
+            .findById(tagId, organizationId)
+            .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
+            .flatMapSingle(
+                oldTag -> {
                     Tag tag = new Tag();
                     tag.setId(tagId);
                     tag.setName(updateTag.getName());
@@ -128,46 +159,94 @@ public class TagServiceImpl implements TagService {
                     tag.setCreatedAt(oldTag.getCreatedAt());
                     tag.setUpdatedAt(new Date());
 
-                    return tagRepository.update(tag)
-                            .doOnSuccess(tag1 -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_UPDATED).tag(tag1).oldValue(oldTag)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_UPDATED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
+                    return tagRepository
+                        .update(tag)
+                        .doOnSuccess(
+                            tag1 ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(TagAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.TAG_UPDATED)
+                                        .tag(tag1)
+                                        .oldValue(oldTag)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(TagAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.TAG_UPDATED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to update a tag", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a tag", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Completable delete(String tagId, String orgaizationId, User principal) {
         LOGGER.debug("Delete tag {}", tagId);
-        return tagRepository.findById(tagId, orgaizationId)
-                .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
-                .flatMapCompletable(tag -> tagRepository.delete(tagId)
-                        .andThen(domainService.findAll()
+        return tagRepository
+            .findById(tagId, orgaizationId)
+            .switchIfEmpty(Maybe.error(new TagNotFoundException(tagId)))
+            .flatMapCompletable(
+                tag ->
+                    tagRepository
+                        .delete(tagId)
+                        .andThen(
+                            domainService
+                                .findAll()
                                 .flatMapObservable(domains -> Observable.fromIterable(domains))
-                                .flatMapCompletable(domain -> {
-                                    if (domain.getTags() != null) {
-                                        domain.getTags().remove(tagId);
-                                        return domainService.update(domain.getId(), domain).toCompletable();
+                                .flatMapCompletable(
+                                    domain -> {
+                                        if (domain.getTags() != null) {
+                                            domain.getTags().remove(tagId);
+                                            return domainService.update(domain.getId(), domain).toCompletable();
+                                        }
+                                        return Completable.complete();
                                     }
-                                    return Completable.complete();
-                                })
+                                )
                         )
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).tag(tag)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).throwable(throwable))))
-                .onErrorResumeNext(ex -> {
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder.builder(TagAuditBuilder.class).principal(principal).type(EventType.TAG_DELETED).tag(tag)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(TagAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.TAG_DELETED)
+                                        .throwable(throwable)
+                                )
+                        )
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete tag {}", tagId, ex);
                     return Completable.error(new TechnicalManagementException("An error occurs while trying to delete tag " + tagId, ex));
-                });
+                }
+            );
     }
 
     private String humanReadableId(String domainName) {

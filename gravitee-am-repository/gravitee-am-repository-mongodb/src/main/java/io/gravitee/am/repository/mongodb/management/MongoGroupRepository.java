@@ -15,28 +15,27 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.*;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.GroupMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
-import static com.mongodb.client.model.Filters.*;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -59,12 +58,18 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Single<List<Group>> findByMember(String memberId) {
-        return Observable.fromPublisher(groupsCollection.find(eq(FIELD_MEMBERS, memberId))).map(this::convert).collect(ArrayList::new, List::add);
+        return Observable
+            .fromPublisher(groupsCollection.find(eq(FIELD_MEMBERS, memberId)))
+            .map(this::convert)
+            .collect(ArrayList::new, List::add);
     }
 
     @Override
     public Single<List<Group>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert).collect(ArrayList::new, List::add);
+        return Observable
+            .fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
+            .map(this::convert)
+            .collect(ArrayList::new, List::add);
     }
 
     @Override
@@ -74,14 +79,27 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(groupsCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
-        Single<List<Group>> groupsOperation = Observable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
+        Single<Long> countOperation = Observable
+            .fromPublisher(
+                groupsCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))
+            )
+            .first(0l);
+        Single<List<Group>> groupsOperation = Observable
+            .fromPublisher(
+                groupsCollection
+                    .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))
+                    .sort(new BasicDBObject(FIELD_NAME, 1))
+                    .skip(size * page)
+                    .limit(size)
+            )
+            .map(this::convert)
+            .collect(LinkedList::new, List::add);
         return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, page, count));
     }
 
     @Override
     public Single<Page<Group>> findByDomain(String domain, int page, int size) {
-       return findAll(DOMAIN, domain, page, size);
+        return findAll(DOMAIN, domain, page, size);
     }
 
     @Override
@@ -91,13 +109,17 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Group> findByName(ReferenceType referenceType, String referenceId, String groupName) {
-        return Observable.fromPublisher(
+        return Observable
+            .fromPublisher(
                 groupsCollection
-                        .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, groupName)))
-                        .limit(1)
-                        .first())
-                .firstElement()
-                .map(this::convert);
+                    .find(
+                        and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, groupName))
+                    )
+                    .limit(1)
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -107,7 +129,14 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Group> findById(ReferenceType referenceType, String referenceId, String group) {
-        return Observable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, group))).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(
+                groupsCollection
+                    .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, group)))
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -125,7 +154,9 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     @Override
     public Single<Group> update(Group item) {
         GroupMongo group = convert(item);
-        return Single.fromPublisher(groupsCollection.replaceOne(eq(FIELD_ID, group.getId()), group)).flatMap(success -> findById(group.getId()).toSingle());
+        return Single
+            .fromPublisher(groupsCollection.replaceOne(eq(FIELD_ID, group.getId()), group))
+            .flatMap(success -> findById(group.getId()).toSingle());
     }
 
     @Override

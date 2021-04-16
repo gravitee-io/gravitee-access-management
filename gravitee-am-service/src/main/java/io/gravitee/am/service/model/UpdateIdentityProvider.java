@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.service.model;
 
-import javax.validation.constraints.NotNull;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -68,8 +68,6 @@ public class UpdateIdentityProvider {
 
     @Override
     public String toString() {
-        return "UpdateIdentityProvider{" +
-                ", name='" + name + '\'' +
-                '}';
+        return "UpdateIdentityProvider{" + ", name='" + name + '\'' + '}';
     }
 }

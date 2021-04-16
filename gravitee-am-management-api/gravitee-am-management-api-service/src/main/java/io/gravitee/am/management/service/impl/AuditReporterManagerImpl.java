@@ -32,6 +32,12 @@ import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
 import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,19 +45,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
-public class AuditReporterManagerImpl extends AbstractService<AuditReporterManager> implements AuditReporterManager, EventListener<ReporterEvent, Payload> {
+public class AuditReporterManagerImpl
+    extends AbstractService<AuditReporterManager>
+    implements AuditReporterManager, EventListener<ReporterEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuditReporterManagerImpl.class);
     private static final long retryTimeout = 10000;
@@ -91,25 +92,37 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         String mongoPort = environment.getProperty("management.mongodb.port", "27017");
         String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
         String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://" + mongoHost + ":" + mongoPort + "/" + mongoDBName);
-        String configuration = "{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + "\",\"bulkActions\":1000,\"flushInterval\":5}";
+        String configuration =
+            "{\"uri\":\"" +
+            mongoUri +
+            "\",\"host\":\"" +
+            mongoHost +
+            "\",\"port\":" +
+            mongoPort +
+            ",\"enableCredentials\":false,\"database\":\"" +
+            mongoDBName +
+            "\",\"reportableCollection\":\"reporter_audits" +
+            "\",\"bulkActions\":1000,\"flushInterval\":5}";
         internalReporter = reporterPluginManager.create("mongodb", configuration);
         logger.info("Internal audit reporter initialized");
 
         logger.info("Initializing audit reporters");
         List<io.gravitee.am.model.Reporter> reporters = reporterService.findAll().blockingGet();
-        reporters.forEach(reporter -> {
-            logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
-            try {
-                Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
-                if (auditReporter != null) {
-                    logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
-                    auditReporters.put(reporter, new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter));
+        reporters.forEach(
+            reporter -> {
+                logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
+                try {
+                    Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration());
+                    if (auditReporter != null) {
+                        logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
+                        auditReporters.put(reporter, new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter));
+                    }
+                } catch (Exception ex) {
+                    logger.error("An error has occurred while loading audit reporter: {} [{}]", reporter.getName(), reporter.getType(), ex);
+                    removeReporter(reporter.getId());
                 }
-            } catch (Exception ex) {
-                logger.error("An error has occurred while loading audit reporter: {} [{}]", reporter.getName(), reporter.getType(), ex);
-                removeReporter(reporter.getId());
             }
-        });
+        );
 
         // deploy verticle
         List<Reporter> allReporters = new ArrayList<>(auditReporters.values());
@@ -122,16 +135,19 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         super.doStop();
 
         if (deploymentId != null) {
-            vertx.undeploy(deploymentId, event -> {
-                for (io.gravitee.reporter.api.Reporter reporter : auditReporters.values()) {
-                    try {
-                        logger.info("Stopping reporter: {}", reporter);
-                        reporter.stop();
-                    } catch (Exception ex) {
-                        logger.error("Unexpected error while stopping reporter", ex);
+            vertx.undeploy(
+                deploymentId,
+                event -> {
+                    for (io.gravitee.reporter.api.Reporter reporter : auditReporters.values()) {
+                        try {
+                            logger.info("Stopping reporter: {}", reporter);
+                            reporter.stop();
+                        } catch (Exception ex) {
+                            logger.error("Unexpected error while stopping reporter", ex);
+                        }
                     }
                 }
-            });
+            );
         }
     }
 
@@ -157,7 +173,6 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     @Override
     public Reporter getReporter(ReferenceType referenceType, String referenceId) {
-
         if (referenceType == ReferenceType.DOMAIN) {
             return doGetReporter(referenceId, System.currentTimeMillis());
         } else {
@@ -173,11 +188,11 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     private Reporter doGetReporter(String domain, long startTime) {
         Optional<Reporter> optionalReporter = auditReporters
-                .entrySet()
-                .stream()
-                .filter(entry -> domain.equals(entry.getKey().getDomain()))
-                .map(entry -> entry.getValue())
-                .findFirst();
+            .entrySet()
+            .stream()
+            .filter(entry -> domain.equals(entry.getKey().getDomain()))
+            .map(entry -> entry.getValue())
+            .findFirst();
 
         if (optionalReporter.isPresent()) {
             return optionalReporter.get();
@@ -208,58 +223,62 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     private Optional<Reporter> doGetReporter0(String domain) {
         return auditReporters
-                .entrySet()
-                .stream()
-                .filter(entry -> domain.equals(entry.getKey().getDomain()))
-                .map(entry -> entry.getValue())
-                .findFirst();
+            .entrySet()
+            .stream()
+            .filter(entry -> domain.equals(entry.getKey().getDomain()))
+            .map(entry -> entry.getValue())
+            .findFirst();
     }
 
     private void deployReporter(String reporterId) {
         logger.info("Management API has received a deploy reporter event for {}", reporterId);
-        reporterService.findById(reporterId)
-                .subscribe(
-                        reporter -> loadReporter(reporter),
-                        error -> logger.error("Unable to deploy reporter {}", reporterId, error),
-                        () -> logger.error("No reporter found with id {}", reporterId));
+        reporterService
+            .findById(reporterId)
+            .subscribe(
+                reporter -> loadReporter(reporter),
+                error -> logger.error("Unable to deploy reporter {}", reporterId, error),
+                () -> logger.error("No reporter found with id {}", reporterId)
+            );
     }
 
     private void reloadReporter(String reporterId) {
         logger.info("Management API has received an update reporter event for {}", reporterId);
-        reporterService.findById(reporterId)
-                .subscribe(
-                        reporter -> {
-                            logger.debug("Reload reporter: {} after configuration update", reporter.getName());
-                            Optional<Reporter> optionalAuditReporter = auditReporters
-                                    .entrySet()
-                                    .stream()
-                                    .filter(entry -> reporter.getId().equals(entry.getKey().getId()))
-                                    .map(entry -> entry.getValue())
-                                    .findFirst();
+        reporterService
+            .findById(reporterId)
+            .subscribe(
+                reporter -> {
+                    logger.debug("Reload reporter: {} after configuration update", reporter.getName());
+                    Optional<Reporter> optionalAuditReporter = auditReporters
+                        .entrySet()
+                        .stream()
+                        .filter(entry -> reporter.getId().equals(entry.getKey().getId()))
+                        .map(entry -> entry.getValue())
+                        .findFirst();
 
-                            if (optionalAuditReporter.isPresent()) {
-                                try {
-                                    Reporter auditReporter = optionalAuditReporter.get();
-                                    // reload the provider if it's enabled
-                                    if (reporter.isEnabled()) {
-                                        auditReporter.stop();
-                                        auditReporters.entrySet().removeIf(entry -> entry.getKey().getId().equals(reporter.getId()));
-                                        loadReporter(reporter);
-                                    } else {
-                                        logger.info("Reporter: {} has been disabled", reporter.getName());
-                                        // unregister event bus consumer
-                                        // we do not stop the underlying reporter because it can be used to fetch reportable
-                                        ((EventBusReporterWrapper) auditReporter).unregister();
-                                    }
-                                } catch (Exception e) {
-                                    logger.error("An error occurs while reloading reporter: {}", reporter.getName(), e);
-                                }
+                    if (optionalAuditReporter.isPresent()) {
+                        try {
+                            Reporter auditReporter = optionalAuditReporter.get();
+                            // reload the provider if it's enabled
+                            if (reporter.isEnabled()) {
+                                auditReporter.stop();
+                                auditReporters.entrySet().removeIf(entry -> entry.getKey().getId().equals(reporter.getId()));
+                                loadReporter(reporter);
                             } else {
-                                logger.info("There is no reporter to reload");
+                                logger.info("Reporter: {} has been disabled", reporter.getName());
+                                // unregister event bus consumer
+                                // we do not stop the underlying reporter because it can be used to fetch reportable
+                                ((EventBusReporterWrapper) auditReporter).unregister();
                             }
-                        },
-                        error -> logger.error("Unable to reload reporter {}", reporterId, error),
-                        () -> logger.error("No reporter found with id {}", reporterId));
+                        } catch (Exception e) {
+                            logger.error("An error occurs while reloading reporter: {}", reporter.getName(), e);
+                        }
+                    } else {
+                        logger.info("There is no reporter to reload");
+                    }
+                },
+                error -> logger.error("Unable to reload reporter {}", reporterId, error),
+                () -> logger.error("No reporter found with id {}", reporterId)
+            );
     }
 
     private void loadReporter(io.gravitee.am.model.Reporter reporter) {
@@ -278,11 +297,11 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     private void removeReporter(String reporterId) {
         try {
             Optional<Reporter> optionalReporter = auditReporters
-                    .entrySet()
-                    .stream()
-                    .filter(entry -> reporterId.equals(entry.getKey().getId()))
-                    .map(entry -> entry.getValue())
-                    .findFirst();
+                .entrySet()
+                .stream()
+                .filter(entry -> reporterId.equals(entry.getKey().getId()))
+                .map(entry -> entry.getValue())
+                .findFirst();
 
             if (optionalReporter.isPresent()) {
                 optionalReporter.get().stop();
@@ -291,30 +310,32 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         } catch (Exception e) {
             logger.error("Unexpected error while removing reporter", e);
         }
-
     }
 
     private void deployReporterVerticle(Collection<Reporter> reporters) {
         Single<String> deployment = RxHelper.deployVerticle(vertx, applicationContext.getBean(AuditReporterVerticle.class));
 
-        deployment.subscribe(id -> {
-            // Deployed
-            deploymentId = id;
-            if (!reporters.isEmpty()) {
-                for (io.gravitee.reporter.api.Reporter reporter : reporters) {
-                    try {
-                        logger.info("Starting reporter: {}", reporter);
-                        reporter.start();
-                    } catch (Exception ex) {
-                        logger.error("Unexpected error while starting reporter", ex);
+        deployment.subscribe(
+            id -> {
+                // Deployed
+                deploymentId = id;
+                if (!reporters.isEmpty()) {
+                    for (io.gravitee.reporter.api.Reporter reporter : reporters) {
+                        try {
+                            logger.info("Starting reporter: {}", reporter);
+                            reporter.start();
+                        } catch (Exception ex) {
+                            logger.error("Unexpected error while starting reporter", ex);
+                        }
                     }
+                } else {
+                    logger.info("\tThere is no reporter to start");
                 }
-            } else {
-                logger.info("\tThere is no reporter to start");
+            },
+            err -> {
+                // Could not deploy
+                logger.error("Reporter service can not be started", err);
             }
-        }, err -> {
-            // Could not deploy
-            logger.error("Reporter service can not be started", err);
-        });
+        );
     }
 }

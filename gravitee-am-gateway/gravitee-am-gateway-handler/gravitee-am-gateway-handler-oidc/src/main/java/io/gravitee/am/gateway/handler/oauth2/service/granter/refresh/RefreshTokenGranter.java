@@ -23,11 +23,10 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGrante
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -48,7 +47,11 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
         super(GrantType.REFRESH_TOKEN);
     }
 
-    public RefreshTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
+    public RefreshTokenGranter(
+        TokenRequestResolver tokenRequestResolver,
+        TokenService tokenService,
+        UserAuthenticationManager userAuthenticationManager
+    ) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
@@ -63,32 +66,44 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
             return Single.error(new InvalidRequestException("A refresh token must be supplied."));
         }
 
-        return super.parseRequest(tokenRequest, client)
-                .flatMap(tokenRequest1 -> getTokenService().refresh(refreshToken, tokenRequest, client)
-                        .map(refreshToken1 -> {
-                            // set resource owner
-                            if (refreshToken1.getSubject() != null) {
-                                tokenRequest1.setSubject(refreshToken1.getSubject());
-                            }
-                            // set scopes
-                            // The requested scope MUST NOT include any scope
-                            // not originally granted by the resource owner, and if omitted is
-                            // treated as equal to the scope originally granted by the resource owner.
-                            final Set<String> originalScopes = (refreshToken1.getScope() != null ? new HashSet(Arrays.asList(refreshToken1.getScope().split("\\s+"))) : null);
-                            final Set<String> requestedScopes = tokenRequest1.getScopes();
-                            if (requestedScopes == null || requestedScopes.isEmpty()) {
-                                tokenRequest1.setScopes(originalScopes);
-                            } else if (originalScopes != null && !originalScopes.isEmpty()) {
-                                Set<String> filteredScopes = requestedScopes
+        return super
+            .parseRequest(tokenRequest, client)
+            .flatMap(
+                tokenRequest1 ->
+                    getTokenService()
+                        .refresh(refreshToken, tokenRequest, client)
+                        .map(
+                            refreshToken1 -> {
+                                // set resource owner
+                                if (refreshToken1.getSubject() != null) {
+                                    tokenRequest1.setSubject(refreshToken1.getSubject());
+                                }
+                                // set scopes
+                                // The requested scope MUST NOT include any scope
+                                // not originally granted by the resource owner, and if omitted is
+                                // treated as equal to the scope originally granted by the resource owner.
+                                final Set<String> originalScopes =
+                                    (
+                                        refreshToken1.getScope() != null
+                                            ? new HashSet(Arrays.asList(refreshToken1.getScope().split("\\s+")))
+                                            : null
+                                    );
+                                final Set<String> requestedScopes = tokenRequest1.getScopes();
+                                if (requestedScopes == null || requestedScopes.isEmpty()) {
+                                    tokenRequest1.setScopes(originalScopes);
+                                } else if (originalScopes != null && !originalScopes.isEmpty()) {
+                                    Set<String> filteredScopes = requestedScopes
                                         .stream()
                                         .filter(requestedScope -> originalScopes.contains(requestedScope))
                                         .collect(Collectors.toSet());
-                                tokenRequest1.setScopes(filteredScopes);
+                                    tokenRequest1.setScopes(filteredScopes);
+                                }
+                                // set decoded refresh token to the current request
+                                tokenRequest1.setRefreshToken(refreshToken1.getAdditionalInformation());
+                                return tokenRequest1;
                             }
-                            // set decoded refresh token to the current request
-                            tokenRequest1.setRefreshToken(refreshToken1.getAdditionalInformation());
-                            return tokenRequest1;
-                        }));
+                        )
+            );
     }
 
     @Override
@@ -99,8 +114,13 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
             return Maybe.empty();
         }
 
-        return userAuthenticationManager.loadUserByUsername(subject)
-                .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
+        return userAuthenticationManager
+            .loadUserByUsername(subject)
+            .onErrorResumeNext(
+                ex -> {
+                    return Maybe.error(new InvalidGrantException());
+                }
+            );
     }
 
     @Override

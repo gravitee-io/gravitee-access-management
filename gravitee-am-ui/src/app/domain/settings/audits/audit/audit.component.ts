@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-audit',
   templateUrl: './audit.component.html',
-  styleUrls: ['./audit.component.scss']
+  styleUrls: ['./audit.component.scss'],
 })
 export class AuditComponent implements OnInit {
   audit: any;
-  config: any = {lineWrapping:true, lineNumbers: true, readOnly: true, mode: 'application/json'};
+  config: any = { lineWrapping: true, lineNumbers: true, readOnly: true, mode: 'application/json' };
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.audit = this.route.snapshot.data['audit'];
+    this.audit = this.route.snapshot.data.audit;
   }
 
   auditDetails() {
@@ -43,5 +42,4 @@ export class AuditComponent implements OnInit {
       return this.audit.type + ' success';
     }
   }
-
 }

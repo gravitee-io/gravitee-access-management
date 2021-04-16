@@ -15,11 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.common.certificate;
 
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
 import io.gravitee.am.model.Domain;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,10 +30,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
-
-import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -56,40 +55,35 @@ public class CertificateManagerTest {
         when(rs256CertificateProvider.signatureAlgorithm()).thenReturn("RS256");
         when(rs512CertificateProvider.signatureAlgorithm()).thenReturn("RS512");
 
-        io.gravitee.am.gateway.certificate.CertificateProvider rs256CertProvider =
-                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
-        io.gravitee.am.gateway.certificate.CertificateProvider rs512CertProvider =
-                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.certificate.CertificateProvider rs256CertProvider = mock(
+            io.gravitee.am.gateway.certificate.CertificateProvider.class
+        );
+        io.gravitee.am.gateway.certificate.CertificateProvider rs512CertProvider = mock(
+            io.gravitee.am.gateway.certificate.CertificateProvider.class
+        );
         when(rs256CertProvider.getProvider()).thenReturn(rs256CertificateProvider);
         when(rs512CertProvider.getProvider()).thenReturn(rs512CertificateProvider);
-        doReturn(Arrays.asList(rs256CertProvider,rs512CertProvider)).when(certificateManager).providers();
+        doReturn(Arrays.asList(rs256CertProvider, rs512CertProvider)).when(certificateManager).providers();
     }
 
     @Test
     public void findByAlgorithm_nullAlgorithm() {
         TestObserver testObserver = certificateManager.findByAlgorithm(null).test();
-        testObserver
-                .assertComplete()
-                .assertNoValues();
-
+        testObserver.assertComplete().assertNoValues();
     }
 
     @Test
     public void findByAlgorithm_emptyAlgorithm() {
         TestObserver testObserver = certificateManager.findByAlgorithm("").test();
         testObserver.assertComplete();
-        testObserver
-                .assertComplete()
-                .assertNoValues();
+        testObserver.assertComplete().assertNoValues();
     }
 
     @Test
     public void findByAlgorithm_unknownAlgorithm() {
         TestObserver testObserver = certificateManager.findByAlgorithm("unknown").test();
         testObserver.assertComplete();
-        testObserver
-                .assertComplete()
-                .assertNoValues();
+        testObserver.assertComplete().assertNoValues();
     }
 
     @Test
@@ -97,11 +91,9 @@ public class CertificateManagerTest {
         TestObserver testObserver = certificateManager.findByAlgorithm("RS512").test();
         testObserver.assertComplete();
         testObserver
-                .assertComplete()
-                .assertValue(o -> "RS512".equals(
-                        ((io.gravitee.am.gateway.certificate.CertificateProvider)o)
-                                .getProvider()
-                                .signatureAlgorithm()
-                ));
+            .assertComplete()
+            .assertValue(
+                o -> "RS512".equals(((io.gravitee.am.gateway.certificate.CertificateProvider) o).getProvider().signatureAlgorithm())
+            );
     }
 }

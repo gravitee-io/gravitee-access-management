@@ -27,7 +27,7 @@ public abstract class SelfUserServiceResponse {
     private String redirectUri;
     private boolean autoLogin;
 
-    public SelfUserServiceResponse() { }
+    public SelfUserServiceResponse() {}
 
     public SelfUserServiceResponse(User user, String redirectUri, boolean autoLogin) {
         this.user = user;

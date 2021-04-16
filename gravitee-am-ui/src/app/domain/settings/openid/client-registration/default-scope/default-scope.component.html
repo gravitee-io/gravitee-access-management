@@ -20,14 +20,13 @@
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="patch()" #defaultScopeForm="ngForm" fxLayout="column">
         <div class="gv-form-section">
-          <scope-selection
-            [initialSelectedScopes]="initialSelectedScopes"
-            [readonly]="readonly"
-            (onScopeSelection)="onChange($event)">
+          <scope-selection [initialSelectedScopes]="initialSelectedScopes" [readonly]="readonly" (onScopeSelection)="onChange($event)">
           </scope-selection>
         </div>
         <div *ngIf="!readonly">
-          <button mat-raised-button [disabled]="(!defaultScopeForm.valid || defaultScopeForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button [disabled]="(!defaultScopeForm.valid || defaultScopeForm.pristine) && !formChanged" type="submit">
+            SAVE
+          </button>
         </div>
       </form>
     </div>
@@ -35,14 +34,22 @@
       <h3>Default scopes</h3>
       <div class="gv-page-description-content">
         <p>
-          This section is used to define some default scope to be automatically added when a client is created through the Openid Connect Dynamic Client Registration endpoint, without any requested scopes.
+          This section is used to define some default scope to be automatically added when a client is created through the Openid Connect
+          Dynamic Client Registration endpoint, without any requested scopes.
         </p>
-        <small><i>As the <a href="https://tools.ietf.org/html/rfc7591#section-2" target="_blank">specification</a> state: If omitted, an authorization server MAY register a client with a default set of scopes.</i></small>
+        <small
+          ><i
+            >As the <a href="https://tools.ietf.org/html/rfc7591#section-2" target="_blank">specification</a> state: If omitted, an
+            authorization server MAY register a client with a default set of scopes.</i
+          ></small
+        >
       </div>
     </div>
   </div>
-  <app-emptystate *ngIf="!dcrIsEnabled"
-                  [message]="'Openid Connect Dynamic Client Registration is disabled.'"
-                  [subMessage]="'This feature can be enable through the Settings tab.'">
+  <app-emptystate
+    *ngIf="!dcrIsEnabled"
+    [message]="'Openid Connect Dynamic Client Registration is disabled.'"
+    [subMessage]="'This feature can be enable through the Settings tab.'"
+  >
   </app-emptystate>
 </div>

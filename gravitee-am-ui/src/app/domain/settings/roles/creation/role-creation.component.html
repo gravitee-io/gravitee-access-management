@@ -31,18 +31,18 @@
 
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required />
           <mat-hint>A name for your role.</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Description</mat-label>
-          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description">
+          <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description" />
           <mat-hint>A description for your role.</mat-hint>
         </mat-form-field>
       </div>
       <div fxLayout="row" fxLayoutAlign="end">
-        <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
+        <a mat-button [routerLink]="['..']" style="margin-right: 20px">CANCEL</a>
         <button mat-raised-button [disabled]="!roleForm.valid || roleForm.pristine" type="submit">CREATE</button>
       </div>
     </form>
@@ -54,13 +54,11 @@
           <span *ngIf="!organizationContext">Each role has a set of permissions to limit user actions.</span>
         </p>
         <div *ngIf="organizationContext">
-          <p>
-            Each role has a scope to specify what a user can do on a specific part of the Admin Portal.
-          </p>
+          <p>Each role has a scope to specify what a user can do on a specific part of the Admin Portal.</p>
           <small>
-            <b><i>MANAGEMENT : </i></b> Platform settings<br>
-            <b><i>DOMAIN : </i></b> Security domain settings<br>
-            <b><i>APPLICATION : </i></b> Application settings<br>
+            <b><i>MANAGEMENT : </i></b> Platform settings<br />
+            <b><i>DOMAIN : </i></b> Security domain settings<br />
+            <b><i>APPLICATION : </i></b> Application settings<br />
           </small>
         </div>
       </div>

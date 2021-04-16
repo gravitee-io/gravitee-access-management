@@ -33,4 +33,3 @@ public class IdentityProviderWithApplicationsException extends AbstractManagemen
         return "You can't delete an identity provider with existing clients.";
     }
 }
-

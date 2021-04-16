@@ -178,59 +178,61 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         csrfHandler(oauth2Router);
 
         // Authorization endpoint
-        oauth2Router.route(HttpMethod.GET,"/authorize")
-                .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
-                .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
-                .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService))
-                .handler(new AuthorizationRequestParseParametersHandler(domain))
-                .handler(new AuthorizationRequestValidateParametersHandler(domain))
-                .handler(authenticationFlowHandler.create())
-                .handler(new AuthorizationRequestResolveHandler())
-                .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService, domain))
-                .handler(new AuthorizationEndpoint(flow))
-                .failureHandler(new AuthorizationRequestFailureHandler(domain, openIDDiscoveryService, jwtService, jweService));
+        oauth2Router
+            .route(HttpMethod.GET, "/authorize")
+            .handler(new AuthorizationRequestParseRequiredParametersHandler(openIDDiscoveryService))
+            .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+            .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService))
+            .handler(new AuthorizationRequestParseParametersHandler(domain))
+            .handler(new AuthorizationRequestValidateParametersHandler(domain))
+            .handler(authenticationFlowHandler.create())
+            .handler(new AuthorizationRequestResolveHandler())
+            .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService, domain))
+            .handler(new AuthorizationEndpoint(flow))
+            .failureHandler(new AuthorizationRequestFailureHandler(domain, openIDDiscoveryService, jwtService, jweService));
 
         // Authorization consent endpoint
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler(clientSyncService);
-        oauth2Router.route(HttpMethod.GET, "/consent")
-                .handler(userConsentPrepareContextHandler)
-                .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
-                .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine));
-        oauth2Router.route(HttpMethod.POST, "/consent")
-                .handler(userConsentPrepareContextHandler)
-                .handler(new UserConsentProcessHandler(userConsentService, domain))
-                .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
-                .handler(new UserConsentPostEndpoint());
-        oauth2Router.route("/consent")
-                .failureHandler(new UserConsentFailureHandler(domain));
+        oauth2Router
+            .route(HttpMethod.GET, "/consent")
+            .handler(userConsentPrepareContextHandler)
+            .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
+            .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine));
+        oauth2Router
+            .route(HttpMethod.POST, "/consent")
+            .handler(userConsentPrepareContextHandler)
+            .handler(new UserConsentProcessHandler(userConsentService, domain))
+            .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
+            .handler(new UserConsentPostEndpoint());
+        oauth2Router.route("/consent").failureHandler(new UserConsentFailureHandler(domain));
 
         // Token endpoint
-        oauth2Router.route(HttpMethod.OPTIONS, "/token")
-                .handler(corsHandler);
-        oauth2Router.route(HttpMethod.POST, "/token")
-                .handler(corsHandler)
-                .handler(new TokenRequestParseHandler())
-                .handler(clientAuthHandler)
-                .handler(new TokenEndpoint(tokenGranter));
+        oauth2Router.route(HttpMethod.OPTIONS, "/token").handler(corsHandler);
+        oauth2Router
+            .route(HttpMethod.POST, "/token")
+            .handler(corsHandler)
+            .handler(new TokenRequestParseHandler())
+            .handler(clientAuthHandler)
+            .handler(new TokenEndpoint(tokenGranter));
 
         // Introspection endpoint
-        oauth2Router.route(HttpMethod.POST, "/introspect")
-                .consumes(MediaType.APPLICATION_FORM_URLENCODED)
-                .handler(clientAuthHandler)
-                .handler(new IntrospectionEndpoint(introspectionService));
+        oauth2Router
+            .route(HttpMethod.POST, "/introspect")
+            .consumes(MediaType.APPLICATION_FORM_URLENCODED)
+            .handler(clientAuthHandler)
+            .handler(new IntrospectionEndpoint(introspectionService));
 
         // Revocation endpoint
-        oauth2Router.route(HttpMethod.OPTIONS, "/revoke")
-                .handler(corsHandler);
-        oauth2Router.route(HttpMethod.POST, "/revoke")
-                .consumes(MediaType.APPLICATION_FORM_URLENCODED)
-                .handler(corsHandler)
-                .handler(clientAuthHandler)
-                .handler(new RevocationTokenEndpoint(revocationTokenService));
+        oauth2Router.route(HttpMethod.OPTIONS, "/revoke").handler(corsHandler);
+        oauth2Router
+            .route(HttpMethod.POST, "/revoke")
+            .consumes(MediaType.APPLICATION_FORM_URLENCODED)
+            .handler(corsHandler)
+            .handler(clientAuthHandler)
+            .handler(new RevocationTokenEndpoint(revocationTokenService));
 
         // Error endpoint
-        oauth2Router.route(HttpMethod.GET, "/error")
-                .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
+        oauth2Router.route(HttpMethod.GET, "/error").handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
 
         // error handler
         errorHandler(oauth2Router);
@@ -250,16 +252,8 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
     private void sessionAndCookieHandler(Router router) {
         // OAuth 2.0 Authorization endpoint
-        router
-                .route("/authorize")
-                .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(ssoSessionHandler);
-        router
-                .route("/consent")
-                .handler(cookieHandler)
-                .handler(sessionHandler)
-                .handler(ssoSessionHandler);
+        router.route("/authorize").handler(cookieHandler).handler(sessionHandler).handler(ssoSessionHandler);
+        router.route("/consent").handler(cookieHandler).handler(sessionHandler).handler(ssoSessionHandler);
     }
 
     private void csrfHandler(Router router) {
@@ -269,5 +263,4 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private void errorHandler(Router router) {
         router.route().failureHandler(new ExceptionHandler());
     }
-
 }

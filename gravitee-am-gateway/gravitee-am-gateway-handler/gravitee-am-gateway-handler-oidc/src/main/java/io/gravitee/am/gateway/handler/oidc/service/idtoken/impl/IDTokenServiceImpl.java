@@ -23,7 +23,6 @@ import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.idtoken.IDToken;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
@@ -32,22 +31,22 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenUtils;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -79,40 +78,63 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Override
     public Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext) {
         // use or create execution context
-        return Single.fromCallable(() -> executionContext != null ? executionContext : createExecution(oAuth2Request, client, user))
-                .flatMap(executionContext1 -> {
+        return Single
+            .fromCallable(() -> executionContext != null ? executionContext : createExecution(oAuth2Request, client, user))
+            .flatMap(
+                executionContext1 -> {
                     // create JWT ID Token
                     IDToken idToken = createIDTokenJWT(oAuth2Request, client, user, executionContext);
 
                     // sign ID Token
-                    return certificateManager.findByAlgorithm(client.getIdTokenSignedResponseAlg())
-                            .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                            .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                            .flatMapSingle(certificateProvider -> {
+                    return certificateManager
+                        .findByAlgorithm(client.getIdTokenSignedResponseAlg())
+                        .switchIfEmpty(certificateManager.get(client.getCertificate()))
+                        .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                        .flatMapSingle(
+                            certificateProvider -> {
                                 // set hash claims (hybrid flow)
                                 if (oAuth2Request.getContext() != null && !oAuth2Request.getContext().isEmpty()) {
-                                    oAuth2Request.getContext().forEach((claimName, claimValue) -> {
-                                        if (claimValue != null) {
-                                            CertificateMetadata certificateMetadata = certificateProvider.getProvider().certificateMetadata();
-                                            String digestAlgorithm = defaultDigestAlgorithm;
-                                            if (certificateMetadata != null
-                                                    && certificateMetadata.getMetadata() != null
-                                                    && certificateMetadata.getMetadata().get(CertificateMetadata.DIGEST_ALGORITHM_NAME) != null) {
-                                                digestAlgorithm = (String) certificateMetadata.getMetadata().get(CertificateMetadata.DIGEST_ALGORITHM_NAME);
+                                    oAuth2Request
+                                        .getContext()
+                                        .forEach(
+                                            (claimName, claimValue) -> {
+                                                if (claimValue != null) {
+                                                    CertificateMetadata certificateMetadata = certificateProvider
+                                                        .getProvider()
+                                                        .certificateMetadata();
+                                                    String digestAlgorithm = defaultDigestAlgorithm;
+                                                    if (
+                                                        certificateMetadata != null &&
+                                                        certificateMetadata.getMetadata() != null &&
+                                                        certificateMetadata.getMetadata().get(CertificateMetadata.DIGEST_ALGORITHM_NAME) !=
+                                                        null
+                                                    ) {
+                                                        digestAlgorithm =
+                                                            (String) certificateMetadata
+                                                                .getMetadata()
+                                                                .get(CertificateMetadata.DIGEST_ALGORITHM_NAME);
+                                                    }
+                                                    idToken.addAdditionalClaim(
+                                                        claimName,
+                                                        getHashValue((String) claimValue, digestAlgorithm)
+                                                    );
+                                                }
                                             }
-                                            idToken.addAdditionalClaim(claimName, getHashValue((String) claimValue, digestAlgorithm));
-                                        }
-                                    });
+                                        );
                                 }
                                 return jwtService.encode(idToken, certificateProvider);
-                            })
-                            .flatMap(signedIdToken -> {
-                                if(client.getIdTokenEncryptedResponseAlg()!=null) {
+                            }
+                        )
+                        .flatMap(
+                            signedIdToken -> {
+                                if (client.getIdTokenEncryptedResponseAlg() != null) {
                                     return jweService.encryptIdToken(signedIdToken, client);
                                 }
                                 return Single.just(signedIdToken);
-                            });
-                });
+                            }
+                        );
+                }
+            );
     }
 
     public void setObjectMapper(ObjectMapper objectMapper) {
@@ -162,7 +184,8 @@ public class IDTokenServiceImpl implements IDTokenService {
 
             // 2. process the request using the claims values (If present, the listed Claims are being requested to be added to the default Claims in the ID Token)
             if (oAuth2Request.parameters() != null && oAuth2Request.parameters().getFirst(Parameters.CLAIMS) != null) {
-                requestForSpecificClaims = processClaimsRequest(oAuth2Request.parameters().getFirst(Parameters.CLAIMS), userClaims, idToken);
+                requestForSpecificClaims =
+                    processClaimsRequest(oAuth2Request.parameters().getFirst(Parameters.CLAIMS), userClaims, idToken);
             }
 
             // 3. If no claims requested, grab all user claims
@@ -192,13 +215,14 @@ public class IDTokenServiceImpl implements IDTokenService {
         }
 
         // get requested scopes claims
-        final List<String> scopesClaims = scopes.stream()
-                .map(scope -> scope.toUpperCase())
-                .filter(scope -> Scope.exists(scope) && !Scope.valueOf(scope).getClaims().isEmpty())
-                .map(scope -> Scope.valueOf(scope))
-                .map(scope -> scope.getClaims())
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+        final List<String> scopesClaims = scopes
+            .stream()
+            .map(scope -> scope.toUpperCase())
+            .filter(scope -> Scope.exists(scope) && !Scope.valueOf(scope).getClaims().isEmpty())
+            .map(scope -> Scope.valueOf(scope))
+            .map(scope -> scope.getClaims())
+            .flatMap(List::stream)
+            .collect(Collectors.toList());
 
         // no OpenID Connect scopes requested continue
         if (scopesClaims.isEmpty()) {
@@ -206,11 +230,13 @@ public class IDTokenServiceImpl implements IDTokenService {
         }
 
         // return specific available sets of information made by scope value request
-        scopesClaims.forEach(scopeClaim -> {
-            if (userClaims.containsKey(scopeClaim)) {
-                requestedClaims.putIfAbsent(scopeClaim, userClaims.get(scopeClaim));
+        scopesClaims.forEach(
+            scopeClaim -> {
+                if (userClaims.containsKey(scopeClaim)) {
+                    requestedClaims.putIfAbsent(scopeClaim, userClaims.get(scopeClaim));
+                }
             }
-        });
+        );
 
         return true;
     }
@@ -226,11 +252,15 @@ public class IDTokenServiceImpl implements IDTokenService {
         try {
             ClaimsRequest claimsRequest = objectMapper.readValue(claimsValue, ClaimsRequest.class);
             if (claimsRequest != null && claimsRequest.getIdTokenClaims() != null) {
-                claimsRequest.getIdTokenClaims().forEach((key, value) -> {
-                    if (userClaims.containsKey(key)) {
-                        idToken.addAdditionalClaim(key, userClaims.get(key));
-                    }
-                });
+                claimsRequest
+                    .getIdTokenClaims()
+                    .forEach(
+                        (key, value) -> {
+                            if (userClaims.containsKey(key)) {
+                                idToken.addAdditionalClaim(key, userClaims.get(key));
+                            }
+                        }
+                    );
                 return true;
             }
         } catch (Exception e) {
@@ -246,23 +276,26 @@ public class IDTokenServiceImpl implements IDTokenService {
     private void enhanceIDToken(JWT jwt, List<TokenClaim> customClaims, ExecutionContext executionContext) {
         if (customClaims != null && !customClaims.isEmpty()) {
             customClaims
-                    .stream()
-                    .filter(tokenClaim -> TokenTypeHint.ID_TOKEN.equals(tokenClaim.getTokenType()))
-                    .forEach(tokenClaim -> {
+                .stream()
+                .filter(tokenClaim -> TokenTypeHint.ID_TOKEN.equals(tokenClaim.getTokenType()))
+                .forEach(
+                    tokenClaim -> {
                         try {
                             String claimName = tokenClaim.getClaimName();
                             String claimExpression = tokenClaim.getClaimValue();
-                            Object extValue = (claimExpression != null) ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class) : null;
+                            Object extValue = (claimExpression != null)
+                                ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class)
+                                : null;
                             if (extValue != null) {
                                 jwt.putIfAbsent(claimName, extValue);
                             }
                         } catch (Exception ex) {
                             logger.debug("An error occurs while parsing expression language : {}", tokenClaim.getClaimValue(), ex);
                         }
-                    });
+                    }
+                );
         }
     }
-
 
     private ExecutionContext createExecution(OAuth2Request request, Client client, User user) {
         ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, null);

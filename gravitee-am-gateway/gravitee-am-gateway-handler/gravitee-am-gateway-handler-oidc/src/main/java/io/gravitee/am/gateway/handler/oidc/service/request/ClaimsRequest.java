@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oidc.service.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Map;
 
 /**
@@ -56,11 +55,13 @@ public class ClaimsRequest {
      * OPTIONAL. Requests that the Claim be returned with one of a set of values, with the values appearing in order of preference.œ
      */
     public static final String VALUES = "values";
+
     /**
      * Individual Claims to be returned from the UserInfo Endpoint.
      */
     @JsonProperty("userinfo")
     private Map<String, Object> userInfoClaims;
+
     /**
      * Individual Claims to be returned in the ID Token.
      */
@@ -84,10 +85,10 @@ public class ClaimsRequest {
     }
 
     public static class Essential {
+
         private boolean essential;
 
-        public Essential() {
-        }
+        public Essential() {}
 
         public Essential(boolean essential) {
             this.essential = essential;

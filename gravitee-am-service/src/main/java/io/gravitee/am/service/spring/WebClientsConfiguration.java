@@ -18,12 +18,11 @@ package io.gravitee.am.service.spring;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import java.net.MalformedURLException;
+import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.net.MalformedURLException;
-import java.net.URI;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

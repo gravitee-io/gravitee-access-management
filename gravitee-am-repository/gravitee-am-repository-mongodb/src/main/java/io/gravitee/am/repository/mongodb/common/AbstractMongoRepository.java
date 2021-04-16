@@ -30,14 +30,14 @@ public abstract class AbstractMongoRepository {
     private final Logger logger = LoggerFactory.getLogger(AbstractMongoRepository.class);
 
     public void createIndex(MongoCollection<?> collection, Document document) {
-
-       this.createIndex(collection, document, new IndexOptions());
+        this.createIndex(collection, document, new IndexOptions());
     }
 
     public void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions) {
-
-        Single.fromPublisher(collection.createIndex(document, indexOptions))
-                .doOnSuccess(s -> logger.debug("Created an index named: {}", s))
-                .doOnError(throwable -> logger.error("Error occurs during creation of index",  throwable)).blockingGet();
+        Single
+            .fromPublisher(collection.createIndex(document, indexOptions))
+            .doOnSuccess(s -> logger.debug("Created an index named: {}", s))
+            .doOnError(throwable -> logger.error("Error occurs during creation of index", throwable))
+            .blockingGet();
     }
 }

@@ -17,6 +17,8 @@ package io.gravitee.am.management.service.impl;
 
 import io.gravitee.am.management.service.NewsletterService;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -25,9 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,13 +47,20 @@ public class NewsletterServiceImpl implements NewsletterService, InitializingBea
 
     @Override
     public void subscribe(Object user) {
-        executorService.execute(() -> {
-            client.post(newsletterURI).sendJson(user, handler -> {
-                if (handler.failed()) {
-                    LOGGER.error("An error has occurred while register newsletter for a user", handler.cause());
-                }
-            });
-        });
+        executorService.execute(
+            () -> {
+                client
+                    .post(newsletterURI)
+                    .sendJson(
+                        user,
+                        handler -> {
+                            if (handler.failed()) {
+                                LOGGER.error("An error has occurred while register newsletter for a user", handler.cause());
+                            }
+                        }
+                    );
+            }
+        );
     }
 
     @Override

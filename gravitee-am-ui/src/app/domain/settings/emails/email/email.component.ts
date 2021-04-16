@@ -21,7 +21,7 @@ import { AuthService } from '../../../../services/auth.service';
 @Component({
   selector: 'app-domain-email',
   templateUrl: './email.component.html',
-  styleUrls: ['./email.component.scss']
+  styleUrls: ['./email.component.scss'],
 })
 export class DomainSettingsEmailComponent implements OnInit {
   private domainId: string;
@@ -31,13 +31,11 @@ export class DomainSettingsEmailComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
-              private authService: AuthService) { }
+  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService, private authService: AuthService) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.rawTemplate = this.route.snapshot.queryParams['template'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.rawTemplate = this.route.snapshot.queryParams.template;
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.createMode = this.authService.hasPermissions(['domain_email_template_create']);
     this.editMode = this.authService.hasPermissions(['domain_email_template_update']);

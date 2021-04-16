@@ -20,14 +20,12 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 public interface JWTService {
-
     /**
      * Encode raw JWT to JWT signed string representation
      * @param jwt JWT to encode

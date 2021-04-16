@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.service.impl.application;
 
+import static io.gravitee.am.common.oauth2.ResponseType.CODE;
+import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.*;
+
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.utils.RandomString;
@@ -23,15 +27,10 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import static io.gravitee.am.common.oauth2.ResponseType.CODE;
-import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
-import static io.gravitee.am.common.oidc.ResponseType.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -69,7 +68,9 @@ public class ApplicationNativeTemplate extends ApplicationAbstractTemplate {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
         oAuthSettings.setClientId(oAuthSettings.getClientId() == null ? RandomString.generate() : oAuthSettings.getClientId());
         // we generate a client secret because a native application might use the password flow
-        oAuthSettings.setClientSecret(oAuthSettings.getClientSecret() == null ? SecureRandomString.generate() : oAuthSettings.getClientSecret());
+        oAuthSettings.setClientSecret(
+            oAuthSettings.getClientSecret() == null ? SecureRandomString.generate() : oAuthSettings.getClientSecret()
+        );
         oAuthSettings.setClientName(oAuthSettings.getClientName() == null ? application.getName() : oAuthSettings.getClientName());
         oAuthSettings.setClientType(ClientType.PUBLIC);
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.NATIVE);
@@ -77,9 +78,13 @@ public class ApplicationNativeTemplate extends ApplicationAbstractTemplate {
         if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
             // set grant types and response types
             oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.IMPLICIT, GrantType.PASSWORD));
-            oAuthSettings.setResponseTypes(Arrays.asList(CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN, ID_TOKEN, ID_TOKEN_TOKEN, CODE, TOKEN));
+            oAuthSettings.setResponseTypes(
+                Arrays.asList(CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN, ID_TOKEN, ID_TOKEN_TOKEN, CODE, TOKEN)
+            );
         } else {
-            Set<String> defaultResponseTypes = oAuthSettings.getResponseTypes() == null ? new HashSet<>() : new HashSet<>(oAuthSettings.getResponseTypes());
+            Set<String> defaultResponseTypes = oAuthSettings.getResponseTypes() == null
+                ? new HashSet<>()
+                : new HashSet<>(oAuthSettings.getResponseTypes());
             if (oAuthSettings.getGrantTypes().contains(GrantType.AUTHORIZATION_CODE)) {
                 // set default authorization code default response types
                 if (!haveAuthorizationCodeResponseTypes(oAuthSettings.getResponseTypes())) {

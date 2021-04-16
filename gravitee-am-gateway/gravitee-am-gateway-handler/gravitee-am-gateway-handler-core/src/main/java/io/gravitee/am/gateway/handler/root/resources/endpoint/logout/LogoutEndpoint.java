@@ -54,19 +54,25 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext routingContext) {
         // invalidate session
-        invalidateSession(routingContext, invalidateSessionHandler -> {
-            // invalidate tokens if option is enabled
-            if (invalidateTokensEnabled(routingContext)) {
-                invalidateTokens(invalidateSessionHandler.result(), invalidateTokensHandler -> {
-                    if (invalidateTokensHandler.failed()) {
-                        LOGGER.error("An error occurs while invalidating user tokens", invalidateSessionHandler.cause());
-                    }
+        invalidateSession(
+            routingContext,
+            invalidateSessionHandler -> {
+                // invalidate tokens if option is enabled
+                if (invalidateTokensEnabled(routingContext)) {
+                    invalidateTokens(
+                        invalidateSessionHandler.result(),
+                        invalidateTokensHandler -> {
+                            if (invalidateTokensHandler.failed()) {
+                                LOGGER.error("An error occurs while invalidating user tokens", invalidateSessionHandler.cause());
+                            }
+                            doRedirect(routingContext);
+                        }
+                    );
+                } else {
                     doRedirect(routingContext);
-                });
-            } else {
-                doRedirect(routingContext);
+                }
             }
-        });
+        );
     }
 
     private void invalidateSession(RoutingContext routingContext, Handler<AsyncResult<User>> handler) {
@@ -94,25 +100,33 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
             return;
         }
 
-        tokenService.deleteByUserId(user.getId())
-                .subscribe(
-                        () -> handler.handle(Future.succeededFuture()),
-                        error -> handler.handle(Future.failedFuture(error)));
-
+        tokenService
+            .deleteByUserId(user.getId())
+            .subscribe(() -> handler.handle(Future.succeededFuture()), error -> handler.handle(Future.failedFuture(error)));
     }
 
     private void doRedirect(RoutingContext routingContext) {
         // redirect to target url
         String logoutRedirectUrl = routingContext.request().getParam(LOGOUT_URL_PARAMETER);
         routingContext
-                .response()
-                .putHeader(HttpHeaders.LOCATION, (logoutRedirectUrl != null && !logoutRedirectUrl.isEmpty()) ? logoutRedirectUrl : DEFAULT_TARGET_URL)
-                .setStatusCode(302)
-                .end();
+            .response()
+            .putHeader(
+                HttpHeaders.LOCATION,
+                (logoutRedirectUrl != null && !logoutRedirectUrl.isEmpty()) ? logoutRedirectUrl : DEFAULT_TARGET_URL
+            )
+            .setStatusCode(302)
+            .end();
     }
 
     private void report(User endUser, HttpServerRequest request) {
-        auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class).domain(domain.getId()).user(endUser).ipAddress(remoteAddress(request)).userAgent(userAgent(request)));
+        auditService.report(
+            AuditBuilder
+                .builder(LogoutAuditBuilder.class)
+                .domain(domain.getId())
+                .user(endUser)
+                .ipAddress(remoteAddress(request))
+                .userAgent(userAgent(request))
+        );
     }
 
     private boolean invalidateTokensEnabled(RoutingContext routingContext) {
@@ -124,7 +138,7 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
         String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;

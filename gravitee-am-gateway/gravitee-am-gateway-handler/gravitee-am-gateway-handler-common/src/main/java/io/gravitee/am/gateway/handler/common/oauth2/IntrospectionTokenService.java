@@ -23,6 +23,5 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface IntrospectionTokenService {
-
     Single<JWT> introspect(String token, boolean offlineVerification);
 }

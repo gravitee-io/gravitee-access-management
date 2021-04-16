@@ -22,6 +22,5 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface IntrospectionService {
-
     Single<IntrospectionResponse> introspect(IntrospectionRequest request);
 }

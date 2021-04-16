@@ -28,8 +28,7 @@ import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.net.URI;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -38,13 +37,13 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.net.URI;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"email"})
+@Api(tags = { "email" })
 public class EmailsResource extends AbstractResource {
 
     @Context
@@ -58,56 +57,76 @@ public class EmailsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Find a email",
-            notes = "User must have the DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified domain " +
-                    "or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified environment " +
-                    "or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Email successfully fetched"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Find a email",
+        notes = "User must have the DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified domain " +
+        "or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified environment " +
+        "or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 200, message = "Email successfully fetched"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void get(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @NotNull @QueryParam("template") Template emailTemplate,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @NotNull @QueryParam("template") Template emailTemplate,
+        @Suspended final AsyncResponse response
+    ) {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EMAIL_TEMPLATE, Acl.READ)
-                .andThen(emailTemplateService.findByDomainAndTemplate(domain, emailTemplate.template()))
-                .map(email -> Response.ok(email).build())
-                .defaultIfEmpty(Response.ok(new Email(false)).build())
-                .subscribe(response::resume, response::resume);
+            .andThen(emailTemplateService.findByDomainAndTemplate(domain, emailTemplate.template()))
+            .map(email -> Response.ok(email).build())
+            .defaultIfEmpty(Response.ok(new Email(false)).build())
+            .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a email",
-            notes = "User must have the DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified domain " +
-                    "or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified environment " +
-                    "or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Email successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Create a email",
+        notes = "User must have the DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified domain " +
+        "or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified environment " +
+        "or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 201, message = "Email successfully created"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void create(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @ApiParam(name = "email", required = true)
-            @Valid @NotNull final NewEmail newEmail,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @ApiParam(name = "email", required = true) @Valid @NotNull final NewEmail newEmail,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EMAIL_TEMPLATE, Acl.CREATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> emailTemplateService.create(domain, newEmail, authenticatedUser))
-                        .map(email -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/emails/" + email.getId()))
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(__ -> emailTemplateService.create(domain, newEmail, authenticatedUser))
+                    .map(
+                        email ->
+                            Response
+                                .created(
+                                    URI.create(
+                                        "/organizations/" +
+                                        organizationId +
+                                        "/environments/" +
+                                        environmentId +
+                                        "/domains/" +
+                                        domain +
+                                        "/emails/" +
+                                        email.getId()
+                                    )
+                                )
                                 .entity(email)
-                                .build()))
-                .subscribe(response::resume, response::resume);
+                                .build()
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{email}")

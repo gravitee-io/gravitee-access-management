@@ -33,7 +33,6 @@ public class TechnicalException extends Exception {
         super(message, cause);
     }
 
-
     public TechnicalException(Throwable cause) {
         super(cause);
     }

@@ -74,7 +74,6 @@ public abstract class Token {
      */
     public static final String SCOPE = "scope";
 
-
     public Token(String value) {
         this.value = value;
     }

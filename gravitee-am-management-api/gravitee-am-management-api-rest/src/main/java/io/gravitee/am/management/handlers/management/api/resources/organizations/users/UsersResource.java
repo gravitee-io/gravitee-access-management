@@ -30,8 +30,10 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.net.URI;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -40,16 +42,13 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"user"})
+@Api(tags = { "user" })
 public class UsersResource extends AbstractResource {
 
     private static final int MAX_USERS_SIZE_PER_PAGE = 30;
@@ -69,52 +68,70 @@ public class UsersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List users of the organization",
-            notes = "User must have the ORGANIZATION_USER[LIST] permission on the specified organization. " +
-                    "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
-                    "Last login and identity provider name will be also returned if current user has ORGANIZATION_USER[READ] permission on the organization.")
-    @ApiResponses({
+    @ApiOperation(
+        value = "List users of the organization",
+        notes = "User must have the ORGANIZATION_USER[LIST] permission on the specified organization. " +
+        "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
+        "Last login and identity provider name will be also returned if current user has ORGANIZATION_USER[READ] permission on the organization."
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "List users of the organization", response = User.class, responseContainer = "Set"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void list(
-            @PathParam("organizationId") String organizationId,
-            @QueryParam("q") String query,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @QueryParam("q") String query,
+        @QueryParam("page") @DefaultValue("0") int page,
+        @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
+        @Suspended final AsyncResponse response
+    ) {
         io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
         final Single<Page<User>> usersPageObs;
 
         if (query != null) {
-            usersPageObs = userService.search(ReferenceType.ORGANIZATION, organizationId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+            usersPageObs =
+                userService.search(ReferenceType.ORGANIZATION, organizationId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
         } else {
-            usersPageObs = userService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+            usersPageObs =
+                userService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
         }
 
-        permissionService.findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
-                .flatMap(organizationPermissions ->
-                        checkPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.LIST)
-                                .andThen(usersPageObs.flatMap(pagedUsers ->
-                                        Observable.fromIterable(pagedUsers.getData())
-                                                .flatMapSingle(user -> filterUserInfos(organizationPermissions, user))
-                                                .toSortedList(Comparator.comparing(User::getUsername))
-                                                .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount())))))
-                .subscribe(response::resume, response::resume);
+        permissionService
+            .findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
+            .flatMap(
+                organizationPermissions ->
+                    checkPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.LIST)
+                        .andThen(
+                            usersPageObs.flatMap(
+                                pagedUsers ->
+                                    Observable
+                                        .fromIterable(pagedUsers.getData())
+                                        .flatMapSingle(user -> filterUserInfos(organizationPermissions, user))
+                                        .toSortedList(Comparator.comparing(User::getUsername))
+                                        .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount()))
+                            )
+                        )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a platform user",
-            notes = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "User successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Create a platform user",
+        notes = "User must have the ORGANIZATION_USER[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 201, message = "User successfully created"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void create(
-            @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "user", required = true) @Valid @NotNull final NewUser newUser,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @ApiParam(name = "user", required = true) @Valid @NotNull final NewUser newUser,
+        @Suspended final AsyncResponse response
+    ) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         // user must have a password in no pre registration mode
@@ -132,12 +149,15 @@ public class UsersResource extends AbstractResource {
         }
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.CREATE)
-                .andThen(userService.create(ReferenceType.ORGANIZATION, organizationId, newUser, authenticatedUser)
-                        .map(user -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/users/" + user.getId()))
-                                .entity(user)
-                                .build()))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                userService
+                    .create(ReferenceType.ORGANIZATION, organizationId, newUser, authenticatedUser)
+                    .map(
+                        user ->
+                            Response.created(URI.create("/organizations/" + organizationId + "/users/" + user.getId())).entity(user).build()
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{user}")
@@ -146,7 +166,6 @@ public class UsersResource extends AbstractResource {
     }
 
     private Single<User> filterUserInfos(Map<Permission, Set<Acl>> organizationPermissions, User user) {
-
         User filteredUser;
 
         if (hasPermission(organizationPermissions, Permission.ORGANIZATION_USER, Acl.READ)) {
@@ -155,13 +174,16 @@ public class UsersResource extends AbstractResource {
             filteredUser.setLoggedAt(user.getLoggedAt());
 
             if (user.getSource() != null) {
-                return identityProviderService.findById(user.getSource())
-                        .map(idP -> {
+                return identityProviderService
+                    .findById(user.getSource())
+                    .map(
+                        idP -> {
                             filteredUser.setSource(idP.getName());
                             return filteredUser;
-                        })
-                        .defaultIfEmpty(filteredUser)
-                        .toSingle();
+                        }
+                    )
+                    .defaultIfEmpty(filteredUser)
+                    .toSingle();
             }
         } else {
             // Current user doesn't have read permission, select only few information and remove default values that could be inexact.

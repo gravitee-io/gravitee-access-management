@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.service.utils;
 
-import io.gravitee.am.model.oidc.Client;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
 import static io.gravitee.am.common.oauth2.GrantType.AUTHORIZATION_CODE;
 import static io.gravitee.am.common.oauth2.GrantType.IMPLICIT;
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
 import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.*;
+
+import io.gravitee.am.model.oidc.Client;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -32,9 +31,9 @@ import static io.gravitee.am.common.oidc.ResponseType.*;
  */
 public class ResponseTypeUtils {
 
-    private static final Set<String> SUPPORTED_RESPONSE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            CODE, TOKEN, ID_TOKEN, ID_TOKEN_TOKEN, CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN
-    )));
+    private static final Set<String> SUPPORTED_RESPONSE_TYPES = Collections.unmodifiableSet(
+        new HashSet<>(Arrays.asList(CODE, TOKEN, ID_TOKEN, ID_TOKEN_TOKEN, CODE_TOKEN, CODE_ID_TOKEN, CODE_ID_TOKEN_TOKEN))
+    );
 
     public static List<String> getSupportedResponseTypes() {
         return Collections.unmodifiableList(SUPPORTED_RESPONSE_TYPES.stream().sorted().collect(Collectors.toList()));
@@ -78,7 +77,7 @@ public class ResponseTypeUtils {
      */
     public static Client applyDefaultResponseType(Client client) {
         Set responseType = applyDefaultResponseType(client.getAuthorizedGrantTypes());
-        client.setResponseTypes((List<String>)responseType.stream().collect(Collectors.toList()));
+        client.setResponseTypes((List<String>) responseType.stream().collect(Collectors.toList()));
         return client;
     }
 
@@ -101,7 +100,9 @@ public class ResponseTypeUtils {
     }
 
     public static boolean isImplicitFlow(String responseType) {
-        return responseType!=null && Arrays.stream(responseType.split("\\s")).allMatch(type -> type.equals(TOKEN) || type.equals(ID_TOKEN));
+        return (
+            responseType != null && Arrays.stream(responseType.split("\\s")).allMatch(type -> type.equals(TOKEN) || type.equals(ID_TOKEN))
+        );
     }
 
     public static boolean isHybridFlow(String responseType) {
@@ -109,6 +110,6 @@ public class ResponseTypeUtils {
     }
 
     public static boolean requireNonce(String responseType) {
-        return responseType!=null && (isHybridFlow(responseType) || ID_TOKEN.equals(responseType) || ID_TOKEN_TOKEN.equals(responseType));
+        return responseType != null && (isHybridFlow(responseType) || ID_TOKEN.equals(responseType) || ID_TOKEN_TOKEN.equals(responseType));
     }
 }

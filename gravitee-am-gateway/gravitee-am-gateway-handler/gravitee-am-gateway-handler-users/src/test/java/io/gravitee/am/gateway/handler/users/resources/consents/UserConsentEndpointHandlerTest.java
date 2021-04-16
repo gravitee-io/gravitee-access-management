@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.users.resources.consents;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -37,11 +41,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -74,15 +73,13 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldNotGetConsent_no_token() throws Exception {
-        router.route("/users/:userId/consents/:consentId")
-                .handler(oAuth2AuthHandler)
-                .handler(userConsentEndpointHandler::get)
-                .failureHandler(new ErrorHandler());
+        router
+            .route("/users/:userId/consents/:consentId")
+            .handler(oAuth2AuthHandler)
+            .handler(userConsentEndpointHandler::get)
+            .failureHandler(new ErrorHandler());
 
-        testRequest(
-                HttpMethod.GET, "/users/user-id/consents/consent-id",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
-
+        testRequest(HttpMethod.GET, "/users/user-id/consents/consent-id", HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     // TODO : need to mock Async Handler of the oauth2AuthHandler
@@ -92,16 +89,20 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
         JWT jwt = new JWT();
         jwt.setAud("client-id");
 
-        router.route("/users/:userId/consents/:consentId")
-                .handler(oAuth2AuthHandler)
-                .handler(userConsentEndpointHandler::get)
-                .failureHandler(new ErrorHandler());
+        router
+            .route("/users/:userId/consents/:consentId")
+            .handler(oAuth2AuthHandler)
+            .handler(userConsentEndpointHandler::get)
+            .failureHandler(new ErrorHandler());
 
         testRequest(
-                HttpMethod.GET, "/users/user-id/consents/consent-id",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
-                401,
-                "Unauthorized", null);
+            HttpMethod.GET,
+            "/users/user-id/consents/consent-id",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+            401,
+            "Unauthorized",
+            null
+        );
     }
 
     @Test
@@ -111,16 +112,16 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
         when(userService.consent(anyString())).thenReturn(Maybe.error(new ScopeApprovalNotFoundException("consentId")));
 
-        router.route("/users/:userId/consents/:consentId")
-                .handler(userConsentEndpointHandler::get)
-                .failureHandler(new ErrorHandler());
+        router.route("/users/:userId/consents/:consentId").handler(userConsentEndpointHandler::get).failureHandler(new ErrorHandler());
 
         testRequest(
-                HttpMethod.GET, "/users/user-id/consents/consent-id",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
-                404,
-                "Not Found", null);
-
+            HttpMethod.GET,
+            "/users/user-id/consents/consent-id",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+            404,
+            "Not Found",
+            null
+        );
     }
 
     @Test
@@ -130,16 +131,16 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
 
         when(userService.consent(anyString())).thenReturn(Maybe.just(new ScopeApproval()));
 
-        router.route("/users/:userId/consents/:consentId")
-                .handler(userConsentEndpointHandler::get)
-                .failureHandler(new ErrorHandler());
+        router.route("/users/:userId/consents/:consentId").handler(userConsentEndpointHandler::get).failureHandler(new ErrorHandler());
 
         testRequest(
-                HttpMethod.GET, "/users/user-id/consents/consent-id",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
-                200,
-                "OK", null);
-
+            HttpMethod.GET,
+            "/users/user-id/consents/consent-id",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+            200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -147,20 +148,26 @@ public class UserConsentEndpointHandlerTest extends RxWebTestBase {
         when(userService.findById(anyString())).thenReturn(Maybe.just(new User()));
         when(userService.revokeConsent(anyString(), anyString(), any())).thenReturn(Completable.complete());
 
-        router.route("/users/:userId/consents/:consentId")
-                .handler(rc -> {
+        router
+            .route("/users/:userId/consents/:consentId")
+            .handler(
+                rc -> {
                     JWT token = new JWT();
                     token.setSub("sub");
                     rc.put(OAuth2AuthHandler.TOKEN_CONTEXT_KEY, token);
                     rc.next();
-                })
-                .handler(userConsentEndpointHandler::revoke)
-                .failureHandler(new ErrorHandler());
+                }
+            )
+            .handler(userConsentEndpointHandler::revoke)
+            .failureHandler(new ErrorHandler());
 
         testRequest(
-                HttpMethod.DELETE, "/users/user-id/consents/consent-id",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
-                204,
-                "No Content", null);
+            HttpMethod.DELETE,
+            "/users/user-id/consents/consent-id",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION.toString(), "Bearer token"),
+            204,
+            "No Content",
+            null
+        );
     }
 }

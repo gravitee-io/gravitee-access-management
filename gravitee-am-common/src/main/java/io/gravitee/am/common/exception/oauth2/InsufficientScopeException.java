@@ -32,8 +32,7 @@ import io.gravitee.common.http.HttpStatusCode;
  */
 public class InsufficientScopeException extends InvalidTokenException {
 
-    public InsufficientScopeException() {
-    }
+    public InsufficientScopeException() {}
 
     public InsufficientScopeException(String message) {
         super(message);

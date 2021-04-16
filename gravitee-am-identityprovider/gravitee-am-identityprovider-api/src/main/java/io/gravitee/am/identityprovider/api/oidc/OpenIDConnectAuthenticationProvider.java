@@ -23,6 +23,5 @@ import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
  * @author GraviteeSource Team
  */
 public interface OpenIDConnectAuthenticationProvider extends SocialAuthenticationProvider {
-
     AuthenticationFlow authenticationFlow();
 }

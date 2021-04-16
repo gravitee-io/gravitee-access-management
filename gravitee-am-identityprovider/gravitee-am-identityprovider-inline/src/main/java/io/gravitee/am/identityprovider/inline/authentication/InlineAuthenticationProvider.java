@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.inline.authentication;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -25,15 +26,13 @@ import io.gravitee.am.identityprovider.inline.InlineIdentityProviderMapper;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.reactivex.Maybe;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
-
-import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -63,7 +62,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
 
     @Override
     public void afterPropertiesSet() {
-        for(io.gravitee.am.identityprovider.inline.model.User user : configuration.getUsers()) {
+        for (io.gravitee.am.identityprovider.inline.model.User user : configuration.getUsers()) {
             LOGGER.debug("Add an inline user: {}", user);
             userDetailsService.createUser(user);
         }
@@ -71,39 +70,49 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        return userDetailsService.loadUserByUsername((String) authentication.getPrincipal())
-                .map(user -> {
+        return userDetailsService
+            .loadUserByUsername((String) authentication.getPrincipal())
+            .map(
+                user -> {
                     String presentedPassword = authentication.getCredentials().toString();
                     if (!passwordEncoder.matches(presentedPassword, user.getPassword())) {
                         LOGGER.debug("Authentication failed: password does not match stored value");
                         throw new BadCredentialsException("Bad credentials");
                     }
                     return createUser(user);
-                });
+                }
+            );
     }
 
     @Override
     public Maybe<User> loadUserByUsername(String username) {
-        return userDetailsService.loadUserByUsername(username)
-                .map(user -> createUser(user));
+        return userDetailsService.loadUserByUsername(username).map(user -> createUser(user));
     }
 
     private List<String> getUserRoles(io.gravitee.am.identityprovider.inline.model.User inlineUser) {
         Set<String> roles = new HashSet();
         if (roleMapper != null && roleMapper.getRoles() != null) {
-            roleMapper.getRoles().forEach((role, users) -> {
-                Arrays.asList(users).forEach(u -> {
-                    // user/group have the following syntax userAttribute=userValue
-                    String[] attributes = u.split("=", 2);
-                    String userAttribute = attributes[0];
-                    String userValue = attributes[1];
+            roleMapper
+                .getRoles()
+                .forEach(
+                    (role, users) -> {
+                        Arrays
+                            .asList(users)
+                            .forEach(
+                                u -> {
+                                    // user/group have the following syntax userAttribute=userValue
+                                    String[] attributes = u.split("=", 2);
+                                    String userAttribute = attributes[0];
+                                    String userValue = attributes[1];
 
-                    // for inline provider we only find by username
-                    if (USERNAME.equals(userAttribute) && inlineUser.getUsername().equals(userValue)) {
-                        roles.add(role);
+                                    // for inline provider we only find by username
+                                    if (USERNAME.equals(userAttribute) && inlineUser.getUsername().equals(userValue)) {
+                                        roles.add(role);
+                                    }
+                                }
+                            );
                     }
-                });
-            });
+                );
         }
         return new ArrayList<>(roles);
     }
@@ -117,12 +126,16 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
         claims.put(StandardClaims.SUB, inlineUser.getUsername());
 
         if (mapper != null && mapper.getMappers() != null && !mapper.getMappers().isEmpty()) {
-            mapper.getMappers().forEach((k, v) -> {
-                Object attributeValue = inlineUser.getAttributeValue(v);
-                if (attributeValue != null) {
-                    claims.put(k, attributeValue);
-                }
-            });
+            mapper
+                .getMappers()
+                .forEach(
+                    (k, v) -> {
+                        Object attributeValue = inlineUser.getAttributeValue(v);
+                        if (attributeValue != null) {
+                            claims.put(k, attributeValue);
+                        }
+                    }
+                );
         } else {
             // default values
             claims.put(StandardClaims.NAME, inlineUser.getFirstname() + " " + inlineUser.getLastname());

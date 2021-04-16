@@ -17,15 +17,14 @@ package io.gravitee.am.gateway.handler.common.client.impl;
 
 import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -54,19 +53,21 @@ public class ClientSyncServiceImpl implements ClientSyncService {
 
     @Override
     public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
-        final Optional<Client> optClient = clientManager.entities()
-                .stream()
-                .filter(client -> !client.isTemplate() && client.getDomain().equals(domain) && client.getClientId().equals(clientId))
-                .findFirst();
+        final Optional<Client> optClient = clientManager
+            .entities()
+            .stream()
+            .filter(client -> !client.isTemplate() && client.getDomain().equals(domain) && client.getClientId().equals(clientId))
+            .findFirst();
         return optClient.isPresent() ? Maybe.just(optClient.get()) : Maybe.empty();
     }
 
     @Override
     public Single<List<Client>> findTemplates() {
-        final List<Client> templates = clientManager.entities()
-                .stream()
-                .filter(client -> client.isTemplate() && client.getDomain().equals(domain.getId()))
-                .collect(Collectors.toList());
+        final List<Client> templates = clientManager
+            .entities()
+            .stream()
+            .filter(client -> client.isTemplate() && client.getDomain().equals(domain.getId()))
+            .collect(Collectors.toList());
         return Single.just(templates);
     }
 

@@ -26,11 +26,6 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -41,6 +36,10 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,29 +69,35 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
             throw new InvalidGrantException("Assertion value is missing");
         }
 
-        return Observable.fromCallable(() -> {
-            try {
-                Jws<Claims> jwsClaims = jwtParser.parseClaimsJws(assertion);
-                Claims claims = jwsClaims.getBody();
-                return createUser(claims);
-            } catch (ExpiredJwtException e) {
-                LOGGER.debug(e.getMessage(), e.getCause());
-                throw new InvalidGrantException("JWT token is expired", e);
-            } catch (SignatureException e) {
-                LOGGER.debug(e.getMessage(),e.getCause());
-                throw new InvalidGrantException("JWT token signature validation failed", e);
-            } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
-                LOGGER.debug(e.getMessage(),e.getCause());
-                throw new InvalidGrantException("JWT token is invalid", e);
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage(),e.getCause());
-                throw new InvalidGrantException(e.getMessage(), e);
-            }
-        }).firstElement();
+        return Observable
+            .fromCallable(
+                () -> {
+                    try {
+                        Jws<Claims> jwsClaims = jwtParser.parseClaimsJws(assertion);
+                        Claims claims = jwsClaims.getBody();
+                        return createUser(claims);
+                    } catch (ExpiredJwtException e) {
+                        LOGGER.debug(e.getMessage(), e.getCause());
+                        throw new InvalidGrantException("JWT token is expired", e);
+                    } catch (SignatureException e) {
+                        LOGGER.debug(e.getMessage(), e.getCause());
+                        throw new InvalidGrantException("JWT token signature validation failed", e);
+                    } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+                        LOGGER.debug(e.getMessage(), e.getCause());
+                        throw new InvalidGrantException("JWT token is invalid", e);
+                    } catch (Exception e) {
+                        LOGGER.error(e.getMessage(), e.getCause());
+                        throw new InvalidGrantException(e.getMessage(), e);
+                    }
+                }
+            )
+            .firstElement();
     }
 
     public User createUser(Claims claims) {
-        final String username = claims.containsKey(StandardClaims.PREFERRED_USERNAME) ? claims.get(StandardClaims.PREFERRED_USERNAME, String.class) : claims.getSubject();
+        final String username = claims.containsKey(StandardClaims.PREFERRED_USERNAME)
+            ? claims.get(StandardClaims.PREFERRED_USERNAME, String.class)
+            : claims.getSubject();
         User user = new DefaultUser(username);
         ((DefaultUser) user).setId(claims.getSubject());
         // set claims
@@ -101,13 +106,15 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
         additionalInformation.put(io.gravitee.am.common.jwt.Claims.sub, claims.getSubject());
         List<Map<String, String>> claimsMapper = jwtBearerTokenGranterConfiguration.getClaimsMapper();
         if (claimsMapper != null && !claimsMapper.isEmpty()) {
-            claimsMapper.forEach(claimMapper -> {
-                String assertionClaim = claimMapper.get("assertion_claim");
-                String tokenClaim = claimMapper.get("token_claim");
-                if (claims.containsKey(assertionClaim)) {
-                    additionalInformation.put(tokenClaim, claims.get(assertionClaim));
+            claimsMapper.forEach(
+                claimMapper -> {
+                    String assertionClaim = claimMapper.get("assertion_claim");
+                    String tokenClaim = claimMapper.get("token_claim");
+                    if (claims.containsKey(assertionClaim)) {
+                        additionalInformation.put(tokenClaim, claims.get(assertionClaim));
+                    }
                 }
-            });
+            );
         }
         ((DefaultUser) user).setAdditionalInformation(additionalInformation);
         return user;
@@ -145,7 +152,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
      * @return RSAPublicKey
      */
     private static RSAPublicKey parseSSHPublicKey(String encKey) {
-        final byte[] PREFIX = new byte[] {0,0,0,7, 's','s','h','-','r','s','a'};
+        final byte[] PREFIX = new byte[] { 0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a' };
         ByteArrayInputStream in = new ByteArrayInputStream(Base64.getDecoder().decode(StandardCharsets.UTF_8.encode(encKey)).array());
 
         byte[] prefix = new byte[11];
@@ -155,8 +162,8 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
                 throw new IllegalArgumentException("SSH key prefix not found");
             }
 
-            BigInteger e = new BigInteger(readBigInteger(in));//public exponent
-            BigInteger n = new BigInteger(readBigInteger(in));//modulus
+            BigInteger e = new BigInteger(readBigInteger(in)); //public exponent
+            BigInteger n = new BigInteger(readBigInteger(in)); //modulus
 
             return createPublicKey(n, e);
         } catch (IOException e) {
@@ -167,8 +174,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
     static RSAPublicKey createPublicKey(BigInteger n, BigInteger e) {
         try {
             return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(new RSAPublicKeySpec(n, e));
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }

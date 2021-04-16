@@ -24,6 +24,5 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public interface PolicyChainHandler {
-
     Handler<RoutingContext> create(ExtensionPoint extensionPoint);
 }

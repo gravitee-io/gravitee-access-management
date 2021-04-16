@@ -17,7 +17,6 @@ package io.gravitee.am.model.application;
 
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.oidc.JWKSet;
-
 import java.util.*;
 
 /**
@@ -29,9 +28,9 @@ import java.util.*;
  */
 public class ApplicationOAuthSettings {
 
-    private final static int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
-    private final static int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
-    private final static int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
+    private static final int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
+    private static final int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
+    private static final int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
 
     /**
      * The client identifier
@@ -251,8 +250,7 @@ public class ApplicationOAuthSettings {
      */
     private String authorizationEncryptedResponseEnc;
 
-    public ApplicationOAuthSettings() {
-    }
+    public ApplicationOAuthSettings() {}
 
     public ApplicationOAuthSettings(ApplicationOAuthSettings other) {
         this.clientId = other.clientId;
@@ -285,7 +283,7 @@ public class ApplicationOAuthSettings {
         this.tokenEndpointAuthSigningAlg = other.tokenEndpointAuthSigningAlg;
         this.defaultMaxAge = other.defaultMaxAge;
         this.requireAuthTime = other.requireAuthTime;
-        this.defaultACRvalues = other.defaultACRvalues != null ? new ArrayList<>(other.defaultACRvalues): null;
+        this.defaultACRvalues = other.defaultACRvalues != null ? new ArrayList<>(other.defaultACRvalues) : null;
         this.initiateLoginUri = other.initiateLoginUri;
         this.requestUris = other.requestUris != null ? new ArrayList<>(other.requestUris) : null;
         this.softwareId = other.softwareId;
@@ -296,12 +294,12 @@ public class ApplicationOAuthSettings {
         this.clientIdIssuedAt = other.clientIdIssuedAt;
         this.clientSecretExpiresAt = other.clientSecretExpiresAt;
         this.scopes = other.scopes != null ? new ArrayList<>(other.scopes) : null;
-        this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals): null;
+        this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
         this.idTokenValiditySeconds = other.idTokenValiditySeconds;
-        this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims): null;
+        this.tokenCustomClaims = other.tokenCustomClaims != null ? new ArrayList<>(other.tokenCustomClaims) : null;
         this.tlsClientAuthSubjectDn = other.tlsClientAuthSubjectDn;
         this.tlsClientAuthSanDns = other.tlsClientAuthSanDns;
         this.tlsClientAuthSanEmail = other.tlsClientAuthSanEmail;

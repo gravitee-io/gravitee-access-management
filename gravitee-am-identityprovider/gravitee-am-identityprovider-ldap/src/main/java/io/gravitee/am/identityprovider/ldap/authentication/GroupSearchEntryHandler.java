@@ -15,15 +15,14 @@
  */
 package io.gravitee.am.identityprovider.ldap.authentication;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.ldaptive.*;
 import org.ldaptive.handler.HandlerResult;
 import org.ldaptive.handler.SearchEntryHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Provides post groups search handling of a search entry (i.e the authenticated user)
@@ -58,13 +57,18 @@ public class GroupSearchEntryHandler implements SearchEntryHandler {
 
             // update search entry
             Collection<LdapEntry> groupEntries = searchResult.getEntries();
-            String[] groups = groupEntries.stream()
-                    .map(groupEntry -> groupEntry.getAttributes()
+            String[] groups = groupEntries
+                .stream()
+                .map(
+                    groupEntry ->
+                        groupEntry
+                            .getAttributes()
                             .stream()
                             .map(ldapAttribute -> ldapAttribute.getStringValue())
-                            .collect(Collectors.toList()))
-                    .flatMap(List::stream)
-                    .toArray(size -> new String[size]);
+                            .collect(Collectors.toList())
+                )
+                .flatMap(List::stream)
+                .toArray(size -> new String[size]);
             entry.addAttribute(new LdapAttribute(MEMBEROF_ATTRIBUTE, groups));
         } catch (Exception ex) {
             LOGGER.warn("No group found for user {}", entry.getDn(), ex);

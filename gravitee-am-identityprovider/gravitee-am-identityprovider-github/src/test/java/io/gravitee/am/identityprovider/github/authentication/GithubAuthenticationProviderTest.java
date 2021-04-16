@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.identityprovider.github.authentication;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.identityprovider.api.Authentication;
@@ -26,6 +29,10 @@ import io.gravitee.am.identityprovider.github.authentication.spring.GithubAuthen
 import io.gravitee.am.identityprovider.github.utils.URLEncodedUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,20 +41,15 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { GithubAuthenticationProviderTestConfiguration.class, GithubAuthenticationProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(
+    classes = { GithubAuthenticationProviderTestConfiguration.class, GithubAuthenticationProviderConfiguration.class },
+    loader = AnnotationConfigContextLoader.class
+)
 public class GithubAuthenticationProviderTest {
 
     @Autowired
@@ -61,35 +63,44 @@ public class GithubAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication() {
-        stubFor(any(urlPathEqualTo("/oauth/token"))
+        stubFor(
+            any(urlPathEqualTo("/oauth/token"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
                 .withRequestBody(matching(".*"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("access_token=test_token&token_type=bearer")));
+                .willReturn(aResponse().withStatus(200).withBody("access_token=test_token&token_type=bearer"))
+        );
 
-        stubFor(any(urlPathEqualTo("/profile"))
+        stubFor(
+            any(urlPathEqualTo("/profile"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token test_token"))
-                .willReturn(okJson("{ \"login\": \"bob\" }")));
+                .willReturn(okJson("{ \"login\": \"bob\" }"))
+        );
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "__social__";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "__social__";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "__social__";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "__social__";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                DummyRequest dummyRequest = new DummyRequest();
-                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        DummyRequest dummyRequest = new DummyRequest();
+                        dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                        return new DummyAuthenticationContext(
+                            Collections.singletonMap("redirect_uri", "http://redirect_uri"),
+                            dummyRequest
+                        );
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
 
@@ -100,29 +111,38 @@ public class GithubAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_badCredentials() {
-        stubFor(any(urlPathEqualTo("/oauth/token"))
+        stubFor(
+            any(urlPathEqualTo("/oauth/token"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
                 .withRequestBody(matching(".*"))
-                .willReturn(unauthorized()));
+                .willReturn(unauthorized())
+        );
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "__social__";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "__social__";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "__social__";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "__social__";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                DummyRequest dummyRequest = new DummyRequest();
-                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("wrong-code")));
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        DummyRequest dummyRequest = new DummyRequest();
+                        dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("wrong-code")));
+                        return new DummyAuthenticationContext(
+                            Collections.singletonMap("redirect_uri", "http://redirect_uri"),
+                            dummyRequest
+                        );
+                    }
+                }
+            )
+            .test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(BadCredentialsException.class);
@@ -130,35 +150,40 @@ public class GithubAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_usernameNotFound() {
-        stubFor(any(urlPathEqualTo("/oauth/token"))
+        stubFor(
+            any(urlPathEqualTo("/oauth/token"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
                 .withRequestBody(matching(".*"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("access_token=test_token&token_type=bearer")));
+                .willReturn(aResponse().withStatus(200).withBody("access_token=test_token&token_type=bearer"))
+        );
 
-        stubFor(any(urlPathEqualTo("/profile"))
-                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token test_token"))
-                .willReturn(notFound()));
+        stubFor(any(urlPathEqualTo("/profile")).withHeader(HttpHeaders.AUTHORIZATION, equalTo("token test_token")).willReturn(notFound()));
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "__social__";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "__social__";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "__social__";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "__social__";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                DummyRequest dummyRequest = new DummyRequest();
-                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        DummyRequest dummyRequest = new DummyRequest();
+                        dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                        return new DummyAuthenticationContext(
+                            Collections.singletonMap("redirect_uri", "http://redirect_uri"),
+                            dummyRequest
+                        );
+                    }
+                }
+            )
+            .test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(BadCredentialsException.class);
@@ -168,38 +193,47 @@ public class GithubAuthenticationProviderTest {
     public void shouldLoadUserByUsername_roleMapping() {
         // configure role mapping
         Map<String, String[]> roles = new HashMap<>();
-        roles.put("admin", new String[] { "preferred_username=bob"});
+        roles.put("admin", new String[] { "preferred_username=bob" });
         roleMapper.setRoles(roles);
 
-        stubFor(any(urlPathEqualTo("/oauth/token"))
+        stubFor(
+            any(urlPathEqualTo("/oauth/token"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLEncodedUtils.CONTENT_TYPE))
                 .withRequestBody(matching(".*"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("access_token=test_token&token_type=bearer")));
+                .willReturn(aResponse().withStatus(200).withBody("access_token=test_token&token_type=bearer"))
+        );
 
-        stubFor(any(urlPathEqualTo("/profile"))
+        stubFor(
+            any(urlPathEqualTo("/profile"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("token test_token"))
-                .willReturn(okJson("{ \"login\": \"bob\", \"preferred_username\": \"bob\"}")));
+                .willReturn(okJson("{ \"login\": \"bob\", \"preferred_username\": \"bob\"}"))
+        );
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "__social__";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "__social__";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "__social__";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "__social__";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                DummyRequest dummyRequest = new DummyRequest();
-                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        DummyRequest dummyRequest = new DummyRequest();
+                        dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                        return new DummyAuthenticationContext(
+                            Collections.singletonMap("redirect_uri", "http://redirect_uri"),
+                            dummyRequest
+                        );
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
 

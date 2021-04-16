@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
@@ -26,14 +28,11 @@ import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,14 +52,15 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         authorizationCodeCollection = mongoOperations.getCollection("authorization_codes", AuthorizationCodeMongo.class);
         super.createIndex(authorizationCodeCollection, new Document(FIELD_CODE, 1));
         super.createIndex(authorizationCodeCollection, new Document(FIELD_TRANSACTION_ID, 1));
-        super.createIndex(authorizationCodeCollection, new Document(FIELD_RESET_TIME, 1), new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
+        super.createIndex(
+            authorizationCodeCollection,
+            new Document(FIELD_RESET_TIME, 1),
+            new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)
+        );
     }
 
     private Maybe<AuthorizationCode> findById(String id) {
-        return Observable
-                .fromPublisher(authorizationCodeCollection.find(eq(FIELD_ID, id)).first())
-                .firstElement()
-                .map(this::convert);
+        return Observable.fromPublisher(authorizationCodeCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -70,8 +70,8 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         }
 
         return Single
-                .fromPublisher(authorizationCodeCollection.insertOne(convert(authorizationCode)))
-                .flatMap(success -> findById(authorizationCode.getId()).toSingle());
+            .fromPublisher(authorizationCodeCollection.insertOne(convert(authorizationCode)))
+            .flatMap(success -> findById(authorizationCode.getId()).toSingle());
     }
 
     @Override
@@ -101,7 +101,10 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         if (authorizationCodeMongo.getRequestParameters() != null) {
             MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
-            authorizationCodeMongo.getRequestParameters().entrySet().forEach(entry -> requestParameters.put(entry.getKey(), (List<String>) entry.getValue()));
+            authorizationCodeMongo
+                .getRequestParameters()
+                .entrySet()
+                .forEach(entry -> requestParameters.put(entry.getKey(), (List<String>) entry.getValue()));
             authorizationCode.setRequestParameters(requestParameters);
         }
         return authorizationCode;
@@ -124,9 +127,13 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         if (authorizationCode.getRequestParameters() != null) {
             Document document = new Document();
-            authorizationCode.getRequestParameters().forEach((key, value) -> {
-                document.append(key, value);
-            });
+            authorizationCode
+                .getRequestParameters()
+                .forEach(
+                    (key, value) -> {
+                        document.append(key, value);
+                    }
+                );
             authorizationCodeMongo.setRequestParameters(document);
         }
         return authorizationCodeMongo;

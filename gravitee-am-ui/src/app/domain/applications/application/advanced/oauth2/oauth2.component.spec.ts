@@ -23,9 +23,8 @@ describe('ClientOAuth2Component', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ClientOAuth2Component ]
-    })
-      .compileComponents();
+      declarations: [ClientOAuth2Component],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

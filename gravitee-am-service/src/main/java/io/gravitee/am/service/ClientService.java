@@ -25,7 +25,6 @@ import io.gravitee.am.service.model.TotalClient;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.Set;
 
 /**
@@ -38,7 +37,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ClientService {
-
     Single<Set<Client>> findAll();
 
     Single<Page<Client>> findAll(int page, int size);
@@ -92,6 +90,7 @@ public interface ClientService {
     default Single<Client> patch(String domain, String id, PatchClient patchClient) {
         return patch(domain, id, patchClient, false, null);
     }
+
     @Deprecated
     default Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull) {
         return patch(domain, id, patchClient, forceNull, null);
@@ -104,5 +103,4 @@ public interface ClientService {
     default Completable delete(String clientId) {
         return delete(clientId, null);
     }
-
 }

@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {MatInput} from '@angular/material';
-import {ActivatedRoute, Router} from '@angular/router';
-import {DomainService} from '../../../services/domain.service';
-import {DialogService} from '../../../services/dialog.service';
-import {SnackbarService} from '../../../services/snackbar.service';
-import {BreadcrumbService} from '../../../services/breadcrumb.service';
-import {AuthService} from '../../../services/auth.service';
-import {NavbarService} from '../../../components/navbar/navbar.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { MatInput } from '@angular/material';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DomainService } from '../../../services/domain.service';
+import { DialogService } from '../../../services/dialog.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { BreadcrumbService } from '../../../services/breadcrumb.service';
+import { AuthService } from '../../../services/auth.service';
+import { NavbarService } from '../../../components/navbar/navbar.service';
 import * as _ from 'lodash';
 
 export interface Tag {
@@ -32,7 +32,7 @@ export interface Tag {
 @Component({
   selector: 'app-general',
   templateUrl: './general.component.html',
-  styleUrls: ['./general.component.scss']
+  styleUrls: ['./general.component.scss'],
 })
 export class DomainSettingsGeneralComponent implements OnInit {
   @ViewChild('chipInput') chipInput: MatInput;
@@ -42,20 +42,21 @@ export class DomainSettingsGeneralComponent implements OnInit {
   selectedTags: Tag[];
   readonly = false;
 
-  constructor(private domainService: DomainService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
-              private authService: AuthService,
-              private navbarService: NavbarService) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private breadcrumbService: BreadcrumbService,
+    private authService: AuthService,
+    private navbarService: NavbarService,
+  ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.parent.data['domain'];
+    this.domain = this.route.snapshot.parent.data.domain;
 
-    if(this.domain.tags === undefined) {
+    if (this.domain.tags === undefined) {
       this.domain.tags = [];
     }
 
@@ -64,26 +65,27 @@ export class DomainSettingsGeneralComponent implements OnInit {
   }
 
   initTags() {
-    let tags = this.route.snapshot.data['tags'];
-    this.selectedTags = this.domain.tags.map(t => _.find(tags, { 'id': t })).filter(t => typeof t !== 'undefined');
+    let tags = this.route.snapshot.data.tags;
+    this.selectedTags = this.domain.tags.map((t) => _.find(tags, { id: t })).filter((t) => typeof t !== 'undefined');
     this.tags = _.difference(tags, this.selectedTags);
   }
 
   addTag(event) {
-    this.selectedTags = this.selectedTags.concat(_.remove(this.tags, { 'id': event.option.value }));
+    this.selectedTags = this.selectedTags.concat(_.remove(this.tags, { id: event.option.value }));
     this.tagsChanged();
   }
 
   removeTag(tag) {
-    this.selectedTags = this.selectedTags.filter(t => t.id !== tag.id);
+    this.selectedTags = this.selectedTags.filter((t) => t.id !== tag.id);
     this.tags.push(tag);
     this.tagsChanged();
   }
 
   tagsChanged() {
-    this.chipInput['nativeElement'].blur();
+    // @ts-ignore
+    this.chipInput.nativeElement.blur();
     this.formChanged = true;
-    this.domain.tags = _.map(this.selectedTags, tag => tag.id);
+    this.domain.tags = _.map(this.selectedTags, (tag) => tag.id);
   }
 
   enableDomain(event) {
@@ -92,7 +94,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
   }
 
   update() {
-    this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe(response => {
+    this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe((response) => {
       this.domain = response;
       this.domainService.notify(this.domain);
       this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domain.id, this.domain.name);
@@ -103,16 +105,14 @@ export class DomainSettingsGeneralComponent implements OnInit {
 
   delete(event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Domain', 'Are you sure you want to delete this domain ?')
-      .subscribe(res => {
-        if (res) {
-          this.domainService.delete(this.domain.id).subscribe(response => {
-            this.snackbarService.open('Domain ' + this.domain.name + ' deleted');
-            this.navbarService.notify({});
-            this.router.navigate(['']);
-          })
-        }
-      });
+    this.dialogService.confirm('Delete Domain', 'Are you sure you want to delete this domain ?').subscribe((res) => {
+      if (res) {
+        this.domainService.delete(this.domain.id).subscribe((response) => {
+          this.snackbarService.open('Domain ' + this.domain.name + ' deleted');
+          this.navbarService.notify({});
+          this.router.navigate(['']);
+        });
+      }
+    });
   }
 }

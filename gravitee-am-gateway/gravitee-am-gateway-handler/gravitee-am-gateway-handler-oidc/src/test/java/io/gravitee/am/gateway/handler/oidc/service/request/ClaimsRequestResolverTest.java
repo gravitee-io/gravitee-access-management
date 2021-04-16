@@ -73,8 +73,9 @@ public class ClaimsRequestResolverTest {
 
     @Test
     public void shouldResolveClaimsRequest() throws ClaimsRequestSyntaxException {
-        String claims = "{ \"userinfo\": {\"name\": {\"essential\": true}, \"family_name\": null}, " +
-                "\"id_token\": {\"name\": {\"essential\": true}, \"family_name\": null}}";
+        String claims =
+            "{ \"userinfo\": {\"name\": {\"essential\": true}, \"family_name\": null}, " +
+            "\"id_token\": {\"name\": {\"essential\": true}, \"family_name\": null}}";
         ClaimsRequest claimsRequest = claimsRequestResolver.resolve(claims);
         Assert.assertNotNull(claimsRequest.getUserInfoClaims());
         Assert.assertNotNull(claimsRequest.getIdTokenClaims());

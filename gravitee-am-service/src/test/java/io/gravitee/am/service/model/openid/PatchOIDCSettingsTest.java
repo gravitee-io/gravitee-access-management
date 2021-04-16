@@ -15,15 +15,14 @@
  */
 package io.gravitee.am.service.model.openid;
 
+import static org.junit.Assert.*;
+
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.Optional;
-
-import static org.junit.Assert.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -44,7 +43,6 @@ public class PatchOIDCSettingsTest {
         assertNotNull(result.getClientRegistrationSettings());
         assertFalse("should be disabled by default", result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
     }
-
 
     @Test
     public void testPatchToEmptyValue() {
@@ -74,8 +72,8 @@ public class PatchOIDCSettingsTest {
 
         assertNotNull(result);
         assertNotNull(result.getClientRegistrationSettings());
-        assertTrue("should be enabled",result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
-        assertTrue("should be enabled",result.getClientRegistrationSettings().isAllowLocalhostRedirectUri());
+        assertTrue("should be enabled", result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
+        assertTrue("should be enabled", result.getClientRegistrationSettings().isAllowLocalhostRedirectUri());
         assertFalse("should be disabled by default", result.getClientRegistrationSettings().isOpenDynamicClientRegistrationEnabled());
     }
 

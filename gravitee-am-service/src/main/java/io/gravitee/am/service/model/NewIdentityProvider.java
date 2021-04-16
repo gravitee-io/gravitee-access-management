@@ -78,9 +78,6 @@ public class NewIdentityProvider {
 
     @Override
     public String toString() {
-        return "NewIdentityProvider{" +
-                "type='" + type + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+        return "NewIdentityProvider{" + "type='" + type + '\'' + ", name='" + name + '\'' + '}';
     }
 }

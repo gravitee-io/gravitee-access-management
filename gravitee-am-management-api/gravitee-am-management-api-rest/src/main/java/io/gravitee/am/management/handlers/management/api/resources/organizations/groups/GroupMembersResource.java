@@ -29,14 +29,13 @@ import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.util.Comparator;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
-import java.util.Comparator;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,41 +57,57 @@ public class GroupMembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List group members",
-            notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "List group members",
+        notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Group members successfully fetched", response = User.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void list(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("group") String group,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue(MAX_MEMBERS_SIZE_PER_PAGE_STRING) int size,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("group") String group,
+        @QueryParam("page") @DefaultValue("0") int page,
+        @QueryParam("size") @DefaultValue(MAX_MEMBERS_SIZE_PER_PAGE_STRING) int size,
+        @Suspended final AsyncResponse response
+    ) {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.READ)
-                .andThen(groupService.findMembers(ReferenceType.ORGANIZATION, organizationId, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE))
-                        .flatMap(pagedMembers -> {
+            .andThen(
+                groupService
+                    .findMembers(ReferenceType.ORGANIZATION, organizationId, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE))
+                    .flatMap(
+                        pagedMembers -> {
                             if (pagedMembers.getData() == null) {
                                 return Single.just(pagedMembers);
                             }
-                            return Observable.fromIterable(pagedMembers.getData())
-                                    .flatMapSingle(member -> {
+                            return Observable
+                                .fromIterable(pagedMembers.getData())
+                                .flatMapSingle(
+                                    member -> {
                                         if (member.getSource() != null) {
-                                            return identityProviderService.findById(member.getSource())
-                                                    .map(idP -> {
+                                            return identityProviderService
+                                                .findById(member.getSource())
+                                                .map(
+                                                    idP -> {
                                                         member.setSource(idP.getName());
                                                         return member;
-                                                    })
-                                                    .defaultIfEmpty(member)
-                                                    .toSingle();
+                                                    }
+                                                )
+                                                .defaultIfEmpty(member)
+                                                .toSingle();
                                         }
                                         return Single.just(member);
-                                    })
-                                    .toSortedList(Comparator.comparing(User::getUsername))
-                                    .map(members -> new Page<>(members, pagedMembers.getCurrentPage(), pagedMembers.getTotalCount()));
-                        }))
-                .subscribe(response::resume, response::resume);
+                                    }
+                                )
+                                .toSortedList(Comparator.comparing(User::getUsername))
+                                .map(members -> new Page<>(members, pagedMembers.getCurrentPage(), pagedMembers.getTotalCount()));
+                        }
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{member}")

@@ -24,7 +24,6 @@ import io.vertx.reactivex.ext.web.handler.AuthHandler;
  * @author GraviteeSource Team
  */
 public interface SocialAuthHandler {
-
     /**
      * Create authentication handler for social/oauth2 authentication
      *

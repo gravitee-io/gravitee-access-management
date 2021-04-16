@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { ReporterService } from "../services/reporter.service";
-import { OrganizationService } from "../services/organization.service";
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { ReporterService } from '../services/reporter.service';
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class ReportersResolver implements Resolve<any> {
+  constructor(private reporterService: ReporterService, private organizationService: OrganizationService) {}
 
-  constructor(private reporterService: ReporterService,
-              private organizationService: OrganizationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     if (state.url.startsWith('/settings')) {
       return this.organizationService.reporters();
     }
-    const domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
+    const domainId = route.parent.paramMap.get('domainId')
+      ? route.parent.paramMap.get('domainId')
+      : route.parent.parent.paramMap.get('domainId');
     return this.reporterService.findByDomain(domainId);
   }
-
 }

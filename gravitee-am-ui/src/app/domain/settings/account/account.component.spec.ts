@@ -23,9 +23,8 @@ describe('DomainSettingsAccountComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsAccountComponent ]
-    })
-      .compileComponents();
+      declarations: [DomainSettingsAccountComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

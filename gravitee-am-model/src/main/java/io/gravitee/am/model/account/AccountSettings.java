@@ -82,8 +82,7 @@ public class AccountSettings {
      */
     private String redirectUriAfterResetPassword;
 
-    public AccountSettings() {
-    }
+    public AccountSettings() {}
 
     public AccountSettings(AccountSettings other) {
         this.inherited = other.inherited;

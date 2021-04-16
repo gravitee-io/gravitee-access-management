@@ -15,21 +15,20 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.exception.ClientNotFoundException;
-import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+
+import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -74,7 +73,6 @@ public class ClientResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("clients").path(clientId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
-
 
     @Test
     public void shouldGetClient_domainNotFound() {
@@ -122,12 +120,12 @@ public class ClientResourceTest extends JerseySpringTest {
         doReturn(Single.just(mockClient)).when(clientService).renewClientSecret(eq(domainId), eq(clientId), any());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("clients")
-                .path(clientId)
-                .path("secret/_renew")
-                .request()
-                .post(null);
+            .path(domainId)
+            .path("clients")
+            .path(clientId)
+            .path("secret/_renew")
+            .request()
+            .post(null);
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
 
@@ -144,15 +142,17 @@ public class ClientResourceTest extends JerseySpringTest {
         mockClient.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.error(new ClientNotFoundException(clientId))).when(clientService).renewClientSecret(eq(domainId), eq(clientId), any());
+        doReturn(Single.error(new ClientNotFoundException(clientId)))
+            .when(clientService)
+            .renewClientSecret(eq(domainId), eq(clientId), any());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("clients")
-                .path(clientId)
-                .path("secret/_renew")
-                .request()
-                .post(null);
+            .path(domainId)
+            .path("clients")
+            .path(clientId)
+            .path("secret/_renew")
+            .request()
+            .post(null);
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 }

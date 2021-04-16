@@ -23,7 +23,6 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationCodeResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.response.ImplicitResponse;
-
 import java.net.URISyntaxException;
 
 /**
@@ -119,13 +118,12 @@ public abstract class JWTAuthorizationResponse<T extends AuthorizationResponse> 
 
         if (response instanceof AuthorizationCodeResponse) {
             return new JWTAuthorizationCodeResponse((AuthorizationCodeResponse) response);
-        }  else if (response instanceof ImplicitResponse) {
+        } else if (response instanceof ImplicitResponse) {
             return new JWTImplicitResponse((ImplicitResponse) response);
         }
 
         return null;
     }
-
 
     public JWT build() {
         jwt.setAud(this.aud);
@@ -146,14 +144,14 @@ public abstract class JWTAuthorizationResponse<T extends AuthorizationResponse> 
         if (ResponseMode.QUERY_JWT.equalsIgnoreCase(responseMode)) {
             uriBuilder.addParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, token);
         } else if (ResponseMode.FRAGMENT_JWT.equalsIgnoreCase(responseMode)) {
-            uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE,token);
+            uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, token);
         } else if (ResponseMode.JWT.equalsIgnoreCase(responseMode)) {
             if (responseType == null || ResponseType.NONE.equalsIgnoreCase(responseType)) {
                 // Nothing to do here
             } else if (io.gravitee.am.common.oauth2.ResponseType.CODE.equalsIgnoreCase(responseType)) {
                 uriBuilder.addParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, token);
             } else {
-                uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE,token);
+                uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, token);
             }
         }
 

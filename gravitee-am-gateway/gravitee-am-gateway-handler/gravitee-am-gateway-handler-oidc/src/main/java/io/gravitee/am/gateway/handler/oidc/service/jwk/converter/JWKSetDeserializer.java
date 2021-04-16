@@ -21,13 +21,12 @@ import com.fasterxml.jackson.databind.util.StdConverter;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -35,8 +34,8 @@ import java.util.stream.Collectors;
  */
 public class JWKSetDeserializer extends StdConverter<ObjectNode, Optional<JWKSet>> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(JWKSetDeserializer.class);
-    public final static String PARSE_ERROR_MESSAGE = "Unable to parse jwks content: ";
+    private static final Logger LOGGER = LoggerFactory.getLogger(JWKSetDeserializer.class);
+    public static final String PARSE_ERROR_MESSAGE = "Unable to parse jwks content: ";
 
     @Override
     public Optional<JWKSet> convert(ObjectNode node) {
@@ -44,10 +43,11 @@ public class JWKSetDeserializer extends StdConverter<ObjectNode, Optional<JWKSet
             return null;
         }
 
-        if (node.get("keys") == null ||
-                node.get("keys").isNull() ||
-                node.get("keys").equals(new TextNode("null")) ||
-                node.get("keys").equals(new TextNode(""))
+        if (
+            node.get("keys") == null ||
+            node.get("keys").isNull() ||
+            node.get("keys").equals(new TextNode("null")) ||
+            node.get("keys").equals(new TextNode(""))
         ) {
             return Optional.empty();
         }
@@ -58,17 +58,14 @@ public class JWKSetDeserializer extends StdConverter<ObjectNode, Optional<JWKSet
     public Optional<JWKSet> convert(String jwkSetAsString) {
         try {
             com.nimbusds.jose.jwk.JWKSet jwkSet = com.nimbusds.jose.jwk.JWKSet.parse(jwkSetAsString);
-            List<JWK> jwkList = jwkSet.getKeys()
-                    .stream()
-                    .map(JWKConverter::convert)
-                    .collect(Collectors.toList());
+            List<JWK> jwkList = jwkSet.getKeys().stream().map(JWKConverter::convert).collect(Collectors.toList());
 
             JWKSet result = new JWKSet();
             result.setKeys(jwkList);
             return Optional.of(result);
         } catch (ParseException ex) {
             LOGGER.error(ex.getMessage(), ex);
-            throw new InvalidClientMetadataException(PARSE_ERROR_MESSAGE+ex.getMessage());
+            throw new InvalidClientMetadataException(PARSE_ERROR_MESSAGE + ex.getMessage());
         }
     }
 }

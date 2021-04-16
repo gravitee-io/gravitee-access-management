@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-user',
   templateUrl: './user.component.html',
-  styleUrls: ['./user.component.scss']
+  styleUrls: ['./user.component.scss'],
 })
 export class UserComponent implements OnInit {
   private domainId: string;
@@ -29,14 +29,11 @@ export class UserComponent implements OnInit {
   avatarUrl: string;
   navLinks: any = [];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService) {
-  }
+  constructor(private route: ActivatedRoute, private router: Router, private breadcrumbService: BreadcrumbService) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.user = this.route.snapshot.data['user'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.user = this.route.snapshot.data.user;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -45,11 +42,11 @@ export class UserComponent implements OnInit {
   }
 
   initNavLinks() {
-    this.navLinks.push({'href': 'profile' , 'label': 'Profile'});
+    this.navLinks.push({ href: 'profile', label: 'Profile' });
     if (!this.organizationContext) {
-      this.navLinks.push({'href': 'applications' , 'label': 'Authorized Apps'});
-      this.navLinks.push({'href': 'factors' , 'label': 'Multi-Factor Authentication'});
-      this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
+      this.navLinks.push({ href: 'applications', label: 'Authorized Apps' });
+      this.navLinks.push({ href: 'factors', label: 'Multi-Factor Authentication' });
+      this.navLinks.push({ href: 'roles', label: 'Roles' });
     }
   }
 
@@ -57,8 +54,14 @@ export class UserComponent implements OnInit {
     if (this.organizationContext) {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/users/' + this.user.id + '$', this.user.username);
     } else {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '$', this.user.username);
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/users/' + this.user.id + '/applications$', 'Authorized Apps');
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/domains/' + this.domainId + '/settings/users/' + this.user.id + '$',
+        this.user.username,
+      );
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/domains/' + this.domainId + '/settings/users/' + this.user.id + '/applications$',
+        'Authorized Apps',
+      );
     }
   }
 }

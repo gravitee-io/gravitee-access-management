@@ -45,14 +45,16 @@ public class DynamicClientRegistrationTemplateEndpoint implements Handler<Routin
         LOGGER.debug("Dynamic client registration TEMPLATE endpoint");
 
         this.clientSyncService.findTemplates()
-                .subscribe(
-                        templates -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .setStatusCode(HttpStatusCode.OK_200)
-                                .end(Json.encodePrettily(DynamicClientRegistrationTemplate.from(templates)))
-                        , error -> context.fail(error)
-                );
+            .subscribe(
+                templates ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setStatusCode(HttpStatusCode.OK_200)
+                        .end(Json.encodePrettily(DynamicClientRegistrationTemplate.from(templates))),
+                error -> context.fail(error)
+            );
     }
 }

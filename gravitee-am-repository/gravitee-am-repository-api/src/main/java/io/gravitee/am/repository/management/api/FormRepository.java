@@ -20,7 +20,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -28,7 +27,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface FormRepository extends CrudRepository<Form, String> {
-
     Single<List<Form>> findAll(ReferenceType referenceType, String referenceId);
 
     Single<List<Form>> findByDomain(String domain);

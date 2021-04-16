@@ -30,14 +30,13 @@ import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMon
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -51,16 +50,17 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Single<Set<Client>> findAll() {
-        MongoCollection<ClientMongo> clientsCollection =  mongoOperations.getCollection(COLLECTION_NAME, ClientMongo.class);
+        MongoCollection<ClientMongo> clientsCollection = mongoOperations.getCollection(COLLECTION_NAME, ClientMongo.class);
         return Observable.fromPublisher(clientsCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Boolean> collectionExists() {
-        return Observable.fromPublisher(mongoOperations.listCollectionNames())
-                .filter(collectionName -> collectionName.equalsIgnoreCase(COLLECTION_NAME))
-                .isEmpty()
-                .map(isEmpty -> !isEmpty);
+        return Observable
+            .fromPublisher(mongoOperations.listCollectionNames())
+            .filter(collectionName -> collectionName.equalsIgnoreCase(COLLECTION_NAME))
+            .isEmpty()
+            .map(isEmpty -> !isEmpty);
     }
 
     @Override
@@ -106,7 +106,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setDefaultMaxAge(clientMongo.getDefaultMaxAge());
         client.setRequireAuthTime(clientMongo.getRequireAuthTime());
         client.setDefaultACRvalues(clientMongo.getDefaultACRvalues());
-        client.setInitiateLoginUri( clientMongo.getInitiateLoginUri());
+        client.setInitiateLoginUri(clientMongo.getInitiateLoginUri());
         client.setRequestUris(clientMongo.getRequestUris());
         client.setScopes(clientMongo.getScopes());
         client.setSoftwareId(clientMongo.getSoftwareId());
@@ -126,7 +126,7 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         client.setEnhanceScopesWithUserPermissions(clientMongo.isEnhanceScopesWithUserPermissions());
         client.setCreatedAt(clientMongo.getCreatedAt());
         client.setUpdatedAt(clientMongo.getUpdatedAt());
-        client.setScopeApprovals((Map)clientMongo.getScopeApprovals());
+        client.setScopeApprovals((Map) clientMongo.getScopeApprovals());
         client.setAccountSettings(convert(clientMongo.getAccountSettings()));
         client.setTokenCustomClaims(getTokenClaims(clientMongo.getTokenCustomClaims()));
         client.setTemplate(clientMongo.isTemplate());
@@ -197,11 +197,11 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
         clientMongo.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
         clientMongo.setCreatedAt(client.getCreatedAt());
         clientMongo.setUpdatedAt(client.getUpdatedAt());
-        clientMongo.setScopeApprovals(client.getScopeApprovals() != null ? new Document((Map)client.getScopeApprovals()) : new Document());
+        clientMongo.setScopeApprovals(client.getScopeApprovals() != null ? new Document((Map) client.getScopeApprovals()) : new Document());
         clientMongo.setAccountSettings(convert(client.getAccountSettings()));
         clientMongo.setTokenCustomClaims(getMongoTokenClaims(client.getTokenCustomClaims()));
         clientMongo.setTemplate(client.isTemplate());
-        clientMongo.setMetadata(client.getMetadata() != null ? new Document((Map)client.getMetadata()) : new Document());
+        clientMongo.setMetadata(client.getMetadata() != null ? new Document((Map) client.getMetadata()) : new Document());
         clientMongo.setTlsClientAuthSanDns(client.getTlsClientAuthSanDns());
         clientMongo.setTlsClientAuthSanEmail(client.getTlsClientAuthSanEmail());
         clientMongo.setTlsClientAuthSanIp(client.getTlsClientAuthSanIp());
@@ -211,15 +211,13 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     }
 
     private JWKSet convert(List<JWKMongo> jwksMongo) {
-        if (jwksMongo==null) {
+        if (jwksMongo == null) {
             return null;
         }
 
         JWKSet jwkSet = new JWKSet();
 
-        List<JWK> jwkList = jwksMongo.stream()
-                .map(jwkMongo -> this.convert(jwkMongo))
-                .collect(Collectors.toList());
+        List<JWK> jwkList = jwksMongo.stream().map(jwkMongo -> this.convert(jwkMongo)).collect(Collectors.toList());
 
         jwkSet.setKeys(jwkList);
 
@@ -227,26 +225,35 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     }
 
     private JWK convert(JWKMongo jwkMongo) {
-        if (jwkMongo==null) {
+        if (jwkMongo == null) {
             return null;
         }
 
         JWK result;
 
         switch (KeyType.parse(jwkMongo.getKty())) {
-            case EC: result = convertEC(jwkMongo);break;
-            case RSA:result = convertRSA(jwkMongo);break;
-            case OCT:result = convertOCT(jwkMongo);break;
-            case OKP:result = convertOKP(jwkMongo);break;
-            default: result = null;
+            case EC:
+                result = convertEC(jwkMongo);
+                break;
+            case RSA:
+                result = convertRSA(jwkMongo);
+                break;
+            case OCT:
+                result = convertOCT(jwkMongo);
+                break;
+            case OKP:
+                result = convertOKP(jwkMongo);
+                break;
+            default:
+                result = null;
         }
 
         result.setAlg(jwkMongo.getAlg());
-        result.setKeyOps(jwkMongo.getKeyOps()!=null?jwkMongo.getKeyOps().stream().collect(Collectors.toSet()):null);
+        result.setKeyOps(jwkMongo.getKeyOps() != null ? jwkMongo.getKeyOps().stream().collect(Collectors.toSet()) : null);
         result.setKid(jwkMongo.getKid());
         result.setKty(jwkMongo.getKty());
         result.setUse(jwkMongo.getUse());
-        result.setX5c(jwkMongo.getX5c()!=null?jwkMongo.getX5c().stream().collect(Collectors.toSet()):null);
+        result.setX5c(jwkMongo.getX5c() != null ? jwkMongo.getX5c().stream().collect(Collectors.toSet()) : null);
         result.setX5t(jwkMongo.getX5t());
         result.setX5tS256(jwkMongo.getX5tS256());
         result.setX5u(jwkMongo.getX5u());
@@ -303,36 +310,43 @@ public class MongoClientRepository extends AbstractManagementMongoRepository imp
     }
 
     private List<JWKMongo> convert(JWKSet jwkSet) {
-        if (jwkSet==null) {
+        if (jwkSet == null) {
             return null;
         }
 
-        return jwkSet.getKeys().stream()
-                .map(jwk -> this.convert(jwk))
-                .collect(Collectors.toList());
+        return jwkSet.getKeys().stream().map(jwk -> this.convert(jwk)).collect(Collectors.toList());
     }
 
     private JWKMongo convert(JWK jwk) {
-        if (jwk==null) {
+        if (jwk == null) {
             return null;
         }
 
         JWKMongo result;
 
         switch (KeyType.parse(jwk.getKty())) {
-            case EC: result = convert((ECKey)jwk);break;
-            case RSA:result = convert((RSAKey)jwk);break;
-            case OCT:result = convert((OCTKey)jwk);break;
-            case OKP:result = convert((OKPKey)jwk);break;
-            default: result = null;
+            case EC:
+                result = convert((ECKey) jwk);
+                break;
+            case RSA:
+                result = convert((RSAKey) jwk);
+                break;
+            case OCT:
+                result = convert((OCTKey) jwk);
+                break;
+            case OKP:
+                result = convert((OKPKey) jwk);
+                break;
+            default:
+                result = null;
         }
 
         result.setAlg(jwk.getAlg());
-        result.setKeyOps(jwk.getKeyOps()!=null?jwk.getKeyOps().stream().collect(Collectors.toList()):null);
+        result.setKeyOps(jwk.getKeyOps() != null ? jwk.getKeyOps().stream().collect(Collectors.toList()) : null);
         result.setKid(jwk.getKid());
         result.setKty(jwk.getKty());
         result.setUse(jwk.getUse());
-        result.setX5c(jwk.getX5c()!=null?jwk.getX5c().stream().collect(Collectors.toList()):null);
+        result.setX5c(jwk.getX5c() != null ? jwk.getX5c().stream().collect(Collectors.toList()) : null);
         result.setX5t(jwk.getX5t());
         result.setX5tS256(jwk.getX5tS256());
         result.setX5u(jwk.getX5u());

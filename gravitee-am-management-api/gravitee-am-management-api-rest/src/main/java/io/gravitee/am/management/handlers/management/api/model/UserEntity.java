@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.User;
 
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team

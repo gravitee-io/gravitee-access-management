@@ -49,7 +49,8 @@ import org.springframework.context.annotation.Import;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import({
+@Import(
+    {
         VertxConfiguration.class,
         ReactorConfiguration.class,
         VertxServerConfiguration.class,
@@ -61,8 +62,9 @@ import org.springframework.context.annotation.Import;
         ProtocolConfiguration.class,
         PolicyConfiguration.class,
         AlertPluginConfiguration.class,
-        FactorConfiguration.class
-})
+        FactorConfiguration.class,
+    }
+)
 public class StandaloneConfiguration {
 
     @Bean
@@ -84,7 +86,7 @@ public class StandaloneConfiguration {
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         //Enable ObjectMapper to manage Optional type.
-        Json.mapper.registerModule(new Jdk8Module());//Manage Optional java type
+        Json.mapper.registerModule(new Jdk8Module()); //Manage Optional java type
         //Json.mapper.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);//Reject duplicated keys
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return mapper;
@@ -92,7 +94,6 @@ public class StandaloneConfiguration {
 
     @Bean
     public ExpressionLanguageInitializer expressionLanguageInitializer() {
-
         return new ExpressionLanguageInitializer();
     }
 

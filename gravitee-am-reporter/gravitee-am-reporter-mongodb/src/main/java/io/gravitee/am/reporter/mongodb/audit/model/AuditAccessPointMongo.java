@@ -25,6 +25,7 @@ public class AuditAccessPointMongo {
 
     @BsonProperty("id")
     private String id;
+
     private String alternativeId;
     private String displayName;
     private String ipAddress;

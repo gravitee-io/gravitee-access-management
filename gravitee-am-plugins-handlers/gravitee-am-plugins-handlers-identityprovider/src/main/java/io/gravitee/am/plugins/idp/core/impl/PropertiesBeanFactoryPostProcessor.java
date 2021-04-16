@@ -15,12 +15,11 @@
  */
 package io.gravitee.am.plugins.idp.core.impl;
 
+import java.util.Properties;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-
-import java.util.Properties;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

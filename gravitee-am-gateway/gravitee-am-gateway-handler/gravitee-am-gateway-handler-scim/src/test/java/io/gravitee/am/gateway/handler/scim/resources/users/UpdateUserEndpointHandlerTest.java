@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -36,11 +40,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -72,9 +71,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         when(objectWriter.writeValueAsString(any())).thenReturn("UserObject");
         when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
 
-        router.route()
-                .handler(BodyHandler.create())
-                .failureHandler(new ErrorHandler());
+        router.route().handler(BodyHandler.create()).failureHandler(new ErrorHandler());
     }
 
     @Test
@@ -83,20 +80,21 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         when(passwordValidator.validate(anyString())).thenReturn(false);
 
         testRequest(
-                HttpMethod.PUT,
-                "/Users",
-                req -> {
-                    req.setChunked(true);
-                    req.write(Json.encode(getUser()));
-                },
-                400,
-                "Bad Request",
-                "{\n" +
-                        "  \"status\" : \"400\",\n" +
-                        "  \"scimType\" : \"invalidValue\",\n" +
-                        "  \"detail\" : \"Field [password] is invalid\",\n" +
-                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
-                        "}");
+            HttpMethod.PUT,
+            "/Users",
+            req -> {
+                req.setChunked(true);
+                req.write(Json.encode(getUser()));
+            },
+            400,
+            "Bad Request",
+            "{\n" +
+            "  \"status\" : \"400\",\n" +
+            "  \"scimType\" : \"invalidValue\",\n" +
+            "  \"detail\" : \"Field [password] is invalid\",\n" +
+            "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+            "}"
+        );
     }
 
     @Test
@@ -106,37 +104,41 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         when(userService.update(any(), any(), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
-                HttpMethod.PUT,
-                "/Users",
-                req -> {
-                    req.setChunked(true);
-                    req.write(Json.encode(getUser()));
-                },
-                200,
-                "OK", null);
+            HttpMethod.PUT,
+            "/Users",
+            req -> {
+                req.setChunked(true);
+                req.write(Json.encode(getUser()));
+            },
+            200,
+            "OK",
+            null
+        );
     }
 
     @Test
     public void shouldNotInvokeSCIMUpdateUserEndpoint_invalid_roles() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
         when(passwordValidator.validate(anyString())).thenReturn(true);
-        when(userService.update(any(), any(), anyString())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
+        when(userService.update(any(), any(), anyString()))
+            .thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
 
         testRequest(
-                HttpMethod.PUT,
-                "/Users",
-                req -> {
-                    req.setChunked(true);
-                    req.write(Json.encode(getUser()));
-                },
-                400,
-                "Bad Request",
-                "{\n" +
-                        "  \"status\" : \"400\",\n" +
-                        "  \"scimType\" : \"invalidValue\",\n" +
-                        "  \"detail\" : \"Role [role-1] can not be found.\",\n" +
-                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
-                        "}");
+            HttpMethod.PUT,
+            "/Users",
+            req -> {
+                req.setChunked(true);
+                req.write(Json.encode(getUser()));
+            },
+            400,
+            "Bad Request",
+            "{\n" +
+            "  \"status\" : \"400\",\n" +
+            "  \"scimType\" : \"invalidValue\",\n" +
+            "  \"detail\" : \"Role [role-1] can not be found.\",\n" +
+            "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+            "}"
+        );
     }
 
     @Test
@@ -146,20 +148,21 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         when(userService.update(any(), any(), anyString())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
 
         testRequest(
-                HttpMethod.PUT,
-                "/Users",
-                req -> {
-                    req.setChunked(true);
-                    req.write(Json.encode(getUser()));
-                },
-                400,
-                "Bad Request",
-                "{\n" +
-                        "  \"status\" : \"400\",\n" +
-                        "  \"scimType\" : \"invalidValue\",\n" +
-                        "  \"detail\" : \"Invalid user infos\",\n" +
-                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
-                        "}");
+            HttpMethod.PUT,
+            "/Users",
+            req -> {
+                req.setChunked(true);
+                req.write(Json.encode(getUser()));
+            },
+            400,
+            "Bad Request",
+            "{\n" +
+            "  \"status\" : \"400\",\n" +
+            "  \"scimType\" : \"invalidValue\",\n" +
+            "  \"detail\" : \"Invalid user infos\",\n" +
+            "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+            "}"
+        );
     }
 
     @Test
@@ -169,20 +172,21 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         when(userService.update(any(), any(), anyString())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
 
         testRequest(
-                HttpMethod.PUT,
-                "/Users",
-                req -> {
-                    req.setChunked(true);
-                    req.write(Json.encode(getUser()));
-                },
-                400,
-                "Bad Request",
-                "{\n" +
-                        "  \"status\" : \"400\",\n" +
-                        "  \"scimType\" : \"invalidValue\",\n" +
-                        "  \"detail\" : \"Value [Invalid email] is not a valid email.\",\n" +
-                        "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
-                        "}");
+            HttpMethod.PUT,
+            "/Users",
+            req -> {
+                req.setChunked(true);
+                req.write(Json.encode(getUser()));
+            },
+            400,
+            "Bad Request",
+            "{\n" +
+            "  \"status\" : \"400\",\n" +
+            "  \"scimType\" : \"invalidValue\",\n" +
+            "  \"detail\" : \"Value [Invalid email] is not a valid email.\",\n" +
+            "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
+            "}"
+        );
     }
 
     private User getUser() {

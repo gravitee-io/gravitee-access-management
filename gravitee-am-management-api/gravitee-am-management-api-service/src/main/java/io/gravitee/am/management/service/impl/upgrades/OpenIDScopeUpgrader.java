@@ -23,13 +23,12 @@ import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.UpdateSystemScope;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -52,25 +51,25 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         logger.info("Applying OIDC scope upgrade");
-        domainService.findAll()
-                .flatMapObservable(Observable::fromIterable)
-                .flatMapSingle(this::createOrUpdateSystemScopes)
-                .subscribe();
+        domainService.findAll().flatMapObservable(Observable::fromIterable).flatMapSingle(this::createOrUpdateSystemScopes).subscribe();
         return true;
     }
 
     private Single<Domain> createOrUpdateSystemScopes(Domain domain) {
-        return Observable.fromArray(io.gravitee.am.common.oidc.Scope.values())
-                .flatMapSingle(scope -> createSystemScope(domain.getId(), scope))
-                .lastOrError()
-                .map(scope -> domain);
+        return Observable
+            .fromArray(io.gravitee.am.common.oidc.Scope.values())
+            .flatMapSingle(scope -> createSystemScope(domain.getId(), scope))
+            .lastOrError()
+            .map(scope -> domain);
     }
 
     private Single<Scope> createSystemScope(String domain, io.gravitee.am.common.oidc.Scope systemScope) {
-        return scopeService.findByDomainAndKey(domain, systemScope.getKey())
-                .map(scope -> Optional.of(scope))
-                .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(optScope -> {
+        return scopeService
+            .findByDomainAndKey(domain, systemScope.getKey())
+            .map(scope -> Optional.of(scope))
+            .defaultIfEmpty(Optional.empty())
+            .flatMapSingle(
+                optScope -> {
                     if (!optScope.isPresent()) {
                         logger.info("Create a new system scope key[{}] for domain[{}]", systemScope.getKey(), domain);
                         NewSystemScope scope = new NewSystemScope();
@@ -80,19 +79,22 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
                         scope.setDescription(systemScope.getDescription());
                         scope.setDiscovery(systemScope.isDiscovery());
                         return scopeService.create(domain, scope);
-                    } else if (shouldUpdateSystemScope(optScope, systemScope)){
+                    } else if (shouldUpdateSystemScope(optScope, systemScope)) {
                         logger.info("Update a system scope key[{}] for domain[{}]", systemScope.getKey(), domain);
                         final Scope existingScope = optScope.get();
                         UpdateSystemScope scope = new UpdateSystemScope();
                         scope.setName(existingScope.getName() != null ? existingScope.getName() : systemScope.getLabel());
-                        scope.setDescription(existingScope.getDescription() != null ? existingScope.getDescription() : systemScope.getDescription());
+                        scope.setDescription(
+                            existingScope.getDescription() != null ? existingScope.getDescription() : systemScope.getDescription()
+                        );
                         scope.setClaims(systemScope.getClaims());
                         scope.setExpiresIn(existingScope.getExpiresIn());
                         scope.setDiscovery(systemScope.isDiscovery());
                         return scopeService.update(domain, optScope.get().getId(), scope);
                     }
                     return Single.just(optScope.get());
-                });
+                }
+            );
     }
 
     /**

@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.service.model;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -59,11 +59,7 @@ public class UpdateRole {
 
     @Override
     public String toString() {
-        return "UpdateRole{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", permissions=" + permissions +
-                '}';
+        return "UpdateRole{" + "name='" + name + '\'' + ", description='" + description + '\'' + ", permissions=" + permissions + '}';
     }
 
     public List<String> getOauthScopes() {

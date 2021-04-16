@@ -15,12 +15,12 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import {UserResolver} from "./user.resolver";
+import { UserResolver } from './user.resolver';
 
 describe('UserResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [UserResolver]
+      providers: [UserResolver],
     });
   });
 

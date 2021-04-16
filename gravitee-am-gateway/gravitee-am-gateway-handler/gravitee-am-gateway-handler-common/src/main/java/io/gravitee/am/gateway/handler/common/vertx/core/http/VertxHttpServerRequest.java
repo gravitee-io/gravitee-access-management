@@ -29,14 +29,13 @@ import io.gravitee.reporter.api.http.Metrics;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.net.SocketAddress;
-
-import javax.net.ssl.SSLSession;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.net.ssl.SSLSession;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -113,17 +112,23 @@ public class VertxHttpServerRequest implements Request {
             MultiMap parameters = httpServerRequest.params();
             queryParameters = new LinkedMultiValueMap<>(parameters.size());
 
-            for(Map.Entry<String, String> param : httpServerRequest.params()) {
+            for (Map.Entry<String, String> param : httpServerRequest.params()) {
                 try {
                     if (decoded) {
                         String paramKey = URLDecoder.decode(param.getKey(), StandardCharsets.UTF_8.name());
-                        List<String> paramValues = parameters.getAll(param.getKey()).stream().map(v -> {
-                            try {
-                                return URLDecoder.decode(v, StandardCharsets.UTF_8.name());
-                            } catch (UnsupportedEncodingException e) {
-                                return v;
-                            }
-                        }).collect(Collectors.toList());
+                        List<String> paramValues = parameters
+                            .getAll(param.getKey())
+                            .stream()
+                            .map(
+                                v -> {
+                                    try {
+                                        return URLDecoder.decode(v, StandardCharsets.UTF_8.name());
+                                    } catch (UnsupportedEncodingException e) {
+                                        return v;
+                                    }
+                                }
+                            )
+                            .collect(Collectors.toList());
                         queryParameters.put(paramKey, paramValues);
                     } else {
                         queryParameters.put(param.getKey(), parameters.getAll(param.getKey()));
@@ -142,7 +147,7 @@ public class VertxHttpServerRequest implements Request {
         if (headers == null) {
             MultiMap vertxHeaders = httpServerRequest.headers();
             headers = new HttpHeaders(vertxHeaders.size());
-            for(Map.Entry<String, String> header : vertxHeaders) {
+            for (Map.Entry<String, String> header : vertxHeaders) {
                 headers.add(header.getKey(), header.getValue());
             }
         }
@@ -194,11 +199,13 @@ public class VertxHttpServerRequest implements Request {
 
     @Override
     public Request bodyHandler(Handler<Buffer> bodyHandler) {
-        if (! httpServerRequest.isEnded()) {
-            httpServerRequest.handler(event -> {
-                bodyHandler.handle(Buffer.buffer(event.getBytes()));
-                metrics.setRequestContentLength(metrics.getRequestContentLength() + event.length());
-            });
+        if (!httpServerRequest.isEnded()) {
+            httpServerRequest.handler(
+                event -> {
+                    bodyHandler.handle(Buffer.buffer(event.getBytes()));
+                    metrics.setRequestContentLength(metrics.getRequestContentLength() + event.length());
+                }
+            );
         }
 
         return this;

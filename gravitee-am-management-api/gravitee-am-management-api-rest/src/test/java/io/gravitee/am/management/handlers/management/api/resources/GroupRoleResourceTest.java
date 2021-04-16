@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
@@ -22,15 +27,9 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
 import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,16 +47,18 @@ public class GroupRoleResourceTest extends JerseySpringTest {
         mockGroup.setId("group-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockGroup)).when(groupService).revokeRoles(eq(ReferenceType.DOMAIN), eq("domain-1"), eq(mockGroup.getId()), eq(Collections.singletonList("role-1")), any());
+        doReturn(Single.just(mockGroup))
+            .when(groupService)
+            .revokeRoles(eq(ReferenceType.DOMAIN), eq("domain-1"), eq(mockGroup.getId()), eq(Collections.singletonList("role-1")), any());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("roles")
-                .path("role-1")
-                .request()
-                .delete();
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("roles")
+            .path("role-1")
+            .request()
+            .delete();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }

@@ -34,9 +34,6 @@ import io.gravitee.am.model.jose.KeyType;
 import io.gravitee.am.model.jose.OCTKey;
 import io.gravitee.am.model.jose.OKPKey;
 import io.gravitee.am.model.jose.RSAKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.security.KeyFactory;
@@ -51,6 +48,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -60,14 +59,13 @@ public class JWSServiceImpl implements JWSService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JWSServiceImpl.class);
 
-
     @Override
     public boolean isValidSignature(JWT jwt, JWK jwk) {
         try {
-            SignedJWT signedJwt = (SignedJWT)jwt;
+            SignedJWT signedJwt = (SignedJWT) jwt;
             return signedJwt.verify(this.verifier(jwk));
         } catch (ClassCastException | JOSEException ex) {
-            LOGGER.error(ex.getMessage(),ex);
+            LOGGER.error(ex.getMessage(), ex);
             return false;
         }
     }
@@ -87,7 +85,7 @@ public class JWSServiceImpl implements JWSService {
                 default:
                     throw new IllegalArgumentException("Signature is using and unknown/not managed algorithm");
             }
-        }catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Signature is using and unknown/not managed algorithm");
         }
     }
@@ -96,12 +94,11 @@ public class JWSServiceImpl implements JWSService {
         try {
             byte[] modulus = Base64.getUrlDecoder().decode(rsaKey.getN());
             byte[] exponent = Base64.getUrlDecoder().decode(rsaKey.getE());
-            RSAPublicKeySpec spec = new RSAPublicKeySpec(new BigInteger(1,modulus), new BigInteger(1,exponent));
+            RSAPublicKeySpec spec = new RSAPublicKeySpec(new BigInteger(1, modulus), new BigInteger(1, exponent));
             KeyFactory factory = KeyFactory.getInstance("RSA");
             return new RSASSAVerifier((RSAPublicKey) factory.generatePublic(spec));
-        }
-        catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
-            LOGGER.error("Unable to build Signature Verifier from RSA key",ex);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
+            LOGGER.error("Unable to build Signature Verifier from RSA key", ex);
             throw new IllegalArgumentException("Signature is using and unknown/not managed key");
         }
     }
@@ -109,8 +106,8 @@ public class JWSServiceImpl implements JWSService {
     private JWSVerifier from(ECKey ecKey) {
         try {
             Curve curve = Curve.parse(ecKey.getCrv());
-            if(curve.getStdName()==null) {
-                throw new IllegalArgumentException("Unknown EC Curve: "+ecKey.getCrv());
+            if (curve.getStdName() == null) {
+                throw new IllegalArgumentException("Unknown EC Curve: " + ecKey.getCrv());
             }
             AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC");
             parameters.init(new ECGenParameterSpec(curve.getStdName()));
@@ -118,14 +115,13 @@ public class JWSServiceImpl implements JWSService {
 
             byte[] x = Base64.getUrlDecoder().decode(ecKey.getX());
             byte[] y = Base64.getUrlDecoder().decode(ecKey.getY());
-            ECPoint ecPoint = new ECPoint(new BigInteger(1,x), new BigInteger(1,y));
+            ECPoint ecPoint = new ECPoint(new BigInteger(1, x), new BigInteger(1, y));
 
             ECPublicKeySpec ecPublicKeySpec = new ECPublicKeySpec(ecPoint, ecParameters);
             ECPublicKey ecPublicKey = (ECPublicKey) KeyFactory.getInstance("EC").generatePublic(ecPublicKeySpec);
             return new ECDSAVerifier(ecPublicKey);
-        }
-        catch (NoSuchAlgorithmException | InvalidParameterSpecException | InvalidKeySpecException | JOSEException ex) {
-            LOGGER.error("Unable to build Verifier from Elliptic Curve (EC) key",ex);
+        } catch (NoSuchAlgorithmException | InvalidParameterSpecException | InvalidKeySpecException | JOSEException ex) {
+            LOGGER.error("Unable to build Verifier from Elliptic Curve (EC) key", ex);
             throw new IllegalArgumentException("Signature is using and unknown/not managed key");
         }
     }
@@ -134,9 +130,8 @@ public class JWSServiceImpl implements JWSService {
         try {
             OctetSequenceKey jwk = new OctetSequenceKey.Builder(new Base64URL(octKey.getK())).build();
             return new MACVerifier(jwk);
-        }
-        catch (JOSEException ex) {
-            LOGGER.error("Unable to build Verifier from Edwards Curve (OKP) key",ex);
+        } catch (JOSEException ex) {
+            LOGGER.error("Unable to build Verifier from Edwards Curve (OKP) key", ex);
             throw new IllegalArgumentException("Signature is using and unknown/not managed key");
         }
     }
@@ -144,14 +139,13 @@ public class JWSServiceImpl implements JWSService {
     private JWSVerifier from(OKPKey okpKey) {
         try {
             Curve curve = Curve.parse(okpKey.getCrv());
-            if(curve.getStdName()==null) {
-                throw new IllegalArgumentException("Unknown OKP Curve: "+okpKey.getCrv());
+            if (curve.getStdName() == null) {
+                throw new IllegalArgumentException("Unknown OKP Curve: " + okpKey.getCrv());
             }
-            OctetKeyPair jwk = new OctetKeyPair.Builder(curve,new Base64URL(okpKey.getX())).build();
+            OctetKeyPair jwk = new OctetKeyPair.Builder(curve, new Base64URL(okpKey.getX())).build();
             return new Ed25519Verifier(jwk);
-        }
-        catch (JOSEException ex) {
-            LOGGER.error("Unable to build Verifier from Message Authentication Code (MAC) key",ex);
+        } catch (JOSEException ex) {
+            LOGGER.error("Unable to build Verifier from Message Authentication Code (MAC) key", ex);
             throw new IllegalArgumentException("Signature is using and unknown/not managed key");
         }
     }

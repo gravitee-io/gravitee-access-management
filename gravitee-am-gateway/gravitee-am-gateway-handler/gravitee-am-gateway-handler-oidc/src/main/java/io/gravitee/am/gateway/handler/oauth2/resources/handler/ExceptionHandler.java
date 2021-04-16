@@ -45,40 +45,31 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                 OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(oAuth2Exception.getOAuth2ErrorCode());
                 oAuth2ErrorResponse.setDescription(oAuth2Exception.getMessage());
                 routingContext
-                        .response()
-                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                        .setStatusCode(oAuth2Exception.getHttpStatusCode())
-                        .end(Json.encodePrettily(oAuth2ErrorResponse));
+                    .response()
+                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                    .setStatusCode(oAuth2Exception.getHttpStatusCode())
+                    .end(Json.encodePrettily(oAuth2ErrorResponse));
             } else if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
                 OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(policyChainException.key());
                 oAuth2ErrorResponse.setDescription(policyChainException.getMessage());
                 routingContext
-                        .response()
-                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                        .setStatusCode(policyChainException.statusCode())
-                        .end(Json.encodePrettily(oAuth2ErrorResponse));
+                    .response()
+                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                    .setStatusCode(policyChainException.statusCode())
+                    .end(Json.encodePrettily(oAuth2ErrorResponse));
             } else if (throwable instanceof HttpStatusException) {
-                routingContext
-                        .response()
-                        .setStatusCode(((HttpStatusException) throwable).getStatusCode())
-                        .end();
+                routingContext.response().setStatusCode(((HttpStatusException) throwable).getStatusCode()).end();
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);
                 if (routingContext.statusCode() != -1) {
-                    routingContext
-                            .response()
-                            .setStatusCode(routingContext.statusCode())
-                            .end();
+                    routingContext.response().setStatusCode(routingContext.statusCode()).end();
                 } else {
-                    routingContext
-                            .response()
-                            .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
-                            .end();
+                    routingContext.response().setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
                 }
             }
         }

@@ -15,14 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.controller;
 
+import java.io.IOException;
+import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,7 +33,8 @@ public class AuthorizationController {
     private static final String REDIRECT_URI = "redirect_uri";
 
     @RequestMapping(value = "/authorize")
-    public void authorize(HttpServletResponse response, @RequestParam Map<String, String> parameters, HttpSession session) throws IOException {
+    public void authorize(HttpServletResponse response, @RequestParam Map<String, String> parameters, HttpSession session)
+        throws IOException {
         String redirectUriParameter = parameters.get(REDIRECT_URI);
         if (redirectUriParameter == null || redirectUriParameter.isEmpty()) {
             throw new IllegalArgumentException("A redirectUri must be either supplied");

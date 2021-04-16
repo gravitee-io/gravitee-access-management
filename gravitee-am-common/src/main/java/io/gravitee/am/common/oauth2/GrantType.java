@@ -24,7 +24,6 @@ package io.gravitee.am.common.oauth2;
  * @author GraviteeSource Team
  */
 public interface GrantType {
-
     /**
      * Client Credentials
      */

@@ -37,14 +37,14 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public class IntrospectionEndpoint implements Handler<RoutingContext> {
-    private final static String CONTEXT_CLIENT_KEY = "client";
-    private final static String TOKEN_PARAM = "token";
-    private final static String TOKEN_TYPE_HINT_PARAM = "token_type_hint";
+
+    private static final String CONTEXT_CLIENT_KEY = "client";
+    private static final String TOKEN_PARAM = "token";
+    private static final String TOKEN_TYPE_HINT_PARAM = "token_type_hint";
 
     private IntrospectionService introspectionService;
 
-    public IntrospectionEndpoint() {
-    }
+    public IntrospectionEndpoint() {}
 
     public IntrospectionEndpoint(IntrospectionService introspectionService) {
         this.introspectionService = introspectionService;
@@ -61,13 +61,17 @@ public class IntrospectionEndpoint implements Handler<RoutingContext> {
         }
 
         introspectionService
-                .introspect(createRequest(context))
-                .doOnSuccess(introspectionResponse -> context.response()
+            .introspect(createRequest(context))
+            .doOnSuccess(
+                introspectionResponse ->
+                    context
+                        .response()
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
                         .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                        .end(Json.encodePrettily(introspectionResponse)))
-                .subscribe();
+                        .end(Json.encodePrettily(introspectionResponse))
+            )
+            .subscribe();
     }
 
     private static IntrospectionRequest createRequest(RoutingContext context) {

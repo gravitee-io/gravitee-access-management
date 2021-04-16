@@ -33,6 +33,7 @@ public class Member {
      */
     @JsonProperty("$ref")
     private String ref;
+
     /**
      * A human-readable name for the member
      */

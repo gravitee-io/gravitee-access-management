@@ -17,55 +17,95 @@
 -->
 <div class="email-container">
   <div fxLayout="row" fxLayoutAlign="start center">
-    <h1>{{emailName}}</h1>
+    <h1>{{ emailName }}</h1>
     <button mat-icon-button (click)="openDialog()"><mat-icon>info_outline</mat-icon></button>
   </div>
   <div class="gv-form-section">
     <div fxLayout="column">
-      <mat-slide-toggle matTooltip="{{isEnabled() ? 'Disable custom email ?' : 'Enable custom email ?'}}"
-                        [matTooltipPosition]="'after'"
-                        (change)="enableEmail($event)"
-                        [checked]="isEnabled()" [disabled]="!canEdit()">
-        Enable custom {{template}} email template.
+      <mat-slide-toggle
+        matTooltip="{{ isEnabled() ? 'Disable custom email ?' : 'Enable custom email ?' }}"
+        [matTooltipPosition]="'after'"
+        (change)="enableEmail($event)"
+        [checked]="isEnabled()"
+        [disabled]="!canEdit()"
+      >
+        Enable custom {{ template }} email template.
       </mat-slide-toggle>
-      <mat-hint style="font-size: 75%;">Override the default {{template}} email template to fit your company requirements.</mat-hint>
+      <mat-hint style="font-size: 75%">Override the default {{ template }} email template to fit your company requirements.</mat-hint>
     </div>
   </div>
 
-  <form (keydown.enter)="false" #emailForm="ngForm" fxLayout="column">
+  <form (keydown.enter)="(false)" #emailForm="ngForm" fxLayout="column">
     <div class="gv-form-section">
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>From</mat-label>
-        <input matInput type="email" placeholder="From" name="from" [(ngModel)]="email.from" required [disabled]="!isEnabled()" [readonly]="!canEdit()">
+        <input
+          matInput
+          type="email"
+          placeholder="From"
+          name="from"
+          [(ngModel)]="email.from"
+          required
+          [disabled]="!isEnabled()"
+          [readonly]="!canEdit()"
+        />
         <mat-hint>The email's FROM address. Example: no-reply@mycompany.com</mat-hint>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>From name</mat-label>
-        <input matInput type="text" placeholder="From name" name="fromName" [(ngModel)]="email.fromName" [disabled]="!isEnabled()" [readonly]="!canEdit()">
+        <input
+          matInput
+          type="text"
+          placeholder="From name"
+          name="fromName"
+          [(ngModel)]="email.fromName"
+          [disabled]="!isEnabled()"
+          [readonly]="!canEdit()"
+        />
         <mat-hint>The email's FROM name. Example: [Support Team]</mat-hint>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Subject</mat-label>
-        <input matInput type="text" placeholder="Subject" name="subject" [(ngModel)]="email.subject" required [disabled]="!isEnabled()" [readonly]="!canEdit()">
-        <mat-hint>The email's subject. Supports contextual attributes such as <code><![CDATA[${user.firstName}]]></code> or <code><![CDATA[${user.lastName}]]></code></mat-hint>
+        <input
+          matInput
+          type="text"
+          placeholder="Subject"
+          name="subject"
+          [(ngModel)]="email.subject"
+          required
+          [disabled]="!isEnabled()"
+          [readonly]="!canEdit()"
+        />
+        <mat-hint
+          >The email's subject. Supports contextual attributes such as <code><![CDATA[${user.firstName}]]></code> or
+          <code><![CDATA[${user.lastName}]]></code></mat-hint
+        >
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Expires after</mat-label>
-        <input matInput type="number" placeholder="Expires after" name="expiresAfter" [(ngModel)]="email.expiresAfter" required [disabled]="!isEnabled()" [readonly]="!canEdit()">
+        <input
+          matInput
+          type="number"
+          placeholder="Expires after"
+          name="expiresAfter"
+          [(ngModel)]="email.expiresAfter"
+          required
+          [disabled]="!isEnabled()"
+          [readonly]="!canEdit()"
+        />
         <mat-hint>The email link will be expired after the specified time (in seconds). Default: 86400 seconds (1 day).</mat-hint>
       </mat-form-field>
     </div>
   </form>
   <div class="gv-form-section">
-    <mat-tab-group (selectedTabChange)="onTabSelectedChanged($event);">
+    <mat-tab-group (selectedTabChange)="onTabSelectedChanged($event)">
       <mat-tab label="Html" [disabled]="!isEnabled() || !canEdit()">
-        <div style= "position:relative;">
+        <div style="position: relative">
           <codemirror #editor [(ngModel)]="emailContent" [config]="config" (change)="onContentChanges($event)"></codemirror>
         </div>
       </mat-tab>
       <mat-tab label="Preview" [disabled]="!isEnabled() || !canEdit()">
-        <iframe frameborder="0" class="preview" #preview width="100%" (load)="resizeIframe()">
-        </iframe>
+        <iframe frameborder="0" class="preview" #preview width="100%" (load)="resizeIframe()"> </iframe>
       </mat-tab>
     </mat-tab-group>
   </div>
@@ -74,7 +114,7 @@
   </div>
   <div *ngIf="emailFound && deleteMode" class="email-delete-zone" fxLayout="column">
     <p>This operation cannot be undone.</p>
-    Email template will be deleted, it will no longer be use to override default {{emailName}} email template.
+    Email template will be deleted, it will no longer be use to override default {{ emailName }} email template.
     <div class="email-delete-button" fxLayout="row">
       <span fxFlex></span>
       <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>

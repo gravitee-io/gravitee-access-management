@@ -28,8 +28,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -38,6 +36,7 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,56 +52,70 @@ public class GroupResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a platform group",
-            notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Get a platform group",
+        notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Group successfully fetched", response = Group.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void get(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("group") String group,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("group") String group,
+        @Suspended final AsyncResponse response
+    ) {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.READ)
-                .andThen(groupService.findById(ReferenceType.ORGANIZATION, organizationId, group))
-                .subscribe(response::resume, response::resume);
+            .andThen(groupService.findById(ReferenceType.ORGANIZATION, organizationId, group))
+            .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a platform group",
-            notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Update a platform group",
+        notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 201, message = "Group successfully updated", response = User.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void updateGroup(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("group") String group,
-            @ApiParam(name = "group", required = true) @Valid @NotNull UpdateGroup updateGroup,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("group") String group,
+        @ApiParam(name = "group", required = true) @Valid @NotNull UpdateGroup updateGroup,
+        @Suspended final AsyncResponse response
+    ) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
-                .andThen(groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser))
-                .subscribe(response::resume, response::resume);
+            .andThen(groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser))
+            .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a platform group",
-            notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "Group successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Delete a platform group",
+        notes = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 204, message = "Group successfully deleted"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void delete(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("group") String group,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("group") String group,
+        @Suspended final AsyncResponse response
+    ) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.DELETE)
-                .andThen(groupService.delete(ReferenceType.ORGANIZATION, organizationId, group, authenticatedUser))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+            .andThen(groupService.delete(ReferenceType.ORGANIZATION, organizationId, group, authenticatedUser))
+            .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @Path("members")

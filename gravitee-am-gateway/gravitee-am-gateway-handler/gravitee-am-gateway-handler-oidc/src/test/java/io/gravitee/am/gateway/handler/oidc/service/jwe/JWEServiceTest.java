@@ -15,15 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.jwe;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.OCTKey;
 import io.gravitee.am.model.jose.OKPKey;
 import io.gravitee.am.model.jose.RSAKey;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.Maybe;
@@ -33,9 +36,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -118,7 +118,7 @@ public class JWEServiceTest {
         client.setIdTokenEncryptedResponseAlg(alg);
 
         when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
-        when(jwkService.filter(any(),any())).thenReturn(Maybe.empty());
+        when(jwkService.filter(any(), any())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = jweService.encryptIdToken("JWT", client).test();
         testObserver.assertError(InvalidClientMetadataException.class);
@@ -131,7 +131,7 @@ public class JWEServiceTest {
         key.setE("e");
         key.setN("n");
 
-        encryptIdToken_parseError(key,"RSA-OAEP-256");
+        encryptIdToken_parseError(key, "RSA-OAEP-256");
     }
 
     @Test
@@ -140,7 +140,7 @@ public class JWEServiceTest {
         key.setCrv("crv");
         key.setX("x");
         key.setY("y");
-        encryptIdToken_parseError(key,"ECDH-ES");
+        encryptIdToken_parseError(key, "ECDH-ES");
     }
 
     @Test
@@ -148,24 +148,24 @@ public class JWEServiceTest {
         OKPKey key = new OKPKey();
         key.setCrv("crv");
         key.setX("x");
-        encryptIdToken_parseError(key,"ECDH-ES");
+        encryptIdToken_parseError(key, "ECDH-ES");
     }
 
     @Test
     public void encryptIdToken_OCT_parseError() {
         OCTKey key = new OCTKey();
         key.setK("k");
-        encryptIdToken_parseError(key,"dir");
+        encryptIdToken_parseError(key, "dir");
     }
 
     public void encryptIdToken_parseError(JWK jwk, String alg) {
-        jwk.setUse("");//will throw ParseException
+        jwk.setUse(""); //will throw ParseException
 
         Client client = new Client();
         client.setIdTokenEncryptedResponseAlg(alg);
 
         when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
-        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(jwk));
+        when(jwkService.filter(any(), any())).thenReturn(Maybe.just(jwk));
 
         TestObserver testObserver = jweService.encryptIdToken("JWT", client).test();
         testObserver.assertError(ServerErrorException.class);

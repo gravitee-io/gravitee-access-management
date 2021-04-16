@@ -16,23 +16,25 @@
 
 -->
 <div class="emails-content" *ngIf="!isEmpty()">
-  <ngx-datatable class="material"
-                 [columnMode]="'flex'"
-                 [headerHeight]="40"
-                 [footerHeight]="40"
-                 [rowHeight]="50"
-                 [rows]='emails'
-                 [sorts]="[{prop: 'enabled', dir: 'desc'}]"
-                 [rowClass]="getRowClass">
+  <ngx-datatable
+    class="material"
+    [columnMode]="'flex'"
+    [headerHeight]="40"
+    [footerHeight]="40"
+    [rowHeight]="50"
+    [rows]="emails"
+    [sorts]="[{ prop: 'enabled', dir: 'desc' }]"
+    [rowClass]="getRowClass"
+  >
     <ngx-datatable-column name="Templates" [flexGrow]="4" [cellClass]="'email-template-name-cell'">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div class="email-template-header" fxLayout="row">
           <div class="email-template-icon">
-            <mat-icon>{{row.icon}}</mat-icon>
+            <mat-icon>{{ row.icon }}</mat-icon>
           </div>
           <div class="email-template-information" fxLayout="column">
-            <h3>{{row.name}}</h3>
-            <small>{{row.description}}</small>
+            <h3>{{ row.name }}</h3>
+            <small>{{ row.description }}</small>
           </div>
         </div>
       </ng-template>
@@ -40,8 +42,16 @@
     <ngx-datatable-column name="" [flexGrow]="1">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <div fxLayout="row" class="emails-actions">
-          <mat-icon *ngIf="!row.enabled" matTooltip="Domain settings {{appId ? 'or application type ' : ''}} does not allow '{{row.name}}' email template customisation">block</mat-icon>
-          <a  *ngIf="row.enabled && canView()" mat-icon-button [routerLink]="['email']" [queryParams]="{template: row.template}"><mat-icon matTooltip="Edit email template">edit</mat-icon></a>
+          <mat-icon
+            *ngIf="!row.enabled"
+            matTooltip="Domain settings {{ appId ? 'or application type ' : '' }} does not allow '{{
+              row.name
+            }}' email template customisation"
+            >block</mat-icon
+          >
+          <a *ngIf="row.enabled && canView()" mat-icon-button [routerLink]="['email']" [queryParams]="{ template: row.template }"
+            ><mat-icon matTooltip="Edit email template">edit</mat-icon></a
+          >
           <mat-icon *ngIf="row.enabled && !canView()" matTooltip="You don't have required permission">block</mat-icon>
         </div>
       </ng-template>

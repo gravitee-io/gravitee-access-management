@@ -20,7 +20,6 @@ package io.gravitee.am.management.service.impl.upgrades;
  * @author GraviteeSource Team
  */
 public interface Upgrader {
-
     boolean upgrade();
 
     int getOrder();

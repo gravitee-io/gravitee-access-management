@@ -23,9 +23,8 @@ describe('UserRolesComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ UserRolesComponent ]
-    })
-      .compileComponents();
+      declarations: [UserRolesComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

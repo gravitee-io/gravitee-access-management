@@ -23,8 +23,7 @@ import io.gravitee.common.http.HttpStatusCode;
  */
 public class TechnicalManagementException extends AbstractManagementException {
 
-    public TechnicalManagementException() {
-    }
+    public TechnicalManagementException() {}
 
     public TechnicalManagementException(Throwable cause) {
         super(cause);

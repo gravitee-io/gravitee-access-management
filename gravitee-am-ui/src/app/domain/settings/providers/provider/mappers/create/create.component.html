@@ -15,20 +15,20 @@
     limitations under the License.
 
 -->
-<h5 matDialogTitle>
-  Attribute mappings
-</h5>
+<h5 matDialogTitle>Attribute mappings</h5>
 <mat-dialog-content>
   <form #attributeForm="ngForm">
     <mat-form-field>
-      <input matInput name="key" placeholder="User profile attribute" required autofocus ngModel/>
+      <input matInput name="key" placeholder="User profile attribute" required autofocus ngModel />
     </mat-form-field>
     <mat-form-field>
-      <input matInput name="value" placeholder="Raw attribute" required ngModel/>
+      <input matInput name="value" placeholder="Raw attribute" required ngModel />
     </mat-form-field>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button type="button" mat-raised-button (click)="dialogRef.close(attributeForm.value)" color="primary" [disabled]="attributeForm.invalid">Save</button>
-  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
+  <button type="button" mat-raised-button (click)="dialogRef.close(attributeForm.value)" color="primary" [disabled]="attributeForm.invalid">
+    Save
+  </button>
+  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px">Cancel</button>
 </mat-dialog-actions>

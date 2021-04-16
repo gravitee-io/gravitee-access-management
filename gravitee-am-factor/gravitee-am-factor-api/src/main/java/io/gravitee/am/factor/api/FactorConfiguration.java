@@ -19,5 +19,4 @@ package io.gravitee.am.factor.api;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FactorConfiguration {
-}
+public interface FactorConfiguration {}

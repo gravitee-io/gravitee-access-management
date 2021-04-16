@@ -39,8 +39,7 @@ public class Factor {
 
     private Date updatedAt;
 
-    public Factor() {
-    }
+    public Factor() {}
 
     public Factor(Factor other) {
         this.id = other.id;

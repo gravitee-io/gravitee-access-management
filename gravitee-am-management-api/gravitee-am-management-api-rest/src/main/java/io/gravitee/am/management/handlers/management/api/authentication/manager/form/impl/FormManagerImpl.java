@@ -26,16 +26,15 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.templateresolver.ITemplateResolver;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,19 +62,23 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
 
         logger.info("Initializing forms for organization {}", organizationId);
 
-        formService.findAll(ReferenceType.ORGANIZATION, organizationId)
-                .subscribe(
-                        forms -> {
-                            updateForms(forms);
-                            logger.info("Forms loaded for organization {}", organizationId);
-                        },
-                        error -> logger.error("Unable to initialize forms for organization {}", organizationId, error));
+        formService
+            .findAll(ReferenceType.ORGANIZATION, organizationId)
+            .subscribe(
+                forms -> {
+                    updateForms(forms);
+                    logger.info("Forms loaded for organization {}", organizationId);
+                },
+                error -> logger.error("Unable to initialize forms for organization {}", organizationId, error)
+            );
     }
 
     @Override
     public void onEvent(Event<FormEvent, Payload> event) {
-
-        if (event.content().getReferenceType() == ReferenceType.ORGANIZATION && Organization.DEFAULT.equals(event.content().getReferenceId())) {
+        if (
+            event.content().getReferenceType() == ReferenceType.ORGANIZATION &&
+            Organization.DEFAULT.equals(event.content().getReferenceId())
+        ) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:
@@ -91,19 +94,21 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
     private void updateForm(String formId, FormEvent formEvent) {
         final String eventType = formEvent.toString().toLowerCase();
         logger.info("Organization {} has received {} form event for {}", Organization.DEFAULT, eventType, formId);
-        formService.findById(formId)
-                .subscribe(
-                        form -> {
-                            // check if form has been disabled
-                            if (forms.containsKey(formId) && !form.isEnabled()) {
-                                removeForm(formId);
-                            } else {
-                                updateForms(Collections.singletonList(form));
-                            }
-                            logger.info("Form {} {}d for organization {}", formId, eventType, Organization.DEFAULT);
-                        },
-                        error -> logger.error("Unable to {} form for organization {}", eventType, Organization.DEFAULT, error),
-                        () -> logger.error("No form found with id {}", formId));
+        formService
+            .findById(formId)
+            .subscribe(
+                form -> {
+                    // check if form has been disabled
+                    if (forms.containsKey(formId) && !form.isEnabled()) {
+                        removeForm(formId);
+                    } else {
+                        updateForms(Collections.singletonList(form));
+                    }
+                    logger.info("Form {} {}d for organization {}", formId, eventType, Organization.DEFAULT);
+                },
+                error -> logger.error("Unable to {} form for organization {}", eventType, Organization.DEFAULT, error),
+                () -> logger.error("No form found with id {}", formId)
+            );
     }
 
     private void removeForm(String formId) {
@@ -116,12 +121,19 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
 
     private void updateForms(List<Form> forms) {
         forms
-                .stream()
-                .filter(Form::isEnabled)
-                .forEach(form -> {
+            .stream()
+            .filter(Form::isEnabled)
+            .forEach(
+                form -> {
                     this.forms.put(form.getId(), form);
                     ((TemplateResolver) templateResolver).addForm(form.getTemplate(), form.getContent());
-                    logger.info("Form {} loaded for organization {} " + (form.getClient() != null ? "and client {}" : ""), form.getTemplate(), Organization.DEFAULT, form.getClient());
-                });
+                    logger.info(
+                        "Form {} loaded for organization {} " + (form.getClient() != null ? "and client {}" : ""),
+                        form.getTemplate(),
+                        Organization.DEFAULT,
+                        form.getClient()
+                    );
+                }
+            );
     }
 }

@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-domain-forms',
   templateUrl: './forms.component.html',
-  styleUrls: ['./forms.component.scss']
+  styleUrls: ['./forms.component.scss'],
 })
 export class DomainSettingsFormsComponent implements OnInit {
   forms: any[];
   domain: any;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router) { }
+  constructor(private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.forms = this.getOrganizationForms();
     } else {
-      this.domain = this.route.snapshot.data['domain'];
+      this.domain = this.route.snapshot.data.domain;
       this.forms = this.getForms();
     }
   }
@@ -40,87 +39,87 @@ export class DomainSettingsFormsComponent implements OnInit {
   getForms() {
     return [
       {
-        'name': 'Login',
-        'description': 'Login page to authenticate users',
-        'template': 'LOGIN',
-        'icon': 'account_box',
-        'enabled': true
+        name: 'Login',
+        description: 'Login page to authenticate users',
+        template: 'LOGIN',
+        icon: 'account_box',
+        enabled: true,
       },
       {
-        'name': 'Registration',
-        'description': 'Registration page to create an account',
-        'template': 'REGISTRATION',
-        'icon': 'person_add',
-        'enabled': this.allowRegister()
+        name: 'Registration',
+        description: 'Registration page to create an account',
+        template: 'REGISTRATION',
+        icon: 'person_add',
+        enabled: this.allowRegister(),
       },
       {
-        'name': 'Registration confirmation',
-        'description': 'Register page to confirm user account',
-        'template': 'REGISTRATION_CONFIRMATION',
-        'icon': 'how_to_reg',
-        'enabled': true
+        name: 'Registration confirmation',
+        description: 'Register page to confirm user account',
+        template: 'REGISTRATION_CONFIRMATION',
+        icon: 'how_to_reg',
+        enabled: true,
       },
       {
-        'name': 'Forgot password',
-        'description': 'Forgot password to recover account',
-        'template': 'FORGOT_PASSWORD',
-        'icon': 'lock',
-        'enabled': this.allowResetPassword()
+        name: 'Forgot password',
+        description: 'Forgot password to recover account',
+        template: 'FORGOT_PASSWORD',
+        icon: 'lock',
+        enabled: this.allowResetPassword(),
       },
       {
-        'name': 'Reset password',
-        'description': 'Reset password page to make a new password',
-        'template': 'RESET_PASSWORD',
-        'icon': 'lock_open',
-        'enabled': true
+        name: 'Reset password',
+        description: 'Reset password page to make a new password',
+        template: 'RESET_PASSWORD',
+        icon: 'lock_open',
+        enabled: true,
       },
       {
-        'name': 'User consent',
-        'description': 'User consent to acknowledge and accept data access',
-        'template': 'OAUTH2_USER_CONSENT',
-        'icon': 'playlist_add_check',
-        'enabled': true
+        name: 'User consent',
+        description: 'User consent to acknowledge and accept data access',
+        template: 'OAUTH2_USER_CONSENT',
+        icon: 'playlist_add_check',
+        enabled: true,
       },
       {
-        'name': 'MFA Enroll',
-        'description': 'Multi-factor authentication settings page',
-        'template': 'MFA_ENROLL',
-        'icon': 'rotate_right',
-        'enabled': true
+        name: 'MFA Enroll',
+        description: 'Multi-factor authentication settings page',
+        template: 'MFA_ENROLL',
+        icon: 'rotate_right',
+        enabled: true,
       },
       {
-        'name': 'MFA Challenge',
-        'description': 'Multi-factor authentication verify page',
-        'template': 'MFA_CHALLENGE',
-        'icon': 'check_circle_outline',
-        'enabled': true
+        name: 'MFA Challenge',
+        description: 'Multi-factor authentication verify page',
+        template: 'MFA_CHALLENGE',
+        icon: 'check_circle_outline',
+        enabled: true,
       },
       {
-        'name': 'Error',
-        'description': 'Error page to display a message describing the problem',
-        'template': 'ERROR',
-        'icon': 'error_outline',
-        'enabled': true
-      }
-    ]
+        name: 'Error',
+        description: 'Error page to display a message describing the problem',
+        template: 'ERROR',
+        icon: 'error_outline',
+        enabled: true,
+      },
+    ];
   }
 
   getOrganizationForms() {
     return [
       {
-        'name': 'Login',
-        'description': 'Login page to authenticate users',
-        'template': 'LOGIN',
-        'icon': 'account_box',
-        'enabled': true
+        name: 'Login',
+        description: 'Login page to authenticate users',
+        template: 'LOGIN',
+        icon: 'account_box',
+        enabled: true,
       },
       {
-        'name': 'Complete profile',
-        'description': 'Enrich user profile after first authentication',
-        'template': 'COMPLETE_PROFILE',
-        'icon': 'person_add',
-        'enabled': true
-      }
+        name: 'Complete profile',
+        description: 'Enrich user profile after first authentication',
+        template: 'COMPLETE_PROFILE',
+        icon: 'person_add',
+        enabled: true,
+      },
     ];
   }
 

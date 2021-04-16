@@ -42,13 +42,12 @@ import io.jsonwebtoken.JwtBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -119,47 +118,57 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<Page<User>> findByDomain(String domain, int page, int size) {
         return findAll(ReferenceType.DOMAIN, domain, page, size)
-                .doOnSuccess(userPage -> userPage.getData().forEach(this::setInternalStatus));
+            .doOnSuccess(userPage -> userPage.getData().forEach(this::setInternalStatus));
     }
 
     @Override
     public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
-        return userService.findById(referenceType, referenceId, id)
-                .map(this::setInternalStatus);
+        return userService.findById(referenceType, referenceId, id).map(this::setInternalStatus);
     }
 
     @Override
     public Maybe<User> findById(String id) {
-        return userService.findById(id)
-                .map(this::setInternalStatus);
+        return userService.findById(id).map(this::setInternalStatus);
     }
 
     @Override
-    public Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> create(
+        ReferenceType referenceType,
+        String referenceId,
+        NewUser newUser,
+        io.gravitee.am.identityprovider.api.User principal
+    ) {
         // set user idp source
         if (newUser.getSource() == null && referenceType == ReferenceType.DOMAIN) {
             newUser.setSource(DEFAULT_IDP_PREFIX + referenceId);
         }
         // check domain
-        return domainService.findById(referenceId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(referenceId)))
-                .flatMapSingle(domain1 -> {
+        return domainService
+            .findById(referenceId)
+            .switchIfEmpty(Maybe.error(new DomainNotFoundException(referenceId)))
+            .flatMapSingle(
+                domain1 -> {
                     // check user
-                    return userService.findByDomainAndUsernameAndSource(domain1.getId(), newUser.getUsername(), newUser.getSource())
-                            .isEmpty()
-                            .flatMap(isEmpty -> {
+                    return userService
+                        .findByDomainAndUsernameAndSource(domain1.getId(), newUser.getUsername(), newUser.getSource())
+                        .isEmpty()
+                        .flatMap(
+                            isEmpty -> {
                                 if (!isEmpty) {
                                     return Single.error(new UserAlreadyExistsException(newUser.getUsername()));
                                 } else {
                                     // check user provider
-                                    return identityProviderManager.getUserProvider(newUser.getSource())
-                                            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
-                                            .flatMapSingle(userProvider -> {
+                                    return identityProviderManager
+                                        .getUserProvider(newUser.getSource())
+                                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
+                                        .flatMapSingle(
+                                            userProvider -> {
                                                 // check client
                                                 return checkClient(referenceId, newUser.getClient())
-                                                        .map(Optional::of)
-                                                        .defaultIfEmpty(Optional.empty())
-                                                        .flatMapSingle(optClient -> {
+                                                    .map(Optional::of)
+                                                    .defaultIfEmpty(Optional.empty())
+                                                    .flatMapSingle(
+                                                        optClient -> {
                                                             Application client = optClient.orElse(null);
                                                             newUser.setDomain(domain1.getId());
                                                             newUser.setClient(client != null ? client.getId() : null);
@@ -175,223 +184,442 @@ public class UserServiceImpl implements UserService {
                                                                 newUser.setDomain(referenceId);
                                                             }
                                                             // store user in its identity provider
-                                                            return userProvider.create(convert(newUser))
-                                                                    .map(idpUser -> {
+                                                            return userProvider
+                                                                .create(convert(newUser))
+                                                                .map(
+                                                                    idpUser -> {
                                                                         // AM 'users' collection is not made for authentication (but only management stuff)
                                                                         // clear password
                                                                         newUser.setPassword(null);
                                                                         // set external id
                                                                         newUser.setExternalId(idpUser.getId());
                                                                         return newUser;
-                                                                    })
-                                                                    // if a user is already in the identity provider but not in the AM users collection,
-                                                                    // it means that the user is coming from a pre-filled AM compatible identity provider (user creation enabled)
-                                                                    // try to create the user with the idp user information
-                                                                    .onErrorResumeNext(ex -> {
+                                                                    }
+                                                                )
+                                                                // if a user is already in the identity provider but not in the AM users collection,
+                                                                // it means that the user is coming from a pre-filled AM compatible identity provider (user creation enabled)
+                                                                // try to create the user with the idp user information
+                                                                .onErrorResumeNext(
+                                                                    ex -> {
                                                                         if (ex instanceof UserAlreadyExistsException) {
-                                                                            return userProvider.findByUsername(newUser.getUsername())
-                                                                                    // double check user existence for case sensitive
-                                                                                    .flatMapSingle(idpUser -> userService.findByDomainAndUsernameAndSource(domain1.getId(), idpUser.getUsername(), newUser.getSource())
+                                                                            return userProvider
+                                                                                .findByUsername(newUser.getUsername())
+                                                                                // double check user existence for case sensitive
+                                                                                .flatMapSingle(
+                                                                                    idpUser ->
+                                                                                        userService
+                                                                                            .findByDomainAndUsernameAndSource(
+                                                                                                domain1.getId(),
+                                                                                                idpUser.getUsername(),
+                                                                                                newUser.getSource()
+                                                                                            )
                                                                                             .isEmpty()
-                                                                                            .map(empty -> {
-                                                                                                if (!empty) {
-                                                                                                    throw new UserAlreadyExistsException(newUser.getUsername());
-                                                                                                } else {
-                                                                                                    // AM 'users' collection is not made for authentication (but only management stuff)
-                                                                                                    // clear password
-                                                                                                    newUser.setPassword(null);
-                                                                                                    // set external id
-                                                                                                    newUser.setExternalId(idpUser.getId());
-                                                                                                    // set username
-                                                                                                    newUser.setUsername(idpUser.getUsername());
-                                                                                                    return newUser;
+                                                                                            .map(
+                                                                                                empty -> {
+                                                                                                    if (!empty) {
+                                                                                                        throw new UserAlreadyExistsException(
+                                                                                                            newUser.getUsername()
+                                                                                                        );
+                                                                                                    } else {
+                                                                                                        // AM 'users' collection is not made for authentication (but only management stuff)
+                                                                                                        // clear password
+                                                                                                        newUser.setPassword(null);
+                                                                                                        // set external id
+                                                                                                        newUser.setExternalId(
+                                                                                                            idpUser.getId()
+                                                                                                        );
+                                                                                                        // set username
+                                                                                                        newUser.setUsername(
+                                                                                                            idpUser.getUsername()
+                                                                                                        );
+                                                                                                        return newUser;
+                                                                                                    }
                                                                                                 }
-                                                                                            }));
+                                                                                            )
+                                                                                );
                                                                         } else {
                                                                             return Single.error(ex);
                                                                         }
-                                                                    })
-                                                                    .flatMap(newUser1 -> {
+                                                                    }
+                                                                )
+                                                                .flatMap(
+                                                                    newUser1 -> {
                                                                         User user = transform(newUser1);
-                                                                        AccountSettings accountSettings = AccountSettings.getInstance(domain1, client);
-                                                                        if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
-                                                                            user.setRegistrationUserUri(getUserRegistrationUri(domain1.getPath(), "/confirmRegistration"));
+                                                                        AccountSettings accountSettings = AccountSettings.getInstance(
+                                                                            domain1,
+                                                                            client
+                                                                        );
+                                                                        if (
+                                                                            newUser.isPreRegistration() &&
+                                                                            accountSettings != null &&
+                                                                            accountSettings.isDynamicUserRegistration()
+                                                                        ) {
+                                                                            user.setRegistrationUserUri(
+                                                                                getUserRegistrationUri(
+                                                                                    domain1.getPath(),
+                                                                                    "/confirmRegistration"
+                                                                                )
+                                                                            );
                                                                             user.setRegistrationAccessToken(getUserRegistrationToken(user));
                                                                         }
-                                                                        return userService.create(user)
-                                                                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
-                                                                    })
-                                                                    .flatMap(user -> {
+                                                                        return userService
+                                                                            .create(user)
+                                                                            .doOnSuccess(
+                                                                                user1 ->
+                                                                                    auditService.report(
+                                                                                        AuditBuilder
+                                                                                            .builder(UserAuditBuilder.class)
+                                                                                            .principal(principal)
+                                                                                            .type(EventType.USER_CREATED)
+                                                                                            .user(user1)
+                                                                                    )
+                                                                            )
+                                                                            .doOnError(
+                                                                                throwable ->
+                                                                                    auditService.report(
+                                                                                        AuditBuilder
+                                                                                            .builder(UserAuditBuilder.class)
+                                                                                            .principal(principal)
+                                                                                            .type(EventType.USER_CREATED)
+                                                                                            .throwable(throwable)
+                                                                                    )
+                                                                            );
+                                                                    }
+                                                                )
+                                                                .flatMap(
+                                                                    user -> {
                                                                         // end pre-registration user if required
-                                                                        AccountSettings accountSettings = AccountSettings.getInstance(domain1, client);
-                                                                        if (newUser.isPreRegistration() && (accountSettings == null || !accountSettings.isDynamicUserRegistration())) {
-                                                                            return sendRegistrationConfirmation(user.getReferenceType(), user.getReferenceId(), user.getId(), principal).toSingleDefault(user);
+                                                                        AccountSettings accountSettings = AccountSettings.getInstance(
+                                                                            domain1,
+                                                                            client
+                                                                        );
+                                                                        if (
+                                                                            newUser.isPreRegistration() &&
+                                                                            (
+                                                                                accountSettings == null ||
+                                                                                !accountSettings.isDynamicUserRegistration()
+                                                                            )
+                                                                        ) {
+                                                                            return sendRegistrationConfirmation(
+                                                                                user.getReferenceType(),
+                                                                                user.getReferenceId(),
+                                                                                user.getId(),
+                                                                                principal
+                                                                            )
+                                                                                .toSingleDefault(user);
                                                                         } else {
                                                                             return Single.just(user);
                                                                         }
-                                                                    })
-                                                                    .map(this::setInternalStatus);
-                                                        });
-                                            });
+                                                                    }
+                                                                )
+                                                                .map(this::setInternalStatus);
+                                                        }
+                                                    );
+                                            }
+                                        );
                                 }
-                            });
-                });
+                            }
+                        );
+                }
+            );
     }
 
     @Override
     public Single<User> create(String domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal) {
-
         return create(ReferenceType.DOMAIN, domain, newUser, principal);
     }
 
     @Override
-    public Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
-
-        return userService.findById(referenceType, referenceId, id)
-                .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
+    public Single<User> update(
+        ReferenceType referenceType,
+        String referenceId,
+        String id,
+        UpdateUser updateUser,
+        io.gravitee.am.identityprovider.api.User principal
+    ) {
+        return userService
+            .findById(referenceType, referenceId, id)
+            .flatMap(
+                user ->
+                    identityProviderManager
+                        .getUserProvider(user.getSource())
                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                         // check client
-                        .flatMapSingle(userProvider -> {
-                            String client = updateUser.getClient() != null ? updateUser.getClient() : user.getClient();
-                            if (client != null && referenceType == ReferenceType.DOMAIN) {
-                                return checkClient(referenceId, client)
-                                        .flatMapSingle(client1 -> {
-                                            updateUser.setClient(client1.getId());
-                                            return Single.just(userProvider);
-                                        });
+                        .flatMapSingle(
+                            userProvider -> {
+                                String client = updateUser.getClient() != null ? updateUser.getClient() : user.getClient();
+                                if (client != null && referenceType == ReferenceType.DOMAIN) {
+                                    return checkClient(referenceId, client)
+                                        .flatMapSingle(
+                                            client1 -> {
+                                                updateUser.setClient(client1.getId());
+                                                return Single.just(userProvider);
+                                            }
+                                        );
+                                }
+                                return Single.just(userProvider);
                             }
-                            return Single.just(userProvider);
-                        })
+                        )
                         // update the idp user
-                        .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                                .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser))))
-                        .flatMap(idpUser -> {
-                            // set external id
-                            updateUser.setExternalId(idpUser.getId());
-                            return userService.update(referenceType, referenceId, id, updateUser)
-                                    .map(this::setInternalStatus);
-                        })
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof UserNotFoundException) {
-                                // idp user does not exist, only update AM user
-                                return userService.update(referenceType, referenceId, id, updateUser)
-                                        .map(this::setInternalStatus);
+                        .flatMap(
+                            userProvider ->
+                                userProvider
+                                    .findByUsername(user.getUsername())
+                                    .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                                    .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser)))
+                        )
+                        .flatMap(
+                            idpUser -> {
+                                // set external id
+                                updateUser.setExternalId(idpUser.getId());
+                                return userService.update(referenceType, referenceId, id, updateUser).map(this::setInternalStatus);
                             }
-                            return Single.error(ex);
-                        })
-                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)))
-                );
+                        )
+                        .onErrorResumeNext(
+                            ex -> {
+                                if (ex instanceof UserNotFoundException) {
+                                    // idp user does not exist, only update AM user
+                                    return userService.update(referenceType, referenceId, id, updateUser).map(this::setInternalStatus);
+                                }
+                                return Single.error(ex);
+                            }
+                        )
+                        .doOnSuccess(
+                            user1 ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_UPDATED)
+                                        .oldValue(user)
+                                        .user(user1)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_UPDATED)
+                                        .throwable(throwable)
+                                )
+                        )
+            );
     }
-
 
     @Override
     public Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
-
         return update(ReferenceType.DOMAIN, domain, id, updateUser, principal);
     }
 
     @Override
-    public Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.findById(referenceType, referenceId, id)
-                .flatMap(user -> {
+    public Single<User> updateStatus(
+        ReferenceType referenceType,
+        String referenceId,
+        String id,
+        boolean status,
+        io.gravitee.am.identityprovider.api.User principal
+    ) {
+        return userService
+            .findById(referenceType, referenceId, id)
+            .flatMap(
+                user -> {
                     user.setEnabled(status);
                     return userService.update(user);
-                })
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
+                }
+            )
+            .doOnSuccess(
+                user1 ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(UserAuditBuilder.class)
+                            .principal(principal)
+                            .type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED))
+                            .user(user1)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(UserAuditBuilder.class)
+                            .principal(principal)
+                            .type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED))
+                            .throwable(throwable)
+                    )
+            );
     }
 
     @Override
     public Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal) {
-
         return updateStatus(ReferenceType.DOMAIN, domain, id, status, principal);
     }
 
     @Override
-    public Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.findById(referenceType, referenceId, userId)
-                .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
+    public Completable delete(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        io.gravitee.am.identityprovider.api.User principal
+    ) {
+        return userService
+            .findById(referenceType, referenceId, userId)
+            .flatMapCompletable(
+                user ->
+                    identityProviderManager
+                        .getUserProvider(user.getSource())
                         .map(Optional::ofNullable)
-                        .flatMapCompletable(optUserProvider -> {
-                            // no user provider found, continue
-                            if (!optUserProvider.isPresent()) {
-                                return Completable.complete();
-                            }
-                            // user has never been created in the identity provider, continue
-                            if (user.getExternalId() == null || user.getExternalId().isEmpty()) {
-                                return Completable.complete();
-                            }
-                            return optUserProvider.get().delete(user.getExternalId())
-                                    .onErrorResumeNext(ex -> {
-                                        if (ex instanceof UserNotFoundException) {
-                                            // idp user does not exist, continue
-                                            return Completable.complete();
+                        .flatMapCompletable(
+                            optUserProvider -> {
+                                // no user provider found, continue
+                                if (!optUserProvider.isPresent()) {
+                                    return Completable.complete();
+                                }
+                                // user has never been created in the identity provider, continue
+                                if (user.getExternalId() == null || user.getExternalId().isEmpty()) {
+                                    return Completable.complete();
+                                }
+                                return optUserProvider
+                                    .get()
+                                    .delete(user.getExternalId())
+                                    .onErrorResumeNext(
+                                        ex -> {
+                                            if (ex instanceof UserNotFoundException) {
+                                                // idp user does not exist, continue
+                                                return Completable.complete();
+                                            }
+                                            return Completable.error(ex);
                                         }
-                                        return Completable.error(ex);
-                                    });
-                        })
+                                    );
+                            }
+                        )
                         .andThen(userService.delete(userId))
                         // remove from memberships if user is an administrative user
-                        .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
-                                membershipService.findByMember(userId, MemberType.USER)
-                                    .flatMapCompletable(memberships -> {
-                                        List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteMembershipsCompletable);
-                                    }))
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
-                );
+                        .andThen(
+                            (ReferenceType.ORGANIZATION != referenceType)
+                                ? Completable.complete()
+                                : membershipService
+                                    .findByMember(userId, MemberType.USER)
+                                    .flatMapCompletable(
+                                        memberships -> {
+                                            List<Completable> deleteMembershipsCompletable = memberships
+                                                .stream()
+                                                .map(m -> membershipService.delete(m.getId()))
+                                                .collect(Collectors.toList());
+                                            return Completable.concat(deleteMembershipsCompletable);
+                                        }
+                                    )
+                        )
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_DELETED)
+                                        .user(user)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_DELETED)
+                                        .throwable(throwable)
+                                )
+                        )
+            );
     }
 
     @Override
-    public Completable resetPassword(ReferenceType referenceType, String referenceId, String userId, String password, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.findById(referenceType, referenceId, userId)
-                .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                                .flatMapSingle(userProvider -> {
-                                    // update idp user
-                                    return userProvider.findByUsername(user.getUsername())
-                                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                                            .flatMapSingle(idpUser -> {
-                                                // set password
-                                                ((DefaultUser) idpUser).setCredentials(password);
-                                                return userProvider.update(idpUser.getId(), idpUser);
-                                            })
-                                            .onErrorResumeNext(ex -> {
-                                                if (ex instanceof UserNotFoundException) {
-                                                    // idp user not found, create its account
-                                                    user.setPassword(password);
-                                                    return userProvider.create(convert(user));
-                                                }
-                                                return Single.error(ex);
-                                            });
-                                })
-                                .flatMap(idpUser -> {
-                                    // update 'users' collection for management and audit purpose
-                                    // if user was in pre-registration mode, end the registration process
-                                    if (user.isPreRegistration()) {
-                                        user.setRegistrationCompleted(true);
-                                        user.setEnabled(true);
-                                    }
-                                    user.setPassword(null);
-                                    user.setExternalId(idpUser.getId());
-                                    user.setUpdatedAt(new Date());
-                                    return userService.update(user);
-                                })
-                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)))
-                        // reset login attempts in case of reset password action
-                ).flatMapCompletable(user -> {
+    public Completable resetPassword(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        String password,
+        io.gravitee.am.identityprovider.api.User principal
+    ) {
+        return userService
+            .findById(referenceType, referenceId, userId)
+            .flatMap(
+                user ->
+                    identityProviderManager
+                        .getUserProvider(user.getSource())
+                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                        .flatMapSingle(
+                            userProvider -> {
+                                // update idp user
+                                return userProvider
+                                    .findByUsername(user.getUsername())
+                                    .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                                    .flatMapSingle(
+                                        idpUser -> {
+                                            // set password
+                                            ((DefaultUser) idpUser).setCredentials(password);
+                                            return userProvider.update(idpUser.getId(), idpUser);
+                                        }
+                                    )
+                                    .onErrorResumeNext(
+                                        ex -> {
+                                            if (ex instanceof UserNotFoundException) {
+                                                // idp user not found, create its account
+                                                user.setPassword(password);
+                                                return userProvider.create(convert(user));
+                                            }
+                                            return Single.error(ex);
+                                        }
+                                    );
+                            }
+                        )
+                        .flatMap(
+                            idpUser -> {
+                                // update 'users' collection for management and audit purpose
+                                // if user was in pre-registration mode, end the registration process
+                                if (user.isPreRegistration()) {
+                                    user.setRegistrationCompleted(true);
+                                    user.setEnabled(true);
+                                }
+                                user.setPassword(null);
+                                user.setExternalId(idpUser.getId());
+                                user.setUpdatedAt(new Date());
+                                return userService.update(user);
+                            }
+                        )
+                        .doOnSuccess(
+                            user1 ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_PASSWORD_RESET)
+                                        .user(user)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_PASSWORD_RESET)
+                                        .throwable(throwable)
+                                )
+                        )
+                // reset login attempts in case of reset password action
+            )
+            .flatMapCompletable(
+                user -> {
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                            .domain(user.getReferenceId())
-                            .client(user.getClient())
-                            .username(user.getUsername())
-                            .build();
+                        .domain(user.getReferenceId())
+                        .client(user.getClient())
+                        .username(user.getUsername())
+                        .build();
                     return loginAttemptService.reset(criteria);
-                });
+                }
+            );
     }
 
     @Override
@@ -400,9 +628,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Completable sendRegistrationConfirmation(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable sendRegistrationConfirmation(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        io.gravitee.am.identityprovider.api.User principal
+    ) {
         return findById(referenceType, referenceId, userId)
-                .flatMapCompletable(user -> {
+            .flatMapCompletable(
+                user -> {
                     if (!user.isPreRegistration()) {
                         return Completable.error(new UserInvalidException("Pre-registration is disabled for the user " + userId));
                     }
@@ -411,66 +645,144 @@ public class UserServiceImpl implements UserService {
                     }
                     // fetch the client
                     return checkClient(user.getReferenceId(), user.getClient())
-                            .map(Optional::of)
-                            .defaultIfEmpty(Optional.empty())
-                            .doOnSuccess(optClient -> new Thread(() -> completeUserRegistration(user, optClient.orElse(null))).start())
-                            .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
-                            .ignoreElement();
-                });
+                        .map(Optional::of)
+                        .defaultIfEmpty(Optional.empty())
+                        .doOnSuccess(optClient -> new Thread(() -> completeUserRegistration(user, optClient.orElse(null))).start())
+                        .doOnSuccess(
+                            __ ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.REGISTRATION_CONFIRMATION_REQUESTED)
+                                        .user(user)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.REGISTRATION_CONFIRMATION_REQUESTED)
+                                        .throwable(throwable)
+                                )
+                        )
+                        .ignoreElement();
+                }
+            );
     }
 
     @Override
-    public Completable unlock(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable unlock(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        io.gravitee.am.identityprovider.api.User principal
+    ) {
         return findById(referenceType, referenceId, userId)
-                .flatMap(user -> {
+            .flatMap(
+                user -> {
                     user.setAccountNonLocked(true);
                     user.setAccountLockedAt(null);
                     user.setAccountLockedUntil(null);
                     // reset login attempts and update user
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                            .domain(user.getReferenceId())
-                            .client(user.getClient())
-                            .username(user.getUsername())
-                            .build();
-                    return loginAttemptService.reset(criteria)
-                            .andThen(userService.update(user));
-                })
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).throwable(throwable)))
-                .toCompletable();
+                        .domain(user.getReferenceId())
+                        .client(user.getClient())
+                        .username(user.getUsername())
+                        .build();
+                    return loginAttemptService.reset(criteria).andThen(userService.update(user));
+                }
+            )
+            .doOnSuccess(
+                user1 ->
+                    auditService.report(
+                        AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).throwable(throwable)
+                    )
+            )
+            .toCompletable();
     }
 
     @Override
-    public Single<User> assignRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> assignRoles(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        List<String> roles,
+        io.gravitee.am.identityprovider.api.User principal
+    ) {
         return assignRoles0(referenceType, referenceId, userId, roles, principal, false);
     }
 
     @Override
-    public Single<User> revokeRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal) {
+    public Single<User> revokeRoles(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        List<String> roles,
+        io.gravitee.am.identityprovider.api.User principal
+    ) {
         return assignRoles0(referenceType, referenceId, userId, roles, principal, true);
     }
 
     @Override
     public Single<User> enrollFactors(String userId, List<EnrolledFactor> factors, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapSingle(oldUser -> {
+        return userService
+            .findById(userId)
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+            .flatMapSingle(
+                oldUser -> {
                     User userToUpdate = new User(oldUser);
                     userToUpdate.setFactors(factors);
-                    return userService.update(userToUpdate)
-                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).user(user1).oldValue(oldUser)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)));
-                });
+                    return userService
+                        .update(userToUpdate)
+                        .doOnSuccess(
+                            user1 ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_UPDATED)
+                                        .user(user1)
+                                        .oldValue(oldUser)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_UPDATED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            );
     }
 
     public void setExpireAfter(Integer expireAfter) {
         this.expireAfter = expireAfter;
     }
 
-    private Single<User> assignRoles0(ReferenceType referenceType, String referenceId, String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal, boolean revoke) {
+    private Single<User> assignRoles0(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        List<String> roles,
+        io.gravitee.am.identityprovider.api.User principal,
+        boolean revoke
+    ) {
         return findById(referenceType, referenceId, userId)
-                .flatMap(oldUser -> {
+            .flatMap(
+                oldUser -> {
                     User userToUpdate = new User(oldUser);
                     // remove existing roles from the user
                     if (revoke) {
@@ -482,38 +794,65 @@ public class UserServiceImpl implements UserService {
                     }
                     // check roles
                     return checkRoles(roles)
-                            // and update the user
-                            .andThen(Single.defer(() -> userService.update(userToUpdate)))
-                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).oldValue(oldUser).user(user1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_ROLES_ASSIGNED).throwable(throwable)));
-                });
+                        // and update the user
+                        .andThen(Single.defer(() -> userService.update(userToUpdate)))
+                        .doOnSuccess(
+                            user1 ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_ROLES_ASSIGNED)
+                                        .oldValue(oldUser)
+                                        .user(user1)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(UserAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.USER_ROLES_ASSIGNED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            );
     }
 
     private Maybe<Application> checkClient(String domain, String client) {
         if (client == null) {
             return Maybe.empty();
         }
-        return applicationService.findById(client)
-                .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(domain, client)))
-                .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
-                .map(app1 -> {
+        return applicationService
+            .findById(client)
+            .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(domain, client)))
+            .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
+            .map(
+                app1 -> {
                     if (!domain.equals(app1.getDomain())) {
                         throw new ClientNotFoundException(client);
                     }
                     return app1;
-                });
+                }
+            );
     }
 
     private Completable checkRoles(List<String> roles) {
-        return roleService.findByIdIn(roles)
-                .map(roles1 -> {
+        return roleService
+            .findByIdIn(roles)
+            .map(
+                roles1 -> {
                     if (roles1.size() != roles.size()) {
                         // find difference between the two list
                         roles.removeAll(roles1.stream().map(Role::getId).collect(Collectors.toList()));
                         throw new RoleNotFoundException(String.join(",", roles));
                     }
                     return roles1;
-                }).toCompletable();
+                }
+            )
+            .toCompletable();
     }
 
     private void completeUserRegistration(User user, Application client) {
@@ -526,13 +865,13 @@ public class UserServiceImpl implements UserService {
     private Email buildEmail(User user, Application client, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
         Map<String, Object> params = prepareEmail(user, client, email.getExpiresAfter(), redirectUri, redirectUriName);
         Email email1 = new EmailBuilder()
-                .to(user.getEmail())
-                .from(email.getFrom())
-                .fromName(email.getFromName())
-                .subject(email.getSubject())
-                .template(email.getTemplate())
-                .params(params)
-                .build();
+            .to(user.getEmail())
+            .from(email.getFrom())
+            .fromName(email.getFromName())
+            .subject(email.getSubject())
+            .template(email.getTemplate())
+            .params(params)
+            .build();
         return email1;
     }
 
@@ -540,14 +879,9 @@ public class UserServiceImpl implements UserService {
         final String token = getUserRegistrationToken(user, expiresAfter);
         // building the redirectUrl
         StringBuilder sb = new StringBuilder();
-        sb
-                .append(getUserRegistrationUri(user.getReferenceId(), redirectUri))
-                .append("?token=")
-                .append(token);
+        sb.append(getUserRegistrationUri(user.getReferenceId(), redirectUri)).append("?token=").append(token);
         if (client != null) {
-            sb
-                    .append("&client_id=")
-                    .append(client.getSettings().getOauth().getClientId());
+            sb.append("&client_id=").append(client.getSettings().getOauth().getClientId());
         }
         String redirectUrl = sb.toString();
         Map<String, Object> params = new HashMap<>();
@@ -588,10 +922,13 @@ public class UserServiceImpl implements UserService {
     }
 
     private String getTemplateName(User user) {
-        return Template.REGISTRATION_CONFIRMATION.template()
-                + EmailManager.TEMPLATE_NAME_SEPARATOR
-                + user.getReferenceType() + user.getReferenceId()
-                + ((user.getClient() != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + user.getClient() : "");
+        return (
+            Template.REGISTRATION_CONFIRMATION.template() +
+            EmailManager.TEMPLATE_NAME_SEPARATOR +
+            user.getReferenceType() +
+            user.getReferenceId() +
+            ((user.getClient() != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + user.getClient() : "")
+        );
     }
 
     private io.gravitee.am.identityprovider.api.User convert(NewUser newUser) {

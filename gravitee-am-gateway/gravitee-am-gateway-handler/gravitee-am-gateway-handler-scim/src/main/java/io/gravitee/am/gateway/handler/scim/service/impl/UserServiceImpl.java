@@ -26,8 +26,8 @@ import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
@@ -36,12 +36,11 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,39 +69,57 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<ListResponse<User>> list(int page, int size, String baseUrl) {
         LOGGER.debug("Find users by domain: {}", domain.getId());
-        return userRepository.findByDomain(domain.getId(), page, size)
-                .flatMap(userPage -> {
+        return userRepository
+            .findByDomain(domain.getId(), page, size)
+            .flatMap(
+                userPage -> {
                     // A negative value SHALL be interpreted as "0".
                     // A value of "0" indicates that no resource results are to be returned except for "totalResults".
                     if (size <= 0) {
                         return Single.just(new ListResponse<User>(null, userPage.getCurrentPage() + 1, userPage.getTotalCount(), 0));
                     } else {
                         // SCIM use 1-based index (increment current page)
-                        return Observable.fromIterable(userPage.getData())
-                                .map(user1 -> convert(user1, baseUrl, true))
-                                // set groups
-                                .flatMapSingle(user1 -> setGroups(user1))
-                                .toList()
-                                .map(users -> new ListResponse<>(users, userPage.getCurrentPage() + 1, userPage.getTotalCount(), users.size()));
+                        return Observable
+                            .fromIterable(userPage.getData())
+                            .map(user1 -> convert(user1, baseUrl, true))
+                            // set groups
+                            .flatMapSingle(user1 -> setGroups(user1))
+                            .toList()
+                            .map(users -> new ListResponse<>(users, userPage.getCurrentPage() + 1, userPage.getTotalCount(), users.size()));
                     }
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find users by domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s", domain), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find users by domain %s", domain),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<User> get(String userId, String baseUrl) {
         LOGGER.debug("Find user by id : {}", userId);
-        return userRepository.findById(userId)
-                .map(user1 -> convert(user1, baseUrl, false))
-                .flatMap(scimUser -> setGroups(scimUser).toMaybe())
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .findById(userId)
+            .map(user1 -> convert(user1, baseUrl, false))
+            .flatMap(scimUser -> setGroups(scimUser).toMaybe())
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its ID {}", userId, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its ID: %s", userId), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a user using its ID: %s", userId),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
@@ -113,20 +130,24 @@ public class UserServiceImpl implements UserService {
         final String source = user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource();
 
         // check if user is unique
-        return userRepository.findByDomainAndUsernameAndSource(domain.getId(), user.getUserName(), source)
-                .isEmpty()
-                .map(isEmpty -> {
+        return userRepository
+            .findByDomainAndUsernameAndSource(domain.getId(), user.getUserName(), source)
+            .isEmpty()
+            .map(
+                isEmpty -> {
                     if (!isEmpty) {
                         throw new UniquenessException("User with username [" + user.getUserName() + "] already exists");
                     }
                     return true;
-                })
-                // check roles
-                .flatMapCompletable(__ -> checkRoles(user.getRoles()))
-                // and create the user
-                .andThen(Maybe.defer(() -> identityProviderManager.getUserProvider(source)))
-                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
-                .flatMapSingle(userProvider -> {
+                }
+            )
+            // check roles
+            .flatMapCompletable(__ -> checkRoles(user.getRoles()))
+            // and create the user
+            .andThen(Maybe.defer(() -> identityProviderManager.getUserProvider(source)))
+            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
+            .flatMapSingle(
+                userProvider -> {
                     io.gravitee.am.model.User userModel = convert(user);
                     // set technical ID
                     userModel.setId(RandomString.generate());
@@ -139,24 +160,37 @@ public class UserServiceImpl implements UserService {
                     userModel.setEnabled(userModel.getPassword() != null);
 
                     // store user in its identity provider
-                    return UserValidator.validate(userModel).andThen(userProvider.create(convert(userModel))
-                            .flatMap(idpUser -> {
-                                // AM 'users' collection is not made for authentication (but only management stuff)
-                                // clear password
-                                userModel.setPassword(null);
-                                // set external id
-                                userModel.setExternalId(idpUser.getId());
-                                return userRepository.create(userModel);
-                            })
-                            .onErrorResumeNext(ex -> {
-                                if (ex instanceof UserAlreadyExistsException) {
-                                    return Single.error(new UniquenessException("User with username [" + user.getUserName() + "] already exists"));
-                                }
-                                return Single.error(ex);
-                            }));
-                })
-                .map(user1 -> convert(user1, baseUrl, true))
-                .onErrorResumeNext(ex -> {
+                    return UserValidator
+                        .validate(userModel)
+                        .andThen(
+                            userProvider
+                                .create(convert(userModel))
+                                .flatMap(
+                                    idpUser -> {
+                                        // AM 'users' collection is not made for authentication (but only management stuff)
+                                        // clear password
+                                        userModel.setPassword(null);
+                                        // set external id
+                                        userModel.setExternalId(idpUser.getId());
+                                        return userRepository.create(userModel);
+                                    }
+                                )
+                                .onErrorResumeNext(
+                                    ex -> {
+                                        if (ex instanceof UserAlreadyExistsException) {
+                                            return Single.error(
+                                                new UniquenessException("User with username [" + user.getUserName() + "] already exists")
+                                            );
+                                        }
+                                        return Single.error(ex);
+                                    }
+                                )
+                        );
+                }
+            )
+            .map(user1 -> convert(user1, baseUrl, true))
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractNotFoundException) {
                         return Single.error(new InvalidValueException(ex.getMessage()));
                     }
@@ -167,63 +201,83 @@ public class UserServiceImpl implements UserService {
 
                     LOGGER.error("An error occurs while trying to create a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<User> update(String userId, User user, String baseUrl) {
         LOGGER.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
-        return userRepository.findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapSingle(existingUser -> {
+        return userRepository
+            .findById(userId)
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+            .flatMapSingle(
+                existingUser -> {
                     // check roles
                     return checkRoles(user.getRoles())
-                            // and update the user
-                            .andThen(Single.defer(() -> {
-                                io.gravitee.am.model.User userToUpdate = convert(user);
-                                // set immutable attribute
-                                userToUpdate.setId(existingUser.getId());
-                                userToUpdate.setExternalId(existingUser.getExternalId());
-                                userToUpdate.setUsername(existingUser.getUsername());
-                                userToUpdate.setReferenceType(existingUser.getReferenceType());
-                                userToUpdate.setReferenceId(existingUser.getReferenceId());
-                                userToUpdate.setSource(existingUser.getSource());
-                                userToUpdate.setCreatedAt(existingUser.getCreatedAt());
-                                userToUpdate.setUpdatedAt(new Date());
+                        // and update the user
+                        .andThen(
+                            Single.defer(
+                                () -> {
+                                    io.gravitee.am.model.User userToUpdate = convert(user);
+                                    // set immutable attribute
+                                    userToUpdate.setId(existingUser.getId());
+                                    userToUpdate.setExternalId(existingUser.getExternalId());
+                                    userToUpdate.setUsername(existingUser.getUsername());
+                                    userToUpdate.setReferenceType(existingUser.getReferenceType());
+                                    userToUpdate.setReferenceId(existingUser.getReferenceId());
+                                    userToUpdate.setSource(existingUser.getSource());
+                                    userToUpdate.setCreatedAt(existingUser.getCreatedAt());
+                                    userToUpdate.setUpdatedAt(new Date());
 
-                                return UserValidator.validate(userToUpdate).andThen(identityProviderManager.getUserProvider(userToUpdate.getSource())
-                                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))
-                                        .flatMapSingle(userProvider -> {
-                                            // no idp user check if we need to create it
-                                            if (userToUpdate.getExternalId() == null) {
-                                                return userProvider.create(convert(userToUpdate));
-                                            } else {
-                                                return userProvider.update(userToUpdate.getExternalId(), convert(userToUpdate));
-                                            }
-                                        })
-                                        .flatMap(idpUser -> {
-                                            // AM 'users' collection is not made for authentication (but only management stuff)
-                                            // clear password
-                                            userToUpdate.setPassword(null);
-                                            // set external id
-                                            userToUpdate.setExternalId(idpUser.getId());
-                                            return userRepository.update(userToUpdate);
-                                        })
-                                        .onErrorResumeNext(ex -> {
-                                            if (ex instanceof UserNotFoundException || ex instanceof UserInvalidException) {
-                                                // idp user does not exist, only update AM user
-                                                // clear password
-                                                userToUpdate.setPassword(null);
-                                                return userRepository.update(userToUpdate);
-                                            }
-                                            return Single.error(ex);
-                                        }));
-                            }));
-                })
-                .map(user1 -> convert(user1, baseUrl, false))
-                // set groups
-                .flatMap(user1 -> setGroups(user1))
-                .onErrorResumeNext(ex -> {
+                                    return UserValidator
+                                        .validate(userToUpdate)
+                                        .andThen(
+                                            identityProviderManager
+                                                .getUserProvider(userToUpdate.getSource())
+                                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))
+                                                .flatMapSingle(
+                                                    userProvider -> {
+                                                        // no idp user check if we need to create it
+                                                        if (userToUpdate.getExternalId() == null) {
+                                                            return userProvider.create(convert(userToUpdate));
+                                                        } else {
+                                                            return userProvider.update(userToUpdate.getExternalId(), convert(userToUpdate));
+                                                        }
+                                                    }
+                                                )
+                                                .flatMap(
+                                                    idpUser -> {
+                                                        // AM 'users' collection is not made for authentication (but only management stuff)
+                                                        // clear password
+                                                        userToUpdate.setPassword(null);
+                                                        // set external id
+                                                        userToUpdate.setExternalId(idpUser.getId());
+                                                        return userRepository.update(userToUpdate);
+                                                    }
+                                                )
+                                                .onErrorResumeNext(
+                                                    ex -> {
+                                                        if (ex instanceof UserNotFoundException || ex instanceof UserInvalidException) {
+                                                            // idp user does not exist, only update AM user
+                                                            // clear password
+                                                            userToUpdate.setPassword(null);
+                                                            return userRepository.update(userToUpdate);
+                                                        }
+                                                        return Single.error(ex);
+                                                    }
+                                                )
+                                        );
+                                }
+                            )
+                        );
+                }
+            )
+            .map(user1 -> convert(user1, baseUrl, false))
+            // set groups
+            .flatMap(user1 -> setGroups(user1))
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof SCIMException || ex instanceof UserNotFoundException) {
                         return Single.error(ex);
                     }
@@ -238,56 +292,75 @@ public class UserServiceImpl implements UserService {
 
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Completable delete(String userId) {
         LOGGER.debug("Delete user {}", userId);
-        return userRepository.findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
+        return userRepository
+            .findById(userId)
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+            .flatMapCompletable(
+                user ->
+                    identityProviderManager
+                        .getUserProvider(user.getSource())
                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                         .flatMapCompletable(userProvider -> userProvider.delete(user.getExternalId()))
                         .andThen(userRepository.delete(userId))
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof UserNotFoundException) {
-                                // idp user does not exist, only remove AM user
-                                return userRepository.delete(userId);
-                            }
-                            return Completable.error(ex);
-                        })
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof AbstractManagementException) {
+                        .onErrorResumeNext(
+                            ex -> {
+                                if (ex instanceof UserNotFoundException) {
+                                    // idp user does not exist, only remove AM user
+                                    return userRepository.delete(userId);
+                                }
                                 return Completable.error(ex);
-                            } else {
-                                LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
-                                return Completable.error(new TechnicalManagementException(
-                                        String.format("An error occurs while trying to delete user: %s", userId), ex));
                             }
-                        }));
+                        )
+                        .onErrorResumeNext(
+                            ex -> {
+                                if (ex instanceof AbstractManagementException) {
+                                    return Completable.error(ex);
+                                } else {
+                                    LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
+                                    return Completable.error(
+                                        new TechnicalManagementException(
+                                            String.format("An error occurs while trying to delete user: %s", userId),
+                                            ex
+                                        )
+                                    );
+                                }
+                            }
+                        )
+            );
     }
-
 
     private Single<User> setGroups(User scimUser) {
         // fetch groups
-        return groupService.findByMember(scimUser.getId())
-                .map(groups -> {
+        return groupService
+            .findByMember(scimUser.getId())
+            .map(
+                groups -> {
                     if (!groups.isEmpty()) {
                         List<Member> scimGroups = groups
-                                .stream()
-                                .map(group -> {
+                            .stream()
+                            .map(
+                                group -> {
                                     Member member = new Member();
                                     member.setValue(group.getId());
                                     member.setDisplay(group.getDisplayName());
                                     return member;
-                                }).collect(Collectors.toList());
+                                }
+                            )
+                            .collect(Collectors.toList());
                         scimUser.setGroups(scimGroups);
                         return scimUser;
                     } else {
                         return scimUser;
                     }
-                });
+                }
+            );
     }
 
     private Completable checkRoles(List<String> roles) {
@@ -295,19 +368,25 @@ public class UserServiceImpl implements UserService {
             return Completable.complete();
         }
 
-        return roleService.findByIdIn(roles)
-                .map(roles1 -> {
+        return roleService
+            .findByIdIn(roles)
+            .map(
+                roles1 -> {
                     if (roles1.size() != roles.size()) {
                         // find difference between the two list
                         roles.removeAll(roles1.stream().map(Role::getId).collect(Collectors.toList()));
                         throw new RoleNotFoundException(String.join(",", roles));
                     }
                     return roles1;
-                }).ignoreElement();
+                }
+            )
+            .ignoreElement();
     }
 
     private User convert(io.gravitee.am.model.User user, String baseUrl, boolean listing) {
-        Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? user.getAdditionalInformation() : Collections.emptyMap();
+        Map<String, Object> additionalInformation = user.getAdditionalInformation() != null
+            ? user.getAdditionalInformation()
+            : Collections.emptyMap();
 
         User scimUser = new User();
         scimUser.setSchemas(User.SCHEMAS);
@@ -337,7 +416,11 @@ public class UserServiceImpl implements UserService {
             attribute.setValue(user.getEmail());
             attribute.setPrimary(true);
             if (scimUser.getEmails() != null) {
-                Optional<Attribute> optional = scimUser.getEmails().stream().filter(attribute1 -> attribute1.getValue().equals(attribute.getValue())).findFirst();
+                Optional<Attribute> optional = scimUser
+                    .getEmails()
+                    .stream()
+                    .filter(attribute1 -> attribute1.getValue().equals(attribute.getValue()))
+                    .findFirst();
                 if (!optional.isPresent()) {
                     scimUser.setEmails(Collections.singletonList(attribute));
                 }
@@ -407,14 +490,19 @@ public class UserServiceImpl implements UserService {
         user.setPassword(scimUser.getPassword());
         if (scimUser.getEmails() != null && !scimUser.getEmails().isEmpty()) {
             List<Attribute> emails = scimUser.getEmails();
-            user.setEmail(emails.stream().filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary())).findFirst().orElse(emails.get(0)).getValue());
+            user.setEmail(
+                emails.stream().filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary())).findFirst().orElse(emails.get(0)).getValue()
+            );
             user.setEmails(toModelAttributes(emails));
         }
         user.setPhoneNumbers(toModelAttributes(scimUser.getPhoneNumbers()));
         user.setIms(toModelAttributes(scimUser.getIms()));
         if (scimUser.getPhotos() != null && !scimUser.getPhotos().isEmpty()) {
             List<Attribute> photos = scimUser.getPhotos();
-            additionalInformation.put(StandardClaims.PICTURE, photos.stream().filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary())).findFirst().orElse(photos.get(0)).getValue());
+            additionalInformation.put(
+                StandardClaims.PICTURE,
+                photos.stream().filter(attribute -> Boolean.TRUE.equals(attribute.isPrimary())).findFirst().orElse(photos.get(0)).getValue()
+            );
             user.setPhotos(toModelAttributes(photos));
         }
         user.setAddresses(toModelAddresses(scimUser.getAddresses()));
@@ -469,14 +557,17 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         return scimAttributes
-                .stream()
-                .map(scimAttribute -> {
+            .stream()
+            .map(
+                scimAttribute -> {
                     io.gravitee.am.model.scim.Attribute modelAttribute = new io.gravitee.am.model.scim.Attribute();
                     modelAttribute.setPrimary(scimAttribute.isPrimary());
                     modelAttribute.setValue(scimAttribute.getValue());
                     modelAttribute.setType(scimAttribute.getType());
                     return modelAttribute;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<Attribute> toScimAttributes(List<io.gravitee.am.model.scim.Attribute> modelAttributes) {
@@ -484,14 +575,17 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         return modelAttributes
-                .stream()
-                .map(modelAttribute -> {
+            .stream()
+            .map(
+                modelAttribute -> {
                     Attribute scimAttribute = new Attribute();
                     scimAttribute.setPrimary(modelAttribute.isPrimary());
                     scimAttribute.setValue(modelAttribute.getValue());
                     scimAttribute.setType(modelAttribute.getType());
                     return scimAttribute;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<io.gravitee.am.model.scim.Address> toModelAddresses(List<Address> scimAddresses) {
@@ -499,8 +593,9 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         return scimAddresses
-                .stream()
-                .map(scimAddress -> {
+            .stream()
+            .map(
+                scimAddress -> {
                     io.gravitee.am.model.scim.Address modelAddress = new io.gravitee.am.model.scim.Address();
                     modelAddress.setType(scimAddress.getType());
                     modelAddress.setFormatted(scimAddress.getFormatted());
@@ -511,7 +606,9 @@ public class UserServiceImpl implements UserService {
                     modelAddress.setRegion(scimAddress.getRegion());
                     modelAddress.setPrimary(scimAddress.isPrimary());
                     return modelAddress;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<Address> toScimAddresses(List<io.gravitee.am.model.scim.Address> modelAddresses) {
@@ -519,8 +616,9 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         return modelAddresses
-                .stream()
-                .map(modelAddress -> {
+            .stream()
+            .map(
+                modelAddress -> {
                     Address scimAddress = new Address();
                     scimAddress.setType(modelAddress.getType());
                     scimAddress.setFormatted(modelAddress.getFormatted());
@@ -531,7 +629,9 @@ public class UserServiceImpl implements UserService {
                     scimAddress.setRegion(modelAddress.getRegion());
                     scimAddress.setPrimary(modelAddress.isPrimary());
                     return scimAddress;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<io.gravitee.am.model.scim.Certificate> toModelCertificates(List<Certificate> scimCertificates) {
@@ -539,12 +639,15 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         return scimCertificates
-                .stream()
-                .map(scimCertificate -> {
+            .stream()
+            .map(
+                scimCertificate -> {
                     io.gravitee.am.model.scim.Certificate modelCertificate = new io.gravitee.am.model.scim.Certificate();
                     modelCertificate.setValue(scimCertificate.getValue());
                     return modelCertificate;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<Certificate> toScimCertificates(List<io.gravitee.am.model.scim.Certificate> modelCertificates) {
@@ -552,11 +655,14 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         return modelCertificates
-                .stream()
-                .map(modelCertificate -> {
+            .stream()
+            .map(
+                modelCertificate -> {
                     Certificate scimCertificate = new Certificate();
                     scimCertificate.setValue(modelCertificate.getValue());
                     return scimCertificate;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 }

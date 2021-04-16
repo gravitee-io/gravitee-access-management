@@ -15,22 +15,21 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.scope;
 
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeServiceImpl;
 import io.gravitee.am.model.oauth2.Scope;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -54,7 +53,7 @@ public class ScopeServiceTest {
         two.setKey("two");
         two.setDiscovery(true);
 
-        when(scopeManager.findAll()).thenReturn(new HashSet<>(Arrays.asList(one,two)));
+        when(scopeManager.findAll()).thenReturn(new HashSet<>(Arrays.asList(one, two)));
     }
 
     @Test
@@ -64,11 +63,11 @@ public class ScopeServiceTest {
         verify(scopeManager, times(1)).findAll();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(list -> ((Set)list).size()==2);
+        testObserver.assertValue(list -> ((Set) list).size() == 2);
     }
 
     @Test
     public void getDiscoveryScope() {
-        assertEquals(1,scopeService.getDiscoveryScope().size());
+        assertEquals(1, scopeService.getDiscoveryScope().size());
     }
 }

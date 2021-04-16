@@ -24,12 +24,10 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
-
 
 /**
  * The authorization server must ensure that the client is using grant flow, redirect_uri which are defined
@@ -79,9 +77,12 @@ public class AuthorizationRequestValidateParametersHandler implements Handler<Ro
     }
 
     private boolean containsGrantType(List<String> authorizedGrantTypes) {
-        return authorizedGrantTypes.stream()
-                .anyMatch(authorizedGrantType -> GrantType.AUTHORIZATION_CODE.equals(authorizedGrantType)
-                        || GrantType.IMPLICIT.equals(authorizedGrantType));
+        return authorizedGrantTypes
+            .stream()
+            .anyMatch(
+                authorizedGrantType ->
+                    GrantType.AUTHORIZATION_CODE.equals(authorizedGrantType) || GrantType.IMPLICIT.equals(authorizedGrantType)
+            );
     }
 
     private void checkResponseType(String responseType, Client client) {
@@ -89,7 +90,7 @@ public class AuthorizationRequestValidateParametersHandler implements Handler<Ro
         if (client.getResponseTypes() == null) {
             throw new UnauthorizedClientException("Client should have response_type.");
         }
-        if(!Arrays.stream(responseType.split("\\s")).allMatch(type -> client.getResponseTypes().contains(type))) {
+        if (!Arrays.stream(responseType.split("\\s")).allMatch(type -> client.getResponseTypes().contains(type))) {
             throw new UnauthorizedClientException("Client should have all requested response_type");
         }
     }
@@ -119,9 +120,9 @@ public class AuthorizationRequestValidateParametersHandler implements Handler<Ro
     }
 
     private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
-        if (registeredClientRedirectUris
-                .stream()
-                .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri))) {
+        if (
+            registeredClientRedirectUris.stream().noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri))
+        ) {
             throw new RedirectMismatchException("The redirect_uri MUST match the registered callback URL for this application");
         }
     }
@@ -142,14 +143,10 @@ public class AuthorizationRequestValidateParametersHandler implements Handler<Ro
 
             boolean portsMatch = registeredPort == requestedPort;
 
-            if (reg.getProtocol().equals(req.getProtocol()) &&
-                    reg.getHost().equals(req.getHost()) &&
-                    portsMatch) {
+            if (reg.getProtocol().equals(req.getProtocol()) && reg.getHost().equals(req.getHost()) && portsMatch) {
                 return req.getPath().startsWith(reg.getPath());
             }
-        } catch (MalformedURLException e) {
-
-        }
+        } catch (MalformedURLException e) {}
 
         return requestedRedirect.equals(registeredClientUri);
     }

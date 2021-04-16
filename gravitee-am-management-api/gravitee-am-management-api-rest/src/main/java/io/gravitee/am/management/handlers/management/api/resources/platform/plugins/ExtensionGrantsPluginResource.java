@@ -19,7 +19,8 @@ import io.gravitee.am.management.service.ExtensionGrantPluginService;
 import io.gravitee.am.service.model.plugin.ExtensionGrantPlugin;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
+import java.util.Comparator;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -29,14 +30,12 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.Comparator;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Extension Grant"})
+@Api(tags = { "Plugin", "Extension Grant" })
 public class ExtensionGrantsPluginResource {
 
     @Context
@@ -47,14 +46,15 @@ public class ExtensionGrantsPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List extension grant plugins",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @ApiOperation(value = "List extension grant plugins", notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
-        extensionGrantPluginService.findAll()
-                .map(extensionGrantPlugins -> extensionGrantPlugins.stream()
-                        .sorted(Comparator.comparing(ExtensionGrantPlugin::getName))
-                        .collect(Collectors.toList()))
-                .subscribe(response::resume, response::resume);
+        extensionGrantPluginService
+            .findAll()
+            .map(
+                extensionGrantPlugins ->
+                    extensionGrantPlugins.stream().sorted(Comparator.comparing(ExtensionGrantPlugin::getName)).collect(Collectors.toList())
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{extensionGrant}")

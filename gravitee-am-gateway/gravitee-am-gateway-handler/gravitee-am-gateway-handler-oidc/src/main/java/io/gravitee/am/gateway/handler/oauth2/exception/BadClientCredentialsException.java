@@ -19,6 +19,4 @@ package io.gravitee.am.gateway.handler.oauth2.exception;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class BadClientCredentialsException extends io.gravitee.am.common.exception.oauth2.BadClientCredentialsException {
-
-}
+public class BadClientCredentialsException extends io.gravitee.am.common.exception.oauth2.BadClientCredentialsException {}

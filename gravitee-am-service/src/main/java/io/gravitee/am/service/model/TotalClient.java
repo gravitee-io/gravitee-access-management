@@ -24,7 +24,7 @@ public class TotalClient {
 
     private long totalClients;
 
-    public TotalClient() { }
+    public TotalClient() {}
 
     public TotalClient(long totalClients) {
         this.totalClients = totalClients;

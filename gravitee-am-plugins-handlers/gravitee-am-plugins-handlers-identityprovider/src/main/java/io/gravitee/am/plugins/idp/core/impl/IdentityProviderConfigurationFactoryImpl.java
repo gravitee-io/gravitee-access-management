@@ -18,10 +18,9 @@ package io.gravitee.am.plugins.idp.core.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderConfigurationFactory;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

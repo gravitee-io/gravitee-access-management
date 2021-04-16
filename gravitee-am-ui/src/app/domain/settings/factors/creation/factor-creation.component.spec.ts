@@ -23,9 +23,8 @@ describe('FactorCreationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FactorCreationComponent ]
-    })
-    .compileComponents();
+      declarations: [FactorCreationComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

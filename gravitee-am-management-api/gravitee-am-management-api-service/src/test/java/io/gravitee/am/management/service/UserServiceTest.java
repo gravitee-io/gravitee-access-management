@@ -15,17 +15,21 @@
  */
 package io.gravitee.am.management.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
 import io.gravitee.am.model.*;
-import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.service.*;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
@@ -38,6 +42,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,12 +52,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.*;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -61,6 +60,7 @@ import static org.mockito.Mockito.*;
 public class UserServiceTest {
 
     public static final String DOMAIN_ID = "domain#1";
+
     @InjectMocks
     private UserService userService = new UserServiceImpl();
 

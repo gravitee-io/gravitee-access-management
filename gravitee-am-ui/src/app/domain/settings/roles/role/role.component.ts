@@ -32,7 +32,7 @@ export interface Scope {
 @Component({
   selector: 'app-role',
   templateUrl: './role.component.html',
-  styleUrls: ['./role.component.scss']
+  styleUrls: ['./role.component.scss'],
 })
 export class RoleComponent implements OnInit {
   @ViewChild('chipInput') chipInput: MatInput;
@@ -43,18 +43,20 @@ export class RoleComponent implements OnInit {
   formChanged = false;
   editMode: boolean;
 
-  constructor(private roleService: RoleService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private roleService: RoleService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private breadcrumbService: BreadcrumbService,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.role = this.route.snapshot.data['role'];
-    this.scopes = this.route.snapshot.data['scopes'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.role = this.route.snapshot.data.role;
+    this.scopes = this.route.snapshot.data.scopes;
     this.editMode = this.authService.hasPermissions(['domain_role_update']);
 
     if (!this.role.permissions) {
@@ -68,8 +70,8 @@ export class RoleComponent implements OnInit {
   initScopes() {
     let that = this;
     // Merge with existing scope
-    this.selectedPermissions = _.map(this.role.permissions, function(permission) {
-      let scope = _.find(that.scopes, { 'key': permission });
+    this.selectedPermissions = _.map(this.role.permissions, function (permission) {
+      let scope = _.find(that.scopes, { key: permission });
       if (scope !== undefined) {
         return scope;
       }
@@ -81,44 +83,49 @@ export class RoleComponent implements OnInit {
   }
 
   update() {
-    this.role.permissions = _.map(this.selectedPermissions, permission => permission.key);
-    this.roleService.update(this.domainId, this.role.id, this.role).subscribe(data => {
+    this.role.permissions = _.map(this.selectedPermissions, (permission) => permission.key);
+    this.roleService.update(this.domainId, this.role.id, this.role).subscribe((data) => {
       this.role = data;
       this.initBreadcrumb();
-      this.snackbarService.open("Role updated");
+      this.snackbarService.open('Role updated');
     });
   }
 
   delete(event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Role', 'Are you sure you want to delete this role ?')
-      .subscribe(res => {
-        if (res) {
-          this.roleService.delete(this.domainId, this.role.id).subscribe(() => {
-            this.snackbarService.open('Role '+ this.role.name + ' deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'roles']);
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Role', 'Are you sure you want to delete this role ?').subscribe((res) => {
+      if (res) {
+        this.roleService.delete(this.domainId, this.role.id).subscribe(() => {
+          this.snackbarService.open('Role ' + this.role.name + ' deleted');
+          this.router.navigate(['/domains', this.domainId, 'settings', 'roles']);
+        });
+      }
+    });
   }
 
   addPermission(event) {
-    this.selectedPermissions = this.selectedPermissions.concat(_.remove(this.scopes, { 'key': event.option.value }));
-    this.chipInput['nativeElement'].blur();
+    this.selectedPermissions = this.selectedPermissions.concat(_.remove(this.scopes, { key: event.option.value }));
+    // @ts-ignore
+    this.chipInput.nativeElement.blur();
     this.formChanged = true;
   }
 
   removePermission(permission) {
-    this.scopes = this.scopes.concat(_.remove(this.selectedPermissions, function(selectPermission) {
-      return selectPermission.key === permission.key;
-    }));
+    this.scopes = this.scopes.concat(
+      _.remove(this.selectedPermissions, function (selectPermission) {
+        return selectPermission.key === permission.key;
+      }),
+    );
 
-    this.chipInput['nativeElement'].blur();
+    // @ts-ignore
+    this.chipInput.nativeElement.blur();
     this.formChanged = true;
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/'+this.domainId+'/settings/roles/'+this.role.id+'$', this.role.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/settings/roles/' + this.role.id + '$',
+      this.role.name,
+    );
   }
 }

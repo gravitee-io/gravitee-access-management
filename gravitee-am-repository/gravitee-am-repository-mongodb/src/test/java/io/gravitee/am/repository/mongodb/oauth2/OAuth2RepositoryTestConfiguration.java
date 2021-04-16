@@ -38,5 +38,4 @@ public class OAuth2RepositoryTestConfiguration {
     public MongoDatabase mongoOperations() {
         return embeddedClient().mongoDatabase();
     }
-
 }

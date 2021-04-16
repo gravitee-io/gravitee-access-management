@@ -28,8 +28,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -38,6 +36,7 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,37 +53,40 @@ public class FormResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a form",
-            notes = "User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(value = "Update a form", notes = "User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization")
+    @ApiResponses(
+        {
             @ApiResponse(code = 201, message = "Form successfully updated", response = Form.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void update(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("form") String form,
-            @ApiParam(name = "form", required = true) @Valid @NotNull UpdateForm updateForm,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("form") String form,
+        @ApiParam(name = "form", required = true) @Valid @NotNull UpdateForm updateForm,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_FORM, Acl.UPDATE)
-                .andThen(formService.update(ReferenceType.ORGANIZATION, organizationId, form, updateForm, authenticatedUser))
-                .subscribe(response::resume, response::resume);
+            .andThen(formService.update(ReferenceType.ORGANIZATION, organizationId, form, updateForm, authenticatedUser))
+            .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a form",
-            notes = "User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "Form successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(value = "Delete a form", notes = "User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization")
+    @ApiResponses(
+        { @ApiResponse(code = 204, message = "Form successfully deleted"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void delete(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("form") String form,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("form") String form,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_FORM, Acl.DELETE)
-                .andThen(formService.delete(ReferenceType.ORGANIZATION, organizationId, form, authenticatedUser))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+            .andThen(formService.delete(ReferenceType.ORGANIZATION, organizationId, form, authenticatedUser))
+            .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

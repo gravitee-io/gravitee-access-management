@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {AppConfig} from '../../config/app.config';
-import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {OrganizationService} from './organization.service';
+import { Injectable } from '@angular/core';
+import { AppConfig } from '../../config/app.config';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { OrganizationService } from './organization.service';
 
 @Injectable()
 export class UserService {
   private usersURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient,
-              private organizationService: OrganizationService) { }
+  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + '/users?page=' + page + '&size=' + size);
@@ -40,18 +39,18 @@ export class UserService {
 
   update(domainId, id, user): Observable<any> {
     return this.http.put<any>(this.usersURL + domainId + '/users/' + id, {
-      'firstName' : user.firstName,
-      'lastName' : user.lastName,
-      'email' : user.email,
-      'enabled': user.enabled,
-      'client' : user.client,
-      'additionalInformation' : user.additionalInformation
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      enabled: user.enabled,
+      client: user.client,
+      additionalInformation: user.additionalInformation,
     });
   }
 
   updateStatus(domainId, id, status): Observable<any> {
     return this.http.put<any>(this.usersURL + domainId + '/users/' + id + '/status', {
-      'enabled' : status
+      enabled: status,
     });
   }
 
@@ -68,7 +67,7 @@ export class UserService {
 
   resetPassword(domainId, id, password): Observable<any> {
     return this.http.post<any>(this.usersURL + domainId + '/users/' + id + '/resetPassword', {
-      'password': password
+      password: password,
     });
   }
 

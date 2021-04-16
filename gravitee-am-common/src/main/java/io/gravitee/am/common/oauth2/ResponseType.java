@@ -24,7 +24,6 @@ package io.gravitee.am.common.oauth2;
  * @author GraviteeSource Team
  */
 public interface ResponseType {
-
     /**
      * "code" for requesting an authorization code
      */

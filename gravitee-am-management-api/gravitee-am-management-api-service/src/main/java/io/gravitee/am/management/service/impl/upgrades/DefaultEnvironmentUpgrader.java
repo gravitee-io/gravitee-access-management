@@ -39,7 +39,6 @@ public class DefaultEnvironmentUpgrader implements Upgrader, Ordered {
 
     @Override
     public boolean upgrade() {
-
         try {
             Environment environment = environmentService.createDefault().blockingGet();
 

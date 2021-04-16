@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
@@ -35,17 +38,13 @@ import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,70 +69,98 @@ public class UserConsentsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a user consents",
-            notes = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
-                    "or DOMAIN_USER[READ] permission on the specified environment " +
-                    "or DOMAIN_USER[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Get a user consents",
+        notes = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
+        "or DOMAIN_USER[READ] permission on the specified environment " +
+        "or DOMAIN_USER[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "User consents successfully fetched", response = ScopeApprovalEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void list(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("user") String user,
-            @QueryParam("clientId") String clientId,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("user") String user,
+        @QueryParam("clientId") String clientId,
+        @Suspended final AsyncResponse response
+    ) {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> {
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(
+                        __ -> {
                             if (clientId == null || clientId.isEmpty()) {
                                 return scopeApprovalService.findByDomainAndUser(domain, user);
                             }
                             return scopeApprovalService.findByDomainAndUserAndClient(domain, user, clientId);
-                        })
-                        .flatMapObservable(Observable::fromIterable)
-                        .flatMapSingle(scopeApproval ->
-                                getClient(scopeApproval.getDomain(), scopeApproval.getClientId())
-                                        .zipWith(getScope(scopeApproval.getDomain(), scopeApproval.getScope()), ((clientEntity, scopeEntity) -> {
+                        }
+                    )
+                    .flatMapObservable(Observable::fromIterable)
+                    .flatMapSingle(
+                        scopeApproval ->
+                            getClient(scopeApproval.getDomain(), scopeApproval.getClientId())
+                                .zipWith(
+                                    getScope(scopeApproval.getDomain(), scopeApproval.getScope()),
+                                    (
+                                        (clientEntity, scopeEntity) -> {
                                             ScopeApprovalEntity scopeApprovalEntity = new ScopeApprovalEntity(scopeApproval);
                                             scopeApprovalEntity.setClientEntity(clientEntity);
                                             scopeApprovalEntity.setScopeEntity(scopeEntity);
                                             return scopeApprovalEntity;
-                                        })))
-                        .toList())
-                .subscribe(response::resume, response::resume);
+                                        }
+                                    )
+                                )
+                    )
+                    .toList()
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Revoke user consents",
-            notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
-                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Revoke user consents",
+        notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+        "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+        "or DOMAIN_USER[UPDATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 204, message = "User consents successfully revoked"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void delete(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("user") String user,
-            @QueryParam("clientId") String clientId,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("user") String user,
+        @QueryParam("clientId") String clientId,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(__ -> {
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapCompletable(
+                        __ -> {
                             if (clientId == null || clientId.isEmpty()) {
                                 return scopeApprovalService.revokeByUser(domain, user, authenticatedUser);
                             }
                             return scopeApprovalService.revokeByUserAndClient(domain, user, clientId, authenticatedUser);
-                        }))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+                        }
+                    )
+            )
+            .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     @Path("{consent}")
@@ -142,18 +169,20 @@ public class UserConsentsResource extends AbstractResource {
     }
 
     private Single<ApplicationEntity> getClient(String domain, String clientId) {
-        return applicationService.findByDomainAndClientId(domain, clientId)
-                .map(ApplicationEntity::new)
-                .defaultIfEmpty(new ApplicationEntity("unknown-id", clientId, "unknown-client-name"))
-                .toSingle()
-                .cache();
+        return applicationService
+            .findByDomainAndClientId(domain, clientId)
+            .map(ApplicationEntity::new)
+            .defaultIfEmpty(new ApplicationEntity("unknown-id", clientId, "unknown-client-name"))
+            .toSingle()
+            .cache();
     }
 
     private Single<ScopeEntity> getScope(String domain, String scopeKey) {
-        return scopeService.findByDomainAndKey(domain, scopeKey)
-                .map(ScopeEntity::new)
-                .defaultIfEmpty(new ScopeEntity("unknown-id", scopeKey, "unknown-scope-name", "unknown-scope-description"))
-                .toSingle()
-                .cache();
+        return scopeService
+            .findByDomainAndKey(domain, scopeKey)
+            .map(ScopeEntity::new)
+            .defaultIfEmpty(new ScopeEntity("unknown-id", scopeKey, "unknown-scope-name", "unknown-scope-description"))
+            .toSingle()
+            .cache();
     }
 }

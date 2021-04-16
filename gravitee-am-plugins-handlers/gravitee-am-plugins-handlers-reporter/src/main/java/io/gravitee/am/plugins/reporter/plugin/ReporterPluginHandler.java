@@ -65,7 +65,6 @@ public class ReporterPluginHandler implements PluginHandler {
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while create reporter instance", iae);
         }
-
     }
 
     private <T> T createInstance(Class<T> clazz) throws Exception {

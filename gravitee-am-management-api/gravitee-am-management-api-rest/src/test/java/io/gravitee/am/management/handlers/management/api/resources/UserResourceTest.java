@@ -15,25 +15,24 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
+
+import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -94,11 +93,12 @@ public class UserResourceTest extends JerseySpringTest {
         doReturn(false).when(passwordValidator).validate(anyString());
 
         final Response response = target("domains")
-                .path(domainId).path("users")
-                .path(userId)
-                .path("resetPassword")
-                .request()
-                .post(Entity.json(passwordValue));
+            .path(domainId)
+            .path("users")
+            .path(userId)
+            .path("resetPassword")
+            .request()
+            .post(Entity.json(passwordValue));
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
@@ -118,17 +118,19 @@ public class UserResourceTest extends JerseySpringTest {
         PasswordValue passwordValue = new PasswordValue();
         passwordValue.setPassword("password");
 
-
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(userService).resetPassword(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString(),  any());
+        doReturn(Completable.complete())
+            .when(userService)
+            .resetPassword(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString(), any());
         doReturn(true).when(passwordValidator).validate(anyString());
 
         final Response response = target("domains")
-                .path(domainId).path("users")
-                .path(userId)
-                .path("resetPassword")
-                .request()
-                .post(Entity.json(passwordValue));
+            .path(domainId)
+            .path("users")
+            .path(userId)
+            .path("resetPassword")
+            .request()
+            .post(Entity.json(passwordValue));
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
     }
 }

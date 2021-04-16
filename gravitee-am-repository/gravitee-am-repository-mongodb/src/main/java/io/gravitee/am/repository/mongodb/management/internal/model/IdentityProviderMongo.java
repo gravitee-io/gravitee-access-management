@@ -137,5 +137,4 @@ public class IdentityProviderMongo extends Auditable {
     public int hashCode() {
         return id.hashCode();
     }
-
 }

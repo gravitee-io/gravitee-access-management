@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {ApplicationService} from "../../../../../services/application.service";
-import {SnackbarService} from "../../../../../services/snackbar.service";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ApplicationService } from '../../../../../services/application.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
 import * as _ from 'lodash';
-import {NgForm} from "@angular/forms";
+import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-application-metadata',
   templateUrl: './metadata.component.html',
-  styleUrls: ['./metadata.component.scss']
+  styleUrls: ['./metadata.component.scss'],
 })
 export class ApplicationMetadataComponent implements OnInit {
   @ViewChild('metadataForm') public form: NgForm;
@@ -34,23 +34,18 @@ export class ApplicationMetadataComponent implements OnInit {
   appMetadata: any[] = [];
   formChanged: boolean = false;
 
-  constructor(private route: ActivatedRoute,
-              private applicationService: ApplicationService,
-              private snackbarService: SnackbarService) { }
+  constructor(private route: ActivatedRoute, private applicationService: ApplicationService, private snackbarService: SnackbarService) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
+    this.application = this.route.snapshot.parent.parent.data.application;
     this.initMetadata();
   }
 
   initMetadata() {
     if (this.application.metadata) {
-      _.forEach(this.application.metadata, (v, k) => {
-        const metadata = {};
-        metadata['id'] = Math.random().toString(36).substring(7);
-        metadata['name'] = k;
-        metadata['value'] = v;
+      _.forEach(this.application.metadata, (value, name) => {
+        const metadata = { value, name, id: Math.random().toString(36).substring(7) };
         this.appMetadata.push(metadata);
       });
     }
@@ -78,7 +73,7 @@ export class ApplicationMetadataComponent implements OnInit {
         return;
       }
       this.editing[rowIndex + '-' + cell] = false;
-      let index = _.findIndex(this.appMetadata, {id: rowIndex});
+      let index = _.findIndex(this.appMetadata, { id: rowIndex });
       this.appMetadata[index][cell] = metadata;
       this.appMetadata = [...this.appMetadata];
       this.formChanged = true;
@@ -87,7 +82,7 @@ export class ApplicationMetadataComponent implements OnInit {
 
   deleteMetadata(key, event) {
     event.preventDefault();
-    _.remove(this.appMetadata, function(el) {
+    _.remove(this.appMetadata, function (el) {
       return el.id === key;
     });
     this.appMetadata = [...this.appMetadata];
@@ -95,7 +90,9 @@ export class ApplicationMetadataComponent implements OnInit {
   }
 
   metadataExits(attribute): boolean {
-    return _.find(this.appMetadata, function(el) { return  el.name === attribute; })
+    return _.find(this.appMetadata, function (el) {
+      return el.name === attribute;
+    });
   }
 
   metadataIsEmpty() {
@@ -104,12 +101,12 @@ export class ApplicationMetadataComponent implements OnInit {
 
   patch(): void {
     let metadata = {};
-    _.each(this.appMetadata, function(item) {
+    _.each(this.appMetadata, function (item) {
       metadata[item.name] = item.value;
     });
-    this.applicationService.patch(this.domainId, this.application.id, { 'metadata' : metadata }).subscribe(data => {
+    this.applicationService.patch(this.domainId, this.application.id, { metadata: metadata }).subscribe((data) => {
       this.application = data;
-      this.route.snapshot.parent.parent.data['application'] = this.application;
+      this.route.snapshot.parent.parent.data.application = this.application;
       this.formChanged = false;
       this.snackbarService.open('Application updated');
       this.appMetadata = [];

@@ -17,7 +17,6 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.Optional;
 
 /**
@@ -38,10 +37,11 @@ public class PatchApplicationAdvancedSettings {
 
     public ApplicationAdvancedSettings patch(ApplicationAdvancedSettings _toPatch) {
         // create new object for audit purpose (patch json result)
-        ApplicationAdvancedSettings toPatch = _toPatch == null ? new ApplicationAdvancedSettings() : new ApplicationAdvancedSettings(_toPatch);
+        ApplicationAdvancedSettings toPatch = _toPatch == null
+            ? new ApplicationAdvancedSettings()
+            : new ApplicationAdvancedSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setSkipConsent, this.getSkipConsent(), boolean.class);
 
         return toPatch;
     }
-
 }

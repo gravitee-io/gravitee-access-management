@@ -15,13 +15,12 @@
  */
 package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Set;
 
@@ -30,7 +29,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface RoleRepository extends CrudRepository<Role, String> {
-
     Flowable<Role> findAll(ReferenceType referenceType, String referenceId);
 
     Single<Set<Role>> findByDomain(String domain);

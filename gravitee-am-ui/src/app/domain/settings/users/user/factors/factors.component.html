@@ -16,55 +16,61 @@
 
 -->
 <div>
-    <div fxFlex="70">
-      <div fxLayout="row" *ngIf="!isEmpty">
-        <div fxFlex>You have configured <b>{{factors.length}}</b> multi-factor authentication method(s).</div>
+  <div fxFlex="70">
+    <div fxLayout="row" *ngIf="!isEmpty">
+      <div fxFlex>
+        You have configured <b>{{ factors.length }}</b> multi-factor authentication method(s).
       </div>
-      <ngx-datatable *ngIf="!isEmpty" class="material"
-                     [columnMode]="'flex'"
-                     [headerHeight]="40"
-                     [footerHeight]="40"
-                     [rowHeight]="50"
-                     [rows]='factors'>
-        <ngx-datatable-column name="Factors" [flexGrow]="4" [cellClass]="'factor-name-cell'">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <div class="factor-header" fxLayout="row">
-              <div class="factor-icon">
-                <mat-icon>mobile_friendly</mat-icon>
-              </div>
-              <div class="factor-information" fxLayout="column">
-                <h3>{{row.name}}</h3>
-                <small>{{row.type}}</small>
-              </div>
+    </div>
+    <ngx-datatable
+      *ngIf="!isEmpty"
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="factors"
+    >
+      <ngx-datatable-column name="Factors" [flexGrow]="4" [cellClass]="'factor-name-cell'">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="factor-header" fxLayout="row">
+            <div class="factor-icon">
+              <mat-icon>mobile_friendly</mat-icon>
             </div>
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="Last update" [flexGrow]="2">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.updatedAt | humanDate}}
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <div fxLayout="row" class="gv-table-cell-actions">
-              <button *ngIf="canRevoke" mat-icon-button (click)="remove($event, row)"><mat-icon style="color: #f44336;" matTooltip="Remove multi-factor auth">highlight_off</mat-icon></button>
+            <div class="factor-information" fxLayout="column">
+              <h3>{{ row.name }}</h3>
+              <small>{{ row.type }}</small>
             </div>
-          </ng-template>
-        </ngx-datatable-column>
-      </ngx-datatable>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Last update" [flexGrow]="2">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.updatedAt | humanDate }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="gv-table-cell-actions">
+            <button *ngIf="canRevoke" mat-icon-button (click)="remove($event, row)">
+              <mat-icon style="color: #f44336" matTooltip="Remove multi-factor auth">highlight_off</mat-icon>
+            </button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
 
-      <app-emptystate *ngIf="isEmpty"
-                      [message]="'No multi-factor authentication methods'"
-                      [subMessage]="'No data to display.'"
-                      [icon]="'donut_large'"></app-emptystate>
+    <app-emptystate
+      *ngIf="isEmpty"
+      [message]="'No multi-factor authentication methods'"
+      [subMessage]="'No data to display.'"
+      [icon]="'donut_large'"
+    ></app-emptystate>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>Multi-Factor Authentication</h3>
+    <div class="gv-page-description-content">
+      <p>Multi-Factor Authentication requires a second factor to verify user identity.</p>
     </div>
-    <div class="gv-page-description" fxFlex>
-      <h3>Multi-Factor Authentication</h3>
-      <div class="gv-page-description-content">
-        <p>
-          Multi-Factor Authentication requires a second factor to verify user identity.
-        </p>
-      </div>
-    </div>
+  </div>
 </div>
-

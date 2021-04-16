@@ -17,31 +17,51 @@
 -->
 <div>
   <div fxLayout="column" fxFlex="70">
-    <small style="margin-top: 10px;" *ngIf="!isEmpty"><i>Double click to edit and press enter to save changes</i></small>
-    <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="55" [rows]='mappers'>
+    <small style="margin-top: 10px" *ngIf="!isEmpty"><i>Double click to edit and press enter to save changes</i></small>
+    <ngx-datatable
+      *ngIf="!isEmpty"
+      [columnMode]="'flex'"
+      class="material"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="55"
+      [rows]="mappers"
+    >
       <ngx-datatable-column name="User profile attributes" [flexGrow]="1">
         <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-        <span (dblclick)="editing[rowIndex + '-key'] = true" *ngIf="!editing[rowIndex + '-key']">
-          {{row.key}}
-        </span>
+          <span (dblclick)="editing[rowIndex + '-key'] = true" *ngIf="!editing[rowIndex + '-key']">
+            {{ row.key }}
+          </span>
           <mat-form-field *ngIf="editing[rowIndex + '-key']" class="datatable-input">
-            <input matInput type="text" required autofocus placeholder="User attribute"
-                   (keyup.enter)="updateMapper($event, 'key', rowIndex)"
-                   (blur)="editing[rowIndex + '-key'] = false"
-                   [value]="row.key" />
+            <input
+              matInput
+              type="text"
+              required
+              autofocus
+              placeholder="User attribute"
+              (keyup.enter)="updateMapper($event, 'key', rowIndex)"
+              (blur)="editing[rowIndex + '-key'] = false"
+              [value]="row.key"
+            />
           </mat-form-field>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Raw attributes" [flexGrow]="1">
         <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-        <span (dblclick)="editing[rowIndex + '-value'] = true" *ngIf="!editing[rowIndex + '-value']">
-          {{row.value}}
-        </span>
+          <span (dblclick)="editing[rowIndex + '-value'] = true" *ngIf="!editing[rowIndex + '-value']">
+            {{ row.value }}
+          </span>
           <mat-form-field *ngIf="editing[rowIndex + '-value']" class="datatable-input">
-            <input matInput type="text" required autofocus placeholder="Raw attribute"
-                   (keyup.enter)="updateMapper($event, 'value', rowIndex)"
-                   (blur)="editing[rowIndex + '-value'] = false"
-                   [value]="row.value" />
+            <input
+              matInput
+              type="text"
+              required
+              autofocus
+              placeholder="Raw attribute"
+              (keyup.enter)="updateMapper($event, 'value', rowIndex)"
+              (blur)="editing[rowIndex + '-value'] = false"
+              [value]="row.value"
+            />
           </mat-form-field>
         </ng-template>
       </ngx-datatable-column>
@@ -54,12 +74,14 @@
       </ngx-datatable-column>
     </ngx-datatable>
 
-    <app-emptystate *ngIf="isEmpty"
-                    [message]="'User mappers will appear here'"
-                    [subMessage]="'Start creating a mapper'"
-                    [icon]="'compare_arrows'"></app-emptystate>
+    <app-emptystate
+      *ngIf="isEmpty"
+      [message]="'User mappers will appear here'"
+      [subMessage]="'Start creating a mapper'"
+      [icon]="'compare_arrows'"
+    ></app-emptystate>
 
-    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
       <button mat-fab color="primary" (click)="add()">
         <mat-icon>add</mat-icon>
       </button>
@@ -69,16 +91,9 @@
   <div class="gv-page-description" fxFlex>
     <h3>User mappers</h3>
     <div class="gv-page-description-content">
-      <p>
-        Attributes mapping let you bind user profile attributes with your identity provider attributes.
-      </p>
-      <p>
-        These new attributes specified in this mapping can be retrieved via the UserInfo Endpoint or be used with ID Token claims.
-      </p>
-      <p>
-        This mapping occurs during user authentication.
-      </p>
+      <p>Attributes mapping let you bind user profile attributes with your identity provider attributes.</p>
+      <p>These new attributes specified in this mapping can be retrieved via the UserInfo Endpoint or be used with ID Token claims.</p>
+      <p>This mapping occurs during user authentication.</p>
     </div>
   </div>
 </div>
-

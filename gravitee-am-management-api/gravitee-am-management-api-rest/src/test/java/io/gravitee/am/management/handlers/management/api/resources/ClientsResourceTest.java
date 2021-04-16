@@ -15,29 +15,28 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.Page;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.NewClient;
-import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
+
+import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.NewClient;
+import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,7 +60,7 @@ public class ClientsResourceTest extends JerseySpringTest {
         mockClient2.setClientId("client-2-name");
         mockClient2.setDomain(domainId);
 
-        final Page<Client> clients = new Page(new HashSet<>(Arrays.asList(mockClient, mockClient2)), 0 , 2);
+        final Page<Client> clients = new Page(new HashSet<>(Arrays.asList(mockClient, mockClient2)), 0, 2);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(clients)).when(clientService).findByDomain(domainId, 0, Integer.MAX_VALUE);
@@ -76,12 +75,13 @@ public class ClientsResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetClients_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(clientService).findByDomain(domainId, 0, Integer.MAX_VALUE);
+        doReturn(Single.error(new TechnicalManagementException("error occurs")))
+            .when(clientService)
+            .findByDomain(domainId, 0, Integer.MAX_VALUE);
 
         final Response response = target("domains").path(domainId).path("clients").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
-
 
     @Test
     public void shouldCreate() {
@@ -100,10 +100,7 @@ public class ClientsResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(client)).when(clientService).create(eq(domainId), any(NewClient.class), any());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("clients")
-                .request().post(Entity.json(newClient));
+        final Response response = target("domains").path(domainId).path("clients").request().post(Entity.json(newClient));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

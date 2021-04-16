@@ -23,9 +23,8 @@ describe('DomainDashboardComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainDashboardComponent ]
-    })
-    .compileComponents();
+      declarations: [DomainDashboardComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

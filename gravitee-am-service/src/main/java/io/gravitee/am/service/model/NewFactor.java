@@ -79,9 +79,6 @@ public class NewFactor {
 
     @Override
     public String toString() {
-        return "NewFactor{" +
-                "type='" + type + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+        return "NewFactor{" + "type='" + type + '\'' + ", name='" + name + '\'' + '}';
     }
 }

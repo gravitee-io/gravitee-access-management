@@ -27,21 +27,22 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
-public class CertificateManagerImpl extends AbstractService<CertificateManager> implements CertificateManager, EventListener<CertificateEvent, Payload> {
+public class CertificateManagerImpl
+    extends AbstractService<CertificateManager>
+    implements CertificateManager, EventListener<CertificateEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
     private static final long retryTimeout = 10000;
@@ -65,10 +66,12 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
 
         logger.info("Initializing certificate providers");
         List<Certificate> certificates = certificateService.findAll().blockingGet();
-        certificates.forEach(certificate -> {
-            logger.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
-            loadCertificate(certificate);
-        });
+        certificates.forEach(
+            certificate -> {
+                logger.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
+                loadCertificate(certificate);
+            }
+        );
     }
 
     @Override
@@ -117,11 +120,13 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
 
     private void deployCertificate(String certificateId) {
         logger.info("Management API has received a deploy certificate event for {}", certificateId);
-        certificateService.findById(certificateId)
-                .subscribe(
-                        certificate -> loadCertificate(certificate),
-                        error -> logger.error("Unable to deploy certificate {}", certificateId, error),
-                        () -> logger.error("No certificate found with id {}", certificateId));
+        certificateService
+            .findById(certificateId)
+            .subscribe(
+                certificate -> loadCertificate(certificate),
+                error -> logger.error("Unable to deploy certificate {}", certificateId, error),
+                () -> logger.error("No certificate found with id {}", certificateId)
+            );
     }
 
     private void removeCertificate(String certificateId) {
@@ -131,8 +136,11 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
 
     private void loadCertificate(Certificate certificate) {
         try {
-            CertificateProvider certificateProvider =
-                    certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
+            CertificateProvider certificateProvider = certificatePluginManager.create(
+                certificate.getType(),
+                certificate.getConfiguration(),
+                certificate.getMetadata()
+            );
             if (certificateProvider != null) {
                 certificateProviders.put(certificate.getId(), certificateProvider);
             } else {

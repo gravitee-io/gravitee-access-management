@@ -23,8 +23,7 @@ import io.gravitee.am.model.User;
  */
 public class RegistrationResponse extends SelfUserServiceResponse {
 
-    public RegistrationResponse() {
-    }
+    public RegistrationResponse() {}
 
     public RegistrationResponse(User user, String redirectUri, boolean autoLogin) {
         super(user, redirectUri, autoLogin);

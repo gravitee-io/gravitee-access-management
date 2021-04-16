@@ -20,7 +20,6 @@ import io.gravitee.am.gateway.policy.PolicyException;
 import io.gravitee.am.gateway.policy.PolicyMetadata;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.api.annotations.OnResponse;
-
 import java.lang.reflect.Method;
 
 /**
@@ -48,15 +47,14 @@ public class PolicyImpl implements Policy {
 
     @Override
     public boolean isRunnable() {
-        return (policyMetadata.method(OnRequest.class) != null ||
-                policyMetadata.method(OnResponse.class) != null);
+        return (policyMetadata.method(OnRequest.class) != null || policyMetadata.method(OnResponse.class) != null);
     }
 
     public static Builder target(Object policyInstance) {
         return new Builder(policyInstance);
     }
 
-    private Object invoke(Method invokedMethod, Object ... args) throws PolicyException {
+    private Object invoke(Method invokedMethod, Object... args) throws PolicyException {
         if (invokedMethod != null) {
             Class<?>[] parametersType = invokedMethod.getParameterTypes();
             Object[] parameters = new Object[parametersType.length];
@@ -78,8 +76,8 @@ public class PolicyImpl implements Policy {
         return null;
     }
 
-    private <T> T getParameterAssignableTo(Class<T> paramType, Object ... args) {
-        for(Object arg: args) {
+    private <T> T getParameterAssignableTo(Class<T> paramType, Object... args) {
+        for (Object arg : args) {
             if (paramType.isAssignableFrom(arg.getClass())) {
                 return (T) arg;
             }
@@ -108,8 +106,7 @@ public class PolicyImpl implements Policy {
         }
 
         public PolicyImpl build() {
-            return new PolicyImpl(policyInstance)
-                    .definition(policyMetadata);
+            return new PolicyImpl(policyInstance).definition(policyMetadata);
         }
     }
 }

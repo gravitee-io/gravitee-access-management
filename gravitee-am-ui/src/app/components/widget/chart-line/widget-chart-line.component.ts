@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import * as Highcharts from 'highcharts';
 import * as _ from 'lodash';
 
 @Component({
   selector: 'gv-widget-chart-line',
   templateUrl: './widget-chart-line.component.html',
-  styleUrls: ['./widget-chart-line.component.scss']
+  styleUrls: ['./widget-chart-line.component.scss'],
 })
 export class WidgetChartLineComponent implements OnInit, OnChanges {
   @Input('Highcharts') Highcharts: typeof Highcharts;
   @Input('chart') chart: any;
   chartOptions;
-  constructor() { }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.chart.currentValue && changes.chart.currentValue.response) {
@@ -39,35 +38,34 @@ export class WidgetChartLineComponent implements OnInit, OnChanges {
           pointStart: response.timestamp.from,
           pointInterval: response.timestamp.interval,
           marker: {
-            enabled: false
-          }
-        }
+            enabled: false,
+          },
+        },
       };
       const xAxis = {
         type: 'datetime',
-        dateTimeLabelFormats: { // don't display the dummy year
-        month: '%e. %b',
-          year: '%b'
-        }
+        dateTimeLabelFormats: {
+          // don't display the dummy year
+          month: '%e. %b',
+          year: '%b',
+        },
       };
-      const series = _.map(response.values, value => {
+      const series = _.map(response.values, (value) => {
         if (value.name.indexOf('failure') !== -1) {
-          value['color'] = '#ED561B';
-          value['legendIndex'] = 1;
+          value.color = '#ED561B';
+          value.legendIndex = 1;
         } else {
-          value['zIndex'] = 1;
-          value['legendIndex'] = 0;
+          value.zIndex = 1;
+          value.legendIndex = 0;
         }
         return value;
       });
       this.chartOptions = {
         chart: { type: 'spline' },
         xAxis: xAxis,
-        plotOptions : plotOptions,
-        series : series
+        plotOptions: plotOptions,
+        series: series,
       };
     }
   }
-
 }
-

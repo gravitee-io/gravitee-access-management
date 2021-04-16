@@ -21,7 +21,6 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ResponseMode;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.web.UriBuilder;
-
 import java.net.URISyntaxException;
 
 /**
@@ -97,20 +96,21 @@ public class JWTOAuth2Exception extends OAuth2Exception {
         return jwt;
     }
 
-    public String buildRedirectUri(final String redirectUri, final String responseType, final String responseMode, final String jwt) throws URISyntaxException {
+    public String buildRedirectUri(final String redirectUri, final String responseType, final String responseMode, final String jwt)
+        throws URISyntaxException {
         UriBuilder uriBuilder = UriBuilder.fromURIString(redirectUri);
 
         if (ResponseMode.QUERY_JWT.equalsIgnoreCase(responseMode)) {
             uriBuilder.addParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, jwt);
         } else if (ResponseMode.FRAGMENT_JWT.equalsIgnoreCase(responseMode)) {
-            uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE,jwt);
+            uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, jwt);
         } else if (ResponseMode.JWT.equalsIgnoreCase(responseMode)) {
             if (responseType == null || ResponseType.NONE.equalsIgnoreCase(responseType)) {
                 // Nothing to do here
             } else if (io.gravitee.am.common.oauth2.ResponseType.CODE.equalsIgnoreCase(responseType)) {
                 uriBuilder.addParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, jwt);
             } else {
-                uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE,jwt);
+                uriBuilder.addFragmentParameter(io.gravitee.am.common.oidc.Parameters.RESPONSE, jwt);
             }
         }
 

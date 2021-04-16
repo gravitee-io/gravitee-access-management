@@ -99,5 +99,4 @@ public class FactorMongo extends Auditable {
     public int hashCode() {
         return id.hashCode();
     }
-
 }

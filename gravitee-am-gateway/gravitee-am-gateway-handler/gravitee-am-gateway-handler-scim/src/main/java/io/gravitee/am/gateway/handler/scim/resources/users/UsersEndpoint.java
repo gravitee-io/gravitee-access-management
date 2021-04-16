@@ -45,33 +45,33 @@ public class UsersEndpoint extends AbstractUserEndpoint {
         Integer page = DEFAULT_START_INDEX;
         Integer size = MAX_ITEMS_PER_PAGE;
 
-
         // The 1-based index of the first query result.
         // A value less than 1 SHALL be interpreted as 1.
         try {
             final String startIndex = context.request().getParam("startIndex");
             page = Integer.valueOf(startIndex);
-        } catch (Exception ex) {
-        }
+        } catch (Exception ex) {}
         // Non-negative integer. Specifies the desired  results per page, e.g., 10.
         // A negative value SHALL be interpreted as "0".
         // A value of "0"  indicates that no resource results are to be returned except for "totalResults".
         try {
             final String count = context.request().getParam("count");
             size = Integer.min(Integer.valueOf(count), MAX_ITEMS_PER_PAGE);
-        } catch (Exception ex) {
-
-        }
+        } catch (Exception ex) {}
 
         // user service use 0-based index
-        userService.list(page - 1, size, location(context.request()))
-                .subscribe(
-                        users -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(users)),
-                        error -> context.fail(error));
+        userService
+            .list(page - 1, size, location(context.request()))
+            .subscribe(
+                users ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(users)),
+                error -> context.fail(error)
+            );
     }
 
     /**
@@ -140,16 +140,20 @@ public class UsersEndpoint extends AbstractUserEndpoint {
                 }
             }
 
-            userService.create(user, location(context.request()))
-                    .subscribe(
-                            user1 -> context.response()
-                                    .setStatusCode(201)
-                                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                    .putHeader(HttpHeaders.LOCATION, user1.getMeta().getLocation())
-                                    .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user1)),
-                            error -> context.fail(error));
+            userService
+                .create(user, location(context.request()))
+                .subscribe(
+                    user1 ->
+                        context
+                            .response()
+                            .setStatusCode(201)
+                            .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .putHeader(HttpHeaders.LOCATION, user1.getMeta().getLocation())
+                            .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user1)),
+                    error -> context.fail(error)
+                );
         } catch (DecodeException ex) {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }

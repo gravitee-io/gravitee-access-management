@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
@@ -28,8 +31,10 @@ import io.gravitee.am.service.model.NewPolicy;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.net.URI;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -38,19 +43,13 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"policy"})
+@Api(tags = { "policy" })
 public class PoliciesResource extends AbstractResource {
 
     @Context
@@ -64,95 +63,147 @@ public class PoliciesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered policies for a security domain",
-            notes = "User must have the DOMAIN_EXTENSION_POINT[LIST] permission on the specified domain " +
-                    "or DOMAIN_EXTENSION_POINT[LIST] permission on the specified environment " +
-                    "or DOMAIN_EXTENSION_POINT[LIST] permission on the specified organization. " +
-                    "Except if user has DOMAIN_EXTENSION_POINT[READ] permission on the domain, environment or organization, each returned extension point is filtered and contains only basic information such as id and name, order and isEnabled.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered policies for a security domain", response = Policy.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "List registered policies for a security domain",
+        notes = "User must have the DOMAIN_EXTENSION_POINT[LIST] permission on the specified domain " +
+        "or DOMAIN_EXTENSION_POINT[LIST] permission on the specified environment " +
+        "or DOMAIN_EXTENSION_POINT[LIST] permission on the specified organization. " +
+        "Except if user has DOMAIN_EXTENSION_POINT[READ] permission on the domain, environment or organization, each returned extension point is filtered and contains only basic information such as id and name, order and isEnabled."
+    )
+    @ApiResponses(
+        {
+            @ApiResponse(
+                code = 200,
+                message = "List registered policies for a security domain",
+                response = Policy.class,
+                responseContainer = "List"
+            ),
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void list(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @Suspended final AsyncResponse response
+    ) {
         User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.LIST)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> policyService.findByDomain(domain))
-                        .flatMap(policies ->
-                                hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.READ)
-                                        .map(hasPermission -> policies.stream().map(policy -> filterPolicyInfos(hasPermission, policy))
-                                                .sorted(Comparator.comparing(Policy::getOrder))
-                                                .collect(Collectors.toList())))
-                        .map(policies -> policies.stream().collect(Collectors.groupingBy(Policy::getExtensionPoint)))
-                )
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(irrelevant -> policyService.findByDomain(domain))
+                    .flatMap(
+                        policies ->
+                            hasAnyPermission(
+                                authenticatedUser,
+                                organizationId,
+                                environmentId,
+                                domain,
+                                Permission.DOMAIN_EXTENSION_POINT,
+                                Acl.READ
+                            )
+                                .map(
+                                    hasPermission ->
+                                        policies
+                                            .stream()
+                                            .map(policy -> filterPolicyInfos(hasPermission, policy))
+                                            .sorted(Comparator.comparing(Policy::getOrder))
+                                            .collect(Collectors.toList())
+                                )
+                    )
+                    .map(policies -> policies.stream().collect(Collectors.groupingBy(Policy::getExtensionPoint)))
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a policy",
-            notes = "User must have the DOMAIN_EXTENSION_POINT[CREATE] permission on the specified domain " +
-                    "or DOMAIN_EXTENSION_POINT[CREATE] permission on the specified environment " +
-                    "or DOMAIN_EXTENSION_POINT[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Policy successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Create a policy",
+        notes = "User must have the DOMAIN_EXTENSION_POINT[CREATE] permission on the specified domain " +
+        "or DOMAIN_EXTENSION_POINT[CREATE] permission on the specified environment " +
+        "or DOMAIN_EXTENSION_POINT[CREATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 201, message = "Policy successfully created"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void create(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @ApiParam(name = "policy", required = true) @Valid @NotNull final NewPolicy newPolicy,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @ApiParam(name = "policy", required = true) @Valid @NotNull final NewPolicy newPolicy,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.CREATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> policyService.create(domain, newPolicy, authenticatedUser))
-                        .map(policy -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/policies/" + policy.getId()))
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(irrelevant -> policyService.create(domain, newPolicy, authenticatedUser))
+                    .map(
+                        policy ->
+                            Response
+                                .created(
+                                    URI.create(
+                                        "/organizations/" +
+                                        organizationId +
+                                        "/environments/" +
+                                        environmentId +
+                                        "/domains/" +
+                                        domain +
+                                        "/policies/" +
+                                        policy.getId()
+                                    )
+                                )
                                 .entity(policy)
-                                .build()))
-                .subscribe(response::resume, response::resume);
+                                .build()
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update policies",
-            notes = "User must have the DOMAIN_EXTENSION_POINT[UPDATE] permission on the specified domain " +
-                    "or DOMAIN_EXTENSION_POINT[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_EXTENSION_POINT[UPDATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Policies successfully updated"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Update policies",
+        notes = "User must have the DOMAIN_EXTENSION_POINT[UPDATE] permission on the specified domain " +
+        "or DOMAIN_EXTENSION_POINT[UPDATE] permission on the specified environment " +
+        "or DOMAIN_EXTENSION_POINT[UPDATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 201, message = "Policies successfully updated"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void update(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @ApiParam(name = "policies", required = true) @Valid @NotNull final List<Policy> policies,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @ApiParam(name = "policies", required = true) @Valid @NotNull final List<Policy> policies,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_POINT, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> policyService.update(domain, policies, authenticatedUser))
-                        .map(policies1 -> policies1.stream().collect(Collectors.groupingBy(Policy::getExtensionPoint)))
-                        .map(result -> {
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(__ -> policyService.update(domain, policies, authenticatedUser))
+                    .map(policies1 -> policies1.stream().collect(Collectors.groupingBy(Policy::getExtensionPoint)))
+                    .map(
+                        result -> {
                             result.forEach((key, value) -> value.sort(Comparator.comparing(Policy::getOrder)));
                             return result;
-                        }))
-                .subscribe(response::resume, response::resume);
+                        }
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{policy}")

@@ -20,13 +20,12 @@ import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
 import io.gravitee.am.repository.mongodb.common.MongoFactory;
+import java.net.URI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-
-import java.net.URI;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -53,7 +52,7 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
 
     private String getDatabaseName() {
         String uri = environment.getProperty("management.mongodb.uri");
-        if (uri != null && ! uri.isEmpty()) {
+        if (uri != null && !uri.isEmpty()) {
             return URI.create(uri).getPath().substring(1);
         }
 

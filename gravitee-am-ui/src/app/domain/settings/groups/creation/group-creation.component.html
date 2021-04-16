@@ -23,28 +23,25 @@
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" #name="ngModel" name="name" [(ngModel)]="group.name" required>
+          <input matInput type="text" placeholder="Name" #name="ngModel" name="name" [(ngModel)]="group.name" required />
           <mat-hint>The name of the Group.</mat-hint>
           <mat-error *ngIf="name.errors?.required">Enter name</mat-error>
         </mat-form-field>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Description</mat-label>
-          <input matInput type="text" placeholder="Description" #name="ngModel" name="description" [(ngModel)]="group.description">
+          <input matInput type="text" placeholder="Description" #name="ngModel" name="description" [(ngModel)]="group.description" />
           <mat-hint>The description of the Group.</mat-hint>
         </mat-form-field>
       </div>
       <div fxLayout="row" fxLayoutAlign="end">
-        <a mat-button [routerLink]="['..']" style="margin-right: 20px;">CANCEL</a>
+        <a mat-button [routerLink]="['..']" style="margin-right: 20px">CANCEL</a>
         <button mat-raised-button [disabled]="!groupForm.valid || groupForm.pristine" type="submit">CREATE</button>
       </div>
     </form>
     <div class="gv-page-description" fxFlex>
       <h3>Group ?</h3>
       <div class="gv-page-description-content">
-        <p>
-          Group resources are meant to enable expression of common
-          group-based or role-based access control models.
-        </p>
+        <p>Group resources are meant to enable expression of common group-based or role-based access control models.</p>
       </div>
     </div>
   </div>

@@ -20,7 +20,7 @@ import { ProviderResolver } from './provider.resolver';
 describe('ProviderResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ProviderResolver]
+      providers: [ProviderResolver],
     });
   });
 

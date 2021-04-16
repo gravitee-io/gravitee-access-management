@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {AuthService} from "../../../services/auth.service";
+import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-emails',
   templateUrl: './emails.component.html',
-  styleUrls: ['./emails.component.scss']
+  styleUrls: ['./emails.component.scss'],
 })
 export class EmailsComponent implements OnInit {
   appId: string;
   @Input() emails: any[];
   private viewPermission: String;
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private authService: AuthService) { }
+  constructor(private router: Router, private route: ActivatedRoute, private authService: AuthService) {}
 
   ngOnInit() {
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
+    this.appId = this.route.snapshot.parent.parent.params.appId;
 
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.viewPermission = 'organization_form_read';
@@ -44,7 +42,7 @@ export class EmailsComponent implements OnInit {
   }
 
   isEmpty() {
-    return !this.emails || this.emails.length == 0;
+    return !this.emails || this.emails.length === 0;
   }
 
   canView(): boolean {
@@ -53,7 +51,7 @@ export class EmailsComponent implements OnInit {
 
   getRowClass(row) {
     return {
-      'row-disabled': !row.enabled
+      'row-disabled': !row.enabled,
     };
   }
 }

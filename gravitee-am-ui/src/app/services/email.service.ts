@@ -14,37 +14,36 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
-import { Observable } from "rxjs";
+import { HttpClient } from '@angular/common/http';
+import { AppConfig } from '../../config/app.config';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class EmailService {
   private emailsUrl = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   get(domainId, appId, emailTemplate): Observable<any> {
-    return this.http.get<any>(this.emailsUrl + domainId + (appId ? "/applications/" + appId : "") + "/emails?template=" + emailTemplate);
+    return this.http.get<any>(this.emailsUrl + domainId + (appId ? '/applications/' + appId : '') + '/emails?template=' + emailTemplate);
   }
 
   create(domainId, appId, email): Observable<any> {
-    return this.http.post<any>(this.emailsUrl + domainId + (appId ? "/applications/" + appId : "") + "/emails", email);
+    return this.http.post<any>(this.emailsUrl + domainId + (appId ? '/applications/' + appId : '') + '/emails', email);
   }
 
   update(domainId, appId, id, email): Observable<any> {
-    return this.http.put<any>(this.emailsUrl + domainId + (appId ? "/applications/" + appId : "") + "/emails/" + id, {
-      'enabled' : email.enabled,
-      'from': email.from,
-      'fromName': email.fromName,
-      'subject': email.subject,
-      'expiresAfter': email.expiresAfter,
-      'content' : email.content
+    return this.http.put<any>(this.emailsUrl + domainId + (appId ? '/applications/' + appId : '') + '/emails/' + id, {
+      enabled: email.enabled,
+      from: email.from,
+      fromName: email.fromName,
+      subject: email.subject,
+      expiresAfter: email.expiresAfter,
+      content: email.content,
     });
   }
 
   delete(domainId, appId, id): Observable<any> {
-    return this.http.delete<any>(this.emailsUrl + domainId + (appId ? "/applications/" + appId : "") + "/emails/" + id);
+    return this.http.delete<any>(this.emailsUrl + domainId + (appId ? '/applications/' + appId : '') + '/emails/' + id);
   }
-
 }

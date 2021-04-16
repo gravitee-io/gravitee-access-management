@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from "@angular/router";
-import {Observable} from "rxjs";
-import {EntrypointService} from "../services/entrypoint.service";
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { EntrypointService } from '../services/entrypoint.service';
 
 @Injectable()
 export class EntrypointResolver implements Resolve<any> {
+  constructor(private entrypointService: EntrypointService) {}
 
-  constructor(private entrypointService: EntrypointService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     let entrypointId: string = route.paramMap.get('entrypointId');
     return this.entrypointService.get(entrypointId);
   }
-
 }

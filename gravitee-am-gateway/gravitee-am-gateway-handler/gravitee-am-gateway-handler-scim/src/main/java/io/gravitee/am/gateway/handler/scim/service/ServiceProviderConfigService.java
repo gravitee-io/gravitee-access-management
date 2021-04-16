@@ -23,6 +23,5 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface ServiceProviderConfigService {
-
     Single<ServiceProviderConfiguration> get();
 }

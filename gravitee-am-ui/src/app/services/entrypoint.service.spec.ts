@@ -20,7 +20,7 @@ import { EntrypointService } from './tag.service';
 describe('EntrypointService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EntrypointService]
+      providers: [EntrypointService],
     });
   });
 

@@ -22,6 +22,5 @@ import io.gravitee.common.service.Service;
  * @author GraviteeSource Team
  */
 public interface ProtocolProvider extends Service<ProtocolProvider> {
-
     String path();
 }

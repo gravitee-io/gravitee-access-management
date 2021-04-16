@@ -1,5 +1,5 @@
-
 package io.gravitee.am.identityprovider.inline;
+
 /**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -16,7 +16,6 @@ package io.gravitee.am.identityprovider.inline;
  * limitations under the License.
  */
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
-
 import java.util.Map;
 
 /**
@@ -36,6 +35,4 @@ public class InlineIdentityProviderMapper implements IdentityProviderMapper {
     public void setMappers(Map<String, String> mappers) {
         this.mappers = mappers;
     }
-
-
 }

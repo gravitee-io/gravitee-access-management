@@ -18,10 +18,9 @@ package io.gravitee.am.repository.healthcheck;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.node.api.healthcheck.Probe;
 import io.gravitee.node.api.healthcheck.Result;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,11 +44,13 @@ public class OAuth2RepositoryProbe implements Probe {
         // Search for an oauth 2.0 token to check repository connection
         final CompletableFuture<Result> future = new CompletableFuture<>();
 
-        accessTokenRepository.findByToken(TOKEN)
-                .subscribe(
-                        domain -> future.complete(Result.healthy()),
-                        error -> future.complete(Result.unhealthy(error)),
-                        () -> future.complete(Result.healthy())); // repository is up but returned no result
+        accessTokenRepository
+            .findByToken(TOKEN)
+            .subscribe(
+                domain -> future.complete(Result.healthy()),
+                error -> future.complete(Result.unhealthy(error)),
+                () -> future.complete(Result.healthy())
+            ); // repository is up but returned no result
 
         return future;
     }

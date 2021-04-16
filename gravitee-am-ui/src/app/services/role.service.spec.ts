@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {RoleService} from "./role.service";
+import { inject, TestBed } from '@angular/core/testing';
+import { RoleService } from './role.service';
 
 describe('RoleService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [RoleService]
+      providers: [RoleService],
     });
   });
 

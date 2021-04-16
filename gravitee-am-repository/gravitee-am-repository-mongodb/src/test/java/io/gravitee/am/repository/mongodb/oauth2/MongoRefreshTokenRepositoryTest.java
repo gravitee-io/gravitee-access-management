@@ -18,10 +18,9 @@ package io.gravitee.am.repository.mongodb.oauth2;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.observers.TestObserver;
+import java.util.UUID;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.UUID;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,10 +54,10 @@ public class MongoRefreshTokenRepositoryTest extends AbstractOAuth2RepositoryTes
         token.setToken("my-token");
 
         TestObserver<RefreshToken> observer = refreshTokenRepository
-                .create(token)
-                .toCompletable()
-                .andThen(refreshTokenRepository.findByToken("my-token"))
-                .test();
+            .create(token)
+            .toCompletable()
+            .andThen(refreshTokenRepository.findByToken("my-token"))
+            .test();
 
         observer.awaitTerminalEvent();
 
@@ -75,10 +74,11 @@ public class MongoRefreshTokenRepositoryTest extends AbstractOAuth2RepositoryTes
         token.setToken("my-token");
 
         refreshTokenRepository
-                .create(token)
-                .toCompletable()
-                .andThen(refreshTokenRepository.delete("my-token"))
-                .andThen(refreshTokenRepository.findByToken("my-token"))
-                .test().assertEmpty();
+            .create(token)
+            .toCompletable()
+            .andThen(refreshTokenRepository.delete("my-token"))
+            .andThen(refreshTokenRepository.findByToken("my-token"))
+            .test()
+            .assertEmpty();
     }
 }

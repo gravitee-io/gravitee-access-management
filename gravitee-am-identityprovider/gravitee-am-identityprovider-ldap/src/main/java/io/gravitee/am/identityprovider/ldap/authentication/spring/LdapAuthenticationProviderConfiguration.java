@@ -20,6 +20,8 @@ import io.gravitee.am.identityprovider.ldap.authentication.CompareAuthentication
 import io.gravitee.am.identityprovider.ldap.authentication.GroupSearchEntryHandler;
 import io.gravitee.am.identityprovider.ldap.authentication.encoding.*;
 import io.gravitee.am.identityprovider.ldap.pool.CustomBlockingConnectionPool;
+import java.time.Duration;
+import java.util.regex.Pattern;
 import org.ldaptive.*;
 import org.ldaptive.auth.*;
 import org.ldaptive.handler.SearchEntryHandler;
@@ -28,9 +30,6 @@ import org.ldaptive.provider.unboundid.UnboundIDProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.time.Duration;
-import java.util.regex.Pattern;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -57,8 +56,11 @@ public class LdapAuthenticationProviderConfiguration {
         poolConfig.setMinPoolSize(configuration.getMinPoolSize());
         poolConfig.setMaxPoolSize(configuration.getMaxPoolSize());
         poolConfig.setValidatePeriodically(true);
-        BlockingConnectionPool connectionPool =
-                new CustomBlockingConnectionPool(poolConfig, (DefaultConnectionFactory) bindConnectionFactory(), configuration.getMaxPoolRetries());
+        BlockingConnectionPool connectionPool = new CustomBlockingConnectionPool(
+            poolConfig,
+            (DefaultConnectionFactory) bindConnectionFactory(),
+            configuration.getMaxPoolRetries()
+        );
         connectionPool.setValidator(new SearchValidator());
         return connectionPool;
     }
@@ -89,8 +91,11 @@ public class LdapAuthenticationProviderConfiguration {
         poolConfig.setMinPoolSize(configuration.getMinPoolSize());
         poolConfig.setMaxPoolSize(configuration.getMaxPoolSize());
         poolConfig.setValidatePeriodically(true);
-        BlockingConnectionPool connectionPool =
-                new CustomBlockingConnectionPool(poolConfig, (DefaultConnectionFactory) searchConnectionFactory(), configuration.getMaxPoolRetries());
+        BlockingConnectionPool connectionPool = new CustomBlockingConnectionPool(
+            poolConfig,
+            (DefaultConnectionFactory) searchConnectionFactory(),
+            configuration.getMaxPoolRetries()
+        );
         connectionPool.setValidator(new SearchValidator());
         return connectionPool;
     }
@@ -116,8 +121,10 @@ public class LdapAuthenticationProviderConfiguration {
         connectionConfig.setResponseTimeout(Duration.ofMillis(configuration.getResponseTimeout()));
         connectionConfig.setLdapUrl(configuration.getContextSourceUrl());
         connectionConfig.setUseStartTLS(configuration.isUseStartTLS());
-        BindConnectionInitializer connectionInitializer =
-                new BindConnectionInitializer(configuration.getContextSourceUsername(), new Credential(configuration.getContextSourcePassword()));
+        BindConnectionInitializer connectionInitializer = new BindConnectionInitializer(
+            configuration.getContextSourceUsername(),
+            new Credential(configuration.getContextSourcePassword())
+        );
         connectionConfig.setConnectionInitializer(connectionInitializer);
         return connectionConfig;
     }
@@ -150,11 +157,14 @@ public class LdapAuthenticationProviderConfiguration {
         dnResolver.setSubtreeSearch(true);
         dnResolver.setAllowMultipleDns(false);
 
-        AbstractAuthenticationHandler authHandler =
-                (configuration.getPasswordAlgorithm() == null)
-                        ? new PooledBindAuthenticationHandler(bindPooledConnectionFactory())
-                        : new CompareAuthenticationHandler(searchPooledConnectionFactory(), passwordEncoder(configuration.getPasswordAlgorithm()), binaryToTextEncoder(), configuration);
-
+        AbstractAuthenticationHandler authHandler = (configuration.getPasswordAlgorithm() == null)
+            ? new PooledBindAuthenticationHandler(bindPooledConnectionFactory())
+            : new CompareAuthenticationHandler(
+                searchPooledConnectionFactory(),
+                passwordEncoder(configuration.getPasswordAlgorithm()),
+                binaryToTextEncoder(),
+                configuration
+            );
 
         PooledSearchEntryResolver pooledSearchEntryResolver = new PooledSearchEntryResolver(searchPooledConnectionFactory());
         if (configuration.isFetchGroups()) {

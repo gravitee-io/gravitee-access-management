@@ -38,12 +38,6 @@ import io.gravitee.am.service.model.UpdateDomain;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
 import io.reactivex.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-
 import java.text.Normalizer;
 import java.util.Collection;
 import java.util.Date;
@@ -51,6 +45,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -120,42 +119,55 @@ public class DomainServiceImpl implements DomainService {
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
-        return domainRepository.findById(id)
-                .onErrorResumeNext(ex -> {
+        return domainRepository
+            .findById(id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a domain using its ID: {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a domain using its ID: %s", id), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a domain using its ID: %s", id),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Flowable<Domain> findAllByEnvironment(String organizationId, String environmentId) {
-
         LOGGER.debug("Find all domains of environment {} (organization {})", environmentId, organizationId);
 
-        return environmentService.findById(environmentId, organizationId)
-                .map(Environment::getId)
-                .flatMapPublisher(environmentsId -> domainRepository.findAllByEnvironment(environmentId));
+        return environmentService
+            .findById(environmentId, organizationId)
+            .map(Environment::getId)
+            .flatMapPublisher(environmentsId -> domainRepository.findAllByEnvironment(environmentId));
     }
 
     @Override
     public Single<Set<Domain>> findAll() {
         LOGGER.debug("Find all domains");
-        return domainRepository.findAll()
-                .onErrorResumeNext(ex -> {
+        return domainRepository
+            .findAll()
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find all domains", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find all domains", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
         LOGGER.debug("Find domains by id in {}", ids);
-        return domainRepository.findByIdIn(ids)
-                .onErrorResumeNext(ex -> {
+        return domainRepository
+            .findByIdIn(ids)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find domains by id in {}", ids, ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find domains by id in", ex));
-                });
+                }
+            );
     }
 
     @Override
@@ -163,9 +175,11 @@ public class DomainServiceImpl implements DomainService {
         LOGGER.debug("Create a new domain: {}", newDomain);
         String id = generateContextPath(newDomain.getName());
 
-        return domainRepository.findById(id)
-                .isEmpty()
-                .flatMap(empty -> {
+        return domainRepository
+            .findById(id)
+            .isEmpty()
+            .flatMap(
+                empty -> {
                     if (!empty) {
                         throw new DomainAlreadyExistsException(newDomain.getName());
                     } else {
@@ -182,19 +196,25 @@ public class DomainServiceImpl implements DomainService {
                         domain.setUpdatedAt(domain.getCreatedAt());
                         return domainRepository.create(domain);
                     }
-                })
-                // create default system scopes
-                .flatMap(this::createSystemScopes)
-                // create default certificate
-                .flatMap(this::createDefaultCertificate)
-                // create owner
-                .flatMap(domain -> {
+                }
+            )
+            // create default system scopes
+            .flatMap(this::createSystemScopes)
+            // create default certificate
+            .flatMap(this::createDefaultCertificate)
+            // create owner
+            .flatMap(
+                domain -> {
                     if (principal == null) {
                         return Single.just(domain);
                     }
-                    return roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, ReferenceType.DOMAIN)
-                            .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the domain, owner role does not exist")))
-                            .flatMap(role -> {
+                    return roleService
+                        .findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, ReferenceType.DOMAIN)
+                        .switchIfEmpty(
+                            Single.error(new InvalidRoleException("Cannot assign owner to the domain, owner role does not exist"))
+                        )
+                        .flatMap(
+                            role -> {
                                 Membership membership = new Membership();
                                 membership.setDomain(domain.getId());
                                 membership.setMemberId(principal.getId());
@@ -202,33 +222,62 @@ public class DomainServiceImpl implements DomainService {
                                 membership.setReferenceId(domain.getId());
                                 membership.setReferenceType(ReferenceType.DOMAIN);
                                 membership.setRoleId(role.getId());
-                                return membershipService.addOrUpdate(organizationId, membership)
-                                        .map(__ -> domain);
-                            });
-                })
-                // create event for sync process
-                .flatMap(domain -> {
+                                return membershipService.addOrUpdate(organizationId, membership).map(__ -> domain);
+                            }
+                        );
+                }
+            )
+            // create event for sync process
+            .flatMap(
+                domain -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), ReferenceType.DOMAIN, domain.getId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(domain));
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to create a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a domain", ex));
-                })
-                .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).domain(domain).referenceType(ReferenceType.ENVIRONMENT).referenceId(environmentId)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).referenceType(ReferenceType.ENVIRONMENT).referenceId(environmentId).throwable(throwable)));
+                }
+            )
+            .doOnSuccess(
+                domain ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(DomainAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.DOMAIN_CREATED)
+                            .domain(domain)
+                            .referenceType(ReferenceType.ENVIRONMENT)
+                            .referenceId(environmentId)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(DomainAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.DOMAIN_CREATED)
+                            .referenceType(ReferenceType.ENVIRONMENT)
+                            .referenceId(environmentId)
+                            .throwable(throwable)
+                    )
+            );
     }
 
     @Override
     public Single<Domain> update(String domainId, UpdateDomain updateDomain, User principal) {
         LOGGER.debug("Update an existing domain: {}", updateDomain);
-        return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(oldDomain -> {
+        return domainRepository
+            .findById(domainId)
+            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+            .flatMapSingle(
+                oldDomain -> {
                     Domain domain = new Domain();
                     domain.setId(domainId);
                     domain.setPath(updateDomain.getPath());
@@ -243,197 +292,394 @@ public class DomainServiceImpl implements DomainService {
                     domain.setLoginSettings(updateDomain.getLoginSettings());
                     domain.setAccountSettings(updateDomain.getAccountSettings());
 
-                    return domainRepository.update(domain)
-                            // create event for sync process
-                            .flatMap(domain1 -> {
-                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
+                    return domainRepository
+                        .update(domain)
+                        // create event for sync process
+                        .flatMap(
+                            domain1 -> {
+                                Event event = new Event(
+                                    Type.DOMAIN,
+                                    new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE)
+                                );
                                 return eventService.create(event).flatMap(__ -> Single.just(domain1));
-                            })
-                            .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
+                            }
+                        )
+                        .doOnSuccess(
+                            domain1 ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(DomainAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.DOMAIN_UPDATED)
+                                        .oldValue(oldDomain)
+                                        .domain(domain1)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(DomainAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.DOMAIN_UPDATED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to update a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a domain", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Domain> update(String domainId, Domain domain) {
         LOGGER.debug("Update an existing domain: {}", domain);
-        return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(__ -> {
+        return domainRepository
+            .findById(domainId)
+            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+            .flatMapSingle(
+                __ -> {
                     domain.setUpdatedAt(new Date());
                     return domainRepository.update(domain);
-                })
-                // create event for sync process
-                .flatMap(domain1 -> {
-                    Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
+                }
+            )
+            // create event for sync process
+            .flatMap(
+                domain1 -> {
+                    Event event = new Event(
+                        Type.DOMAIN,
+                        new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE)
+                    );
                     return eventService.create(event).flatMap(__ -> Single.just(domain1));
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to update a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a domain", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Domain> patch(String domainId, PatchDomain patchDomain, User principal) {
         LOGGER.debug("Patching an existing domain ({}) with : {}", domainId, patchDomain);
-        return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapSingle(oldDomain -> {
+        return domainRepository
+            .findById(domainId)
+            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+            .flatMapSingle(
+                oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
                     toPatch.setUpdatedAt(new Date());
-                    return domainRepository.update(toPatch)
-                            // create event for sync process
-                            .flatMap(domain1 -> {
-                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
+                    return domainRepository
+                        .update(toPatch)
+                        // create event for sync process
+                        .flatMap(
+                            domain1 -> {
+                                Event event = new Event(
+                                    Type.DOMAIN,
+                                    new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE)
+                                );
                                 return eventService.create(event).flatMap(__ -> Single.just(domain1));
-                            })
-                            .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).throwable(throwable)));
-
-                })
-                .onErrorResumeNext(ex -> {
+                            }
+                        )
+                        .doOnSuccess(
+                            domain1 ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(DomainAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.DOMAIN_UPDATED)
+                                        .oldValue(oldDomain)
+                                        .domain(domain1)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(DomainAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.DOMAIN_UPDATED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to patch a domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to patch a domain", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Completable delete(String domainId, User principal) {
         LOGGER.debug("Delete security domain {}", domainId);
-        return domainRepository.findById(domainId)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapCompletable(domain -> {
+        return domainRepository
+            .findById(domainId)
+            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+            .flatMapCompletable(
+                domain -> {
                     // delete applications
-                    return applicationService.findByDomain(domainId)
-                            .flatMapCompletable(applications -> {
-                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId())).collect(Collectors.toList());
+                    return applicationService
+                        .findByDomain(domainId)
+                        .flatMapCompletable(
+                            applications -> {
+                                List<Completable> deleteApplicationsCompletable = applications
+                                    .stream()
+                                    .map(a -> applicationService.delete(a.getId()))
+                                    .collect(Collectors.toList());
                                 return Completable.concat(deleteApplicationsCompletable);
-                            })
-                            // delete certificates
-                            .andThen(certificateService.findByDomain(domainId)
-                                    .flatMapCompletable(certificates -> {
-                                        List<Completable> deleteCertificatesCompletable = certificates.stream().map(c -> certificateService.delete(c.getId())).collect(Collectors.toList());
+                            }
+                        )
+                        // delete certificates
+                        .andThen(
+                            certificateService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    certificates -> {
+                                        List<Completable> deleteCertificatesCompletable = certificates
+                                            .stream()
+                                            .map(c -> certificateService.delete(c.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteCertificatesCompletable);
-                                    })
-                            )
-                            // delete identity providers
-                            .andThen(identityProviderService.findByDomain(domainId)
-                                    .flatMapCompletable(identityProviders -> {
-                                        List<Completable> deleteIdentityProvidersCompletable = identityProviders.stream().map(i -> identityProviderService.delete(domainId, i.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete identity providers
+                        .andThen(
+                            identityProviderService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    identityProviders -> {
+                                        List<Completable> deleteIdentityProvidersCompletable = identityProviders
+                                            .stream()
+                                            .map(i -> identityProviderService.delete(domainId, i.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteIdentityProvidersCompletable);
-                                    })
-                            )
-                            // delete extension grants
-                            .andThen(extensionGrantService.findByDomain(domainId)
-                                    .flatMapCompletable(extensionGrants -> {
-                                        List<Completable> deleteExtensionGrantsCompletable = extensionGrants.stream().map(i -> extensionGrantService.delete(domainId, i.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete extension grants
+                        .andThen(
+                            extensionGrantService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    extensionGrants -> {
+                                        List<Completable> deleteExtensionGrantsCompletable = extensionGrants
+                                            .stream()
+                                            .map(i -> extensionGrantService.delete(domainId, i.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteExtensionGrantsCompletable);
-                                    })
-                            )
-                            // delete roles
-                            .andThen(roleService.findByDomain(domainId)
-                                    .flatMapCompletable(roles -> {
-                                        List<Completable> deleteRolesCompletable = roles.stream().map(r -> roleService.delete(ReferenceType.DOMAIN, domainId, r.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete roles
+                        .andThen(
+                            roleService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    roles -> {
+                                        List<Completable> deleteRolesCompletable = roles
+                                            .stream()
+                                            .map(r -> roleService.delete(ReferenceType.DOMAIN, domainId, r.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteRolesCompletable);
-                                    })
-                            )
-                            // delete users
-                            .andThen(userService.findByDomain(domainId)
-                                    .flatMapCompletable(users -> {
-                                        List<Completable> deleteUsersCompletable = users.stream().map(u -> userService.delete(u.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete users
+                        .andThen(
+                            userService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    users -> {
+                                        List<Completable> deleteUsersCompletable = users
+                                            .stream()
+                                            .map(u -> userService.delete(u.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteUsersCompletable);
-                                    })
-                            )
-                            // delete groups
-                            .andThen(groupService.findByDomain(domainId)
-                                    .flatMapCompletable(groups -> {
-                                        List<Completable> deleteGroupsCompletable = groups.stream().map(u -> groupService.delete(ReferenceType.DOMAIN, domainId, u.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete groups
+                        .andThen(
+                            groupService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    groups -> {
+                                        List<Completable> deleteGroupsCompletable = groups
+                                            .stream()
+                                            .map(u -> groupService.delete(ReferenceType.DOMAIN, domainId, u.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteGroupsCompletable);
-                                    })
-                            )
-                            // delete scopes
-                            .andThen(scopeService.findByDomain(domainId)
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteScopesCompletable = scopes.stream().map(s -> scopeService.delete(s.getId(), true)).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete scopes
+                        .andThen(
+                            scopeService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    scopes -> {
+                                        List<Completable> deleteScopesCompletable = scopes
+                                            .stream()
+                                            .map(s -> scopeService.delete(s.getId(), true))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteScopesCompletable);
-                                    })
-                            )
-                            // delete email templates
-                            .andThen(emailTemplateService.findAll(ReferenceType.DOMAIN, domainId)
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteEmailsCompletable = scopes.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete email templates
+                        .andThen(
+                            emailTemplateService
+                                .findAll(ReferenceType.DOMAIN, domainId)
+                                .flatMapCompletable(
+                                    scopes -> {
+                                        List<Completable> deleteEmailsCompletable = scopes
+                                            .stream()
+                                            .map(e -> emailTemplateService.delete(e.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteEmailsCompletable);
-                                    })
-                            )
-                            // delete form templates
-                            .andThen(formService.findByDomain(domainId)
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteFormsCompletable = scopes.stream().map(f -> formService.delete(domainId, f.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete form templates
+                        .andThen(
+                            formService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    scopes -> {
+                                        List<Completable> deleteFormsCompletable = scopes
+                                            .stream()
+                                            .map(f -> formService.delete(domainId, f.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteFormsCompletable);
-                                    })
-                            )
-                            // delete reporters
-                            .andThen(reporterService.findByDomain(domainId)
-                                    .flatMapCompletable(reporters -> {
-                                        List<Completable> deleteReportersCompletable = reporters.stream().map(r -> reporterService.delete(r.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete reporters
+                        .andThen(
+                            reporterService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    reporters -> {
+                                        List<Completable> deleteReportersCompletable = reporters
+                                            .stream()
+                                            .map(r -> reporterService.delete(r.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteReportersCompletable);
-                                    })
-                            )
-                            // delete policies
-                            .andThen(policyService.findByDomain(domainId)
-                                    .flatMapCompletable(policies -> {
-                                        List<Completable> deletePoliciesCompletable = policies.stream().map(p -> policyService.delete(p.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete policies
+                        .andThen(
+                            policyService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    policies -> {
+                                        List<Completable> deletePoliciesCompletable = policies
+                                            .stream()
+                                            .map(p -> policyService.delete(p.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deletePoliciesCompletable);
-                                    })
-                            )
-                            // delete memberships
-                            .andThen(membershipService.findByReference(domainId, ReferenceType.DOMAIN)
-                                    .flatMapCompletable(memberships -> {
-                                        List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete memberships
+                        .andThen(
+                            membershipService
+                                .findByReference(domainId, ReferenceType.DOMAIN)
+                                .flatMapCompletable(
+                                    memberships -> {
+                                        List<Completable> deleteMembershipsCompletable = memberships
+                                            .stream()
+                                            .map(m -> membershipService.delete(m.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteMembershipsCompletable);
-                                    })
-                            )
-                            // delete factors
-                            .andThen(factorService.findByDomain(domainId)
-                                    .flatMapCompletable(factors -> {
-                                        List<Completable> deleteFactorsCompletable = factors.stream().map(f -> factorService.delete(domainId, f.getId())).collect(Collectors.toList());
+                                    }
+                                )
+                        )
+                        // delete factors
+                        .andThen(
+                            factorService
+                                .findByDomain(domainId)
+                                .flatMapCompletable(
+                                    factors -> {
+                                        List<Completable> deleteFactorsCompletable = factors
+                                            .stream()
+                                            .map(f -> factorService.delete(domainId, f.getId()))
+                                            .collect(Collectors.toList());
                                         return Completable.concat(deleteFactorsCompletable);
-                                    })
+                                    }
+                                )
+                        )
+                        .andThen(domainRepository.delete(domainId))
+                        .andThen(
+                            Completable.fromSingle(
+                                eventService.create(
+                                    new Event(Type.DOMAIN, new Payload(domainId, ReferenceType.DOMAIN, domainId, Action.DELETE))
+                                )
                             )
-                            .andThen(domainRepository.delete(domainId))
-                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, ReferenceType.DOMAIN, domainId, Action.DELETE)))))
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
+                        )
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(DomainAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.DOMAIN_DELETED)
+                                        .domain(domain)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(DomainAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.DOMAIN_DELETED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete security domain {}", domainId, ex);
-                    return Completable.error(new TechnicalManagementException("An error occurs while trying to delete security domain " + domainId, ex));
-                });
+                    return Completable.error(
+                        new TechnicalManagementException("An error occurs while trying to delete security domain " + domainId, ex)
+                    );
+                }
+            );
     }
 
     private Single<Domain> createSystemScopes(Domain domain) {
-        return Observable.fromArray(io.gravitee.am.common.oidc.Scope.values())
-                .flatMapSingle(systemScope -> {
+        return Observable
+            .fromArray(io.gravitee.am.common.oidc.Scope.values())
+            .flatMapSingle(
+                systemScope -> {
                     final String scopeKey = systemScope.getKey();
                     NewSystemScope scope = new NewSystemScope();
                     scope.setKey(scopeKey);
@@ -442,15 +688,14 @@ public class DomainServiceImpl implements DomainService {
                     scope.setDescription(systemScope.getDescription());
                     scope.setDiscovery(systemScope.isDiscovery());
                     return scopeService.create(domain.getId(), scope);
-                })
-                .lastOrError()
-                .map(scope -> domain);
+                }
+            )
+            .lastOrError()
+            .map(scope -> domain);
     }
 
     private Single<Domain> createDefaultCertificate(Domain domain) {
-        return certificateService
-                .create(domain.getId())
-                .map(certificate -> domain);
+        return certificateService.create(domain.getId()).map(certificate -> domain);
     }
 
     private String generateContextPath(String domainName) {

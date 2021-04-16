@@ -17,18 +17,20 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to reporters</small></a>
-  <h1>{{reporter.name}}</h1>
+  <h1>{{ reporter.name }}</h1>
   <div class="reporter-content">
     <form #reporterForm="ngForm" fxLayout="column" fxFlex="70">
       <div class="gv-form-section" fxLayout="column">
         <div fxFlex fxLayoutAlign="end">
-          <mat-slide-toggle matTooltip="{{reporter.enabled ? 'Disable reporter ?' : 'Enable reporter ?'}}"
-                            (change)="enableReporter($event)"
-                            [checked]="reporter.enabled"></mat-slide-toggle>
+          <mat-slide-toggle
+            matTooltip="{{ reporter.enabled ? 'Disable reporter ?' : 'Enable reporter ?' }}"
+            (change)="enableReporter($event)"
+            [checked]="reporter.enabled"
+          ></mat-slide-toggle>
         </div>
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="reporter.name" required />
           <mat-hint>A name for your reporter.</mat-hint>
         </mat-form-field>
       </div>
@@ -39,20 +41,29 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <reporter-form *ngIf="reporter" [reporterConfiguration]="reporterConfiguration" [reporterSchema]="reporterSchema" (configurationCompleted)="enableReporterUpdate($event)"></reporter-form>
+          <reporter-form
+            *ngIf="reporter"
+            [reporterConfiguration]="reporterConfiguration"
+            [reporterSchema]="reporterSchema"
+            (configurationCompleted)="enableReporterUpdate($event)"
+          ></reporter-form>
         </div>
       </div>
 
       <div fxLayout="row">
-        <button mat-raised-button [disabled]="(!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
+        <button
+          mat-raised-button
+          [disabled]="(!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged"
+          (click)="update()"
+        >
+          SAVE
+        </button>
       </div>
     </form>
     <div class="gv-page-description" fxFlex>
       <h3>Reporter</h3>
       <div class="gv-page-description-content">
-        <p>
-          A reporter is used by the platform to report many types of event (e.g Audit logs).
-        </p>
+        <p>A reporter is used by the platform to report many types of event (e.g Audit logs).</p>
       </div>
     </div>
   </div>

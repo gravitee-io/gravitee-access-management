@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
@@ -32,8 +34,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -95,7 +95,7 @@ public class DynamicClientRegistrationEndpointTest {
         //Context
         HttpServerRequest serverRequest = Mockito.mock(HttpServerRequest.class);
         when(routingContext.request()).thenReturn(serverRequest);
-        when(dcrService.create(any(),any())).thenReturn(Single.error(new Exception()));
+        when(dcrService.create(any(), any())).thenReturn(Single.error(new Exception()));
 
         //Test
         endpoint.handle(routingContext);
@@ -115,10 +115,10 @@ public class DynamicClientRegistrationEndpointTest {
         when(serverRequest.scheme()).thenReturn("https");
         when(serverRequest.host()).thenReturn("host");
         when(routingContext.response()).thenReturn(serverResponse);
-        when(serverResponse.putHeader(anyString(),anyString())).thenReturn(serverResponse);
+        when(serverResponse.putHeader(anyString(), anyString())).thenReturn(serverResponse);
         when(serverResponse.setStatusCode(201)).thenReturn(serverResponse);
 
-        when(dcrService.create(any(),any())).thenReturn(Single.just(new Client()));
+        when(dcrService.create(any(), any())).thenReturn(Single.just(new Client()));
         when(clientSyncService.addDynamicClientRegistred(any())).thenReturn(new Client());
 
         //Test
@@ -126,7 +126,7 @@ public class DynamicClientRegistrationEndpointTest {
 
         //Assertions
         verify(routingContext, times(1)).response();
-        verify(serverResponse,times(3)).putHeader(anyString(),anyString());
-        verify(serverResponse,times(1)).end(anyString());
+        verify(serverResponse, times(3)).putHeader(anyString(), anyString());
+        verify(serverResponse, times(1)).end(anyString());
     }
 }

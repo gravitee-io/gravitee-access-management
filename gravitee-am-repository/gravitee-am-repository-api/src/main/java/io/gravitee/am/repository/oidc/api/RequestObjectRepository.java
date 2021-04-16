@@ -25,7 +25,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface RequestObjectRepository {
-
     Maybe<RequestObject> findById(String id);
 
     Single<RequestObject> create(RequestObject requestObject);

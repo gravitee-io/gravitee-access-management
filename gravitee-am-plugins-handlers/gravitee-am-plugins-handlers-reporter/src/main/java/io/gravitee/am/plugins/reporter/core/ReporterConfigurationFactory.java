@@ -22,6 +22,5 @@ import io.gravitee.am.reporter.api.ReporterConfiguration;
  * @author GraviteeSource Team
  */
 public interface ReporterConfigurationFactory {
-
     <T extends ReporterConfiguration> T create(Class<T> clazz, String content);
 }

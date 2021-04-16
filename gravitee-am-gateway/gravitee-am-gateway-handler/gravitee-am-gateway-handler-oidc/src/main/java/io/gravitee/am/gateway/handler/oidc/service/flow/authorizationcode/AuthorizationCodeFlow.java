@@ -24,7 +24,6 @@ import io.gravitee.am.gateway.handler.oidc.service.flow.AbstractFlow;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -57,7 +56,7 @@ import java.util.List;
  */
 public class AuthorizationCodeFlow extends AbstractFlow {
 
-    private final static List<String> RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
+    private static final List<String> RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
     private AuthorizationCodeService authorizationCodeService;
 
     public AuthorizationCodeFlow(AuthorizationCodeService authorizationCodeService) {
@@ -67,13 +66,16 @@ public class AuthorizationCodeFlow extends AbstractFlow {
 
     @Override
     protected Single<AuthorizationResponse> prepareResponse(AuthorizationRequest authorizationRequest, Client client, User endUser) {
-        return authorizationCodeService.create(authorizationRequest, endUser)
-                .map(code -> {
+        return authorizationCodeService
+            .create(authorizationRequest, endUser)
+            .map(
+                code -> {
                     AuthorizationCodeResponse response = new AuthorizationCodeResponse();
                     response.setRedirectUri(authorizationRequest.getRedirectUri());
                     response.setCode(code.getCode());
                     response.setState(authorizationRequest.getState());
                     return response;
-                });
+                }
+            );
     }
 }

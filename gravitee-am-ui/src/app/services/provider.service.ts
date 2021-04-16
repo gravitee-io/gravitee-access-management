@@ -14,46 +14,45 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
-import { Observable } from "rxjs";
-import { OrganizationService } from "./organization.service";
+import { HttpClient } from '@angular/common/http';
+import { AppConfig } from '../../config/app.config';
+import { Observable } from 'rxjs';
+import { OrganizationService } from './organization.service';
 
 @Injectable()
 export class ProviderService {
   private providersURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient,
-              private organizationService: OrganizationService) { }
+  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
 
   findByDomain(domainId): Observable<any> {
-    return this.http.get<any>(this.providersURL + domainId + "/identities");
+    return this.http.get<any>(this.providersURL + domainId + '/identities');
   }
 
   findUserProvidersByDomain(domainId): Observable<any> {
-    return this.http.get<any>(this.providersURL + domainId + "/identities?userProvider=true");
+    return this.http.get<any>(this.providersURL + domainId + '/identities?userProvider=true');
   }
 
   get(domainId, id): Observable<any> {
-    return this.http.get<any>(this.providersURL + domainId + "/identities/" + id);
+    return this.http.get<any>(this.providersURL + domainId + '/identities/' + id);
   }
 
   create(domainId, provider, organizationContext): Observable<any> {
     if (organizationContext) {
       return this.organizationService.createIdentityProvider(provider);
     }
-    return this.http.post<any>(this.providersURL + domainId + "/identities", provider);
+    return this.http.post<any>(this.providersURL + domainId + '/identities', provider);
   }
 
   update(domainId, id, provider, organizationContext): Observable<any> {
     if (organizationContext) {
       return this.organizationService.updateIdentityProvider(id, provider);
     }
-    return this.http.put<any>(this.providersURL + domainId + "/identities/" + id, {
-      'name' : provider.name,
-      'configuration' : provider.configuration,
-      'mappers' : provider.mappers,
-      'roleMapper' : provider.roleMapper
+    return this.http.put<any>(this.providersURL + domainId + '/identities/' + id, {
+      name: provider.name,
+      configuration: provider.configuration,
+      mappers: provider.mappers,
+      roleMapper: provider.roleMapper,
     });
   }
 
@@ -61,7 +60,6 @@ export class ProviderService {
     if (organizationContext) {
       return this.organizationService.deleteIdentityProvider(id);
     }
-    return this.http.delete<any>(this.providersURL + domainId + "/identities/" + id);
+    return this.http.delete<any>(this.providersURL + domainId + '/identities/' + id);
   }
-
 }

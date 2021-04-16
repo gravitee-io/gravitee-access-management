@@ -19,13 +19,12 @@ import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -39,7 +38,6 @@ public class DefaultSecurityDomainManager implements SecurityDomainManager {
     private EventManager eventManager;
 
     private final Map<String, Domain> domains = new HashMap<>();
-
 
     @Override
     public void deploy(Domain domain) {

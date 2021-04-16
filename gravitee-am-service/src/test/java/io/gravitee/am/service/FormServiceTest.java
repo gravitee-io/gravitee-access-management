@@ -15,26 +15,25 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.model.Form;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.exception.FormAlreadyExistsException;
 import io.gravitee.am.service.impl.FormServiceImpl;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -59,7 +58,6 @@ public class FormServiceTest {
 
     @Test
     public void copyFromClient() {
-
         final String sourceUid = "sourceUid";
         final String targetUid = "targetUid";
 
@@ -84,20 +82,28 @@ public class FormServiceTest {
 
         TestObserver<List<Form>> testObserver = formService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
         testObserver.assertComplete().assertNoErrors();
-        testObserver.assertValue(forms -> forms != null && forms.size() == 2 && forms.stream().filter(
-                form -> form.getReferenceId().equals(DOMAIN) &&
-                        form.getClient().equals(targetUid) &&
-                        !form.getId().equals("templateId") &&
-                        Arrays.asList("login", "error").contains(form.getTemplate()) &&
-                        form.getContent().equals("formContent") &&
-                        form.getAssets().equals("formAsset")
-                ).count() == 2
+        testObserver.assertValue(
+            forms ->
+                forms != null &&
+                forms.size() == 2 &&
+                forms
+                    .stream()
+                    .filter(
+                        form ->
+                            form.getReferenceId().equals(DOMAIN) &&
+                            form.getClient().equals(targetUid) &&
+                            !form.getId().equals("templateId") &&
+                            Arrays.asList("login", "error").contains(form.getTemplate()) &&
+                            form.getContent().equals("formContent") &&
+                            form.getAssets().equals("formAsset")
+                    )
+                    .count() ==
+                2
         );
     }
 
     @Test
     public void copyFromClient_duplicateFound() {
-
         final String sourceUid = "sourceUid";
         final String targetUid = "targetUid";
 

@@ -15,15 +15,13 @@
  */
 package io.gravitee.am.service.model;
 
+import static org.junit.Assert.*;
+
 import io.gravitee.am.model.oidc.Client;
+import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.Optional;
-
-import static org.junit.Assert.*;
-
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -54,10 +52,10 @@ public class PatchClientTest {
 
         //Checks
         assertNotNull(result);
-        assertEquals("Client name should have been replaced","expectedClientName",result.getClientName());
-        assertEquals("Client secret should have been kept","expectedSecret", result.getClientSecret());
-        assertNull("Certificate should have been erased",result.getCertificate());
-        assertEquals("Access token validity should have been replaced",14400,result.getAccessTokenValiditySeconds());
-        assertEquals("Refresh token validity should have been removed",0, result.getRefreshTokenValiditySeconds());
+        assertEquals("Client name should have been replaced", "expectedClientName", result.getClientName());
+        assertEquals("Client secret should have been kept", "expectedSecret", result.getClientSecret());
+        assertNull("Certificate should have been erased", result.getCertificate());
+        assertEquals("Access token validity should have been replaced", 14400, result.getAccessTokenValiditySeconds());
+        assertEquals("Refresh token validity should have been removed", 0, result.getRefreshTokenValiditySeconds());
     }
 }

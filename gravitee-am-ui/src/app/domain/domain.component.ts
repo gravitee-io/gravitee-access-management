@@ -13,36 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {SidenavService} from '../components/sidenav/sidenav.service';
-import {BreadcrumbService} from '../services/breadcrumb.service';
-import {DomainService} from '../services/domain.service';
-import {NavbarService} from '../components/navbar/navbar.service';
-import {SnackbarService} from '../services/snackbar.service';
-import {AuthService} from '../services/auth.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { SidenavService } from '../components/sidenav/sidenav.service';
+import { BreadcrumbService } from '../services/breadcrumb.service';
+import { DomainService } from '../services/domain.service';
+import { NavbarService } from '../components/navbar/navbar.service';
+import { SnackbarService } from '../services/snackbar.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-domain',
   templateUrl: './domain.component.html',
-  styleUrls: ['./domain.component.scss']
+  styleUrls: ['./domain.component.scss'],
 })
 export class DomainComponent implements OnInit {
   domain: any = {};
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private sidenavService: SidenavService,
-              private navbarService: NavbarService,
-              private breadcrumbService: BreadcrumbService,
-              private snackbarService: SnackbarService,
-              private domainService: DomainService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private sidenavService: SidenavService,
+    private navbarService: NavbarService,
+    private breadcrumbService: BreadcrumbService,
+    private snackbarService: SnackbarService,
+    private domainService: DomainService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
-    this.domainService.domainUpdated$.subscribe(domain => this.domain = domain);
+    this.domain = this.route.snapshot.data.domain;
+    this.domainService.domainUpdated$.subscribe((domain) => (this.domain = domain));
     setTimeout(() => {
       this.navbarService.notify(this.domain);
     });
@@ -64,7 +65,10 @@ export class DomainComponent implements OnInit {
   initBreadcrumb() {
     this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domain.id, this.domain.name);
     this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domain.id + '/settings/(providers|certificates|roles)/.*', ' ');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domain.id + '/settings/(providers|certificates|roles)/new$', 'new');
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domain.id + '/settings/(providers|certificates|roles)/new$',
+      'new',
+    );
     this.breadcrumbService.hideRoute('/domains');
     this.breadcrumbService.hideRouteRegex('/domains/' + this.domain.id + '/settings/providers/.*/settings$');
     this.breadcrumbService.hideRouteRegex('/domains/' + this.domain.id + '/clients/.*/settings$');
@@ -72,13 +76,13 @@ export class DomainComponent implements OnInit {
 
   enable() {
     this.domain.enabled = true;
-    this.domainService.enable(this.domain.id, this.domain).subscribe(response => {
+    this.domainService.enable(this.domain.id, this.domain).subscribe((response) => {
       this.domain = response;
       this.snackbarService.open('Domain ' + this.domain.name + ' enabled');
     });
   }
 
-  hasPermissions(permissions): boolean{
+  hasPermissions(permissions): boolean {
     return this.authService.hasPermissions(permissions);
   }
 
@@ -86,4 +90,3 @@ export class DomainComponent implements OnInit {
     return this.authService.hasPermissions(permissions);
   }
 }
-

@@ -23,6 +23,5 @@ import org.springframework.security.core.Authentication;
  * @author GraviteeSource Team
  */
 public interface AuthenticationService {
-
     User onAuthenticationSuccess(Authentication authentication);
 }

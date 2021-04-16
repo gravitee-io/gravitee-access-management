@@ -31,5 +31,4 @@ public class ProtocolConfiguration {
     public ProtocolPluginManager protocolPluginManager() {
         return new ProtocolPluginManagerImpl();
     }
-
 }

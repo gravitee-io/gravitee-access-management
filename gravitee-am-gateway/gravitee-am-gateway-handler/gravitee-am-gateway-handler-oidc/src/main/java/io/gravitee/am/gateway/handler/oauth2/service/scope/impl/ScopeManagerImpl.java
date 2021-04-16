@@ -26,16 +26,15 @@ import io.gravitee.am.service.ScopeService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,17 +57,18 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing scopes for domain {}", domain.getName());
-        scopeService.findByDomain(domain.getId())
-                .subscribe(
-                        scopes -> {
-                            updateScopes(scopes);
-                            logger.info("Scopes loaded for domain {}", domain.getName());
-                        },
-                        error -> logger.error("Unable to initialize scopes for domain {}", domain.getName(), error));
+        scopeService
+            .findByDomain(domain.getId())
+            .subscribe(
+                scopes -> {
+                    updateScopes(scopes);
+                    logger.info("Scopes loaded for domain {}", domain.getName());
+                },
+                error -> logger.error("Unable to initialize scopes for domain {}", domain.getName(), error)
+            );
 
         logger.info("Register event listener for scopes events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ScopeEvent.class, domain.getId());
-
     }
 
     @Override
@@ -106,24 +106,28 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
 
     private void updateScopes(Set<Scope> scopes) {
         scopes
-                .stream()
-                .forEach(scope -> {
+            .stream()
+            .forEach(
+                scope -> {
                     this.scopes.put(scope.getKey(), scope);
                     logger.info("Scope {} loaded for domain {}", scope.getKey(), domain.getName());
-                });
+                }
+            );
     }
 
     private void updateScope(String scopeId, ScopeEvent scopeEvent) {
         final String eventType = scopeEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} scope event for {}", domain.getName(), eventType, scopeId);
-        scopeService.findById(scopeId)
-                .subscribe(
-                        scope -> {
-                            updateScopes(Collections.singleton(scope));
-                            logger.info("Scope {} {}d for domain {}", scopeId, eventType, domain.getName());
-                        },
-                        error -> logger.error("Unable to {} scope for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No scope found with id {}", scopeId));
+        scopeService
+            .findById(scopeId)
+            .subscribe(
+                scope -> {
+                    updateScopes(Collections.singleton(scope));
+                    logger.info("Scope {} {}d for domain {}", scopeId, eventType, domain.getName());
+                },
+                error -> logger.error("Unable to {} scope for domain {}", eventType, domain.getName(), error),
+                () -> logger.error("No scope found with id {}", scopeId)
+            );
     }
 
     private void removeScope(String scopeId) {

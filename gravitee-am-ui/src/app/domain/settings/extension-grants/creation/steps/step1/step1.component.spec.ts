@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {async, ComponentFixture, TestBed} from "@angular/core/testing";
-import {ExtensionGrantCreationStep1Component} from "./step1.component";
-
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ExtensionGrantCreationStep1Component } from './step1.component';
 
 describe('ExtensionGrantCreationStep1Component', () => {
   let component: ExtensionGrantCreationStep1Component;
@@ -23,9 +22,8 @@ describe('ExtensionGrantCreationStep1Component', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ExtensionGrantCreationStep1Component ]
-    })
-    .compileComponents();
+      declarations: [ExtensionGrantCreationStep1Component],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
@@ -30,23 +33,19 @@ import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"form"})
+@Api(tags = { "form" })
 public class ApplicationFormResource extends AbstractResource {
 
     @Autowired
@@ -61,55 +60,65 @@ public class ApplicationFormResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a form for an application",
-            notes = "User must have APPLICATION_FORM[UPDATE] permission on the specified application " +
-                    "or APPLICATION_FORM[UPDATE] permission on the specified domain " +
-                    "or APPLICATION_FORM[UPDATE] permission on the specified environment " +
-                    "or APPLICATION_FORM[UPDATE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Update a form for an application",
+        notes = "User must have APPLICATION_FORM[UPDATE] permission on the specified application " +
+        "or APPLICATION_FORM[UPDATE] permission on the specified domain " +
+        "or APPLICATION_FORM[UPDATE] permission on the specified environment " +
+        "or APPLICATION_FORM[UPDATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 201, message = "Form successfully updated", response = Form.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void update(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("application") String application,
-            @PathParam("form") String form,
-            @ApiParam(name = "form", required = true) @Valid @NotNull UpdateForm updateForm,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("application") String application,
+        @PathParam("form") String form,
+        @ApiParam(name = "form", required = true) @Valid @NotNull UpdateForm updateForm,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> applicationService.findById(application))
-                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(irrelevant -> formService.update(domain, application, form, updateForm, authenticatedUser)))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMap(irrelevant -> applicationService.findById(application))
+                    .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
+                    .flatMapSingle(irrelevant -> formService.update(domain, application, form, updateForm, authenticatedUser))
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a form for an application",
-            notes = "User must have APPLICATION_FORM[DELETE] permission on the specified application " +
-                    "or APPLICATION_FORM[DELETE] permission on the specified domain " +
-                    "or APPLICATION_FORM[DELETE] permission on the specified environment " +
-                    "or APPLICATION_FORM[DELETE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "Form successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Delete a form for an application",
+        notes = "User must have APPLICATION_FORM[DELETE] permission on the specified application " +
+        "or APPLICATION_FORM[DELETE] permission on the specified domain " +
+        "or APPLICATION_FORM[DELETE] permission on the specified environment " +
+        "or APPLICATION_FORM[DELETE] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 204, message = "Form successfully deleted"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void delete(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("application") String application,
-            @PathParam("form") String form,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("application") String application,
+        @PathParam("form") String form,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_FORM, Acl.DELETE)
-                .andThen(formService.delete(domain, form, authenticatedUser))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+            .andThen(formService.delete(domain, form, authenticatedUser))
+            .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

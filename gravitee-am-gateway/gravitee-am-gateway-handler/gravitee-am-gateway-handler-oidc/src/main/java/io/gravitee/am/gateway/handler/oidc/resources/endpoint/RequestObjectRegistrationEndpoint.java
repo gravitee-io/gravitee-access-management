@@ -63,22 +63,27 @@ public class RequestObjectRegistrationEndpoint implements Handler<RoutingContext
         request.setRequest(context.getBodyAsString());
         request.setOrigin(extractOrigin(context.request()));
 
-        requestObjectService.registerRequestObject(request, client)
-                .subscribe(new Consumer<RequestObjectRegistrationResponse>() {
+        requestObjectService
+            .registerRequestObject(request, client)
+            .subscribe(
+                new Consumer<RequestObjectRegistrationResponse>() {
                     @Override
                     public void accept(RequestObjectRegistrationResponse response) throws Exception {
-                        context.response()
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .end(Json.encodePrettily(response));
+                        context
+                            .response()
+                            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                            .end(Json.encodePrettily(response));
                     }
-                }, new Consumer<Throwable>() {
+                },
+                new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) throws Exception {
                         context.fail(throwable);
                     }
-                });
+                }
+            );
     }
 
     private String extractOrigin(HttpServerRequest request) {

@@ -22,6 +22,5 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
  * @author GraviteeSource Team
  */
 public interface ExtensionGrantConfigurationFactory {
-
     <T extends ExtensionGrantConfiguration> T create(Class<T> clazz, String content);
 }

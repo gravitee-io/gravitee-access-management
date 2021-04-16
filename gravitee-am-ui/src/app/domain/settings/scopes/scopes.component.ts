@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { SnackbarService } from "../../../services/snackbar.service";
-import { DialogService } from "../../../services/dialog.service";
-import { ActivatedRoute } from "@angular/router";
-import { ScopeService } from "../../../services/scope.service";
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
+import { ActivatedRoute } from '@angular/router';
+import { ScopeService } from '../../../services/scope.service';
 import * as moment from 'moment';
-import {AuthService} from "../../../services/auth.service";
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-scopes',
   templateUrl: './scopes.component.html',
-  styleUrls: ['./scopes.component.scss']
+  styleUrls: ['./scopes.component.scss'],
 })
 export class DomainSettingsScopesComponent implements OnInit {
   private scopes: any[];
@@ -32,22 +32,23 @@ export class DomainSettingsScopesComponent implements OnInit {
   canDelete: boolean;
   canEdit: boolean;
 
-  constructor(private scopeService: ScopeService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute) {
-  }
+  constructor(
+    private scopeService: ScopeService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.scopes = this.route.snapshot.data['scopes'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.scopes = this.route.snapshot.data.scopes;
     this.canDelete = this.authService.hasPermissions(['domain_scope_delete']);
     this.canEdit = this.authService.hasPermissions(['domain_scope_update']);
   }
 
   loadScopes() {
-    this.scopeService.findByDomain(this.domainId).subscribe(response => this.scopes = response);
+    this.scopeService.findByDomain(this.domainId).subscribe((response) => (this.scopes = response));
   }
 
   get isEmpty() {
@@ -56,16 +57,14 @@ export class DomainSettingsScopesComponent implements OnInit {
 
   delete(id, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Scope', 'Are you sure you want to delete this scope ?')
-      .subscribe(res => {
-        if (res) {
-          this.scopeService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open("Scope deleted");
-            this.loadScopes();
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Scope', 'Are you sure you want to delete this scope ?').subscribe((res) => {
+      if (res) {
+        this.scopeService.delete(this.domainId, id).subscribe((response) => {
+          this.snackbarService.open('Scope deleted');
+          this.loadScopes();
+        });
+      }
+    });
   }
 
   getScopeExpiry(expiresIn) {
@@ -73,7 +72,7 @@ export class DomainSettingsScopesComponent implements OnInit {
   }
 
   enableScopeDiscovery(id, event) {
-    this.scopeService.patchDiscovery(this.domainId, id, event.checked).subscribe(response => {
+    this.scopeService.patchDiscovery(this.domainId, id, event.checked).subscribe((response) => {
       this.snackbarService.open('Scope updated');
       this.loadScopes();
     });

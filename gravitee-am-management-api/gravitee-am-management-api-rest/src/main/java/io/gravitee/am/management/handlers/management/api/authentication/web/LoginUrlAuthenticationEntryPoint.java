@@ -16,11 +16,10 @@
 package io.gravitee.am.management.handlers.management.api.authentication.web;
 
 import io.gravitee.common.http.HttpHeaders;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -35,7 +34,11 @@ public class LoginUrlAuthenticationEntryPoint extends org.springframework.securi
     }
 
     @Override
-    protected String buildRedirectUrlToLoginPage(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) {
+    protected String buildRedirectUrlToLoginPage(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        AuthenticationException authException
+    ) {
         String url = super.buildRedirectUrlToLoginPage(request, response, authException);
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
@@ -49,7 +52,7 @@ public class LoginUrlAuthenticationEntryPoint extends org.springframework.securi
         if (host != null && !host.isEmpty()) {
             if (host.contains(":")) {
                 // Forwarded host contains both host and port
-                String [] parts = host.split(":");
+                String[] parts = host.split(":");
                 builder.host(parts[0]);
                 builder.port(parts[1]);
             } else {

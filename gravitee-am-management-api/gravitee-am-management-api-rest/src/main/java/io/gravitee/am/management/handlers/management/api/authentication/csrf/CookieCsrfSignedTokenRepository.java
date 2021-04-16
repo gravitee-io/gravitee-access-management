@@ -20,6 +20,12 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.UUID;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -30,13 +36,6 @@ import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.DefaultCsrfToken;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.WebUtils;
-
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.text.ParseException;
-import java.util.Date;
-import java.util.UUID;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -68,7 +67,6 @@ public class CookieCsrfSignedTokenRepository implements InitializingBean, CsrfTo
 
     @Override
     public CsrfToken generateToken(HttpServletRequest request) {
-
         CsrfToken csrfToken = loadToken(request);
         if (csrfToken != null) {
             return csrfToken;
@@ -79,15 +77,13 @@ public class CookieCsrfSignedTokenRepository implements InitializingBean, CsrfTo
     }
 
     @Override
-    public void saveToken(CsrfToken token, HttpServletRequest request,
-                          HttpServletResponse response) {
-
-        if(request.getAttribute(DEFAULT_CSRF_COOKIE_NAME) != null) {
+    public void saveToken(CsrfToken token, HttpServletRequest request, HttpServletResponse response) {
+        if (request.getAttribute(DEFAULT_CSRF_COOKIE_NAME) != null) {
             // Token already persisted in cookie.
             return;
         }
 
-        if(token == null) {
+        if (token == null) {
             // Null token means delete it.
             response.addCookie(jwtGenerator.generateCookie(DEFAULT_CSRF_COOKIE_NAME, null, true));
             return;
@@ -96,11 +92,7 @@ public class CookieCsrfSignedTokenRepository implements InitializingBean, CsrfTo
         String tokenValue = token.getToken();
 
         try {
-            JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                    .issuer(issuer)
-                    .issueTime(new Date())
-                    .claim(TOKEN_CLAIM, tokenValue)
-                    .build();
+            JWTClaimsSet claims = new JWTClaimsSet.Builder().issuer(issuer).issueTime(new Date()).claim(TOKEN_CLAIM, tokenValue).build();
 
             JWSObject jwsObject = new JWSObject(new JWSHeader((JWSAlgorithm.HS256)), new Payload(claims.toJSONObject()));
             jwsObject.sign(signer);
@@ -115,7 +107,6 @@ public class CookieCsrfSignedTokenRepository implements InitializingBean, CsrfTo
 
     @Override
     public CsrfToken loadToken(HttpServletRequest request) {
-
         Cookie cookie = WebUtils.getCookie(request, DEFAULT_CSRF_COOKIE_NAME);
         if (cookie == null) {
             return null;

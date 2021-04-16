@@ -22,8 +22,7 @@ package io.gravitee.am.common.policy;
  * @author GraviteeSource Team
  */
 public enum ExtensionPoint {
-
     ROOT,
     PRE_CONSENT,
-    POST_CONSENT
+    POST_CONSENT,
 }

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Acl;
@@ -32,8 +35,8 @@ import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.util.Collections;
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -41,11 +44,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
-import java.util.Collections;
-import java.util.List;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -67,63 +66,81 @@ public class UserRolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a user roles",
-            notes = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
-                    "or DOMAIN_USER[READ] permission on the specified environment " +
-                    "or DOMAIN_USER[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Get a user roles",
+        notes = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
+        "or DOMAIN_USER[READ] permission on the specified environment " +
+        "or DOMAIN_USER[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "User roles successfully fetched", response = Role.class, responseContainer = "Set"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void list(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("user") String user,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("user") String user,
+        @Suspended final AsyncResponse response
+    ) {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> userService.findById(user))
-                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
-                        .flatMapSingle(endUser -> {
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMap(__ -> userService.findById(user))
+                    .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
+                    .flatMapSingle(
+                        endUser -> {
                             if (endUser.getRoles() == null || endUser.getRoles().isEmpty()) {
                                 return Single.just(Collections.emptyList());
                             }
                             return roleService.findByIdIn(endUser.getRoles());
-                        }))
-                .subscribe(response::resume, response::resume);
+                        }
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Assign roles to a user",
-            notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
-                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Assign roles to a user",
+        notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+        "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+        "or DOMAIN_USER[UPDATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Roles successfully assigned", response = User.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void assign(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("user") String user,
-            @Valid @NotNull final List<String> roles,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("user") String user,
+        @Valid @NotNull final List<String> roles,
+        @Suspended final AsyncResponse response
+    ) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(endUser -> userService.assignRoles(ReferenceType.DOMAIN, domain, user, roles, authenticatedUser)))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(endUser -> userService.assignRoles(ReferenceType.DOMAIN, domain, user, roles, authenticatedUser))
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{role}")
     public UserRoleResource getUserRoleResource() {
         return resourceContext.getResource(UserRoleResource.class);
     }
-
 }

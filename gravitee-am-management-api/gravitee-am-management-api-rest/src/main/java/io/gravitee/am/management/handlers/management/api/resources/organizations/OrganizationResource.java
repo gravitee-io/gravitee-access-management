@@ -40,8 +40,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -49,6 +47,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -65,21 +64,23 @@ public class OrganizationResource extends AbstractResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create or update an organization",
-            notes = "User must have the ORGANIZATION[CREATE] permission on the platform")
-    @ApiResponses({
+    @ApiOperation(value = "Create or update an organization", notes = "User must have the ORGANIZATION[CREATE] permission on the platform")
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Organization successfully created or updated"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void create(
-            @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "organization", required = true)
-            @Valid @NotNull final NewOrganization newOrganization,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @ApiParam(name = "organization", required = true) @Valid @NotNull final NewOrganization newOrganization,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.PLATFORM, Platform.DEFAULT, Permission.ORGANIZATION, Acl.CREATE)
-                .andThen(organizationService.createOrUpdate(organizationId, newOrganization, authenticatedUser))
-                .subscribe(response::resume, response::resume);
+            .andThen(organizationService.createOrUpdate(organizationId, newOrganization, authenticatedUser))
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("environments")

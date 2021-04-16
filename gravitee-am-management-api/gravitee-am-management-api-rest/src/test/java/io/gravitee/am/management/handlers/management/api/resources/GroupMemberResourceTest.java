@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
@@ -22,15 +27,9 @@ import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,13 +47,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.empty()).when(domainService).findById(domainId);
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path("member-1")
-                .request()
-                .post(null);
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path("member-1")
+            .request()
+            .post(null);
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
@@ -72,13 +71,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.empty()).when(groupService).findById(mockGroup.getId());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path("member-1")
-                .request()
-                .post(null);
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path("member-1")
+            .request()
+            .post(null);
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
@@ -97,13 +96,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.empty()).when(userService).findById("member-1");
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path("member-1")
-                .request()
-                .post(null);
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path("member-1")
+            .request()
+            .post(null);
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
@@ -126,13 +125,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path(mockUser.getId())
-                .request()
-                .post(null);
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path(mockUser.getId())
+            .request()
+            .post(null);
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
@@ -155,13 +154,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path(mockUser.getId())
-                .request()
-                .post(null);
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path(mockUser.getId())
+            .request()
+            .post(null);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
@@ -176,13 +175,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.empty()).when(domainService).findById(domainId);
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path("member-1")
-                .request()
-                .delete();
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path("member-1")
+            .request()
+            .delete();
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
@@ -200,13 +199,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.empty()).when(groupService).findById(mockGroup.getId());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path("member-1")
-                .request()
-                .delete();
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path("member-1")
+            .request()
+            .delete();
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
@@ -225,13 +224,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.empty()).when(userService).findById("member-1");
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path("member-1")
-                .request()
-                .delete();
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path("member-1")
+            .request()
+            .delete();
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
@@ -254,13 +253,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path(mockUser.getId())
-                .request()
-                .delete();
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path(mockUser.getId())
+            .request()
+            .delete();
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
@@ -284,13 +283,13 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("members")
-                .path(mockUser.getId())
-                .request()
-                .delete();
+            .path(domainId)
+            .path("groups")
+            .path(mockGroup.getId())
+            .path("members")
+            .path(mockUser.getId())
+            .request()
+            .delete();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }

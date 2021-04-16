@@ -20,6 +20,5 @@ package io.gravitee.am.identityprovider.ldap.authentication.encoding;
  * @author GraviteeSource Team
  */
 public interface BinaryToTextEncoder {
-
     String encode(byte[] value);
 }

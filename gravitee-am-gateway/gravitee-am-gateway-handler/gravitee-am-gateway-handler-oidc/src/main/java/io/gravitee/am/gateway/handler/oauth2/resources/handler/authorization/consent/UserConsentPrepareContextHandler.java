@@ -55,41 +55,55 @@ public class UserConsentPrepareContextHandler implements Handler<RoutingContext>
         }
 
         // check client
-        authenticate(authorizationRequest.getClientId(), resultHandler -> {
-            if (resultHandler.failed()) {
-                routingContext.fail(resultHandler.cause());
-                return;
+        authenticate(
+            authorizationRequest.getClientId(),
+            resultHandler -> {
+                if (resultHandler.failed()) {
+                    routingContext.fail(resultHandler.cause());
+                    return;
+                }
+
+                // check user
+                User authenticatedUser = routingContext.user();
+                if (
+                    authenticatedUser == null ||
+                    !(authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User)
+                ) {
+                    routingContext.fail(new AccessDeniedException());
+                    return;
+                }
+
+                // prepare context
+                Client safeClient = new Client(resultHandler.result());
+                safeClient.setClientSecret(null);
+                io.gravitee.am.model.User user =
+                    ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
+                prepareContext(routingContext, safeClient, user, authorizationRequest);
+
+                routingContext.next();
             }
-
-            // check user
-            User authenticatedUser = routingContext.user();
-            if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User)) {
-                routingContext.fail(new AccessDeniedException());
-                return;
-            }
-
-            // prepare context
-            Client safeClient = new Client(resultHandler.result());
-            safeClient.setClientSecret(null);
-            io.gravitee.am.model.User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
-            prepareContext(routingContext, safeClient, user, authorizationRequest);
-
-            routingContext.next();
-        });
-
+        );
     }
 
     private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
         clientSyncService
-                .findByClientId(clientId)
-                .subscribe(
-                        client -> authHandler.handle(Future.succeededFuture(client)),
-                        error -> authHandler.handle(Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))),
-                        () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
-                );
+            .findByClientId(clientId)
+            .subscribe(
+                client -> authHandler.handle(Future.succeededFuture(client)),
+                error ->
+                    authHandler.handle(
+                        Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))
+                    ),
+                () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
+            );
     }
 
-    private void prepareContext(RoutingContext context, Client client, io.gravitee.am.model.User user, AuthorizationRequest authorizationRequest) {
+    private void prepareContext(
+        RoutingContext context,
+        Client client,
+        io.gravitee.am.model.User user,
+        AuthorizationRequest authorizationRequest
+    ) {
         context.put(CLIENT_CONTEXT_KEY, client);
         context.put(USER_CONTEXT_KEY, user);
         context.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);

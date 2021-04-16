@@ -14,41 +14,43 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { ProviderService } from "../../../../../services/provider.service";
-import { DialogService } from "../../../../../services/dialog.service";
+import { ActivatedRoute, Router } from '@angular/router';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ProviderService } from '../../../../../services/provider.service';
+import { DialogService } from '../../../../../services/dialog.service';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'provider-mappers',
   templateUrl: './mappers.component.html',
-  styleUrls: ['./mappers.component.scss']
+  styleUrls: ['./mappers.component.scss'],
 })
 export class ProviderMappersComponent implements OnInit {
   private domainId: string;
   private organizationContext = false;
   private defaultMappers: any = {
-    'sub' : 'uid',
-    'email' : 'mail',
-    'name' : 'displayname',
-    'given_name' : 'givenname',
-    'family_name' : 'sn'
+    sub: 'uid',
+    email: 'mail',
+    name: 'displayname',
+    given_name: 'givenname',
+    family_name: 'sn',
   };
   mappers: any = [];
   provider: any;
   editing = {};
 
-  constructor(private providerService: ProviderService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private route: ActivatedRoute,
-              private router: Router,
-              private dialog: MatDialog) { }
+  constructor(
+    private providerService: ProviderService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.provider = this.route.snapshot.parent.data['provider'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
+    this.provider = this.route.snapshot.parent.data.provider;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -61,24 +63,24 @@ export class ProviderMappersComponent implements OnInit {
 
   setMappers(mappers) {
     this.mappers = [];
-    for (var k in mappers){
+    for (var k in mappers) {
       if (mappers.hasOwnProperty(k)) {
         this.mappers.push({
           key: k,
-          value: mappers[k]
+          value: mappers[k],
         });
       }
     }
   }
 
   add() {
-    let dialogRef = this.dialog.open(CreateMapperComponent, { width : '700px'});
-    dialogRef.afterClosed().subscribe(mapper => {
+    let dialogRef = this.dialog.open(CreateMapperComponent, { width: '700px' });
+    dialogRef.afterClosed().subscribe((mapper) => {
       if (mapper) {
         if (!this.attributeExits(mapper.key)) {
           this.mappers.push(mapper);
           this.mappers = [...this.mappers];
-          this.update("Attribute added");
+          this.update('Attribute added');
         } else {
           this.snackbarService.open(`Error : attribute ${mapper.key} already exists`);
         }
@@ -87,10 +89,13 @@ export class ProviderMappersComponent implements OnInit {
   }
 
   update(message) {
-    this.provider.mappers = this.mappers.reduce(function(map, obj) { map[obj.key] = obj.value; return map; }, {});
-    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
+    this.provider.mappers = this.mappers.reduce(function (map, obj) {
+      map[obj.key] = obj.value;
+      return map;
+    }, {});
+    this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe((data) => {
       this.snackbarService.open(message);
-    })
+    });
   }
 
   updateMapper(event, cell, rowIndex) {
@@ -104,28 +109,34 @@ export class ProviderMappersComponent implements OnInit {
       this.editing[rowIndex + '-' + cell] = false;
       this.mappers[rowIndex][cell] = mapper;
       this.mappers = [...this.mappers];
-      this.update("Mapper saved");
+      this.update('Mapper saved');
     }
   }
 
   delete(key, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Mapper', 'Are you sure you want to delete this mapper ?')
-      .subscribe(res => {
-        if (res) {
-          this.mappers = this.mappers.filter(function(el) { return el.key !== key; });
-          this.update('Mapper deleted');
-        }
-      });
+    this.dialogService.confirm('Delete Mapper', 'Are you sure you want to delete this mapper ?').subscribe((res) => {
+      if (res) {
+        this.mappers = this.mappers.filter(function (el) {
+          return el.key !== key;
+        });
+        this.update('Mapper deleted');
+      }
+    });
   }
 
   attributeExits(attribute): boolean {
-    return this.mappers.map(function(m) { return m.key; }).indexOf(attribute) > -1;
+    return (
+      this.mappers
+        .map(function (m) {
+          return m.key;
+        })
+        .indexOf(attribute) > -1
+    );
   }
 
   get isEmpty() {
-    return !this.mappers || this.mappers.length == 0;
+    return !this.mappers || this.mappers.length === 0;
   }
 }
 
@@ -134,5 +145,5 @@ export class ProviderMappersComponent implements OnInit {
   templateUrl: './create/create.component.html',
 })
 export class CreateMapperComponent {
-  constructor(public dialogRef: MatDialogRef<CreateMapperComponent>) { }
+  constructor(public dialogRef: MatDialogRef<CreateMapperComponent>) {}
 }

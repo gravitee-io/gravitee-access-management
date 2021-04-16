@@ -23,8 +23,7 @@ import io.gravitee.am.gateway.handler.scim.model.ScimType;
  */
 public class UniquenessException extends SCIMException {
 
-    public UniquenessException() {
-    }
+    public UniquenessException() {}
 
     public UniquenessException(String message) {
         super(message);

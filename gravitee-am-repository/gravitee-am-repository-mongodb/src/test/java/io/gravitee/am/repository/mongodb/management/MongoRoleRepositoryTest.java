@@ -15,20 +15,19 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,6 +36,7 @@ import static org.junit.Assert.assertTrue;
 public class MongoRoleRepositoryTest extends AbstractManagementRepositoryTest {
 
     public static final String DOMAIN_ID = "domain#1";
+
     @Autowired
     private RoleRepository roleRepository;
 

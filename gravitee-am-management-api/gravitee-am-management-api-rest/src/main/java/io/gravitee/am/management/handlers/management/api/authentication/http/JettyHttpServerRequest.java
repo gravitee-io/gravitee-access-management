@@ -27,12 +27,11 @@ import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.stream.ReadStream;
 import io.gravitee.gateway.api.ws.WebSocket;
 import io.gravitee.reporter.api.http.Metrics;
-
-import javax.net.ssl.SSLSession;
-import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Map;
+import javax.net.ssl.SSLSession;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

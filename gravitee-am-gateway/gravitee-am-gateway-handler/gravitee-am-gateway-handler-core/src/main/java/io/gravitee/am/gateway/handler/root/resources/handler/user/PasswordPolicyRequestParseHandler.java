@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.HashMap;
 import java.util.Map;
 

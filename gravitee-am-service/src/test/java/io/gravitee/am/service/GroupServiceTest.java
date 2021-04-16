@@ -15,11 +15,14 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.service.exception.GroupAlreadyExistsException;
@@ -33,17 +36,13 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.*;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -67,7 +66,7 @@ public class GroupServiceTest {
     @Mock
     private EventService eventService;
 
-    private final static String DOMAIN = "domain1";
+    private static final String DOMAIN = "domain1";
 
     @Test
     public void shouldFindById() {
@@ -98,7 +97,6 @@ public class GroupServiceTest {
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
     }
-
 
     @Test
     public void shouldFindByDomain() {

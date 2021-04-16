@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.plugins.idp.core;
 
-
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 
 /**
@@ -23,6 +22,5 @@ import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderConfigurationFactory {
-
     <T extends IdentityProviderConfiguration> T create(Class<T> clazz, String content);
 }

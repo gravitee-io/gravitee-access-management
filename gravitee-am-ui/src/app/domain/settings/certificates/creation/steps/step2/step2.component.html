@@ -16,16 +16,14 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">
-    Configure your certificate.
-  </p>
+  <p class="gv-plugin-creation-description">Configure your certificate.</p>
 
   <div class="certificate-creation-step2-content">
     <form class="certificate-creation-step2-form" fxLayout="column">
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required />
           <mat-hint>Certificate name</mat-hint>
         </mat-form-field>
       </div>
@@ -36,7 +34,11 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <certificate-form [certificateConfiguration]="configuration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateCreation($event)"></certificate-form>
+          <certificate-form
+            [certificateConfiguration]="configuration"
+            [certificateSchema]="certificateSchema"
+            (configurationCompleted)="enableCertificateCreation($event)"
+          ></certificate-form>
         </div>
       </div>
     </form>

@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.scim.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -62,8 +61,7 @@ public class ListResponse<T extends Resource> extends Resource {
      */
     private Integer itemsPerPage;
 
-    public ListResponse() {
-    }
+    public ListResponse() {}
 
     public ListResponse(List<T> resources, Integer startIndex, long totalResults, Integer itemsPerPage) {
         this.resources = resources;

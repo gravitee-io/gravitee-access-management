@@ -22,6 +22,5 @@ import io.gravitee.am.factor.api.FactorConfiguration;
  * @author GraviteeSource Team
  */
 public interface FactorConfigurationFactory {
-
     <T extends FactorConfiguration> T create(Class<T> clazz, String content);
 }

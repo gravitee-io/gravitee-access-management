@@ -38,22 +38,22 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class MFAChallengeEndpoint implements Handler<RoutingContext> {
+
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
-    private static final String STRONG_AUTH_COMPLETED  = "strongAuthCompleted";
+    private static final String STRONG_AUTH_COMPLETED = "strongAuthCompleted";
     private static final String ENROLLED_FACTOR_KEY = "enrolledFactor";
     private static final String ERROR_PARAM = "error";
     private FactorManager factorManager;
@@ -84,7 +84,8 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     private void renderMFAPage(RoutingContext routingContext) {
         try {
             final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-            final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            final io.gravitee.am.model.User endUser =
+                ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Factor factor = getFactor(routingContext, client, endUser);
             final String error = routingContext.request().getParam(ERROR_PARAM);
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().uri(), null);
@@ -93,15 +94,19 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             routingContext.put(ERROR_PARAM, error);
 
             // render the mfa challenge page
-            engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-                if (res.succeeded()) {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(res.result());
-                } else {
-                    logger.error("Unable to render MFA challenge page", res.cause());
-                    routingContext.fail(res.cause());
+            engine.render(
+                routingContext.data(),
+                getTemplateFileName(client),
+                res -> {
+                    if (res.succeeded()) {
+                        routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                        routingContext.response().end(res.result());
+                    } else {
+                        logger.error("Unable to render MFA challenge page", res.cause());
+                        routingContext.fail(res.cause());
+                    }
                 }
-            });
+            );
         } catch (Exception ex) {
             logger.error("An error occurs while rendering MFA challenge page", ex);
             routingContext.fail(503);
@@ -109,7 +114,8 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     }
 
     private void verifyCode(RoutingContext routingContext) {
-        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        io.gravitee.am.model.User endUser =
+            ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         MultiMap params = routingContext.request().formAttributes();
         final String code = params.get("code");
         final String factorId = params.get("factorId");
@@ -126,47 +132,53 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
         FactorProvider factorProvider = factorManager.get(factorId);
         EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorId, endUser);
         final String sharedSecret = enrolledFactor.getSecurity().getValue();
-        verify(factorProvider, code, sharedSecret, h -> {
-            if (h.failed()) {
-                handleException(routingContext);
-                return;
-            }
-            // save enrolled factor if needed and redirect to the original url
-            final String returnURL = routingContext.session().get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
-            if (routingContext.session().get(ENROLLED_FACTOR_KEY) != null) {
-                saveFactor(endUser.getId(), enrolledFactor, fh -> {
-                    if (fh.failed()) {
-                        logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
-                        handleException(routingContext);
-                        return;
-                    }
-                    // clean session
-                    routingContext.session().remove(ENROLLED_FACTOR_KEY);
+        verify(
+            factorProvider,
+            code,
+            sharedSecret,
+            h -> {
+                if (h.failed()) {
+                    handleException(routingContext);
+                    return;
+                }
+                // save enrolled factor if needed and redirect to the original url
+                final String returnURL = routingContext.session().get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
+                if (routingContext.session().get(ENROLLED_FACTOR_KEY) != null) {
+                    saveFactor(
+                        endUser.getId(),
+                        enrolledFactor,
+                        fh -> {
+                            if (fh.failed()) {
+                                logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
+                                handleException(routingContext);
+                                return;
+                            }
+                            // clean session
+                            routingContext.session().remove(ENROLLED_FACTOR_KEY);
+                            // update user strong auth status
+                            routingContext.session().put(STRONG_AUTH_COMPLETED, true);
+                            doRedirect(routingContext.request().response(), returnURL);
+                        }
+                    );
+                } else {
                     // update user strong auth status
                     routingContext.session().put(STRONG_AUTH_COMPLETED, true);
                     doRedirect(routingContext.request().response(), returnURL);
-                });
-            } else {
-                // update user strong auth status
-                routingContext.session().put(STRONG_AUTH_COMPLETED, true);
-                doRedirect(routingContext.request().response(), returnURL);
+                }
             }
-        });
+        );
     }
 
     private void verify(FactorProvider factorProvider, String code, String sharedSecret, Handler<AsyncResult<Void>> handler) {
-        factorProvider.verify(sharedSecret, code)
-                .subscribe(
-                        () -> handler.handle(Future.succeededFuture()),
-                        error -> handler.handle(Future.failedFuture(error)));
+        factorProvider
+            .verify(sharedSecret, code)
+            .subscribe(() -> handler.handle(Future.succeededFuture()), error -> handler.handle(Future.failedFuture(error)));
     }
 
     private void saveFactor(String userId, EnrolledFactor enrolledFactor, Handler<AsyncResult<User>> handler) {
-        userService.addFactor(userId, enrolledFactor)
-                .subscribe(
-                        user -> handler.handle(Future.succeededFuture(user)),
-                        error -> handler.handle(Future.failedFuture(error))
-                );
+        userService
+            .addFactor(userId, enrolledFactor)
+            .subscribe(user -> handler.handle(Future.succeededFuture(user)), error -> handler.handle(Future.failedFuture(error)));
     }
 
     private Factor getFactor(RoutingContext routingContext, Client client, User endUser) {
@@ -176,13 +188,13 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             EnrolledFactor enrolledFactor = routingContext.session().get(ENROLLED_FACTOR_KEY);
             return factorManager.getFactor(enrolledFactor.getFactorId());
         }
-        return endUser.getFactors()
-                .stream()
-                .filter(enrolledFactor -> client.getFactors().contains(enrolledFactor.getFactorId()))
-                .findFirst()
-                .map(enrolledFactor -> factorManager.getFactor(enrolledFactor.getFactorId()))
-                .orElseThrow(() -> new FactorNotFoundException("No factor found for the end user"));
-
+        return endUser
+            .getFactors()
+            .stream()
+            .filter(enrolledFactor -> client.getFactors().contains(enrolledFactor.getFactorId()))
+            .findFirst()
+            .map(enrolledFactor -> factorManager.getFactor(enrolledFactor.getFactorId()))
+            .orElseThrow(() -> new FactorNotFoundException("No factor found for the end user"));
     }
 
     private EnrolledFactor getEnrolledFactor(RoutingContext routingContext, String factorId, User endUser) {
@@ -193,11 +205,12 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             return enrolledFactor;
         }
 
-        return endUser.getFactors()
-                .stream()
-                .filter(f -> factorId.equals(f.getFactorId()))
-                .findFirst()
-                .orElseThrow(() -> new FactorNotFoundException("No enrolled factor found for the end user"));
+        return endUser
+            .getFactors()
+            .stream()
+            .filter(f -> factorId.equals(f.getFactorId()))
+            .findFirst()
+            .orElseThrow(() -> new FactorNotFoundException("No enrolled factor found for the end user"));
     }
 
     private String getTemplateFileName(Client client) {
@@ -216,7 +229,9 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             // redirect to mfa challenge page with error message
             QueryStringDecoder queryStringDecoder = new QueryStringDecoder(req.uri());
             Map<String, String> parameters = new LinkedHashMap<>();
-            parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
+            parameters.putAll(
+                queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)))
+            );
             parameters.put("error", "mfa_challenge_failed");
             String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters);
             doRedirect(resp, uri);

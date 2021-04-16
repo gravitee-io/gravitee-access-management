@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild} from '@angular/core';
-import {MatAutocompleteSelectedEvent, MatAutocompleteTrigger} from '@angular/material';
-import {FormControl} from "@angular/forms";
-import {COMMA, ENTER} from "@angular/cdk/keycodes";
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material';
+import { FormControl } from '@angular/forms';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import * as _ from 'lodash';
 
 @Component({
   selector: 'role-selection',
   templateUrl: './role-selection.component.html',
-  styleUrls: ['./role-selection.component.scss']
+  styleUrls: ['./role-selection.component.scss'],
 })
-
 export class RoleSelectionComponent implements OnInit, OnChanges {
   @Output() onRoleSelection = new EventEmitter();
   @Input('roles') domainRoles: any[] = [];
@@ -38,8 +37,7 @@ export class RoleSelectionComponent implements OnInit, OnChanges {
   separatorKeysCodes: number[] = [ENTER, COMMA];
   roleCtrl = new FormControl();
 
-  constructor() {
-  }
+  constructor() {}
 
   ngOnInit(): void {
     this.assignedRoles = this.initialSelectedRoles ? _.map(this.initialSelectedRoles, 'id') : [];
@@ -70,12 +68,12 @@ export class RoleSelectionComponent implements OnInit, OnChanges {
   }
 
   onFocus() {
-    this.trigger._onChange("");
+    this.trigger._onChange('');
     this.trigger.openPanel();
   }
 
   private _filter(): void {
-    this.filteredRoles = this.domainRoles.filter(domainRole => !this.assignedRoles.includes(domainRole.id));
-    this.initialSelectedRoles = this.domainRoles.filter(selectedRole => this.assignedRoles.includes(selectedRole.id));
+    this.filteredRoles = this.domainRoles.filter((domainRole) => !this.assignedRoles.includes(domainRole.id));
+    this.initialSelectedRoles = this.domainRoles.filter((selectedRole) => this.assignedRoles.includes(selectedRole.id));
   }
 }

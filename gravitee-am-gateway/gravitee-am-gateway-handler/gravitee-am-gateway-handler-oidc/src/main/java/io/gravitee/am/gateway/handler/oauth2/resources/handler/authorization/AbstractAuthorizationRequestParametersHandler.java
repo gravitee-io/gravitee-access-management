@@ -21,11 +21,10 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URISyntaxException;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -45,7 +44,10 @@ public abstract class AbstractAuthorizationRequestParametersHandler {
         // if user is already authenticated and if the last login date is greater than the max age parameter,
         // the OP MUST attempt to actively re-authenticate the End-User.
         User authenticatedUser = context.user();
-        if (authenticatedUser == null || !(authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User)) {
+        if (
+            authenticatedUser == null ||
+            !(authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User)
+        ) {
             // user not authenticated, continue
             return;
         }
@@ -56,7 +58,8 @@ public abstract class AbstractAuthorizationRequestParametersHandler {
             return;
         }
 
-        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
+        io.gravitee.am.model.User endUser =
+            ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
         Date loggedAt = endUser.getLoggedAt();
         if (loggedAt == null) {
             // user has no last login date, continue

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Factor;
@@ -24,14 +26,11 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,8 +47,8 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
     @PostConstruct
     public void init() {
         factorsCollection = mongoOperations.getCollection("factors", FactorMongo.class);
-        super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1));
-        super.createIndex(factorsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_FACTOR_TYPE, 1));
+        super.createIndex(factorsCollection, new Document(FIELD_DOMAIN, 1));
+        super.createIndex(factorsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_FACTOR_TYPE, 1));
     }
 
     @Override
@@ -59,12 +58,18 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Single<Set<Factor>> findByDomain(String domain) {
-        return Observable.fromPublisher(factorsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable
+            .fromPublisher(factorsCollection.find(eq(FIELD_DOMAIN, domain)))
+            .map(this::convert)
+            .collect(HashSet::new, Set::add);
     }
 
     @Override
     public Maybe<Factor> findByDomainAndFactorType(String domain, String factorType) {
-        return Observable.fromPublisher(factorsCollection.find(new Document(FIELD_DOMAIN, domain).append(FIELD_FACTOR_TYPE, factorType)).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(factorsCollection.find(new Document(FIELD_DOMAIN, domain).append(FIELD_FACTOR_TYPE, factorType)).first())
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -76,13 +81,17 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
     public Single<Factor> create(Factor item) {
         FactorMongo authenticator = convert(item);
         authenticator.setId(authenticator.getId() == null ? RandomString.generate() : authenticator.getId());
-        return Single.fromPublisher(factorsCollection.insertOne(authenticator)).flatMap(success -> findById(authenticator.getId()).toSingle());
+        return Single
+            .fromPublisher(factorsCollection.insertOne(authenticator))
+            .flatMap(success -> findById(authenticator.getId()).toSingle());
     }
 
     @Override
     public Single<Factor> update(Factor item) {
         FactorMongo authenticator = convert(item);
-        return Single.fromPublisher(factorsCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator)).flatMap(updateResult -> findById(authenticator.getId()).toSingle());
+        return Single
+            .fromPublisher(factorsCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator))
+            .flatMap(updateResult -> findById(authenticator.getId()).toSingle());
     }
 
     @Override

@@ -37,15 +37,14 @@ import io.gravitee.am.service.reporter.builder.management.FactorAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,43 +74,58 @@ public class FactorServiceImpl implements FactorService {
     @Override
     public Single<List<Factor>> findAll() {
         LOGGER.debug("Find all factors");
-        return factorRepository.findAll()
-                .map(factors -> (List<Factor>) new ArrayList<>(factors))
-                .onErrorResumeNext(ex -> {
+        return factorRepository
+            .findAll()
+            .map(factors -> (List<Factor>) new ArrayList<>(factors))
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find all factors", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find all factors", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Maybe<Factor> findById(String id) {
         LOGGER.debug("Find factor by ID: {}", id);
-        return factorRepository.findById(id)
-                .onErrorResumeNext(ex -> {
+        return factorRepository
+            .findById(id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find an factor using its ID: {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find an factor using its ID: %s", id), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find an factor using its ID: %s", id),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<List<Factor>> findByDomain(String domain) {
         LOGGER.debug("Find factors by domain: {}", domain);
-        return factorRepository.findByDomain(domain)
-                .map(factors -> (List<Factor>) new ArrayList<>(factors))
-                .onErrorResumeNext(ex -> {
+        return factorRepository
+            .findByDomain(domain)
+            .map(factors -> (List<Factor>) new ArrayList<>(factors))
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find factors by domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find factors by domain", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Factor> create(String domain, NewFactor newFactor, User principal) {
         LOGGER.debug("Create a new factor {} for domain {}", newFactor, domain);
 
-        return factorRepository.findByDomainAndFactorType(domain, newFactor.getFactorType())
-                .isEmpty()
-                .flatMap(empty -> {
+        return factorRepository
+            .findByDomainAndFactorType(domain, newFactor.getFactorType())
+            .isEmpty()
+            .flatMap(
+                empty -> {
                     if (!empty) {
                         throw new FactorAlreadyExistsException(newFactor.getFactorType());
                     } else {
@@ -126,85 +140,168 @@ public class FactorServiceImpl implements FactorService {
                         factor.setUpdatedAt(factor.getCreatedAt());
                         return factorRepository.create(factor);
                     }
-                })
-                .flatMap(factor1 -> {
+                }
+            )
+            .flatMap(
+                factor1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.FACTOR, new Payload(factor1.getId(), ReferenceType.DOMAIN, factor1.getDomain(), Action.CREATE));
+                    Event event = new Event(
+                        Type.FACTOR,
+                        new Payload(factor1.getId(), ReferenceType.DOMAIN, factor1.getDomain(), Action.CREATE)
+                    );
                     return eventService.create(event).flatMap(__ -> Single.just(factor1));
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to create a factor", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a factor", ex));
-                })
-                .doOnSuccess(factor1 -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_CREATED).factor(factor1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_CREATED).throwable(throwable)));
+                }
+            )
+            .doOnSuccess(
+                factor1 ->
+                    auditService.report(
+                        AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_CREATED).factor(factor1)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(FactorAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.FACTOR_CREATED)
+                            .throwable(throwable)
+                    )
+            );
     }
 
     @Override
     public Single<Factor> update(String domain, String id, UpdateFactor updateFactor, User principal) {
         LOGGER.debug("Update an factor {} for domain {}", id, domain);
 
-        return factorRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new FactorNotFoundException(id)))
-                .flatMapSingle(oldFactor -> {
+        return factorRepository
+            .findById(id)
+            .switchIfEmpty(Maybe.error(new FactorNotFoundException(id)))
+            .flatMapSingle(
+                oldFactor -> {
                     Factor factorToUpdate = new Factor(oldFactor);
                     factorToUpdate.setName(updateFactor.getName());
                     factorToUpdate.setConfiguration(updateFactor.getConfiguration());
                     factorToUpdate.setUpdatedAt(new Date());
 
-                    return factorRepository.update(factorToUpdate)
-                            .flatMap(factor1 -> {
+                    return factorRepository
+                        .update(factorToUpdate)
+                        .flatMap(
+                            factor1 -> {
                                 // create event for sync process
-                                Event event = new Event(Type.FACTOR, new Payload(factor1.getId(), ReferenceType.DOMAIN, factor1.getDomain(), Action.UPDATE));
+                                Event event = new Event(
+                                    Type.FACTOR,
+                                    new Payload(factor1.getId(), ReferenceType.DOMAIN, factor1.getDomain(), Action.UPDATE)
+                                );
                                 return eventService.create(event).flatMap(__ -> Single.just(factor1));
-                            })
-                            .doOnSuccess(factor1 -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_UPDATED).oldValue(oldFactor).factor(factor1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_UPDATED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
+                            }
+                        )
+                        .doOnSuccess(
+                            factor1 ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(FactorAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.FACTOR_UPDATED)
+                                        .oldValue(oldFactor)
+                                        .factor(factor1)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(FactorAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.FACTOR_UPDATED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to update a factor", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a factor", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Completable delete(String domain, String factorId, User principal) {
         LOGGER.debug("Delete factor {}", factorId);
 
-        return factorRepository.findById(factorId)
-                .switchIfEmpty(Maybe.error(new FactorNotFoundException(factorId)))
-                .flatMapSingle(factor -> applicationService.findByFactor(factorId)
-                        .flatMap(applications -> {
-                            if (applications.size() > 0) {
-                                throw new FactorWithApplicationsException();
+        return factorRepository
+            .findById(factorId)
+            .switchIfEmpty(Maybe.error(new FactorNotFoundException(factorId)))
+            .flatMapSingle(
+                factor ->
+                    applicationService
+                        .findByFactor(factorId)
+                        .flatMap(
+                            applications -> {
+                                if (applications.size() > 0) {
+                                    throw new FactorWithApplicationsException();
+                                }
+                                return Single.just(factor);
                             }
-                            return Single.just(factor);
-                        }))
-                .flatMapCompletable(factor -> {
+                        )
+            )
+            .flatMapCompletable(
+                factor -> {
                     // create event for sync process
                     Event event = new Event(Type.FACTOR, new Payload(factorId, ReferenceType.DOMAIN, domain, Action.DELETE));
-                    return factorRepository.delete(factorId)
-                            .andThen(eventService.create(event))
-                            .toCompletable()
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_DELETED).factor(factor)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_DELETED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
+                    return factorRepository
+                        .delete(factorId)
+                        .andThen(eventService.create(event))
+                        .toCompletable()
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(FactorAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.FACTOR_DELETED)
+                                        .factor(factor)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(FactorAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.FACTOR_DELETED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete factor: {}", factorId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete factor: %s", factorId), ex));
-                });
+                    return Completable.error(
+                        new TechnicalManagementException(String.format("An error occurs while trying to delete factor: %s", factorId), ex)
+                    );
+                }
+            );
     }
 }

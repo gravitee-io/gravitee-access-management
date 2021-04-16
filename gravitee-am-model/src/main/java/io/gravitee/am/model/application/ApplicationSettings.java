@@ -22,6 +22,7 @@ import io.gravitee.am.model.account.AccountSettings;
  * @author GraviteeSource Team
  */
 public class ApplicationSettings {
+
     /**
      * OAuth 2.0/OIDC Client settings
      */
@@ -35,8 +36,7 @@ public class ApplicationSettings {
      */
     private ApplicationAdvancedSettings advanced;
 
-    public ApplicationSettings() {
-    }
+    public ApplicationSettings() {}
 
     public ApplicationSettings(ApplicationSettings other) {
         this.oauth = other.oauth != null ? new ApplicationOAuthSettings(other.oauth) : null;

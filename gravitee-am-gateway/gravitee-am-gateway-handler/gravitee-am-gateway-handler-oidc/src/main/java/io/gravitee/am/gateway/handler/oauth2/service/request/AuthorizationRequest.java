@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.model.oauth2.ScopeApproval;
-
 import java.util.List;
 import java.util.Set;
 

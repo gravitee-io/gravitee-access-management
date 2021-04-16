@@ -25,7 +25,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface AuthorizationCodeRepository {
-
     /**
      * Store an authorization code.
      *

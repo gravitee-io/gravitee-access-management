@@ -23,12 +23,11 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,45 +44,51 @@ public class ReporterPluginServiceImpl implements ReporterPluginService {
     @Override
     public Single<List<ReporterPlugin>> findAll() {
         LOGGER.debug("List all reporter plugins");
-        return Observable.fromIterable(reporterPluginManager.getAll())
-                .map(this::convert)
-                .toList();
+        return Observable.fromIterable(reporterPluginManager.getAll()).map(this::convert).toList();
     }
 
     @Override
     public Maybe<ReporterPlugin> findById(String reporterId) {
         LOGGER.debug("Find reporter plugin by ID: {}", reporterId);
-        return Maybe.create(emitter -> {
-            try {
-                Plugin reporter = reporterPluginManager.findById(reporterId);
-                if (reporter != null) {
-                    emitter.onSuccess(convert(reporter));
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    Plugin reporter = reporterPluginManager.findById(reporterId);
+                    if (reporter != null) {
+                        emitter.onSuccess(convert(reporter));
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception ex) {
+                    LOGGER.error("An error occurs while trying to get reporter plugin : {}", reporterId, ex);
+                    emitter.onError(
+                        new TechnicalManagementException("An error occurs while trying to get reporter plugin : " + reporterId, ex)
+                    );
                 }
-            } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get reporter plugin : {}", reporterId, ex);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get reporter plugin : " + reporterId, ex));
             }
-        });
+        );
     }
 
     @Override
     public Maybe<String> getSchema(String reporterId) {
         LOGGER.debug("Find reporter plugin schema by ID: {}", reporterId);
-        return Maybe.create(emitter -> {
-            try {
-                String schema = reporterPluginManager.getSchema(reporterId);
-                if (schema != null) {
-                    emitter.onSuccess(schema);
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    String schema = reporterPluginManager.getSchema(reporterId);
+                    if (schema != null) {
+                        emitter.onSuccess(schema);
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("An error occurs while trying to get schema for reporter plugin {}", reporterId, e);
+                    emitter.onError(
+                        new TechnicalManagementException("An error occurs while trying to get schema for reporter plugin " + reporterId, e)
+                    );
                 }
-            } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for reporter plugin {}", reporterId, e);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for reporter plugin " + reporterId, e));
             }
-        });
+        );
     }
 
     private ReporterPlugin convert(Plugin reporterPlugin) {

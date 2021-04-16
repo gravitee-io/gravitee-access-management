@@ -16,21 +16,31 @@
 
 -->
 <div class="gv-page-container">
-  <a *ngIf="displayNavLink" [routerLink]="['']" class="gv-back-link"><small><< <mat-icon>home</mat-icon></small></a>
+  <a *ngIf="displayNavLink" [routerLink]="['']" class="gv-back-link"
+    ><small><< <mat-icon>home</mat-icon></small></a
+  >
   <h1>New domain</h1>
   <div class="gv-page-content">
     <form (ngSubmit)="create()" #domainForm="ngForm" fxLayout="column" fxFlex="70">
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required>
-          <mat-hint>A name for your security domain. The security domain's name is used to generate the security domain's path. The security domain's path will be used as a context path for the API operations.</mat-hint>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required />
+          <mat-hint
+            >A name for your security domain. The security domain's name is used to generate the security domain's path. The security
+            domain's path will be used as a context path for the API operations.</mat-hint
+          >
         </mat-form-field>
-        <mat-form-field appearance="outline" floatLabel="always" style="margin-top: 20px;">
+        <mat-form-field appearance="outline" floatLabel="always" style="margin-top: 20px">
           <textarea matInput placeholder="Description" name="description" [(ngModel)]="domain.description"></textarea>
           <mat-hint>A description for your security domain.</mat-hint>
         </mat-form-field>
       </div>
-      <div fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center" style="margin-top: 20px; border-top: 1px solid #e2e5e7; padding: 10px;">
+      <div
+        fxLayout="row"
+        fxLayoutGap="10px"
+        fxLayoutAlign="center center"
+        style="margin-top: 20px; border-top: 1px solid #e2e5e7; padding: 10px"
+      >
         <button mat-raised-button color="primary" [disabled]="!domainForm.valid || domainForm.pristine" type="submit">CREATE</button>
         <a mat-stroked-button [routerLink]="['']">CANCEL</a>
       </div>
@@ -39,7 +49,8 @@
       <h3>Security domain ?</h3>
       <div class="gv-page-description-content">
         <p>
-          Security domain will let you create clients, register users and manage identity providers to provide centralize authentication, authorization and user management.
+          Security domain will let you create clients, register users and manage identity providers to provide centralize authentication,
+          authorization and user management.
         </p>
       </div>
     </div>

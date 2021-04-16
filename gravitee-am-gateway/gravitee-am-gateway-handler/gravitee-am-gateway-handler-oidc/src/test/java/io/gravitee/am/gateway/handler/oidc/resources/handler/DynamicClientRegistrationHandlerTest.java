@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.handler;
 
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
 import io.gravitee.am.model.Domain;
@@ -26,8 +28,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -55,7 +55,10 @@ public class DynamicClientRegistrationHandlerTest {
 
         handler.handle(context);
 
-        Assert.assertTrue("Should return a DCR disabled exception", exceptionCaptor.getValue() instanceof ClientRegistrationForbiddenException);
+        Assert.assertTrue(
+            "Should return a DCR disabled exception",
+            exceptionCaptor.getValue() instanceof ClientRegistrationForbiddenException
+        );
     }
 
     @Test
@@ -66,7 +69,10 @@ public class DynamicClientRegistrationHandlerTest {
 
         ArgumentCaptor<Throwable> exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
         verify(context, times(1)).fail(exceptionCaptor.capture());
-        Assert.assertTrue("Should return a DCR disabled exception", exceptionCaptor.getValue() instanceof ClientRegistrationForbiddenException);
+        Assert.assertTrue(
+            "Should return a DCR disabled exception",
+            exceptionCaptor.getValue() instanceof ClientRegistrationForbiddenException
+        );
     }
 
     @Test
@@ -88,7 +94,6 @@ public class DynamicClientRegistrationHandlerTest {
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(oAuth2AuthHandler, times(1)).handle(context);
     }
-
     /*
     @Test
     public void register_withOidcDcrEnabled_notAuthenticated() {

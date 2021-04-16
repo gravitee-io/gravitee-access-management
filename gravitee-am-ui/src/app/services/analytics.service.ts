@@ -21,15 +21,19 @@ import { AppConfig } from '../../config/app.config';
 export class AnalyticsService {
   private analyticsURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   search(domainId, type, field, interval, from, to, size): any {
-    return this.http.get(this.analyticsURL + domainId + '/analytics' +
-      (type ? '?type=' + type : '') +
-      (field ? '&field=' + field : '') +
-      (interval ? '&interval=' + interval : '') +
-      (from ? '&from=' + from : '') +
-      (to ? '&to=' + to : '') +
-      (size ? '&size=' + size : ''));
+    return this.http.get(
+      this.analyticsURL +
+        domainId +
+        '/analytics' +
+        (type ? '?type=' + type : '') +
+        (field ? '&field=' + field : '') +
+        (interval ? '&interval=' + interval : '') +
+        (from ? '&from=' + from : '') +
+        (to ? '&to=' + to : '') +
+        (size ? '&size=' + size : ''),
+    );
   }
 }

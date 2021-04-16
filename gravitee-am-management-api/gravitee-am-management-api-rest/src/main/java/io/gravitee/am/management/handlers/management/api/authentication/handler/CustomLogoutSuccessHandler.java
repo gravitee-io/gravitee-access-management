@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.handler;
 
-import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

@@ -67,17 +67,11 @@ public class UsersProvider extends AbstractService<ProtocolProvider> implements 
         oAuth2AuthHandler.selfResource(true, "userId");
 
         // user consent routes
-        usersRouter.routeWithRegex(".*consents.*")
-                .pathRegex("\\/(?<userId>[^\\/]+)\\/([^\\/]+)")
-                .handler(oAuth2AuthHandler);
-        usersRouter.get("/:userId/consents")
-                .handler(userConsentsHandler::list);
-        usersRouter.delete("/:userId/consents")
-                .handler(userConsentsHandler::revoke);
-        usersRouter.get("/:userId/consents/:consentId")
-                .handler(userConsentHandler::get);
-        usersRouter.delete("/:userId/consents/:consentId")
-                .handler(userConsentHandler::revoke);
+        usersRouter.routeWithRegex(".*consents.*").pathRegex("\\/(?<userId>[^\\/]+)\\/([^\\/]+)").handler(oAuth2AuthHandler);
+        usersRouter.get("/:userId/consents").handler(userConsentsHandler::list);
+        usersRouter.delete("/:userId/consents").handler(userConsentsHandler::revoke);
+        usersRouter.get("/:userId/consents/:consentId").handler(userConsentHandler::get);
+        usersRouter.delete("/:userId/consents/:consentId").handler(userConsentHandler::revoke);
 
         // error handler
         usersRouter.route().failureHandler(new ErrorHandler());

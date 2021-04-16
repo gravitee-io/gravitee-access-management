@@ -23,7 +23,6 @@ package io.gravitee.am.common.oauth2;
  * @author GraviteeSource Team
  */
 public enum TokenTypeHint {
-
     ACCESS_TOKEN,
     REFRESH_TOKEN,
     ID_TOKEN;

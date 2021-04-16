@@ -87,7 +87,9 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             // see <a href="https://tools.ietf.org/html/rfc7644#section-3.2">3.2. SCIM Endpoints and HTTP Methods</a>
 
             // Service Provider configuration
-            ServiceProviderConfigurationEndpointHandler serviceProviderConfigurationEndpointHandler = ServiceProviderConfigurationEndpointHandler.create(serviceProviderConfigService);
+            ServiceProviderConfigurationEndpointHandler serviceProviderConfigurationEndpointHandler = ServiceProviderConfigurationEndpointHandler.create(
+                serviceProviderConfigService
+            );
             serviceProviderConfigurationEndpointHandler.setObjectMapper(objectMapper);
             scimRouter.get("/ServiceProviderConfig").handler(serviceProviderConfigurationEndpointHandler);
 

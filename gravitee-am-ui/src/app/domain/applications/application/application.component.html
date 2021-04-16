@@ -26,19 +26,15 @@
       <svg width="80" height="80" [identiconHash]="application.name"></svg>
     </div>
     <div class="app-information" fxLayout="column">
-      <span class="app-name">{{application.name}}</span>
-      <span class="app-type">{{application.type}}</span>
+      <span class="app-name">{{ application.name }}</span>
+      <span class="app-type">{{ application.type }}</span>
     </div>
   </div>
   <nav mat-tab-nav-bar color="accent">
-    <a mat-tab-link
-       *ngFor="let link of navLinks"
-       [routerLink]="link.href"
-       routerLinkActive #rla="routerLinkActive"
-       [active]="rla.isActive">
-      <span style="display: flex; align-items: center;">
-        <mat-icon>{{link.icon}}</mat-icon>
-        <span style="margin-left: 5px;">{{link.label}}</span>
+    <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
+      <span style="display: flex; align-items: center">
+        <mat-icon>{{ link.icon }}</mat-icon>
+        <span style="margin-left: 5px">{{ link.label }}</span>
       </span>
     </a>
   </nav>

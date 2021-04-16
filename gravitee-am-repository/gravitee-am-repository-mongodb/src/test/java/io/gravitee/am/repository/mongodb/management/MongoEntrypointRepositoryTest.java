@@ -40,7 +40,6 @@ public class MongoEntrypointRepositoryTest extends AbstractManagementRepositoryT
 
     @Test
     public void testFindAll() {
-
         Entrypoint entrypoint = new Entrypoint();
         entrypoint.setName("testName");
         entrypoint.setDescription("Description");
@@ -57,7 +56,6 @@ public class MongoEntrypointRepositoryTest extends AbstractManagementRepositoryT
 
     @Test
     public void testFindById() {
-
         Entrypoint entrypoint = new Entrypoint();
         entrypoint.setName("testName");
         Entrypoint entrypointCreated = entrypointRepository.create(entrypoint).blockingGet();
@@ -72,13 +70,11 @@ public class MongoEntrypointRepositoryTest extends AbstractManagementRepositoryT
 
     @Test
     public void testNotFoundById() {
-
         entrypointRepository.findById("test").test().assertEmpty();
     }
 
     @Test
     public void testCreate() {
-
         Entrypoint entrypoint = new Entrypoint();
         entrypoint.setName("testName");
 
@@ -92,7 +88,6 @@ public class MongoEntrypointRepositoryTest extends AbstractManagementRepositoryT
 
     @Test
     public void testUpdate() {
-
         Entrypoint entrypoint = new Entrypoint();
         entrypoint.setName("testName");
         Entrypoint entrypointCreated = entrypointRepository.create(entrypoint).blockingGet();
@@ -111,7 +106,6 @@ public class MongoEntrypointRepositoryTest extends AbstractManagementRepositoryT
 
     @Test
     public void testDelete() {
-
         Entrypoint entrypoint = new Entrypoint();
         entrypoint.setName("testName");
         Entrypoint entrypointCreated = entrypointRepository.create(entrypoint).blockingGet();

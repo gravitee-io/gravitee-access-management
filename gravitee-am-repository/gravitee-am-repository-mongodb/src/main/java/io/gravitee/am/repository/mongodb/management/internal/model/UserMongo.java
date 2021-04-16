@@ -20,11 +20,10 @@ import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.CertificateMongo;
-import org.bson.Document;
-import org.bson.codecs.pojo.annotations.BsonId;
-
 import java.util.Date;
 import java.util.List;
+import org.bson.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,6 +33,7 @@ public class UserMongo extends Auditable {
 
     @BsonId
     private String id;
+
     private String externalId;
     private String username;
     private String email;

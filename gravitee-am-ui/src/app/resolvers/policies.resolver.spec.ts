@@ -20,7 +20,7 @@ import { PoliciesResolver } from './policies.resolver';
 describe('PoliciesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PoliciesResolver]
+      providers: [PoliciesResolver],
     });
   });
 

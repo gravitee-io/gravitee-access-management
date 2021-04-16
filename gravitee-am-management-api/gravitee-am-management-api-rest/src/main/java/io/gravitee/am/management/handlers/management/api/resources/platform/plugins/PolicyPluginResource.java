@@ -22,7 +22,6 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -38,7 +37,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Policy"})
+@Api(tags = { "Plugin", "Policy" })
 public class PolicyPluginResource {
 
     @Context
@@ -49,32 +48,27 @@ public class PolicyPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a policy plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void get(
-            @PathParam("policy") String policyId,
-            @Suspended final AsyncResponse response) {
-
-        policyPluginService.findById(policyId)
-                .switchIfEmpty(Maybe.error(new PolicyPluginNotFoundException(policyId)))
-                .map(policyPlugin -> Response.ok(policyPlugin).build())
-                .subscribe(response::resume, response::resume);
+    @ApiOperation(value = "Get a policy plugin", notes = "There is no particular permission needed. User must be authenticated.")
+    public void get(@PathParam("policy") String policyId, @Suspended final AsyncResponse response) {
+        policyPluginService
+            .findById(policyId)
+            .switchIfEmpty(Maybe.error(new PolicyPluginNotFoundException(policyId)))
+            .map(policyPlugin -> Response.ok(policyPlugin).build())
+            .subscribe(response::resume, response::resume);
     }
 
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a policy plugin's schema")
-    public void getSchema(
-            @PathParam("policy") String policyId,
-            @Suspended final AsyncResponse response) {
-
+    public void getSchema(@PathParam("policy") String policyId, @Suspended final AsyncResponse response) {
         // Check that the policy exists
-        policyPluginService.findById(policyId)
-                .switchIfEmpty(Maybe.error(new PolicyPluginNotFoundException(policyId)))
-                .flatMap(irrelevant -> policyPluginService.getSchema(policyId))
-                .switchIfEmpty(Maybe.error(new PolicyPluginSchemaNotFoundException(policyId)))
-                .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
-                .subscribe(response::resume, response::resume);
+        policyPluginService
+            .findById(policyId)
+            .switchIfEmpty(Maybe.error(new PolicyPluginNotFoundException(policyId)))
+            .flatMap(irrelevant -> policyPluginService.getSchema(policyId))
+            .switchIfEmpty(Maybe.error(new PolicyPluginSchemaNotFoundException(policyId)))
+            .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
+            .subscribe(response::resume, response::resume);
     }
 }

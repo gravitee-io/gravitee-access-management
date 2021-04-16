@@ -15,19 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,10 +59,14 @@ public class AuthorizationRequestFactoryTest {
 
         Assert.assertNotNull(authorizationRequest);
         Assert.assertEquals("client-id", authorizationRequest.getClientId());
-        Assert.assertTrue(authorizationRequest.getAdditionalParameters().size() == 1 && authorizationRequest.getAdditionalParameters().containsKey("custom"));
+        Assert.assertTrue(
+            authorizationRequest.getAdditionalParameters().size() == 1 &&
+            authorizationRequest.getAdditionalParameters().containsKey("custom")
+        );
     }
 
     private class Parameter<K, V> implements Map.Entry<K, V> {
+
         private final K key;
         private V value;
 

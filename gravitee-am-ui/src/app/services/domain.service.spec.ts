@@ -20,7 +20,7 @@ import { DomainService } from './domain.service';
 describe('DomainService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DomainService]
+      providers: [DomainService],
     });
   });
 

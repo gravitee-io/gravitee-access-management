@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
@@ -25,18 +28,14 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -58,21 +57,36 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     @PostConstruct
     public void init() {
         scopeApprovalsCollection = mongoOperations.getCollection("scope_approvals", ScopeApprovalMongo.class);
-        super.createIndex(scopeApprovalsCollection, new Document(FIELD_EXPIRES_AT, 1),  new IndexOptions().expireAfter(0l, TimeUnit.SECONDS));
+        super.createIndex(
+            scopeApprovalsCollection,
+            new Document(FIELD_EXPIRES_AT, 1),
+            new IndexOptions().expireAfter(0l, TimeUnit.SECONDS)
+        );
         super.createIndex(scopeApprovalsCollection, new Document(FIELD_TRANSACTION_ID, 1));
         super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_USER_ID, 1));
         super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1));
-        super.createIndex(scopeApprovalsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1));
+        super.createIndex(
+            scopeApprovalsCollection,
+            new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1).append(FIELD_USER_ID, 1).append(FIELD_SCOPE, 1)
+        );
     }
 
     @Override
     public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
-        return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_USER_ID, userId)))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable
+            .fromPublisher(
+                scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), eq(FIELD_USER_ID, userId)))
+            )
+            .map(this::convert)
+            .collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Set<ScopeApproval>> findByDomainAndUser(String domain, String user) {
-        return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user)))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable
+            .fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user))))
+            .map(this::convert)
+            .collect(HashSet::new, Set::add);
     }
 
     @Override
@@ -84,32 +98,50 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     public Single<ScopeApproval> create(ScopeApproval scopeApproval) {
         ScopeApprovalMongo scopeApprovalMongo = convert(scopeApproval);
         scopeApprovalMongo.setId(scopeApprovalMongo.getId() == null ? RandomString.generate() : scopeApprovalMongo.getId());
-        return Single.fromPublisher(scopeApprovalsCollection.insertOne(scopeApprovalMongo)).flatMap(success -> _findById(scopeApprovalMongo.getId()));
+        return Single
+            .fromPublisher(scopeApprovalsCollection.insertOne(scopeApprovalMongo))
+            .flatMap(success -> _findById(scopeApprovalMongo.getId()));
     }
 
     @Override
     public Single<ScopeApproval> update(ScopeApproval scopeApproval) {
         ScopeApprovalMongo scopeApprovalMongo = convert(scopeApproval);
 
-        return Single.fromPublisher(scopeApprovalsCollection.replaceOne(
-                and(eq(FIELD_DOMAIN, scopeApproval.getDomain()),
+        return Single
+            .fromPublisher(
+                scopeApprovalsCollection.replaceOne(
+                    and(
+                        eq(FIELD_DOMAIN, scopeApproval.getDomain()),
                         eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
                         eq(FIELD_USER_ID, scopeApproval.getUserId()),
-                        eq(FIELD_SCOPE, scopeApproval.getScope()))
-                , scopeApprovalMongo)).flatMap(updateResult -> _findById(scopeApprovalMongo.getId()));
+                        eq(FIELD_SCOPE, scopeApproval.getScope())
+                    ),
+                    scopeApprovalMongo
+                )
+            )
+            .flatMap(updateResult -> _findById(scopeApprovalMongo.getId()));
     }
 
     @Override
     public Single<ScopeApproval> upsert(ScopeApproval scopeApproval) {
-        return Observable.fromPublisher(scopeApprovalsCollection.find(
-                and(eq(FIELD_DOMAIN, scopeApproval.getDomain()),
-                        eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
-                        eq(FIELD_USER_ID, scopeApproval.getUserId()),
-                        eq(FIELD_SCOPE, scopeApproval.getScope()))).first())
-                .firstElement()
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(optionalApproval -> {
+        return Observable
+            .fromPublisher(
+                scopeApprovalsCollection
+                    .find(
+                        and(
+                            eq(FIELD_DOMAIN, scopeApproval.getDomain()),
+                            eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
+                            eq(FIELD_USER_ID, scopeApproval.getUserId()),
+                            eq(FIELD_SCOPE, scopeApproval.getScope())
+                        )
+                    )
+                    .first()
+            )
+            .firstElement()
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty())
+            .flatMapSingle(
+                optionalApproval -> {
                     if (!optionalApproval.isPresent()) {
                         scopeApproval.setCreatedAt(new Date());
                         scopeApproval.setUpdatedAt(scopeApproval.getCreatedAt());
@@ -119,13 +151,13 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
                         scopeApproval.setUpdatedAt(new Date());
                         return update(scopeApproval);
                     }
-                });
+                }
+            );
     }
 
     @Override
     public Completable deleteByDomainAndScopeKey(String domain, String scope) {
-        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
-                and(eq(FIELD_DOMAIN, domain), eq(FIELD_SCOPE, scope))));
+        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(and(eq(FIELD_DOMAIN, domain), eq(FIELD_SCOPE, scope))));
     }
 
     @Override
@@ -135,14 +167,14 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
 
     @Override
     public Completable deleteByDomainAndUserAndClient(String domain, String user, String client) {
-        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
-                and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user), eq(FIELD_CLIENT_ID, client))));
+        return Completable.fromPublisher(
+            scopeApprovalsCollection.deleteMany(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user), eq(FIELD_CLIENT_ID, client)))
+        );
     }
 
     @Override
     public Completable deleteByDomainAndUser(String domain, String user) {
-        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
-                and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user))));
+        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(and(eq(FIELD_DOMAIN, domain), eq(FIELD_USER_ID, user))));
     }
 
     private Single<ScopeApproval> _findById(String id) {

@@ -19,18 +19,17 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import javax.servlet.http.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
-
-import javax.servlet.http.Cookie;
-import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,9 +54,7 @@ public class JWTGenerator implements InitializingBean {
     @Autowired
     private Environment environment;
 
-
     public Cookie generateCookie(final String name, final String value, final boolean httpOnly) {
-
         final Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(httpOnly);
         cookie.setSecure(environment.getProperty("jwt.cookie-secure", Boolean.class, DEFAULT_JWT_COOKIE_SECURE));
@@ -71,7 +68,7 @@ public class JWTGenerator implements InitializingBean {
     public Cookie generateCookie(final User user) {
         int expiresAfter = environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
         Date expirationDate = new Date(System.currentTimeMillis() + expiresAfter * 1000);
-        String jwtToken  = generateToken(user, expirationDate);
+        String jwtToken = generateToken(user, expirationDate);
 
         final Cookie cookie = generateCookie(authCookieName, "Bearer " + jwtToken, true);
         cookie.setMaxAge(expiresAfter);
@@ -82,7 +79,7 @@ public class JWTGenerator implements InitializingBean {
     public Map<String, Object> generateToken(final User user) {
         int expiresAfter = environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER);
         Date expirationDate = new Date(System.currentTimeMillis() + expiresAfter * 1000);
-        String jwtToken  = generateToken(user, expirationDate);
+        String jwtToken = generateToken(user, expirationDate);
 
         Map<String, Object> token = new HashMap<>();
         token.put("access_token", jwtToken);
@@ -93,14 +90,15 @@ public class JWTGenerator implements InitializingBean {
     }
 
     private String generateToken(final User user, Date expirationDate) {
-        String compactJws = Jwts.builder()
-                .setSubject(user.getId())
-                .setIssuedAt(new Date())
-                .setExpiration(expirationDate)
-                .claim(StandardClaims.PREFERRED_USERNAME, user.getUsername())
-                .addClaims(user.getAdditionalInformation())
-                .signWith(key)
-                .compact();
+        String compactJws = Jwts
+            .builder()
+            .setSubject(user.getId())
+            .setIssuedAt(new Date())
+            .setExpiration(expirationDate)
+            .claim(StandardClaims.PREFERRED_USERNAME, user.getUsername())
+            .addClaims(user.getAdditionalInformation())
+            .signWith(key)
+            .compact();
 
         return compactJws;
     }

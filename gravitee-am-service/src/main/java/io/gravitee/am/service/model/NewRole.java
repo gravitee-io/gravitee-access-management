@@ -17,7 +17,6 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.RoleScope;
-
 import javax.validation.constraints.NotNull;
 
 /**
@@ -59,10 +58,6 @@ public class NewRole {
 
     @Override
     public String toString() {
-        return "NewRole{" +
-                "name='" + name + '\'' +
-                ", assignableType=" + assignableType +
-                ", description='" + description + '\'' +
-                '}';
+        return "NewRole{" + "name='" + name + '\'' + ", assignableType=" + assignableType + ", description='" + description + '\'' + '}';
     }
 }

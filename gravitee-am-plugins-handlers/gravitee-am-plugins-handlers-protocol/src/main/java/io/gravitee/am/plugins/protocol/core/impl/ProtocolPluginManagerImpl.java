@@ -21,6 +21,9 @@ import io.gravitee.am.plugins.protocol.core.ProtocolDefinition;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import java.net.URLClassLoader;
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -30,10 +33,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.ConfigurableEnvironment;
-
-import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,12 +49,9 @@ public class ProtocolPluginManagerImpl implements ProtocolPluginManager {
 
     @Override
     public void register(ProtocolDefinition protocolDefinition) {
-        protocols.putIfAbsent(protocolDefinition.getPlugin().id(),
-                protocolDefinition.getProtocol());
+        protocols.putIfAbsent(protocolDefinition.getPlugin().id(), protocolDefinition.getProtocol());
 
-        protocolPlugins.putIfAbsent(protocolDefinition.getProtocol(),
-                protocolDefinition.getPlugin());
-
+        protocolPlugins.putIfAbsent(protocolDefinition.getProtocol(), protocolDefinition.getPlugin());
     }
 
     @Override
@@ -78,7 +74,10 @@ public class ProtocolPluginManagerImpl implements ProtocolPluginManager {
                 context.addBeanFactoryPostProcessor(configurer);
 
                 context.register(protocol.configuration());
-                context.registerBeanDefinition(plugin.clazz(), BeanDefinitionBuilder.rootBeanDefinition(plugin.clazz()).getBeanDefinition());
+                context.registerBeanDefinition(
+                    plugin.clazz(),
+                    BeanDefinitionBuilder.rootBeanDefinition(plugin.clazz()).getBeanDefinition()
+                );
                 context.refresh();
 
                 context.getAutowireCapableBeanFactory().autowireBean(protocolProvider);

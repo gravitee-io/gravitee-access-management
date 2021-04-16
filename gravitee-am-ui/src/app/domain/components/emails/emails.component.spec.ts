@@ -23,9 +23,8 @@ describe('EmailsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ EmailsComponent ]
-    })
-    .compileComponents();
+      declarations: [EmailsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -18,9 +18,8 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
-
-import javax.validation.constraints.NotNull;
 import java.util.Set;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

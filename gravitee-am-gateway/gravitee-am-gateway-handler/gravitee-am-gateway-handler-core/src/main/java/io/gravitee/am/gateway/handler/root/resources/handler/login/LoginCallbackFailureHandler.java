@@ -16,22 +16,21 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import com.google.common.net.HttpHeaders;
-import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.common.exception.authentication.AuthenticationException;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * In case of login callback failures, the user will be redirected to the login page with error message
@@ -48,22 +47,18 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         if (routingContext.failed()) {
             Throwable throwable = routingContext.failure();
-            if (throwable instanceof OAuth2Exception
-                    || throwable instanceof AbstractManagementException
-                    || throwable instanceof AuthenticationException) {
+            if (
+                throwable instanceof OAuth2Exception ||
+                throwable instanceof AbstractManagementException ||
+                throwable instanceof AuthenticationException
+            ) {
                 redirectToLoginPage(routingContext, throwable);
             } else {
                 logger.error(throwable.getMessage(), throwable);
                 if (routingContext.statusCode() != -1) {
-                    routingContext
-                            .response()
-                            .setStatusCode(routingContext.statusCode())
-                            .end();
+                    routingContext.response().setStatusCode(routingContext.statusCode()).end();
                 } else {
-                    routingContext
-                            .response()
-                            .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
-                            .end();
+                    routingContext.response().setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
                 }
             }
         }
@@ -75,16 +70,20 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
             Map<String, String> params = new HashMap<>();
             params.put(Parameters.CLIENT_ID, client.getClientId());
             params.put("error", "social_authentication_failed");
-            params.put("error_description", UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path().replaceFirst("/callback", ""), params);
+            params.put(
+                "error_description",
+                UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage())
+            );
+            String uri = UriBuilderRequest.resolveProxyRequest(
+                context.request(),
+                context.request().path().replaceFirst("/callback", ""),
+                params
+            );
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error has occurred while redirecting to the login page", ex);
             // Note: we can't invoke context.fail cause it'll lead to infinite failure handling.
-            context
-                    .response()
-                    .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
-                    .end();
+            context.response().setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503).end();
         }
     }
 

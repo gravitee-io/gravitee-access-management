@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -25,17 +28,13 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Collections;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Collections;
-import java.util.Set;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,7 +55,7 @@ public class ScopeApprovalServiceTest {
     @Mock
     private UserService userService;
 
-    private final static String DOMAIN = "domain1";
+    private static final String DOMAIN = "domain1";
 
     @Test
     public void shouldFindById() {
@@ -90,7 +89,8 @@ public class ScopeApprovalServiceTest {
 
     @Test
     public void shouldFindByDomainAndUser() {
-        when(scopeApprovalRepository.findByDomainAndUser(DOMAIN, "userId")).thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
+        when(scopeApprovalRepository.findByDomainAndUser(DOMAIN, "userId"))
+            .thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
         TestObserver<Set<ScopeApproval>> testObserver = scopeApprovalService.findByDomainAndUser(DOMAIN, "userId").test();
         testObserver.awaitTerminalEvent();
 
@@ -112,8 +112,11 @@ public class ScopeApprovalServiceTest {
 
     @Test
     public void shouldFindByDomainAndUserAndClient() {
-        when(scopeApprovalRepository.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId")).thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
-        TestObserver<Set<ScopeApproval>> testObserver = scopeApprovalService.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId").test();
+        when(scopeApprovalRepository.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId"))
+            .thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
+        TestObserver<Set<ScopeApproval>> testObserver = scopeApprovalService
+            .findByDomainAndUserAndClient(DOMAIN, "userId", "clientId")
+            .test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -123,7 +126,8 @@ public class ScopeApprovalServiceTest {
 
     @Test
     public void shouldFindByDomainAndUserAndClient_technicalException() {
-        when(scopeApprovalRepository.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId")).thenReturn(Single.error(TechnicalException::new));
+        when(scopeApprovalRepository.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId"))
+            .thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         scopeApprovalService.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId").subscribe(testObserver);
@@ -135,7 +139,7 @@ public class ScopeApprovalServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(userService.findById(anyString())).thenReturn(Maybe.just(new User()));
-        TestObserver testObserver = scopeApprovalService.revokeByConsent("my-domain","user-id","my-consent").test();
+        TestObserver testObserver = scopeApprovalService.revokeByConsent("my-domain", "user-id", "my-consent").test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -147,7 +151,7 @@ public class ScopeApprovalServiceTest {
         when(scopeApprovalRepository.findById("my-consent")).thenReturn(Maybe.just(new ScopeApproval()));
         when(userService.findById(anyString())).thenReturn(Maybe.just(new User()));
 
-        TestObserver testObserver = scopeApprovalService.revokeByConsent("my-domain","user-id", "my-consent").test();
+        TestObserver testObserver = scopeApprovalService.revokeByConsent("my-domain", "user-id", "my-consent").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

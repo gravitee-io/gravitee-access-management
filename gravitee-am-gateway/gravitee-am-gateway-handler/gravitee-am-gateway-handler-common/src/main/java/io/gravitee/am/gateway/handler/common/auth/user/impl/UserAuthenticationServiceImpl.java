@@ -19,24 +19,23 @@ import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,46 +59,59 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     public Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
         // save or update the user
         return saveOrUpdate(principal, afterAuthentication)
-                // check account status
-                .flatMap(user -> checkAccountStatus(user)
+            // check account status
+            .flatMap(
+                user ->
+                    checkAccountStatus(user)
                         // and enhance user information
-                        .andThen(Single.defer(() -> userService.enhance(user))));
+                        .andThen(Single.defer(() -> userService.enhance(user)))
+            );
     }
 
     @Override
     public Maybe<User> loadPreAuthenticatedUser(String subject) {
         // find user by its technical id
         return userService
-                .findById(subject)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(subject)))
-                .flatMap(user -> identityProviderManager.get(user.getSource())
+            .findById(subject)
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(subject)))
+            .flatMap(
+                user ->
+                    identityProviderManager
+                        .get(user.getSource())
                         // if the user has been found, try to load user information from its latest identity provider
                         .flatMap(authenticationProvider -> authenticationProvider.loadUserByUsername(user.getUsername()))
-                        .flatMap(idpUser -> {
-                            // retrieve information from the idp user and update the user
-                            Map<String, Object> additionalInformation = idpUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(idpUser.getAdditionalInformation());
-                            additionalInformation.put(SOURCE_FIELD, user.getSource());
-                            additionalInformation.put(Parameters.CLIENT_ID, user.getClient());
-                            ((DefaultUser) idpUser).setAdditionalInformation(additionalInformation);
-                            return update(user, idpUser, false)
-                                    .flatMap(userService::enhance).toMaybe();
-                        })
+                        .flatMap(
+                            idpUser -> {
+                                // retrieve information from the idp user and update the user
+                                Map<String, Object> additionalInformation = idpUser.getAdditionalInformation() == null
+                                    ? new HashMap<>()
+                                    : new HashMap<>(idpUser.getAdditionalInformation());
+                                additionalInformation.put(SOURCE_FIELD, user.getSource());
+                                additionalInformation.put(Parameters.CLIENT_ID, user.getClient());
+                                ((DefaultUser) idpUser).setAdditionalInformation(additionalInformation);
+                                return update(user, idpUser, false).flatMap(userService::enhance).toMaybe();
+                            }
+                        )
                         // no user has been found in the identity provider, just enhance user information
-                        .switchIfEmpty(Maybe.defer(() -> userService.enhance(user).toMaybe())));
+                        .switchIfEmpty(Maybe.defer(() -> userService.enhance(user).toMaybe()))
+            );
     }
 
     private Single<User> saveOrUpdate(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
         String source = (String) principal.getAdditionalInformation().get(SOURCE_FIELD);
-        return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
-                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
-                .flatMapSingle(existingUser -> update(existingUser, principal, afterAuthentication))
-                .onErrorResumeNext(ex -> {
+        return userService
+            .findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
+            .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
+            .flatMapSingle(existingUser -> update(existingUser, principal, afterAuthentication))
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof UserNotFoundException) {
                         return create(principal, afterAuthentication);
                     }
                     return Single.error(ex);
-                });
+                }
+            );
     }
 
     /**

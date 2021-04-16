@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.*;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Email;
@@ -25,14 +27,11 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.mongodb.client.model.Filters.*;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -53,7 +52,10 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
         super.createIndex(emailsCollection, new Document(FIELD_ID, 1));
         super.createIndex(emailsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
         super.createIndex(emailsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1));
-        super.createIndex(emailsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));
+        super.createIndex(
+            emailsCollection,
+            new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1)
+        );
     }
 
     @Override
@@ -63,37 +65,49 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Single<List<Email>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
-                .map(this::convert).collect(ArrayList::new, List::add);
+        return Observable
+            .fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
+            .map(this::convert)
+            .collect(ArrayList::new, List::add);
     }
 
     @Override
     public Single<List<Email>> findByDomain(String domain) {
-        return Observable.fromPublisher(emailsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(ArrayList::new, List::add);
+        return Observable
+            .fromPublisher(emailsCollection.find(eq(FIELD_DOMAIN, domain)))
+            .map(this::convert)
+            .collect(ArrayList::new, List::add);
     }
 
     @Override
     public Single<List<Email>> findByClient(ReferenceType referenceType, String referenceId, String client) {
-        return Observable.fromPublisher(
+        return Observable
+            .fromPublisher(
                 emailsCollection.find(
-                        and(
-                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                                eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_CLIENT, client))
-                )).map(this::convert).collect(ArrayList::new, List::add);
+                    and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_CLIENT, client))
+                )
+            )
+            .map(this::convert)
+            .collect(ArrayList::new, List::add);
     }
 
     @Override
     public Maybe<Email> findByTemplate(ReferenceType referenceType, String referenceId, String template) {
-        return Observable.fromPublisher(
-                emailsCollection.find(
+        return Observable
+            .fromPublisher(
+                emailsCollection
+                    .find(
                         and(
-                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                                eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_TEMPLATE, template),
-                                exists(FIELD_CLIENT, false)))
-                        .first())
-                .firstElement().map(this::convert);
+                            eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                            eq(FIELD_REFERENCE_ID, referenceId),
+                            eq(FIELD_TEMPLATE, template),
+                            exists(FIELD_CLIENT, false)
+                        )
+                    )
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -103,15 +117,21 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Email> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template) {
-        return Observable.fromPublisher(
-                emailsCollection.find(
+        return Observable
+            .fromPublisher(
+                emailsCollection
+                    .find(
                         and(
-                                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                                eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_CLIENT, client),
-                                eq(FIELD_TEMPLATE, template)))
-                        .first())
-                .firstElement().map(this::convert);
+                            eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                            eq(FIELD_REFERENCE_ID, referenceId),
+                            eq(FIELD_CLIENT, client),
+                            eq(FIELD_TEMPLATE, template)
+                        )
+                    )
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -121,7 +141,14 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Email> findById(ReferenceType referenceType, String referenceId, String id) {
-        return Observable.fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(
+                emailsCollection
+                    .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id)))
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -139,7 +166,9 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     @Override
     public Single<Email> update(Email item) {
         EmailMongo email = convert(item);
-        return Single.fromPublisher(emailsCollection.replaceOne(eq(FIELD_ID, email.getId()), email)).flatMap(updateResult -> findById(email.getId()).toSingle());
+        return Single
+            .fromPublisher(emailsCollection.replaceOne(eq(FIELD_ID, email.getId()), email))
+            .flatMap(updateResult -> findById(email.getId()).toSingle());
     }
 
     @Override
@@ -189,5 +218,4 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
         emailMongo.setUpdatedAt(email.getUpdatedAt());
         return emailMongo;
     }
-
 }

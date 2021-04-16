@@ -20,8 +20,11 @@ package io.gravitee.am.model.permissions;
  * @author GraviteeSource Team
  */
 public enum DefaultRole {
-    ORGANIZATION_OWNER, ORGANIZATION_USER,
-    DOMAIN_OWNER, DOMAIN_USER,
+    ORGANIZATION_OWNER,
+    ORGANIZATION_USER,
+    DOMAIN_OWNER,
+    DOMAIN_USER,
     ENVIRONMENT_OWNER,
-    APPLICATION_OWNER, APPLICATION_USER;
+    APPLICATION_OWNER,
+    APPLICATION_USER,
 }

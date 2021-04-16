@@ -26,10 +26,9 @@ import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.stream.ReadStream;
 import io.gravitee.gateway.api.ws.WebSocket;
 import io.gravitee.reporter.api.http.Metrics;
-
-import javax.net.ssl.SSLSession;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.SSLSession;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,7 +70,7 @@ public class DummyRequest implements Request {
 
     @Override
     public MultiValueMap<String, String> parameters() {
-       return queryParameters;
+        return queryParameters;
     }
 
     public void setParameters(Map<String, List<String>> parameters) {

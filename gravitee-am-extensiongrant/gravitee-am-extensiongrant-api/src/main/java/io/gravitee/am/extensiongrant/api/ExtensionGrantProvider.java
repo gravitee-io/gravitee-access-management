@@ -24,7 +24,6 @@ import io.reactivex.Maybe;
  * @author GraviteeSource Team
  */
 public interface ExtensionGrantProvider {
-
     /**
      * Grant OAuth2 access tokens by validating the assertion stored inside the incoming token request
      * @param tokenRequest tokenRequest token endpoint request

@@ -15,19 +15,18 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.EnvironmentMongo;
 import io.reactivex.*;
+import javax.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -49,34 +48,31 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Maybe<Environment> findById(String id, String organizationId) {
-
-        return Observable.fromPublisher(collection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first())
-                .firstElement()
-                .map(this::convert);
+        return Observable
+            .fromPublisher(collection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first())
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
     public Maybe<Environment> findById(String id) {
-
-        return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first())
-                .firstElement()
-                .map(this::convert);
+        return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<Environment> create(Environment environment) {
-
         environment.setId(environment.getId() == null ? RandomString.generate() : environment.getId());
 
-        return Single.fromPublisher(collection.insertOne(convert(environment)))
-                .flatMap(success -> findById(environment.getId()).toSingle());
+        return Single
+            .fromPublisher(collection.insertOne(convert(environment)))
+            .flatMap(success -> findById(environment.getId()).toSingle());
     }
 
     @Override
     public Single<Environment> update(Environment environment) {
-
-        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, environment.getId()), convert(environment)))
-                .flatMap(updateResult -> findById(environment.getId()).toSingle());
+        return Single
+            .fromPublisher(collection.replaceOne(eq(FIELD_ID, environment.getId()), convert(environment)))
+            .flatMap(updateResult -> findById(environment.getId()).toSingle());
     }
 
     @Override
@@ -86,12 +82,10 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Single<Long> count() {
-
         return Single.fromPublisher(collection.countDocuments());
     }
 
     private Environment convert(EnvironmentMongo environmentMongo) {
-
         Environment environment = new Environment();
         environment.setId(environmentMongo.getId());
         environment.setDescription(environmentMongo.getDescription());
@@ -105,7 +99,6 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
     }
 
     private EnvironmentMongo convert(Environment environment) {
-
         EnvironmentMongo environmentMongo = new EnvironmentMongo();
         environmentMongo.setId(environment.getId());
         environmentMongo.setDescription(environment.getDescription());

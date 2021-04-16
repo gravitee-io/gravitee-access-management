@@ -18,7 +18,6 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Single;
-
 import java.util.Set;
 
 /**
@@ -29,11 +28,9 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ClientRepository {
-
     Single<Set<Client>> findAll();
 
     Single<Boolean> collectionExists();
 
     Completable deleteCollection();
-
 }

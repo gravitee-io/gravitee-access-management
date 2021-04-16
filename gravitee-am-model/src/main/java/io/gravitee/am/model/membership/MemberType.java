@@ -21,5 +21,5 @@ package io.gravitee.am.model.membership;
  */
 public enum MemberType {
     USER,
-    GROUP
+    GROUP,
 }
