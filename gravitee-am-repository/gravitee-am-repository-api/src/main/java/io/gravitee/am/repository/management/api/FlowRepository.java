@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
+import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;

@@ -87,6 +87,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private CredentialService credentialService;
 
+    @Autowired
+    private UserValidator userValidator;
+
     @Override
     public Maybe<UserToken> verifyToken(String token) {
         return Maybe.fromCallable(() -> jwtParser.parse(token))
@@ -107,7 +110,7 @@ public class UserServiceImpl implements UserService {
                 : (user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource());
 
         // validate user and then check user uniqueness
-        return UserValidator.validate(user)
+        return userValidator.validate(user)
                 .andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
                         .isEmpty()
                         .flatMapMaybe(isEmpty -> {

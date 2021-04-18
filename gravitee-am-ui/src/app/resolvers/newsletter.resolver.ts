@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.oidc;
+import {Injectable} from '@angular/core';
+import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
+import {Observable} from 'rxjs';
+import {AuthService} from "../services/auth.service";
 
-/**
- * OpenID Connect Application Types
- *
- * See <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">Client metadata</a>
- *
- * @author Alexandre FARIA (contact at alexandrefaria.net)
- * @author GraviteeSource Team
- */
-public interface ApplicationType {
+@Injectable()
+export class NewsletterResolver implements Resolve<any> {
 
-    String WEB = "web";
-    String NATIVE = "native";
-    String BROWSER = "browser";
+  constructor(private authService: AuthService) {
+  }
+
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+    return this.authService.newsletterTaglines();
+  }
+
 }

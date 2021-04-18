@@ -22,6 +22,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
+import io.gravitee.am.reporter.api.provider.NoOpReporter;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EnvironmentService;
@@ -57,7 +58,6 @@ import java.util.concurrent.ConcurrentMap;
 public class AuditReporterManagerImpl extends AbstractService<AuditReporterManager> implements AuditReporterManager, EventListener<ReporterEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuditReporterManagerImpl.class);
-    private static final long retryTimeout = 10000;
     private String deploymentId;
 
     @Autowired
@@ -88,12 +88,17 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     private Reporter internalReporter;
 
+    private Reporter noOpReporter;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
         logger.info("Register event listener for reporter events for the management API");
         eventManager.subscribeForEvents(this, ReporterEvent.class);
+
+        // init noOpReporter
+        noOpReporter = new NoOpReporter();
 
         if (useMongoReporter()) {
             logger.info("Initializing internal audit mongodb reporter");
@@ -228,7 +233,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     public Reporter getReporter(ReferenceType referenceType, String referenceId) {
 
         if (referenceType == ReferenceType.DOMAIN) {
-            return doGetReporter(referenceId, System.currentTimeMillis());
+            return doGetReporter(referenceId);
         } else {
             // Internal reporter must be use for all other resources.
             return internalReporter;
@@ -237,46 +242,35 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     @Override
     public Reporter getReporter(String domain) {
-        return doGetReporter(domain, System.currentTimeMillis());
+        return doGetReporter(domain);
     }
 
-    private Reporter doGetReporter(String domain, long startTime) {
-        Optional<Reporter> optionalReporter = doGetReporter0(domain);
+    private Reporter doGetReporter(String domain) {
+        Optional<Reporter> optionalReporter = auditReporters
+                .entrySet()
+                .stream()
+                .filter(entry -> domain.equals(entry.getKey().getDomain()))
+                .map(entry -> entry.getValue())
+                .findFirst();
+
         if (optionalReporter.isPresent()) {
             return optionalReporter.get();
         }
 
         // reporter can be missing as it can take sometime for the reporter events
-        // to propagate across the cluster so if the next call comes
-        // in quickly at a different node there is a possibility it isn't available yet.
+        // to propagate across the cluster so if there are at least one reporter for the domain, return the NoOpReporter to avoid
+        // too long waiting time that may lead to unexpected even on the UI.
         try {
             List<io.gravitee.am.model.Reporter> reporters = reporterService.findByDomain(domain).blockingGet();
             if (reporters.isEmpty()) {
                 throw new ReporterNotFoundForDomainException(domain);
             }
-            // retry
-            while (!optionalReporter.isPresent() && System.currentTimeMillis() - startTime < retryTimeout) {
-                optionalReporter = doGetReporter0(domain);
-            }
-            if (optionalReporter.isPresent()) {
-                return optionalReporter.get();
-            } else {
-                throw new ReporterNotFoundForDomainException(domain);
-            }
+            logger.warn("Reporter for domain {} isn't bootstrapped yet", domain);
+            return noOpReporter;
         } catch (Exception ex) {
             logger.error("An error has occurred while fetching reporter for domain {}", domain, ex);
             throw new IllegalStateException(ex);
         }
-    }
-
-    private Optional<Reporter> doGetReporter0(String domain) {
-        return auditReporters
-                .entrySet()
-                .stream()
-                .filter(entry -> domain.equals(entry.getKey().getDomain()))
-                .map(entry -> entry.getValue())
-                .filter(reporter -> reporter.canSearch() )
-                .findFirst();
     }
 
     private void deployReporter(String reporterId) {

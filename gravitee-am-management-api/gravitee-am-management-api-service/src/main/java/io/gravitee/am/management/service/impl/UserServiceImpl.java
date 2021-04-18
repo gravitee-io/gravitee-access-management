@@ -121,6 +121,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private PasswordValidator passwordValidator;
 
+    @Autowired
+    private UserValidator userValidator;
+
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
         return userService.search(referenceType, referenceId, query, page, size);
@@ -223,7 +226,7 @@ public class UserServiceImpl implements UserService {
                                                 // store user in its identity provider:
                                                 // - perform first validation of user to avoid error status 500 when the IDP is based on relational databases
                                                 // - in case of error, trace the event otherwise continue the creation process
-                                                return UserValidator.validate(transform(newUser))
+                                                return userValidator.validate(transform(newUser))
                                                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
                                                         .andThen(userProvider.create(convert(newUser)))
                                                         .map(idpUser -> {

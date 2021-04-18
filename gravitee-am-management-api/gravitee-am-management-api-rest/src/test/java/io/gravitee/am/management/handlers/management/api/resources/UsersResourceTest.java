@@ -24,8 +24,10 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
@@ -43,6 +45,11 @@ import static org.mockito.Mockito.doReturn;
  * @author GraviteeSource Team
  */
 public class UsersResourceTest extends JerseySpringTest {
+
+    @Before
+    public void setUp() {
+        doReturn(Completable.complete()).when(userValidator).validate(any());
+    }
 
     @Test
     public void shouldGetUsers() {

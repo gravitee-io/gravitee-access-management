@@ -36,5 +36,10 @@
                     subMessage="Seems that your installation is connected to <a href=&quot;{{installation.additionalInformation.COCKPIT_URL}}&quot; target=&quot;_blank&quot;>Cockpit</a>, but has been rejected..."
                     icon="warning">
     </app-emptystate>
+
+    <app-emptystate *ngIf="installation!.additionalInformation!.COCKPIT_INSTALLATION_STATUS === 'DELETED'" message="Installation unlinked !"
+                    subMessage="Seems that your installation is connected to <a href=&quot;{{installation.additionalInformation.COCKPIT_URL}}&quot; target=&quot;_blank&quot;>Cockpit</a>, but is not linked anymore..."
+                    icon="link_off">
+    </app-emptystate>
   </div>
 </div>
