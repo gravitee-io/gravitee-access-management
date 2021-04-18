@@ -314,7 +314,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.GET, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
-                .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine));
+                .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine, domain));
         rootRouter.route(HttpMethod.POST, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)

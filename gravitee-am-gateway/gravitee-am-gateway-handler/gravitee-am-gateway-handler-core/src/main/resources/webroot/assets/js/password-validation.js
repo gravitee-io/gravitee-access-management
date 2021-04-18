@@ -27,7 +27,7 @@ passwordInput.onkeyup = function () {
     let isIncludeNumbersOk = true;
     if (passwordSettings.includeNumbers) {
         const numbersPattern = /[0-9]/g;
-        isPasswordIncludeOk = passwordInput.value.match(numbersPattern);
+        isIncludeNumbersOk = passwordInput.value.match(numbersPattern);
         validateMessageElement(number, isIncludeNumbersOk);
     }
 
