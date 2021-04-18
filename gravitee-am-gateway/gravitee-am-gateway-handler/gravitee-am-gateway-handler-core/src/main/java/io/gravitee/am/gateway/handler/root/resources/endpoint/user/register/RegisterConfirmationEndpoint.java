@@ -20,6 +20,8 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
@@ -43,9 +45,11 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(RegisterConfirmationEndpoint.class);
 
     private final ThymeleafTemplateEngine engine;
+    private final Domain domain;
 
-    public RegisterConfirmationEndpoint(ThymeleafTemplateEngine thymeleafTemplateEngine) {
+    public RegisterConfirmationEndpoint(ThymeleafTemplateEngine thymeleafTemplateEngine, Domain domain) {
         this.engine = thymeleafTemplateEngine;
+        this.domain = domain;
     }
 
     @Override
@@ -75,6 +79,7 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
         // retrieve client (if exists)
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        PasswordSettings.getInstance(client, domain).ifPresent(v -> routingContext.put(ConstantKeys.PASSWORD_SETTINGS_PARAM_KEY, v));
 
         // check if user has already completed its registration
         if (user != null && user.isPreRegistration() && user.isRegistrationCompleted()) {
