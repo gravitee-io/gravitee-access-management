@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.gravitee.am.model.IUser;
+
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.Date;
@@ -24,26 +26,25 @@ import java.util.Map;
 
 import static io.gravitee.am.service.validators.EmailValidator.EMAIL_MAX_LENGTH;
 import static io.gravitee.am.service.validators.EmailValidator.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.UserValidator.*;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compisegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UpdateUser {
+public class UpdateUser implements IUser {
 
     @NotBlank
     @Size(max = EMAIL_MAX_LENGTH,  message = "must not be greater than "+ EMAIL_MAX_LENGTH)
     @Pattern(regexp = EMAIL_PATTERN, message = "must be a well-formed email address")
     private String email;
 
-    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid first name")
+//    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid first name")
     private String firstName;
 
-    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid last name")
+//    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid last name")
     private String lastName;
 
-    @Size(max = DEFAULT_MAX_LENGTH,  message = "must not be greater than "+ DEFAULT_MAX_LENGTH)
+//    @Size(max = UserValidator.DEFAULT_MAX_LENGTH,  message = "must not be greater than " + DEFAULT_MAX_LENGTH)
     private String externalId;
 
     private boolean accountNonExpired = true;
@@ -72,6 +73,12 @@ public class UpdateUser {
 
     private Date updatedAt;
 
+    @Override
+    @JsonIgnore
+    public String getUsername() {
+        return null;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -92,6 +99,18 @@ public class UpdateUser {
         return lastName;
     }
 
+    @Override
+    @JsonIgnore
+    public String getDisplayName() {
+        return null;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getNickName() {
+        return null;
+    }
+
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
@@ -104,7 +123,7 @@ public class UpdateUser {
         this.externalId = externalId;
     }
 
-    public boolean isAccountNonExpired() {
+    public Boolean isAccountNonExpired() {
         return accountNonExpired;
     }
 
@@ -112,7 +131,7 @@ public class UpdateUser {
         this.accountNonExpired = accountNonExpired;
     }
 
-    public boolean isAccountNonLocked() {
+    public Boolean isAccountNonLocked() {
         return accountNonLocked;
     }
 
@@ -120,7 +139,7 @@ public class UpdateUser {
         this.accountNonLocked = accountNonLocked;
     }
 
-    public boolean isCredentialsNonExpired() {
+    public Boolean isCredentialsNonExpired() {
         return credentialsNonExpired;
     }
 
@@ -128,7 +147,7 @@ public class UpdateUser {
         this.credentialsNonExpired = credentialsNonExpired;
     }
 
-    public boolean isEnabled() {
+    public Boolean isEnabled() {
         return enabled;
     }
 
@@ -136,7 +155,7 @@ public class UpdateUser {
         this.enabled = enabled;
     }
 
-    public boolean isPreRegistration() {
+    public Boolean isPreRegistration() {
         return preRegistration;
     }
 
@@ -144,7 +163,7 @@ public class UpdateUser {
         this.preRegistration = preRegistration;
     }
 
-    public boolean isRegistrationCompleted() {
+    public Boolean isRegistrationCompleted() {
         return registrationCompleted;
     }
 
@@ -168,7 +187,7 @@ public class UpdateUser {
         this.client = client;
     }
 
-    public long getLoginsCount() {
+    public Long getLoginsCount() {
         return loginsCount;
     }
 

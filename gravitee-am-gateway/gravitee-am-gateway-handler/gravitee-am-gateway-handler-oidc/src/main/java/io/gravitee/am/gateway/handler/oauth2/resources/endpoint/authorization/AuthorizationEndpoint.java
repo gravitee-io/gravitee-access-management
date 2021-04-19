@@ -15,19 +15,26 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
+import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerResponse;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.
@@ -42,11 +49,13 @@ import org.slf4j.LoggerFactory;
 public class AuthorizationEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationEndpoint.class);
-
+    private static final String FORM_PARAMETERS = "parameters";
     private final Flow flow;
+    private final ThymeleafTemplateEngine engine;
 
-    public AuthorizationEndpoint(Flow flow) {
+    public AuthorizationEndpoint(Flow flow, ThymeleafTemplateEngine engine) {
         this.flow = flow;
+        this.engine = engine;
     }
 
     @Override
@@ -73,7 +82,7 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
                             try {
                                 // final step of the authorization flow, we can clean the session and redirect the user
                                 cleanSession(context);
-                                doRedirect(context.response(), authorizationResponse.buildRedirectUri());
+                                doRedirect(context, request, authorizationResponse);
                             } catch (Exception e) {
                                 logger.error("Unable to redirect to client redirect_uri", e);
                                 context.fail(new ServerErrorException());
@@ -82,8 +91,43 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
 
     }
 
-    private void doRedirect(HttpServerResponse response, String url) {
-        response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    private void doRedirect(RoutingContext context, AuthorizationRequest request, AuthorizationResponse response) {
+        try {
+            // if response mode is not set to form_post, the user is redirected to the client callback endpoint
+            final String redirectUri = response.buildRedirectUri();
+            if (!ResponseMode.FORM_POST.equals(request.getResponseMode())) {
+                context
+                        .response()
+                        .putHeader(HttpHeaders.LOCATION, redirectUri)
+                        .setStatusCode(302)
+                        .end();
+                return;
+            }
+
+            // In form_post mode, Authorization Response parameters are encoded as HTML form values that are auto-submitted in the User Agent,
+            // and thus are transmitted via the HTTP POST method to the Client.
+            // Prepare context to render post form.
+            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(redirectUri);
+            context.put(ACTION_KEY, request.getRedirectUri());
+            context.put(FORM_PARAMETERS, queryParams.remove(ACTION_KEY));
+
+            // Render Authorization form_post form.
+            engine.render(context.data(), "login_sso_post", res -> {
+                if (res.succeeded()) {
+                    context.response()
+                            .putHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store")
+                            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML)
+                            .end(res.result());
+                } else {
+                    logger.error("Unable to render Authorization form_post page", res.cause());
+                    context.fail(res.cause());
+                }
+            });
+        } catch (Exception e) {
+            logger.error("Unable to redirect to client redirect_uri", e);
+            context.fail(new ServerErrorException());
+        }
     }
 
     private void cleanSession(RoutingContext context) {

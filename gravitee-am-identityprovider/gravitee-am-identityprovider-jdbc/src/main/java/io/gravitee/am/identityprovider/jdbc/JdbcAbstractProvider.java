@@ -22,13 +22,17 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.service.AbstractService;
 import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.pool.PoolingConnectionFactoryProvider;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
+import io.r2dbc.spi.ValidationDepth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -76,6 +80,18 @@ public class JdbcAbstractProvider<T extends LifecycleComponent> extends Abstract
         if (configuration.getPassword() != null) {
             builder.option(PASSWORD, configuration.getPassword());
         }
+
+        // default values for connections
+        // may be overridden by the configuration.getOptions
+        builder
+                .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, 1)
+                .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, 0)
+                .option(PoolingConnectionFactoryProvider.MAX_SIZE, 10)
+                .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(0, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(0, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
 
         List<Map<String, String>> options = configuration.getOptions();
         if (options != null && !options.isEmpty()) {

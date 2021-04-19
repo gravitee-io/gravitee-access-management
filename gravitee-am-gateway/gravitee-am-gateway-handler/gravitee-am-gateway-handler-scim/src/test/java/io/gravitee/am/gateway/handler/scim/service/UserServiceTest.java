@@ -30,6 +30,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.validators.PasswordValidator;
+import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -39,6 +40,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
@@ -60,6 +62,9 @@ public class UserServiceTest {
 
     @InjectMocks
     private UserService userService = new UserServiceImpl();
+
+    @Spy
+    private UserValidator userValidator = new UserValidator();
 
     @Mock
     private UserRepository userRepository;

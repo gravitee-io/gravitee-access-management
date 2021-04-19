@@ -121,6 +121,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private PasswordValidator passwordValidator;
 
+    @Autowired
+    private UserValidator userValidator;
+
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
         return userService.search(referenceType, referenceId, query, page, size);
@@ -223,7 +226,7 @@ public class UserServiceImpl implements UserService {
                                                 // store user in its identity provider:
                                                 // - perform first validation of user to avoid error status 500 when the IDP is based on relational databases
                                                 // - in case of error, trace the event otherwise continue the creation process
-                                                return UserValidator.validate(transform(newUser))
+                                                return userValidator.validate(transform(newUser))
                                                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
                                                         .andThen(userProvider.create(convert(newUser)))
                                                         .map(idpUser -> {
@@ -290,43 +293,43 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
-
-        return userService.findById(referenceType, referenceId, id)
-                .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
-                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                        // check client
-                        .flatMapSingle(userProvider -> {
-                            String client = updateUser.getClient() != null ? updateUser.getClient() : user.getClient();
-                            if (client != null && referenceType == ReferenceType.DOMAIN) {
-                                return checkClient(referenceId, client)
-                                        .flatMapSingle(client1 -> {
-                                            updateUser.setClient(client1.getId());
-                                            return Single.just(userProvider);
-                                        });
-                            }
-                            return Single.just(userProvider);
-                        })
-                        // update the idp user
-                        .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                                .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser))))
-                        .flatMap(idpUser -> {
-                            // set external id
-                            updateUser.setExternalId(idpUser.getId());
-                            return userService.update(referenceType, referenceId, id, updateUser)
-                                    .map(this::setInternalStatus);
-                        })
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof UserNotFoundException) {
-                                // idp user does not exist, only update AM user
-                                return userService.update(referenceType, referenceId, id, updateUser)
-                                        .map(this::setInternalStatus);
-                            }
-                            return Single.error(ex);
-                        })
-                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)))
-                );
+        return userValidator.validate(updateUser).andThen(
+                userService.findById(referenceType, referenceId, id)
+                        .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
+                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                                // check client
+                                .flatMapSingle(userProvider -> {
+                                    String client = updateUser.getClient() != null ? updateUser.getClient() : user.getClient();
+                                    if (client != null && referenceType == ReferenceType.DOMAIN) {
+                                        return checkClient(referenceId, client)
+                                                .flatMapSingle(client1 -> {
+                                                    updateUser.setClient(client1.getId());
+                                                    return Single.just(userProvider);
+                                                });
+                                    }
+                                    return Single.just(userProvider);
+                                })
+                                // update the idp user
+                                .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
+                                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                                        .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser))))
+                                .flatMap(idpUser -> {
+                                    // set external id
+                                    updateUser.setExternalId(idpUser.getId());
+                                    return userService.update(referenceType, referenceId, id, updateUser)
+                                            .map(this::setInternalStatus);
+                                })
+                                .onErrorResumeNext(ex -> {
+                                    if (ex instanceof UserNotFoundException) {
+                                        // idp user does not exist, only update AM user
+                                        return userService.update(referenceType, referenceId, id, updateUser)
+                                                .map(this::setInternalStatus);
+                                    }
+                                    return Single.error(ex);
+                                })
+                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)))
+                        ));
     }
 
 

@@ -74,6 +74,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private CredentialService credentialService;
 
+    @Autowired
+    private UserValidator userValidator;
+
     @Override
     public Single<Set<User>> findByDomain(String domain) {
         LOGGER.debug("Find users by domain: {}", domain);
@@ -260,7 +263,8 @@ public class UserServiceImpl implements UserService {
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
 
-        return UserValidator.validate(user).andThen(userRepository.create(user)
+        return userValidator.validate(user)
+                .andThen(userRepository.create(user))
                 .flatMap(user1 -> {
                     // create event for sync process
                     Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.CREATE));
@@ -272,7 +276,7 @@ public class UserServiceImpl implements UserService {
                     }
                     LOGGER.error("An error occurs while trying to create a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
-                }));
+                });
     }
 
     @Override
@@ -321,7 +325,7 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Update a user {}", user);
         // updated date
         user.setUpdatedAt(new Date());
-        return UserValidator.validate(user).andThen(userRepository.update(user)
+        return userValidator.validate(user).andThen(userRepository.update(user)
                 .flatMap(user1 -> {
                     // create event for sync process
                     Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.UPDATE));

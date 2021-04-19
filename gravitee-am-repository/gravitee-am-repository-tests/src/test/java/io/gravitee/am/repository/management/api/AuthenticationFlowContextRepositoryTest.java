@@ -153,6 +153,15 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractManagementT
         assertSameContext(entity, testObserver);
     }
 
+
+    @Test
+    public void shouldNotFind_NullTransactionId() {
+        TestSubscriber<AuthenticationFlowContext> testList = authenticationFlowContextRepository.findByTransactionId(null).test();
+        testList.awaitTerminalEvent();
+        testList.assertNoValues();
+        testList.assertNoErrors();
+    }
+
     @Test
     public void shouldNotFindExpiredData() {
         AuthenticationFlowContext entity = generateAuthContext(Instant.now().minus(10, ChronoUnit.MINUTES), 1);

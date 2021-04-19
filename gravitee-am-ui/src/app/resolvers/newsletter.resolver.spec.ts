@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.oidc;
+import { TestBed, inject } from '@angular/core/testing';
 
-/**
- * OpenID Connect Application Types
- *
- * See <a href="https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata">Client metadata</a>
- *
- * @author Alexandre FARIA (contact at alexandrefaria.net)
- * @author GraviteeSource Team
- */
-public interface ApplicationType {
+import { NewsletterResolver } from './newsletter.resolver';
 
-    String WEB = "web";
-    String NATIVE = "native";
-    String BROWSER = "browser";
-}
+describe('NewsletterResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [NewsletterResolver]
+    });
+  });
+
+  it('should ...', inject([NewsletterResolver], (service: NewsletterResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});

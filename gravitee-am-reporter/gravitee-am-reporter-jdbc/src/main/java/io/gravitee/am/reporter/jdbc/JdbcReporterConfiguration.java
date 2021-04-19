@@ -32,13 +32,13 @@ public class JdbcReporterConfiguration implements ReporterConfiguration {
     private String username;
     private String password;
     private Integer acquireRetry;
-    private Integer initialSize = 10;
+    private Integer initialSize = 0;
     private Integer maxSize = 10;
-    private Integer maxIdleTime = 180000;
-    private Integer maxLifeTime = 0;
-    private Integer maxAcquireTime =0 ;
+    private Integer maxIdleTime = 30000;
+    private Integer maxLifeTime = 30000;
+    private Integer maxAcquireTime = 0 ;
     private Integer maxCreateConnectionTime = 0;
-    private String validationQuery;
+    private String validationQuery = "SELECT 1";
     private String tableSuffix;
     private Integer bulkActions = 1000;
     private Integer flushInterval = 5;

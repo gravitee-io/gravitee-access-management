@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.management.service;
 
+import io.reactivex.Single;
+
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -26,4 +30,10 @@ public interface NewsletterService {
      * @param user a user with email, firstname and lastname.
      */
     void subscribe(Object user);
+
+    /**
+     * Get tag lines
+     * @return tag lines
+     */
+    Single<List<String>> getTaglines();
 }

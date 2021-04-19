@@ -20,7 +20,6 @@ import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Payload;
@@ -33,16 +32,15 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import reactor.util.function.Tuples;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -84,21 +82,28 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         deployment.subscribe(id -> {
             // Deployed
             deploymentId = id;
+
             // Start reporters
-            List<Reporter> reporters = reporterRepository.findByDomain(domain.getId()).blockingGet();
-            if (!reporters.isEmpty()) {
-                Map<String, Environment> localEnvCache = new HashMap<>();
-                reporters.forEach(reporter -> {
-                    if (!localEnvCache.containsKey(domain.getReferenceId())) {
-                        localEnvCache.put(domain.getReferenceId(), environmentService.findById(domain.getReferenceId()).blockingGet());
-                    }
-                    GraviteeContext context = new GraviteeContext(localEnvCache.get(domain.getReferenceId()).getOrganizationId(), domain.getReferenceId(), domain.getId());
-                    startReporterProvider(reporter, context);
-                });
-                logger.info("Reporters loaded for domain {}", domain.getName());
-            } else {
-                logger.info("\tThere is no reporter to start");
-            }
+            reporterRepository.findByDomain(domain.getId())
+                    .flatMap(reporters ->
+                            environmentService
+                                    .findById(domain.getReferenceId())
+                                    .map(env -> new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()))
+                                    .map(ctx -> Tuples.of(reporters, ctx)))
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(tupleReportersContext -> {
+                                if (!tupleReportersContext.getT1().isEmpty()) {
+                                    tupleReportersContext.getT1().forEach(reporter -> {
+                                        startReporterProvider(reporter, tupleReportersContext.getT2());
+                                    });
+                                    logger.info("Reporters loaded for domain {}", domain.getName());
+                                } else {
+                                    logger.info("\tThere is no reporter to start");
+                                }
+                            },
+                            err -> {
+                                logger.error("Reporter service can not be started", err);
+                            });
         }, err -> {
             // Could not deploy
             logger.error("Reporter service can not be started", err);
@@ -155,34 +160,40 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         final String eventType = reporterEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} reporter event for {}", domain.getName(), eventType, reporterId);
         reporterRepository.findById(reporterId)
+                .flatMapSingle(reporter ->
+                        environmentService
+                                .findById(domain.getReferenceId())
+                                .map(env -> new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()))
+                                .map(ctx -> Tuples.of(reporter, ctx)))
+                .subscribeOn(Schedulers.io())
                 .subscribe(
-                        reporter -> {
-                            Environment env = environmentService.findById(domain.getReferenceId()).blockingGet();
-                            GraviteeContext context = new GraviteeContext(env.getOrganizationId(), domain.getReferenceId(), domain.getId());
-                            updateReporterProvider(reporter, context);
+                        tupleReporterContext -> {
+                            updateReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
                             logger.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
                         },
-                        error -> logger.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No reporter found with id {}", reporterId));
+                        error -> logger.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error));
     }
 
     private void deployReporter(String reporterId, ReporterEvent reporterEvent) {
         final String eventType = reporterEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} reporter event for {}", domain.getName(), eventType, reporterId);
         reporterRepository.findById(reporterId)
+                .flatMapSingle(reporter ->
+                        environmentService
+                                .findById(domain.getReferenceId())
+                                .map(env -> new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()))
+                                .map(ctx -> Tuples.of(reporter, ctx)))
+                .subscribeOn(Schedulers.io())
                 .subscribe(
-                        reporter -> {
-                            Environment env = environmentService.findById(domain.getReferenceId()).blockingGet();
-                            GraviteeContext context = new GraviteeContext(env.getOrganizationId(), domain.getReferenceId(), domain.getId());
+                        tupleReporterContext -> {
                             if (reporters.containsKey(reporterId)) {
-                                updateReporterProvider(reporter, context);
+                                updateReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
                             } else {
-                                startReporterProvider(reporter, context);
+                                startReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
                             }
                             logger.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
                         },
-                        error -> logger.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No reporter found with id {}", reporterId));
+                        error -> logger.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error));
     }
 
     private void removeReporter(String reporterId) {

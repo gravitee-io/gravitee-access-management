@@ -116,8 +116,12 @@ export class AuthService {
   }
 
   subscribeNewsletter(email): Observable<any>  {
-    return this.http.post<any>(this.userInfoUrl + '/subscribeNewsletter', {
+    return this.http.post<any>(this.userInfoUrl + '/newsletter/_subscribe', {
       'email': email
     });
+  }
+
+  newsletterTaglines(): Observable<any> {
+    return this.http.get<any>(this.userInfoUrl + '/newsletter/taglines');
   }
 }

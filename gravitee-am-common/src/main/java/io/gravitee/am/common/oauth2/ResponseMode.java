@@ -36,4 +36,10 @@ public interface ResponseMode {
      * redirecting back to the Client.
      */
     String FRAGMENT = "fragment";
+
+    /**
+     * In this mode, Authorization Response parameters are encoded as HTML form values that are auto-submitted in the User Agent,
+     * and thus are transmitted via the HTTP POST method to the Client, with the result parameters being encoded in the body using the application/x-www-form-urlencoded format.
+     */
+    String FORM_POST = "form_post";
 }

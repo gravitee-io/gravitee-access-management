@@ -75,6 +75,9 @@ public class UserServiceImpl implements UserService {
     private IdentityProviderManager identityProviderManager;
 
     @Autowired
+    private UserValidator userValidator;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -161,7 +164,7 @@ public class UserServiceImpl implements UserService {
                     userModel.setEnabled(userModel.getPassword() != null);
 
                     // store user in its identity provider
-                    return UserValidator.validate(userModel).andThen(userProvider.create(convert(userModel))
+                    return userValidator.validate(userModel).andThen(userProvider.create(convert(userModel))
                             .flatMap(idpUser -> {
                                 // AM 'users' collection is not made for authentication (but only management stuff)
                                 // clear password
@@ -222,7 +225,7 @@ public class UserServiceImpl implements UserService {
 
                                 UserFactorUpdater.updateFactors(existingUser.getFactors(), existingUser, userToUpdate);
 
-                                return UserValidator.validate(userToUpdate).andThen(identityProviderManager.getUserProvider(userToUpdate.getSource())
+                                return userValidator.validate(userToUpdate).andThen(identityProviderManager.getUserProvider(userToUpdate.getSource())
                                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))
                                         .flatMapSingle(userProvider -> {
                                             // no idp user check if we need to create it

@@ -32,18 +32,19 @@
     <name>Gravitee IO - Access Management - Reporter JDBC</name>
 
     <properties>
-        <r2dbc-pool.version>0.8.4.RELEASE</r2dbc-pool.version>
-        <r2dbc-postgresql.version>0.8.5.RELEASE</r2dbc-postgresql.version>
-        <r2dbc-mssql.version>0.8.4.RELEASE</r2dbc-mssql.version>
+        <r2dbc-pool.version>0.8.6.RELEASE</r2dbc-pool.version>
+        <r2dbc-postgresql.version>0.8.7.RELEASE</r2dbc-postgresql.version>
+        <r2dbc-mssql.version>0.8.5.RELEASE</r2dbc-mssql.version>
         <r2dbc-mysql.version>0.8.2.RELEASE</r2dbc-mysql.version>
         <r2dbc-mariadb.version>0.8.4-rc</r2dbc-mariadb.version>
-        <reactor-netty.version>0.9.11.RELEASE</reactor-netty.version>
-        <testcontainers.version>1.15.0</testcontainers.version>
+        <r2dbc-spi.version>0.8.4.RELEASE</r2dbc-spi.version>
+        <reactor-netty.version>0.9.19.RELEASE</reactor-netty.version>
+        <testcontainers.version>1.15.1</testcontainers.version>
 
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
         <jdbc-mysql.version>8.0.17</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
-        
+
         <skip-reporters-tests>true</skip-reporters-tests>
     </properties>
 
@@ -90,6 +91,10 @@
                     <artifactId>reactive-streams</artifactId>
                     <groupId>org.reactivestreams</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
 
@@ -111,6 +116,13 @@
                     <groupId>io.projectreactor</groupId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>io.r2dbc</groupId>
+            <artifactId>r2dbc-spi</artifactId>
+            <version>${r2dbc-spi.version}</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Guava dependencies -->
@@ -135,6 +147,10 @@
                     <artifactId>reactor-core</artifactId>
                     <groupId>io.projectreactor</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
+                </exclusion>
             </exclusions>
             <scope>provided</scope>
         </dependency>
@@ -146,6 +162,10 @@
                 <exclusion>
                     <artifactId>reactor-core</artifactId>
                     <groupId>io.projectreactor</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
                 </exclusion>
             </exclusions>
             <scope>provided</scope>
@@ -159,6 +179,10 @@
                     <artifactId>reactor-core</artifactId>
                     <groupId>io.projectreactor</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
+                </exclusion>
             </exclusions>
             <scope>provided</scope>
         </dependency>
@@ -170,6 +194,10 @@
                 <exclusion>
                     <artifactId>reactor-core</artifactId>
                     <groupId>io.projectreactor</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
                 </exclusion>
             </exclusions>
             <scope>provided</scope>
@@ -199,6 +227,12 @@
             <artifactId>r2dbc</artifactId>
             <version>${testcontainers.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>r2dbc-spi</artifactId>
+                    <groupId>io.r2dbc</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -260,46 +294,6 @@
         </resources>
 
         <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <minimizeJar>false</minimizeJar>
-                            <filters>
-                                <filter>
-                                    <artifact>io.projectreactor.netty:reactor-netty</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.MF</exclude>
-                                        <exclude>reactor/netty/ReactorNetty*</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <artifactSet>
-                                <excludes>
-                                    <exclude>org.springframework:*</exclude>
-                                    <exclude>org.springframework.data:*</exclude>
-                                    <exclude>io.projectreactor:*</exclude>
-                                    <exclude>io.projectreactor.addons:*</exclude>
-                                    <exclude>io.netty:*</exclude>
-                                    <exclude>io.r2dbc:*</exclude>
-                                </excludes>
-                            </artifactSet>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4</version>
@@ -410,3 +404,4 @@
     </build>
 
 </project>
+

@@ -43,8 +43,8 @@
     },
     "initialSize" : {
       "type": "number",
-      "minimum": 1,
-      "default": 5,
+      "minimum": 0,
+      "default": 0,
       "title": "Initial Pool Size",
       "description": "Initial pool size (default: 5)"
     },
@@ -57,33 +57,35 @@
     },
     "maxIdleTime" : {
       "type": "number",
-      "minimum": 1,
-      "default": 1800000,
+      "minimum": 0,
+      "default": 30000,
       "title": "Maximum Idle Time",
       "description": "Maximum idle time of the connection in the pool in millis (default: 1800000)"
     },
     "maxLifeTime" : {
       "type": "number",
       "minimum": 0,
-      "default": 0,
+      "default": 30000,
       "title": "Maximum Life Time",
       "description": "Maximum life time of the connection in the pool in millis (default: 0)"
     },
     "maxAcquireTime" : {
       "type": "number",
       "minimum": 0,
-      "default": 0,
+      "default": 1000,
       "title": "Maximum Acquiring Time",
       "description": "Maximum time to acquire connection from pool in millis (default: 0)"
     },
     "maxCreateConnectionTime" : {
       "type": "number",
-      "minimum": 1,
+      "minimum": 0,
+      "default": 0,
       "title": "Maximum Creation Time",
       "description": "Maximum time to create a new connection in millis (default: 0)"
     },
     "validationQuery" : {
       "type": "string",
+      "default": "SELECT 1",
       "title": "Validation Query",
       "description": "Query that will be executed to validate that a connection to the database is still alive."
     },

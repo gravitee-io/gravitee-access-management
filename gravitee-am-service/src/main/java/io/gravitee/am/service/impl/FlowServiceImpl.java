@@ -265,10 +265,31 @@ public class FlowServiceImpl implements FlowService {
     }
 
     private Single<List<Flow>> createOrUpdate0(ReferenceType referenceType, String referenceId, String application, List<Flow> flows, User principal) {
-        return Observable.fromIterable(flows)
-                .flatMapSingle(flow -> flow.getId() == null ? create0(referenceType, referenceId, application, flow, principal) : update(referenceType, referenceId, flow.getId(), flow))
-                .sorted(getFlowComparator())
-                .toList()
+        return flowRepository.findAll(referenceType, referenceId)
+                .flatMap(existingFlows -> {
+                    return Observable.fromIterable(flows)
+                            .flatMapSingle(flowToCreateOrUpdate -> {
+                                // if no flow exists, just insert a new one
+                                if (existingFlows == null || existingFlows.isEmpty()) {
+                                    return create0(referenceType, referenceId, application, flowToCreateOrUpdate, principal);
+                                }
+
+                                // find existing flow
+                                Optional<Flow> optFlow = existingFlows.stream().filter(existingFlow -> {
+                                    if (application != null) {
+                                        return application.equals(existingFlow.getApplication()) &&
+                                                existingFlow.getType().equals(flowToCreateOrUpdate.getType());
+                                    }
+                                    return existingFlow.getType().equals(flowToCreateOrUpdate.getType());
+                                }).findAny();
+
+                                return optFlow.isPresent() ?
+                                        update(referenceType, referenceId, optFlow.get().getId(), flowToCreateOrUpdate) :
+                                        create0(referenceType, referenceId, application, flowToCreateOrUpdate, principal);
+                            })
+                            .sorted(getFlowComparator())
+                            .toList();
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
