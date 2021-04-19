@@ -135,7 +135,9 @@ public class EventBusReporterWrapper implements Reporter, Handler<Message<Report
 
     @Override
     public Object stop() throws Exception {
-        messageConsumer.unregister();
+        if (messageConsumer != null) {
+            messageConsumer.unregister();
+        }
         return reporter.stop();
     }
 

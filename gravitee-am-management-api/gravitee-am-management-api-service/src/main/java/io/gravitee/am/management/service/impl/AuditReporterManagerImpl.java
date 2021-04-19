@@ -243,6 +243,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                 .stream()
                 .filter(entry -> domain.equals(entry.getKey().getDomain()))
                 .map(entry -> entry.getValue())
+                .filter(reporter -> reporter.canSearch())
                 .findFirst();
 
         if (optionalReporter.isPresent()) {
