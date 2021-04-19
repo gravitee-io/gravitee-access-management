@@ -1,6 +1,21 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/373?closed=1[AM - 3.6.3 (2021-04-19)]
+
+=== Bug fixes
+
+*_General_*
+
+- Reporter Initialization may block infinitly https://github.com/gravitee-io/issues/issues/5420[#5420]
+
+*_RegTest_*
+
+- Update postman test https://github.com/gravitee-io/issues/issues/5437[#5437]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/369?closed=1[AM - 3.6.2 (2021-04-15)]
 
 === Bug fixes
