@@ -18,7 +18,6 @@ package io.gravitee.am.management.service.impl;
 import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.service.AuditReporterManager;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
@@ -37,6 +36,8 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
+import io.reactivex.functions.BiConsumer;
+import io.reactivex.schedulers.Schedulers;
 import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
@@ -46,9 +47,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -125,9 +130,10 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                     "\"username\":\"" + jdbcUser+ "\"," +
                     "\"password\":\"" + jdbcPwd + "\"," +
                     "\"tableSuffix\":\"\"," + // empty domain
-                    "\"initialSize\":5," +
+                    "\"initialSize\":0," +
                     "\"maxSize\":10," +
-                    "\"maxIdleTime\":180000," +
+                    "\"maxIdleTime\":30000," +
+                    "\"maxLifeTime\":30000," +
                     "\"bulkActions\":1000," +
                     "\"flushInterval\":5}";
 
@@ -137,36 +143,22 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
         logger.info("Initializing audit reporters");
         List<io.gravitee.am.model.Reporter> reporters = reporterService.findAll().blockingGet();
-        Map<String, Domain> localDomainCache = new HashMap<>();
-        Map<String, io.gravitee.am.model.Environment> localEnvCache = new HashMap<>();
         reporters.forEach(reporter -> {
             logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
             try {
-                Domain domain = localDomainCache.get(reporter.getDomain());
-                if (domain == null) {
-                    domain = domainService.findById(reporter.getDomain()).blockingGet();
-                    localDomainCache.put(reporter.getDomain(), domain);
-                }
-
-                io.gravitee.am.model.Environment domainEnv = localEnvCache.get(domain.getReferenceId());
-                if (ReferenceType.ENVIRONMENT.equals(domain.getReferenceType())) {
-                    if (domainEnv == null) {
-                        domainEnv = environmentService.findById(domain.getReferenceId()).blockingGet();
-                        localEnvCache.put(domain.getReferenceId(), domainEnv);
-                    }
-                } else {
-                    // currently domain is only linked to domainEnv
-                    throw new EnvironmentNotFoundException("Domain " + reporter.getDomain() +" should be lined to an Environment");
-                }
-
-                Reporter auditReporter = reporterPluginManager.create(
-                        reporter.getType(),
-                        reporter.getConfiguration(),
-                        new GraviteeContext(domainEnv.getOrganizationId(), domainEnv.getId(), domain.getId()));
-                if (auditReporter != null) {
-                    logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
-                    auditReporters.put(reporter, new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter));
-                }
+                AuditReporterLauncher launcher = new AuditReporterLauncher(reporter, false);
+                domainService
+                        .findById(reporter.getDomain())
+                        .flatMapSingle(domain -> {
+                            if (ReferenceType.ENVIRONMENT.equals(domain.getReferenceType())) {
+                                return environmentService.findById(domain.getReferenceId()).map(env -> new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()));
+                            } else {
+                                // currently domain is only linked to domainEnv
+                                return Single.error(new EnvironmentNotFoundException("Domain " + reporter.getDomain() +" should be lined to an Environment"));
+                            }
+                        })
+                        .subscribeOn(Schedulers.io())
+                        .subscribe(launcher);
             } catch (Exception ex) {
                 logger.error("An error has occurred while loading audit reporter: {} [{}]", reporter.getName(), reporter.getType(), ex);
                 removeReporter(reporter.getId());
@@ -321,24 +313,67 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     }
 
     private void loadReporter(io.gravitee.am.model.Reporter reporter) {
-        Domain domain = domainService.findById(reporter.getDomain()).blockingGet();
-        io.gravitee.am.model.Environment domainEnv;
-        if (ReferenceType.ENVIRONMENT.equals(domain.getReferenceType())) {
-            domainEnv = environmentService.findById(domain.getReferenceId()).blockingGet();
-        } else {
-            // currently domain is only linked to domainEnv
-            throw new EnvironmentNotFoundException("Domain " + reporter.getDomain() +" should be lined to an Environment");
+        AuditReporterLauncher launcher = new AuditReporterLauncher(reporter, true);
+        domainService
+                .findById(reporter.getDomain())
+                .flatMapSingle(domain -> {
+                    if (ReferenceType.ENVIRONMENT.equals(domain.getReferenceType())) {
+                        return environmentService.findById(domain.getReferenceId()).map(env -> new GraviteeContext(env.getOrganizationId(), env.getId(), domain.getId()));
+                    } else {
+                        // currently domain is only linked to domainEnv
+                        return Single.error(new EnvironmentNotFoundException("Domain " + reporter.getDomain() +" should be lined to an Environment"));
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .subscribe(launcher);
+    }
+
+    public class AuditReporterLauncher implements BiConsumer<GraviteeContext, Throwable> {
+        private boolean startEventBus;
+        private io.gravitee.am.model.Reporter reporter;
+
+        private CountDownLatch countDownLatch = new CountDownLatch(1);
+        private Throwable error;
+
+        public AuditReporterLauncher(io.gravitee.am.model.Reporter reporter, boolean startEventBus) {
+            this.startEventBus = startEventBus;
+            this.reporter = reporter;
         }
 
-        Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), new GraviteeContext(domainEnv.getOrganizationId(), domainEnv.getId(), domain.getId()));
-        if (auditReporter != null) {
-            Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
-            auditReporters.put(reporter, eventBusReporter);
+        @Override
+        public void accept(GraviteeContext graviteeContext, Throwable throwable) throws Exception {
             try {
-                eventBusReporter.start();
-            } catch (Exception e) {
-                logger.error("Unexpected error while loading reporter", e);
+                if (graviteeContext != null) {
+                    Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), graviteeContext);
+                    if (auditReporter != null) {
+                        logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
+                        Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
+                        auditReporters.put(reporter, eventBusReporter);
+                        try {
+                            if (startEventBus) {
+                                eventBusReporter.start();
+                            }
+                        } catch (Exception e) {
+                            logger.error("Unexpected error while loading reporter", e);
+                        }
+                    }
+                }
+
+                if (throwable != null) {
+                    logger.error("Unable to load reporter '{}'", reporter.getId(), throwable);
+                    this.error = throwable;
+                }
+            } finally {
+                this.countDownLatch.countDown();
             }
+        }
+
+        public boolean failed() {
+            return error != null;
+        }
+
+        public Throwable getError() {
+            return error;
         }
     }
 

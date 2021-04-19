@@ -107,17 +107,19 @@ public class JdbcReporterSpringConfiguration extends AbstractR2dbcConfiguration 
                 .option(HOST, host)
                 .option(USER, user)
                 .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, Optional.ofNullable(configuration.getAcquireRetry()).orElse(1))
-                .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, Optional.ofNullable(configuration.getInitialSize()).orElse(10))
+                .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, Optional.ofNullable(configuration.getInitialSize()).orElse(0))
                 .option(PoolingConnectionFactoryProvider.MAX_SIZE, Optional.ofNullable(configuration.getMaxSize()).orElse(10))
-                .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Optional.ofNullable(configuration.getMaxIdleTime()).orElse(1800000), ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Optional.ofNullable(configuration.getMaxLifeTime()).orElse(0), ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(Optional.ofNullable(configuration.getMaxIdleTime()).orElse(30000), ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(Optional.ofNullable(configuration.getMaxLifeTime()).orElse(30000), ChronoUnit.MILLIS))
                 .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(Optional.ofNullable(configuration.getMaxAcquireTime()).orElse(0), ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Optional.ofNullable(configuration.getMaxCreateConnectionTime()).orElse(0), ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.valueOf("LOCAL"));
+                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(Optional.ofNullable(configuration.getMaxCreateConnectionTime()).orElse(0), ChronoUnit.MILLIS));
 
         final String validationQuery = configuration.getValidationQuery();
         if (validationQuery != null) {
-            builder.option(PoolingConnectionFactoryProvider.VALIDATION_QUERY, validationQuery);
+            builder.option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.REMOTE)
+                    .option(PoolingConnectionFactoryProvider.VALIDATION_QUERY, validationQuery);
+        } else {
+            builder.option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
         }
 
         if (port != null) {
