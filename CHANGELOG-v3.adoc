@@ -1,6 +1,23 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/374?closed=1[AM - 3.7.2 (2021-04-19)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.6.2 https://github.com/gravitee-io/issues/issues/5444[#5444]
+- Merge 3.6.3 https://github.com/gravitee-io/issues/issues/5445[#5445]
+- Merge 3.6.4 https://github.com/gravitee-io/issues/issues/5458[#5458]
+
+*_Management_*
+
+- Password policy missing and inconsistent validation rules https://github.com/gravitee-io/issues/issues/5335[#5335]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/375?closed=1[AM - 3.6.4 (2021-04-19)]
 
 === Bug fixes
