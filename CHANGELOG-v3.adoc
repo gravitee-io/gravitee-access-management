@@ -1,6 +1,36 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/250?closed=1[AM - 3.8.0 (2021-04-20)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.7.1 https://github.com/gravitee-io/issues/issues/5291[#5291]
+- Merge 3.7.2 https://github.com/gravitee-io/issues/issues/5459[#5459]
+
+*_Management_*
+
+- MembershipCommandHandler throws a SinglePrimaryOwnerException https://github.com/gravitee-io/issues/issues/5339[#5339]
+
+=== Features
+
+*_Gateway_*
+
+- [mfa] SMS support https://github.com/gravitee-io/issues/issues/4101[#4101]
+- [mfa] email support https://github.com/gravitee-io/issues/issues/5166[#5166]
+- [scim] support PATCH method https://github.com/gravitee-io/issues/issues/3936[#3936]
+- [webauthn] force registration of a new credential https://github.com/gravitee-io/issues/issues/5305[#5305]
+
+*_Management_*
+
+- [cockpit] Report gateway nodes in commands https://github.com/gravitee-io/issues/issues/5058[#5058]
+- [cockpit] add healthcheck command https://github.com/gravitee-io/issues/issues/5171[#5171]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/374?closed=1[AM - 3.7.2 (2021-04-19)]
 
 === Bug fixes
