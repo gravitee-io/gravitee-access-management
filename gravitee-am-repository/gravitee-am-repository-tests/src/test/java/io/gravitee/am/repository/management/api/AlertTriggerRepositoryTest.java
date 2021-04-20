@@ -109,7 +109,7 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void findByCriteria() {
+    public void findByCriteria_alertNotifiers() {
         AlertTrigger alertTriggerToCreate = buildAlertTrigger();
         alertTriggerToCreate.setAlertNotifiers(Collections.emptyList());
         alertTriggerRepository.create(alertTriggerToCreate).blockingGet();
@@ -135,6 +135,23 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
         testObserver1.assertNoErrors();
         testObserver1.assertValue(alertTrigger -> alertTrigger.getId().equals(alertTriggerUpdated.getId()));
     }
+
+    @Test
+    public void findByCriteria_type() {
+        AlertTrigger alertTriggerToCreate = buildAlertTrigger();
+        AlertTrigger alertTriggerCreated = alertTriggerRepository.create(alertTriggerToCreate).blockingGet();
+
+        AlertTriggerCriteria criteria = new AlertTriggerCriteria();
+        criteria.setEnabled(true);
+        criteria.setType(AlertTriggerType.TOO_MANY_LOGIN_FAILURES);
+        TestSubscriber<AlertTrigger> testObserver1 = alertTriggerRepository.findByCriteria(ReferenceType.DOMAIN, DOMAIN_ID, criteria).test();
+
+        testObserver1.awaitTerminalEvent();
+        testObserver1.assertComplete();
+        testObserver1.assertNoErrors();
+        testObserver1.assertValue(alertTrigger -> alertTrigger.getId().equals(alertTriggerCreated.getId()));
+    }
+
 
     @Test
     public void findByDomain() {

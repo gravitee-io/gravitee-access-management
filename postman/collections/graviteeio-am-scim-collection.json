@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "435f6a66-df9a-411b-85be-9e70483d8e8e",
+		"_postman_id": "021ce1c6-9ebc-4705-90ae-104c0dd651c5",
 		"name": "Gravitee.io - AM - SCIM",
 		"description": "Test System for Cross-domain Identity Management\nSCIM 2.0 is released as RFC7642, RFC7643 and RFC7644",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -2460,7 +2460,7 @@
 									"response": []
 								},
 								{
-									"name": "Patch user - remove operation - single atttribute",
+									"name": "Patch user - remove operation - single attribute",
 									"event": [
 										{
 											"listen": "test",
@@ -2516,7 +2516,7 @@
 									"response": []
 								},
 								{
-									"name": "Patch user - remove operation - complex atttribute",
+									"name": "Patch user - remove operation - complex attribute",
 									"event": [
 										{
 											"listen": "test",
@@ -2573,7 +2573,7 @@
 									"response": []
 								},
 								{
-									"name": "Patch user - remove operation - multi-valued atttribute with filter",
+									"name": "Patch user - remove operation - multi-valued attribute with filter",
 									"event": [
 										{
 											"listen": "test",
@@ -2630,7 +2630,7 @@
 									"response": []
 								},
 								{
-									"name": "Patch user - remove operation - multi-valued atttribute",
+									"name": "Patch user - remove operation - multi-valued attribute",
 									"event": [
 										{
 											"listen": "test",
@@ -3988,63 +3988,7 @@
 									"response": []
 								},
 								{
-									"name": "Patch group - remove operation - single atttribute",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"",
-													"pm.test(\"SCIM patch group - remove operation - single attribute\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData).to.have.property('id');",
-													"    pm.expect(jsonData.schemas).to.eql(['urn:ietf:params:scim:schemas:core:2.0:Group']);",
-													"    pm.expect(jsonData).to.not.have.property('displayName');",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PATCH",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{access_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"type": "text",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n     \"schemas\":[\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n     \"Operations\": [{\n        \"op\":\"Remove\",\n        \"path\":\"displayName\"\n     }]\n\n}"
-										},
-										"url": {
-											"raw": "{{gateway_url}}/{{domainHrid}}/scim/Groups/{{groupSCIM}}",
-											"host": [
-												"{{gateway_url}}"
-											],
-											"path": [
-												"{{domainHrid}}",
-												"scim",
-												"Groups",
-												"{{groupSCIM}}"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Patch group - remove operation - multi-valued atttribute with filter",
+									"name": "Patch group - remove operation - multi-valued attribute with filter",
 									"event": [
 										{
 											"listen": "test",
@@ -4101,7 +4045,7 @@
 									"response": []
 								},
 								{
-									"name": "Patch group - remove operation - multi-valued atttribute",
+									"name": "Patch group - remove operation - multi-valued attribute",
 									"event": [
 										{
 											"listen": "test",

@@ -262,7 +262,7 @@ public class GroupServiceImpl implements GroupService {
         scimGroup.setDisplayName(group.getName());
 
         // members
-        if (group.getMembers() != null) {
+        if (group.getMembers() != null && !group.getMembers().isEmpty()) {
             scimGroup.setMembers(group.getMembers().stream().map(userId -> {
                 Member member = new Member();
                 member.setValue(userId);

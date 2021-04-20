@@ -78,7 +78,7 @@ public class MongoAlertTriggerRepository extends AbstractManagementMongoReposito
         }
 
         if (criteria.getType().isPresent()) {
-            filters.add(eq("type", criteria.getType().get()));
+            filters.add(eq("type", criteria.getType().get().name()));
         }
 
         if (criteria.getAlertNotifierIds().isPresent() && !criteria.getAlertNotifierIds().get().isEmpty()) {
