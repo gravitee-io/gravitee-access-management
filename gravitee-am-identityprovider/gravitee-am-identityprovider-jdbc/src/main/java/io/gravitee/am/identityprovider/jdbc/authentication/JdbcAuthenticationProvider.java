@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.jdbc.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -28,11 +27,13 @@ import io.gravitee.am.identityprovider.jdbc.JdbcIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.jdbc.authentication.spring.JdbcAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
 import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
+import io.r2dbc.spi.Statement;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -54,23 +55,58 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         final String username = authentication.getPrincipal().toString();
         final String presentedPassword = authentication.getCredentials().toString();
 
-        return selectUserByUsername(username)
-                .switchIfEmpty(Maybe.error(new UsernameNotFoundException(username)))
-                .map(result -> {
+        return selectUserByMultipleField(username)
+                .filter(result -> {
                     // check password
                     String password = result.get(configuration.getPasswordAttribute()).toString();
                     if (password == null) {
                         LOGGER.debug("Authentication failed: password is null");
-                        throw new BadCredentialsException("Invalid account");
+                        return false;
                     }
 
                     if (!passwordEncoder.matches(presentedPassword, password)) {
                         LOGGER.debug("Authentication failed: password does not match stored value");
-                        throw new BadCredentialsException("Bad credentials");
+                        return false;
                     }
-                    // create the user
-                    return createUser(result);
+
+                    return true;
+                })
+                .map(this::createUser)
+                .toList()
+                .flatMapMaybe(users -> {
+                    if (users.isEmpty()) {
+                        return Maybe.error(new BadCredentialsException("Bad credentials"));
+                    }
+                    if (users.size() > 1) {
+                        return Maybe.error(new BadCredentialsException("Bad credentials"));
+                    }
+                    return Maybe.just(users.get(0));
                 });
+    }
+
+    private Flowable<Map<String, Object>> selectUserByMultipleField(String username) {
+        String rawQuery = configuration.getSelectUserByMultipleFieldsQuery() != null ? configuration.getSelectUserByMultipleFieldsQuery() : configuration.getSelectUserByUsernameQuery();
+        String[] args = prepareIndexParameters(rawQuery);
+        final String sql = String.format(rawQuery, args);
+        return Flowable.fromPublisher(connectionPool.create())
+                .flatMap(connection -> {
+                    Statement statement = connection.createStatement(sql);
+                    for (int i = 0; i < args.length; ++i) {
+                        statement = statement.bind(i, username);
+                    }
+                    return Flowable.fromPublisher(statement.execute())
+                            .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe());
+                })
+                .flatMap(result -> result.map(ColumnMapRowMapper::mapRow));
+    }
+
+    private String[] prepareIndexParameters(String rawQuery) {
+        final int variables = StringUtils.countOccurrencesOf(rawQuery, "%s");
+        String[] idxParameters = new String[variables];
+        for (int i = 0; i < variables; ++i) {
+            idxParameters[i] = getIndexParameter("username", i);
+        }
+        return idxParameters;
     }
 
     @Override
@@ -176,7 +212,11 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
     }
 
     private String getIndexParameter(String field) {
-        return ParametersUtils.getIndexParameter(configuration.getProtocol(), 1, field);
+        return getIndexParameter(field, 0);
+    }
+
+    private String getIndexParameter(String field, int offset) {
+        return ParametersUtils.getIndexParameter(configuration.getProtocol(), 1 + offset, field);
     }
 
 }

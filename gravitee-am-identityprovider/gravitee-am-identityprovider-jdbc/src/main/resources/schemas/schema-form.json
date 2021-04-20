@@ -47,6 +47,12 @@
       "title": "Query to find for a user using its identifier (username)",
       "description": "The query which is executed to search for an user using its identifier (username)."
     },
+    "selectUserByMultipleFieldsQuery" : {
+      "type" : "string",
+      "widget": "textarea",
+      "title": "Query to find for a user using multiple fields (username or email)",
+      "description": "The query which is executed to search for an user using its identifier (username) or another field (email). If this field isn't specified, the findUserByUsernameQuery is used"
+    },
     "identifierAttribute": {
       "type": "string",
       "title": "User identifier attribute",

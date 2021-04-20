@@ -22,6 +22,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.reactivex.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,58 @@ public abstract class JdbcAuthenticationProviderTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_authentication_multifield_username() {
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return "user01";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "user01";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return null;
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "user01".equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldLoadUserByUsername_authentication_multifield_email() {
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return "user01";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "user01@acme.com";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return null;
+            }
+        }).test();
+
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "user01".equals(u.getUsername()));
     }
 
     @Test
@@ -105,6 +158,6 @@ public abstract class JdbcAuthenticationProviderTest {
         }).test();
 
         testObserver.awaitTerminalEvent();
-        testObserver.assertError(UsernameNotFoundException.class);
+        testObserver.assertError(BadCredentialsException.class);
     }
 }

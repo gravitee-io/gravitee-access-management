@@ -105,7 +105,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             if (lastException instanceof BadCredentialsException) {
                                 return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
                             } else if (lastException instanceof UsernameNotFoundException) {
-                                return Single.error(new UsernameNotFoundException("Invalid or unknown user"));
+                                // if an IdP return UsernameNotFoundException, convert it as BadCredentials in order to avoid helping attackers
+                                return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
                             } else if (lastException instanceof AccountStatusException) {
                                 return Single.error(lastException);
                             }  else if (lastException instanceof NegotiateContinueException) {
@@ -115,7 +116,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                                 return Single.error(new InternalAuthenticationServiceException("Unable to validate credentials. The user account you are trying to access may be experiencing a problem.", lastException));
                             }
                         } else {
-                            return Single.error(new UsernameNotFoundException("No user found for registered providers"));
+                            // if an IdP return null user, throw BadCredentials in order to avoid helping attackers
+                            return Single.error(new BadCredentialsException("The credentials you entered are invalid"));
                         }
                     } else {
                         // complete user connection

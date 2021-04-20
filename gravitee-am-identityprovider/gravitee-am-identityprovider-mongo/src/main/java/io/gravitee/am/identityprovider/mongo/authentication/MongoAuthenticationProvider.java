@@ -17,6 +17,8 @@ package io.gravitee.am.identityprovider.mongo.authentication;
 
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -27,8 +29,7 @@ import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderMapper;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import org.bson.BsonDocument;
@@ -72,23 +73,43 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
 
     public Maybe<User> loadUserByUsername(Authentication authentication) {
         String username = ((String) authentication.getPrincipal()).toLowerCase();
-        return findUserByUsername(username)
-                .switchIfEmpty(Maybe.error(new UsernameNotFoundException(username)))
-                .map(user -> {
+        return findUserByMultipleField(username)
+                .filter( user -> {
                     String password = user.getString(this.configuration.getPasswordField());
                     String presentedPassword = authentication.getCredentials().toString();
 
                     if (password == null) {
                         LOGGER.debug("Authentication failed: password is null");
-                        throw new BadCredentialsException("Invalid account");
+                        return false;
                     }
 
                     if (!passwordEncoder.matches(presentedPassword, password)) {
                         LOGGER.debug("Authentication failed: password does not match stored value");
-                        throw new BadCredentialsException("Bad credentials");
+                        return false;
                     }
-                    return createUser(user);
+
+                    return true;
+                })
+                .map(this::createUser)
+                .toList()
+                .flatMapMaybe(users -> {
+                    if (users.isEmpty()) {
+                        return Maybe.error(new BadCredentialsException("Bad credentials"));
+                    }
+                    if (users.size() > 1) {
+                        return Maybe.error(new BadCredentialsException("Bad credentials"));
+                    }
+                    return Maybe.just(users.get(0));
                 });
+    }
+
+    private Flowable<Document> findUserByMultipleField(String value) {
+        MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
+        String findQuery = this.configuration.getFindUserByMultipleFieldsQuery() != null ? this.configuration.getFindUserByMultipleFieldsQuery() : this.configuration.getFindUserByUsernameQuery();
+        String rawQuery = findQuery.replaceAll("\\?", value);
+        String jsonQuery = convertToJsonString(rawQuery);
+        BsonDocument query = BsonDocument.parse(jsonQuery);
+        return Flowable.fromPublisher(usersCol.find(query));
     }
 
     public Maybe<User> loadUserByUsername(String username) {
@@ -143,7 +164,7 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     }
 
     private String convertToJsonString(String rawString) {
-        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:]+", "\"$0\"").replaceAll("\\s+","");
+        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:\\s]+", "\"$0\"").replaceAll("\\s+","");
         return rawString;
     }
 
