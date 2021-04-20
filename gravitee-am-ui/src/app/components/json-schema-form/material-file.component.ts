@@ -19,7 +19,7 @@ import { JsonSchemaFormService } from 'angular7-json-schema-form';
 
 @Component({
   selector: 'material-file-widget',
-  template: `<div class="mat-input-wrapper mat-form-field-wrapper">
+  template: ` <div class="mat-input-wrapper mat-form-field-wrapper">
     <div class="mat-input-flex mat-form-field-flex">
       <div class="mat-input-infix mat-form-field-infix">
         <input type="file" (change)="updateValue($event)" [required]="options?.required" [placeholder]="options?.title" />
@@ -88,16 +88,14 @@ export class MaterialFileComponent implements OnInit {
       let self = this;
       reader.readAsDataURL(file);
       reader.onload = function () {
-        let jsonFile = {};
-        jsonFile.name = file.name;
-        jsonFile.type = file.type;
-        jsonFile.size = file.size;
-        jsonFile.content = reader.result.toString().split(',')[1];
+        const content = reader.result.toString().split(',')[1];
+        const { name, type, size } = file;
+        const jsonFile = { name, type, size, content };
         self.jsf.updateValue(self, JSON.stringify(jsonFile));
         self.editMode = false;
       };
       reader.onerror = function (error) {
-        console.log('Error uploading file: ', error);
+        console.error('Error uploading file: ', error);
       };
     } else {
       this.jsf.updateValue(this, event.target.value);

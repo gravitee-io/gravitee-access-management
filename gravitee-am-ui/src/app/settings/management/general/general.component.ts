@@ -58,10 +58,8 @@ export class ManagementGeneralComponent implements OnInit {
   }
 
   update() {
-    const settings = {};
-    settings.identities = this.settings.identityProviders.concat(this.settings.socialIdentities);
-
-    this.organizationService.patchSettings(settings).subscribe((response) => {
+    const identities = this.settings.identityProviders.concat(this.settings.socialIdentities);
+    this.organizationService.patchSettings({ identities }).subscribe((response) => {
       this.snackbarService.open('Settings updated');
     });
   }

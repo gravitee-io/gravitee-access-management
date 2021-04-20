@@ -83,10 +83,12 @@ export class MembershipsComponent implements OnInit, OnChanges {
 
   addMembership(event) {
     event.preventDefault();
-    const membership = {};
-    membership.memberId = this.selectedMember;
-    membership.role = this.selectedRole;
-    membership.memberType = this.selectedMemberType.toUpperCase();
+    const membership = {
+      memberId: this.selectedMember,
+      role: this.selectedRole,
+      memberType: this.selectedMemberType.toUpperCase(),
+    };
+
     this.membershipAdded.emit(membership);
     this.selectedMember = null;
     this.selectedRole = null;
@@ -108,10 +110,11 @@ export class MembershipsComponent implements OnInit, OnChanges {
   update(memberId, memberType, event) {
     this.dialogService.confirm('Updater member', 'Are you sure you want to change this membership ?').subscribe((res) => {
       if (res) {
-        const member = {};
-        member.memberId = memberId;
-        member.memberType = memberType;
-        member.role = event.value;
+        const member = {
+          memberId,
+          memberType,
+          role: event.value,
+        };
         this.membershipUpdated.emit(member);
         this.filterGroups();
       }

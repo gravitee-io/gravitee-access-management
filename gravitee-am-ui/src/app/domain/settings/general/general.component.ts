@@ -82,6 +82,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
   }
 
   tagsChanged() {
+    // @ts-ignore
     this.chipInput.nativeElement.blur();
     this.formChanged = true;
     this.domain.tags = _.map(this.selectedTags, (tag) => tag.id);

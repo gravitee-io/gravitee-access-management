@@ -13,47 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {TagService} from '../../../services/tag.service';
-import {SnackbarService} from '../../../services/snackbar.service';
-import {DialogService} from '../../../services/dialog.service';
-import {ActivatedRoute, Router} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { TagService } from '../../../services/tag.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { DialogService } from '../../../services/dialog.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-tags',
   templateUrl: './tags.component.html',
-  styleUrls: ['./tags.component.scss']
+  styleUrls: ['./tags.component.scss'],
 })
 export class TagsComponent implements OnInit {
   private tags: any[];
 
-  constructor(private tagService: TagService, private dialogService: DialogService,
-              private snackbarService: SnackbarService, private route: ActivatedRoute, private router: Router) {
-  }
+  constructor(
+    private tagService: TagService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.tags = this.route.snapshot.data.tags;
   }
 
   get isEmpty() {
-    return !this.tags || this.tags.length == 0
+    return !this.tags || this.tags.length === 0;
   }
 
   loadTags() {
-    this.tagService.list().subscribe(response => this.tags = response);
+    this.tagService.list().subscribe((response) => (this.tags = response));
   }
 
   delete(id, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Sharding Tag', 'Are you sure you want to delete this sharding tag ?')
-      .subscribe(res => {
-        if (res) {
-          this.tagService.delete(id).subscribe(response => {
-            this.snackbarService.open('Sharding tag deleted');
-            this.loadTags();
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Sharding Tag', 'Are you sure you want to delete this sharding tag ?').subscribe((res) => {
+      if (res) {
+        this.tagService.delete(id).subscribe((response) => {
+          this.snackbarService.open('Sharding tag deleted');
+          this.loadTags();
+        });
+      }
+    });
   }
 }

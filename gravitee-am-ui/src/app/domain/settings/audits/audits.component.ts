@@ -201,11 +201,10 @@ export class AuditsComponent implements OnInit {
   }
 
   getTargetParams(row) {
-    let params = {};
     if (row.target.type === 'FORM' || row.target.type === 'EMAIL') {
-      params.template = row.target.displayName.toUpperCase();
+      return { template: row.target.displayName.toUpperCase() };
     }
-    return params;
+    return {};
   }
 
   search() {

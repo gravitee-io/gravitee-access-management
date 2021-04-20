@@ -105,6 +105,7 @@ export class RoleComponent implements OnInit {
 
   addPermission(event) {
     this.selectedPermissions = this.selectedPermissions.concat(_.remove(this.scopes, { key: event.option.value }));
+    // @ts-ignore
     this.chipInput.nativeElement.blur();
     this.formChanged = true;
   }
@@ -116,6 +117,7 @@ export class RoleComponent implements OnInit {
       }),
     );
 
+    // @ts-ignore
     this.chipInput.nativeElement.blur();
     this.formChanged = true;
   }
