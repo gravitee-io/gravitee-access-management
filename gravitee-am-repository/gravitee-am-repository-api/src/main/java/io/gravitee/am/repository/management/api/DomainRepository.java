@@ -32,13 +32,15 @@ import java.util.Set;
  */
 public interface DomainRepository extends CrudRepository<Domain, String> {
 
+    Flowable<Domain> findAllByReferenceId(String environmentId);
+
+    Flowable<Domain> search(String environmentId, String query);
+
     Maybe<Domain> findByHrid(ReferenceType referenceType, String referenceId, String hrid);
 
     Single<Set<Domain>> findAll();
 
     Single<Set<Domain>> findByIdIn(Collection<String> ids);
-
-    Flowable<Domain> findAllByEnvironment(String environmentId);
 
     Flowable<Domain> findAllByCriteria(DomainCriteria criteria);
 }

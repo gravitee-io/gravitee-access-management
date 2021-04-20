@@ -74,7 +74,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   listDomains() {
     if(this.hasCurrentEnvironment()) {
-      this.domainService.list().subscribe(data => this.domains = data);
+      this.domainService.findByEnvironment(0,5).subscribe(response => this.domains = response.data);
     } else {
       this.domains = [];
     }

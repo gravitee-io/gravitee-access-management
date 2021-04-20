@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
@@ -46,6 +47,7 @@ import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -95,9 +97,30 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
-    public Flowable<Domain> findAllByEnvironment(String environmentId) {
+    public Flowable<Domain> findAllByReferenceId(String environmentId) {
+        Bson mongoQuery =and(
+                eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
+                eq(FIELD_REFERENCE_ID, environmentId));
+        return Flowable.fromPublisher(domainsCollection.find(mongoQuery)).map(MongoDomainRepository::convert);
+    }
 
-        return Flowable.fromPublisher(domainsCollection.find(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()), eq(FIELD_REFERENCE_ID, environmentId)))).map(MongoDomainRepository::convert);
+    @Override
+    public Flowable<Domain> search(String environmentId, String query) {
+        // currently search on client_id field
+        Bson searchQuery = eq(FIELD_NAME, query);
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = new BasicDBObject(FIELD_NAME, pattern);
+        }
+
+        Bson mongoQuery =and(
+                eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
+                eq(FIELD_REFERENCE_ID, environmentId), searchQuery);
+
+        return Flowable.fromPublisher(domainsCollection.find(mongoQuery)).map(MongoDomainRepository::convert);
     }
 
     @Override
@@ -108,7 +131,6 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return toBsonFilter(criteria.isLogicalOR(), eqAlertEnabled)
                 .switchIfEmpty(Single.just(new BsonDocument()))
                 .flatMapPublisher(filter -> Flowable.fromPublisher(domainsCollection.find(filter))).map(MongoDomainRepository::convert);
-
     }
 
     @Override

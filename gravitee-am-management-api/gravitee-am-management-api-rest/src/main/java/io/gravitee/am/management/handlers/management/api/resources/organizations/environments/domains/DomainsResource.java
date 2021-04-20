@@ -20,6 +20,7 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.NewDomain;
@@ -35,6 +36,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
 import static io.gravitee.am.management.service.permissions.Permissions.or;
@@ -47,6 +49,9 @@ import static io.gravitee.am.management.service.permissions.Permissions.or;
 @Api(tags = {"domain"})
 public class DomainsResource extends AbstractDomainResource {
 
+    private static final int MAX_DOMAINS_SIZE_PER_PAGE = 50;
+    private static final String MAX_DOMAINS_SIZE_PER_PAGE_STRING = "50";
+
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
@@ -56,7 +61,7 @@ public class DomainsResource extends AbstractDomainResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "List security domains",
+            value = "List security domains for an environment",
             notes = "List all the security domains accessible to the current user. " +
                     "User must have DOMAIN[LIST] permission on the specified environment or organization " +
                     "AND either DOMAIN[READ] permission on each security domain " +
@@ -69,20 +74,23 @@ public class DomainsResource extends AbstractDomainResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue(MAX_DOMAINS_SIZE_PER_PAGE_STRING) int size,
+            @QueryParam("q") String query,
             @Suspended final AsyncResponse response) {
 
         User authenticatedUser = getAuthenticatedUser();
-
         checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.LIST)
-                .andThen(domainService.findAllByEnvironment(organizationId, environmentId)
-                        .flatMapMaybe(domain -> hasPermission(authenticatedUser,
-                                or(of(ReferenceType.DOMAIN, domain.getId(), Permission.DOMAIN, Acl.READ),
-                                        of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
-                                        of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
-                                .filter(Boolean::booleanValue).map(permit -> domain))
-                        .map(this::filterDomainInfos)
-                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                        .toList())
+                .andThen(query != null ? domainService.search(organizationId, environmentId, query) : domainService.findAllByEnvironment(organizationId, environmentId))
+                .flatMapMaybe(domain -> hasPermission(authenticatedUser,
+                        or(of(ReferenceType.DOMAIN, domain.getId(), Permission.DOMAIN, Acl.READ),
+                                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN, Acl.READ),
+                                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN, Acl.READ)))
+                        .filter(Boolean::booleanValue).map(permit -> domain))
+                .map(this::filterDomainInfos)
+                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                .toList()
+                .map(domains -> new Page<Domain>(domains.stream().skip((long) page * size).limit(size).collect(Collectors.toList()), page, domains.size()))
                 .subscribe(response::resume, response::resume);
     }
 
