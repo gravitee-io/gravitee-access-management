@@ -16,7 +16,6 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.membership.MemberType;
-
 import javax.validation.constraints.NotNull;
 
 /**
@@ -27,8 +26,10 @@ public class NewMembership {
 
     @NotNull
     private String memberId;
+
     @NotNull
     private MemberType memberType;
+
     @NotNull
     private String role;
 

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
-import { MaterialFileComponent } from "../../../../../components/json-schema-form/material-file.component";
+import { MaterialFileComponent } from '../../../../../components/json-schema-form/material-file.component';
 
 @Component({
   selector: 'certificate-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
 export class CertificateFormComponent implements OnInit, OnChanges {
   @Input('certificateConfiguration') configuration: any = {};
@@ -28,13 +28,12 @@ export class CertificateFormComponent implements OnInit, OnChanges {
   displayForm: boolean = false;
   data: any = {};
   customWidgets = {
-    file: MaterialFileComponent
+    file: MaterialFileComponent,
   };
 
-  constructor() { }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.certificateSchema) {
@@ -57,7 +56,7 @@ export class CertificateFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    let configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    let configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

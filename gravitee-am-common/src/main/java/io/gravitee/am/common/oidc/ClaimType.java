@@ -24,7 +24,6 @@ package io.gravitee.am.common.oidc;
  * @author GraviteeSource Team
  */
 public interface ClaimType {
-
     /**
      * Claims that are directly asserted by the OpenID Provider.
      */

@@ -26,7 +26,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +36,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ScopeService {
-
     Maybe<Scope> findById(String id);
 
     Single<Scope> create(String domain, NewScope scope, User principal);
@@ -77,5 +75,4 @@ public interface ScopeService {
     default Completable delete(String scopeId, boolean force) {
         return delete(scopeId, force, null);
     }
-
 }

@@ -40,7 +40,5 @@ public final class NoOpPasswordEncoder implements PasswordEncoder {
 
     private static final PasswordEncoder INSTANCE = new NoOpPasswordEncoder();
 
-    private NoOpPasswordEncoder() {
-    }
-
+    private NoOpPasswordEncoder() {}
 }

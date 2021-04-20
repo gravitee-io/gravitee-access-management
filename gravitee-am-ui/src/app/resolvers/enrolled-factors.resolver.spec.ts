@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
-import {EnrolledFactorsResolver} from './enrolled-factors.resolver';
+import { inject, TestBed } from '@angular/core/testing';
+import { EnrolledFactorsResolver } from './enrolled-factors.resolver';
 
 describe('EnrolledFactorsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EnrolledFactorsResolver]
+      providers: [EnrolledFactorsResolver],
     });
   });
 

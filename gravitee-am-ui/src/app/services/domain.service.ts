@@ -114,11 +114,11 @@ export class DomainService {
         const memberships = response.memberships;
         const metadata = response.metadata;
         const members = memberships.map(m => {
-          m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
+          m.roleName = (metadata.roles[m.roleId]) ? metadata.roles[m.roleId].name : 'Unknown role';
           if (m.memberType === 'user') {
-            m.name = (metadata['users'][m.memberId]) ? metadata['users'][m.memberId].displayName : 'Unknown user';
+            m.name = (metadata.users[m.memberId]) ? metadata.users[m.memberId].displayName : 'Unknown user';
           } else if (m.memberType === 'group') {
-            m.name = (metadata['groups'][m.memberId]) ? metadata['groups'][m.memberId].displayName : 'Unknown group';
+            m.name = (metadata.groups[m.memberId]) ? metadata.groups[m.memberId].displayName : 'Unknown group';
           }
           return m;
         });

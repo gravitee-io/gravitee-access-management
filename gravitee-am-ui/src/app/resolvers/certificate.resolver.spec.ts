@@ -15,12 +15,12 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import { CertificateResolver } from "./certificate.resolver";
+import { CertificateResolver } from './certificate.resolver';
 
 describe('CertificateResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [CertificateResolver]
+      providers: [CertificateResolver],
     });
   });
 

@@ -24,9 +24,7 @@ import io.gravitee.am.model.jose.JWK;
  * @author GraviteeSource Team
  */
 public interface JWSService {
-
     JWSVerifier verifier(JWK jwk);
 
     boolean isValidSignature(JWT jwt, JWK jwk);
-
 }

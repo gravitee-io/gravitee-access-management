@@ -16,15 +16,13 @@
 
 -->
 <div fxLayout="column">
-  <p class="gv-plugin-creation-description">
-    Configure your identity provider.
-  </p>
+  <p class="gv-plugin-creation-description">Configure your identity provider.</p>
   <div>
     <form fxLayout="column">
       <div class="gv-form-section">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Name</mat-label>
-          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
+          <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required />
           <mat-hint>Identity provider name</mat-hint>
         </mat-form-field>
       </div>
@@ -35,7 +33,11 @@
           <mat-divider></mat-divider>
         </div>
         <div>
-          <provider-form [providerConfiguration]="configuration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderCreation($event)"></provider-form>
+          <provider-form
+            [providerConfiguration]="configuration"
+            [providerSchema]="providerSchema"
+            (configurationCompleted)="enableProviderCreation($event)"
+          ></provider-form>
         </div>
       </div>
     </form>

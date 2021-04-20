@@ -15,14 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.root.service.user;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.UserProvider;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.UserInvalidException;
@@ -31,17 +35,12 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Collections;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -202,7 +201,8 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true))
+            .thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -220,7 +220,8 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn("idp-id");
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true))
+            .thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -245,7 +246,8 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
         when(domain.getAccountSettings()).thenReturn(accountSettings);
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true))
+            .thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -266,7 +268,8 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true))
+            .thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -290,7 +293,8 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true))
+            .thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
         when(commonUserService.create(any())).thenReturn(Single.just(user));
 
@@ -308,7 +312,8 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true))
+            .thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
@@ -323,10 +328,10 @@ public class UserServiceTest {
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
 
-
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true))
+            .thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -347,12 +352,12 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true)).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByDomainAndEmail(domain.getId(), user.getEmail(), true))
+            .thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
     }
-
 }

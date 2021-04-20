@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {OrganizationService} from '../../../../../../services/organization.service';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'factor-creation-step2',
   templateUrl: './step2.component.html',
-  styleUrls: ['./step2.component.scss']
+  styleUrls: ['./step2.component.scss'],
 })
 export class FactorCreationStep2Component implements OnInit {
   @Input('factor') factor: any;
@@ -29,10 +29,10 @@ export class FactorCreationStep2Component implements OnInit {
   configuration: any;
   factorSchema: any = {};
 
-  constructor(private organizationService: OrganizationService) { }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.factorSchema(this.factor.type).subscribe(data => {
+    this.organizationService.factorSchema(this.factor.type).subscribe((data) => {
       this.factorSchema = data;
       // set the grant_type value
       if (this.factorSchema.properties.factorType) {

@@ -16,7 +16,6 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
-
 import java.util.Date;
 
 /**
@@ -47,7 +46,7 @@ public class Policy {
 
     private Date updatedAt;
 
-    public Policy() { }
+    public Policy() {}
 
     public Policy(Policy other) {
         this.id = other.id;

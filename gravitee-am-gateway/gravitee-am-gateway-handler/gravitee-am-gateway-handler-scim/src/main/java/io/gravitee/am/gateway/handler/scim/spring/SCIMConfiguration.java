@@ -46,5 +46,4 @@ public class SCIMConfiguration implements ProtocolConfiguration {
     public ServiceProviderConfigService serviceProviderConfigService() {
         return new ServiceProviderConfigServiceImpl();
     }
-
 }

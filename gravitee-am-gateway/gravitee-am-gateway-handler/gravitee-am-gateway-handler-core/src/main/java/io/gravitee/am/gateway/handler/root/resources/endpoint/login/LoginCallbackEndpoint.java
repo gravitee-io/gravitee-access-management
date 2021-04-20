@@ -44,7 +44,6 @@ public class LoginCallbackEndpoint implements Handler<RoutingContext> {
         } else {
             routingContext.fail(503);
         }
-
     }
 
     private void doRedirect(HttpServerResponse response, String url) {

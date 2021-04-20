@@ -45,16 +45,13 @@ public class IntrospectionEndpointTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        router.route(HttpMethod.POST, "/oauth/introspect")
-                .handler(introspectionEndpointHandler);
+        router.route(HttpMethod.POST, "/oauth/introspect").handler(introspectionEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
     }
 
     @Test
     public void shouldNotInvokeEndpoint_noClient() throws Exception {
-        testRequest(
-                HttpMethod.POST, "/oauth/introspect",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+        testRequest(HttpMethod.POST, "/oauth/introspect", HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test
@@ -62,15 +59,16 @@ public class IntrospectionEndpointTest extends RxWebTestBase {
         io.gravitee.am.model.oidc.Client client = new io.gravitee.am.model.oidc.Client();
         client.setClientId("my-client-id");
 
-        router.route().order(-1).handler(routingContext -> {
-            routingContext.put("client", client);
-            routingContext.next();
-        });
+        router
+            .route()
+            .order(-1)
+            .handler(
+                routingContext -> {
+                    routingContext.put("client", client);
+                    routingContext.next();
+                }
+            );
 
-        testRequest(
-                HttpMethod.POST,
-                "/oauth/introspect",
-                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+        testRequest(HttpMethod.POST, "/oauth/introspect", HttpStatusCode.BAD_REQUEST_400, "Bad Request");
     }
-
 }

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.AuditService;
 import io.gravitee.am.model.Acl;
@@ -25,17 +28,13 @@ import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,22 +47,27 @@ public class AuditResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an audit log",
-            notes = "User must have the DOMAIN_AUDIT[READ] permission on the specified domain " +
-                    "or DOMAIN_AUDIT[READ] permission on the specified environment " +
-                    "or DOMAIN_AUDIT[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Get an audit log",
+        notes = "User must have the DOMAIN_AUDIT[READ] permission on the specified domain " +
+        "or DOMAIN_AUDIT[READ] permission on the specified environment " +
+        "or DOMAIN_AUDIT[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Audit log successfully fetched", response = Audit.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void get(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("audit") String audit,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("audit") String audit,
+        @Suspended final AsyncResponse response
+    ) {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_AUDIT, Acl.READ)
-                .andThen(auditService.findById(domain, audit))
-                .subscribe(response::resume, response::resume);
+            .andThen(auditService.findById(domain, audit))
+            .subscribe(response::resume, response::resume);
     }
 }

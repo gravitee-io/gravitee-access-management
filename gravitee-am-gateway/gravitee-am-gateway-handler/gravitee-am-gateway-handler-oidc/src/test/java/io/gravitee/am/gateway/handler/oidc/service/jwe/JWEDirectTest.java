@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.jwe;
 
+import static org.junit.runners.Parameterized.Parameters;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.DirectDecrypter;
@@ -23,11 +27,14 @@ import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.OCTKey;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;
+import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.stream.Collectors;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,21 +44,12 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.security.SecureRandom;
-import java.util.Collection;
-import java.util.stream.Collectors;
-
-import static org.junit.runners.Parameterized.Parameters;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
 @RunWith(Parameterized.class)
 public class JWEDirectTest {
-
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -68,14 +66,14 @@ public class JWEDirectTest {
         this.enc = enc;
     }
 
-    @Parameters(name="Encrypt with Direct Encryption, enc {0}")
+    @Parameters(name = "Encrypt with Direct Encryption, enc {0}")
     public static Collection<Object[]> data() {
-        return JWAlgorithmUtils.getSupportedIdTokenResponseEnc().stream().map(s -> new Object[]{s}).collect(Collectors.toList());
+        return JWAlgorithmUtils.getSupportedIdTokenResponseEnc().stream().map(s -> new Object[] { s }).collect(Collectors.toList());
     }
 
     @Test
     public void encryptIdToken() {
-        byte[] secretKey = new byte[EncryptionMethod.parse(this.enc).cekBitLength()/8];
+        byte[] secretKey = new byte[EncryptionMethod.parse(this.enc).cekBitLength() / 8];
         new SecureRandom().nextBytes(secretKey);
 
         // Convert to JWK format
@@ -91,22 +89,23 @@ public class JWEDirectTest {
         client.setIdTokenEncryptedResponseEnc(this.enc);
 
         when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
-        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+        when(jwkService.filter(any(), any())).thenReturn(Maybe.just(key));
 
         TestObserver testObserver = jweService.encryptIdToken("JWT", client).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(jweString -> {
-            JWEObject jwe = JWEObject.parse((String)jweString);
-            jwe.decrypt(new DirectDecrypter(jwk));
-            return "JWT".equals(jwe.getPayload().toString());
-        });
+        testObserver.assertValue(
+            jweString -> {
+                JWEObject jwe = JWEObject.parse((String) jweString);
+                jwe.decrypt(new DirectDecrypter(jwk));
+                return "JWT".equals(jwe.getPayload().toString());
+            }
+        );
     }
-
 
     @Test
     public void encryptUserinfo() {
-        byte[] secretKey = new byte[EncryptionMethod.parse(this.enc).cekBitLength()/8];
+        byte[] secretKey = new byte[EncryptionMethod.parse(this.enc).cekBitLength() / 8];
         new SecureRandom().nextBytes(secretKey);
 
         // Convert to JWK format
@@ -122,21 +121,23 @@ public class JWEDirectTest {
         client.setUserinfoEncryptedResponseEnc(this.enc);
 
         when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
-        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+        when(jwkService.filter(any(), any())).thenReturn(Maybe.just(key));
 
         TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(jweString -> {
-            JWEObject jwe = JWEObject.parse((String)jweString);
-            jwe.decrypt(new DirectDecrypter(jwk));
-            return "JWT".equals(jwe.getPayload().toString());
-        });
+        testObserver.assertValue(
+            jweString -> {
+                JWEObject jwe = JWEObject.parse((String) jweString);
+                jwe.decrypt(new DirectDecrypter(jwk));
+                return "JWT".equals(jwe.getPayload().toString());
+            }
+        );
     }
 
     @Test
     public void encryptIdToken_wronkKeySize() {
-        byte[] secretKey = new byte[(EncryptionMethod.parse(this.enc).cekBitLength()/8)-8];
+        byte[] secretKey = new byte[(EncryptionMethod.parse(this.enc).cekBitLength() / 8) - 8];
         new SecureRandom().nextBytes(secretKey);
 
         // Convert to JWK format
@@ -152,7 +153,7 @@ public class JWEDirectTest {
         client.setIdTokenEncryptedResponseEnc(this.enc);
 
         when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
-        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+        when(jwkService.filter(any(), any())).thenReturn(Maybe.just(key));
 
         TestObserver testObserver = jweService.encryptIdToken("JWT", client).test();
         testObserver.assertError(ServerErrorException.class);
@@ -161,7 +162,7 @@ public class JWEDirectTest {
 
     @Test
     public void encryptUserinfo_wronkKeySize() {
-        byte[] secretKey = new byte[(EncryptionMethod.parse(this.enc).cekBitLength()/8)-8];
+        byte[] secretKey = new byte[(EncryptionMethod.parse(this.enc).cekBitLength() / 8) - 8];
         new SecureRandom().nextBytes(secretKey);
 
         // Convert to JWK format
@@ -177,7 +178,7 @@ public class JWEDirectTest {
         client.setUserinfoEncryptedResponseEnc(this.enc);
 
         when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
-        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+        when(jwkService.filter(any(), any())).thenReturn(Maybe.just(key));
 
         TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
         testObserver.assertError(ServerErrorException.class);

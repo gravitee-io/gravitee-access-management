@@ -42,30 +42,40 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
         final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
 
         // get user
-        final io.gravitee.am.model.User endUser = routingContext.user() != null ?
-                ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null;
+        final io.gravitee.am.model.User endUser = routingContext.user() != null
+            ? ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser()
+            : null;
 
         // create authorization request
         final AuthorizationRequest authorizationRequest = resolveInitialAuthorizeRequest(routingContext);
 
         // compute authorization request
-        computeAuthorizationRequest(authorizationRequest, client, endUser, h -> {
-            if (h.failed()) {
-                routingContext.fail(h.cause());
-                return;
+        computeAuthorizationRequest(
+            authorizationRequest,
+            client,
+            endUser,
+            h -> {
+                if (h.failed()) {
+                    routingContext.fail(h.cause());
+                    return;
+                }
+                // prepare context for the next handlers
+                routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
+                // continue
+                routingContext.next();
             }
-            // prepare context for the next handlers
-            routingContext.session().put(OAuth2Constants.AUTHORIZATION_REQUEST, authorizationRequest);
-            // continue
-            routingContext.next();
-        });
+        );
     }
 
-    private void computeAuthorizationRequest(AuthorizationRequest authorizationRequest, Client client, User endUser, Handler<AsyncResult> handler) {
-        authorizationRequestResolver.resolve(authorizationRequest, client, endUser)
-                .subscribe(
-                        __ -> handler.handle(Future.succeededFuture()),
-                        error -> handler.handle(Future.failedFuture(error)));
+    private void computeAuthorizationRequest(
+        AuthorizationRequest authorizationRequest,
+        Client client,
+        User endUser,
+        Handler<AsyncResult> handler
+    ) {
+        authorizationRequestResolver
+            .resolve(authorizationRequest, client, endUser)
+            .subscribe(__ -> handler.handle(Future.succeededFuture()), error -> handler.handle(Future.failedFuture(error)));
     }
 
     private AuthorizationRequest resolveInitialAuthorizeRequest(RoutingContext routingContext) {

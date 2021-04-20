@@ -16,9 +16,8 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.application.ApplicationType;
-
-import javax.validation.constraints.NotNull;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -90,10 +89,17 @@ public class NewApplication {
 
     @Override
     public String toString() {
-        return "{\"_class\":\"NewApplication\", " +
-                "\"name\":" + (name == null ? "null" : "\"" + name + "\"") + ", " +
-                "\"type\":" + (type == null ? "null" : type) + ", " +
-                "\"description\":" + (description == null ? "null" : "\"" + description + "\"") +
-                "}";
+        return (
+            "{\"_class\":\"NewApplication\", " +
+            "\"name\":" +
+            (name == null ? "null" : "\"" + name + "\"") +
+            ", " +
+            "\"type\":" +
+            (type == null ? "null" : type) +
+            ", " +
+            "\"description\":" +
+            (description == null ? "null" : "\"" + description + "\"") +
+            "}"
+        );
     }
 }

@@ -26,7 +26,6 @@ package io.gravitee.am.common.event;
 import io.gravitee.common.event.EventListener;
 
 public interface EventManager extends io.gravitee.common.event.EventManager {
-
     <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain);
 
     <T extends Enum> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain);

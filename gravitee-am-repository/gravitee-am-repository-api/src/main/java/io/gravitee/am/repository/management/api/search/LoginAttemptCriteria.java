@@ -50,6 +50,7 @@ public class LoginAttemptCriteria {
     }
 
     public static class Builder {
+
         private String domain;
         private String client;
         private String identityProvider;
@@ -82,11 +83,20 @@ public class LoginAttemptCriteria {
 
     @Override
     public String toString() {
-        return "{\"_class\":\"LoginAttemptCriteria\", " +
-                "\"domain\":" + (domain == null ? "null" : "\"" + domain + "\"") + ", " +
-                "\"client\":" + (client == null ? "null" : "\"" + client + "\"") + ", " +
-                "\"identityProvider\":" + (identityProvider == null ? "null" : "\"" + identityProvider + "\"") + ", " +
-                "\"username\":" + (username == null ? "null" : "\"" + username + "\"") +
-                "}";
+        return (
+            "{\"_class\":\"LoginAttemptCriteria\", " +
+            "\"domain\":" +
+            (domain == null ? "null" : "\"" + domain + "\"") +
+            ", " +
+            "\"client\":" +
+            (client == null ? "null" : "\"" + client + "\"") +
+            ", " +
+            "\"identityProvider\":" +
+            (identityProvider == null ? "null" : "\"" + identityProvider + "\"") +
+            ", " +
+            "\"username\":" +
+            (username == null ? "null" : "\"" + username + "\"") +
+            "}"
+        );
     }
 }

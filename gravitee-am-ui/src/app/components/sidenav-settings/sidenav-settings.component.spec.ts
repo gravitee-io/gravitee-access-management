@@ -15,7 +15,7 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SidenavSettingsComponent } from "./sidenav-settings.component";
+import { SidenavSettingsComponent } from './sidenav-settings.component';
 
 describe('SidenavSettingsComponent', () => {
   let component: SidenavSettingsComponent;
@@ -23,9 +23,8 @@ describe('SidenavSettingsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ SidenavSettingsComponent ]
-    })
-      .compileComponents();
+      declarations: [SidenavSettingsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

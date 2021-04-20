@@ -33,4 +33,3 @@ public class CertificateWithApplicationsException extends AbstractManagementExce
         return "You can't delete a certificate with existing applications.";
     }
 }
-

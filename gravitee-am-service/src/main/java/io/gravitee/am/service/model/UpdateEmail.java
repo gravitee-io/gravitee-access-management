@@ -28,6 +28,7 @@ public class UpdateEmail {
     private String fromName;
     private String subject;
     private String content;
+
     @Min(1)
     private int expiresAfter;
 

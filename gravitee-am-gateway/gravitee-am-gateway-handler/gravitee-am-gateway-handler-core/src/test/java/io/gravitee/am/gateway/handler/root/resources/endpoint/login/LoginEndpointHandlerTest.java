@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
@@ -26,8 +28,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,25 +46,18 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
         ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
         clientRequestParseHandler.setRequired(true);
 
-        router.route(HttpMethod.GET, "/login")
-                .handler(clientRequestParseHandler)
-                .failureHandler(new ErrorHandler());
+        router.route(HttpMethod.GET, "/login").handler(clientRequestParseHandler).failureHandler(new ErrorHandler());
     }
 
     @Test
     public void shouldNotInvokeLoginEndpoint_noClientParameter() throws Exception {
-        testRequest(
-                HttpMethod.GET, "/login",
-                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+        testRequest(HttpMethod.GET, "/login", HttpStatusCode.BAD_REQUEST_400, "Bad Request");
     }
 
     @Test
     public void shouldNotInvokeLoginEndpoint_noClient() throws Exception {
         when(clientSyncService.findByClientId("test")).thenReturn(Maybe.empty());
 
-        testRequest(
-                HttpMethod.GET, "/login?client_id=test",
-                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+        testRequest(HttpMethod.GET, "/login?client_id=test", HttpStatusCode.BAD_REQUEST_400, "Bad Request");
     }
-
 }

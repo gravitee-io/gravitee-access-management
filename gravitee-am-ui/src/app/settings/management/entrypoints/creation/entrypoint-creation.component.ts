@@ -13,27 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {SnackbarService} from "../../../../services/snackbar.service";
-import {EntrypointService} from "../../../../services/entrypoint.service";
+import { Component } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { EntrypointService } from '../../../../services/entrypoint.service';
 
 @Component({
   selector: 'app-creation',
   templateUrl: './entrypoint-creation.component.html',
-  styleUrls: ['./entrypoint-creation.component.scss']
+  styleUrls: ['./entrypoint-creation.component.scss'],
 })
 export class EntrypointCreationComponent {
   entrypoint: any = { tags: [] };
 
-  constructor(private entrypointService: EntrypointService, private router: Router, private route: ActivatedRoute,
-              private snackbarService : SnackbarService) { }
+  constructor(
+    private entrypointService: EntrypointService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+  ) {}
 
   create() {
-    this.entrypointService.create(this.entrypoint).subscribe(data => {
-      this.snackbarService.open("Entrypoint " + data.name + " created");
+    this.entrypointService.create(this.entrypoint).subscribe((data) => {
+      this.snackbarService.open('Entrypoint ' + data.name + ' created');
       this.router.navigate(['/settings', 'management', 'entrypoints', data.id]);
     });
   }
-
 }

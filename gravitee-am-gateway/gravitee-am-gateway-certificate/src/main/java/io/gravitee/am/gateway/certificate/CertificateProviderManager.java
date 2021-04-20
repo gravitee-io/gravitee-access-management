@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.certificate;
 
 import io.gravitee.am.model.Certificate;
-
 import java.util.Collection;
 
 /**
@@ -24,7 +23,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface CertificateProviderManager {
-
     void create(Certificate certificate);
 
     void update(Certificate certificate);

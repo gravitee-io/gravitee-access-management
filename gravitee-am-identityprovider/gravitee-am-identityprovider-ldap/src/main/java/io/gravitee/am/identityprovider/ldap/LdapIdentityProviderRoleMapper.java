@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.ldap;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
-
 import java.util.List;
 import java.util.Map;
 

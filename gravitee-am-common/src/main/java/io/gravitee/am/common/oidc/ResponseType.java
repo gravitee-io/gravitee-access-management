@@ -24,7 +24,6 @@ package io.gravitee.am.common.oidc;
  * @author GraviteeSource Team
  */
 public interface ResponseType {
-
     /**
      * When supplied as the response_type parameter in an OAuth 2.0 Authorization Request, a successful response MUST include the parameter id_token.
      * The Authorization Server SHOULD NOT return an OAuth 2.0 Authorization Code, Access Token, or Access Token Type in a successful response to the grant request.

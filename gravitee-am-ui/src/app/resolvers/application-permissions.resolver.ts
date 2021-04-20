@@ -20,13 +20,11 @@ import { ApplicationService } from '../services/application.service';
 
 @Injectable()
 export class ApplicationPermissionsResolver implements Resolve<any> {
+  constructor(private applicationService: ApplicationService) {}
 
-  constructor(private applicationService: ApplicationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const domainId = (route.paramMap.get('domainId')) ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId');
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+    const domainId = route.paramMap.get('domainId') ? route.paramMap.get('domainId') : route.parent.paramMap.get('domainId');
     const appId = route.paramMap.get('appId');
     return this.applicationService.permissions(domainId, appId);
   }
-
 }

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.reporter.mongodb.audit;
 
+import static com.mongodb.client.model.Filters.*;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
@@ -45,6 +47,11 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -53,19 +60,11 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import static com.mongodb.client.model.Filters.*;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Import({io.gravitee.am.reporter.mongodb.spring.MongoReporterConfiguration.class})
+@Import({ io.gravitee.am.reporter.mongodb.spring.MongoReporterConfiguration.class })
 public class MongoAuditReporter extends AbstractService implements AuditReporter, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
@@ -91,18 +90,32 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private Disposable disposable;
 
     @Override
-    public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
+    public Single<Page<Audit>> search(
+        ReferenceType referenceType,
+        String referenceId,
+        AuditReportableCriteria criteria,
+        int page,
+        int size
+    ) {
         // build query
         Bson query = query(referenceType, referenceId, criteria);
 
         // run search query
         Single<Long> countOperation = Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l);
-        Single<List<Audit>> auditsOperation = Observable.fromPublisher(reportableCollection.find(query).sort(new BasicDBObject(FIELD_TIMESTAMP, -1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
+        Single<List<Audit>> auditsOperation = Observable
+            .fromPublisher(reportableCollection.find(query).sort(new BasicDBObject(FIELD_TIMESTAMP, -1)).skip(size * page).limit(size))
+            .map(this::convert)
+            .collect(LinkedList::new, List::add);
         return Single.zip(countOperation, auditsOperation, (count, audits) -> new Page<>(audits, page, count));
     }
 
     @Override
-    public Single<Map<Object, Object>> aggregate(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, Type analyticsType) {
+    public Single<Map<Object, Object>> aggregate(
+        ReferenceType referenceType,
+        String referenceId,
+        AuditReportableCriteria criteria,
+        Type analyticsType
+    ) {
         // build query
         Bson query = query(referenceType, referenceId, criteria);
         switch (analyticsType) {
@@ -119,25 +132,32 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
 
     @Override
     public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
-        return Observable.fromPublisher(reportableCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(
+                reportableCollection
+                    .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id)))
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
     public void report(Reportable reportable) {
-        bulkProcessor
-                .onNext((Audit) reportable);
+        bulkProcessor.onNext((Audit) reportable);
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
         // init reportable collection
-        reportableCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
+        reportableCollection =
+            this.mongoClient.getDatabase(this.configuration.getDatabase())
+                .getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
 
         // init bulk processor
-        disposable = bulkProcessor.buffer(
-                configuration.getFlushInterval(),
-                TimeUnit.SECONDS,
-                configuration.getBulkActions())
+        disposable =
+            bulkProcessor
+                .buffer(configuration.getFlushInterval(), TimeUnit.SECONDS, configuration.getBulkActions())
                 .flatMap(this::bulk)
                 .doOnError(throwable -> logger.error("An error occurs while indexing data into MongoDB", throwable))
                 .subscribe();
@@ -172,55 +192,107 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         Map<Long, Long> intervals = intervals(criteria);
         String fieldSuccess = (criteria.types().get(0) + "_" + Status.SUCCESS).toLowerCase();
         String fieldFailure = (criteria.types().get(0) + "_" + Status.FAILURE).toLowerCase();
-        return Observable.fromPublisher(reportableCollection.aggregate(Arrays.asList(
-                Aggregates.match(query),
-                Aggregates.group(
-                        new BasicDBObject("_id",
-                                new BasicDBObject("$subtract",
-                                        Arrays.asList(
+        return Observable
+            .fromPublisher(
+                reportableCollection.aggregate(
+                    Arrays.asList(
+                        Aggregates.match(query),
+                        Aggregates.group(
+                            new BasicDBObject(
+                                "_id",
+                                new BasicDBObject(
+                                    "$subtract",
+                                    Arrays.asList(
+                                        new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0))),
+                                        new BasicDBObject(
+                                            "$mod",
+                                            Arrays.asList(
                                                 new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0))),
-                                                new BasicDBObject("$mod", Arrays.asList(new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0))), criteria.interval()))
-                                        ))),
-                        Accumulators.sum(fieldSuccess, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS)), 1, 0))),
-                        Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE)), 1, 0)))))))
-                .toList()
-                .map(docs -> {
+                                                criteria.interval()
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            Accumulators.sum(
+                                fieldSuccess,
+                                new BasicDBObject(
+                                    "$cond",
+                                    Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS)), 1, 0)
+                                )
+                            ),
+                            Accumulators.sum(
+                                fieldFailure,
+                                new BasicDBObject(
+                                    "$cond",
+                                    Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE)), 1, 0)
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            .toList()
+            .map(
+                docs -> {
                     Map<Long, Long> successResult = new HashMap<>();
                     Map<Long, Long> failureResult = new HashMap<>();
-                    docs.forEach(document -> {
-                        Long timestamp = ((Number) ((Document) document.get("_id")).get("_id")).longValue();
-                        Long successAttempts = ((Number) document.get(fieldSuccess)).longValue();
-                        Long failureAttempts = ((Number) document.get(fieldFailure)).longValue();
-                        successResult.put(timestamp, successAttempts);
-                        failureResult.put(timestamp, failureAttempts);
-                    });
+                    docs.forEach(
+                        document -> {
+                            Long timestamp = ((Number) ((Document) document.get("_id")).get("_id")).longValue();
+                            Long successAttempts = ((Number) document.get(fieldSuccess)).longValue();
+                            Long failureAttempts = ((Number) document.get(fieldFailure)).longValue();
+                            successResult.put(timestamp, successAttempts);
+                            failureResult.put(timestamp, failureAttempts);
+                        }
+                    );
                     // complete result with remaining intervals
-                    intervals.forEach((k, v) -> {
-                        successResult.putIfAbsent(k, v);
-                        failureResult.putIfAbsent(k, v);
-                    });
-                    List<Long> successData = successResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> e.getValue()).collect(Collectors.toList());
-                    List<Long> failureData = failureResult.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> e.getValue()).collect(Collectors.toList());
+                    intervals.forEach(
+                        (k, v) -> {
+                            successResult.putIfAbsent(k, v);
+                            failureResult.putIfAbsent(k, v);
+                        }
+                    );
+                    List<Long> successData = successResult
+                        .entrySet()
+                        .stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .map(e -> e.getValue())
+                        .collect(Collectors.toList());
+                    List<Long> failureData = failureResult
+                        .entrySet()
+                        .stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .map(e -> e.getValue())
+                        .collect(Collectors.toList());
                     Map<Object, Object> result = new HashMap<>();
                     result.put(fieldSuccess, successData);
                     result.put(fieldFailure, failureData);
                     return result;
-                });
+                }
+            );
     }
 
     private Single<Map<Object, Object>> executeGroupBy(AuditReportableCriteria criteria, Bson query) {
-        return Observable.fromPublisher(reportableCollection.aggregate(
-                Arrays.asList(
+        return Observable
+            .fromPublisher(
+                reportableCollection.aggregate(
+                    Arrays.asList(
                         Aggregates.match(query),
                         Aggregates.group(new BasicDBObject("_id", "$" + criteria.field()), Accumulators.sum("count", 1)),
-                        Aggregates.limit(criteria.size() != null ? criteria.size() : 50))
-        ))
-                .toList()
-                .map(docs -> docs.stream().collect(Collectors.toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
+                        Aggregates.limit(criteria.size() != null ? criteria.size() : 50)
+                    )
+                )
+            )
+            .toList()
+            .map(docs -> docs.stream().collect(Collectors.toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
     }
 
     private Single<Map<Object, Object>> executeCount(Bson query) {
-        return Observable.fromPublisher(reportableCollection.countDocuments(query)).first(0l).map(data -> Collections.singletonMap("data", data));
+        return Observable
+            .fromPublisher(reportableCollection.countDocuments(query))
+            .first(0l)
+            .map(data -> Collections.singletonMap("data", data));
     }
 
     private Flowable bulk(List<Audit> audits) {
@@ -253,7 +325,9 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
 
         // time range
         if (criteria.from() != 0 && criteria.to() != 0) {
-            filters.add(new Document(FIELD_TIMESTAMP, new Document("$gte", new Date(criteria.from())).append("$lte", new Date(criteria.to()))));
+            filters.add(
+                new Document(FIELD_TIMESTAMP, new Document("$gte", new Date(criteria.from())).append("$lte", new Date(criteria.to())))
+            );
         } else {
             if (criteria.from() != 0) {
                 filters.add(gte(FIELD_TIMESTAMP, new Date(criteria.from())));

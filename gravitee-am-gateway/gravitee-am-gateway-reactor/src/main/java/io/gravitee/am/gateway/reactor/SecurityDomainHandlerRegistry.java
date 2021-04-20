@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.reactor;
 
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
-
 import java.util.Collection;
 
 /**
@@ -25,7 +24,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface SecurityDomainHandlerRegistry {
-
     void create(Domain domain);
 
     void update(Domain domain);

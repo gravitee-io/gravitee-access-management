@@ -24,13 +24,12 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,22 +54,24 @@ public class JWTServiceImpl implements JWTService {
 
     @Override
     public Single<String> encode(JWT jwt, Client client) {
-        return certificateManager.get(client.getCertificate())
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
+        return certificateManager
+            .get(client.getCertificate())
+            .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+            .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
     }
 
     @Override
     public Single<String> encodeUserinfo(JWT jwt, Client client) {
         //Userinfo may not be signed but only encrypted
-        if(client.getUserinfoSignedResponseAlg()==null) {
-            return encode(jwt,certificateManager.noneAlgorithmCertificateProvider());
+        if (client.getUserinfoSignedResponseAlg() == null) {
+            return encode(jwt, certificateManager.noneAlgorithmCertificateProvider());
         }
 
-        return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
-                .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
+        return certificateManager
+            .findByAlgorithm(client.getUserinfoSignedResponseAlg())
+            .switchIfEmpty(certificateManager.get(client.getCertificate()))
+            .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+            .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
     }
 
     @Override
@@ -85,31 +86,35 @@ public class JWTServiceImpl implements JWTService {
             signedResponseAlg = JWSAlgorithm.RS256.getName();
         }
 
-        return certificateManager.findByAlgorithm(signedResponseAlg)
-                .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
+        return certificateManager
+            .findByAlgorithm(signedResponseAlg)
+            .switchIfEmpty(certificateManager.get(client.getCertificate()))
+            .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+            .flatMapSingle(certificateProvider -> encode(jwt, certificateProvider));
     }
 
     @Override
     public Single<JWT> decodeAndVerify(String jwt, Client client) {
-        return certificateManager.get(client.getCertificate())
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
-                .flatMapSingle(certificateProvider -> decode(certificateProvider, jwt))
-                .map(JWT::new);
+        return certificateManager
+            .get(client.getCertificate())
+            .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+            .flatMapSingle(certificateProvider -> decode(certificateProvider, jwt))
+            .map(JWT::new);
     }
 
     @Override
     public Single<JWT> decode(String jwt) {
-        return Single.create(emitter -> {
-            try {
-                String json = new String(Base64.getDecoder().decode(jwt.split("\\.")[1]), "UTF-8");
-                emitter.onSuccess(objectMapper.readValue(json, JWT.class));
-            } catch (Exception ex) {
-                logger.debug("Failed to decode JWT", ex);
-                emitter.onError(new InvalidTokenException("The access token is invalid", ex));
+        return Single.create(
+            emitter -> {
+                try {
+                    String json = new String(Base64.getDecoder().decode(jwt.split("\\.")[1]), "UTF-8");
+                    emitter.onSuccess(objectMapper.readValue(json, JWT.class));
+                } catch (Exception ex) {
+                    logger.debug("Failed to decode JWT", ex);
+                    emitter.onError(new InvalidTokenException("The access token is invalid", ex));
+                }
             }
-        });
+        );
     }
 
     private Single<String> sign(CertificateProvider certificateProvider, JWT jwt) {
@@ -119,5 +124,4 @@ public class JWTServiceImpl implements JWTService {
     private Single<Map<String, Object>> decode(CertificateProvider certificateProvider, String payload) {
         return Single.just(certificateProvider.getJwtParser().parse(payload));
     }
-
 }

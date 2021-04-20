@@ -16,9 +16,8 @@
 package io.gravitee.am.reporter.mongodb.audit.model;
 
 import io.gravitee.am.model.ReferenceType;
-import org.bson.codecs.pojo.annotations.BsonId;
-
 import java.time.Instant;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,6 +27,7 @@ public class AuditMongo {
 
     @BsonId
     private String id;
+
     private String transactionId;
     private String type;
     private ReferenceType referenceType;

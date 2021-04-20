@@ -36,17 +36,16 @@ public class HMACKeyProcessor<C extends SecurityContext> extends AbstractKeyProc
         return new JWSVerificationKeySelector<C>(signature.getAlg(), jwkSource) {
             @Override
             protected JWKMatcher createJWKMatcher(final JWSHeader jwsHeader) {
-
-                if (! getExpectedJWSAlgorithm().equals(jwsHeader.getAlgorithm())) {
+                if (!getExpectedJWSAlgorithm().equals(jwsHeader.getAlgorithm())) {
                     // Unexpected JWS alg
                     return null;
                 } else if (JWSAlgorithm.Family.HMAC_SHA.contains(getExpectedJWSAlgorithm())) {
                     // HMAC secret matcher
                     return new JWKMatcher.Builder()
-                            .keyType(KeyType.forAlgorithm(getExpectedJWSAlgorithm()))
-                            .privateOnly(true)
-                            .algorithms(getExpectedJWSAlgorithm(), null)
-                            .build();
+                        .keyType(KeyType.forAlgorithm(getExpectedJWSAlgorithm()))
+                        .privateOnly(true)
+                        .algorithms(getExpectedJWSAlgorithm(), null)
+                        .build();
                 } else {
                     return null; // Unsupported algorithm
                 }

@@ -20,7 +20,7 @@ import { FactorResolver } from './factor.resolver';
 describe('FactorResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [FactorResolver]
+      providers: [FactorResolver],
     });
   });
 

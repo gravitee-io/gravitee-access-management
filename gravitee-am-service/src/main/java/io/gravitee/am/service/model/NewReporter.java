@@ -78,9 +78,6 @@ public class NewReporter {
 
     @Override
     public String toString() {
-        return "NewReporter{" +
-                "type='" + type + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+        return "NewReporter{" + "type='" + type + '\'' + ", name='" + name + '\'' + '}';
     }
 }

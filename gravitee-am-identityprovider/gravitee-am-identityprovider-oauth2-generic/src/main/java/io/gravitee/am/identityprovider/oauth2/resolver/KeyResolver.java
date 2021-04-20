@@ -20,7 +20,6 @@ package io.gravitee.am.identityprovider.oauth2.resolver;
  * @author GraviteeSource Team
  */
 public enum KeyResolver {
-
     GIVEN_KEY,
-    JWKS_URL
+    JWKS_URL,
 }

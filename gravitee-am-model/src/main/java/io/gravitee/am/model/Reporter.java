@@ -33,8 +33,7 @@ public class Reporter {
     private Date createdAt;
     private Date updatedAt;
 
-    public Reporter() {
-    }
+    public Reporter() {}
 
     public Reporter(Reporter other) {
         this.id = other.id;

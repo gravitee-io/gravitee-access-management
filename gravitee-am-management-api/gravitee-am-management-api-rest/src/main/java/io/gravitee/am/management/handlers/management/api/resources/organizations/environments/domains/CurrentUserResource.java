@@ -27,44 +27,52 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-
+import java.util.HashMap;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"user"})
+@Api(tags = { "user" })
 @Path("/user")
 public class CurrentUserResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get the current user")
-    @ApiResponses({
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Current user successfully fetched", response = User.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void get(@Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
         // Get the organization the current user is logged on.
-        String organizationId = (String) authenticatedUser.getAdditionalInformation().getOrDefault(Claims.organization, Organization.DEFAULT);
+        String organizationId = (String) authenticatedUser
+            .getAdditionalInformation()
+            .getOrDefault(Claims.organization, Organization.DEFAULT);
 
-        permissionService.findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
-                .map(Permission::flatten)
-                .map(permissions -> {
+        permissionService
+            .findAllPermissions(authenticatedUser, ReferenceType.ORGANIZATION, organizationId)
+            .map(Permission::flatten)
+            .map(
+                permissions -> {
                     // prepare profile information with role permissions
                     Map<String, Object> profile = new HashMap<>(authenticatedUser.getAdditionalInformation());
                     profile.put("permissions", permissions);
                     profile.remove(CustomClaims.ROLES);
 
                     return profile;
-                }).subscribe(response::resume, response::resume);
+                }
+            )
+            .subscribe(response::resume, response::resume);
     }
 }

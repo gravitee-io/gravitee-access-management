@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {Subject} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class BreadcrumbService {
-
   private routesFriendlyNames: Map<string, string> = new Map<string, string>();
   private routesFriendlyNamesRegex: Map<string, string> = new Map<string, string>();
   private routesWithCallback: Map<string, (string: string) => string> = new Map<string, (string: string) => string>();

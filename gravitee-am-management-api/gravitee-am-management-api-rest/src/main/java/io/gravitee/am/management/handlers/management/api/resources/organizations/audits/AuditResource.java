@@ -26,14 +26,13 @@ import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,19 +48,23 @@ public class AuditResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an audit log",
-            notes = "User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Get an audit log",
+        notes = "User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Audit log successfully fetched", response = Audit.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void get(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("audit") String audit,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("audit") String audit,
+        @Suspended final AsyncResponse response
+    ) {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_AUDIT, Acl.READ)
-                .andThen(auditService.findById(ReferenceType.ORGANIZATION, organizationId, audit))
-                .subscribe(response::resume, response::resume);
+            .andThen(auditService.findById(ReferenceType.ORGANIZATION, organizationId, audit))
+            .subscribe(response::resume, response::resume);
     }
-
 }

@@ -30,10 +30,9 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 /**
  * SSO Session Handler to check if the user stored in the HTTP session is still "valid" upon the incoming request
@@ -63,60 +62,76 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
             return;
         }
 
-        authorizeUser(context, h -> {
-            if (h.failed()) {
-                Throwable cause = h.cause();
-                LOGGER.debug("An error occurs while checking SSO Session upon the current user : {}", context.user().principal(), cause);
-                if (cause instanceof AccountDisabledException) {
-                    // user has been disabled, invalidate session
-                    context.clearUser();
-                    context.session().destroy();
-                } else if (cause instanceof InvalidRequestException) {
-                    context.fail(new HttpStatusException(403, "Invalid request for the current SSO context"));
-                    return;
+        authorizeUser(
+            context,
+            h -> {
+                if (h.failed()) {
+                    Throwable cause = h.cause();
+                    LOGGER.debug(
+                        "An error occurs while checking SSO Session upon the current user : {}",
+                        context.user().principal(),
+                        cause
+                    );
+                    if (cause instanceof AccountDisabledException) {
+                        // user has been disabled, invalidate session
+                        context.clearUser();
+                        context.session().destroy();
+                    } else if (cause instanceof InvalidRequestException) {
+                        context.fail(new HttpStatusException(403, "Invalid request for the current SSO context"));
+                        return;
+                    }
                 }
+                context.next();
             }
-            context.next();
-        });
-
+        );
     }
 
     private void authorizeUser(RoutingContext context, Handler<AsyncResult<Void>> handler) {
         // retrieve end user and check if it's authorized to call the subsequence handlers
         User authenticatedUser = context.user();
-        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
+        io.gravitee.am.model.User endUser =
+            ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
 
         // check account status
-        checkAccountStatus(endUser, accountHandler -> {
-            if (accountHandler.failed()) {
-                handler.handle(Future.failedFuture(accountHandler.cause()));
-                return;
-            }
-            // additional check
-            checkClient(context, endUser, clientHandler -> {
-                if (clientHandler.failed()) {
-                    handler.handle(Future.failedFuture(clientHandler.cause()));
+        checkAccountStatus(
+            endUser,
+            accountHandler -> {
+                if (accountHandler.failed()) {
+                    handler.handle(Future.failedFuture(accountHandler.cause()));
                     return;
                 }
-                // continue
-                handler.handle(Future.succeededFuture());
-            });
-        });
+                // additional check
+                checkClient(
+                    context,
+                    endUser,
+                    clientHandler -> {
+                        if (clientHandler.failed()) {
+                            handler.handle(Future.failedFuture(clientHandler.cause()));
+                            return;
+                        }
+                        // continue
+                        handler.handle(Future.succeededFuture());
+                    }
+                );
+            }
+        );
     }
 
     private void checkAccountStatus(io.gravitee.am.model.User user, Handler<AsyncResult<Void>> handler) {
-        userManager.get(user.getId())
-                .subscribe(
-                        user1 -> {
-                            // if user is disabled, throw exception
-                            if (!user1.isEnabled()) {
-                                handler.handle(Future.failedFuture(new AccountDisabledException(user1.getId())));
-                                return;
-                            }
-                            handler.handle(Future.succeededFuture());
-                        },
-                        error -> handler.handle(Future.failedFuture(error)),
-                        () -> handler.handle(Future.succeededFuture()));
+        userManager
+            .get(user.getId())
+            .subscribe(
+                user1 -> {
+                    // if user is disabled, throw exception
+                    if (!user1.isEnabled()) {
+                        handler.handle(Future.failedFuture(new AccountDisabledException(user1.getId())));
+                        return;
+                    }
+                    handler.handle(Future.succeededFuture());
+                },
+                error -> handler.handle(Future.failedFuture(error)),
+                () -> handler.handle(Future.succeededFuture())
+            );
     }
 
     private void checkClient(RoutingContext context, io.gravitee.am.model.User user, Handler<AsyncResult<Void>> handler) {
@@ -132,45 +147,47 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
             return;
         }
         // check if both clients (requested and user client) share the same identity provider
-        Single.zip(getClient(clientId), getClient(user.getClient()), (optRequestedClient, optUserClient) -> {
-            Client requestedClient = optRequestedClient.get();
-            Client userClient = optUserClient.get();
+        Single
+            .zip(
+                getClient(clientId),
+                getClient(user.getClient()),
+                (optRequestedClient, optUserClient) -> {
+                    Client requestedClient = optRequestedClient.get();
+                    Client userClient = optUserClient.get();
 
-            // no client to check, continue
-            if (requestedClient == null) {
-                return Completable.complete();
-            }
+                    // no client to check, continue
+                    if (requestedClient == null) {
+                        return Completable.complete();
+                    }
 
-            // no client to check for the user, continue
-            if (userClient == null) {
-                return Completable.complete();
-            }
+                    // no client to check for the user, continue
+                    if (userClient == null) {
+                        return Completable.complete();
+                    }
 
-            // if same client, nothing to do, continue
-            if (userClient.getId().equals(requestedClient.getId())) {
-                return Completable.complete();
-            }
+                    // if same client, nothing to do, continue
+                    if (userClient.getId().equals(requestedClient.getId())) {
+                        return Completable.complete();
+                    }
 
-            // both clients are sharing the same provider, continue
-            if (requestedClient.getIdentities() != null && requestedClient.getIdentities().contains(user.getSource())) {
-                return Completable.complete();
-            }
+                    // both clients are sharing the same provider, continue
+                    if (requestedClient.getIdentities() != null && requestedClient.getIdentities().contains(user.getSource())) {
+                        return Completable.complete();
+                    }
 
-            // throw error
-            throw new InvalidRequestException("User is not on a shared identity provider");
-        }).subscribe(
-            __ -> handler.handle(Future.succeededFuture()),
-            error -> handler.handle(Future.failedFuture(error)));
-
+                    // throw error
+                    throw new InvalidRequestException("User is not on a shared identity provider");
+                }
+            )
+            .subscribe(__ -> handler.handle(Future.succeededFuture()), error -> handler.handle(Future.failedFuture(error)));
     }
 
     private Single<Optional<Client>> getClient(String clientId) {
-        return clientSyncService.findById(clientId)
-                .switchIfEmpty(Maybe.defer(() -> clientSyncService.findByClientId(clientId)))
-                .map(Optional::ofNullable)
-                .defaultIfEmpty(Optional.empty())
-                .toSingle();
+        return clientSyncService
+            .findById(clientId)
+            .switchIfEmpty(Maybe.defer(() -> clientSyncService.findByClientId(clientId)))
+            .map(Optional::ofNullable)
+            .defaultIfEmpty(Optional.empty())
+            .toSingle();
     }
-
-
 }

@@ -38,14 +38,18 @@ public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandl
      */
     public void get(RoutingContext context) {
         final String consentId = context.request().getParam("consentId");
-        userService.consent(consentId)
-                .subscribe(
-                        scopeApproval -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(Json.encodePrettily(scopeApproval)),
-                        error -> context.fail(error));
+        userService
+            .consent(consentId)
+            .subscribe(
+                scopeApproval ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .end(Json.encodePrettily(scopeApproval)),
+                error -> context.fail(error)
+            );
     }
 
     /**
@@ -56,9 +60,7 @@ public class UserConsentEndpointHandler extends AbstractUserConsentEndpointHandl
         final String consentId = context.request().getParam("consentId");
 
         getPrincipal(context)
-                .flatMapCompletable(principal -> userService.revokeConsent(userId, consentId, principal))
-                .subscribe(
-                        () -> context.response().setStatusCode(204).end(),
-                        error -> context.fail(error));
+            .flatMapCompletable(principal -> userService.revokeConsent(userId, consentId, principal))
+            .subscribe(() -> context.response().setStatusCode(204).end(), error -> context.fail(error));
     }
 }

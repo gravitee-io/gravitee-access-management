@@ -15,7 +15,7 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {ApplicationGeneralComponent} from './general.component';
+import { ApplicationGeneralComponent } from './general.component';
 
 describe('ApplicationGeneralComponent', () => {
   let component: ApplicationGeneralComponent;
@@ -23,9 +23,8 @@ describe('ApplicationGeneralComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationGeneralComponent ]
-    })
-    .compileComponents();
+      declarations: [ApplicationGeneralComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

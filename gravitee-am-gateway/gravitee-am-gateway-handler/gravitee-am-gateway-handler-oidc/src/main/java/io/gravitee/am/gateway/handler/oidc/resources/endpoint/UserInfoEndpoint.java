@@ -21,16 +21,16 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
@@ -41,7 +41,6 @@ import io.reactivex.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,12 +70,14 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     private JWEService jweService;
     private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public UserInfoEndpoint(UserService userService,
-                            RoleService roleService,
-                            GroupService groupService,
-                            JWTService jwtService,
-                            JWEService jweService,
-                            OpenIDDiscoveryService openIDDiscoveryService) {
+    public UserInfoEndpoint(
+        UserService userService,
+        RoleService roleService,
+        GroupService groupService,
+        JWTService jwtService,
+        JWEService jweService,
+        OpenIDDiscoveryService openIDDiscoveryService
+    ) {
         this.userService = userService;
         this.roleService = roleService;
         this.groupService = groupService;
@@ -90,40 +91,44 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         JWT accessToken = context.get(OAuth2AuthHandler.TOKEN_CONTEXT_KEY);
         Client client = context.get(OAuth2AuthHandler.CLIENT_CONTEXT_KEY);
         String subject = accessToken.getSub();
-        userService.findById(subject)
-                .switchIfEmpty(Maybe.error(new InvalidTokenException("No user found for this token")))
-                // enhance user information
-                .flatMapSingle(user -> enhance(user, accessToken))
-                // process user claims
-                .map(user -> processClaims(user, accessToken))
-                // encode response
-                .flatMap(claims -> {
-                        if (!expectSignedOrEncryptedUserInfo(client)) {
-                            context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-                            return Single.just(Json.encodePrettily(claims));
-                        } else {
-                            context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
+        userService
+            .findById(subject)
+            .switchIfEmpty(Maybe.error(new InvalidTokenException("No user found for this token")))
+            // enhance user information
+            .flatMapSingle(user -> enhance(user, accessToken))
+            // process user claims
+            .map(user -> processClaims(user, accessToken))
+            // encode response
+            .flatMap(
+                claims -> {
+                    if (!expectSignedOrEncryptedUserInfo(client)) {
+                        context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+                        return Single.just(Json.encodePrettily(claims));
+                    } else {
+                        context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
 
-                            JWT jwt = new JWT(claims);
-                            jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.extractBasePath(context)));
-                            jwt.setSub(accessToken.getSub());
-                            jwt.setAud(accessToken.getAud());
-                            jwt.setIat(new Date().getTime() / 1000l);
-                            jwt.setExp(accessToken.getExp() / 1000l);
+                        JWT jwt = new JWT(claims);
+                        jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.extractBasePath(context)));
+                        jwt.setSub(accessToken.getSub());
+                        jwt.setAud(accessToken.getAud());
+                        jwt.setIat(new Date().getTime() / 1000l);
+                        jwt.setExp(accessToken.getExp() / 1000l);
 
-                            return jwtService.encodeUserinfo(jwt,client)//Sign if needed, else return unsigned JWT
-                                    .flatMap(userinfo -> jweService.encryptUserinfo(userinfo,client));//Encrypt if needed, else return JWT
-                        }
+                        return jwtService
+                            .encodeUserinfo(jwt, client) //Sign if needed, else return unsigned JWT
+                            .flatMap(userinfo -> jweService.encryptUserinfo(userinfo, client)); //Encrypt if needed, else return JWT
                     }
-                )
-                .subscribe(
-                        buffer -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .end(buffer)
-                        ,
-                        error -> context.fail(error)
-                );
+                }
+            )
+            .subscribe(
+                buffer ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .end(buffer),
+                error -> context.fail(error)
+            );
     }
 
     /**
@@ -133,7 +138,9 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * @return user claims
      */
     private Map<String, Object> processClaims(User user, JWT accessToken) {
-        Map<String, Object> userClaims = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
+        Map<String, Object> userClaims = user.getAdditionalInformation() == null
+            ? new HashMap<>()
+            : new HashMap<>(user.getAdditionalInformation());
         if (userClaims.isEmpty() || !userClaims.containsKey(StandardClaims.SUB)) {
             // The sub (subject) Claim MUST always be returned in the UserInfo Response.
             // https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse
@@ -179,13 +186,14 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         }
 
         // get requested scopes claims
-        final List<String> scopesClaims = scopes.stream()
-                .map(String::toUpperCase)
-                .filter(scope -> Scope.exists(scope) && !Scope.valueOf(scope).getClaims().isEmpty())
-                .map(Scope::valueOf)
-                .map(Scope::getClaims)
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+        final List<String> scopesClaims = scopes
+            .stream()
+            .map(String::toUpperCase)
+            .filter(scope -> Scope.exists(scope) && !Scope.valueOf(scope).getClaims().isEmpty())
+            .map(Scope::valueOf)
+            .map(Scope::getClaims)
+            .flatMap(List::stream)
+            .collect(Collectors.toList());
 
         // no OpenID Connect scopes requested continue
         if (scopesClaims.isEmpty()) {
@@ -193,11 +201,13 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         }
 
         // return specific available sets of information made by scope value request
-        scopesClaims.forEach(scopeClaim -> {
-            if (userClaims.containsKey(scopeClaim)) {
-                requestedClaims.putIfAbsent(scopeClaim, userClaims.get(scopeClaim));
+        scopesClaims.forEach(
+            scopeClaim -> {
+                if (userClaims.containsKey(scopeClaim)) {
+                    requestedClaims.putIfAbsent(scopeClaim, userClaims.get(scopeClaim));
+                }
             }
-        });
+        );
 
         return true;
     }
@@ -213,11 +223,15 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         try {
             ClaimsRequest claimsRequest = Json.decodeValue(claimsValue, ClaimsRequest.class);
             if (claimsRequest != null && claimsRequest.getUserInfoClaims() != null) {
-                claimsRequest.getUserInfoClaims().forEach((key, value) -> {
-                    if (userClaims.containsKey(key)) {
-                        requestedClaims.putIfAbsent(key, userClaims.get(key));
-                    }
-                });
+                claimsRequest
+                    .getUserInfoClaims()
+                    .forEach(
+                        (key, value) -> {
+                            if (userClaims.containsKey(key)) {
+                                requestedClaims.putIfAbsent(key, userClaims.get(key));
+                            }
+                        }
+                    );
                 return true;
             }
         } catch (Exception e) {
@@ -234,21 +248,28 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      */
     private Single<User> enhance(User user, JWT accessToken) {
         return Single.zip(
-                loadRoles(user, accessToken) ? roleService.findByIdIn(user.getRoles()).map(Optional::of) : Single.just(Optional.<Set<Role>>empty()),
-                loadGroups(accessToken) ? groupService.findByMember(user.getId()).map(Optional::of) : Single.just(Optional.<List<Group>>empty()),
-                (optionalRoles, optionalGroups) -> {
-                    Map<String, Object> userClaims = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
-                    if (optionalRoles.isPresent() && !optionalRoles.get().isEmpty()) {
-                        Set<Role> roles = optionalRoles.get();
-                        userClaims.putIfAbsent(CustomClaims.ROLES, roles.stream().map(Role::getName).collect(Collectors.toList()));
-                    }
-                    if (optionalGroups.isPresent() && !optionalGroups.get().isEmpty()) {
-                        List<Group> groups = optionalGroups.get();
-                        userClaims.putIfAbsent(CustomClaims.GROUPS, groups.stream().map(Group::getName).collect(Collectors.toList()));
-                    }
-                    user.setAdditionalInformation(userClaims);
-                    return user;
-                });
+            loadRoles(user, accessToken)
+                ? roleService.findByIdIn(user.getRoles()).map(Optional::of)
+                : Single.just(Optional.<Set<Role>>empty()),
+            loadGroups(accessToken)
+                ? groupService.findByMember(user.getId()).map(Optional::of)
+                : Single.just(Optional.<List<Group>>empty()),
+            (optionalRoles, optionalGroups) -> {
+                Map<String, Object> userClaims = user.getAdditionalInformation() == null
+                    ? new HashMap<>()
+                    : new HashMap<>(user.getAdditionalInformation());
+                if (optionalRoles.isPresent() && !optionalRoles.get().isEmpty()) {
+                    Set<Role> roles = optionalRoles.get();
+                    userClaims.putIfAbsent(CustomClaims.ROLES, roles.stream().map(Role::getName).collect(Collectors.toList()));
+                }
+                if (optionalGroups.isPresent() && !optionalGroups.get().isEmpty()) {
+                    List<Group> groups = optionalGroups.get();
+                    userClaims.putIfAbsent(CustomClaims.GROUPS, groups.stream().map(Group::getName).collect(Collectors.toList()));
+                }
+                user.setAdditionalInformation(userClaims);
+                return user;
+            }
+        );
     }
 
     /**
@@ -256,7 +277,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * @return Return true if client request signed or encrypted (or both) userinfo.
      */
     private boolean expectSignedOrEncryptedUserInfo(Client client) {
-        return client.getUserinfoSignedResponseAlg()!=null || client.getUserinfoEncryptedResponseAlg()!=null;
+        return client.getUserinfoSignedResponseAlg() != null || client.getUserinfoEncryptedResponseAlg() != null;
     }
 
     private boolean loadRoles(User user, JWT accessToken) {

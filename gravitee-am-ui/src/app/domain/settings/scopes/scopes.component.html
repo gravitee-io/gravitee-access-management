@@ -18,15 +18,23 @@
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Scopes</h1>
   <div *ngIf="!isEmpty">
-    <p>Scope is a mechanism in OAuth 2.0 to limit an application's access to a user's account. The access token issued to the application will be limited to the scopes granted.</p>
+    <p>
+      Scope is a mechanism in OAuth 2.0 to limit an application's access to a user's account. The access token issued to the application
+      will be limited to the scopes granted.
+    </p>
     <p>An application can request one or more scopes, this information is then presented to the user in the consent screen.</p>
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='scopes'
-                   [sorts]="[{prop: 'system', dir: 'desc'}, {prop: 'key', dir: 'asc'}]">
+    <ngx-datatable
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="scopes"
+      [sorts]="[
+        { prop: 'system', dir: 'desc' },
+        { prop: 'key', dir: 'asc' }
+      ]"
+    >
       <ngx-datatable-column name="Scopes" [flexGrow]="4" [cellClass]="'scope-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="scope-header" fxLayout="row">
@@ -35,10 +43,10 @@
             </div>
             <div class="scope-information" fxLayout="column">
               <div fxLayout="row">
-                <h3>{{row.key}}</h3>
+                <h3>{{ row.key }}</h3>
                 <mat-chip-list *ngIf="row.system"><mat-chip>system</mat-chip></mat-chip-list>
               </div>
-              <small>{{row.description}}</small>
+              <small>{{ row.description }}</small>
             </div>
           </div>
         </ng-template>
@@ -46,10 +54,7 @@
       <ngx-datatable-column name="Discovery" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span>
-            <mat-slide-toggle
-              (change)="enableScopeDiscovery(row.id, $event)"
-              [checked]="row.discovery"
-              [disabled]="row.system || !canEdit">
+            <mat-slide-toggle (change)="enableScopeDiscovery(row.id, $event)" [checked]="row.discovery" [disabled]="row.system || !canEdit">
             </mat-slide-toggle>
           </span>
         </ng-template>
@@ -65,12 +70,14 @@
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Scopes will appear here'"
-                  [subMessage]="'No data to display'"
-                  [icon]="'donut_large'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Scopes will appear here'"
+    [subMessage]="'No data to display'"
+    [icon]="'donut_large'"
+  ></app-emptystate>
 
-  <div *hasPermission="['domain_scope_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *hasPermission="['domain_scope_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

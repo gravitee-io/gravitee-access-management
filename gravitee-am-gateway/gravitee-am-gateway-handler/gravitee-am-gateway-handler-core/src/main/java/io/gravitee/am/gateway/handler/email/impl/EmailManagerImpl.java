@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.email.impl;
 
+import static java.lang.String.format;
+
 import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import io.gravitee.am.common.event.EmailEvent;
@@ -29,19 +31,16 @@ import io.gravitee.am.repository.management.api.EmailRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
-
-import static java.lang.String.format;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -78,13 +77,15 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing emails for domain {}", domain.getName());
-        emailRepository.findByDomain(domain.getId())
-                .subscribe(
-                        emails -> {
-                            updateEmails(emails);
-                            logger.info("Emails loaded for domain {}", domain.getName());
-                        },
-                        error -> logger.error("Unable to initialize emails for domain {}", domain.getName(), error));
+        emailRepository
+            .findByDomain(domain.getId())
+            .subscribe(
+                emails -> {
+                    updateEmails(emails);
+                    logger.info("Emails loaded for domain {}", domain.getName());
+                },
+                error -> logger.error("Unable to initialize emails for domain {}", domain.getName(), error)
+            );
     }
 
     @Override
@@ -131,7 +132,13 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
 
         if (templateFound) {
             Email customEmail = emailTemplates.get(template);
-            return create(template, customEmail.getFrom(), customEmail.getFromName(), customEmail.getSubject(), customEmail.getExpiresAfter());
+            return create(
+                template,
+                customEmail.getFrom(),
+                customEmail.getFromName(),
+                customEmail.getSubject(),
+                customEmail.getExpiresAfter()
+            );
         } else {
             return create(template, defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter);
         }
@@ -150,19 +157,21 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     private void updateEmail(String emailId, EmailEvent emailEvent) {
         final String eventType = emailEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} email event for {}", domain.getName(), eventType, emailId);
-        emailRepository.findById(emailId)
-                .subscribe(
-                        email -> {
-                            // check if email has been disabled
-                            if (emails.containsKey(emailId) && !email.isEnabled()) {
-                                removeEmail(emailId);
-                            } else {
-                                updateEmails(Collections.singletonList(email));
-                            }
-                            logger.info("Email {} {}d for domain {}", emailId, eventType, domain.getName());
-                        },
-                        error -> logger.error("Unable to {} email for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No email found with id {}", emailId));
+        emailRepository
+            .findById(emailId)
+            .subscribe(
+                email -> {
+                    // check if email has been disabled
+                    if (emails.containsKey(emailId) && !email.isEnabled()) {
+                        removeEmail(emailId);
+                    } else {
+                        updateEmails(Collections.singletonList(email));
+                    }
+                    logger.info("Email {} {}d for domain {}", emailId, eventType, domain.getName());
+                },
+                error -> logger.error("Unable to {} email for domain {}", eventType, domain.getName(), error),
+                () -> logger.error("No email found with id {}", emailId)
+            );
     }
 
     private void removeEmail(String emailId) {
@@ -176,15 +185,17 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
 
     private void updateEmails(List<Email> emails) {
         emails
-                .stream()
-                .filter(Email::isEnabled)
-                .forEach(email -> {
+            .stream()
+            .filter(Email::isEnabled)
+            .forEach(
+                email -> {
                     String templateName = getTemplateName(email);
                     this.emails.put(email.getId(), email);
                     this.emailTemplates.put(templateName, email);
                     reloadTemplate(templateName + TEMPLATE_SUFFIX, email.getContent());
                     logger.info("Email {} loaded for domain {}", templateName, domain.getName());
-                });
+                }
+            );
     }
 
     private void reloadTemplate(String templateName, String content) {
@@ -193,8 +204,7 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
     }
 
     private String getTemplateName(Email email) {
-        return email.getTemplate()
-                + ((email.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + email.getClient() : "");
+        return email.getTemplate() + ((email.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + email.getClient() : "");
     }
 
     public void setSubject(String subject) {

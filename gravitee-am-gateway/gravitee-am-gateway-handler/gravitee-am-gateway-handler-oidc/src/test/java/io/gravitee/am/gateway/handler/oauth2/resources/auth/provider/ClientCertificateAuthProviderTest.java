@@ -15,24 +15,23 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Client Authentication method : tls_client_auth
@@ -55,11 +54,15 @@ public class ClientCertificateAuthProviderTest {
         when(sslSession.getPeerCertificates()).thenThrow(SSLPeerUnverifiedException.class);
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(clientAsyncResult);
-            Assert.assertNotNull(clientAsyncResult.cause());
-        });
+        authProvider.handle(
+            client,
+            httpServerRequest,
+            clientAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(clientAsyncResult);
+                Assert.assertNotNull(clientAsyncResult.cause());
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
@@ -77,14 +80,18 @@ public class ClientCertificateAuthProviderTest {
         when(subjectDN.getName()).thenReturn("CN=localhost, O=GraviteeSource, C=FR");
         when(certificate.getSubjectDN()).thenReturn(subjectDN);
         when(httpServerRequest.sslSession()).thenReturn(sslSession);
-        when(sslSession.getPeerCertificates()).thenReturn(new Certificate[]{certificate});
+        when(sslSession.getPeerCertificates()).thenReturn(new Certificate[] { certificate });
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(clientAsyncResult);
-            Assert.assertNotNull(clientAsyncResult.cause());
-        });
+        authProvider.handle(
+            client,
+            httpServerRequest,
+            clientAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(clientAsyncResult);
+                Assert.assertNotNull(clientAsyncResult.cause());
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
@@ -102,14 +109,18 @@ public class ClientCertificateAuthProviderTest {
         when(subjectDN.getName()).thenReturn("CN=localhost, O=GraviteeSource, C=FR");
         when(certificate.getSubjectDN()).thenReturn(subjectDN);
         when(httpServerRequest.sslSession()).thenReturn(sslSession);
-        when(sslSession.getPeerCertificates()).thenReturn(new Certificate[]{certificate});
+        when(sslSession.getPeerCertificates()).thenReturn(new Certificate[] { certificate });
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(clientAsyncResult);
-            Assert.assertNotNull(clientAsyncResult.result());
-        });
+        authProvider.handle(
+            client,
+            httpServerRequest,
+            clientAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(clientAsyncResult);
+                Assert.assertNotNull(clientAsyncResult.result());
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }

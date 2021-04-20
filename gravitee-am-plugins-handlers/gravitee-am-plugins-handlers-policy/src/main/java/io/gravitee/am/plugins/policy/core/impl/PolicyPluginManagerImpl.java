@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.plugins.policy.core.impl;
 
+import static org.reflections.ReflectionUtils.withModifier;
+import static org.reflections.ReflectionUtils.withParametersCount;
+
 import com.google.common.base.Predicate;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyMetadata;
@@ -28,21 +31,17 @@ import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.plugin.policy.internal.PolicyMethodResolver;
 import io.gravitee.policy.api.PolicyConfiguration;
-import org.reflections.ReflectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ClassUtils;
-
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static org.reflections.ReflectionUtils.withModifier;
-import static org.reflections.ReflectionUtils.withParametersCount;
+import org.reflections.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.ClassUtils;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -90,7 +89,10 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
             try {
                 // create policy configuration
                 PluginClassLoader pluginClassLoader = pluginClassLoaderFactory.getOrCreateClassLoader(policyPlugin);
-                Class<? extends PolicyConfiguration> configurationClass =  (Class<? extends PolicyConfiguration>) ClassUtils.forName(policyPlugin.configuration().getName(), pluginClassLoader);
+                Class<? extends PolicyConfiguration> configurationClass = (Class<? extends PolicyConfiguration>) ClassUtils.forName(
+                    policyPlugin.configuration().getName(),
+                    pluginClassLoader
+                );
                 PolicyConfiguration policyConfiguration = policyConfigurationFactory.create(configurationClass, configuration);
 
                 // create policy instance
@@ -99,10 +101,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                 // Prepare metadata
                 Class<?> policyClass = ClassUtils.forName(policyPlugin.policy().getName(), pluginClassLoader);
                 PolicyMetadataBuilder builder = new PolicyMetadataBuilder();
-                builder
-                        .setId(policyPlugin.id())
-                        .setPolicy(policyClass)
-                        .setMethods(new PolicyMethodResolver().resolve(policyClass));
+                builder.setId(policyPlugin.id()).setPolicy(policyClass).setMethods(new PolicyMethodResolver().resolve(policyClass));
                 PolicyMetadata policyMetadata = builder.build();
 
                 // Create instance with matching constructor
@@ -115,10 +114,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                             policyInst = constr.newInstance();
                         }
                         if (policyInst != null) {
-                            return PolicyImpl
-                                    .target(policyInst)
-                                    .definition(policyMetadata)
-                                    .build();
+                            return PolicyImpl.target(policyInst).definition(policyMetadata).build();
                         }
                     } catch (IllegalAccessException | InstantiationException | InvocationTargetException ex) {
                         logger.error("Unable to instantiate policy {}", policyMetadata.policy().getName(), ex);
@@ -139,15 +135,18 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
         if (constructor == null) {
             logger.debug("Looking for a constructor to inject policy configuration");
 
-            Set<Constructor> policyConstructors =
-                    ReflectionUtils.getConstructors(policyClass,
-                            withModifier(Modifier.PUBLIC),
-                            withParametersAssignableFrom(PolicyConfiguration.class),
-                            withParametersCount(1));
+            Set<Constructor> policyConstructors = ReflectionUtils.getConstructors(
+                policyClass,
+                withModifier(Modifier.PUBLIC),
+                withParametersAssignableFrom(PolicyConfiguration.class),
+                withParametersCount(1)
+            );
 
             if (policyConstructors.isEmpty()) {
-                logger.debug("No configuration can be injected for {} because there is no valid constructor. " +
-                        "Using default empty constructor.", policyClass.getName());
+                logger.debug(
+                    "No configuration can be injected for {} because there is no valid constructor. " + "Using default empty constructor.",
+                    policyClass.getName()
+                );
                 try {
                     constructor = policyClass.getConstructor();
                 } catch (NoSuchMethodException nsme) {
@@ -171,8 +170,9 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                 Class<?>[] parameterTypes = parameterTypes(input);
                 if (parameterTypes.length == types.length) {
                     for (int i = 0; i < parameterTypes.length; i++) {
-                        if (!types[i].isAssignableFrom(parameterTypes[i]) ||
-                                (parameterTypes[i] == Object.class && types[i] != Object.class)) {
+                        if (
+                            !types[i].isAssignableFrom(parameterTypes[i]) || (parameterTypes[i] == Object.class && types[i] != Object.class)
+                        ) {
                             return false;
                         }
                     }
@@ -184,8 +184,10 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
     }
 
     private static Class[] parameterTypes(Member member) {
-        return member != null ?
-                member.getClass() == Method.class ? ((Method) member).getParameterTypes() :
-                        member.getClass() == Constructor.class ? ((Constructor) member).getParameterTypes() : null : null;
+        return member != null
+            ? member.getClass() == Method.class
+                ? ((Method) member).getParameterTypes()
+                : member.getClass() == Constructor.class ? ((Constructor) member).getParameterTypes() : null
+            : null;
     }
 }

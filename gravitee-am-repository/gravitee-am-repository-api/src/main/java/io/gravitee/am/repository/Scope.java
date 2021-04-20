@@ -20,7 +20,6 @@ package io.gravitee.am.repository;
  * @author GraviteeSource Team
  */
 public enum Scope {
-
     OAUTH2("oauth2"),
     MANAGEMENT("management");
 

@@ -13,37 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-openid-client-registration',
   templateUrl: './client-registration.component.html',
-  styleUrls: ['./client-registration.component.scss']
+  styleUrls: ['./client-registration.component.scss'],
 })
 export class DomainSettingsOpenidClientRegistrationComponent implements OnInit {
   private domainId: string;
   navLinks: any = [
-    {'href': 'settings' , 'label': 'Settings'},
-    {'href': 'default-scope' , 'label': 'Default Scopes'},
-    {'href': 'allowed-scope' , 'label': 'Allowed Scopes'},
-    {'href': 'templates' , 'label': 'Client templates'}
+    { href: 'settings', label: 'Settings' },
+    { href: 'default-scope', label: 'Default Scopes' },
+    { href: 'allowed-scope', label: 'Allowed Scopes' },
+    { href: 'templates', label: 'Client templates' },
   ];
 
-  constructor(private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService) {}
+  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
     this.initBreadcrumb();
   }
 
   initBreadcrumb() {
     this.breadcrumbService.addFriendlyNameForRoute('/domains/' + this.domainId + '/settings/openid/clientRegistration', 'dcr');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/settings', 'settings');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/default-scope', 'default scopes');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/allowed-scope', 'allowed scopes');
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/openid/clientRegistration/client-templates', 'client templates');
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/settings/openid/clientRegistration/settings',
+      'settings',
+    );
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/settings/openid/clientRegistration/default-scope',
+      'default scopes',
+    );
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/settings/openid/clientRegistration/allowed-scope',
+      'allowed scopes',
+    );
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/settings/openid/clientRegistration/client-templates',
+      'client templates',
+    );
   }
 }

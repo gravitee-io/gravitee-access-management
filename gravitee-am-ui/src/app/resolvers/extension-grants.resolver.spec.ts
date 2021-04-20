@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {ExtensionGrantsResolver} from "./extension-grants.resolver";
+import { inject, TestBed } from '@angular/core/testing';
+import { ExtensionGrantsResolver } from './extension-grants.resolver';
 
 describe('ExtensionGrantsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ExtensionGrantsResolver]
+      providers: [ExtensionGrantsResolver],
     });
   });
 

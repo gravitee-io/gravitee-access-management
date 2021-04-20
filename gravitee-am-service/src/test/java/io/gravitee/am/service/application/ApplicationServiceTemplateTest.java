@@ -22,11 +22,10 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.service.impl.application.ApplicationServiceTemplate;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Collections;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -101,7 +100,9 @@ public class ApplicationServiceTemplateTest {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
         Assert.assertTrue(oAuthSettings.getClientId() != null && !oAuthSettings.getClientId().isEmpty());
         Assert.assertTrue(oAuthSettings.getClientSecret() != null && !oAuthSettings.getClientSecret().isEmpty());
-        Assert.assertTrue((oAuthSettings.getGrantTypes().size() == 1 && oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)));
+        Assert.assertTrue(
+            (oAuthSettings.getGrantTypes().size() == 1 && oAuthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS))
+        );
         Assert.assertTrue(oAuthSettings.getClientType().equals(ClientType.CONFIDENTIAL));
         Assert.assertTrue(oAuthSettings.getResponseTypes().isEmpty());
     }

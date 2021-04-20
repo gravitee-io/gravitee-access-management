@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains.DomainsResource;
@@ -29,8 +32,6 @@ import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -38,9 +39,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -57,22 +56,27 @@ public class EnvironmentResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create or update an environment",
-            notes = "User must have the ORGANIZATION_ENVIRONMENT[CREATE] permission on the platform.")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Create or update an environment",
+        notes = "User must have the ORGANIZATION_ENVIRONMENT[CREATE] permission on the platform."
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Environment successfully created or updated"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void newEnvironment(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @Valid @NotNull final NewEnvironment newEnvironment,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @Valid @NotNull final NewEnvironment newEnvironment,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermissions(of(ReferenceType.PLATFORM, Platform.DEFAULT, Permission.ENVIRONMENT, Acl.CREATE))
-                .andThen(environmentService.createOrUpdate(organizationId, environmentId, newEnvironment, authenticatedUser))
-                .subscribe(response::resume, response::resume);
+            .andThen(environmentService.createOrUpdate(organizationId, environmentId, newEnvironment, authenticatedUser))
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("/domains")

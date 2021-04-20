@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service;
 
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.service.impl.ReCaptchaServiceImpl;
 import io.gravitee.common.http.HttpStatusCode;
@@ -28,6 +31,7 @@ import io.vertx.ext.web.client.impl.WebClientInternal;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,11 +40,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.concurrent.CompletableFuture;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -62,14 +61,12 @@ public class ReCaptchaServiceImplTest {
 
     @Before
     public void before() {
-
         ReflectionTestUtils.setField(reCaptchaService, "objectMapper", objectMapper);
         ReflectionTestUtils.setField(reCaptchaService, "serviceUrl", "https://verif");
     }
 
     @Test
     public void isValidWhenDisabled() {
-
         ReflectionTestUtils.setField(reCaptchaService, "enabled", false);
 
         TestObserver<Boolean> obs = reCaptchaService.isValid(null).test();
@@ -87,7 +84,6 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isNotValidIfNoToken() {
-
         ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
 
         TestObserver<Boolean> obs = reCaptchaService.isValid(null).test();
@@ -101,12 +97,10 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isValid() {
-
         ReflectionTestUtils.setField(reCaptchaService, "minScore", 0.5d);
         ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
 
-        when(httpResponse.bodyAsString())
-                .thenReturn(new JsonObject().put("success", true).put("score", 0.9d).toString());
+        when(httpResponse.bodyAsString()).thenReturn(new JsonObject().put("success", true).put("score", 0.9d).toString());
 
         spyHttpRequest(client.post(eq("https://verif")));
 
@@ -117,12 +111,10 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isValidAboveMinScore() {
-
         ReflectionTestUtils.setField(reCaptchaService, "minScore", 0.5d);
         ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
 
-        when(httpResponse.bodyAsString())
-                .thenReturn(new JsonObject().put("success", true).put("score", 1.0d).toString());
+        when(httpResponse.bodyAsString()).thenReturn(new JsonObject().put("success", true).put("score", 1.0d).toString());
 
         spyHttpRequest(client.post(eq("https://verif")));
 
@@ -133,12 +125,10 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isNotValidBelowMinScore() {
-
         ReflectionTestUtils.setField(reCaptchaService, "minScore", 0.5d);
         ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
 
-        when(httpResponse.bodyAsString())
-                .thenReturn(new JsonObject().put("success", true).put("score", 0.4d).toString());
+        when(httpResponse.bodyAsString()).thenReturn(new JsonObject().put("success", true).put("score", 0.4d).toString());
 
         spyHttpRequest(client.post(eq("https://verif")));
 
@@ -149,12 +139,10 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isNotValidNoSuccess() {
-
         ReflectionTestUtils.setField(reCaptchaService, "minScore", 0.5d);
         ReflectionTestUtils.setField(reCaptchaService, "enabled", true);
 
-        when(httpResponse.bodyAsString())
-                .thenReturn(new JsonObject().put("success", false).put("score", 0.0d).toString());
+        when(httpResponse.bodyAsString()).thenReturn(new JsonObject().put("success", false).put("score", 0.0d).toString());
 
         spyHttpRequest(client.post(eq("https://verif")));
 
@@ -165,20 +153,17 @@ public class ReCaptchaServiceImplTest {
 
     @Test
     public void isNotEnabled() {
-
         ReflectionTestUtils.setField(reCaptchaService, "enabled", false);
         assertFalse(reCaptchaService.isEnabled());
     }
 
     @Test
     public void getSiteKeyNullByDefault() {
-
         assertNull(reCaptchaService.getSiteKey());
     }
 
     @Test
     public void getSiteKey() {
-
         ReflectionTestUtils.setField(reCaptchaService, "siteKey", "test");
 
         assertEquals("test", reCaptchaService.getSiteKey());
@@ -186,28 +171,30 @@ public class ReCaptchaServiceImplTest {
 
     @Before
     public void beforeEach() {
-        ((WebClientInternal) client.getDelegate()).addInterceptor(event -> {
+        ((WebClientInternal) client.getDelegate()).addInterceptor(
+                event -> {
+                    if (event.phase() == ClientPhase.SEND_REQUEST) {
+                        // By pass send request and jump directly to dispatch phase with the mocked http response.
+                        event.dispatchResponse(httpResponse);
+                    }
 
-            if(event.phase() == ClientPhase.SEND_REQUEST) {
-                // By pass send request and jump directly to dispatch phase with the mocked http response.
-                event.dispatchResponse(httpResponse);
-            }
-
-            event.next();
-        });
+                    event.next();
+                }
+            );
 
         verify(client).getDelegate();
     }
 
     protected Single<HttpRequest> spyHttpRequest(HttpRequest httpRequest) {
-
-
         CompletableFuture<HttpRequest> spyHttpRequest = new CompletableFuture<>();
 
-        when(httpRequest).thenAnswer(invocationOnMock -> {
-            spyHttpRequest.complete((HttpRequest) spy(invocationOnMock.callRealMethod()));
-            return spyHttpRequest.get();
-        });
+        when(httpRequest)
+            .thenAnswer(
+                invocationOnMock -> {
+                    spyHttpRequest.complete((HttpRequest) spy(invocationOnMock.callRealMethod()));
+                    return spyHttpRequest.get();
+                }
+            );
 
         return Single.fromFuture(spyHttpRequest);
     }

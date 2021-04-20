@@ -22,6 +22,4 @@ import io.gravitee.am.reporter.api.provider.Reporter;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuditReporter extends Reporter<Audit, AuditReportableCriteria> {
-
-}
+public interface AuditReporter extends Reporter<Audit, AuditReportableCriteria> {}

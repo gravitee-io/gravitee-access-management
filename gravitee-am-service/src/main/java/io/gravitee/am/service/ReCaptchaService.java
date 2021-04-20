@@ -22,7 +22,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface ReCaptchaService {
-
     Single<Boolean> isValid(String token);
 
     boolean isEnabled();

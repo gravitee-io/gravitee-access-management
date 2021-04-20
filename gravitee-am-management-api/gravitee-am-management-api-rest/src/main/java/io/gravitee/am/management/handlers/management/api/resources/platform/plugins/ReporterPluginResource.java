@@ -22,7 +22,6 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -38,7 +37,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Reporter"})
+@Api(tags = { "Plugin", "Reporter" })
 public class ReporterPluginResource {
 
     @Context
@@ -49,32 +48,27 @@ public class ReporterPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a reporter plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void get(
-            @PathParam("reporter") String reporterId,
-            @Suspended final AsyncResponse response) {
-
-        reporterPluginService.findById(reporterId)
-                .switchIfEmpty(Maybe.error(new ReporterPluginNotFoundException(reporterId)))
-                .map(reporterPlugin -> Response.ok(reporterPlugin).build())
-                .subscribe(response::resume, response::resume);
+    @ApiOperation(value = "Get a reporter plugin", notes = "There is no particular permission needed. User must be authenticated.")
+    public void get(@PathParam("reporter") String reporterId, @Suspended final AsyncResponse response) {
+        reporterPluginService
+            .findById(reporterId)
+            .switchIfEmpty(Maybe.error(new ReporterPluginNotFoundException(reporterId)))
+            .map(reporterPlugin -> Response.ok(reporterPlugin).build())
+            .subscribe(response::resume, response::resume);
     }
 
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a reporter plugin's schema")
-    public void getSchema(
-            @PathParam("reporter") String reporterId,
-            @Suspended final AsyncResponse response) {
-
+    public void getSchema(@PathParam("reporter") String reporterId, @Suspended final AsyncResponse response) {
         // Check that the identity provider exists
-        reporterPluginService.findById(reporterId)
-                .switchIfEmpty(Maybe.error(new ReporterPluginNotFoundException(reporterId)))
-                .flatMap(irrelevant -> reporterPluginService.getSchema(reporterId))
-                .switchIfEmpty(Maybe.error(new ReporterPluginSchemaNotFoundException(reporterId)))
-                .map(reporterPluginSchema -> Response.ok(reporterPluginSchema).build())
-                .subscribe(response::resume, response::resume);
+        reporterPluginService
+            .findById(reporterId)
+            .switchIfEmpty(Maybe.error(new ReporterPluginNotFoundException(reporterId)))
+            .flatMap(irrelevant -> reporterPluginService.getSchema(reporterId))
+            .switchIfEmpty(Maybe.error(new ReporterPluginSchemaNotFoundException(reporterId)))
+            .map(reporterPluginSchema -> Response.ok(reporterPluginSchema).build())
+            .subscribe(response::resume, response::resume);
     }
 }

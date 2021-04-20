@@ -33,8 +33,10 @@ public class ECKey extends JWK {
 
     @JsonProperty("crv")
     private String crv;
+
     @JsonProperty("x")
     private String x;
+
     @JsonProperty("y")
     private String y;
 

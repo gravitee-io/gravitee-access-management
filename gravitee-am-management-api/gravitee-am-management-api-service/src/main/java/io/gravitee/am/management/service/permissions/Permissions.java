@@ -18,7 +18,6 @@ package io.gravitee.am.management.service.permissions;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,7 +29,6 @@ import java.util.Set;
 public final class Permissions {
 
     public static PermissionAcls of(ReferenceType referenceType, String referenceId, Permission permission, Acl... acls) {
-
         return new SimplePermissionAcls(referenceType, referenceId, permission, new HashSet<>(Arrays.asList(acls)));
     }
 

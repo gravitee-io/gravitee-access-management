@@ -39,7 +39,14 @@ public class EnvironmentAuditBuilder extends ManagementAuditBuilder<EnvironmentA
         referenceType(ReferenceType.ORGANIZATION);
         referenceId(environment.getOrganizationId());
 
-        setTarget(environment.getId(), EntityType.ENVIRONMENT, null, environment.getName(), ReferenceType.ORGANIZATION, environment.getOrganizationId());
+        setTarget(
+            environment.getId(),
+            EntityType.ENVIRONMENT,
+            null,
+            environment.getName(),
+            ReferenceType.ORGANIZATION,
+            environment.getOrganizationId()
+        );
         return this;
     }
 }

@@ -16,11 +16,11 @@
 package io.gravitee.am.gateway.handler.oauth2.service.revocation.impl;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -47,7 +47,8 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
         // find anything. See RFC 7009, Sec 2.1: https://tools.ietf.org/html/rfc7009#section-2.1
         if (request.getHint() != null && request.getHint().equals(TokenTypeHint.REFRESH_TOKEN)) {
             return revokeRefreshToken(token, client)
-                    .onErrorResumeNext(throwable -> {
+                .onErrorResumeNext(
+                    throwable -> {
                         // if the token was not issued to the client making the revocation request
                         // the request is refused and the client is informed of the error
                         if (throwable instanceof InvalidGrantException) {
@@ -65,8 +66,10 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
 
                         // fallback to access token
                         return revokeAccessToken(token, client);
-                    })
-                    .onErrorResumeNext(throwable -> {
+                    }
+                )
+                .onErrorResumeNext(
+                    throwable -> {
                         // Note: invalid tokens do not cause an error response since the client
                         // cannot handle such an error in a reasonable way.  Moreover, the
                         // purpose of the revocation request, invalidating the particular token,
@@ -77,13 +80,15 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                             return Completable.complete();
                         }
                         return Completable.error(throwable);
-                    });
+                    }
+                );
         }
 
         // The user didn't hint that this is a refresh token, so it MAY be an access
         // token. If we don't find an access token... check if it's a refresh token.
         return revokeAccessToken(token, client)
-                .onErrorResumeNext(throwable -> {
+            .onErrorResumeNext(
+                throwable -> {
                     // if the token was not issued to the client making the revocation request
                     // the request is refused and the client is informed of the error
                     if (throwable instanceof InvalidGrantException) {
@@ -101,8 +106,10 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
 
                     // fallback to refresh token
                     return revokeRefreshToken(token, client);
-                })
-                .onErrorResumeNext(throwable -> {
+                }
+            )
+            .onErrorResumeNext(
+                throwable -> {
                     // Note: invalid tokens do not cause an error response since the client
                     // cannot handle such an error in a reasonable way.  Moreover, the
                     // purpose of the revocation request, invalidating the particular token,
@@ -113,14 +120,16 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                         return Completable.complete();
                     }
                     return Completable.error(throwable);
-                });
-
+                }
+            );
     }
 
     private Completable revokeAccessToken(String token, Client client) {
-        return tokenService.getAccessToken(token, client)
-                .switchIfEmpty(Maybe.error(new InvalidTokenException("Unknown access token")))
-                .flatMapCompletable(accessToken -> {
+        return tokenService
+            .getAccessToken(token, client)
+            .switchIfEmpty(Maybe.error(new InvalidTokenException("Unknown access token")))
+            .flatMapCompletable(
+                accessToken -> {
                     String tokenClientId = accessToken.getClientId();
                     if (!client.getClientId().equals(tokenClientId)) {
                         logger.debug("Revoke FAILED: requesting client = {}, token's client = {}.", client.getClientId(), tokenClientId);
@@ -128,13 +137,16 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     }
 
                     return tokenService.deleteAccessToken(accessToken.getValue());
-                });
+                }
+            );
     }
 
     private Completable revokeRefreshToken(String token, Client client) {
-        return tokenService.getRefreshToken(token, client)
-                .switchIfEmpty(Maybe.error(new InvalidTokenException("Unknown refresh token")))
-                .flatMapCompletable(refreshToken -> {
+        return tokenService
+            .getRefreshToken(token, client)
+            .switchIfEmpty(Maybe.error(new InvalidTokenException("Unknown refresh token")))
+            .flatMapCompletable(
+                refreshToken -> {
                     String tokenClientId = refreshToken.getClientId();
                     if (!client.getClientId().equals(tokenClientId)) {
                         logger.debug("Revoke FAILED: requesting client = {}, token's client = {}.", client.getClientId(), tokenClientId);
@@ -142,6 +154,7 @@ public class RevocationTokenServiceImpl implements RevocationTokenService {
                     }
 
                     return tokenService.deleteRefreshToken(refreshToken.getValue());
-                });
+                }
+            );
     }
 }

@@ -28,8 +28,10 @@ import java.util.List;
  */
 public class EntrepriseUser extends User {
 
-    public static final List<String> SCHEMAS = Arrays.asList("urn:ietf:params:scim:schemas:core:2.0:User",
-            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User");
+    public static final List<String> SCHEMAS = Arrays.asList(
+        "urn:ietf:params:scim:schemas:core:2.0:User",
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+    );
 
     /**
      * A string identifier, typically numeric or alphanumeric, assigned

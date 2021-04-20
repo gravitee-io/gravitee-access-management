@@ -24,7 +24,6 @@ package io.gravitee.am.common.oauth2;
  * @author GraviteeSource Team
  */
 public interface ClientType {
-
     /**
      * confidential
      *       Clients capable of maintaining the confidentiality of their

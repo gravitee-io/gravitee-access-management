@@ -19,7 +19,6 @@ import io.gravitee.am.management.service.*;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.jetty.node.JettyNode;
 import io.gravitee.plugin.core.internal.PluginEventListener;
-
 import java.util.List;
 
 /**

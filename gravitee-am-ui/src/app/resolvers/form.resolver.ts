@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {FormService} from '../services/form.service';
-import {OrganizationService} from '../services/organization.service';
-import {Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { FormService } from '../services/form.service';
+import { OrganizationService } from '../services/organization.service';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class FormResolver implements Resolve<any> {
+  constructor(private formService: FormService, private organizationService: OrganizationService) {}
 
-  constructor(private formService: FormService, private organizationService: OrganizationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const template = route.queryParams['template'];
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+    const template = route.queryParams.template;
     if (state.url.startsWith('/settings')) {
       return this.organizationService.forms(template);
     }
-    const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
+    const domainId = route.parent.paramMap.get('domainId')
+      ? route.parent.paramMap.get('domainId')
+      : route.parent.parent.paramMap.get('domainId')
+      ? route.parent.parent.paramMap.get('domainId')
+      : route.parent.parent.parent.paramMap.get('domainId');
     const appId = route.parent.parent.paramMap.get('appId');
     return this.formService.get(domainId, appId, template);
   }
-
 }

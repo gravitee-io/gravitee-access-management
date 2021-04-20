@@ -24,9 +24,8 @@ import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,8 +59,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Maybe<ScopeApproval> consent(String consentId) {
-        return scopeApprovalService.findById(consentId)
-                .switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consentId)));
+        return scopeApprovalService.findById(consentId).switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consentId)));
     }
 
     @Override
@@ -78,5 +76,4 @@ public class UserServiceImpl implements UserService {
     public Completable revokeConsents(String userId, String clientId, io.gravitee.am.identityprovider.api.User principal) {
         return scopeApprovalService.revokeByUserAndClient(domain.getId(), userId, clientId, principal);
     }
-
 }

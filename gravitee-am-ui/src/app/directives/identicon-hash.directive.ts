@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Directive, ElementRef, Input, OnChanges, SimpleChanges} from '@angular/core';
+import { Directive, ElementRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import * as jdenticon from 'jdenticon';
 
 @Directive({
-  selector: '[identiconHash]'
+  selector: '[identiconHash]',
 })
 export class IdenticonHashDirective implements OnChanges {
   @Input() identiconHash: string;

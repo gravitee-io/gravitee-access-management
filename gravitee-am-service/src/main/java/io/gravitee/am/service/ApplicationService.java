@@ -25,7 +25,6 @@ import io.gravitee.am.service.model.TopApplication;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,7 +34,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ApplicationService {
-
     Single<Page<Application>> findAll(int page, int size);
 
     Single<Page<Application>> findByDomain(String domain, int page, int size);
@@ -78,12 +76,18 @@ public interface ApplicationService {
 
     default Single<Set<Application>> findAll() {
         return findAll(0, Integer.MAX_VALUE)
-                .map(pagedApplications -> (pagedApplications.getData() == null) ? Collections.emptySet() : new HashSet<>(pagedApplications.getData()));
+            .map(
+                pagedApplications ->
+                    (pagedApplications.getData() == null) ? Collections.emptySet() : new HashSet<>(pagedApplications.getData())
+            );
     }
 
     default Single<Set<Application>> findByDomain(String domain) {
         return findByDomain(domain, 0, Integer.MAX_VALUE)
-                .map(pagedApplications -> (pagedApplications.getData() == null) ? Collections.emptySet() : new HashSet<>(pagedApplications.getData()));
+            .map(
+                pagedApplications ->
+                    (pagedApplications.getData() == null) ? Collections.emptySet() : new HashSet<>(pagedApplications.getData())
+            );
     }
 
     default Single<Application> create(String domain, NewApplication newApplication) {

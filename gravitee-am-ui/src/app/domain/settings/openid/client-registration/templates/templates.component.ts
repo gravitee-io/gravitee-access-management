@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import {AfterViewInit, Component, OnInit, ViewChild} from "@angular/core";
-import {MatPaginator, MatSort, MatTableDataSource} from "@angular/material";
-import {ActivatedRoute} from "@angular/router";
-import {DomainService} from "../../../../../services/domain.service";
-import {SnackbarService} from "../../../../../services/snackbar.service";
-import {ApplicationService} from "../../../../../services/application.service";
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { MatPaginator, MatSort, MatTableDataSource } from '@angular/material';
+import { ActivatedRoute } from '@angular/router';
+import { DomainService } from '../../../../../services/domain.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ApplicationService } from '../../../../../services/application.service';
 import * as _ from 'lodash';
-import {AuthService} from "../../../../../services/auth.service";
+import { AuthService } from '../../../../../services/auth.service';
 
 export interface Client {
   id: string;
@@ -33,9 +33,8 @@ export interface Client {
 @Component({
   selector: 'app-openid-client-registration-templates',
   templateUrl: './templates.component.html',
-  styleUrls: ['./templates.component.scss']
+  styleUrls: ['./templates.component.scss'],
 })
-
 export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewInit {
   domain: any = {};
   dcrIsEnabled: boolean;
@@ -48,23 +47,31 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
-  constructor(private domainService: DomainService,
-              private applicationService: ApplicationService,
-              private route: ActivatedRoute,
-              private snackbarService: SnackbarService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private applicationService: ApplicationService,
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = this.route.snapshot.data.domain;
     this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
     this.templateIsEnabled = this.domain.oidc.clientRegistrationSettings.isClientTemplateEnabled;
     this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
     this.initEmptyStateMessage();
 
-    const datasource = _.map(this.route.snapshot.data['apps'].data,  app => <Client>{
-      id: app.id, clientId: app.clientId, name: app.name, template: app.template
-    });
+    const datasource = _.map(
+      this.route.snapshot.data.apps.data,
+      (app) =>
+        <Client>{
+          id: app.id,
+          clientId: app.clientId,
+          name: app.name,
+          template: app.template,
+        },
+    );
     this.apps = new MatTableDataSource(datasource);
   }
 
@@ -98,7 +105,7 @@ export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewIn
 
   applyChange(client, event) {
     client.template = event.checked;
-    this.applicationService.patch(this.domain.id, client.id, { 'template' : event.checked}).subscribe(data => {
+    this.applicationService.patch(this.domain.id, client.id, { template: event.checked }).subscribe((data) => {
       this.snackbarService.open('Application updated');
     });
     this.applySort();

@@ -24,6 +24,7 @@ import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
  * @author GraviteeSource Team
  */
 public class MongoIdentityProviderConfiguration implements IdentityProviderConfiguration {
+
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_PASSWORD = "password";
 

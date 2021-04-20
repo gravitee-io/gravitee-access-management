@@ -20,6 +20,8 @@ import io.gravitee.am.service.ReCaptchaService;
 import io.reactivex.Single;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import java.net.URI;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +29,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.net.URI;
-import java.util.Map;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -64,7 +63,6 @@ public class ReCaptchaServiceImpl implements ReCaptchaService {
 
     @Override
     public Single<Boolean> isValid(String token) {
-
         if (!this.isEnabled()) {
             logger.debug("ReCaptchaService is disabled");
             return Single.just(true);
@@ -77,9 +75,11 @@ public class ReCaptchaServiceImpl implements ReCaptchaService {
             return Single.just(false);
         }
 
-        return client.post(URI.create(serviceUrl).toString())
-                .rxSendForm(MultiMap.caseInsensitiveMultiMap().set("secret", secretKey).set("response", token))
-                .map(buffer -> {
+        return client
+            .post(URI.create(serviceUrl).toString())
+            .rxSendForm(MultiMap.caseInsensitiveMultiMap().set("secret", secretKey).set("response", token))
+            .map(
+                buffer -> {
                     Map res = objectMapper.readValue(buffer.bodyAsString(), Map.class);
 
                     Boolean success = (Boolean) res.getOrDefault("success", false);
@@ -89,11 +89,14 @@ public class ReCaptchaServiceImpl implements ReCaptchaService {
 
                     // Result should be successful and score above 0.5.
                     return (success && score >= minScore);
-                })
-                .onErrorResumeNext(throwable -> {
+                }
+            )
+            .onErrorResumeNext(
+                throwable -> {
                     logger.error("An error occurred when trying to validate ReCaptcha token.", throwable);
                     return Single.just(false);
-                });
+                }
+            );
     }
 
     public boolean isEnabled() {

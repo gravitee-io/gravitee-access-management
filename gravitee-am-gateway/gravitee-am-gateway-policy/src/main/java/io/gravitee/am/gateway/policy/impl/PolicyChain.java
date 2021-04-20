@@ -25,7 +25,6 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.policy.api.PolicyResult;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -56,26 +55,23 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
             Policy policy = policyIterator.next();
             try {
                 if (policy.isRunnable()) {
-                    execute(
-                            policy,
-                            this,
-                            executionContext.request(),
-                            executionContext.response(),
-                            executionContext);
+                    execute(policy, this, executionContext.request(), executionContext.response(), executionContext);
                 } else {
                     doNext(executionContext.request(), executionContext.response());
                 }
             } catch (Exception ex) {
-                request.metrics().setMessage("An error occurs in policy[" + policy.id()+"] error["+ Throwables.getStackTraceAsString(ex)+"]");
+                request
+                    .metrics()
+                    .setMessage("An error occurs in policy[" + policy.id() + "] error[" + Throwables.getStackTraceAsString(ex) + "]");
                 if (errorHandler != null) {
-                    errorHandler.handle(new PolicyChainProcessorFailure(PolicyResult.failure(
-                            GATEWAY_POLICY_INTERNAL_ERROR_KEY, ex.getMessage())));
+                    errorHandler.handle(
+                        new PolicyChainProcessorFailure(PolicyResult.failure(GATEWAY_POLICY_INTERNAL_ERROR_KEY, ex.getMessage()))
+                    );
                 }
             }
         } else {
             next.handle(executionContext);
         }
-
     }
 
     @Override
@@ -93,7 +89,7 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
         doNext(context.request(), context.response());
     }
 
-    private void execute(Policy policy, Object ... args) throws PolicyChainException {
+    private void execute(Policy policy, Object... args) throws PolicyChainException {
         try {
             policy.execute(args);
         } catch (PolicyException pe) {

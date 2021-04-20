@@ -23,7 +23,6 @@ import io.vertx.reactivex.ext.web.Router;
  * @author GraviteeSource Team
  */
 public interface Reactor extends Service {
-
     Router route();
 
     Router mountSubRouter(String contextPath, Router child);

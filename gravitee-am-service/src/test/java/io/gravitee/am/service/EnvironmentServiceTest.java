@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
@@ -33,17 +37,12 @@ import io.gravitee.am.service.model.NewEnvironment;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -69,13 +68,11 @@ public class EnvironmentServiceTest {
 
     @Before
     public void before() {
-
         cut = new EnvironmentServiceImpl(environmentRepository, organizationService, auditService);
     }
 
     @Test
     public void shouldFindById() {
-
         Environment environment = new Environment();
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(environment));
 
@@ -88,7 +85,6 @@ public class EnvironmentServiceTest {
 
     @Test
     public void shouldFindById_notExistingEnvironment() {
-
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.empty());
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID, ORGANIZATION_ID).test();
@@ -99,7 +95,6 @@ public class EnvironmentServiceTest {
 
     @Test
     public void shouldFindById_technicalException() {
-
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Environment> obs = cut.findById(ENVIRONMENT_ID, ORGANIZATION_ID).test();
@@ -110,32 +105,36 @@ public class EnvironmentServiceTest {
 
     @Test
     public void shouldCreateDefault() {
-
         Environment defaultEnvironment = new Environment();
         defaultEnvironment.setId(Environment.DEFAULT);
         defaultEnvironment.setOrganizationId(ORGANIZATION_ID);
 
         when(environmentRepository.count()).thenReturn(Single.just(0L));
-        when(environmentRepository.create(argThat(environment -> environment.getId().equals(Environment.DEFAULT)))).thenReturn(Single.just(defaultEnvironment));
+        when(environmentRepository.create(argThat(environment -> environment.getId().equals(Environment.DEFAULT))))
+            .thenReturn(Single.just(defaultEnvironment));
 
         TestObserver<Environment> obs = cut.createDefault().test();
 
         obs.awaitTerminalEvent();
         obs.assertValue(defaultEnvironment);
 
-        verify(auditService, times(1)).report(argThat(builder -> {
-            Audit audit = builder.build(new ObjectMapper());
-            assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
-            assertEquals(defaultEnvironment.getOrganizationId(), audit.getReferenceId());
-            assertEquals("system", audit.getActor().getId());
+        verify(auditService, times(1))
+            .report(
+                argThat(
+                    builder -> {
+                        Audit audit = builder.build(new ObjectMapper());
+                        assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
+                        assertEquals(defaultEnvironment.getOrganizationId(), audit.getReferenceId());
+                        assertEquals("system", audit.getActor().getId());
 
-            return true;
-        }));
+                        return true;
+                    }
+                )
+            );
     }
 
     @Test
     public void shouldCreateDefault_EnvironmentsAlreadyExists() {
-
         Environment defaultEnvironment = new Environment();
         defaultEnvironment.setId("DEFAULT");
 
@@ -154,13 +153,13 @@ public class EnvironmentServiceTest {
 
     @Test
     public void shouldCreate() {
-
         Organization organization = new Organization();
         organization.setId(ORGANIZATION_ID);
 
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.empty());
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
-        when(environmentRepository.create(argThat(environment -> environment.getId().equals(ENVIRONMENT_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        when(environmentRepository.create(argThat(environment -> environment.getId().equals(ENVIRONMENT_ID))))
+            .thenAnswer(i -> Single.just(i.getArgument(0)));
 
         NewEnvironment newEnvironment = new NewEnvironment();
         newEnvironment.setName("TestName");
@@ -173,36 +172,43 @@ public class EnvironmentServiceTest {
         TestObserver<Environment> obs = cut.createOrUpdate(ORGANIZATION_ID, ENVIRONMENT_ID, newEnvironment, createdBy).test();
 
         obs.awaitTerminalEvent();
-        obs.assertValue(environment -> {
-            assertEquals(ORGANIZATION_ID, environment.getOrganizationId());
-            assertEquals(newEnvironment.getName(), environment.getName());
-            assertEquals(newEnvironment.getDescription(), environment.getDescription());
-            assertEquals(newEnvironment.getDomainRestrictions(), environment.getDomainRestrictions());
+        obs.assertValue(
+            environment -> {
+                assertEquals(ORGANIZATION_ID, environment.getOrganizationId());
+                assertEquals(newEnvironment.getName(), environment.getName());
+                assertEquals(newEnvironment.getDescription(), environment.getDescription());
+                assertEquals(newEnvironment.getDomainRestrictions(), environment.getDomainRestrictions());
 
-            return true;
-        });
+                return true;
+            }
+        );
 
-        verify(auditService, times(1)).report(argThat(builder -> {
-            Audit audit = builder.build(new ObjectMapper());
-            assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
-            assertEquals(ORGANIZATION_ID, audit.getReferenceId());
-            assertEquals(createdBy.getId(), audit.getActor().getId());
-            assertEquals(EventType.ENVIRONMENT_CREATED, audit.getType());
-            assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
+        verify(auditService, times(1))
+            .report(
+                argThat(
+                    builder -> {
+                        Audit audit = builder.build(new ObjectMapper());
+                        assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
+                        assertEquals(ORGANIZATION_ID, audit.getReferenceId());
+                        assertEquals(createdBy.getId(), audit.getActor().getId());
+                        assertEquals(EventType.ENVIRONMENT_CREATED, audit.getType());
+                        assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
 
-            return true;
-        }));
+                        return true;
+                    }
+                )
+            );
     }
 
     @Test
     public void shouldCreate_error() {
-
         Organization organization = new Organization();
         organization.setId(ORGANIZATION_ID);
 
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.empty());
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
-        when(environmentRepository.create(argThat(environment -> environment.getId().equals(ENVIRONMENT_ID)))).thenReturn(Single.error(new TechnicalManagementException()));
+        when(environmentRepository.create(argThat(environment -> environment.getId().equals(ENVIRONMENT_ID))))
+            .thenReturn(Single.error(new TechnicalManagementException()));
 
         NewEnvironment newEnvironment = new NewEnvironment();
         newEnvironment.setName("TestName");
@@ -217,21 +223,25 @@ public class EnvironmentServiceTest {
         obs.awaitTerminalEvent();
         obs.assertError(TechnicalManagementException.class);
 
-        verify(auditService, times(1)).report(argThat(builder -> {
-            Audit audit = builder.build(new ObjectMapper());
-            assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
-            assertEquals(ORGANIZATION_ID, audit.getReferenceId());
-            assertEquals(createdBy.getId(), audit.getActor().getId());
-            assertEquals(EventType.ENVIRONMENT_CREATED, audit.getType());
-            assertEquals(Status.FAILURE, audit.getOutcome().getStatus());
+        verify(auditService, times(1))
+            .report(
+                argThat(
+                    builder -> {
+                        Audit audit = builder.build(new ObjectMapper());
+                        assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
+                        assertEquals(ORGANIZATION_ID, audit.getReferenceId());
+                        assertEquals(createdBy.getId(), audit.getActor().getId());
+                        assertEquals(EventType.ENVIRONMENT_CREATED, audit.getType());
+                        assertEquals(Status.FAILURE, audit.getOutcome().getStatus());
 
-            return true;
-        }));
+                        return true;
+                    }
+                )
+            );
     }
 
     @Test
     public void shouldCreate_organizationNotFound() {
-
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.empty());
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.error(new OrganizationNotFoundException(ORGANIZATION_ID)));
 
@@ -253,13 +263,13 @@ public class EnvironmentServiceTest {
 
     @Test
     public void shouldCreate_update() {
-
         Environment existingEnvironment = new Environment();
         existingEnvironment.setId(ENVIRONMENT_ID);
         existingEnvironment.setOrganizationId(ORGANIZATION_ID);
 
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEnvironment));
-        when(environmentRepository.update(argThat(environment -> environment.getId().equals(ENVIRONMENT_ID)))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        when(environmentRepository.update(argThat(environment -> environment.getId().equals(ENVIRONMENT_ID))))
+            .thenAnswer(i -> Single.just(i.getArgument(0)));
 
         NewEnvironment newEnvironment = new NewEnvironment();
         newEnvironment.setName("TestName");
@@ -272,36 +282,43 @@ public class EnvironmentServiceTest {
         TestObserver<Environment> obs = cut.createOrUpdate(ORGANIZATION_ID, ENVIRONMENT_ID, newEnvironment, createdBy).test();
 
         obs.awaitTerminalEvent();
-        obs.assertValue(environment -> {
-            assertEquals(ENVIRONMENT_ID, environment.getId());
-            assertEquals(newEnvironment.getName(), environment.getName());
-            assertEquals(newEnvironment.getDescription(), environment.getDescription());
-            assertEquals(newEnvironment.getDomainRestrictions(), environment.getDomainRestrictions());
+        obs.assertValue(
+            environment -> {
+                assertEquals(ENVIRONMENT_ID, environment.getId());
+                assertEquals(newEnvironment.getName(), environment.getName());
+                assertEquals(newEnvironment.getDescription(), environment.getDescription());
+                assertEquals(newEnvironment.getDomainRestrictions(), environment.getDomainRestrictions());
 
-            return true;
-        });
+                return true;
+            }
+        );
 
-        verify(auditService, times(1)).report(argThat(builder -> {
-            Audit audit = builder.build(new ObjectMapper());
-            assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
-            assertEquals(ORGANIZATION_ID, audit.getReferenceId());
-            assertEquals(createdBy.getId(), audit.getActor().getId());
-            assertEquals(EventType.ENVIRONMENT_UPDATED, audit.getType());
-            assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
+        verify(auditService, times(1))
+            .report(
+                argThat(
+                    builder -> {
+                        Audit audit = builder.build(new ObjectMapper());
+                        assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
+                        assertEquals(ORGANIZATION_ID, audit.getReferenceId());
+                        assertEquals(createdBy.getId(), audit.getActor().getId());
+                        assertEquals(EventType.ENVIRONMENT_UPDATED, audit.getType());
+                        assertEquals(Status.SUCCESS, audit.getOutcome().getStatus());
 
-            return true;
-        }));
+                        return true;
+                    }
+                )
+            );
     }
 
     @Test
     public void shouldCreate_updateError() {
-
         Environment existingEnvironment = new Environment();
         existingEnvironment.setId(ENVIRONMENT_ID);
         existingEnvironment.setOrganizationId(ORGANIZATION_ID);
 
         when(environmentRepository.findById(ENVIRONMENT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEnvironment));
-        when(environmentRepository.update(argThat(environment -> environment.getId().equals(ENVIRONMENT_ID)))).thenReturn(Single.error(new TechnicalManagementException()));
+        when(environmentRepository.update(argThat(environment -> environment.getId().equals(ENVIRONMENT_ID))))
+            .thenReturn(Single.error(new TechnicalManagementException()));
 
         NewEnvironment newEnvironment = new NewEnvironment();
         newEnvironment.setName("TestName");
@@ -316,15 +333,20 @@ public class EnvironmentServiceTest {
         obs.awaitTerminalEvent();
         obs.assertError(TechnicalManagementException.class);
 
-        verify(auditService, times(1)).report(argThat(builder -> {
-            Audit audit = builder.build(new ObjectMapper());
-            assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
-            assertEquals(ORGANIZATION_ID, audit.getReferenceId());
-            assertEquals(createdBy.getId(), audit.getActor().getId());
-            assertEquals(EventType.ENVIRONMENT_UPDATED, audit.getType());
-            assertEquals(Status.FAILURE, audit.getOutcome().getStatus());
+        verify(auditService, times(1))
+            .report(
+                argThat(
+                    builder -> {
+                        Audit audit = builder.build(new ObjectMapper());
+                        assertEquals(ReferenceType.ORGANIZATION, audit.getReferenceType());
+                        assertEquals(ORGANIZATION_ID, audit.getReferenceId());
+                        assertEquals(createdBy.getId(), audit.getActor().getId());
+                        assertEquals(EventType.ENVIRONMENT_UPDATED, audit.getType());
+                        assertEquals(Status.FAILURE, audit.getOutcome().getStatus());
 
-            return true;
-        }));
+                        return true;
+                    }
+                )
+            );
     }
 }

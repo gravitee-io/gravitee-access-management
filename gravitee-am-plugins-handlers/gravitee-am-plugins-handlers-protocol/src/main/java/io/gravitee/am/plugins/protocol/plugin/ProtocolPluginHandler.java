@@ -62,7 +62,6 @@ public class ProtocolPluginHandler implements PluginHandler {
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while router protocol instance", iae);
         }
-
     }
 
     private <T> T createInstance(Class<T> clazz) throws Exception {

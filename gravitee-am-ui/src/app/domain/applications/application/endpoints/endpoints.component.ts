@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {AuthService} from "../../../../services/auth.service";
-import {SnackbarService} from "../../../../services/snackbar.service";
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../../../services/auth.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'application-overview',
   templateUrl: './endpoints.component.html',
-  styleUrls: ['./endpoints.component.scss']
+  styleUrls: ['./endpoints.component.scss'],
 })
 export class ApplicationEndpointsComponent implements OnInit {
   application: any;
@@ -29,14 +29,12 @@ export class ApplicationEndpointsComponent implements OnInit {
   private baseURL: string;
   @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
 
-  constructor(private route: ActivatedRoute,
-              private snackbarService: SnackbarService) {
-  }
+  constructor(private route: ActivatedRoute, private snackbarService: SnackbarService) {}
 
   ngOnInit() {
-    const domain = this.route.snapshot.data['domain'];
-    this.entrypoint = this.route.snapshot.data['entrypoint'];
-    this.application = this.route.snapshot.parent.data['application'];
+    const domain = this.route.snapshot.data.domain;
+    this.entrypoint = this.route.snapshot.data.entrypoint;
+    this.application = this.route.snapshot.parent.data.application;
     this.baseURL = this.entrypoint.url + '/' + domain.path;
   }
 
@@ -47,5 +45,4 @@ export class ApplicationEndpointsComponent implements OnInit {
   endpoint(path) {
     return this.baseURL + path;
   }
-
 }

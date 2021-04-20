@@ -31,21 +31,22 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderManagerImpl extends AbstractService implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload> {
+public class IdentityProviderManagerImpl
+    extends AbstractService
+    implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
@@ -133,14 +134,16 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     private void updateIdentityProvider(String identityProviderId, IdentityProviderEvent identityProviderEvent) {
         final String eventType = identityProviderEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} identity provider event for {}", domain.getName(), eventType, identityProviderId);
-        identityProviderRepository.findById(identityProviderId)
-                .subscribe(
-                        identityProvider -> {
-                            updateAuthenticationProvider(identityProvider);
-                            logger.info("Identity provider {} {}d for domain {}", identityProviderId, eventType, domain.getName());
-                        },
-                        error -> logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No identity provider found with id {}", identityProviderId));
+        identityProviderRepository
+            .findById(identityProviderId)
+            .subscribe(
+                identityProvider -> {
+                    updateAuthenticationProvider(identityProvider);
+                    logger.info("Identity provider {} {}d for domain {}", identityProviderId, eventType, domain.getName());
+                },
+                error -> logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error),
+                () -> logger.error("No identity provider found with id {}", identityProviderId)
+            );
     }
 
     private void removeIdentityProvider(String identityProviderId) {
@@ -154,15 +157,21 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
             // stop existing provider, if any
             clearProvider(identityProvider.getId());
             // create and start the new provider
-            AuthenticationProvider authenticationProvider =
-                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                            identityProvider.getMappers(), identityProvider.getRoleMapper(), certificateManager);
+            AuthenticationProvider authenticationProvider = identityProviderPluginManager.create(
+                identityProvider.getType(),
+                identityProvider.getConfiguration(),
+                identityProvider.getMappers(),
+                identityProvider.getRoleMapper(),
+                certificateManager
+            );
             if (authenticationProvider != null) {
                 // start the authentication provider
                 authenticationProvider.start();
                 // init the user provider
-                UserProvider userProvider =
-                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
+                UserProvider userProvider = identityProviderPluginManager.create(
+                    identityProvider.getType(),
+                    identityProvider.getConfiguration()
+                );
                 providers.put(identityProvider.getId(), authenticationProvider);
                 identities.put(identityProvider.getId(), identityProvider);
                 if (userProvider != null) {

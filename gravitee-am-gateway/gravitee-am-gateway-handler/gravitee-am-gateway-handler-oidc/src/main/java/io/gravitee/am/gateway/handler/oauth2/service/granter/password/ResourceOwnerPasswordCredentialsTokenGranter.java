@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.password;
 
-import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
@@ -25,8 +25,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -41,8 +41,8 @@ import io.reactivex.Single;
  */
 public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenGranter {
 
-    final static String USERNAME_PARAMETER = "username";
-    final static String PASSWORD_PARAMETER = "password";
+    static final String USERNAME_PARAMETER = "username";
+    static final String PASSWORD_PARAMETER = "password";
 
     private UserAuthenticationManager userAuthenticationManager;
 
@@ -50,7 +50,11 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         super(GrantType.PASSWORD);
     }
 
-    public ResourceOwnerPasswordCredentialsTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, UserAuthenticationManager userAuthenticationManager) {
+    public ResourceOwnerPasswordCredentialsTokenGranter(
+        TokenRequestResolver tokenRequestResolver,
+        TokenService tokenService,
+        UserAuthenticationManager userAuthenticationManager
+    ) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
@@ -83,9 +87,10 @@ public class ResourceOwnerPasswordCredentialsTokenGranter extends AbstractTokenG
         String username = tokenRequest.getUsername();
         String password = tokenRequest.getPassword();
 
-        return userAuthenticationManager.authenticate(client, new EndUserAuthentication(username, password, new SimpleAuthenticationContext(tokenRequest)))
-                .onErrorResumeNext(ex -> Single.error(new InvalidGrantException(ex.getMessage())))
-                .toMaybe();
+        return userAuthenticationManager
+            .authenticate(client, new EndUserAuthentication(username, password, new SimpleAuthenticationContext(tokenRequest)))
+            .onErrorResumeNext(ex -> Single.error(new InvalidGrantException(ex.getMessage())))
+            .toMaybe();
     }
 
     public void setUserAuthenticationManager(UserAuthenticationManager userAuthenticationManager) {

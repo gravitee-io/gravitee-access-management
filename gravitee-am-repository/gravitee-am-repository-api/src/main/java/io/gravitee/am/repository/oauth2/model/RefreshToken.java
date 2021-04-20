@@ -19,6 +19,4 @@ package io.gravitee.am.repository.oauth2.model;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RefreshToken extends Token {
-
-}
+public class RefreshToken extends Token {}

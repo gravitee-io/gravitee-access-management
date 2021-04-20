@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Subject } from "rxjs";
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class NavbarService {
   private currentResource = new Subject<any>();
   public notifyObservable$ = this.currentResource.asObservable();
 
-  constructor() { }
+  constructor() {}
 
   notify(data) {
     if (data) {

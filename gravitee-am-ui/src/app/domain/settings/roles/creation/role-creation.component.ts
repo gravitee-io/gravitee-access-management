@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { RoleService } from "../../../../services/role.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { SnackbarService } from "../../../../services/snackbar.service";
-import { OrganizationService } from "../../../../services/organization.service";
+import { RoleService } from '../../../../services/role.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { OrganizationService } from '../../../../services/organization.service';
 
 @Component({
   selector: 'app-creation',
   templateUrl: './role-creation.component.html',
-  styleUrls: ['./role-creation.component.scss']
+  styleUrls: ['./role-creation.component.scss'],
 })
 export class RoleCreationComponent implements OnInit {
   private scopes: any[];
@@ -31,32 +31,33 @@ export class RoleCreationComponent implements OnInit {
   role: any = {};
   roleTypes: any[] = ['ORGANIZATION', 'DOMAIN', 'APPLICATION'];
 
-  constructor(private roleService: RoleService,
-              private organizationService: OrganizationService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private snackbarService: SnackbarService) { }
+  constructor(
+    private roleService: RoleService,
+    private organizationService: OrganizationService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
-    this.scopes = this.route.snapshot.data['scopes'];
+    this.scopes = this.route.snapshot.data.scopes;
   }
 
   create() {
     if (this.organizationContext) {
-      this.organizationService.createRole(this.role).subscribe(data => {
+      this.organizationService.createRole(this.role).subscribe((data) => {
         this.snackbarService.open('Role ' + data.name + ' created');
         this.router.navigate(['/settings', 'management', 'roles', data.id]);
       });
     } else {
-      this.roleService.create(this.domainId, this.role).subscribe(data => {
+      this.roleService.create(this.domainId, this.role).subscribe((data) => {
         this.snackbarService.open('Role ' + data.name + ' created');
         this.router.navigate(['/domains', this.domainId, 'settings', 'roles', data.id]);
       });
     }
   }
-
 }

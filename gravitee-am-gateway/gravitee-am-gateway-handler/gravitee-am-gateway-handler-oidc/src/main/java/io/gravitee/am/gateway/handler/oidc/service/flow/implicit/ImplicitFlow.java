@@ -29,7 +29,6 @@ import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -58,12 +57,15 @@ import java.util.List;
  */
 public class ImplicitFlow extends AbstractFlow {
 
-    private static final List<String> RESPONSE_TYPES = Arrays.asList(ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN);
+    private static final List<String> RESPONSE_TYPES = Arrays.asList(
+        ResponseType.TOKEN,
+        io.gravitee.am.common.oidc.ResponseType.ID_TOKEN,
+        io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN
+    );
     private TokenService tokenService;
     private IDTokenService idTokenService;
 
-    public ImplicitFlow(TokenService tokenService,
-                        IDTokenService idTokenService) {
+    public ImplicitFlow(TokenService tokenService, IDTokenService idTokenService) {
         super(RESPONSE_TYPES);
         this.tokenService = tokenService;
         this.idTokenService = idTokenService;
@@ -77,23 +79,29 @@ public class ImplicitFlow extends AbstractFlow {
         oAuth2Request.setSubject(endUser.getId());
         oAuth2Request.getContext().put(Claims.s_hash, authorizationRequest.getState());
         if (io.gravitee.am.common.oidc.ResponseType.ID_TOKEN.equals(authorizationRequest.getResponseType())) {
-            return idTokenService.create(oAuth2Request, client, endUser)
-                    .map(idToken -> {
+            return idTokenService
+                .create(oAuth2Request, client, endUser)
+                .map(
+                    idToken -> {
                         IDTokenResponse response = new IDTokenResponse();
                         response.setRedirectUri(authorizationRequest.getRedirectUri());
                         response.setIdToken(idToken);
                         response.setState(authorizationRequest.getState());
                         return response;
-                    });
+                    }
+                );
         } else {
-            return tokenService.create(oAuth2Request, client, endUser)
-                    .map(accessToken -> {
+            return tokenService
+                .create(oAuth2Request, client, endUser)
+                .map(
+                    accessToken -> {
                         ImplicitResponse response = new ImplicitResponse();
                         response.setRedirectUri(authorizationRequest.getRedirectUri());
                         response.setAccessToken(accessToken);
                         response.setState(authorizationRequest.getState());
                         return response;
-                    });
+                    }
+                );
         }
     }
 }

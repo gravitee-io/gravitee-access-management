@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
@@ -25,16 +30,10 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -59,11 +58,7 @@ public class EmailResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(new Email())).when(emailTemplateService).update(eq(domainId), eq(emailId), any(), any(User.class));
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("emails")
-                .path(emailId)
-                .request().put(Entity.json(updateEmail));
+        final Response response = target("domains").path(domainId).path("emails").path(emailId).request().put(Entity.json(updateEmail));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
 
@@ -77,11 +72,7 @@ public class EmailResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Completable.complete()).when(emailTemplateService).delete(eq(emailId), any());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("emails")
-                .path(emailId)
-                .request().delete();
+        final Response response = target("domains").path(domainId).path("emails").path(emailId).request().delete();
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
     }
 
@@ -95,12 +86,7 @@ public class EmailResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Completable.error(new EmailNotFoundException(emailId))).when(emailTemplateService).delete(eq(emailId), any());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("emails")
-                .path(emailId)
-                .request().delete();
+        final Response response = target("domains").path(domainId).path("emails").path(emailId).request().delete();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
-
 }

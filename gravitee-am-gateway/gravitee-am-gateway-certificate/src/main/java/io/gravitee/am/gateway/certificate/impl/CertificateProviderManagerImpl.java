@@ -26,13 +26,12 @@ import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.jackson.io.JacksonDeserializer;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.security.Key;
 import java.security.KeyPair;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -80,13 +79,23 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
 
         // create parser and builder (default to jjwt)
         io.jsonwebtoken.JwtParser jjwtParser;
-        io.jsonwebtoken. JwtBuilder jjwtBuilder;
+        io.jsonwebtoken.JwtBuilder jjwtBuilder;
         try {
             io.gravitee.am.certificate.api.Key providerKey = provider.key().blockingGet();
-            Key signingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPrivate() : (Key) providerKey.getValue();
-            Key verifyingKey = providerKey.getValue() instanceof KeyPair ? ((KeyPair) providerKey.getValue()).getPublic() : (Key) providerKey.getValue();
-            jjwtParser = Jwts.parserBuilder().deserializeJsonWith(new JacksonDeserializer<>(objectMapper)).setSigningKey(verifyingKey).build();
-            jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer<>(objectMapper)).signWith(signingKey).setHeaderParam(JwsHeader.KEY_ID, providerKey.getKeyId());
+            Key signingKey = providerKey.getValue() instanceof KeyPair
+                ? ((KeyPair) providerKey.getValue()).getPrivate()
+                : (Key) providerKey.getValue();
+            Key verifyingKey = providerKey.getValue() instanceof KeyPair
+                ? ((KeyPair) providerKey.getValue()).getPublic()
+                : (Key) providerKey.getValue();
+            jjwtParser =
+                Jwts.parserBuilder().deserializeJsonWith(new JacksonDeserializer<>(objectMapper)).setSigningKey(verifyingKey).build();
+            jjwtBuilder =
+                Jwts
+                    .builder()
+                    .serializeToJsonWith(new JacksonSerializer<>(objectMapper))
+                    .signWith(signingKey)
+                    .setHeaderParam(JwsHeader.KEY_ID, providerKey.getKeyId());
         } catch (UnsupportedOperationException ex) {
             jjwtParser = Jwts.parserBuilder().deserializeJsonWith(new JacksonDeserializer<>(objectMapper)).build();
             jjwtBuilder = Jwts.builder().serializeToJsonWith(new JacksonSerializer<>(objectMapper));
@@ -104,7 +113,11 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
 
     private void deploy(Certificate certificate) {
         // create underline provider
-        io.gravitee.am.certificate.api.CertificateProvider provider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
+        io.gravitee.am.certificate.api.CertificateProvider provider = certificatePluginManager.create(
+            certificate.getType(),
+            certificate.getConfiguration(),
+            certificate.getMetadata()
+        );
         // create certificate provider
         if (provider != null) {
             CertificateProvider certificateProvider = create(provider);

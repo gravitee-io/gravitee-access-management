@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute} from '@angular/router';
 
 @Component({
   selector: 'app-audits-settings',
@@ -29,7 +29,7 @@ export class AuditsSettingsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.reporters = this.route.snapshot.data['reporters'];
+    this.reporters = this.route.snapshot.data.reporters;
   }
 
   get isEmpty() {

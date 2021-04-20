@@ -39,7 +39,7 @@ public class DynamicClientAccessHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext context) {
         //1st check if dynamic client registration is enabled.
-        if(!domain.isDynamicClientRegistrationEnabled()) {
+        if (!domain.isDynamicClientRegistrationEnabled()) {
             context.fail(new ClientRegistrationForbiddenException());
             return;
         }

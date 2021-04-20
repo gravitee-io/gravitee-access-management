@@ -36,4 +36,3 @@ public class JWTBearerExtensionGrant implements ExtensionGrant {
         return JWTBearerExtensionGrantProvider.class;
     }
 }
-

@@ -17,7 +17,6 @@ package io.gravitee.am.identityprovider.inline;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.inline.model.User;
-
 import java.util.List;
 
 /**

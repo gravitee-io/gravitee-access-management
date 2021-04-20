@@ -42,14 +42,13 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import java.lang.reflect.Constructor;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
-
-import java.lang.reflect.Constructor;
-import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -95,10 +94,12 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
 
             // set headers
             if (authenticationHttpHeaders != null) {
-                authenticationHttpHeaders.forEach(header -> {
-                    String extValue = templateEngine.getValue(header.getValue(), String.class);
-                    httpRequest.putHeader(header.getName(), extValue);
-                });
+                authenticationHttpHeaders.forEach(
+                    header -> {
+                        String extValue = templateEngine.getValue(header.getValue(), String.class);
+                        httpRequest.putHeader(header.getName(), extValue);
+                    }
+                );
             }
 
             // set body
@@ -111,10 +112,10 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
                 } else {
                     String contentTypeHeader = httpRequest.headers().get(HttpHeaders.CONTENT_TYPE);
                     switch (contentTypeHeader) {
-                        case(MediaType.APPLICATION_JSON):
+                        case (MediaType.APPLICATION_JSON):
                             responseHandler = httpRequest.rxSendJsonObject(new JsonObject(bodyRequest));
                             break;
-                        case(MediaType.APPLICATION_FORM_URLENCODED):
+                        case (MediaType.APPLICATION_FORM_URLENCODED):
                             Map<String, String> queryParameters = format(bodyRequest);
                             MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
                             multiMap.setAll(queryParameters);
@@ -130,12 +131,14 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
             }
 
             return responseHandler
-                    .toMaybe()
-                    .map(httpResponse -> {
-                        String responseBody =  httpResponse.bodyAsString();
+                .toMaybe()
+                .map(
+                    httpResponse -> {
+                        String responseBody = httpResponse.bodyAsString();
                         // put response into template variable for EL
-                        templateEngine.getTemplateContext().setVariable(AUTHENTICATION_RESPONSE_CONTEXT_KEY,
-                                new HttpIdentityProviderResponse(httpResponse, responseBody));
+                        templateEngine
+                            .getTemplateContext()
+                            .setVariable(AUTHENTICATION_RESPONSE_CONTEXT_KEY, new HttpIdentityProviderResponse(httpResponse, responseBody));
 
                         // process authentication response
                         Exception lastException = null;
@@ -144,11 +147,13 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
                             while (iter.hasNext() && lastException == null) {
                                 HttpResponseErrorCondition errorCondition = iter.next();
                                 if (templateEngine.getValue(errorCondition.getValue(), Boolean.class)) {
-                                    Class<? extends Exception> clazz = (Class<? extends Exception>) Class.forName(errorCondition.getException());
+                                    Class<? extends Exception> clazz = (Class<? extends Exception>) Class.forName(
+                                        errorCondition.getException()
+                                    );
                                     if (errorCondition.getMessage() != null) {
                                         String errorMessage = templateEngine.getValue(errorCondition.getMessage(), String.class);
                                         Constructor<?> constructor = clazz.getConstructor(String.class);
-                                        lastException = clazz.cast(constructor.newInstance(new Object[]{errorMessage}));
+                                        lastException = clazz.cast(constructor.newInstance(new Object[] { errorMessage }));
                                     } else {
                                         lastException = clazz.newInstance();
                                     }
@@ -165,15 +170,23 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
                             throw new InternalAuthenticationServiceException("Unable to find user information");
                         }
                         // else connect the user
-                        return createUser( new JsonObject(responseBody).getMap());
-                    })
-                    .onErrorResumeNext(ex -> {
+                        return createUser(new JsonObject(responseBody).getMap());
+                    }
+                )
+                .onErrorResumeNext(
+                    ex -> {
                         if (ex instanceof AuthenticationException) {
                             return Maybe.error(ex);
                         }
                         LOGGER.error("An error has occurred while calling the remote HTTP identity provider {}", ex);
-                        return Maybe.error(new InternalAuthenticationServiceException("An error has occurred while calling the remote HTTP identity provider", ex));
-                    });
+                        return Maybe.error(
+                            new InternalAuthenticationServiceException(
+                                "An error has occurred while calling the remote HTTP identity provider",
+                                ex
+                            )
+                        );
+                    }
+                );
         } catch (Exception ex) {
             LOGGER.error("An error has occurred while authenticating the user {}", ex);
             return Maybe.error(new InternalAuthenticationServiceException("An error has occurred while authenticating the user", ex));
@@ -220,11 +233,14 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         }
 
         Map<String, Object> claims = new HashMap<>();
-        this.mapper.getMappers().forEach((k, v) -> {
-            if (attributes.containsKey(v)) {
-                claims.put(k, attributes.get(v));
-            }
-        });
+        this.mapper.getMappers()
+            .forEach(
+                (k, v) -> {
+                    if (attributes.containsKey(v)) {
+                        claims.put(k, attributes.get(v));
+                    }
+                }
+            );
         return claims;
     }
 
@@ -234,23 +250,31 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         }
 
         Set<String> roles = new HashSet<>();
-        roleMapper.getRoles().forEach((role, users) -> {
-            Arrays.asList(users).forEach(u -> {
-                // role mapping have the following syntax userAttribute=userValue
-                String[] roleMapping = u.split("=",2);
-                String userAttribute = roleMapping[0];
-                String userValue = roleMapping[1];
-                if (attributes.containsKey(userAttribute)) {
-                    Object attribute = attributes.get(userAttribute);
-                    // attribute is a list
-                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
-                        roles.add(role);
-                    } else if (userValue.equals(attributes.get(userAttribute))) {
-                        roles.add(role);
-                    }
+        roleMapper
+            .getRoles()
+            .forEach(
+                (role, users) -> {
+                    Arrays
+                        .asList(users)
+                        .forEach(
+                            u -> {
+                                // role mapping have the following syntax userAttribute=userValue
+                                String[] roleMapping = u.split("=", 2);
+                                String userAttribute = roleMapping[0];
+                                String userValue = roleMapping[1];
+                                if (attributes.containsKey(userAttribute)) {
+                                    Object attribute = attributes.get(userAttribute);
+                                    // attribute is a list
+                                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
+                                        roles.add(role);
+                                    } else if (userValue.equals(attributes.get(userAttribute))) {
+                                        roles.add(role);
+                                    }
+                                }
+                            }
+                        );
                 }
-            });
-        });
+            );
 
         return new ArrayList<>(roles);
     }

@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
@@ -34,20 +38,15 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-
-import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -57,6 +56,7 @@ import static org.mockito.Mockito.*;
 public class RoleServiceTest {
 
     public static final String ORGANIZATION_ID = "orga#1";
+
     @InjectMocks
     private RoleService roleService = new RoleServiceImpl();
 
@@ -69,7 +69,7 @@ public class RoleServiceTest {
     @Mock
     private EventService eventService;
 
-    private final static String DOMAIN = "domain1";
+    private static final String DOMAIN = "domain1";
 
     @Test
     public void shouldFindById() {
@@ -236,7 +236,8 @@ public class RoleServiceTest {
 
         when(roleRepository.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role")).thenReturn(Maybe.just(role));
         when(roleRepository.findAll(ReferenceType.ORGANIZATION, ORGANIZATION_ID)).thenReturn(Flowable.empty());
-        when(roleRepository.update(argThat(r -> r.getPermissionAcls().equals(Permission.unflatten(updateRole.getPermissions()))))).thenReturn(Single.just(role));
+        when(roleRepository.update(argThat(r -> r.getPermissionAcls().equals(Permission.unflatten(updateRole.getPermissions())))))
+            .thenReturn(Single.just(role));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = roleService.update(ReferenceType.ORGANIZATION, ORGANIZATION_ID, "my-role", updateRole, null).test();
@@ -327,7 +328,6 @@ public class RoleServiceTest {
 
     @Test
     public void shouldNotUpdate_defaultRoleName() {
-
         UpdateRole updateRole = new UpdateRole();
         updateRole.setName("new name");
 
@@ -365,7 +365,6 @@ public class RoleServiceTest {
 
     @Test
     public void shouldDelete_technicalException() {
-
         when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
         when(roleRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-role"))).thenReturn(Maybe.just(new Role()));
         when(roleRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));

@@ -19,7 +19,6 @@ import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.container.AbstractNode;
-
 import java.util.List;
 
 /**

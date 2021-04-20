@@ -17,13 +17,12 @@ package io.gravitee.am.gateway.certificate;
 
 import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.model.Certificate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -44,7 +43,7 @@ public class DefaultCertificateManager implements EntityManager<Certificate> {
             certificates.put(certificate.getId(), certificate);
             logger.info("Certificate {} for domain {} loaded", certificate.getName(), certificate.getDomain());
         } catch (Exception ex) {
-           logger.error("Unable to load certificate {} for domain {}", certificate.getName(), certificate.getDomain(), ex);
+            logger.error("Unable to load certificate {} for domain {}", certificate.getName(), certificate.getDomain(), ex);
         }
     }
 

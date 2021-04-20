@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
@@ -22,13 +25,9 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
 import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,13 +49,7 @@ public class GroupRolesResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockGroup)).when(groupService).findById(mockGroup.getId());
         doReturn(Single.just(Collections.singleton("role-1"))).when(roleService).findByIdIn(mockGroup.getRoles());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path(mockGroup.getId())
-                .path("roles")
-                .request()
-                .get();
+        final Response response = target("domains").path(domainId).path("groups").path(mockGroup.getId()).path("roles").request().get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
@@ -66,12 +59,7 @@ public class GroupRolesResourceTest extends JerseySpringTest {
         final String domainId = "domain-1";
         doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(domainService).findById(domainId);
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .path("group1")
-                .path("roles")
-                .request().get();
+        final Response response = target("domains").path(domainId).path("groups").path("group1").path("roles").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 }

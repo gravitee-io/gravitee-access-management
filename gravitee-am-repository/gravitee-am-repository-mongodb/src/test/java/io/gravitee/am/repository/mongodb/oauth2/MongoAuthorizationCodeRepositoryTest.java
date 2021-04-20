@@ -65,10 +65,10 @@ public class MongoAuthorizationCodeRepositoryTest extends AbstractOAuth2Reposito
         authorizationCode.setCode(code);
 
         authorizationCodeRepository
-                .create(authorizationCode)
-                .toCompletable()
-                .andThen(authorizationCodeRepository.delete(code))
-                .test().assertEmpty();
+            .create(authorizationCode)
+            .toCompletable()
+            .andThen(authorizationCodeRepository.delete(code))
+            .test()
+            .assertEmpty();
     }
-
 }

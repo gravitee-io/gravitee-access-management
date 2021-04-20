@@ -46,8 +46,6 @@ public class NewDomain {
 
     @Override
     public String toString() {
-        return "NewDomain{" +
-                "name='" + name + '\'' +
-                '}';
+        return "NewDomain{" + "name='" + name + '\'' + '}';
     }
 }

@@ -39,8 +39,7 @@ public class InvalidClientException extends OAuth2Exception {
 
     private String authenticateHeader;
 
-    public InvalidClientException() {
-    }
+    public InvalidClientException() {}
 
     public InvalidClientException(String message) {
         super(message);

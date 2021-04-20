@@ -17,13 +17,12 @@ package io.gravitee.am.gateway.handler.oauth2.service.token.indexer;
 
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,11 +46,13 @@ public class AccessTokenBulkProcessor implements Subscriber<List<AccessToken>> {
 
     @Override
     public void onNext(List<AccessToken> accessTokens) {
-        accessTokenRepository.bulkWrite(accessTokens)
-                .retryWhen(t -> t.take(30).delay(1000, TimeUnit.MILLISECONDS))
-                .subscribe(
-                        () -> logger.debug("Access tokens indexation completed"),
-                        error -> logger.error("Unexpected error while indexing access tokens", error));
+        accessTokenRepository
+            .bulkWrite(accessTokens)
+            .retryWhen(t -> t.take(30).delay(1000, TimeUnit.MILLISECONDS))
+            .subscribe(
+                () -> logger.debug("Access tokens indexation completed"),
+                error -> logger.error("Unexpected error while indexing access tokens", error)
+            );
         subscription.request(1);
     }
 

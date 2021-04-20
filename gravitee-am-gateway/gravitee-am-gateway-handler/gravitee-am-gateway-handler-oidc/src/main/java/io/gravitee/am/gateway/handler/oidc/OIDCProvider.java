@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc;
 
+import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
+
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -51,8 +53,6 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-
-import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -157,9 +157,7 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> openIDProviderConfigurationEndpoint = new ProviderConfigurationEndpoint();
         ((ProviderConfigurationEndpoint) openIDProviderConfigurationEndpoint).setDiscoveryService(discoveryService);
         oidcRouter.route("/.well-known/openid-configuration").handler(corsHandler);
-        oidcRouter
-                .route(HttpMethod.GET, "/.well-known/openid-configuration")
-                .handler(openIDProviderConfigurationEndpoint);
+        oidcRouter.route(HttpMethod.GET, "/.well-known/openid-configuration").handler(openIDProviderConfigurationEndpoint);
 
         // UserInfo Endpoint
         OAuth2AuthHandler userInfoAuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, Scope.OPENID.getKey());
@@ -167,32 +165,38 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
         userInfoAuthHandler.extractClient(true);
         userInfoAuthHandler.forceEndUserToken(true);
 
-        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService, roleService, groupService, jwtService, jweService, discoveryService);
+        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(
+            userService,
+            roleService,
+            groupService,
+            jwtService,
+            jweService,
+            discoveryService
+        );
         oidcRouter.route("/userinfo").handler(corsHandler);
+        oidcRouter.route(HttpMethod.GET, "/userinfo").handler(userInfoAuthHandler).handler(userInfoEndpoint);
         oidcRouter
-                .route(HttpMethod.GET, "/userinfo")
-                .handler(userInfoAuthHandler)
-                .handler(userInfoEndpoint);
-        oidcRouter
-                .route(HttpMethod.POST, "/userinfo")
-                .consumes(MediaType.APPLICATION_FORM_URLENCODED)
-                .handler(userInfoAuthHandler)
-                .handler(userInfoEndpoint);
+            .route(HttpMethod.POST, "/userinfo")
+            .consumes(MediaType.APPLICATION_FORM_URLENCODED)
+            .handler(userInfoAuthHandler)
+            .handler(userInfoEndpoint);
 
         // OpenID Provider JWK Set
         Handler<RoutingContext> openIDProviderJWKSetEndpoint = new ProviderJWKSetEndpoint(jwkService);
         oidcRouter.route("/.well-known/jwks.json").handler(corsHandler);
-        oidcRouter
-                .route(HttpMethod.GET, "/.well-known/jwks.json")
-                .handler(openIDProviderJWKSetEndpoint);
+        oidcRouter.route(HttpMethod.GET, "/.well-known/jwks.json").handler(openIDProviderJWKSetEndpoint);
 
         // Dynamic Client Registration templates
-        DynamicClientRegistrationTemplateHandler dynamicClientRegistrationTemplateHandler = new DynamicClientRegistrationTemplateHandler(domain);
-        DynamicClientRegistrationTemplateEndpoint dynamicClientRegistrationTemplateEndpoint = new DynamicClientRegistrationTemplateEndpoint(clientSyncService);
+        DynamicClientRegistrationTemplateHandler dynamicClientRegistrationTemplateHandler = new DynamicClientRegistrationTemplateHandler(
+            domain
+        );
+        DynamicClientRegistrationTemplateEndpoint dynamicClientRegistrationTemplateEndpoint = new DynamicClientRegistrationTemplateEndpoint(
+            clientSyncService
+        );
         oidcRouter
-                .route(HttpMethod.GET, "/register_templates")
-                .handler(dynamicClientRegistrationTemplateHandler)
-                .handler(dynamicClientRegistrationTemplateEndpoint);
+            .route(HttpMethod.GET, "/register_templates")
+            .handler(dynamicClientRegistrationTemplateHandler)
+            .handler(dynamicClientRegistrationTemplateEndpoint);
 
         // Dynamic Client Registration
         OAuth2AuthHandler dynamicClientRegistrationAuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, Scope.DCR_ADMIN.getKey());
@@ -200,13 +204,19 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
         dynamicClientRegistrationAuthHandler.extractClient(true);
         dynamicClientRegistrationAuthHandler.forceClientToken(true);
 
-        DynamicClientRegistrationHandler dynamicClientRegistrationHandler = new DynamicClientRegistrationHandler(domain, dynamicClientRegistrationAuthHandler);
-        DynamicClientRegistrationEndpoint dynamicClientRegistrationEndpoint = new DynamicClientRegistrationEndpoint(dcrService, clientSyncService);
+        DynamicClientRegistrationHandler dynamicClientRegistrationHandler = new DynamicClientRegistrationHandler(
+            domain,
+            dynamicClientRegistrationAuthHandler
+        );
+        DynamicClientRegistrationEndpoint dynamicClientRegistrationEndpoint = new DynamicClientRegistrationEndpoint(
+            dcrService,
+            clientSyncService
+        );
         oidcRouter
-                .route(HttpMethod.POST, "/register")
-                .consumes(MediaType.APPLICATION_JSON)
-                .handler(dynamicClientRegistrationHandler)
-                .handler(dynamicClientRegistrationEndpoint);
+            .route(HttpMethod.POST, "/register")
+            .consumes(MediaType.APPLICATION_JSON)
+            .handler(dynamicClientRegistrationHandler)
+            .handler(dynamicClientRegistrationEndpoint);
 
         // Dynamic Client Configuration
         OAuth2AuthHandler dynamicClientAccessAuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, Scope.DCR_ADMIN.getKey());
@@ -221,51 +231,48 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
         DynamicClientAccessTokenHandler dynamicClientAccessTokenHandler = new DynamicClientAccessTokenHandler();
         DynamicClientAccessEndpoint dynamicClientAccessEndpoint = new DynamicClientAccessEndpoint(dcrService, clientSyncService);
         oidcRouter
-                .route(HttpMethod.GET, "/register/:"+CLIENT_ID)
-                .handler(dynamicClientAccessHandler)
-                .handler(dynamicClientAccessAuthHandler)
-                .handler(dynamicClientAccessTokenHandler)
-                .handler(dynamicClientAccessEndpoint::read);
+            .route(HttpMethod.GET, "/register/:" + CLIENT_ID)
+            .handler(dynamicClientAccessHandler)
+            .handler(dynamicClientAccessAuthHandler)
+            .handler(dynamicClientAccessTokenHandler)
+            .handler(dynamicClientAccessEndpoint::read);
         oidcRouter
-                .route(HttpMethod.PATCH, "/register/:"+CLIENT_ID)
-                .consumes(MediaType.APPLICATION_JSON)
-                .handler(dynamicClientAccessHandler)
-                .handler(dynamicClientAccessAuthHandler)
-                .handler(dynamicClientAccessTokenHandler)
-                .handler(dynamicClientAccessEndpoint::patch);
+            .route(HttpMethod.PATCH, "/register/:" + CLIENT_ID)
+            .consumes(MediaType.APPLICATION_JSON)
+            .handler(dynamicClientAccessHandler)
+            .handler(dynamicClientAccessAuthHandler)
+            .handler(dynamicClientAccessTokenHandler)
+            .handler(dynamicClientAccessEndpoint::patch);
         oidcRouter
-                .route(HttpMethod.PUT, "/register/:"+CLIENT_ID)
-                .consumes(MediaType.APPLICATION_JSON)
-                .handler(dynamicClientAccessHandler)
-                .handler(dynamicClientAccessAuthHandler)
-                .handler(dynamicClientAccessTokenHandler)
-                .handler(dynamicClientAccessEndpoint::update);
+            .route(HttpMethod.PUT, "/register/:" + CLIENT_ID)
+            .consumes(MediaType.APPLICATION_JSON)
+            .handler(dynamicClientAccessHandler)
+            .handler(dynamicClientAccessAuthHandler)
+            .handler(dynamicClientAccessTokenHandler)
+            .handler(dynamicClientAccessEndpoint::update);
         oidcRouter
-                .route(HttpMethod.DELETE, "/register/:"+CLIENT_ID)
-                .handler(dynamicClientAccessHandler)
-                .handler(dynamicClientAccessAuthHandler)
-                .handler(dynamicClientAccessTokenHandler)
-                .handler(dynamicClientAccessEndpoint::delete);
+            .route(HttpMethod.DELETE, "/register/:" + CLIENT_ID)
+            .handler(dynamicClientAccessHandler)
+            .handler(dynamicClientAccessAuthHandler)
+            .handler(dynamicClientAccessTokenHandler)
+            .handler(dynamicClientAccessEndpoint::delete);
         oidcRouter
-                .route(HttpMethod.POST, "/register/:"+CLIENT_ID+"/renew_secret")
-                .handler(dynamicClientAccessHandler)
-                .handler(dynamicClientAccessAuthHandler)
-                .handler(dynamicClientAccessTokenHandler)
-                .handler(dynamicClientAccessEndpoint::renewClientSecret);
+            .route(HttpMethod.POST, "/register/:" + CLIENT_ID + "/renew_secret")
+            .handler(dynamicClientAccessHandler)
+            .handler(dynamicClientAccessAuthHandler)
+            .handler(dynamicClientAccessTokenHandler)
+            .handler(dynamicClientAccessEndpoint::renewClientSecret);
 
         // client auth handler
         final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService);
 
         // Request object registration
         oidcRouter
-                .route(HttpMethod.POST, "/ros")
-                .handler(clientAuthHandler)
-                .handler(new RequestObjectRegistrationEndpoint(requestObjectService));
+            .route(HttpMethod.POST, "/ros")
+            .handler(clientAuthHandler)
+            .handler(new RequestObjectRegistrationEndpoint(requestObjectService));
 
-        oidcRouter
-                .route("/ros")
-                .handler(clientAuthHandler)
-                .handler(new RequestObjectRegistrationEndpoint.MethodNotAllowedHandler());
+        oidcRouter.route("/ros").handler(clientAuthHandler).handler(new RequestObjectRegistrationEndpoint.MethodNotAllowedHandler());
 
         // error handler
         errorHandler(oidcRouter);

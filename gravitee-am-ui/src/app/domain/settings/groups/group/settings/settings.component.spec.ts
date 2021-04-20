@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {GroupSettingsComponent} from './settings.component';
+import { GroupSettingsComponent } from './settings.component';
 
 describe('GroupSettingsComponent', () => {
   let component: GroupSettingsComponent;
@@ -23,9 +23,8 @@ describe('GroupSettingsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ GroupSettingsComponent ]
-    })
-    .compileComponents();
+      declarations: [GroupSettingsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

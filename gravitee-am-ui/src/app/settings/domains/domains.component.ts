@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { AppConfig } from "../../../config/app.config";
-import { ActivatedRoute } from "@angular/router";
+import { AppConfig } from '../../../config/app.config';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-domains',
   templateUrl: './domains.component.html',
-  styleUrls: ['./domains.component.scss']
+  styleUrls: ['./domains.component.scss'],
 })
 export class DomainsComponent implements OnInit {
   title = AppConfig.settings.portalTitle;
   version = AppConfig.settings.version;
   domains = [];
 
-  constructor(private route : ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.domains = this.route.snapshot.data['domains'];
+    this.domains = this.route.snapshot.data.domains;
   }
 
   get isEmpty() {

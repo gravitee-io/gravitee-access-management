@@ -35,7 +35,14 @@ public class ExtensionGrantAuditBuilder extends ManagementAuditBuilder<Extension
             setNewValue(extensionGrant);
         }
         domain(extensionGrant.getDomain());
-        setTarget(extensionGrant.getId(), EntityType.EXTENSION_GRANT, null, extensionGrant.getName(), ReferenceType.DOMAIN, extensionGrant.getDomain());
+        setTarget(
+            extensionGrant.getId(),
+            EntityType.EXTENSION_GRANT,
+            null,
+            extensionGrant.getName(),
+            ReferenceType.DOMAIN,
+            extensionGrant.getDomain()
+        );
         return this;
     }
 }

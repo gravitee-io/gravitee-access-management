@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {ApplicationService} from "../../../../../services/application.service";
-import {SnackbarService} from "../../../../../services/snackbar.service";
-import {AuthService} from "../../../../../services/auth.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ApplicationService } from '../../../../../services/application.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-application-account-settings',
   templateUrl: './account.component.html',
-  styleUrls: ['./account.component.scss']
+  styleUrls: ['./account.component.scss'],
 })
 export class ApplicationAccountSettingsComponent implements OnInit {
   private domainId: string;
@@ -30,24 +30,25 @@ export class ApplicationAccountSettingsComponent implements OnInit {
   accountSettings: any;
   readonly = false;
 
-  constructor(private route: ActivatedRoute,
-              private applicationService: ApplicationService,
-              private authService: AuthService,
-              private snackbarService: SnackbarService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private applicationService: ApplicationService,
+    private authService: AuthService,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
-    this.accountSettings = this.application.settings.account || { 'inherited' : true };
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
+    this.application = this.route.snapshot.parent.parent.data.application;
+    this.accountSettings = this.application.settings.account || { inherited: true };
     this.readonly = !this.authService.hasPermissions(['application_settings_update']);
   }
 
   updateAccountSettings(accountSettings) {
     this.accountSettings = accountSettings;
-    this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'account' : accountSettings}}).subscribe(data => {
+    this.applicationService.patch(this.domainId, this.application.id, { settings: { account: accountSettings } }).subscribe((data) => {
       this.application = data;
-      this.route.snapshot.parent.data['application'] = this.application;
+      this.route.snapshot.parent.data.application = this.application;
       this.snackbarService.open('Application updated');
     });
   }

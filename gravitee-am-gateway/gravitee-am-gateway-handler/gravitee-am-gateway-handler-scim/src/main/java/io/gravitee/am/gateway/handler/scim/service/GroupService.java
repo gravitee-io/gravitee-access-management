@@ -20,7 +20,6 @@ import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -28,7 +27,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface GroupService {
-
     Single<ListResponse<Group>> list(int page, int size, String baseUrl);
 
     Single<List<Group>> findByMember(String memberId);

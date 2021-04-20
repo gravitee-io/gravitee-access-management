@@ -20,13 +20,11 @@ import { UserService } from '../services/user.service';
 
 @Injectable()
 export class EnrolledFactorsResolver implements Resolve<any> {
+  constructor(private userService: UserService) {}
 
-  constructor(private userService: UserService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.parent.parent.paramMap.get('domainId');
     const userId = route.parent.paramMap.get('userId');
     return this.userService.factors(domainId, userId);
   }
-
 }

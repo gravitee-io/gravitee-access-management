@@ -19,7 +19,6 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
-
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.util.Base64;
@@ -41,7 +40,7 @@ public final class QRCode {
     }
 
     public static String generateURI(String secret, String issuer, String account) throws Exception {
-        URI uri = new URI("otpauth", "totp", "/" + issuer + ":" + account, "secret=" + secret + "&issuer=" + issuer,null);
+        URI uri = new URI("otpauth", "totp", "/" + issuer + ":" + account, "secret=" + secret + "&issuer=" + issuer, null);
         return uri.toASCIIString();
     }
 }

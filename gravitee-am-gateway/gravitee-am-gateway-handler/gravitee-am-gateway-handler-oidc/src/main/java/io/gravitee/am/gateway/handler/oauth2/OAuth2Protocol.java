@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
  * @author GraviteeSource Team
  */
 public class OAuth2Protocol implements Protocol {
+
     @Override
     public Class<? extends ProtocolConfiguration> configuration() {
         return OAuth2Configuration.class;

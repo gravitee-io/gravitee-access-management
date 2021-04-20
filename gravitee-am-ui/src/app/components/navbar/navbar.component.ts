@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {Router} from "@angular/router";
-import {AuthService} from "../../services/auth.service";
-import {DomainService} from "../../services/domain.service";
-import {Subscription} from "rxjs";
-import {NavbarService} from "./navbar.service";
-import {SnackbarService} from "../../services/snackbar.service";
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { DomainService } from '../../services/domain.service';
+import { Subscription } from 'rxjs';
+import { NavbarService } from './navbar.service';
+import { SnackbarService } from '../../services/snackbar.service';
 import * as _ from 'lodash';
-import {SidenavService} from "../sidenav/sidenav.service";
+import { SidenavService } from '../sidenav/sidenav.service';
 
 @Component({
   selector: 'gv-navbar',
   templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.scss']
+  styleUrls: ['./navbar.component.scss'],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   private navbarSubscription: Subscription;
@@ -35,17 +35,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
   domains: any[];
   currentResource: any = {};
   navLinks: any = [
-    {'href': '/domains/new' , 'label': 'Create domain', 'icon': 'add'},
-    {'href': '/settings' , 'label': 'Global settings', 'icon': 'settings'},
-    {'href': '/logout' , 'label': 'Sign out', 'icon': 'exit_to_app'},
+    { href: '/domains/new', label: 'Create domain', icon: 'add' },
+    { href: '/settings', label: 'Global settings', icon: 'settings' },
+    { href: '/logout', label: 'Sign out', icon: 'exit_to_app' },
   ];
 
-  constructor(private authService: AuthService,
-              private domainService: DomainService,
-              private navbarService: NavbarService,
-              private snackbarService: SnackbarService,
-              private sidenavService: SidenavService,
-              public router: Router) {
+  constructor(
+    private authService: AuthService,
+    private domainService: DomainService,
+    private navbarService: NavbarService,
+    private snackbarService: SnackbarService,
+    private sidenavService: SidenavService,
+    public router: Router,
+  ) {
     if (!this.authService.user()) {
       this.authService.userInfo().subscribe(() => this.initNavLinks());
     } else {
@@ -54,8 +56,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.navbarSubscription = this.navbarService.notifyObservable$.subscribe(data => this.currentResource = data);
-    this.sidenavSubscription = this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
+    this.navbarSubscription = this.navbarService.notifyObservable$.subscribe((data) => (this.currentResource = data));
+    this.sidenavSubscription = this.sidenavService.resizeSidenavObservable.subscribe((reducedMode) => (this.reducedMode = reducedMode));
   }
 
   ngOnDestroy(): void {
@@ -68,22 +70,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   listDomains() {
-    this.domainService.list().subscribe(data => this.domains = data);
+    this.domainService.list().subscribe((data) => (this.domains = data));
   }
 
   goTo(routerLink) {
     // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
-    this.router.navigateByUrl('/dummy', { skipLocationChange: true })
-      .then(() => this.router.navigate(routerLink));
+    this.router.navigateByUrl('/dummy', { skipLocationChange: true }).then(() => this.router.navigate(routerLink));
   }
 
   displayBreadcrumb(): boolean {
-    return !this.router.url.startsWith('/domains/new') &&
+    return (
+      !this.router.url.startsWith('/domains/new') &&
       !this.router.url.startsWith('/login') &&
       !this.router.url.startsWith('/logout') &&
-      !this.router.url.startsWith('/404');
+      !this.router.url.startsWith('/404')
+    );
   }
-
 
   private initNavLinks() {
     if (!this.canDisplay(['domain_create'])) {

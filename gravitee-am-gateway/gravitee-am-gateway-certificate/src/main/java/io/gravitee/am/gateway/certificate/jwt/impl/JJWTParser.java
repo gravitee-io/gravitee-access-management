@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.gateway.certificate.jwt.impl;
 
-import io.gravitee.am.common.exception.jwt.SignatureException;
-import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
+import io.gravitee.am.common.exception.jwt.SignatureException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.jwt.JWTParser;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -58,6 +58,4 @@ public class JJWTParser implements JWTParser {
             throw ex;
         }
     }
-
-
 }

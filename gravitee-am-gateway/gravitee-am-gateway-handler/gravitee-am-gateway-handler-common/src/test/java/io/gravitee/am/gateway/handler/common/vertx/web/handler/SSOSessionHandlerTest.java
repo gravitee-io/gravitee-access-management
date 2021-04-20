@@ -15,24 +15,23 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.user.UserManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.vertx.core.http.HttpMethod;
+import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Collections;
-
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -51,18 +50,16 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        router.route("/login")
-                .handler(new SSOSessionHandler(userManager, clientSyncService))
-                .handler(rc -> rc.response().setStatusCode(200).end())
-                .failureHandler(new ErrorHandler());
+        router
+            .route("/login")
+            .handler(new SSOSessionHandler(userManager, clientSyncService))
+            .handler(rc -> rc.response().setStatusCode(200).end())
+            .failureHandler(new ErrorHandler());
     }
 
     @Test
     public void shouldInvoke_noUser() throws Exception {
-        testRequest(
-                HttpMethod.GET,
-                "/login",
-                HttpStatusCode.OK_200, "OK");
+        testRequest(HttpMethod.GET, "/login", HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -79,15 +76,19 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(client.getClientId())).thenReturn(Maybe.just(client));
 
-        router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
-            routingContext.next();
-        });
+        router
+            .route()
+            .order(-1)
+            .handler(
+                routingContext -> {
+                    routingContext.setUser(
+                        new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))
+                    );
+                    routingContext.next();
+                }
+            );
 
-        testRequest(
-                HttpMethod.GET,
-                "/login?client_id=test-client",
-                HttpStatusCode.OK_200, "OK");
+        testRequest(HttpMethod.GET, "/login?client_id=test-client", HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -108,7 +109,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
         when(userManager.get(user.getId())).thenReturn(Maybe.just(user));
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty()).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+        when(clientSyncService.findByClientId(anyString()))
+            .thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
                     if (argument.equals("test-client")) {
@@ -116,21 +118,23 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
                     } else if (argument.equals("requested-client")) {
                         return Maybe.just(requestedClient);
                     }
-                    throw new InvalidUseOfMatchersException(
-                            String.format("Argument %s does not match", argument)
-                    );
+                    throw new InvalidUseOfMatchersException(String.format("Argument %s does not match", argument));
                 }
-        );
+            );
 
-        router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
-            routingContext.next();
-        });
+        router
+            .route()
+            .order(-1)
+            .handler(
+                routingContext -> {
+                    routingContext.setUser(
+                        new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))
+                    );
+                    routingContext.next();
+                }
+            );
 
-        testRequest(
-                HttpMethod.GET,
-                "/login?client_id=requested-client",
-                HttpStatusCode.OK_200, "OK");
+        testRequest(HttpMethod.GET, "/login?client_id=requested-client", HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -151,7 +155,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
 
         when(userManager.get(user.getId())).thenReturn(Maybe.just(user));
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
-        when(clientSyncService.findByClientId(anyString())).thenAnswer(
+        when(clientSyncService.findByClientId(anyString()))
+            .thenAnswer(
                 invocation -> {
                     String argument = invocation.getArgument(0);
                     if (argument.equals("test-client")) {
@@ -159,20 +164,22 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
                     } else if (argument.equals("requested-client")) {
                         return Maybe.just(requestedClient);
                     }
-                    throw new InvalidUseOfMatchersException(
-                            String.format("Argument %s does not match", argument)
-                    );
+                    throw new InvalidUseOfMatchersException(String.format("Argument %s does not match", argument));
                 }
-        );
+            );
 
-        router.route().order(-1).handler(routingContext -> {
-            routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
-            routingContext.next();
-        });
+        router
+            .route()
+            .order(-1)
+            .handler(
+                routingContext -> {
+                    routingContext.setUser(
+                        new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))
+                    );
+                    routingContext.next();
+                }
+            );
 
-        testRequest(
-                HttpMethod.GET,
-                "/login?client_id=requested-client",
-                HttpStatusCode.FORBIDDEN_403, "Forbidden");
+        testRequest(HttpMethod.GET, "/login?client_id=requested-client", HttpStatusCode.FORBIDDEN_403, "Forbidden");
     }
 }

@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 public class RepositoryScopeProvider implements io.gravitee.platform.repository.api.RepositoryScopeProvider {
 
     public Scope[] getHandledScopes() {
-
-        return new Scope[]{Scope.MANAGEMENT, Scope.OAUTH2};
+        return new Scope[] { Scope.MANAGEMENT, Scope.OAUTH2 };
     }
 }

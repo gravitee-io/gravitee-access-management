@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.oauth2.service.token;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -29,7 +29,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface TokenService {
-
     Maybe<Token> getAccessToken(String accessToken, Client client);
 
     Maybe<Token> getRefreshToken(String refreshToken, Client client);

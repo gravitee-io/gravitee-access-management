@@ -15,12 +15,11 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2.internal.model;
 
+import java.util.Date;
+import java.util.Set;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
-
-import java.util.Date;
-import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

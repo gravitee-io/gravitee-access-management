@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.provider;
 
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
-
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
@@ -26,14 +25,14 @@ import javax.ws.rs.ext.Provider;
  * @author GraviteeSource Team
  */
 @Provider
-public class Oauth2ExceptionMapper extends AbstractExceptionMapper<OAuth2Exception>  {
+public class Oauth2ExceptionMapper extends AbstractExceptionMapper<OAuth2Exception> {
 
     @Override
     public Response toResponse(final OAuth2Exception oauthException) {
         return Response
-                .status(oauthException.getHttpStatusCode())
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(convert(oauthException))
-                .build();
+            .status(oauthException.getHttpStatusCode())
+            .type(MediaType.APPLICATION_JSON_TYPE)
+            .entity(convert(oauthException))
+            .build();
     }
 }

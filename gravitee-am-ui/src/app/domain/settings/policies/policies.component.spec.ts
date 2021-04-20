@@ -23,9 +23,8 @@ describe('DomainSettingsPoliciesComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsPoliciesComponent ]
-    })
-      .compileComponents();
+      declarations: [DomainSettingsPoliciesComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {
@@ -38,4 +37,3 @@ describe('DomainSettingsPoliciesComponent', () => {
     expect(component).toBeTruthy();
   });
 });
-

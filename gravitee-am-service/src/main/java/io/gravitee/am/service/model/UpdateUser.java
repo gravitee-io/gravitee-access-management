@@ -15,16 +15,16 @@
  */
 package io.gravitee.am.service.model;
 
+import static io.gravitee.am.service.validators.EmailValidator.EMAIL_MAX_LENGTH;
+import static io.gravitee.am.service.validators.EmailValidator.EMAIL_PATTERN;
+import static io.gravitee.am.service.validators.UserValidator.*;
+
+import java.util.Date;
+import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import java.util.Date;
-import java.util.Map;
-
-import static io.gravitee.am.service.validators.EmailValidator.EMAIL_MAX_LENGTH;
-import static io.gravitee.am.service.validators.EmailValidator.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.UserValidator.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -33,7 +33,7 @@ import static io.gravitee.am.service.validators.UserValidator.*;
 public class UpdateUser {
 
     @NotBlank
-    @Size(max = EMAIL_MAX_LENGTH,  message = "must not be greater than "+ EMAIL_MAX_LENGTH)
+    @Size(max = EMAIL_MAX_LENGTH, message = "must not be greater than " + EMAIL_MAX_LENGTH)
     @Pattern(regexp = EMAIL_PATTERN, message = "must be a well-formed email address")
     private String email;
 
@@ -43,7 +43,7 @@ public class UpdateUser {
     @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid last name")
     private String lastName;
 
-    @Size(max = DEFAULT_MAX_LENGTH,  message = "must not be greater than "+ DEFAULT_MAX_LENGTH)
+    @Size(max = DEFAULT_MAX_LENGTH, message = "must not be greater than " + DEFAULT_MAX_LENGTH)
     private String externalId;
 
     private boolean accountNonExpired = true;
@@ -210,20 +210,39 @@ public class UpdateUser {
 
     @Override
     public String toString() {
-        return "UpdateUser{" +
-                ", email='" + email + '\'' +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", accountNonExpired=" + accountNonExpired +
-                ", accountNonLocked=" + accountNonLocked +
-                ", credentialsNonExpired=" + credentialsNonExpired +
-                ", enabled=" + enabled +
-                ", source='" + source + '\'' +
-                ", loginsCount=" + loginsCount +
-                ", loggedAt=" + loggedAt +
-                ", additionalInformation=" + additionalInformation +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
+        return (
+            "UpdateUser{" +
+            ", email='" +
+            email +
+            '\'' +
+            ", firstName='" +
+            firstName +
+            '\'' +
+            ", lastName='" +
+            lastName +
+            '\'' +
+            ", accountNonExpired=" +
+            accountNonExpired +
+            ", accountNonLocked=" +
+            accountNonLocked +
+            ", credentialsNonExpired=" +
+            credentialsNonExpired +
+            ", enabled=" +
+            enabled +
+            ", source='" +
+            source +
+            '\'' +
+            ", loginsCount=" +
+            loginsCount +
+            ", loggedAt=" +
+            loggedAt +
+            ", additionalInformation=" +
+            additionalInformation +
+            ", createdAt=" +
+            createdAt +
+            ", updatedAt=" +
+            updatedAt +
+            '}'
+        );
     }
 }

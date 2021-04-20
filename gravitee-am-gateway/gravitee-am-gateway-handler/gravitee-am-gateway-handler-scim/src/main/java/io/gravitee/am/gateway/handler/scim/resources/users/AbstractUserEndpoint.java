@@ -23,13 +23,12 @@ import io.gravitee.am.gateway.handler.scim.model.EntrepriseUser;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,14 +53,18 @@ public class AbstractUserEndpoint {
         }
         Set<String> schemaSet = new HashSet();
         // check duplicate and check if values are supported
-        schemas.forEach(schema -> {
-            if (!schemaSet.add(schema)) {
-                throw new InvalidSyntaxException("Duplicate 'schemas' values are forbidden");
+        schemas.forEach(
+            schema -> {
+                if (!schemaSet.add(schema)) {
+                    throw new InvalidSyntaxException("Duplicate 'schemas' values are forbidden");
+                }
+                if (!EntrepriseUser.SCHEMAS.contains(schema)) {
+                    throw new InvalidSyntaxException(
+                        "The 'schemas' attribute MUST only contain values defined as 'schema' and schemaExtensions' for the resource's defined User type"
+                    );
+                }
             }
-            if (!EntrepriseUser.SCHEMAS.contains(schema)) {
-                throw new InvalidSyntaxException("The 'schemas' attribute MUST only contain values defined as 'schema' and schemaExtensions' for the resource's defined User type");
-            }
-        });
+        );
     }
 
     protected String location(HttpServerRequest request) {

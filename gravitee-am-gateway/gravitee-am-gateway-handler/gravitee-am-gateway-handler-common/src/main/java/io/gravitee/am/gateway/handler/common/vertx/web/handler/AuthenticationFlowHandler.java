@@ -27,6 +27,5 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public interface AuthenticationFlowHandler {
-
     Handler<RoutingContext> create();
 }

@@ -57,29 +57,37 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         User user = new User();
         user.setId("user_id");
 
-        router.route()
-                .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
-                .handler(routingContext -> {
-                    routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+        router
+            .route()
+            .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+            .handler(
+                routingContext -> {
+                    routingContext.setUser(
+                        new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))
+                    );
                     routingContext.next();
-                })
-                .handler(authenticationFlowHandler.create())
-                .handler(rc -> {
+                }
+            )
+            .handler(authenticationFlowHandler.create())
+            .handler(
+                rc -> {
                     final String returnUrl = rc.session().get(FormLoginHandler.DEFAULT_RETURN_URL_PARAM);
                     if (returnUrl != null && returnUrl.contains("/oauth/authorize")) {
                         rc.response().end();
                     } else {
                         rc.response().setStatusCode(500).end();
                     }
-                })
-                .failureHandler(rc -> rc.response().setStatusCode(503).end());
+                }
+            )
+            .failureHandler(rc -> rc.response().setStatusCode(503).end());
 
         testRequest(
-                HttpMethod.GET,
-                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/authorize/callback",
-                null,
-                HttpStatusCode.OK_200, "OK", null);
-
-
+            HttpMethod.GET,
+            "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/authorize/callback",
+            null,
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 }

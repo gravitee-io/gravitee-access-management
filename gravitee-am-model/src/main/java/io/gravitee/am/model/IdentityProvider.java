@@ -46,8 +46,7 @@ public class IdentityProvider {
 
     private Date updatedAt;
 
-    public IdentityProvider() {
-    }
+    public IdentityProvider() {}
 
     public IdentityProvider(IdentityProvider other) {
         this.id = other.id;

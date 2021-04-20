@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
-import { FormControl } from "@angular/forms";
-import { ApplicationService } from "../../../services/application.service";
+import { ActivatedRoute } from '@angular/router';
+import { FormControl } from '@angular/forms';
+import { ApplicationService } from '../../../services/application.service';
 
 @Component({
   selector: 'app-select-applications',
-  templateUrl: './select-applications.component.html'
+  templateUrl: './select-applications.component.html',
 })
 export class SelectApplicationsComponent implements OnInit {
   private domainId: string;
@@ -30,23 +30,22 @@ export class SelectApplicationsComponent implements OnInit {
   @Output() onSelectApp = new EventEmitter<any>();
   @Output() onRemoveApp = new EventEmitter<any>();
 
-  constructor(private route: ActivatedRoute,
-              private applicationService: ApplicationService) {
-  }
+  constructor(private route: ActivatedRoute, private applicationService: ApplicationService) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'] ? this.route.snapshot.parent.parent.params['domainId'] : this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.appCtrl.valueChanges
-      .subscribe(searchTerm => {
-        if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
-          this.applicationService.search(this.domainId, searchTerm + '*').subscribe(response => {
-            this.filteredApps = response.data;
-          });
-        }
-      });
+    this.domainId = this.route.snapshot.parent.parent.params.domainId
+      ? this.route.snapshot.parent.parent.params.domainId
+      : this.route.snapshot.parent.parent.parent.params.domainId;
+    this.appCtrl.valueChanges.subscribe((searchTerm) => {
+      if (typeof searchTerm === 'string' || searchTerm instanceof String) {
+        this.applicationService.search(this.domainId, searchTerm + '*').subscribe((response) => {
+          this.filteredApps = response.data;
+        });
+      }
+    });
 
     if (this.selectedApp) {
-      this.appCtrl.setValue({name: this.selectedApp.name, clientId: this.selectedApp.clientId});
+      this.appCtrl.setValue({ name: this.selectedApp.name, clientId: this.selectedApp.clientId });
     }
   }
 

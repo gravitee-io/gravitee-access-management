@@ -15,15 +15,15 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -62,7 +62,6 @@ public class MongoOrganizationRepositoryTest extends AbstractManagementRepositor
 
     @Test
     public void testCreate() {
-
         Organization organization = new Organization();
         organization.setName("testName");
 

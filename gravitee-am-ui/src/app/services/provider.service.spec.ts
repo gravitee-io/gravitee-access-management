@@ -20,7 +20,7 @@ import { ProviderService } from './provider.service';
 describe('ProviderService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ProviderService]
+      providers: [ProviderService],
     });
   });
 

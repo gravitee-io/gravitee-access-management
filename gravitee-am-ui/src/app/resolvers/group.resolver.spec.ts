@@ -15,12 +15,12 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import {GroupResolver} from "./group.resolver";
+import { GroupResolver } from './group.resolver';
 
 describe('GroupResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [GroupResolver]
+      providers: [GroupResolver],
     });
   });
 

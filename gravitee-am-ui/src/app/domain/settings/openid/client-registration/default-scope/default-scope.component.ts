@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import * as _ from 'lodash';
-import {DomainService} from '../../../../../services/domain.service';
-import {SnackbarService} from '../../../../../services/snackbar.service';
-import {Scope} from '../../../../components/scope-selection/scope-selection.component';
-import {AuthService} from '../../../../../services/auth.service';
+import { DomainService } from '../../../../../services/domain.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { Scope } from '../../../../components/scope-selection/scope-selection.component';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-openid-client-registration-default-scope',
   templateUrl: './default-scope.component.html',
-  styleUrls: ['./default-scope.component.scss']
+  styleUrls: ['./default-scope.component.scss'],
 })
-
 export class ClientRegistrationDefaultScopeComponent implements OnInit {
   domain: any = {};
   formChanged: boolean;
@@ -35,14 +34,15 @@ export class ClientRegistrationDefaultScopeComponent implements OnInit {
   selectedScopes: Scope[];
   readonly: boolean;
 
-  constructor(private domainService: DomainService,
-              private route: ActivatedRoute,
-              private snackbarService: SnackbarService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private domainService: DomainService,
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = this.route.snapshot.data.domain;
     this.dcrIsEnabled = this.domain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled;
     this.initialSelectedScopes = this.domain.oidc.clientRegistrationSettings.defaultScopes;
     this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
@@ -57,12 +57,12 @@ export class ClientRegistrationDefaultScopeComponent implements OnInit {
     const domain = {
       oidc: {
         clientRegistrationSettings: {
-          defaultScopes: _.map(this.selectedScopes, scope => scope.key)
-        }
-      }
+          defaultScopes: _.map(this.selectedScopes, (scope) => scope.key),
+        },
+      },
     };
 
-    this.domainService.patchOpenidDCRSettings(this.domain.id, domain).subscribe(response => {
+    this.domainService.patchOpenidDCRSettings(this.domain.id, domain).subscribe((response) => {
       this.domain = response;
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
       this.formChanged = false;

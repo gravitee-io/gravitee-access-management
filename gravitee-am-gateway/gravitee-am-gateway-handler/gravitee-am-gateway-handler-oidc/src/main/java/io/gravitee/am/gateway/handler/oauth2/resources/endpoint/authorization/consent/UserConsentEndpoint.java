@@ -27,17 +27,17 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class UserConsentEndpoint implements Handler<RoutingContext> {
+
     private static final Logger logger = LoggerFactory.getLogger(UserConsentEndpoint.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String SCOPES_CONTEXT_KEY = "scopes";
@@ -57,30 +57,36 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
         final Set<String> requiredConsent = session.get(REQUESTED_CONSENT_CONTEXT_KEY);
 
         // fetch scope information (name + description)
-        fetchConsentInformation(requiredConsent, h -> {
-            if (h.failed()) {
-                routingContext.fail(h.cause());
-                return;
-            }
-            List<Scope> requestedScopes = h.result();
-            routingContext.put(SCOPES_CONTEXT_KEY, requestedScopes);
-            engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-                if (res.succeeded()) {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(res.result());
-                } else {
-                    logger.error("Unable to render user consent page", res.cause());
-                    routingContext.fail(res.cause());
+        fetchConsentInformation(
+            requiredConsent,
+            h -> {
+                if (h.failed()) {
+                    routingContext.fail(h.cause());
+                    return;
                 }
-            });
-        });
+                List<Scope> requestedScopes = h.result();
+                routingContext.put(SCOPES_CONTEXT_KEY, requestedScopes);
+                engine.render(
+                    routingContext.data(),
+                    getTemplateFileName(client),
+                    res -> {
+                        if (res.succeeded()) {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            routingContext.response().end(res.result());
+                        } else {
+                            logger.error("Unable to render user consent page", res.cause());
+                            routingContext.fail(res.cause());
+                        }
+                    }
+                );
+            }
+        );
     }
 
     private void fetchConsentInformation(Set<String> requiredConsent, Handler<AsyncResult<List<Scope>>> handler) {
-        userConsentService.getConsentInformation(requiredConsent)
-                .subscribe(
-                        scopes -> handler.handle(Future.succeededFuture(scopes)),
-                        error -> handler.handle(Future.failedFuture(error)));
+        userConsentService
+            .getConsentInformation(requiredConsent)
+            .subscribe(scopes -> handler.handle(Future.succeededFuture(scopes)), error -> handler.handle(Future.failedFuture(error)));
     }
 
     private String getTemplateFileName(Client client) {

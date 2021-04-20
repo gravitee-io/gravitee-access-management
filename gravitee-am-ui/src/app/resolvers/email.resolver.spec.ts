@@ -20,7 +20,7 @@ import { EmailResolver } from './email.resolver';
 describe('EmailResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EmailResolver]
+      providers: [EmailResolver],
     });
   });
 

@@ -19,13 +19,12 @@ import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.security.Key;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
-import java.security.Key;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -34,7 +33,7 @@ import java.security.Key;
  */
 @Configuration
 @ComponentScan("io.gravitee.am.management.service")
-@Import({EmailConfiguration.class})
+@Import({ EmailConfiguration.class })
 public class ServiceConfiguration {
 
     @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
@@ -52,5 +51,4 @@ public class ServiceConfiguration {
         Key key = Keys.hmacShaKeyFor(signingKeySecret.getBytes());
         return Jwts.builder().setHeaderParam(JwsHeader.KEY_ID, kid).setIssuer(issuer).signWith(key);
     }
-
 }

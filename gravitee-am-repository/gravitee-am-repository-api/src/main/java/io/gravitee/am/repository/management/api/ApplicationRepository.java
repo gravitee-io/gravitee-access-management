@@ -20,7 +20,6 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +28,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ApplicationRepository extends CrudRepository<Application, String> {
-
     Single<List<Application>> findAll();
 
     Single<Page<Application>> findAll(int page, int size);
@@ -51,5 +49,4 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
     Single<Long> countByDomain(String domain);
 
     Maybe<Application> findByDomainAndClientId(String domain, String clientId);
-
 }

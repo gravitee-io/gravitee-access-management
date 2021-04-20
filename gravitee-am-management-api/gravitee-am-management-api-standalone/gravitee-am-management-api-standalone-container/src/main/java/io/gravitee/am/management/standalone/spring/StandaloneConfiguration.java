@@ -38,14 +38,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
-@Import({
+@Import(
+    {
         VertxConfiguration.class,
         PluginConfiguration.class,
         ManagementApiServer.class,
@@ -57,8 +57,9 @@ import org.springframework.context.annotation.Import;
         ReporterConfiguration.class,
         PolicyConfiguration.class,
         AlertPluginConfiguration.class,
-        FactorConfiguration.class
-})
+        FactorConfiguration.class,
+    }
+)
 public class StandaloneConfiguration {
 
     @Bean
@@ -83,7 +84,6 @@ public class StandaloneConfiguration {
 
     @Bean
     public ExpressionLanguageInitializer expressionLanguageInitializer() {
-
         return new ExpressionLanguageInitializer();
     }
 

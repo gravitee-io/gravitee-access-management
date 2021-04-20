@@ -15,23 +15,22 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -59,11 +58,15 @@ public class ClientPostAuthProviderTest {
         when(httpServerRequest.getParam(Parameters.CLIENT_SECRET)).thenReturn("my-client-secret");
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(clientAsyncResult);
-            Assert.assertNotNull(clientAsyncResult.result());
-        });
+        authProvider.handle(
+            client,
+            httpServerRequest,
+            clientAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(clientAsyncResult);
+                Assert.assertNotNull(clientAsyncResult.result());
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
@@ -79,12 +82,16 @@ public class ClientPostAuthProviderTest {
         when(httpServerRequest.getParam(Parameters.CLIENT_SECRET)).thenReturn("my-other-client-secret");
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, userAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.failed());
-            Assert.assertTrue(userAsyncResult.cause() instanceof InvalidClientException);
-        });
+        authProvider.handle(
+            client,
+            httpServerRequest,
+            userAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(userAsyncResult);
+                Assert.assertTrue(userAsyncResult.failed());
+                Assert.assertTrue(userAsyncResult.cause() instanceof InvalidClientException);
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }

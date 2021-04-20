@@ -15,6 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -25,17 +31,10 @@ import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
+import java.util.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,7 +69,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Map responseEntity = readEntity(response, Map.class);
-        assertTrue(((List)responseEntity.get("data")).size() == 2);
+        assertTrue(((List) responseEntity.get("data")).size() == 2);
     }
 
     @Test
@@ -81,7 +80,6 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         final Response response = target("domains").path(domainId).path("applications").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
-
 
     @Test
     public void shouldCreate() {
@@ -101,10 +99,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(application)).when(applicationService).create(eq(domainId), any(NewApplication.class), any());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("applications")
-                .request().post(Entity.json(newApplication));
+        final Response response = target("domains").path(domainId).path("applications").request().post(Entity.json(newApplication));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

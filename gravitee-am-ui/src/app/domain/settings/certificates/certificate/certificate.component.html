@@ -17,14 +17,14 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to certificates</small></a>
-  <h1>{{certificate.name}}</h1>
+  <h1>{{ certificate.name }}</h1>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
       <form #certificateForm="ngForm">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required>
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="certificate.name" required />
             <mat-hint>Certificate name</mat-hint>
           </mat-form-field>
         </div>
@@ -34,11 +34,22 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-            <certificate-form *ngIf="certificate" [certificateConfiguration]="certificateConfiguration" [certificateSchema]="certificateSchema" (configurationCompleted)="enableCertificateUpdate($event)"></certificate-form>
+            <certificate-form
+              *ngIf="certificate"
+              [certificateConfiguration]="certificateConfiguration"
+              [certificateSchema]="certificateSchema"
+              (configurationCompleted)="enableCertificateUpdate($event)"
+            ></certificate-form>
           </div>
         </div>
         <div *hasPermission="['domain_certificate_update']" fxLayout="row" class="certificate-actions">
-          <button mat-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">SAVE</button>
+          <button
+            mat-raised-button
+            [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)"
+            (click)="update()"
+          >
+            SAVE
+          </button>
         </div>
       </form>
 
@@ -55,9 +66,7 @@
     <div class="gv-page-description" fxFlex>
       <h3>Manage certificate</h3>
       <div class="gv-page-description-content">
-        <p>
-          Configure your certificate to ensure data integrity.
-        </p>
+        <p>Configure your certificate to ensure data integrity.</p>
       </div>
     </div>
   </div>

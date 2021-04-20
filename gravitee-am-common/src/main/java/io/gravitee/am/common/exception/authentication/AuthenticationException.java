@@ -25,8 +25,7 @@ public abstract class AuthenticationException extends RuntimeException {
 
     private Map<String, String> details;
 
-    public AuthenticationException() {
-    }
+    public AuthenticationException() {}
 
     public AuthenticationException(String msg, Throwable t) {
         super(msg, t);

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.*;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Form;
@@ -25,15 +28,11 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.mongodb.client.model.Filters.*;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -52,12 +51,18 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
         formsCollection = mongoOperations.getCollection("forms", FormMongo.class);
         super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
         super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TEMPLATE, 1));
-        super.createIndex(formsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1));
+        super.createIndex(
+            formsCollection,
+            new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CLIENT, 1).append(FIELD_TEMPLATE, 1)
+        );
     }
 
     @Override
     public Single<List<Form>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert).collect(ArrayList::new, List::add);
+        return Observable
+            .fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
+            .map(this::convert)
+            .collect(ArrayList::new, List::add);
     }
 
     @Override
@@ -67,38 +72,64 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client) {
-        return Observable.fromPublisher(
+        return Observable
+            .fromPublisher(
                 formsCollection.find(
-                        and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_CLIENT, client))
-                )).map(this::convert).collect(ArrayList::new, List::add);
+                    and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_CLIENT, client))
+                )
+            )
+            .map(this::convert)
+            .collect(ArrayList::new, List::add);
     }
 
     @Override
     public Maybe<Form> findByTemplate(ReferenceType referenceType, String referenceId, String template) {
-        return Observable.fromPublisher(
-                formsCollection.find(
-                        and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_TEMPLATE, template),
-                                exists(FIELD_CLIENT, false)))
-                        .first())
-                .firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(
+                formsCollection
+                    .find(
+                        and(
+                            eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                            eq(FIELD_REFERENCE_ID, referenceId),
+                            eq(FIELD_TEMPLATE, template),
+                            exists(FIELD_CLIENT, false)
+                        )
+                    )
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
     public Maybe<Form> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template) {
-        return Observable.fromPublisher(
-                formsCollection.find(
-                        and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_CLIENT, client),
-                                eq(FIELD_TEMPLATE, template)))
-                        .first())
-                .firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(
+                formsCollection
+                    .find(
+                        and(
+                            eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                            eq(FIELD_REFERENCE_ID, referenceId),
+                            eq(FIELD_CLIENT, client),
+                            eq(FIELD_TEMPLATE, template)
+                        )
+                    )
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
     public Maybe<Form> findById(ReferenceType referenceType, String referenceId, String id) {
-        return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(
+                formsCollection
+                    .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id)))
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -116,7 +147,9 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     @Override
     public Single<Form> update(Form item) {
         FormMongo page = convert(item);
-        return Single.fromPublisher(formsCollection.replaceOne(eq(FIELD_ID, page.getId()), page)).flatMap(updateResult -> findById(page.getId()).toSingle());
+        return Single
+            .fromPublisher(formsCollection.replaceOne(eq(FIELD_ID, page.getId()), page))
+            .flatMap(updateResult -> findById(page.getId()).toSingle());
     }
 
     @Override

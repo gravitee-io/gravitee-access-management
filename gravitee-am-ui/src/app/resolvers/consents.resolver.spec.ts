@@ -20,7 +20,7 @@ import { ConsentsResolver } from './consents.resolver';
 describe('ConsentsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ConsentsResolver]
+      providers: [ConsentsResolver],
     });
   });
 

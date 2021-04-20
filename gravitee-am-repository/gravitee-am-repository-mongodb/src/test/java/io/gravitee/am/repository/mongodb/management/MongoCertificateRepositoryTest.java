@@ -19,10 +19,9 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.reactivex.observers.TestObserver;
+import java.util.Set;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -107,7 +106,6 @@ public class MongoCertificateRepositoryTest extends AbstractManagementRepository
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(d -> d.getName().equals(updatedCertificate.getName()));
-
     }
 
     @Test

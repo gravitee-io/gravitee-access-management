@@ -23,9 +23,8 @@ describe('ApplicationAccountSettingsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationAccountSettingsComponent ]
-    })
-      .compileComponents();
+      declarations: [ApplicationAccountSettingsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

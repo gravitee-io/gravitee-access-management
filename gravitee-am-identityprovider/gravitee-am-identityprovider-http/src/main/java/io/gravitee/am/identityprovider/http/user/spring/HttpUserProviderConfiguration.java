@@ -44,12 +44,11 @@ public class HttpUserProviderConfiguration {
     public WebClient httpClient() {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
-                .setUserAgent(DEFAULT_USER_AGENT)
-                .setConnectTimeout(configuration.getConnectTimeout())
-                .setMaxPoolSize(configuration.getMaxPoolSize());
+            .setUserAgent(DEFAULT_USER_AGENT)
+            .setConnectTimeout(configuration.getConnectTimeout())
+            .setMaxPoolSize(configuration.getMaxPoolSize());
 
-        if (configuration.getUsersResource().getBaseURL() != null
-                && configuration.getUsersResource().getBaseURL().startsWith("https://")) {
+        if (configuration.getUsersResource().getBaseURL() != null && configuration.getUsersResource().getBaseURL().startsWith("https://")) {
             httpClientOptions.setSsl(true);
             httpClientOptions.setTrustAll(true);
         }

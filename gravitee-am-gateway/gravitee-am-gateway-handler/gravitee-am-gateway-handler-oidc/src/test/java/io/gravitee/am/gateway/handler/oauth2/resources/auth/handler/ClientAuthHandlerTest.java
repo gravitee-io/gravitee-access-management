@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
@@ -29,11 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,27 +55,28 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        router.post("/oauth/token")
-                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService))
-                .handler(rc -> rc.response().setStatusCode(200).end())
-                .failureHandler(new ExceptionHandler());
+        router
+            .post("/oauth/token")
+            .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService))
+            .handler(rc -> rc.response().setStatusCode(200).end())
+            .failureHandler(new ExceptionHandler());
     }
 
     @Test
     public void shouldNotInvoke_noClientCredentials() throws Exception {
-        testRequest(
-                HttpMethod.POST,
-                "/oauth/token",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+        testRequest(HttpMethod.POST, "/oauth/token", HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test
     public void shouldNotInvoke_badClientAuthenticationMethod() throws Exception {
         testRequest(
-                HttpMethod.POST,
-                "/oauth/token",
-                req -> req.putHeader("Authorization", "Custom test"),
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized", null);
+            HttpMethod.POST,
+            "/oauth/token",
+            req -> req.putHeader("Authorization", "Custom test"),
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized",
+            null
+        );
     }
 
     @Test
@@ -86,10 +87,11 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
 
         testRequest(
-                HttpMethod.POST,
-                "/oauth/token?client_id=client-id&client_secret=client-secret",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
-
+            HttpMethod.POST,
+            "/oauth/token?client_id=client-id&client_secret=client-secret",
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized"
+        );
     }
 
     @Test
@@ -102,10 +104,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.CLIENT_SECRET_POST);
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
 
-        testRequest(
-                HttpMethod.POST,
-                "/oauth/token?client_id=client-id&client_secret=client-secret",
-                HttpStatusCode.OK_200, "OK");
+        testRequest(HttpMethod.POST, "/oauth/token?client_id=client-id&client_secret=client-secret", HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -119,10 +118,13 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
 
         testRequest(
-                HttpMethod.POST,
-                "/oauth/token",
-                req -> req.putHeader("Authorization", "Basic Y2xpZW50LWlkOmNsaWVudC1zZWNyZXQ="),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.POST,
+            "/oauth/token",
+            req -> req.putHeader("Authorization", "Basic Y2xpZW50LWlkOmNsaWVudC1zZWNyZXQ="),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -136,14 +138,17 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
 
         testRequest(
-                HttpMethod.POST,
-                "/oauth/token",
-                req -> req.putHeader("Authorization", "Basic Y2xpZW50LWlkOnRlc3Q="),
-                resp -> {
-                    String wwwAuth = resp.headers().get("WWW-Authenticate");
-                    assertNotNull(wwwAuth);
-                },
-                401, "Unauthorized", null);
+            HttpMethod.POST,
+            "/oauth/token",
+            req -> req.putHeader("Authorization", "Basic Y2xpZW50LWlkOnRlc3Q="),
+            resp -> {
+                String wwwAuth = resp.headers().get("WWW-Authenticate");
+                assertNotNull(wwwAuth);
+            },
+            401,
+            "Unauthorized",
+            null
+        );
     }
 
     @Test
@@ -152,10 +157,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         Client client = mock(Client.class);
         when(clientAssertionService.assertClient(eq("type"), eq("myToken"), anyString())).thenReturn(Maybe.just(client));
 
-        testRequest(
-                HttpMethod.POST,
-                "/oauth/token?client_assertion_type=type&client_assertion=myToken",
-                HttpStatusCode.OK_200, "OK");
+        testRequest(HttpMethod.POST, "/oauth/token?client_assertion_type=type&client_assertion=myToken", HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -164,10 +166,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         Client client = mock(Client.class);
         when(clientAssertionService.assertClient(eq("type"), eq("myToken"), anyString())).thenReturn(Maybe.just(client));
 
-        testRequest(
-                HttpMethod.POST,
-                "/oauth/token?client_assertion_type=type&client_assertion=myToken",
-                HttpStatusCode.OK_200, "OK");
+        testRequest(HttpMethod.POST, "/oauth/token?client_assertion_type=type&client_assertion=myToken", HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -178,9 +177,11 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
 
         testRequest(
-                HttpMethod.POST,
-                "/oauth/token?grant_type=client_credentials&client_id="+clientId,
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+            HttpMethod.POST,
+            "/oauth/token?grant_type=client_credentials&client_id=" + clientId,
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized"
+        );
     }
 
     @Test
@@ -189,10 +190,6 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         Client client = mock(Client.class);
         when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.NONE);
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
-        testRequest(
-                HttpMethod.POST,
-                "/oauth/token?client_id=public-client-id",
-                HttpStatusCode.OK_200, "OK");
-
+        testRequest(HttpMethod.POST, "/oauth/token?client_id=public-client-id", HttpStatusCode.OK_200, "OK");
     }
 }

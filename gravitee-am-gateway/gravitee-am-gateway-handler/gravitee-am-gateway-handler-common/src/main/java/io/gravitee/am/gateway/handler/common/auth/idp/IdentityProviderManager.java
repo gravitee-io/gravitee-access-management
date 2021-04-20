@@ -27,7 +27,6 @@ import io.reactivex.Maybe;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderManager extends Service {
-
     Maybe<AuthenticationProvider> get(String id);
 
     IdentityProvider getIdentityProvider(String id);

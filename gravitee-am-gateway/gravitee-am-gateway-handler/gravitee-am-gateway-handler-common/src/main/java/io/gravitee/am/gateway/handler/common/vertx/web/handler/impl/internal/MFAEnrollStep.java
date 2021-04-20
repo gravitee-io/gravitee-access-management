@@ -26,9 +26,10 @@ import io.vertx.reactivex.ext.web.Session;
  * @author GraviteeSource Team
  */
 public class MFAEnrollStep extends AuthenticationFlowStep {
+
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
-    private static final String STRONG_AUTH_COMPLETED  = "strongAuthCompleted";
+    private static final String STRONG_AUTH_COMPLETED = "strongAuthCompleted";
     private static final String ENROLLED_FACTOR_KEY = "enrolledFactor";
 
     public MFAEnrollStep(Handler<RoutingContext> wrapper) {
@@ -78,9 +79,10 @@ public class MFAEnrollStep extends AuthenticationFlowStep {
             return false;
         }
 
-        return user.getFactors()
-                .stream()
-                .map(enrolledFactor -> enrolledFactor.getFactorId())
-                .anyMatch(f -> client.getFactors().contains(f));
+        return user
+            .getFactors()
+            .stream()
+            .map(enrolledFactor -> enrolledFactor.getFactorId())
+            .anyMatch(f -> client.getFactors().contains(f));
     }
 }

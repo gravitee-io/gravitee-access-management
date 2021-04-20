@@ -21,11 +21,10 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collections;
 import java.util.Set;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,7 +55,6 @@ public class MongoDomainRepositoryTest extends AbstractManagementRepositoryTest 
         testObserver1.assertNoErrors();
         testObserver1.assertValue(domains -> domains.size() == 1);
     }
-
 
     @Test
     public void testFindAllByEnvironment() throws TechnicalException {
@@ -151,7 +149,6 @@ public class MongoDomainRepositoryTest extends AbstractManagementRepositoryTest 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(d -> d.getName().equals(updatedDomain.getName()));
-
     }
 
     @Test

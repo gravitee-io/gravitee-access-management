@@ -20,21 +20,19 @@ import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 @Component({
   selector: 'app-group',
   templateUrl: './group.component.html',
-  styleUrls: ['./group.component.scss']
+  styleUrls: ['./group.component.scss'],
 })
 export class GroupComponent implements OnInit {
   private domainId: string;
   private organizationContext = false;
   group: any;
-  navLinks: any = [ ];
+  navLinks: any = [];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService) { }
+  constructor(private route: ActivatedRoute, private router: Router, private breadcrumbService: BreadcrumbService) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.group = this.route.snapshot.data['group'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.group = this.route.snapshot.data.group;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -43,11 +41,11 @@ export class GroupComponent implements OnInit {
   }
 
   initNavLinks() {
-    this.navLinks.push({'href': 'settings' , 'label': 'Settings'});
-    this.navLinks.push({'href': 'members' , 'label': 'Members'});
+    this.navLinks.push({ href: 'settings', label: 'Settings' });
+    this.navLinks.push({ href: 'members', label: 'Members' });
 
     if (!this.organizationContext) {
-      this.navLinks.push({'href': 'roles' , 'label': 'Roles'});
+      this.navLinks.push({ href: 'roles', label: 'Roles' });
     }
   }
 
@@ -56,8 +54,14 @@ export class GroupComponent implements OnInit {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/groups/' + this.group.id + '$', this.group.name);
       this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/groups/members', 'Members');
     } else {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/groups/' + this.group.id + '$', this.group.name);
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/groups/' + this.group.id + '/members', 'Members');
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/domains/' + this.domainId + '/settings/groups/' + this.group.id + '$',
+        this.group.name,
+      );
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/domains/' + this.domainId + '/settings/groups/' + this.group.id + '/members',
+        'Members',
+      );
     }
   }
 }

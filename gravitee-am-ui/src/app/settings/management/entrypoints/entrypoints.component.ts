@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {EntrypointService} from "../../../services/entrypoint.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {DialogService} from "../../../services/dialog.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {AuthService} from "../../../services/auth.service";
+import {EntrypointService} from '../../../services/entrypoint.service';
+import {SnackbarService} from '../../../services/snackbar.service';
+import {DialogService} from '../../../services/dialog.service';
+import {ActivatedRoute, Router} from '@angular/router';
+import {AuthService} from '../../../services/auth.service';
 
 @Component({
   selector: 'app-entrypoints',
@@ -36,7 +36,7 @@ export class EntrypointsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.entrypoints = this.route.snapshot.data['entrypoints'];
+    this.entrypoints = this.route.snapshot.data.entrypoints;
   }
 
   get isEmpty() {
@@ -54,7 +54,7 @@ export class EntrypointsComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.entrypointService.delete(id).subscribe(response => {
-            this.snackbarService.open("Entrypoint deleted");
+            this.snackbarService.open('Entrypoint deleted');
             this.loadEntrypoints();
           });
         }

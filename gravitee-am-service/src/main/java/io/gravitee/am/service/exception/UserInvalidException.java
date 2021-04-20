@@ -21,8 +21,7 @@ package io.gravitee.am.service.exception;
  */
 public class UserInvalidException extends AbstractManagementException {
 
-    public UserInvalidException() {
-    }
+    public UserInvalidException() {}
 
     public UserInvalidException(Throwable cause) {
         super(cause);

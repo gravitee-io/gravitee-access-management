@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
+import { inject, TestBed } from '@angular/core/testing';
 
 describe('DomainEntrypointdResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DomainEntrypointResolver]
+      providers: [DomainEntrypointResolver],
     });
   });
 

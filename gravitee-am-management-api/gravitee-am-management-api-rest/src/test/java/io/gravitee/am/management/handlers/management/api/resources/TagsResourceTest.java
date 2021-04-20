@@ -15,6 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -22,20 +28,13 @@ import io.gravitee.am.service.model.NewTag;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -59,9 +58,7 @@ public class TagsResourceTest extends JerseySpringTest {
 
         doReturn(Flowable.just(mockRole, mockRole2)).when(tagService).findAll(anyString());
 
-        final Response response = target("organizations")
-                .path("DEFAULT")
-                .path("tags").request().get();
+        final Response response = target("organizations").path("DEFAULT").path("tags").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final List<Tag> responseEntity = readEntity(response, List.class);
@@ -72,9 +69,7 @@ public class TagsResourceTest extends JerseySpringTest {
     public void shouldGetTags_technicalManagementException() {
         doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(tagService).findAll(anyString());
 
-        final Response response = target("organizations")
-                .path("DEFAULT")
-                .path("tags").request().get();
+        final Response response = target("organizations").path("DEFAULT").path("tags").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
@@ -89,10 +84,7 @@ public class TagsResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(tag)).when(tagService).create(any(), anyString(), any());
 
-        final Response response = target("organizations")
-                .path("DEFAULT")
-                .path("tags")
-                .request().post(Entity.json(newTag));
+        final Response response = target("organizations").path("DEFAULT").path("tags").request().post(Entity.json(newTag));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

@@ -37,8 +37,7 @@ public class Email {
     private Date createdAt;
     private Date updatedAt;
 
-    public Email() {
-    }
+    public Email() {}
 
     public Email(boolean enabled) {
         this.enabled = enabled;

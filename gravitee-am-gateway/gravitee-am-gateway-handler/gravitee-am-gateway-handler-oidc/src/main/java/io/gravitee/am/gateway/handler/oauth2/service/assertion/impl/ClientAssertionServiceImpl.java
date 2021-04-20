@@ -37,15 +37,14 @@ import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.functions.Function;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Client assertion as described for <a href="https://tools.ietf.org/html/rfc7521#section-4.2">oauth2 assertion framework</a>
@@ -75,7 +74,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     @Override
     public Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
-
         InvalidClientException unsupportedAssertionType = new InvalidClientException("Unknown or unsupported assertion_type");
 
         if (assertionType == null || assertionType.isEmpty()) {
@@ -84,7 +82,8 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
         if (JWT_BEARER.equals(assertionType)) {
             return this.validateJWT(assertion, basePath)
-                    .flatMap(new Function<JWT, MaybeSource<Client>>() {
+                .flatMap(
+                    new Function<JWT, MaybeSource<Client>>() {
                         @Override
                         public MaybeSource<Client> apply(JWT jwt) throws Exception {
                             // Handle client_secret_key client authentication
@@ -95,7 +94,8 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                                 return validateSignatureWithPublicKey(jwt);
                             }
                         }
-                    });
+                    }
+                );
         }
 
         return Maybe.error(unsupportedAssertionType);
@@ -116,7 +116,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             List<String> aud = jwt.getJWTClaimsSet().getAudience();
             Date exp = jwt.getJWTClaimsSet().getExpirationTime();
 
-            if  (iss == null || iss.isEmpty() || sub == null || sub.isEmpty() || aud == null || aud.isEmpty() || exp == null) {
+            if (iss == null || iss.isEmpty() || sub == null || sub.isEmpty() || aud == null || aud.isEmpty() || exp == null) {
                 return Maybe.error(NOT_VALID);
             }
 
@@ -130,7 +130,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(new ServerErrorException("Unable to retrieve discovery token endpoint."));
             }
 
-            if (aud.stream().filter(discovery.getTokenEndpoint()::equals).count()==0) {
+            if (aud.stream().filter(discovery.getTokenEndpoint()::equals).count() == 0) {
                 return Maybe.error(NOT_VALID);
             }
 
@@ -146,29 +146,36 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             SignedJWT signedJWT = (SignedJWT) jwt;
 
             return this.clientSyncService.findByClientId(clientId)
-                    .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
-                    .flatMap(client -> {
-                        if (client.getTokenEndpointAuthMethod() == null ||
-                                ClientAuthenticationMethod.PRIVATE_KEY_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
+                .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
+                .flatMap(
+                    client -> {
+                        if (
+                            client.getTokenEndpointAuthMethod() == null ||
+                            ClientAuthenticationMethod.PRIVATE_KEY_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())
+                        ) {
                             return this.getClientJwkSet(client)
-                                    .switchIfEmpty(Maybe.error(new InvalidClientException("No jwk keys available on client")))
-                                    .flatMap(jwkSet -> jwkService.getKey(jwkSet, signedJWT.getHeader().getKeyID()))
-                                    .switchIfEmpty(Maybe.error(new InvalidClientException("Unable to validate client, no matching key.")))
-                                    .flatMap(jwk -> {
+                                .switchIfEmpty(Maybe.error(new InvalidClientException("No jwk keys available on client")))
+                                .flatMap(jwkSet -> jwkService.getKey(jwkSet, signedJWT.getHeader().getKeyID()))
+                                .switchIfEmpty(Maybe.error(new InvalidClientException("Unable to validate client, no matching key.")))
+                                .flatMap(
+                                    jwk -> {
                                         if (jwsService.isValidSignature(signedJWT, jwk)) {
                                             return Maybe.just(client);
                                         }
-                                        return Maybe.error(new InvalidClientException("Unable to validate client, assertion signature is not valid."));
-                                    });
+                                        return Maybe.error(
+                                            new InvalidClientException("Unable to validate client, assertion signature is not valid.")
+                                        );
+                                    }
+                                );
                         } else {
                             return Maybe.error(new InvalidClientException("Invalid client: missing or unsupported authentication method"));
                         }
-                    });
+                    }
+                );
         } catch (ClassCastException | ParseException ex) {
-            LOGGER.error(ex.getMessage(),ex);
+            LOGGER.error(ex.getMessage(), ex);
             return Maybe.error(NOT_VALID);
-        }
-        catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException ex) {
             return Maybe.error(new InvalidClientException(ex.getMessage()));
         }
     }
@@ -190,38 +197,41 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
             SignedJWT signedJWT = (SignedJWT) jwt;
 
             return this.clientSyncService.findByClientId(clientId)
-                    .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
-                    .flatMap(client -> {
+                .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))
+                .flatMap(
+                    client -> {
                         try {
                             // Ensure to validate JWT using client_secret_key only if client is authorized to use this auth method
-                            if (client.getTokenEndpointAuthMethod() == null ||
-                                    ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
+                            if (
+                                client.getTokenEndpointAuthMethod() == null ||
+                                ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())
+                            ) {
                                 JWSVerifier verifier = new MACVerifier(client.getClientSecret());
                                 if (signedJWT.verify(verifier)) {
                                     return Maybe.just(client);
                                 }
                             } else {
-                                return Maybe.error(new InvalidClientException("Invalid client: missing or unsupported authentication method"));
+                                return Maybe.error(
+                                    new InvalidClientException("Invalid client: missing or unsupported authentication method")
+                                );
                             }
-                        } catch (JOSEException josee) {
-                        }
+                        } catch (JOSEException josee) {}
 
                         return Maybe.error(new InvalidClientException("Unable to validate client, assertion signature is not valid."));
-                    });
+                    }
+                );
         } catch (ClassCastException | ParseException ex) {
-            LOGGER.error(ex.getMessage(),ex);
+            LOGGER.error(ex.getMessage(), ex);
             return Maybe.error(NOT_VALID);
-        }
-        catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException ex) {
             return Maybe.error(new InvalidClientException(ex.getMessage()));
         }
     }
 
     private Maybe<JWKSet> getClientJwkSet(Client client) {
-        if(client.getJwksUri()!=null && !client.getJwksUri().trim().isEmpty()) {
+        if (client.getJwksUri() != null && !client.getJwksUri().trim().isEmpty()) {
             return jwkService.getKeys(client.getJwksUri());
-        }
-        else if(client.getJwks()!=null) {
+        } else if (client.getJwks() != null) {
             return Maybe.just(client.getJwks());
         }
         return Maybe.empty();

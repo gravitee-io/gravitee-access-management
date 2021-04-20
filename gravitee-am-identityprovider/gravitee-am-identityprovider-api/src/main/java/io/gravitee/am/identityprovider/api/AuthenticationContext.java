@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.api;
 
 import io.gravitee.gateway.api.ExecutionContext;
-
 import java.util.Map;
 
 /**
@@ -25,7 +24,6 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface AuthenticationContext extends ExecutionContext {
-
     /**
      * Stores an attribute in this context.
      *

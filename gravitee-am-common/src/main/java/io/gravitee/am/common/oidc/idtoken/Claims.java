@@ -24,7 +24,6 @@ package io.gravitee.am.common.oidc.idtoken;
  * @author GraviteeSource Team
  */
 public interface Claims extends io.gravitee.am.common.jwt.Claims {
-
     /**
      * Time when the End-User authentication occurred. Its value is a JSON number representing the number of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time.
      * When a max_age request is made or when auth_time is requested as an Essential Claim, then this Claim is REQUIRED; otherwise, its inclusion is OPTIONAL.

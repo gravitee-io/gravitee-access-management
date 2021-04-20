@@ -32,7 +32,6 @@ import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.impl.HttpStatusException;
-
 import java.net.URISyntaxException;
 import java.util.Collections;
 
@@ -69,31 +68,17 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
             return;
         }
         // parse the request in order to extract the credentials object
-        parseCredentials(ctx, res -> {
-            if (res.failed()) {
-                processException(ctx, res.cause());
-                return;
-            }
-            // check if the user has been set
-            User updatedUser = ctx.user();
-
-            if (updatedUser != null) {
-                Session session = ctx.session();
-                if (session != null) {
-                    // the user has upgraded from unauthenticated to authenticated
-                    // session should be upgraded as recommended by owasp
-                    session.regenerateId();
+        parseCredentials(
+            ctx,
+            res -> {
+                if (res.failed()) {
+                    processException(ctx, res.cause());
+                    return;
                 }
-                // proceed to AuthZ
-                authorizeUser(ctx, updatedUser);
-                return;
-            }
+                // check if the user has been set
+                User updatedUser = ctx.user();
 
-            // proceed to authN
-            getSocialAuthenticationProvider().authenticate(ctx, res.result(), authN -> {
-                if (authN.succeeded()) {
-                    User authenticated = authN.result();
-                    ctx.setUser(authenticated);
+                if (updatedUser != null) {
                     Session session = ctx.session();
                     if (session != null) {
                         // the user has upgraded from unauthenticated to authenticated
@@ -101,26 +86,47 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
                         session.regenerateId();
                     }
                     // proceed to AuthZ
-                    authorizeUser(ctx, authenticated);
-                } else {
-                    String header = authenticateHeader(ctx);
-                    if (header != null) {
-                        ctx.response()
-                                .putHeader("WWW-Authenticate", header);
-                    }
-                    // to allow further processing if needed
-                    processException(ctx, new HttpStatusException(401, authN.cause()));
+                    authorizeUser(ctx, updatedUser);
+                    return;
                 }
-            });
-        });
+
+                // proceed to authN
+                getSocialAuthenticationProvider()
+                    .authenticate(
+                        ctx,
+                        res.result(),
+                        authN -> {
+                            if (authN.succeeded()) {
+                                User authenticated = authN.result();
+                                ctx.setUser(authenticated);
+                                Session session = ctx.session();
+                                if (session != null) {
+                                    // the user has upgraded from unauthenticated to authenticated
+                                    // session should be upgraded as recommended by owasp
+                                    session.regenerateId();
+                                }
+                                // proceed to AuthZ
+                                authorizeUser(ctx, authenticated);
+                            } else {
+                                String header = authenticateHeader(ctx);
+                                if (header != null) {
+                                    ctx.response().putHeader("WWW-Authenticate", header);
+                                }
+                                // to allow further processing if needed
+                                processException(ctx, new HttpStatusException(401, authN.cause()));
+                            }
+                        }
+                    );
+            }
+        );
     }
 
     protected final void parseAuthorization(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
         try {
             JsonObject clientCredentials = new JsonObject()
-                    .put(USERNAME_PARAMETER, "__social__")
-                    .put(PASSWORD_PARAMETER, "__social__")
-                    .put(Parameters.REDIRECT_URI, buildRedirectUri(context.request()));
+                .put(USERNAME_PARAMETER, "__social__")
+                .put(PASSWORD_PARAMETER, "__social__")
+                .put(Parameters.REDIRECT_URI, buildRedirectUri(context.request()));
 
             handler.handle(Future.succeededFuture(clientCredentials));
         } catch (Exception e) {
@@ -167,22 +173,25 @@ public class SocialAuthHandlerImpl extends AuthHandlerImpl {
     }
 
     private void authorizeUser(RoutingContext ctx, User user) {
-        authorize(user, authZ -> {
-            if (authZ.failed()) {
-                processException(ctx, authZ.cause());
-                return;
+        authorize(
+            user,
+            authZ -> {
+                if (authZ.failed()) {
+                    processException(ctx, authZ.cause());
+                    return;
+                }
+                // success, allowed to continue
+                ctx.next();
             }
-            // success, allowed to continue
-            ctx.next();
-        });
+        );
     }
 
     private String buildRedirectUri(io.vertx.core.http.HttpServerRequest request) throws URISyntaxException {
         return UriBuilderRequest.resolveProxyRequest(
-                new io.vertx.reactivex.core.http.HttpServerRequest(request),
-                request.path(),
-                // append provider query param to avoid redirect mismatch exception
-                Collections.singletonMap("provider", request.getParam(PROVIDER_PARAMETER)));
+            new io.vertx.reactivex.core.http.HttpServerRequest(request),
+            request.path(),
+            // append provider query param to avoid redirect mismatch exception
+            Collections.singletonMap("provider", request.getParam(PROVIDER_PARAMETER))
+        );
     }
-
 }

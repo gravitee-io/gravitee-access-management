@@ -23,8 +23,7 @@ import io.gravitee.am.gateway.handler.scim.model.ScimType;
  */
 public class InvalidValueException extends SCIMException {
 
-    public InvalidValueException() {
-    }
+    public InvalidValueException() {}
 
     public InvalidValueException(String message) {
         super(message);

@@ -20,11 +20,10 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
 import io.vertx.reactivex.ext.web.handler.FormLoginHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * If a user is signed in via the auto login feature (after a reset password or a registration)
@@ -51,11 +50,14 @@ public class AutoLoginStep extends AuthenticationFlowStep {
                     // set return url
                     try {
                         Map<String, String> requestParameters = request
-                                .params()
-                                .entries()
-                                .stream()
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                        session.put(FormLoginHandler.DEFAULT_RETURN_URL_PARAM, UriBuilderRequest.resolveProxyRequest(request, request.path(), requestParameters));
+                            .params()
+                            .entries()
+                            .stream()
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                        session.put(
+                            FormLoginHandler.DEFAULT_RETURN_URL_PARAM,
+                            UriBuilderRequest.resolveProxyRequest(request, request.path(), requestParameters)
+                        );
                     } catch (Exception ex) {
                         logger.warn("Failed to decode original redirect url", ex);
                     }

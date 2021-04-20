@@ -46,8 +46,6 @@ public class NewTag {
 
     @Override
     public String toString() {
-        return "NewTag{" +
-                "name='" + name + '\'' +
-                '}';
+        return "NewTag{" + "name='" + name + '\'' + '}';
     }
 }

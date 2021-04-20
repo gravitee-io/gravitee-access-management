@@ -20,8 +20,8 @@ import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
@@ -29,11 +29,10 @@ import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-
-import java.util.Date;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -74,31 +73,40 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
 
     @Override
     public Maybe<AuthorizationCode> remove(String code, Client client) {
-        return authorizationCodeRepository.findByCode(code)
-                .switchIfEmpty(handleInvalidCode(code))
-                .flatMap(authorizationCode -> {
+        return authorizationCodeRepository
+            .findByCode(code)
+            .switchIfEmpty(handleInvalidCode(code))
+            .flatMap(
+                authorizationCode -> {
                     if (!authorizationCode.getClientId().equals(client.getClientId())) {
-                        return Maybe.error(new InvalidGrantException("The authorization code " + code + " does not belong to the client " + client.getClientId() + "."));
+                        return Maybe.error(
+                            new InvalidGrantException(
+                                "The authorization code " + code + " does not belong to the client " + client.getClientId() + "."
+                            )
+                        );
                     }
                     return Maybe.just(authorizationCode);
-                })
-                .flatMap(authorizationCode -> authorizationCodeRepository.delete(authorizationCode.getId()));
+                }
+            )
+            .flatMap(authorizationCode -> authorizationCodeRepository.delete(authorizationCode.getId()));
     }
-
 
     private Maybe<AuthorizationCode> handleInvalidCode(String code) {
         // The client MUST NOT use the authorization code more than once.
         // If an authorization code is used more than once, the authorization server MUST deny the request and SHOULD
         // revoke (when possible) all tokens previously issued based on that authorization code.
         // https://tools.ietf.org/html/rfc6749#section-4.1.2
-        return accessTokenRepository.findByAuthorizationCode(code)
-                .flatMapCompletable(accessToken -> {
+        return accessTokenRepository
+            .findByAuthorizationCode(code)
+            .flatMapCompletable(
+                accessToken -> {
                     Completable deleteAccessTokenAction = accessTokenRepository.delete(accessToken.getToken());
                     if (accessToken.getRefreshToken() != null) {
                         deleteAccessTokenAction.andThen(refreshTokenRepository.delete(accessToken.getRefreshToken()));
                     }
                     return deleteAccessTokenAction;
-                })
-                .andThen(Maybe.error(new InvalidGrantException("The authorization code " + code + " is invalid.")));
+                }
+            )
+            .andThen(Maybe.error(new InvalidGrantException("The authorization code " + code + " is invalid.")));
     }
 }

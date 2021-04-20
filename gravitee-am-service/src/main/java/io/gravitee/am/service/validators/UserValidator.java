@@ -19,7 +19,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.reactivex.Completable;
-
 import java.util.regex.Pattern;
 
 /**
@@ -43,7 +42,6 @@ public class UserValidator {
     private static final Pattern USERNAME_PATTERN_COMPILED = Pattern.compile(USERNAME_PATTERN);
 
     public static Completable validate(User user) {
-
         if (!isValid(user.getUsername(), USERNAME_PATTERN_COMPILED)) {
             return Completable.error(new InvalidUserException(String.format("Username [%s] is not a valid value", user.getUsername())));
         }
@@ -61,7 +59,9 @@ public class UserValidator {
         }
 
         if (!isValid(user.getDisplayName(), NAME_LAX_PATTERN_COMPILED)) {
-            return Completable.error(new InvalidUserException(String.format("Display name [%s] is not a valid value", user.getDisplayName())));
+            return Completable.error(
+                new InvalidUserException(String.format("Display name [%s] is not a valid value", user.getDisplayName()))
+            );
         }
 
         if (!isValid(user.getNickName(), NAME_LAX_PATTERN_COMPILED)) {
@@ -69,7 +69,9 @@ public class UserValidator {
         }
 
         if (user.getExternalId() != null && user.getExternalId().length() > DEFAULT_MAX_LENGTH) {
-            return Completable.error(new InvalidUserException(String.format("External id [%s] is not a valid value", user.getExternalId())));
+            return Completable.error(
+                new InvalidUserException(String.format("External id [%s] is not a valid value", user.getExternalId()))
+            );
         }
 
         return Completable.complete();

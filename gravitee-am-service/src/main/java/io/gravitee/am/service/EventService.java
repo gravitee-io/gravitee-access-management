@@ -17,7 +17,6 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.model.common.event.Event;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -25,7 +24,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface EventService {
-
     Single<Event> create(Event event);
 
     Single<List<Event>> findByTimeFrame(long from, long to);

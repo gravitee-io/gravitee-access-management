@@ -47,8 +47,6 @@ public class UpdateFactor {
 
     @Override
     public String toString() {
-        return "UpdateFactor{" +
-                ", name='" + name + '\'' +
-                '}';
+        return "UpdateFactor{" + ", name='" + name + '\'' + '}';
     }
 }

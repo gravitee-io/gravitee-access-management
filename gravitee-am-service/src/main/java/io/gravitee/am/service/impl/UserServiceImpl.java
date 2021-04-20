@@ -37,14 +37,13 @@ import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -72,21 +71,37 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<Set<User>> findByDomain(String domain) {
         LOGGER.debug("Find users by domain: {}", domain);
-        return userRepository.findByDomain(domain)
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .findByDomain(domain)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find users by domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s", domain), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find users by domain %s", domain),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
         LOGGER.debug("Find users by {}: {}", referenceType, referenceId);
-        return userRepository.findAll(referenceType, referenceId, page, size)
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .findAll(referenceType, referenceId, page, size)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find users by {} {}", referenceType, referenceId, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by %s %s", referenceType, referenceId), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find users by %s %s", referenceType, referenceId),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
@@ -97,11 +112,30 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
         LOGGER.debug("Search users for {} {} with query {}", referenceType, referenceId, query);
-        return userRepository.search(referenceType, referenceId, query, page, size)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to search users for {} {} and query {}", referenceType, referenceId, query, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for %s %s and query %s", referenceType, referenceId, query), ex));
-                });
+        return userRepository
+            .search(referenceType, referenceId, query, page, size)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to search users for {} {} and query {}",
+                        referenceType,
+                        referenceId,
+                        query,
+                        ex
+                    );
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find users for %s %s and query %s",
+                                referenceType,
+                                referenceId,
+                                query
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
@@ -113,67 +147,124 @@ public class UserServiceImpl implements UserService {
     public Single<List<User>> findByIdIn(List<String> ids) {
         String userIds = String.join(",", ids);
         LOGGER.debug("Find users by ids: {}", userIds);
-        return userRepository.findByIdIn(ids)
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .findByIdIn(ids)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find users by ids {}", userIds, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by ids %s", userIds), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(String.format("An error occurs while trying to find users by ids %s", userIds), ex)
+                    );
+                }
+            );
     }
 
     @Override
     public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
         LOGGER.debug("Find users by domain : {} and email: {}", domain, email);
-        return userRepository.findByDomainAndEmail(domain, email, strict)
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .findByDomainAndEmail(domain, email, strict)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find users by domain : {} and email : {} ", domain, email, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s and email %s", domain, email), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find users by domain %s and email %s", domain, email),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
-
         LOGGER.debug("Find user by id : {}", id);
-        return userRepository.findById(referenceType, referenceId, id)
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .findById(referenceType, referenceId, id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its ID {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its ID: %s", id), ex));
-                })
-                .switchIfEmpty(Single.error(new UserNotFoundException(id)));
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a user using its ID: %s", id),
+                            ex
+                        )
+                    );
+                }
+            )
+            .switchIfEmpty(Single.error(new UserNotFoundException(id)));
     }
 
     @Override
     public Maybe<User> findById(String id) {
         LOGGER.debug("Find user by id : {}", id);
-        return userRepository.findById(id)
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .findById(id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its ID {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its ID: %s", id), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a user using its ID: %s", id),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<User> findByDomainAndUsername(String domain, String username) {
         LOGGER.debug("Find user by username and domain: {} {}", username, domain);
-        return userRepository.findByUsernameAndDomain(domain, username)
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .findByUsernameAndDomain(domain, username)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a user using its ID: {} for the domain {}", username, domain, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its ID: %s for the domain %s", username, domain), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find a user using its ID: %s for the domain %s",
+                                username,
+                                domain
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
         LOGGER.debug("Find user by {} {}, username and source: {} {}", referenceType, referenceId, username, source);
-        return userRepository.findByUsernameAndSource(referenceType, referenceId, username, source)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a user using its username: {} for the {} {}  and source {}", username, referenceType, referenceId, source, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its username: %s for the %s %s and source %s", username, referenceType, referenceId, source), ex));
-                });
+        return userRepository
+            .findByUsernameAndSource(referenceType, referenceId, username, source)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find a user using its username: {} for the {} {}  and source {}",
+                        username,
+                        referenceType,
+                        referenceId,
+                        source,
+                        ex
+                    );
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find a user using its username: %s for the %s %s and source %s",
+                                username,
+                                referenceType,
+                                referenceId,
+                                source
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
@@ -184,17 +275,36 @@ public class UserServiceImpl implements UserService {
     @Override
     public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
         LOGGER.debug("Find user by {} {}, externalId and source: {} {}", referenceType, referenceId, externalId, source);
-        return userRepository.findByExternalIdAndSource(referenceType, referenceId, externalId, source)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a user using its externalId: {} for the {} {} and source {}", externalId, referenceType, referenceId, source, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a user using its externalId: %s for the %s %s and source %s", externalId, referenceType, referenceId, source), ex));
-                });
+        return userRepository
+            .findByExternalIdAndSource(referenceType, referenceId, externalId, source)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find a user using its externalId: {} for the {} {} and source {}",
+                        externalId,
+                        referenceType,
+                        referenceId,
+                        source,
+                        ex
+                    );
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find a user using its externalId: %s for the %s %s and source %s",
+                                externalId,
+                                referenceType,
+                                referenceId,
+                                source
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<User> create(String domain, NewUser newUser) {
-
         return create(ReferenceType.DOMAIN, domain, newUser);
     }
 
@@ -202,9 +312,11 @@ public class UserServiceImpl implements UserService {
     public Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser) {
         LOGGER.debug("Create a new user {} for {} {}", newUser, referenceType, referenceId);
 
-        return userRepository.findByUsernameAndSource(referenceType, referenceId, newUser.getUsername(), newUser.getSource())
-                .isEmpty()
-                .flatMap(isEmpty -> {
+        return userRepository
+            .findByUsernameAndSource(referenceType, referenceId, newUser.getUsername(), newUser.getSource())
+            .isEmpty()
+            .flatMap(
+                isEmpty -> {
                     if (!isEmpty) {
                         return Single.error(new UserAlreadyExistsException(newUser.getUsername()));
                     } else {
@@ -232,46 +344,62 @@ public class UserServiceImpl implements UserService {
                         user.setUpdatedAt(user.getCreatedAt());
                         return create(user);
                     }
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     } else {
                         LOGGER.error("An error occurs while trying to create a user", ex);
                         return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
                     }
-                });
+                }
+            );
     }
 
     @Override
     public Single<User> create(User user) {
-
         LOGGER.debug("Create a user {}", user);
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
 
-        return UserValidator.validate(user).andThen(userRepository.create(user)
-                .flatMap(user1 -> {
-                    // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(user1));
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to create a user", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
-                }));
+        return UserValidator
+            .validate(user)
+            .andThen(
+                userRepository
+                    .create(user)
+                    .flatMap(
+                        user1 -> {
+                            // create event for sync process
+                            Event event = new Event(
+                                Type.USER,
+                                new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.CREATE)
+                            );
+                            return eventService.create(event).flatMap(__ -> Single.just(user1));
+                        }
+                    )
+                    .onErrorResumeNext(
+                        ex -> {
+                            if (ex instanceof AbstractManagementException) {
+                                return Single.error(ex);
+                            }
+                            LOGGER.error("An error occurs while trying to create a user", ex);
+                            return Single.error(new TechnicalManagementException("An error occurs while trying to create a user", ex));
+                        }
+                    )
+            );
     }
 
     @Override
     public Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser) {
         LOGGER.debug("Update a user {} for {} {}", id, referenceType, referenceId);
 
-        return userRepository.findById(referenceType, referenceId, id)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
-                .flatMapSingle(oldUser -> {
+        return userRepository
+            .findById(referenceType, referenceId, id)
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
+            .flatMapSingle(
+                oldUser -> {
                     oldUser.setClient(updateUser.getClient());
                     oldUser.setExternalId(updateUser.getExternalId());
                     oldUser.setFirstName(updateUser.getFirstName());
@@ -283,20 +411,22 @@ public class UserServiceImpl implements UserService {
                     oldUser.setUpdatedAt(new Date());
                     oldUser.setAdditionalInformation(updateUser.getAdditionalInformation());
                     return update(oldUser);
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to update a user", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<User> update(String domain, String id, UpdateUser updateUser) {
-
         return update(ReferenceType.DOMAIN, domain, id, updateUser);
     }
 
@@ -305,19 +435,31 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Update a user {}", user);
         // updated date
         user.setUpdatedAt(new Date());
-        return UserValidator.validate(user).andThen(userRepository.update(user)
-                .flatMap(user1 -> {
-                    // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(user1));
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to update a user", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
-                }));
+        return UserValidator
+            .validate(user)
+            .andThen(
+                userRepository
+                    .update(user)
+                    .flatMap(
+                        user1 -> {
+                            // create event for sync process
+                            Event event = new Event(
+                                Type.USER,
+                                new Payload(user1.getId(), user1.getReferenceType(), user1.getReferenceId(), Action.UPDATE)
+                            );
+                            return eventService.create(event).flatMap(__ -> Single.just(user1));
+                        }
+                    )
+                    .onErrorResumeNext(
+                        ex -> {
+                            if (ex instanceof AbstractManagementException) {
+                                return Single.error(ex);
+                            }
+                            LOGGER.error("An error occurs while trying to update a user", ex);
+                            return Single.error(new TechnicalManagementException("An error occurs while trying to update a user", ex));
+                        }
+                    )
+            );
     }
 
     @Override
@@ -325,18 +467,22 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Enhance user {} with groups and roles", user.getId());
 
         // fetch user groups
-        return groupService.findByMember(user.getId())
-                .flatMap(groups -> {
+        return groupService
+            .findByMember(user.getId())
+            .flatMap(
+                groups -> {
                     Set<String> roles = new HashSet<>();
                     if (groups != null && !groups.isEmpty()) {
                         // set groups
                         user.setGroups(groups.stream().map(Group::getName).collect(Collectors.toList()));
                         // set groups roles
-                        roles.addAll(groups
+                        roles.addAll(
+                            groups
                                 .stream()
                                 .filter(group -> group.getRoles() != null && !group.getRoles().isEmpty())
                                 .flatMap(group -> group.getRoles().stream())
-                                .collect(Collectors.toSet()));
+                                .collect(Collectors.toSet())
+                        );
                     }
                     // get user roles
                     if (user.getRoles() != null && !user.getRoles().isEmpty()) {
@@ -344,73 +490,97 @@ public class UserServiceImpl implements UserService {
                     }
                     // fetch roles information and enhance user data
                     if (!roles.isEmpty()) {
-                        return roleService.findByIdIn(new ArrayList<>(roles))
-                                .map(roles1 -> {
+                        return roleService
+                            .findByIdIn(new ArrayList<>(roles))
+                            .map(
+                                roles1 -> {
                                     user.setRolesPermissions(roles1);
                                     return user;
-                                });
-
+                                }
+                            );
                     }
                     return Single.just(user);
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to enhance user {}", user.getId(), ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to enhance user %s", user.getId()), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(String.format("An error occurs while trying to enhance user %s", user.getId()), ex)
+                    );
+                }
+            );
     }
 
     @Override
     public Completable delete(String userId) {
         LOGGER.debug("Delete user {}", userId);
 
-        return userRepository.findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapCompletable(user -> {
+        return userRepository
+            .findById(userId)
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+            .flatMapCompletable(
+                user -> {
                     // create event for sync process
-                    Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.DELETE));
+                    Event event = new Event(
+                        Type.USER,
+                        new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.DELETE)
+                    );
                     return userRepository.delete(userId).andThen(eventService.create(event)).toCompletable();
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete user: %s", userId), ex));
-                });
+                    return Completable.error(
+                        new TechnicalManagementException(String.format("An error occurs while trying to delete user: %s", userId), ex)
+                    );
+                }
+            );
     }
 
     @Override
     public Single<Long> countByDomain(String domain) {
         LOGGER.debug("Count user by domain {}", domain);
 
-        return userRepository.countByDomain(domain)
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .countByDomain(domain)
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to count users by domain: {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while count users to delete user: %s", domain), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(String.format("An error occurs while count users to delete user: %s", domain), ex)
+                    );
+                }
+            );
     }
 
     @Override
     public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
         LOGGER.debug("Get user collection analytics {}", query);
 
-        return userRepository.statistics(query)
-                .onErrorResumeNext(ex -> {
+        return userRepository
+            .statistics(query)
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to get users analytics : {}", query, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while count users analytics : %s", query), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(String.format("An error occurs while count users analytics : %s", query), ex)
+                    );
+                }
+            );
     }
 }

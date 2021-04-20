@@ -25,7 +25,7 @@
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required />
             <mat-hint>Identity provider name</mat-hint>
           </mat-form-field>
         </div>
@@ -36,11 +36,22 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-            <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
+            <provider-form
+              *ngIf="provider"
+              [providerConfiguration]="providerConfiguration"
+              [providerSchema]="providerSchema"
+              (configurationCompleted)="enableProviderUpdate($event)"
+            ></provider-form>
           </div>
         </div>
         <div *hasPermission="['domain_identity_provider_update']" fxLayout="row">
-          <button mat-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">SAVE</button>
+          <button
+            mat-raised-button
+            [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)"
+            (click)="update()"
+          >
+            SAVE
+          </button>
         </div>
       </form>
 
@@ -56,27 +67,55 @@
     <div class="gv-page-description" fxFlex="30">
       <h3>Manage identity provider</h3>
       <div class="gv-page-description-content">
-        <p>
-          Register your users to interact with the Access Management {{organizationContext?'Portal':'Server'}}.
-        </p>
+        <p>Register your users to interact with the Access Management {{ organizationContext ? 'Portal' : 'Server' }}.</p>
       </div>
       <div *ngIf="provider.external" class="social-provider-settings-description">
         <h5>Social/Enterprise Identity Provider</h5>
         <small>1. Configure the redirect URI</small>
-        <p class="social-provider-settings-description-contextual-help">The Redirect URI or callback URL or Assertion Consumer Service URL must be known by your Identity Server. Go to your Identity Server app settings page and specify the following URL</p>
-        <mat-form-field appearance="outline" floatLabel="always"s>
-          <input matInput type="text" name="redirectUri" [value]="redirectUri" disabled style="font-family: monospace; color: rgba(0, 0, 0, 0.87);">
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="redirectUri" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
-        </mat-form-field>
-        <small>2. (Optional) Custom login page</small>
-        <p class="social-provider-settings-description-contextual-help">If you enabled custom login form and want to use the identity provider, update the login form content with the following code</p>
-        <div class="code">
-          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="customCode" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();">
+        <p class="social-provider-settings-description-contextual-help">
+          The Redirect URI or callback URL or Assertion Consumer Service URL must be known by your Identity Server. Go to your Identity
+          Server app settings page and specify the following URL
+        </p>
+        <mat-form-field appearance="outline" floatLabel="always" s>
+          <input
+            matInput
+            type="text"
+            name="redirectUri"
+            [value]="redirectUri"
+            disabled
+            style="font-family: monospace; color: rgba(0, 0, 0, 0.87)"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="redirectUri"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
             <mat-icon>content_copy</mat-icon>
           </button>
-          <pre style="white-space: normal;">
+        </mat-form-field>
+        <small>2. (Optional) Custom login page</small>
+        <p class="social-provider-settings-description-contextual-help">
+          If you enabled custom login form and want to use the identity provider, update the login form content with the following code
+        </p>
+        <div class="code">
+          <button
+            mat-icon-button
+            matSuffix
+            matTooltip="Copy to clipboard"
+            ngxClipboard
+            [cbContent]="customCode"
+            (cbOnSuccess)="valueCopied('Copied to clipboard')"
+            (click)="$event.preventDefault()"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
+          <pre style="white-space: normal">
             <![CDATA[
-               {{customCode}}
+               {{ customCode }}
             ]]>
           </pre>
         </div>

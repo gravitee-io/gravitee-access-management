@@ -19,7 +19,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
@@ -80,11 +79,9 @@ public class PatchApplicationSettings {
     }
 
     public Set<Permission> getRequiredPermissions() {
-
         Set<Permission> requiredPermissions = new HashSet<>();
 
-        if (account != null && account.isPresent()
-                || advanced != null && advanced.isPresent()) {
+        if (account != null && account.isPresent() || advanced != null && advanced.isPresent()) {
             requiredPermissions.add(Permission.APPLICATION_SETTINGS);
         }
 

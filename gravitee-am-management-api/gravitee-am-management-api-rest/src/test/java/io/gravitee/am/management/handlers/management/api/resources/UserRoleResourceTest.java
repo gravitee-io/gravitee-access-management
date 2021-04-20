@@ -15,22 +15,21 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-import java.util.Collections;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+
+import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
+import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+import java.util.Collections;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,16 +47,18 @@ public class UserRoleResourceTest extends JerseySpringTest {
         mockUser.setId("user-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockUser)).when(userService).revokeRoles(eq(ReferenceType.DOMAIN), eq(domainId), eq(mockUser.getId()), eq(Collections.singletonList("role-1")), any());
+        doReturn(Single.just(mockUser))
+            .when(userService)
+            .revokeRoles(eq(ReferenceType.DOMAIN), eq(domainId), eq(mockUser.getId()), eq(Collections.singletonList("role-1")), any());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .path(mockUser.getId())
-                .path("roles")
-                .path("role-1")
-                .request()
-                .delete();
+            .path(domainId)
+            .path("users")
+            .path(mockUser.getId())
+            .path("roles")
+            .path("role-1")
+            .request()
+            .delete();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }

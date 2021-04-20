@@ -57,8 +57,6 @@ public class UpdateReporter {
 
     @Override
     public String toString() {
-        return "UpdateReporter{" +
-                ", name='" + name + '\'' +
-                '}';
+        return "UpdateReporter{" + ", name='" + name + '\'' + '}';
     }
 }

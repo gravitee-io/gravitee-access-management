@@ -22,9 +22,8 @@ import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -44,6 +43,11 @@ public class PolicyChainHandlerImpl implements PolicyChainHandler {
     @Override
     public Handler<RoutingContext> create(ExtensionPoint extensionPoint) {
         Objects.requireNonNull(extensionPoint, "An extension point is required");
-        return new io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.PolicyChainHandlerImpl(policyManager, policyChainProcessorFactory, executionContextFactory, extensionPoint);
+        return new io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.PolicyChainHandlerImpl(
+            policyManager,
+            policyChainProcessorFactory,
+            executionContextFactory,
+            extensionPoint
+        );
     }
 }

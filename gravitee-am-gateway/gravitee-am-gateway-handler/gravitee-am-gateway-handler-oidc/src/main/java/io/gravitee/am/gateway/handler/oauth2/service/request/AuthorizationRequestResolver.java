@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -28,8 +27,7 @@ import java.util.List;
 public class AuthorizationRequestResolver extends AbstractRequestResolver<AuthorizationRequest> {
 
     public Single<AuthorizationRequest> resolve(AuthorizationRequest authorizationRequest, Client client, User endUser) {
-        return resolveAuthorizedScopes(authorizationRequest, client, endUser)
-                .flatMap(request -> resolveRedirectUri(request, client));
+        return resolveAuthorizedScopes(authorizationRequest, client, endUser).flatMap(request -> resolveRedirectUri(request, client));
     }
 
     /**

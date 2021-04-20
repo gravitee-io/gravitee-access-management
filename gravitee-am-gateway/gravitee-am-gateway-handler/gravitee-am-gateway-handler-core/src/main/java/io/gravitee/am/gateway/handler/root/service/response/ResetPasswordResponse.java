@@ -23,8 +23,7 @@ import io.gravitee.am.model.User;
  */
 public class ResetPasswordResponse extends SelfUserServiceResponse {
 
-    public ResetPasswordResponse() {
-    }
+    public ResetPasswordResponse() {}
 
     public ResetPasswordResponse(User user, String redirectUri, boolean autoLogin) {
         super(user, redirectUri, autoLogin);

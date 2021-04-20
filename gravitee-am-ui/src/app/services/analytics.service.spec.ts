@@ -20,7 +20,7 @@ import { AnalyticsService } from './analytics.service';
 describe('AnalyticsService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AnalyticsService]
+      providers: [AnalyticsService],
     });
   });
 

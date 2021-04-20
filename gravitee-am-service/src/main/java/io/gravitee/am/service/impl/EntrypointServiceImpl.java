@@ -31,15 +31,14 @@ import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -54,24 +53,20 @@ public class EntrypointServiceImpl implements EntrypointService {
 
     private final AuditService auditService;
 
-    public EntrypointServiceImpl(@Lazy EntrypointRepository entrypointRepository,
-                                 AuditService auditService) {
+    public EntrypointServiceImpl(@Lazy EntrypointRepository entrypointRepository, AuditService auditService) {
         this.entrypointRepository = entrypointRepository;
         this.auditService = auditService;
     }
 
     @Override
     public Single<Entrypoint> findById(String id, String organizationId) {
-
         LOGGER.debug("Find entrypoint by id {} and organizationId {}", id, organizationId);
 
-        return entrypointRepository.findById(id, organizationId)
-                .switchIfEmpty(Single.error(new EntrypointNotFoundException(id)));
+        return entrypointRepository.findById(id, organizationId).switchIfEmpty(Single.error(new EntrypointNotFoundException(id)));
     }
 
     @Override
     public Flowable<Entrypoint> findAll(String organizationId) {
-
         LOGGER.debug("Find all entrypoints by organizationId {}", organizationId);
 
         return entrypointRepository.findAll(organizationId);
@@ -79,7 +74,6 @@ public class EntrypointServiceImpl implements EntrypointService {
 
     @Override
     public Single<Entrypoint> create(String organizationId, NewEntrypoint newEntrypoint, User principal) {
-
         LOGGER.debug("Create a new entrypoint {} for organization {}", newEntrypoint, organizationId);
 
         Entrypoint toCreate = new Entrypoint();
@@ -94,7 +88,6 @@ public class EntrypointServiceImpl implements EntrypointService {
 
     @Override
     public Single<Entrypoint> createDefault(String organizationId) {
-
         Entrypoint toCreate = new Entrypoint();
 
         toCreate.setName("Default");
@@ -109,11 +102,11 @@ public class EntrypointServiceImpl implements EntrypointService {
 
     @Override
     public Single<Entrypoint> update(String entrypointId, String organizationId, UpdateEntrypoint updateEntrypoint, User principal) {
-
         LOGGER.debug("Update an existing entrypoint {}", updateEntrypoint);
 
         return findById(entrypointId, organizationId)
-                .flatMap(oldEntrypoint -> {
+            .flatMap(
+                oldEntrypoint -> {
                     Entrypoint toUpdate = new Entrypoint(oldEntrypoint);
                     toUpdate.setName(updateEntrypoint.getName());
                     toUpdate.setDescription(updateEntrypoint.getDescription());
@@ -122,25 +115,68 @@ public class EntrypointServiceImpl implements EntrypointService {
                     toUpdate.setUpdatedAt(new Date());
 
                     return validate(toUpdate, oldEntrypoint)
-                            .andThen(entrypointRepository.update(toUpdate)
-                                    .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_UPDATED).entrypoint(updated).oldValue(oldEntrypoint)))
-                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_UPDATED).throwable(throwable))));
-                });
+                        .andThen(
+                            entrypointRepository
+                                .update(toUpdate)
+                                .doOnSuccess(
+                                    updated ->
+                                        auditService.report(
+                                            AuditBuilder
+                                                .builder(EntrypointAuditBuilder.class)
+                                                .principal(principal)
+                                                .type(EventType.ENTRYPOINT_UPDATED)
+                                                .entrypoint(updated)
+                                                .oldValue(oldEntrypoint)
+                                        )
+                                )
+                                .doOnError(
+                                    throwable ->
+                                        auditService.report(
+                                            AuditBuilder
+                                                .builder(EntrypointAuditBuilder.class)
+                                                .principal(principal)
+                                                .type(EventType.ENTRYPOINT_UPDATED)
+                                                .throwable(throwable)
+                                        )
+                                )
+                        );
+                }
+            );
     }
 
     @Override
     public Completable delete(String id, String orgaizationId, User principal) {
-
         LOGGER.debug("Delete entrypoint by id {} and organizationId {}", id, orgaizationId);
 
         return findById(id, orgaizationId)
-                .flatMapCompletable(entrypoint -> entrypointRepository.delete(id)
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_DELETED).entrypoint(entrypoint)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).principal(principal).type(EventType.ENTRYPOINT_DELETED).throwable(throwable))));
+            .flatMapCompletable(
+                entrypoint ->
+                    entrypointRepository
+                        .delete(id)
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(EntrypointAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.ENTRYPOINT_DELETED)
+                                        .entrypoint(entrypoint)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(EntrypointAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.ENTRYPOINT_DELETED)
+                                        .throwable(throwable)
+                                )
+                        )
+            );
     }
 
     private Single<Entrypoint> createInternal(Entrypoint toCreate, User principal) {
-
         Date now = new Date();
 
         toCreate.setId(UUID.random().toString());
@@ -148,9 +184,31 @@ public class EntrypointServiceImpl implements EntrypointService {
         toCreate.setUpdatedAt(now);
 
         return validate(toCreate)
-                .andThen(entrypointRepository.create(toCreate)
-                        .doOnSuccess(entrypoint -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).entrypoint(entrypoint).principal(principal).type(EventType.ENTRYPOINT_CREATED)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(EntrypointAuditBuilder.class).referenceId(toCreate.getOrganizationId()).principal(principal).type(EventType.ENTRYPOINT_CREATED).throwable(throwable))));
+            .andThen(
+                entrypointRepository
+                    .create(toCreate)
+                    .doOnSuccess(
+                        entrypoint ->
+                            auditService.report(
+                                AuditBuilder
+                                    .builder(EntrypointAuditBuilder.class)
+                                    .entrypoint(entrypoint)
+                                    .principal(principal)
+                                    .type(EventType.ENTRYPOINT_CREATED)
+                            )
+                    )
+                    .doOnError(
+                        throwable ->
+                            auditService.report(
+                                AuditBuilder
+                                    .builder(EntrypointAuditBuilder.class)
+                                    .referenceId(toCreate.getOrganizationId())
+                                    .principal(principal)
+                                    .type(EventType.ENTRYPOINT_CREATED)
+                                    .throwable(throwable)
+                            )
+                    )
+            );
     }
 
     private Completable validate(Entrypoint entrypoint) {
@@ -158,12 +216,13 @@ public class EntrypointServiceImpl implements EntrypointService {
     }
 
     private Completable validate(Entrypoint entrypoint, Entrypoint oldEntrypoint) {
-
         if (oldEntrypoint != null && oldEntrypoint.isDefaultEntrypoint()) {
             // Only the url of the default entrypoint can be updated.
-            if (!entrypoint.getName().equals(oldEntrypoint.getName())
-                    || !entrypoint.getDescription().equals(oldEntrypoint.getDescription())
-                    || !entrypoint.getTags().equals(oldEntrypoint.getTags())) {
+            if (
+                !entrypoint.getName().equals(oldEntrypoint.getName()) ||
+                !entrypoint.getDescription().equals(oldEntrypoint.getDescription()) ||
+                !entrypoint.getTags().equals(oldEntrypoint.getTags())
+            ) {
                 return Completable.error(new InvalidEntrypointException("Only the url of the default entrypoint can be updated."));
             }
         }

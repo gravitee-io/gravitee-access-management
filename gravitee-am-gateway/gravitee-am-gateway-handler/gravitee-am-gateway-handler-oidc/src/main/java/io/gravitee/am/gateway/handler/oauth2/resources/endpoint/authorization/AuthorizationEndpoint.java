@@ -33,10 +33,9 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.
@@ -65,7 +64,10 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         // The authorization server authenticates the resource owner and obtains
         // an authorization decision (by asking the resource owner or by establishing approval via other means).
         User authenticatedUser = context.user();
-        if (authenticatedUser == null || ! (authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User)) {
+        if (
+            authenticatedUser == null ||
+            !(authenticatedUser.getDelegate() instanceof io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User)
+        ) {
             throw new AccessDeniedException();
         }
 
@@ -76,22 +78,24 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         Client client = context.get(CLIENT_CONTEXT_KEY);
 
         // get resource owner
-        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
+        io.gravitee.am.model.User endUser =
+            ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
 
-        flow.run(request, client, endUser)
-                .subscribe(
-                        authorizationResponse -> {
-                            try {
-                                // final step of the authorization flow, we can clean the session and redirect the user
-                                cleanSession(context);
-                                doRedirect(context.response(), authorizationResponse.buildRedirectUri());
-                            } catch (Exception e) {
-                                logger.error("Unable to redirect to client redirect_uri", e);
-                                context.fail(new ServerErrorException());
-                            }
-                        },
-                        error -> context.fail(error));
-
+        flow
+            .run(request, client, endUser)
+            .subscribe(
+                authorizationResponse -> {
+                    try {
+                        // final step of the authorization flow, we can clean the session and redirect the user
+                        cleanSession(context);
+                        doRedirect(context.response(), authorizationResponse.buildRedirectUri());
+                    } catch (Exception e) {
+                        logger.error("Unable to redirect to client redirect_uri", e);
+                        context.fail(new ServerErrorException());
+                    }
+                },
+                error -> context.fail(error)
+            );
     }
 
     private void doRedirect(HttpServerResponse response, String url) {

@@ -32,5 +32,4 @@ public class MongoReporter implements Reporter {
     public Class<? extends AuditReporter> auditReporter() {
         return MongoAuditReporter.class;
     }
-
 }

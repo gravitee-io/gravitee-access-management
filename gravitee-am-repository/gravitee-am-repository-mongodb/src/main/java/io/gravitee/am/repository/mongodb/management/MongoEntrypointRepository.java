@@ -15,18 +15,17 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.repository.management.api.EntrypointRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.EntrypointMongo;
 import io.reactivex.*;
-import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -46,7 +45,10 @@ public class MongoEntrypointRepository extends AbstractManagementMongoRepository
 
     @Override
     public Maybe<Entrypoint> findById(String id, String organizationId) {
-        return Observable.fromPublisher(collection.find(and(eq(FIELD_ORGANIZATION_ID, organizationId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(collection.find(and(eq(FIELD_ORGANIZATION_ID, organizationId), eq(FIELD_ID, id))).first())
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -69,7 +71,9 @@ public class MongoEntrypointRepository extends AbstractManagementMongoRepository
     @Override
     public Single<Entrypoint> update(Entrypoint item) {
         EntrypointMongo entrypoint = convert(item);
-        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, entrypoint.getId()), entrypoint)).flatMap(updateResult -> findById(entrypoint.getId()).toSingle());
+        return Single
+            .fromPublisher(collection.replaceOne(eq(FIELD_ID, entrypoint.getId()), entrypoint))
+            .flatMap(updateResult -> findById(entrypoint.getId()).toSingle());
     }
 
     @Override

@@ -82,5 +82,4 @@ public class TagMongo extends Auditable {
     public int hashCode() {
         return id.hashCode();
     }
-
 }

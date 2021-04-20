@@ -23,7 +23,7 @@ public class TotalApplication {
 
     private long totalApplications;
 
-    public TotalApplication() { }
+    public TotalApplication() {}
 
     public TotalApplication(long totalApplications) {
         this.totalApplications = totalApplications;

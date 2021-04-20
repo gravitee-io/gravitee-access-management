@@ -18,7 +18,6 @@ package io.gravitee.am.management.handlers.management.api.provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.common.http.HttpStatusCode;
-
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
@@ -33,9 +32,9 @@ public class JsonMappingExceptionMapper extends AbstractExceptionMapper<JsonProc
     @Override
     public Response toResponse(JsonProcessingException e) {
         return Response
-                .status(Response.Status.BAD_REQUEST)
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(new ErrorEntity(e.getOriginalMessage(), HttpStatusCode.BAD_REQUEST_400))
-                .build();
+            .status(Response.Status.BAD_REQUEST)
+            .type(MediaType.APPLICATION_JSON_TYPE)
+            .entity(new ErrorEntity(e.getOriginalMessage(), HttpStatusCode.BAD_REQUEST_400))
+            .build();
     }
 }

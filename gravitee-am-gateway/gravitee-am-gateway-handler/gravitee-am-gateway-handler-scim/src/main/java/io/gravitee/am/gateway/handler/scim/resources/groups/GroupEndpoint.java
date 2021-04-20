@@ -40,16 +40,19 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
     public void get(RoutingContext context) {
         final String groupId = context.request().getParam("id");
         groupService
-                .get(groupId, location(context.request()))
-                .subscribe(
-                        group -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .putHeader(HttpHeaders.LOCATION, group.getMeta().getLocation())
-                                .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group)),
-                        error -> context.fail(error),
-                        () -> context.fail(new GroupNotFoundException(groupId)));
+            .get(groupId, location(context.request()))
+            .subscribe(
+                group ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .putHeader(HttpHeaders.LOCATION, group.getMeta().getLocation())
+                        .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group)),
+                error -> context.fail(error),
+                () -> context.fail(new GroupNotFoundException(groupId))
+            );
     }
 
     /**
@@ -105,15 +108,19 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
                 return;
             }
 
-            groupService.update(groupId, group, location(context.request()))
-                    .subscribe(
-                            group1 -> context.response()
-                                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                    .putHeader(HttpHeaders.LOCATION, group1.getMeta().getLocation())
-                                    .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group1)),
-                            error -> context.fail(error));
+            groupService
+                .update(groupId, group, location(context.request()))
+                .subscribe(
+                    group1 ->
+                        context
+                            .response()
+                            .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .putHeader(HttpHeaders.LOCATION, group1.getMeta().getLocation())
+                            .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(group1)),
+                    error -> context.fail(error)
+                );
         } catch (DecodeException ex) {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }
@@ -138,9 +145,6 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
      */
     public void delete(RoutingContext context) {
         final String groupId = context.request().getParam("id");
-        groupService.delete(groupId)
-                .subscribe(
-                        () -> context.response().setStatusCode(204).end(),
-                        error -> context.fail(error));
+        groupService.delete(groupId).subscribe(() -> context.response().setStatusCode(204).end(), error -> context.fail(error));
     }
 }

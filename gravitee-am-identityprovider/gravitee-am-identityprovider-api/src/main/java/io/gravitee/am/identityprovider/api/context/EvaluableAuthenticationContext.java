@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.api.context;
 
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
-
 import java.util.Map;
 
 /**
@@ -34,5 +33,4 @@ public class EvaluableAuthenticationContext {
     public Map<String, Object> getAttributes() {
         return authenticationContext.getAttributes();
     }
-
 }

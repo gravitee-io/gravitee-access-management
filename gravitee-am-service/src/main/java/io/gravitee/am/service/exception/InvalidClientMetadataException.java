@@ -31,7 +31,9 @@ public class InvalidClientMetadataException extends OAuth2Exception {
         super("One of the Client Metadata value is invalid.");
     }
 
-    public InvalidClientMetadataException(String message) { super(message); }
+    public InvalidClientMetadataException(String message) {
+        super(message);
+    }
 
     @Override
     public String getOAuth2ErrorCode() {

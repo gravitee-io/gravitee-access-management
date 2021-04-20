@@ -31,5 +31,4 @@ public class ScopeApprovalNotFoundException extends AbstractNotFoundException {
     public String getMessage() {
         return "Scope approval [" + scope + "] can not be found.";
     }
-
 }

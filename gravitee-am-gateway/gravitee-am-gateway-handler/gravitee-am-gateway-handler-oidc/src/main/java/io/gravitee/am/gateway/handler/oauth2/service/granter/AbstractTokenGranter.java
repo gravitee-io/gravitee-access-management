@@ -22,11 +22,10 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.Objects;
 import java.util.Optional;
 
@@ -58,10 +57,10 @@ public class AbstractTokenGranter implements TokenGranter {
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return parseRequest(tokenRequest, client)
-                .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest1, client))
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .flatMapSingle(user -> handleRequest(tokenRequest, client, user.orElse(null)));
+            .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest1, client))
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty())
+            .flatMapSingle(user -> handleRequest(tokenRequest, client, user.orElse(null)));
     }
 
     /**
@@ -72,8 +71,11 @@ public class AbstractTokenGranter implements TokenGranter {
      */
     protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
         // Is client allowed to use such grant type ?
-        if (client.getAuthorizedGrantTypes() != null && !client.getAuthorizedGrantTypes().isEmpty()
-                && !client.getAuthorizedGrantTypes().contains(grantType)) {
+        if (
+            client.getAuthorizedGrantTypes() != null &&
+            !client.getAuthorizedGrantTypes().isEmpty() &&
+            !client.getAuthorizedGrantTypes().contains(grantType)
+        ) {
             throw new UnauthorizedClientException("Unauthorized grant type: " + grantType);
         }
         return Single.just(tokenRequest);
@@ -110,19 +112,22 @@ public class AbstractTokenGranter implements TokenGranter {
 
     private Single<Token> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
         return resolveRequest(tokenRequest, client, endUser)
-                .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client, endUser))
-                .flatMap(oAuth2Request -> createAccessToken(oAuth2Request, client, endUser));
+            .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client, endUser))
+            .flatMap(oAuth2Request -> createAccessToken(oAuth2Request, client, endUser));
     }
 
     private Single<OAuth2Request> createOAuth2Request(TokenRequest tokenRequest, Client client, User endUser) {
-        return Single.just(tokenRequest.createOAuth2Request())
-                .map(oAuth2Request -> {
+        return Single
+            .just(tokenRequest.createOAuth2Request())
+            .map(
+                oAuth2Request -> {
                     if (endUser != null) {
                         oAuth2Request.setSubject(endUser.getId());
                     }
                     oAuth2Request.setSupportRefreshToken(isSupportRefreshToken(client));
                     return oAuth2Request;
-                });
+                }
+            );
     }
 
     private Single<Token> createAccessToken(OAuth2Request oAuth2Request, Client client, User endUser) {
@@ -148,5 +153,4 @@ public class AbstractTokenGranter implements TokenGranter {
     public void setTokenService(TokenService tokenService) {
         this.tokenService = tokenService;
     }
-
 }

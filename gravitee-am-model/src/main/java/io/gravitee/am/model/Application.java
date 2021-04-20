@@ -20,7 +20,6 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.oidc.Client;
-
 import java.util.*;
 
 /**
@@ -86,8 +85,7 @@ public class Application implements Resource {
      */
     private Date updatedAt;
 
-    public Application() {
-    }
+    public Application() {}
 
     public Application(Application other) {
         this.id = other.id;

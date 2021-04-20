@@ -26,8 +26,7 @@ import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.util.stream.Collectors;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -36,7 +35,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
-import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -53,26 +52,31 @@ public class SystemRoleResource extends AbstractResource {
     @GET
     @Path("{role}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a system role",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    @ApiResponses({
+    @ApiOperation(value = "Get a system role", notes = "There is no particular permission needed. User must be authenticated.")
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "System role successfully fetched", response = Role.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
-    public void get(
-            @PathParam("role") String role,
-            @Suspended final AsyncResponse response) {
-
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
+    public void get(@PathParam("role") String role, @Suspended final AsyncResponse response) {
         // No permission needed to read system role.
-        roleService.findById(ReferenceType.PLATFORM, Platform.DEFAULT, role)
-                .map(this::convert)
-                .subscribe(response::resume, response::resume);
+        roleService
+            .findById(ReferenceType.PLATFORM, Platform.DEFAULT, role)
+            .map(this::convert)
+            .subscribe(response::resume, response::resume);
     }
 
     private RoleEntity convert(Role role) {
-
         RoleEntity roleEntity = new RoleEntity(role);
 
-        roleEntity.setAvailablePermissions(Permission.allPermissions(role.getAssignableType()).stream().map(permission -> permission.name().toLowerCase()).collect(Collectors.toList()));
+        roleEntity.setAvailablePermissions(
+            Permission
+                .allPermissions(role.getAssignableType())
+                .stream()
+                .map(permission -> permission.name().toLowerCase())
+                .collect(Collectors.toList())
+        );
         roleEntity.setPermissions(Permission.flatten(role.getPermissionAcls()));
 
         return roleEntity;

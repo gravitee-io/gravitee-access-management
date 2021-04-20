@@ -22,6 +22,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class NoIdentityProviderRoleMapper implements IdentityProviderRoleMapper {
+
     @Override
     public Map<String, String[]> getRoles() {
         return null;

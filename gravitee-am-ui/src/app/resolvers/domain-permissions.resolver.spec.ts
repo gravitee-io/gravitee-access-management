@@ -20,7 +20,7 @@ import { DomainPermissionsResolver } from './domain-permissions.resolver';
 describe('DomainPermissionsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DomainPermissionsResolver]
+      providers: [DomainPermissionsResolver],
     });
   });
 

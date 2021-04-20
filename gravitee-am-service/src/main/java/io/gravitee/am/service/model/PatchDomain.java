@@ -24,7 +24,6 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -35,15 +34,16 @@ import java.util.Set;
  */
 public class PatchDomain {
 
-    public PatchDomain() {
-    }
+    public PatchDomain() {}
 
     private Optional<String> name;
     private Optional<String> description;
     private Optional<Boolean> enabled;
     private Optional<String> path;
+
     @JsonProperty("oidc")
     private Optional<PatchOIDCSettings> oidc;
+
     private Optional<SCIMSettings> scim;
     private Optional<LoginSettings> loginSettings;
     private Optional<AccountSettings> accountSettings;
@@ -146,7 +146,6 @@ public class PatchDomain {
         return toPatch;
     }
 
-
     /**
      * Returns the list of required permission depending on what fields are filled.
      *
@@ -155,17 +154,24 @@ public class PatchDomain {
      * @return the list of required permissions.
      */
     public Set<Permission> getRequiredPermissions() {
-
         Set<Permission> requiredPermissions = new HashSet<>();
 
-        if (name != null && name.isPresent()
-                || description != null && description.isPresent()
-                || enabled != null && enabled.isPresent()
-                || path != null && path.isPresent()
-                || loginSettings != null && loginSettings.isPresent()
-                || accountSettings != null && accountSettings.isPresent()
-                || tags != null && tags.isPresent()) {
-
+        if (
+            name != null &&
+            name.isPresent() ||
+            description != null &&
+            description.isPresent() ||
+            enabled != null &&
+            enabled.isPresent() ||
+            path != null &&
+            path.isPresent() ||
+            loginSettings != null &&
+            loginSettings.isPresent() ||
+            accountSettings != null &&
+            accountSettings.isPresent() ||
+            tags != null &&
+            tags.isPresent()
+        ) {
             requiredPermissions.add(Permission.DOMAIN_SETTINGS);
         }
 

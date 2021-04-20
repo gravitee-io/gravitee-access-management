@@ -18,7 +18,7 @@ import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChange
 @Component({
   selector: 'extension-grant-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
 export class ExtensionGrantFormComponent implements OnInit, OnChanges {
   @Input('extensionGrantConfiguration') configuration: any = {};
@@ -27,14 +27,13 @@ export class ExtensionGrantFormComponent implements OnInit, OnChanges {
   displayForm: boolean = false;
   data: any = {};
 
-  constructor() { }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.extensionGrantSchema) {
-      let _extensionGrantSchema= changes.extensionGrantSchema.currentValue;
+      let _extensionGrantSchema = changes.extensionGrantSchema.currentValue;
       if (_extensionGrantSchema && _extensionGrantSchema.id) {
         this.displayForm = true;
       }
@@ -53,7 +52,7 @@ export class ExtensionGrantFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    let configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    let configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

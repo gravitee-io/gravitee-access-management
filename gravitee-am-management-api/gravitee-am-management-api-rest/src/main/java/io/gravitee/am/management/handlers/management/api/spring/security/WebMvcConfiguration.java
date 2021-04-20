@@ -32,10 +32,7 @@ public class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-
-        registry
-                .addResourceHandler("/access/assets/*", "/oauth/assets/**", "/assets/**")
-                .addResourceLocations("classpath:/assets/");
+        registry.addResourceHandler("/access/assets/*", "/oauth/assets/**", "/assets/**").addResourceLocations("classpath:/assets/");
     }
 
     @Override

@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.response;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
-
 import java.net.URISyntaxException;
 
 /**

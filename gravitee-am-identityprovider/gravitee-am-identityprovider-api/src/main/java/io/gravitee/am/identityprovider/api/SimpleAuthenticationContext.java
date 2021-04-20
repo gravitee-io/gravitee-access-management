@@ -21,7 +21,6 @@ import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
-
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -40,7 +39,7 @@ public class SimpleAuthenticationContext implements AuthenticationContext {
     private final Map<String, Object> attributes = new HashMap<>();
     private TemplateEngine templateEngine;
 
-    public SimpleAuthenticationContext() { }
+    public SimpleAuthenticationContext() {}
 
     public SimpleAuthenticationContext(Request request) {
         this.request = request;

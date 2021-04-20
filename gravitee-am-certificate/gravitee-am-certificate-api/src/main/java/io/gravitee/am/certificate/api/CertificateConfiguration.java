@@ -19,5 +19,4 @@ package io.gravitee.am.certificate.api;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateConfiguration {
-}
+public interface CertificateConfiguration {}

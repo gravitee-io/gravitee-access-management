@@ -19,10 +19,9 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.observers.TestObserver;
+import java.util.UUID;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.UUID;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -56,10 +55,10 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
         token.setToken("my-token");
 
         TestObserver<AccessToken> observer = accessTokenRepository
-                .create(token)
-                .toCompletable()
-                .andThen(accessTokenRepository.findByToken("my-token"))
-                .test();
+            .create(token)
+            .toCompletable()
+            .andThen(accessTokenRepository.findByToken("my-token"))
+            .test();
 
         observer.awaitTerminalEvent();
 
@@ -76,17 +75,19 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
         token.setClient("my-client-id");
         token.setSubject("my-subject");
 
-        TestObserver<AccessToken> observer = accessTokenRepository.create(token)
-                .toCompletable()
-                .andThen(accessTokenRepository.findByClientIdAndSubject("my-client-id", "my-subject"))
-                .test();
-
+        TestObserver<AccessToken> observer = accessTokenRepository
+            .create(token)
+            .toCompletable()
+            .andThen(accessTokenRepository.findByClientIdAndSubject("my-client-id", "my-subject"))
+            .test();
 
         observer.awaitTerminalEvent();
 
         observer.assertComplete();
         observer.assertNoErrors();
-        observer.assertValue(accessToken -> accessToken.getSubject().equals("my-subject") && accessToken.getClient().equals("my-client-id"));
+        observer.assertValue(
+            accessToken -> accessToken.getSubject().equals("my-subject") && accessToken.getClient().equals("my-client-id")
+        );
     }
 
     @Test
@@ -96,10 +97,11 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
         token.setToken("my-token");
         token.setClient("my-client-id-2");
 
-        TestObserver<AccessToken> observer = accessTokenRepository.create(token)
-                .toCompletable()
-                .andThen(accessTokenRepository.findByClientId("my-client-id-2"))
-                .test();
+        TestObserver<AccessToken> observer = accessTokenRepository
+            .create(token)
+            .toCompletable()
+            .andThen(accessTokenRepository.findByClientId("my-client-id-2"))
+            .test();
 
         observer.awaitTerminalEvent();
         observer.assertComplete();
@@ -114,10 +116,11 @@ public class MongoAccessTokenRepositoryTest extends AbstractOAuth2RepositoryTest
         token.setToken("my-token");
         token.setClient("my-client-id-count");
 
-        TestObserver<Long> observer = accessTokenRepository.create(token)
-                .toCompletable()
-                .andThen(accessTokenRepository.countByClientId("my-client-id-count"))
-                .test();
+        TestObserver<Long> observer = accessTokenRepository
+            .create(token)
+            .toCompletable()
+            .andThen(accessTokenRepository.countByClientId("my-client-id-count"))
+            .test();
 
         observer.awaitTerminalEvent();
         observer.assertComplete();

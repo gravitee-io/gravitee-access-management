@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.Scope;
@@ -24,15 +27,11 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -69,7 +68,9 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     @Override
     public Single<Scope> update(Scope item) {
         ScopeMongo scope = convert(item);
-        return Single.fromPublisher(scopesCollection.replaceOne(eq(FIELD_ID, scope.getId()), scope)).flatMap(updateResult -> findById(scope.getId()).toSingle());
+        return Single
+            .fromPublisher(scopesCollection.replaceOne(eq(FIELD_ID, scope.getId()), scope))
+            .flatMap(updateResult -> findById(scope.getId()).toSingle());
     }
 
     @Override
@@ -84,7 +85,10 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Scope> findByDomainAndKey(String domain, String key) {
-        return Observable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_KEY, key))).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_KEY, key))).first())
+            .firstElement()
+            .map(this::convert);
     }
 
     private Scope convert(ScopeMongo scopeMongo) {

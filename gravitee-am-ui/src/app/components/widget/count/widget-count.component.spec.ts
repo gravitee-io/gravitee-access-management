@@ -23,9 +23,8 @@ describe('WidgetCountComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetCountComponent ]
-    })
-    .compileComponents();
+      declarations: [WidgetCountComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

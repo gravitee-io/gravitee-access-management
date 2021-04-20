@@ -17,7 +17,6 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.*;
-
 import java.util.List;
 
 /**

@@ -22,13 +22,12 @@ import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -48,17 +47,17 @@ public class DomainUpgrader implements Upgrader, Ordered {
     @Override
     public boolean upgrade() {
         LOGGER.info("Applying domain upgrade");
-        domainService.findAll()
-                .flatMapObservable(domains -> Observable.fromIterable(domains))
-                .flatMapSingle(this::upgradeDomain)
-                .toList()
-                .subscribe();
+        domainService
+            .findAll()
+            .flatMapObservable(domains -> Observable.fromIterable(domains))
+            .flatMapSingle(this::upgradeDomain)
+            .toList()
+            .subscribe();
         return true;
-
     }
 
     private Single<Domain> upgradeDomain(Domain domain) {
-        if(domain.getOidc()!=null) {
+        if (domain.getOidc() != null) {
             return Single.just(domain);
         }
 
@@ -75,7 +74,7 @@ public class DomainUpgrader implements Upgrader, Ordered {
         PatchDomain patchDomain = new PatchDomain();
         patchDomain.setOidc(Optional.of(oidcPatch));
 
-        return domainService.patch(domain.getId(),patchDomain);
+        return domainService.patch(domain.getId(), patchDomain);
     }
 
     @Override

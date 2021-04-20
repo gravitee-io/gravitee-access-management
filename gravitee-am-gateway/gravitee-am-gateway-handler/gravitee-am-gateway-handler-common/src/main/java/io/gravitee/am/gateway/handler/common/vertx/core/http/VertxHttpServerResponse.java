@@ -94,8 +94,7 @@ public class VertxHttpServerResponse implements Response {
                 } else if (transferEncodingHeader == null) {
                     String connectionHeader = headers().getFirst(HttpHeaders.CONNECTION);
                     String contentLengthHeader = headers().getFirst(HttpHeaders.CONTENT_LENGTH);
-                    if (HttpHeadersValues.CONNECTION_CLOSE.equalsIgnoreCase(connectionHeader)
-                            && contentLengthHeader == null) {
+                    if (HttpHeadersValues.CONNECTION_CLOSE.equalsIgnoreCase(connectionHeader) && contentLengthHeader == null) {
                         httpServerResponse.setChunked(true);
                     }
                 }
@@ -136,13 +135,20 @@ public class VertxHttpServerResponse implements Response {
     private void writeHeaders() {
         // As per https://tools.ietf.org/html/rfc7540#section-8.1.2.2
         // connection-specific header fields must be remove from response headers
-        headers.forEach((headerName, headerValues) -> {
-            if (version == HttpVersion.HTTP_1_0 || version == HttpVersion.HTTP_1_1
-                    || (!headerName.equalsIgnoreCase(HttpHeaders.CONNECTION)
-                    && !headerName.equalsIgnoreCase(HttpHeaders.KEEP_ALIVE)
-                    && !headerName.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING))) {
-                httpServerResponse.putHeader(headerName, headerValues);
+        headers.forEach(
+            (headerName, headerValues) -> {
+                if (
+                    version == HttpVersion.HTTP_1_0 ||
+                    version == HttpVersion.HTTP_1_1 ||
+                    (
+                        !headerName.equalsIgnoreCase(HttpHeaders.CONNECTION) &&
+                        !headerName.equalsIgnoreCase(HttpHeaders.KEEP_ALIVE) &&
+                        !headerName.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING)
+                    )
+                ) {
+                    httpServerResponse.putHeader(headerName, headerValues);
+                }
             }
-        });
+        );
     }
 }

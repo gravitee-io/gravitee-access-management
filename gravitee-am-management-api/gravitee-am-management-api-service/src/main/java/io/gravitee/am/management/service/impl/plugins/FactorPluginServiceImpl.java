@@ -23,12 +23,11 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,45 +44,51 @@ public class FactorPluginServiceImpl implements FactorPluginService {
     @Override
     public Single<List<FactorPlugin>> findAll() {
         LOGGER.debug("List all factor plugins");
-        return Observable.fromIterable(factorPluginManager.getAll())
-                .map(this::convert)
-                .toList();
+        return Observable.fromIterable(factorPluginManager.getAll()).map(this::convert).toList();
     }
 
     @Override
     public Maybe<FactorPlugin> findById(String factorId) {
         LOGGER.debug("Find factor plugin by ID: {}", factorId);
-        return Maybe.create(emitter -> {
-            try {
-                Plugin authenticator = factorPluginManager.findById(factorId);
-                if (authenticator != null) {
-                    emitter.onSuccess(convert(authenticator));
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    Plugin authenticator = factorPluginManager.findById(factorId);
+                    if (authenticator != null) {
+                        emitter.onSuccess(convert(authenticator));
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception ex) {
+                    LOGGER.error("An error occurs while trying to get factor plugin : {}", factorId, ex);
+                    emitter.onError(
+                        new TechnicalManagementException("An error occurs while trying to get factor plugin : " + factorId, ex)
+                    );
                 }
-            } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get factor plugin : {}", factorId, ex);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get factor plugin : " + factorId, ex));
             }
-        });
+        );
     }
 
     @Override
     public Maybe<String> getSchema(String factorId) {
         LOGGER.debug("Find authenticator plugin schema by ID: {}", factorId);
-        return Maybe.create(emitter -> {
-            try {
-                String schema = factorPluginManager.getSchema(factorId);
-                if (schema != null) {
-                    emitter.onSuccess(schema);
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    String schema = factorPluginManager.getSchema(factorId);
+                    if (schema != null) {
+                        emitter.onSuccess(schema);
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("An error occurs while trying to get schema for factor plugin {}", factorId, e);
+                    emitter.onError(
+                        new TechnicalManagementException("An error occurs while trying to get schema for factor plugin " + factorId, e)
+                    );
                 }
-            } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for factor plugin {}", factorId, e);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for factor plugin " + factorId, e));
             }
-        });
+        );
     }
 
     private FactorPlugin convert(Plugin factorPlugin) {

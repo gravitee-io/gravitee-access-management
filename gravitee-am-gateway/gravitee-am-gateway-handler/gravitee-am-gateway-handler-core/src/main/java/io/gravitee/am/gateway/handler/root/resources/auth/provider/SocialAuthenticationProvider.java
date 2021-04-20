@@ -32,11 +32,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -51,8 +50,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
     private static final String CLIENT_PARAMETER = "client";
     private UserAuthenticationManager userAuthenticationManager;
 
-    public SocialAuthenticationProvider() {
-    }
+    public SocialAuthenticationProvider() {}
 
     public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager) {
         this.userAuthenticationManager = userAuthenticationManager;
@@ -81,20 +79,32 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
         EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password, authenticationContext);
 
         // authenticate the user via the social provider
-        authenticationProvider.loadUserByUsername(endUserAuthentication)
-                .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate social provider, authentication provider has returned empty value")))
-                .flatMapSingle(user -> {
+        authenticationProvider
+            .loadUserByUsername(endUserAuthentication)
+            .switchIfEmpty(
+                Maybe.error(
+                    new BadCredentialsException("Unable to authenticate social provider, authentication provider has returned empty value")
+                )
+            )
+            .flatMapSingle(
+                user -> {
                     // set source and client for the current authenticated end-user
-                    Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
+                    Map<String, Object> additionalInformation = user.getAdditionalInformation() == null
+                        ? new HashMap<>()
+                        : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
                     additionalInformation.put(Parameters.CLIENT_ID, client.getClientId());
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);
                     return userAuthenticationManager.connect(user);
-                })
-                .subscribe(user -> resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))), error -> {
+                }
+            )
+            .subscribe(
+                user ->
+                    resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))),
+                error -> {
                     logger.error("Unable to authenticate social provider", error);
                     resultHandler.handle(Future.failedFuture(error));
-                });
-
+                }
+            );
     }
 }

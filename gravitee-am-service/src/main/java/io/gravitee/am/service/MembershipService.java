@@ -24,7 +24,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +32,6 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface MembershipService {
-
     Maybe<Membership> findById(String id);
 
     Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria);

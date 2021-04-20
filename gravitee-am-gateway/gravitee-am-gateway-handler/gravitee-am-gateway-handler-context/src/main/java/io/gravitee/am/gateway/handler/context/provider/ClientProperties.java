@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.context.provider;
 
 import io.gravitee.am.model.oidc.Client;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,8 +31,7 @@ public class ClientProperties {
     private String clientName;
     private Map<String, Object> metadata;
 
-    public ClientProperties() {
-    }
+    public ClientProperties() {}
 
     public ClientProperties(Client client) {
         this.id = client.getId();

@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
@@ -25,15 +30,9 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
 import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,13 +62,7 @@ public class UserFactorsResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
         doReturn(Maybe.just(mockFactor)).when(factorService).findById(enrolledFactor.getFactorId());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .path(mockUser.getId())
-                .path("factors")
-                .request()
-                .get();
+        final Response response = target("domains").path(domainId).path("users").path(mockUser.getId()).path("factors").request().get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
@@ -79,13 +72,7 @@ public class UserFactorsResourceTest extends JerseySpringTest {
         final String domainId = "domain-1";
         doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(domainService).findById(domainId);
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .path("user1")
-                .path("factors")
-                .request().get();
+        final Response response = target("domains").path(domainId).path("users").path("user1").path("factors").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
-
 }

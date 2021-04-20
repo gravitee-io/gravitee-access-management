@@ -19,7 +19,8 @@ import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.service.model.plugin.PolicyPlugin;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
+import java.util.Comparator;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -29,14 +30,12 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.Comparator;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Policy"})
+@Api(tags = { "Plugin", "Policy" })
 public class PoliciesPluginResource {
 
     @Context
@@ -47,15 +46,12 @@ public class PoliciesPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List policy plugins",
-            notes = "There is no particular permission needed. User must be authenticated.")
+    @ApiOperation(value = "List policy plugins", notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
-
-        policyPluginService.findAll()
-                .map(policyPlugins -> policyPlugins.stream()
-                        .sorted(Comparator.comparing(PolicyPlugin::getName))
-                        .collect(Collectors.toList()))
-                .subscribe(response::resume, response::resume);
+        policyPluginService
+            .findAll()
+            .map(policyPlugins -> policyPlugins.stream().sorted(Comparator.comparing(PolicyPlugin::getName)).collect(Collectors.toList()))
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{policy}")

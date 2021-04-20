@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { GroupService } from "../services/group.service";
-import { OrganizationService } from "../services/organization.service";
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { GroupService } from '../services/group.service';
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class GroupResolver implements Resolve<any> {
+  constructor(private groupService: GroupService, private organizationService: OrganizationService) {}
 
-  constructor(private groupService: GroupService,
-              private organizationService: OrganizationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const groupId = route.paramMap.get('groupId');
     if (state.url.startsWith('/settings')) {
       return this.organizationService.group(groupId);
@@ -33,5 +31,4 @@ export class GroupResolver implements Resolve<any> {
     const domainId = route.parent.parent.paramMap.get('domainId');
     return this.groupService.get(domainId, groupId);
   }
-
 }

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.common.jwt;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.jwt.JWTBuilder;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -28,9 +31,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -56,14 +56,18 @@ public class JWTServiceTest {
         when(defaultJWTBuilder.sign(any())).thenReturn("token_default");
         when(noneAlgBuilder.sign(any())).thenReturn("not_signed_jwt");
 
-        io.gravitee.am.gateway.certificate.CertificateProvider rs256CertProvider =
-                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
-        io.gravitee.am.gateway.certificate.CertificateProvider rs512CertProvider =
-                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
-        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider =
-                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
-        io.gravitee.am.gateway.certificate.CertificateProvider noneAlgCertProvider =
-                mock(io.gravitee.am.gateway.certificate.CertificateProvider.class);
+        io.gravitee.am.gateway.certificate.CertificateProvider rs256CertProvider = mock(
+            io.gravitee.am.gateway.certificate.CertificateProvider.class
+        );
+        io.gravitee.am.gateway.certificate.CertificateProvider rs512CertProvider = mock(
+            io.gravitee.am.gateway.certificate.CertificateProvider.class
+        );
+        io.gravitee.am.gateway.certificate.CertificateProvider defaultCertProvider = mock(
+            io.gravitee.am.gateway.certificate.CertificateProvider.class
+        );
+        io.gravitee.am.gateway.certificate.CertificateProvider noneAlgCertProvider = mock(
+            io.gravitee.am.gateway.certificate.CertificateProvider.class
+        );
         when(rs256CertProvider.getJwtBuilder()).thenReturn(rs256JWTBuilder);
         when(rs512CertProvider.getJwtBuilder()).thenReturn(rs512JWTBuilder);
         when(defaultCertProvider.getJwtBuilder()).thenReturn(defaultJWTBuilder);
@@ -80,17 +84,17 @@ public class JWTServiceTest {
 
     @Test
     public void encode_noClientCertificate() {
-        this.testEncode(null,"token_default");
+        this.testEncode(null, "token_default");
     }
 
     @Test
     public void encode_noClientCertificateFound() {
-        this.testEncode("notExistingId","token_default");
+        this.testEncode("notExistingId", "token_default");
     }
 
     @Test
     public void encode_clientCertificateFound() {
-        this.testEncode("existingId","token_rs_256");
+        this.testEncode("existingId", "token_rs_256");
     }
 
     private void testEncode(String clientCertificate, String expectedResult) {
@@ -104,27 +108,27 @@ public class JWTServiceTest {
 
     @Test
     public void encodeUserinfo_withoutSignature() {
-        this.testEncodeUserinfo(null, null,"not_signed_jwt");
+        this.testEncodeUserinfo(null, null, "not_signed_jwt");
     }
 
     @Test
     public void encodeUserinfo_noMatchingAlgorithm_noClientCertificate() {
-        this.testEncodeUserinfo("unknown", null,"token_default");
+        this.testEncodeUserinfo("unknown", null, "token_default");
     }
 
     @Test
     public void encodeUserinfo_noMatchingAlgorithm_noClientCertificateFound() {
-        this.testEncodeUserinfo("unknown", "notExistingId","token_default");
+        this.testEncodeUserinfo("unknown", "notExistingId", "token_default");
     }
 
     @Test
     public void encodeUserinfo_noMatchingAlgorithm_clientCertificateFound() {
-        this.testEncodeUserinfo("unknown", "existingId","token_rs_256");
+        this.testEncodeUserinfo("unknown", "existingId", "token_rs_256");
     }
 
     @Test
     public void encodeUserinfo_matchingAlgorithm() {
-        this.testEncodeUserinfo("RS512", null,"token_rs_512");
+        this.testEncodeUserinfo("RS512", null, "token_rs_512");
     }
 
     private void testEncodeUserinfo(String algorithm, String clientCertificate, String expectedResult) {

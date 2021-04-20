@@ -23,9 +23,8 @@ describe('ReporterComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ReporterComponent ]
-    })
-      .compileComponents();
+      declarations: [ReporterComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

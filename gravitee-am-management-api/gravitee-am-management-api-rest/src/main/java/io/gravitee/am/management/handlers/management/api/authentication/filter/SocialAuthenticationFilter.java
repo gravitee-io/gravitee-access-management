@@ -23,6 +23,14 @@ import io.gravitee.am.management.handlers.management.api.authentication.manager.
 import io.gravitee.am.management.handlers.management.api.authentication.provider.jwt.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,15 +45,6 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationFa
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -105,7 +104,11 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
             // set user identity provider source
             Map<String, String> details = new LinkedHashMap<>();
             details.put(SOURCE, providerId);
-            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user, provAuthentication.getCredentials(), AuthorityUtils.NO_AUTHORITIES);
+            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
+                user,
+                provAuthentication.getCredentials(),
+                AuthorityUtils.NO_AUTHORITIES
+            );
             usernamePasswordAuthenticationToken.setDetails(details);
             return usernamePasswordAuthenticationToken;
         } catch (Exception ex) {
@@ -115,13 +118,14 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
     }
 
     @Override
-    protected final void successfulAuthentication(HttpServletRequest request,
-                                                  HttpServletResponse response, FilterChain chain, Authentication authResult)
-            throws IOException, ServletException {
-
+    protected final void successfulAuthentication(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain chain,
+        Authentication authResult
+    ) throws IOException, ServletException {
         if (logger.isDebugEnabled()) {
-            logger.debug("Authentication success. Updating SecurityContextHolder to contain: "
-                    + authResult);
+            logger.debug("Authentication success. Updating SecurityContextHolder to contain: " + authResult);
         }
 
         SecurityContextHolder.getContext().setAuthentication(authResult);
@@ -159,10 +163,8 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
      * @return
      */
     private boolean authenticated() {
-        Authentication authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
-        return authentication != null && authentication.isAuthenticated()
-                && !(authentication instanceof AnonymousAuthenticationToken);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken);
     }
 
     private String buildRedirectUri(HttpServletRequest request) {
@@ -173,15 +175,11 @@ public class SocialAuthenticationFilter extends AbstractAuthenticationProcessing
         return builder.build(false).toUriString();
     }
 
-
     private static class NoopAuthenticationManager implements AuthenticationManager {
 
         @Override
-        public Authentication authenticate(Authentication authentication)
-                throws AuthenticationException {
+        public Authentication authenticate(Authentication authentication) throws AuthenticationException {
             throw new UnsupportedOperationException("No authentication should be done with this AuthenticationManager");
         }
-
     }
-
 }

@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.common.auth;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
-import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
+import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
@@ -26,19 +29,15 @@ import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -147,7 +146,7 @@ public class UserAuthenticationServiceTest {
         String source = "SRC";
         String id = "id";
 
-        Role role1= new Role();
+        Role role1 = new Role();
         role1.setId("idp-role");
         Role role2 = new Role();
         role2.setId("idp2-role");
@@ -186,7 +185,7 @@ public class UserAuthenticationServiceTest {
         String source = "SRC";
         String id = "id";
 
-        Role role1= new Role();
+        Role role1 = new Role();
         role1.setId("idp-role");
         Role role2 = new Role();
         role2.setId("idp2-role");
@@ -226,7 +225,7 @@ public class UserAuthenticationServiceTest {
 
         Group group = mock(Group.class);
 
-        Role role1= new Role();
+        Role role1 = new Role();
         role1.setId("idp-role");
         Role role2 = new Role();
         role2.setId("idp2-role");

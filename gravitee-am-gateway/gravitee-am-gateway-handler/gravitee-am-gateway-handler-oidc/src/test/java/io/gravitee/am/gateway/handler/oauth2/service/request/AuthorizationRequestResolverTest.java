@@ -16,17 +16,16 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.observers.TestObserver;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -117,7 +116,7 @@ public class AuthorizationRequestResolverTest {
         final String scope = "read";
         final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
         final String redirectUri = "http://localhost:8080/callback";
-        
+
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setRedirectUri(redirectUri);
         List<String> authScopes = new ArrayList<>();
@@ -133,24 +132,27 @@ public class AuthorizationRequestResolverTest {
         Role role = new Role();
         role.setOauthScopes(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
-        
+
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        
+
         // Request should have been enhanced with all of user's permissions, even though none of them has been requested
         List<String> expectedScopes = new ArrayList<>();
         expectedScopes.add(scope);
         expectedScopes.addAll(userScopes);
-        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
+        testObserver.assertValue(
+            request ->
+                request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4
+        );
     }
-    
+
     @Test
     public void shouldResolveAuthorizationRequest_userPermissionsRequestedAny() {
-    	final String scope = "read";
+        final String scope = "read";
         final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
         final String redirectUri = "http://localhost:8080/callback";
-        
+
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setRedirectUri(redirectUri);
         List<String> authScopes = new ArrayList<>();
@@ -166,47 +168,53 @@ public class AuthorizationRequestResolverTest {
         Role role = new Role();
         role.setOauthScopes(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
-        
+
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        
+
         // Request should have been enhanced with all of user's permissions, even though only one has been requested
         List<String> expectedScopes = new ArrayList<>();
         expectedScopes.add(scope);
         expectedScopes.addAll(userScopes);
-        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
+        testObserver.assertValue(
+            request ->
+                request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4
+        );
     }
-    
+
     @Test
     public void shouldResolveAuthorizationRequest_userPermissionsRequestedNone() {
-    	final String scope = "read";
+        final String scope = "read";
         final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
         final String redirectUri = "http://localhost:8080/callback";
-        
+
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setRedirectUri(redirectUri);
         // Request none of the three user scopes
         authorizationRequest.setScopes(new HashSet<>(Arrays.asList(scope)));
-        
+
         Client client = new Client();
         client.setScopes(Collections.singletonList(scope));
         client.setEnhanceScopesWithUserPermissions(true);
-        
+
         User user = new User();
         Role role = new Role();
         role.setOauthScopes(userScopes);
         user.setRolesPermissions(Collections.singleton(role));
-        
+
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        
+
         List<String> expectedScopes = new ArrayList<>();
         expectedScopes.add(scope);
         expectedScopes.addAll(userScopes);
-        
+
         // Request should have been enhanced with all of user's permissions, even though none of them has been requested
-        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
+        testObserver.assertValue(
+            request ->
+                request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4
+        );
     }
 }

@@ -54,7 +54,5 @@ public class User implements io.vertx.ext.auth.User {
     }
 
     @Override
-    public void setAuthProvider(AuthProvider authProvider) {
-
-    }
+    public void setAuthProvider(AuthProvider authProvider) {}
 }

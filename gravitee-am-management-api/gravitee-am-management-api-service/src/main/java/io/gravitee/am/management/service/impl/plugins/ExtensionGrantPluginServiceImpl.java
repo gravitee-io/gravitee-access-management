@@ -22,13 +22,12 @@ import io.gravitee.am.service.model.plugin.ExtensionGrantPlugin;
 import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,53 +47,68 @@ public class ExtensionGrantPluginServiceImpl implements ExtensionGrantPluginServ
     @Override
     public Single<Set<ExtensionGrantPlugin>> findAll() {
         LOGGER.debug("List all extension grant plugins");
-        return Single.create(emitter -> {
-            try {
-                emitter.onSuccess(extensionGrantPluginManager.getAll()
-                        .stream()
-                        .map(this::convert)
-                        .collect(Collectors.toSet()));
-            } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to list all extension grant plugins", ex);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to list all extension grant plugins", ex));
+        return Single.create(
+            emitter -> {
+                try {
+                    emitter.onSuccess(extensionGrantPluginManager.getAll().stream().map(this::convert).collect(Collectors.toSet()));
+                } catch (Exception ex) {
+                    LOGGER.error("An error occurs while trying to list all extension grant plugins", ex);
+                    emitter.onError(
+                        new TechnicalManagementException("An error occurs while trying to list all extension grant plugins", ex)
+                    );
+                }
             }
-        });
+        );
     }
 
     @Override
     public Maybe<ExtensionGrantPlugin> findById(String extensionGrantPluginId) {
         LOGGER.debug("Find extension grant plugin by ID: {}", extensionGrantPluginId);
-        return Maybe.create(emitter -> {
-            try {
-                Plugin extensionGrant = extensionGrantPluginManager.findById(extensionGrantPluginId);
-                if (extensionGrant != null) {
-                    emitter.onSuccess(convert(extensionGrant));
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    Plugin extensionGrant = extensionGrantPluginManager.findById(extensionGrantPluginId);
+                    if (extensionGrant != null) {
+                        emitter.onSuccess(convert(extensionGrant));
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception ex) {
+                    LOGGER.error("An error occurs while trying to get extension grant plugin : {}", extensionGrantPluginId, ex);
+                    emitter.onError(
+                        new TechnicalManagementException(
+                            "An error occurs while trying to get extension grant plugin : " + extensionGrantPluginId,
+                            ex
+                        )
+                    );
                 }
-            } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get extension grant plugin : {}", extensionGrantPluginId, ex);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get extension grant plugin : " + extensionGrantPluginId, ex));
             }
-        });
+        );
     }
 
     @Override
     public Maybe<String> getSchema(String extensionGrantPluginId) {
         LOGGER.debug("Find extension grant plugin schema by ID: {}", extensionGrantPluginId);
-        return Maybe.create(emitter -> {
-            try {
-                String schema = extensionGrantPluginManager.getSchema(extensionGrantPluginId);
-                if (schema != null) {
-                    emitter.onSuccess(schema);
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    String schema = extensionGrantPluginManager.getSchema(extensionGrantPluginId);
+                    if (schema != null) {
+                        emitter.onSuccess(schema);
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("An error occurs while trying to get schema for extension grant plugin {}", extensionGrantPluginId, e);
+                    emitter.onError(
+                        new TechnicalManagementException(
+                            "An error occurs while trying to get schema for extension grant plugin " + extensionGrantPluginId,
+                            e
+                        )
+                    );
                 }
-            } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for extension grant plugin {}", extensionGrantPluginId, e);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for extension grant plugin " + extensionGrantPluginId, e));
             }
-        });
+        );
     }
 
     private ExtensionGrantPlugin convert(Plugin extensionGrantPlugin) {

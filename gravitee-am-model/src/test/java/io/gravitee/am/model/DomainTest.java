@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.model;
 
+import static org.junit.Assert.assertFalse;
+
 import io.gravitee.am.model.oidc.OIDCSettings;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -28,14 +28,13 @@ import static org.junit.Assert.assertFalse;
  */
 public class DomainTest {
 
-
     @Test
     public void isDynamicClientRegistrationEnabled_defaultSettings() {
         Domain domain = new Domain();
         domain.setOidc(OIDCSettings.defaultSettings());
 
         boolean isEnabled = domain.isDynamicClientRegistrationEnabled();
-        assertFalse("By default dcr settings should be disabled",isEnabled);
+        assertFalse("By default dcr settings should be disabled", isEnabled);
     }
 
     @Test
@@ -43,7 +42,7 @@ public class DomainTest {
         Domain domain = new Domain();
 
         boolean isEnabled = domain.isDynamicClientRegistrationEnabled();
-        assertFalse("By default dcr settings should be disabled",isEnabled);
+        assertFalse("By default dcr settings should be disabled", isEnabled);
     }
 
     @Test
@@ -52,7 +51,7 @@ public class DomainTest {
         domain.setOidc(OIDCSettings.defaultSettings());
 
         boolean isEnabled = domain.isOpenDynamicClientRegistrationEnabled();
-        assertFalse("By default should be disabled",isEnabled);
+        assertFalse("By default should be disabled", isEnabled);
     }
 
     @Test
@@ -62,7 +61,7 @@ public class DomainTest {
         domain.getOidc().getClientRegistrationSettings().setOpenDynamicClientRegistrationEnabled(true);
 
         boolean isEnabled = domain.isOpenDynamicClientRegistrationEnabled();
-        assertFalse("Should be disabled if dcr is not enabled...",isEnabled);
+        assertFalse("Should be disabled if dcr is not enabled...", isEnabled);
     }
 
     @Test
@@ -82,7 +81,7 @@ public class DomainTest {
         domain.setOidc(OIDCSettings.defaultSettings());
 
         boolean isEnabled = domain.isRedirectUriLocalhostAllowed();
-        assertFalse("By default dcr settings should be disabled",isEnabled);
+        assertFalse("By default dcr settings should be disabled", isEnabled);
     }
 
     @Test
@@ -90,7 +89,7 @@ public class DomainTest {
         Domain domain = new Domain();
 
         boolean isEnabled = domain.isRedirectUriLocalhostAllowed();
-        assertFalse("By default dcr settings should be disabled",isEnabled);
+        assertFalse("By default dcr settings should be disabled", isEnabled);
     }
 
     @Test
@@ -99,7 +98,7 @@ public class DomainTest {
         domain.setOidc(OIDCSettings.defaultSettings());
 
         boolean isEnabled = domain.isRedirectUriUnsecuredHttpSchemeAllowed();
-        assertFalse("By default dcr settings should be disabled",isEnabled);
+        assertFalse("By default dcr settings should be disabled", isEnabled);
     }
 
     @Test
@@ -107,7 +106,7 @@ public class DomainTest {
         Domain domain = new Domain();
 
         boolean isEnabled = domain.isRedirectUriUnsecuredHttpSchemeAllowed();
-        assertFalse("By default dcr settings should be disabled",isEnabled);
+        assertFalse("By default dcr settings should be disabled", isEnabled);
     }
 
     @Test
@@ -116,7 +115,7 @@ public class DomainTest {
         domain.setOidc(OIDCSettings.defaultSettings());
 
         boolean isEnabled = domain.isRedirectUriWildcardAllowed();
-        assertFalse("By default dcr settings should be disabled",isEnabled);
+        assertFalse("By default dcr settings should be disabled", isEnabled);
     }
 
     @Test
@@ -124,7 +123,7 @@ public class DomainTest {
         Domain domain = new Domain();
 
         boolean isEnabled = domain.isRedirectUriWildcardAllowed();
-        assertFalse("By default dcr settings should be disabled",isEnabled);
+        assertFalse("By default dcr settings should be disabled", isEnabled);
     }
 
     @Test
@@ -133,6 +132,6 @@ public class DomainTest {
         domain.setOidc(OIDCSettings.defaultSettings());
 
         boolean isEnabled = domain.isRedirectUriStrictMatching();
-        assertFalse("By default strict matching settings should be disabled",isEnabled);
+        assertFalse("By default strict matching settings should be disabled", isEnabled);
     }
 }

@@ -27,7 +27,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderManager extends Service<IdentityProviderManager> {
-
     Maybe<UserProvider> getUserProvider(String userProvider);
 
     Single<IdentityProvider> create(ReferenceType referenceType, String referenceId);

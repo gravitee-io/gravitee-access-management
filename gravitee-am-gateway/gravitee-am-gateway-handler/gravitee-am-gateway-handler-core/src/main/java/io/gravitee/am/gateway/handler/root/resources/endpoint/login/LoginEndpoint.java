@@ -19,18 +19,17 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -72,8 +71,14 @@ public class LoginEndpoint implements Handler<RoutingContext> {
         // put domain in context data
         routingContext.put(DOMAIN_CONTEXT_KEY, domain);
         // put domain login settings in context data
-        routingContext.put(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, domain.getLoginSettings() == null ? false : domain.getLoginSettings().isForgotPasswordEnabled());
-        routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, domain.getLoginSettings() == null ? false : domain.getLoginSettings().isRegisterEnabled());
+        routingContext.put(
+            ALLOW_FORGOT_PASSWORD_CONTEXT_KEY,
+            domain.getLoginSettings() == null ? false : domain.getLoginSettings().isForgotPasswordEnabled()
+        );
+        routingContext.put(
+            ALLOW_REGISTER_CONTEXT_KEY,
+            domain.getLoginSettings() == null ? false : domain.getLoginSettings().isRegisterEnabled()
+        );
 
         // put request in context
         EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate(), true));
@@ -95,15 +100,19 @@ public class LoginEndpoint implements Handler<RoutingContext> {
 
     private void renderLoginPage(RoutingContext routingContext, Client client) {
         // render the login page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render login page", res.cause());
-                routingContext.fail(res.cause());
+        engine.render(
+            routingContext.data(),
+            getTemplateFileName(client),
+            res -> {
+                if (res.succeeded()) {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(res.result());
+                } else {
+                    logger.error("Unable to render login page", res.cause());
+                    routingContext.fail(res.cause());
+                }
             }
-        });
+        );
     }
 
     private String getTemplateFileName(Client client) {

@@ -38,6 +38,6 @@ public class ScopeAlreadyExistsException extends AbstractManagementException {
 
     @Override
     public String getMessage() {
-        return "A scope [" + scope + "] already exists for domain [" + domain+ "]";
+        return "A scope [" + scope + "] already exists for domain [" + domain + "]";
     }
 }

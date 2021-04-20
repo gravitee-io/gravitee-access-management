@@ -31,16 +31,13 @@ public class SerializationUtils {
             oos.writeObject(state);
             oos.flush();
             return bos.toByteArray();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new IllegalArgumentException(e);
-        }
-        finally {
+        } finally {
             if (oos != null) {
                 try {
                     oos.close();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     // ignore close exception
                 }
             }
@@ -54,19 +51,15 @@ public class SerializationUtils {
             oip = new ObjectInputStream(bis);
             T result = (T) oip.readObject();
             return result;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new IllegalArgumentException(e);
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(e);
-        }
-        finally {
+        } finally {
             if (oip != null) {
                 try {
                     oip.close();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     // ignore close exception
                 }
             }

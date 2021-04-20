@@ -20,7 +20,6 @@ package io.gravitee.am.identityprovider.api;
  * @author GraviteeSource Team
  */
 public interface IdentityProvider {
-
     default boolean external() {
         return false;
     }
@@ -29,7 +28,9 @@ public interface IdentityProvider {
 
     Class<? extends AuthenticationProvider> authenticationProvider();
 
-    default Class<? extends UserProvider> userProvider() { return null; }
+    default Class<? extends UserProvider> userProvider() {
+        return null;
+    }
 
     default Class<? extends IdentityProviderMapper> mapper() {
         return null;

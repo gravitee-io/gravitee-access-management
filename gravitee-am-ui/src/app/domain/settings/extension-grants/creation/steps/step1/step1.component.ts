@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationService } from "../../../../../../services/organization.service";
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'extension-grant-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class ExtensionGrantCreationStep1Component implements OnInit {
   private extensionGrantTypes: any = {
-    'jwtbearer-am-extension-grant' : 'Extension Grant JWT Bearer'
+    'jwtbearer-am-extension-grant': 'Extension Grant JWT Bearer',
   };
   @Input() extensionGrant: any;
   extensionGrants: any[];
   selectedExtensionGrantTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.extensionGrants().subscribe(data => this.extensionGrants = data);
+    this.organizationService.extensionGrants().subscribe((data) => (this.extensionGrants = data));
   }
 
   selectExtensionGrantType() {

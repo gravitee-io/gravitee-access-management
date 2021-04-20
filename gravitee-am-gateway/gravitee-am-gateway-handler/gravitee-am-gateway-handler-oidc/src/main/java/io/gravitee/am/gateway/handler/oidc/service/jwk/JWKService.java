@@ -15,12 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.jwk;
 
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.function.Predicate;
 
 /**
@@ -29,7 +28,6 @@ import java.util.function.Predicate;
  * @author GraviteeSource Team
  */
 public interface JWKService {
-
     Single<JWKSet> getKeys();
     Maybe<JWKSet> getKeys(Client client);
     Maybe<JWKSet> getKeys(String jwksUri);

@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.response;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.web.UriBuilder;
-
 import java.net.URISyntaxException;
 
 /**
@@ -40,9 +39,11 @@ public class IDTokenResponse extends AuthorizationResponse {
     public String getIdToken() {
         return idToken;
     }
+
     public void setIdToken(String idToken) {
         this.idToken = idToken;
     }
+
     @Override
     public String buildRedirectUri() throws URISyntaxException {
         UriBuilder uriBuilder = UriBuilder.fromURIString(getRedirectUri());

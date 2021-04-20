@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.management.service.impl.upgrades.helpers;
 
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
@@ -29,8 +31,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.mockito.Mockito.*;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -49,21 +49,21 @@ public class MembershipHelperTest {
 
     @Before
     public void before() {
-
         cut = new MembershipHelper(membershipService, roleService);
     }
 
     @Test
     public void shouldSetOrganizationPrimaryOwnerRole() {
-
         User user = new User();
         user.setId("user-id");
 
         final Role primaryOwnerRole = new Role();
         primaryOwnerRole.setId("role-id");
 
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class))).thenReturn(Flowable.empty()); // user has no role yet.
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(primaryOwnerRole));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.empty()); // user has no role yet.
+        when(roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION))
+            .thenReturn(Maybe.just(primaryOwnerRole));
         when(membershipService.addOrUpdate(eq(Organization.DEFAULT), any(Membership.class))).thenReturn(Single.just(new Membership()));
 
         cut.setOrganizationPrimaryOwnerRole(user);
@@ -71,15 +71,16 @@ public class MembershipHelperTest {
 
     @Test
     public void shouldNotSetOrganizationPrimaryOwnerRole_alreadyHasARole() {
-
         User user = new User();
         user.setId("user-id");
 
         final Role adminRole = new Role();
         adminRole.setId("role-id");
 
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class))).thenReturn(Flowable.just(new Membership()));
-        when(roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION)).thenReturn(Maybe.just(adminRole));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(new Membership()));
+        when(roleService.findSystemRole(SystemRole.ORGANIZATION_PRIMARY_OWNER, ReferenceType.ORGANIZATION))
+            .thenReturn(Maybe.just(adminRole));
 
         cut.setOrganizationPrimaryOwnerRole(user);
     }

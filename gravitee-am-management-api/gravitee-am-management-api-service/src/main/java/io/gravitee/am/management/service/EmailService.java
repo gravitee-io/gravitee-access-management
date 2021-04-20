@@ -23,6 +23,5 @@ import io.gravitee.am.model.User;
  * @author GraviteeSource Team
  */
 public interface EmailService {
-
     void send(Email email, User user);
 }

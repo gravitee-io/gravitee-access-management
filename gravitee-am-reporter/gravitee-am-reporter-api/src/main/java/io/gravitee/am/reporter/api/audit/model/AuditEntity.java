@@ -16,7 +16,6 @@
 package io.gravitee.am.reporter.api.audit.model;
 
 import io.gravitee.am.model.ReferenceType;
-
 import java.util.Map;
 
 /**

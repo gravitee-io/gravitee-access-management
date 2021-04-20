@@ -18,10 +18,9 @@ package io.gravitee.am.plugins.certificate.core.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateConfiguration;
 import io.gravitee.am.plugins.certificate.core.CertificateConfigurationFactory;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

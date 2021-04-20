@@ -19,10 +19,9 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.FactorRepository;
 import io.reactivex.observers.TestObserver;
+import java.util.Set;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -130,5 +129,4 @@ public class MongoFactorRepositoryTest extends AbstractManagementRepositoryTest 
         // fetch factor
         factorRepository.findById(factorCreated.getId()).test().assertEmpty();
     }
-
 }

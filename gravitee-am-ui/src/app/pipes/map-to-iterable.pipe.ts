@@ -16,18 +16,16 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'mapToIterable'
+  name: 'mapToIterable',
 })
 export class MapToIterablePipe implements PipeTransform {
-
   transform(value: any, args?: any): any {
     var array = [];
     for (var key in value) {
       if (value.hasOwnProperty(key)) {
-        array.push({key: key, value: value[key]});
+        array.push({ key: key, value: value[key] });
       }
     }
     return array;
   }
-
 }

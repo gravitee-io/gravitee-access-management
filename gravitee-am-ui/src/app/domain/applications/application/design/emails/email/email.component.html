@@ -18,17 +18,13 @@
 <div fxFlex="70" class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to emails</small></a>
   <div>
-    <app-email [createMode]="createMode"
-               [editMode]="editMode"
-               [deleteMode]="deleteMode"></app-email>
+    <app-email [createMode]="createMode" [editMode]="editMode" [deleteMode]="deleteMode"></app-email>
   </div>
 </div>
 <div class="gv-page-description" fxFlex>
   <h3>Application's email template</h3>
   <div class="gv-page-description-content">
-    <p>
-      You can customize the <b>From</b> Address, the <b>Subject</b>, and the <b>Content</b> for each email template.
-    </p>
+    <p>You can customize the <b>From</b> Address, the <b>Subject</b>, and the <b>Content</b> for each email template.</p>
     <p>
       You can use <code>FreeMarker</code> syntax to dynamically generate content and access User attributes like
       <small><code><![CDATA[${user.firstName}]]></code></small> or <small><code><![CDATA[${user.lastName}]]></code></small> and so on.

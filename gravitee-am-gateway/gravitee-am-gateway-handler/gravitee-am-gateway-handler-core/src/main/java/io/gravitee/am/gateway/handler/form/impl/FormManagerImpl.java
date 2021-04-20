@@ -27,16 +27,15 @@ import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.templateresolver.ITemplateResolver;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -62,13 +61,15 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing forms for domain {}", domain.getName());
-        formRepository.findByDomain(domain.getId())
-                .subscribe(
-                        forms -> {
-                            updateForms(forms);
-                            logger.info("Forms loaded for domain {}", domain.getName());
-                        },
-                        error -> logger.error("Unable to initialize forms for domain {}", domain.getName(), error));
+        formRepository
+            .findByDomain(domain.getId())
+            .subscribe(
+                forms -> {
+                    updateForms(forms);
+                    logger.info("Forms loaded for domain {}", domain.getName());
+                },
+                error -> logger.error("Unable to initialize forms for domain {}", domain.getName(), error)
+            );
     }
 
     @Override
@@ -105,19 +106,21 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
     private void updateForm(String formId, FormEvent formEvent) {
         final String eventType = formEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} form event for {}", domain.getName(), eventType, formId);
-        formRepository.findById(formId)
-                .subscribe(
-                        form -> {
-                            // check if form has been disabled
-                            if (forms.containsKey(formId) && !form.isEnabled()) {
-                                removeForm(formId);
-                            } else {
-                                updateForms(Collections.singletonList(form));
-                            }
-                            logger.info("Form {} {}d for domain {}", formId, eventType, domain.getName());
-                        },
-                        error -> logger.error("Unable to {} form for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No form found with id {}", formId));
+        formRepository
+            .findById(formId)
+            .subscribe(
+                form -> {
+                    // check if form has been disabled
+                    if (forms.containsKey(formId) && !form.isEnabled()) {
+                        removeForm(formId);
+                    } else {
+                        updateForms(Collections.singletonList(form));
+                    }
+                    logger.info("Form {} {}d for domain {}", formId, eventType, domain.getName());
+                },
+                error -> logger.error("Unable to {} form for domain {}", eventType, domain.getName(), error),
+                () -> logger.error("No form found with id {}", formId)
+            );
     }
 
     private void removeForm(String formId) {
@@ -130,17 +133,23 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
 
     private void updateForms(List<Form> forms) {
         forms
-                .stream()
-                .filter(Form::isEnabled)
-                .forEach(form -> {
+            .stream()
+            .filter(Form::isEnabled)
+            .forEach(
+                form -> {
                     this.forms.put(form.getId(), form);
                     ((DomainBasedTemplateResolver) templateResolver).addForm(getTemplateName(form), form.getContent());
-                    logger.info("Form {} loaded for domain {} " + (form.getClient() != null ? "and client {}" : ""), form.getTemplate(), domain.getName(), form.getClient());
-                });
+                    logger.info(
+                        "Form {} loaded for domain {} " + (form.getClient() != null ? "and client {}" : ""),
+                        form.getTemplate(),
+                        domain.getName(),
+                        form.getClient()
+                    );
+                }
+            );
     }
 
     private String getTemplateName(Form form) {
-        return form.getTemplate()
-                + ((form.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + form.getClient() : "");
+        return form.getTemplate() + ((form.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + form.getClient() : "");
     }
 }

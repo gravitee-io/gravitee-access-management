@@ -19,18 +19,17 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,48 +59,58 @@ public class RegisterConfirmationSubmissionEndpoint extends UserRequestHandler {
         user.setPassword(password);
 
         // confirm registration
-        confirmRegistration(client, user, getAuthenticatedUser(context), h -> {
-            // prepare response
-            Map<String, String> queryParams = new HashMap<>();
-            // add client_id parameter for future use
-            if (client != null) {
-                queryParams.put(Parameters.CLIENT_ID, client.getClientId());
-            }
+        confirmRegistration(
+            client,
+            user,
+            getAuthenticatedUser(context),
+            h -> {
+                // prepare response
+                Map<String, String> queryParams = new HashMap<>();
+                // add client_id parameter for future use
+                if (client != null) {
+                    queryParams.put(Parameters.CLIENT_ID, client.getClientId());
+                }
 
-            // if failure, return to the registration confirmation page with an error
-            if (h.failed()) {
-                LOGGER.error("An error occurs while ending user registration", h.cause());
-                queryParams.put("error", "registration_failed");
-                redirectToPage(context, queryParams, h.cause());
-                return;
+                // if failure, return to the registration confirmation page with an error
+                if (h.failed()) {
+                    LOGGER.error("An error occurs while ending user registration", h.cause());
+                    queryParams.put("error", "registration_failed");
+                    redirectToPage(context, queryParams, h.cause());
+                    return;
+                }
+                // handle response
+                RegistrationResponse registrationResponse = h.result();
+                // if auto login option is enabled add the user to the session
+                if (registrationResponse.isAutoLogin()) {
+                    context.setUser(
+                        io.vertx.reactivex.ext.auth.User.newInstance(
+                            new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser())
+                        )
+                    );
+                    // the user has upgraded from unauthenticated to authenticated
+                    // session should be upgraded as recommended by owasp
+                    context.session().regenerateId();
+                }
+                // no redirect uri has been set, redirect to the default page
+                if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
+                    queryParams.put("success", "registration_completed");
+                    redirectToPage(context, queryParams);
+                    return;
+                }
+                // else, redirect to the custom redirect_uri
+                context.response().putHeader(HttpHeaders.LOCATION, registrationResponse.getRedirectUri()).setStatusCode(302).end();
             }
-            // handle response
-            RegistrationResponse registrationResponse = h.result();
-            // if auto login option is enabled add the user to the session
-            if (registrationResponse.isAutoLogin()) {
-                context.setUser(io.vertx.reactivex.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser())));
-                // the user has upgraded from unauthenticated to authenticated
-                // session should be upgraded as recommended by owasp
-                context.session().regenerateId();
-            }
-            // no redirect uri has been set, redirect to the default page
-            if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
-                queryParams.put("success", "registration_completed");
-                redirectToPage(context, queryParams);
-                return;
-            }
-            // else, redirect to the custom redirect_uri
-            context.response()
-                    .putHeader(HttpHeaders.LOCATION, registrationResponse.getRedirectUri())
-                    .setStatusCode(302)
-                    .end();
-        });
+        );
     }
 
-    private void confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal, Handler<AsyncResult<RegistrationResponse>> handler) {
-        userService.confirmRegistration(client, user, principal)
-                .subscribe(
-                        response -> handler.handle(Future.succeededFuture(response)),
-                        error -> handler.handle(Future.failedFuture(error)));
+    private void confirmRegistration(
+        Client client,
+        User user,
+        io.gravitee.am.identityprovider.api.User principal,
+        Handler<AsyncResult<RegistrationResponse>> handler
+    ) {
+        userService
+            .confirmRegistration(client, user, principal)
+            .subscribe(response -> handler.handle(Future.succeededFuture(response)), error -> handler.handle(Future.failedFuture(error)));
     }
 }

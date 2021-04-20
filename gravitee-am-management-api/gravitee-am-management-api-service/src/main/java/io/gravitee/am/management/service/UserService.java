@@ -24,7 +24,6 @@ import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -32,7 +31,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface UserService {
-
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
     Single<Page<User>> search(String domain, String query, int page, int size);
@@ -45,31 +43,71 @@ public interface UserService {
 
     Maybe<User> findById(String id);
 
-    Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> create(
+        ReferenceType referenceType,
+        String referenceId,
+        NewUser newUser,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
     Single<User> create(String domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> update(
+        ReferenceType referenceType,
+        String referenceId,
+        String id,
+        UpdateUser updateUser,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
     Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> updateStatus(
+        ReferenceType referenceType,
+        String referenceId,
+        String id,
+        boolean status,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
     Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
 
     Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable resetPassword(ReferenceType referenceType, String referenceId, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
+    Completable resetPassword(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        String password,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
     Completable resetPassword(String domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable sendRegistrationConfirmation(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
+    Completable sendRegistrationConfirmation(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
     Completable unlock(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> assignRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> assignRoles(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        List<String> roles,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
-    Single<User> revokeRoles(ReferenceType referenceType, String referenceId, String userId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
+    Single<User> revokeRoles(
+        ReferenceType referenceType,
+        String referenceId,
+        String userId,
+        List<String> roles,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
     Single<User> enrollFactors(String userId, List<EnrolledFactor> factors, io.gravitee.am.identityprovider.api.User principal);
 
@@ -112,5 +150,4 @@ public interface UserService {
     default Single<User> enrollFactors(String userId, List<EnrolledFactor> factors) {
         return enrollFactors(userId, factors, null);
     }
-
 }

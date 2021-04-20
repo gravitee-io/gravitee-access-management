@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { PolicyService } from "../services/policy.service";
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { PolicyService } from '../services/policy.service';
 
 @Injectable()
 export class PoliciesResolver implements Resolve<any> {
+  constructor(private policyService: PolicyService) {}
 
-  constructor(private policyService: PolicyService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    let domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+    let domainId = route.parent.paramMap.get('domainId')
+      ? route.parent.paramMap.get('domainId')
+      : route.parent.parent.paramMap.get('domainId');
     return this.policyService.findByDomain(domainId);
   }
-
 }

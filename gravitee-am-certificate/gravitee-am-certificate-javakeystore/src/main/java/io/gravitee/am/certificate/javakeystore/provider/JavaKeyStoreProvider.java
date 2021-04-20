@@ -25,9 +25,6 @@ import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,6 +44,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -125,7 +124,7 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     private String getPublicKey() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         /* encode the "ssh-rsa" string */
-        byte[] sshrsa = new byte[]{0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a'};
+        byte[] sshrsa = new byte[] { 0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a' };
         out.write(sshrsa);
         /* Encode the public exponent */
         BigInteger e = ((RSAPublicKey) keyPair.getPublic()).getPublicExponent();
@@ -146,10 +145,10 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
 
     private void encodeUInt32(int value, OutputStream out) throws IOException {
         byte[] tmp = new byte[4];
-        tmp[0] = (byte)((value >>> 24) & 0xff);
-        tmp[1] = (byte)((value >>> 16) & 0xff);
-        tmp[2] = (byte)((value >>> 8) & 0xff);
-        tmp[3] = (byte)(value & 0xff);
+        tmp[0] = (byte) ((value >>> 24) & 0xff);
+        tmp[1] = (byte) ((value >>> 16) & 0xff);
+        tmp[2] = (byte) ((value >>> 8) & 0xff);
+        tmp[3] = (byte) (value & 0xff);
         out.write(tmp);
     }
 
@@ -196,10 +195,11 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     }
 
     private Signature getSignature(String signingAlgorithmOID) {
-        return Stream.of(Signature.values())
-                .filter(signature -> signature.getAlgorithmId().toString().equals(signingAlgorithmOID))
-                .findFirst()
-                .orElse(Signature.SHA256withRSA);
+        return Stream
+            .of(Signature.values())
+            .filter(signature -> signature.getAlgorithmId().toString().equals(signingAlgorithmOID))
+            .findFirst()
+            .orElse(Signature.SHA256withRSA);
     }
 
     @Override

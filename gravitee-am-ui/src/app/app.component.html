@@ -19,7 +19,7 @@
   <mat-sidenav *ngIf="router.url !== '/login'" mode="side" opened="true" class="main-sidenav">
     <gv-sidenav></gv-sidenav>
   </mat-sidenav>
-  <mat-sidenav-content [ngClass]="{'gs-sidenav-content-min': reducedMode}">
+  <mat-sidenav-content [ngClass]="{ 'gs-sidenav-content-min': reducedMode }">
     <gv-navbar *ngIf="router.url !== '/login'"></gv-navbar>
     <div class="main-content">
       <router-outlet></router-outlet>

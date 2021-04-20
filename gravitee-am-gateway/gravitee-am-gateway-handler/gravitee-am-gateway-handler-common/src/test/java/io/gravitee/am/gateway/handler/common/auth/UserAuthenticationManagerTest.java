@@ -15,38 +15,37 @@
  */
 package io.gravitee.am.gateway.handler.common.auth;
 
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
+
+import io.gravitee.am.common.exception.authentication.AccountDisabledException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
+import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
-import io.gravitee.am.common.exception.authentication.AccountDisabledException;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.event.EventManager;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -92,41 +91,54 @@ public class UserAuthenticationManagerTest {
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
-            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
-            User user = new User();
-            user.setUsername(idpUser.getUsername());
-            return Single.just(user);
-        });
+        when(userAuthenticationService.connect(any(), eq(true)))
+            .then(
+                invocation -> {
+                    io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
+                    User user = new User();
+                    user.setUsername(idpUser.getUsername());
+                    return Single.just(user);
+                }
+            );
 
-        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
-                return Maybe.just(new DefaultUser("username"));
-            }
+        when(identityProviderManager.get("idp-1"))
+            .thenReturn(
+                Maybe.just(
+                    new AuthenticationProvider() {
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                            return Maybe.just(new DefaultUser("username"));
+                        }
 
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
-                return Maybe.empty();
-            }
-        }));
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                            return Maybe.empty();
+                        }
+                    }
+                )
+            );
 
-        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return null;
-            }
+        TestObserver<User> observer = userAuthenticationManager
+            .authenticate(
+                client,
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return null;
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return null;
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return null;
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
 
         observer.assertNoErrors();
         observer.assertComplete();
@@ -144,34 +156,44 @@ public class UserAuthenticationManagerTest {
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
 
-        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
-                throw new BadCredentialsException();
-            }
+        when(identityProviderManager.get("idp-1"))
+            .thenReturn(
+                Maybe.just(
+                    new AuthenticationProvider() {
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                            throw new BadCredentialsException();
+                        }
 
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
-                return Maybe.empty();
-            }
-        }));
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                            return Maybe.empty();
+                        }
+                    }
+                )
+            );
 
-        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return null;
-            }
+        TestObserver<User> observer = userAuthenticationManager
+            .authenticate(
+                client,
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return null;
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return null;
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return null;
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
 
         verifyZeroInteractions(userAuthenticationService);
         observer.assertError(BadCredentialsException.class);
@@ -187,59 +209,76 @@ public class UserAuthenticationManagerTest {
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
 
-
         IdentityProvider identityProvider2 = new IdentityProvider();
         identityProvider2.setId("idp-2");
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
-            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
-            User user = new User();
-            user.setUsername(idpUser.getUsername());
-            return Single.just(user);
-        });
+        when(userAuthenticationService.connect(any(), eq(true)))
+            .then(
+                invocation -> {
+                    io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
+                    User user = new User();
+                    user.setUsername(idpUser.getUsername());
+                    return Single.just(user);
+                }
+            );
 
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
-        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
-                throw new BadCredentialsException();
-            }
+        when(identityProviderManager.get("idp-1"))
+            .thenReturn(
+                Maybe.just(
+                    new AuthenticationProvider() {
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                            throw new BadCredentialsException();
+                        }
 
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
-                return Maybe.empty();
-            }
-        }));
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                            return Maybe.empty();
+                        }
+                    }
+                )
+            );
 
         when(identityProviderManager.getIdentityProvider("idp-2")).thenReturn(identityProvider2);
-        when(identityProviderManager.get("idp-2")).thenReturn(Maybe.just(new AuthenticationProvider() {
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
-                return Maybe.just(new DefaultUser("username"));
-            }
+        when(identityProviderManager.get("idp-2"))
+            .thenReturn(
+                Maybe.just(
+                    new AuthenticationProvider() {
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                            return Maybe.just(new DefaultUser("username"));
+                        }
 
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
-                return Maybe.empty();
-            }
-        }));
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                            return Maybe.empty();
+                        }
+                    }
+                )
+            );
 
-        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return null;
-            }
+        TestObserver<User> observer = userAuthenticationManager
+            .authenticate(
+                client,
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return null;
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return null;
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return null;
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
 
         observer.assertNoErrors();
         observer.assertComplete();
@@ -257,39 +296,52 @@ public class UserAuthenticationManagerTest {
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
-            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
-            return Single.error(new AccountDisabledException(idpUser.getUsername()));
-        });
+        when(userAuthenticationService.connect(any(), eq(true)))
+            .then(
+                invocation -> {
+                    io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
+                    return Single.error(new AccountDisabledException(idpUser.getUsername()));
+                }
+            );
 
-        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
-                return Maybe.just(new DefaultUser("username"));
-            }
+        when(identityProviderManager.get("idp-1"))
+            .thenReturn(
+                Maybe.just(
+                    new AuthenticationProvider() {
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                            return Maybe.just(new DefaultUser("username"));
+                        }
 
-            @Override
-            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
-                return Maybe.empty();
-            }
-        }));
+                        @Override
+                        public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                            return Maybe.empty();
+                        }
+                    }
+                )
+            );
 
-        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return null;
-            }
+        TestObserver<User> observer = userAuthenticationManager
+            .authenticate(
+                client,
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return null;
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return null;
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return null;
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
 
         observer.assertError(AccountDisabledException.class);
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());

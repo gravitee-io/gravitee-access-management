@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.factor.otp.utils;
 
+import java.security.SecureRandom;
 import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Hex;
-
-import java.security.SecureRandom;
 
 /**
  * The shared secret key K is a Base32 string — randomly generated or derived —

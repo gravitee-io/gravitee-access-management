@@ -15,19 +15,18 @@
  */
 package io.gravitee.am.service.utils;
 
+import static io.gravitee.am.common.oauth2.GrantType.*;
+import static io.gravitee.am.common.oauth2.ResponseType.CODE;
+import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
+import static io.gravitee.am.common.oidc.ResponseType.*;
+
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.Single;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static io.gravitee.am.common.oauth2.GrantType.*;
-import static io.gravitee.am.common.oauth2.ResponseType.CODE;
-import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
-import static io.gravitee.am.common.oidc.ResponseType.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -37,9 +36,18 @@ public class GrantTypeUtils {
 
     private static final String AM_V2_VERSION = "AM_V2_VERSION";
     private static final String EXTENSION_GRANT_SEPARATOR = "~";
-    private static final Set<String> SUPPORTED_GRANT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER//, DEVIDE_CODE, SAML2_BEARER
-    )));
+    private static final Set<String> SUPPORTED_GRANT_TYPES = Collections.unmodifiableSet(
+        new HashSet<>(
+            Arrays.asList(
+                AUTHORIZATION_CODE,
+                IMPLICIT,
+                REFRESH_TOKEN,
+                CLIENT_CREDENTIALS,
+                PASSWORD,
+                JWT_BEARER //, DEVIDE_CODE, SAML2_BEARER
+            )
+        )
+    );
 
     /**
      * <pre>
@@ -53,7 +61,7 @@ public class GrantTypeUtils {
      */
     public static Single<Application> validateGrantTypes(Application application) {
         // no application to check, continue
-        if (application==null) {
+        if (application == null) {
             return Single.error(new InvalidClientMetadataException("No application to validate grant"));
         }
 
@@ -70,8 +78,10 @@ public class GrantTypeUtils {
         // Each security domain can have multiple extension grant with the same grant_type
         // we must split the client authorized grant types to get the real grant_type value
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
-        List<String> formattedClientGrantTypes = oAuthSettings.getGrantTypes() == null ? null : oAuthSettings.getGrantTypes().stream().map(str -> str.split(EXTENSION_GRANT_SEPARATOR)[0]).collect(Collectors.toList());
-        if(!isSupportedGrantType(formattedClientGrantTypes)) {
+        List<String> formattedClientGrantTypes = oAuthSettings.getGrantTypes() == null
+            ? null
+            : oAuthSettings.getGrantTypes().stream().map(str -> str.split(EXTENSION_GRANT_SEPARATOR)[0]).collect(Collectors.toList());
+        if (!isSupportedGrantType(formattedClientGrantTypes)) {
             return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
         }
 
@@ -80,14 +90,16 @@ public class GrantTypeUtils {
 
         //refresh_token are not allowed for all grant types...
         Set<String> grantTypeSet = Collections.unmodifiableSet(new HashSet<>(oAuthSettings.getGrantTypes()));
-        if(grantTypeSet.contains(REFRESH_TOKEN)) {
+        if (grantTypeSet.contains(REFRESH_TOKEN)) {
             //Hybrid is not managed yet and AM does not support refresh token for client_credentials for now...
-            List<String> allowedRefreshTokenGrant = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, JWT_BEARER);//, CLIENT_CREDENTIALS, HYBRID);
+            List<String> allowedRefreshTokenGrant = Arrays.asList(AUTHORIZATION_CODE, PASSWORD, JWT_BEARER); //, CLIENT_CREDENTIALS, HYBRID);
             //return true if there is no element in common
-            if(Collections.disjoint(formattedClientGrantTypes, allowedRefreshTokenGrant)) {
-                return Single.error(new InvalidClientMetadataException(
-                        REFRESH_TOKEN+" grant type must be associated with one of "+String.join(", ",allowedRefreshTokenGrant)
-                ));
+            if (Collections.disjoint(formattedClientGrantTypes, allowedRefreshTokenGrant)) {
+                return Single.error(
+                    new InvalidClientMetadataException(
+                        REFRESH_TOKEN + " grant type must be associated with one of " + String.join(", ", allowedRefreshTokenGrant)
+                    )
+                );
             }
         }
 
@@ -116,13 +128,13 @@ public class GrantTypeUtils {
      * @param grantTypes Array of grant_type to validate.
      */
     public static boolean isSupportedGrantType(List<String> grantTypes) {
-        if(grantTypes==null || grantTypes.isEmpty()) {
+        if (grantTypes == null || grantTypes.isEmpty()) {
             return false;
         }
 
         //Check grant types are all known
-        for(String grantType:grantTypes) {
-            if(!isSupportedGrantType(grantType)) {
+        for (String grantType : grantTypes) {
+            if (!isSupportedGrantType(grantType)) {
                 return false;
             }
         }
@@ -154,9 +166,9 @@ public class GrantTypeUtils {
      * @return true if at least one of the grant type included in the array require a redirect_uri.
      */
     public static boolean isRedirectUriRequired(List<String> grantTypes) {
-        List<String> requireRedirectUri = Arrays.asList(IMPLICIT);//, HYBRID); Add Hybrid once supported...
+        List<String> requireRedirectUri = Arrays.asList(IMPLICIT); //, HYBRID); Add Hybrid once supported...
         //return true if there's no grant type matching
-        return grantTypes!=null && !Collections.disjoint(grantTypes, requireRedirectUri);
+        return grantTypes != null && !Collections.disjoint(grantTypes, requireRedirectUri);
     }
 
     /**
@@ -179,38 +191,37 @@ public class GrantTypeUtils {
         Set grantType = oAuthSettings.getGrantTypes() != null ? new HashSet<>(oAuthSettings.getGrantTypes()) : new HashSet();
 
         //If response type contains "code", then grant_type must contains "authorization_code"
-        if(mustHaveAuthorizationCode(responseType) && !grantType.contains(AUTHORIZATION_CODE)) {
+        if (mustHaveAuthorizationCode(responseType) && !grantType.contains(AUTHORIZATION_CODE)) {
             grantType.add(AUTHORIZATION_CODE);
-            updatedGrantType=true;
+            updatedGrantType = true;
         }
 
         //If response type contains "token" or "id_token", then grant_type must contains "implicit"
-        if(mustHaveImplicit(responseType) && !grantType.contains(IMPLICIT)) {
+        if (mustHaveImplicit(responseType) && !grantType.contains(IMPLICIT)) {
             grantType.add(IMPLICIT);
-            updatedGrantType=true;
+            updatedGrantType = true;
         }
 
         //If grant_type contains authorization_code, response_type must contains code
-        if(grantType.contains(AUTHORIZATION_CODE) && !mustHaveAuthorizationCode(responseType)) {
+        if (grantType.contains(AUTHORIZATION_CODE) && !mustHaveAuthorizationCode(responseType)) {
             grantType.remove(AUTHORIZATION_CODE);
-            updatedGrantType=true;
+            updatedGrantType = true;
         }
 
         //If grant_type contains implicit, response_type must contains token or id_token
-        if(grantType.contains(IMPLICIT) && !mustHaveImplicit(responseType)) {
+        if (grantType.contains(IMPLICIT) && !mustHaveImplicit(responseType)) {
             grantType.remove(IMPLICIT);
-            updatedGrantType=true;
+            updatedGrantType = true;
         }
 
         //Finally in case of bad client status (no response/grant type) reset to default values...
-        if(responseType.isEmpty() && grantType.isEmpty()) {
+        if (responseType.isEmpty() && grantType.isEmpty()) {
             oAuthSettings.setResponseTypes(Client.DEFAULT_RESPONSE_TYPES);
             oAuthSettings.setGrantTypes(Client.DEFAULT_GRANT_TYPES);
         }
-
         //if grant type list has been modified, then update it.
-        else if(updatedGrantType) {
-            oAuthSettings.setGrantTypes((List<String>)grantType.stream().collect(Collectors.toList()));
+        else if (updatedGrantType) {
+            oAuthSettings.setGrantTypes((List<String>) grantType.stream().collect(Collectors.toList()));
         }
 
         return application;
@@ -223,27 +234,27 @@ public class GrantTypeUtils {
         Set grantType = client.getAuthorizedGrantTypes() != null ? new HashSet<>(client.getAuthorizedGrantTypes()) : new HashSet();
 
         //If response type contains "code", then grant_type must contains "authorization_code"
-        if(mustHaveAuthorizationCode(responseType) && !grantType.contains(AUTHORIZATION_CODE)) {
+        if (mustHaveAuthorizationCode(responseType) && !grantType.contains(AUTHORIZATION_CODE)) {
             grantType.add(AUTHORIZATION_CODE);
-            updatedGrantType=true;
+            updatedGrantType = true;
         }
 
         //If response type contains "token" or "id_token", then grant_type must contains "implicit"
-        if(mustHaveImplicit(responseType) && !grantType.contains(IMPLICIT)) {
+        if (mustHaveImplicit(responseType) && !grantType.contains(IMPLICIT)) {
             grantType.add(IMPLICIT);
-            updatedGrantType=true;
+            updatedGrantType = true;
         }
 
         //If grant_type contains authorization_code, response_type must contains code
-        if(grantType.contains(AUTHORIZATION_CODE) && !mustHaveAuthorizationCode(responseType)) {
+        if (grantType.contains(AUTHORIZATION_CODE) && !mustHaveAuthorizationCode(responseType)) {
             grantType.remove(AUTHORIZATION_CODE);
-            updatedGrantType=true;
+            updatedGrantType = true;
         }
 
         //If grant_type contains implicit, response_type must contains token or id_token
-        if(grantType.contains(IMPLICIT) && !mustHaveImplicit(responseType)) {
+        if (grantType.contains(IMPLICIT) && !mustHaveImplicit(responseType)) {
             grantType.remove(IMPLICIT);
-            updatedGrantType=true;
+            updatedGrantType = true;
         }
 
         // If grant_type contains client_credentials, remove refresh_token flow, only for old clients created by the upgrader
@@ -255,29 +266,28 @@ public class GrantTypeUtils {
         }
 
         //Finally in case of bad client status (no response/grant type) reset to default values...
-        if(responseType.isEmpty() && grantType.isEmpty()) {
+        if (responseType.isEmpty() && grantType.isEmpty()) {
             client.setResponseTypes(Client.DEFAULT_RESPONSE_TYPES);
             client.setAuthorizedGrantTypes(Client.DEFAULT_GRANT_TYPES);
         }
-
         //if grant type list has been modified, then update it.
-        else if(updatedGrantType) {
-            client.setAuthorizedGrantTypes((List<String>)grantType.stream().collect(Collectors.toList()));
+        else if (updatedGrantType) {
+            client.setAuthorizedGrantTypes((List<String>) grantType.stream().collect(Collectors.toList()));
         }
 
         return client;
     }
 
     private static boolean mustHaveAuthorizationCode(Set<String> responseType) {
-        return responseType.contains(CODE) ||
-                responseType.contains(CODE_TOKEN) ||
-                responseType.contains(CODE_ID_TOKEN) ||
-                responseType.contains(CODE_ID_TOKEN_TOKEN);
+        return (
+            responseType.contains(CODE) ||
+            responseType.contains(CODE_TOKEN) ||
+            responseType.contains(CODE_ID_TOKEN) ||
+            responseType.contains(CODE_ID_TOKEN_TOKEN)
+        );
     }
 
     private static boolean mustHaveImplicit(Set<String> responseType) {
-        return responseType.contains(TOKEN) ||
-                responseType.contains(ID_TOKEN) ||
-                responseType.contains(ID_TOKEN_TOKEN);
+        return responseType.contains(TOKEN) || responseType.contains(ID_TOKEN) || responseType.contains(ID_TOKEN_TOKEN);
     }
 }

@@ -19,7 +19,6 @@ import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
-
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
@@ -82,5 +81,4 @@ public class DummyAuthenticationContext implements AuthenticationContext {
     public TemplateEngine getTemplateEngine() {
         throw new IllegalStateException();
     }
-
 }

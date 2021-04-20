@@ -26,7 +26,7 @@ public class ScopeApproval {
 
     public enum ApprovalStatus {
         APPROVED,
-        DENIED
+        DENIED,
     }
 
     private String id;
@@ -60,7 +60,15 @@ public class ScopeApproval {
         this.status = status;
     }
 
-    public ScopeApproval(String transactionId, String userId, String clientId, String domain, String scope, ApprovalStatus status, Date expiresAt) {
+    public ScopeApproval(
+        String transactionId,
+        String userId,
+        String clientId,
+        String domain,
+        String scope,
+        ApprovalStatus status,
+        Date expiresAt
+    ) {
         this(transactionId, userId, clientId, domain, scope, status);
         this.expiresAt = expiresAt;
     }

@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.provider;
 
 import io.gravitee.am.service.exception.AbstractManagementException;
-
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
@@ -30,10 +29,6 @@ public class ManagementExceptionMapper extends AbstractExceptionMapper<AbstractM
 
     @Override
     public Response toResponse(AbstractManagementException mex) {
-        return Response
-                .status(mex.getHttpStatusCode())
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(convert(mex))
-                .build();
+        return Response.status(mex.getHttpStatusCode()).type(MediaType.APPLICATION_JSON_TYPE).entity(convert(mex)).build();
     }
 }

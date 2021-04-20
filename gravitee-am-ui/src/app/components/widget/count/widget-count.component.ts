@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import * as Highcharts from 'highcharts';
 
 @Component({
   selector: 'gv-widget-count',
   templateUrl: './widget-count.component.html',
-  styleUrls: ['./widget-count.component.scss']
+  styleUrls: ['./widget-count.component.scss'],
 })
 export class WidgetCountComponent implements OnInit, OnChanges {
   @Input('chart') chart: any;
   value: number;
 
-  constructor() { }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.chart.currentValue && changes.chart.currentValue.response) {
       this.value = changes.chart.currentValue.response.value;
     }
   }
-
 }
-

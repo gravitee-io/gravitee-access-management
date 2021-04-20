@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {AuthService} from '../../../../services/auth.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../../../services/auth.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'application-overview',
   templateUrl: './overview.component.html',
-  styleUrls: ['./overview.component.scss']
+  styleUrls: ['./overview.component.scss'],
 })
 export class ApplicationOverviewComponent implements OnInit {
   domain: any;
@@ -38,15 +38,12 @@ export class ApplicationOverviewComponent implements OnInit {
   tokenEndpointAuthMethod: string;
   @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
 
-  constructor(private route: ActivatedRoute,
-              private authService: AuthService,
-              private snackbarService: SnackbarService) {
-  }
+  constructor(private route: ActivatedRoute, private authService: AuthService, private snackbarService: SnackbarService) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
-    this.entrypoint = this.route.snapshot.data['entrypoint'];
-    this.application = this.route.snapshot.parent.data['application'];
+    this.domain = this.route.snapshot.data.domain;
+    this.entrypoint = this.route.snapshot.data.entrypoint;
+    this.application = this.route.snapshot.parent.data.application;
     this.safeClientSecret = this.hidden;
     this.safeAuthorizationHeader = this.hidden;
     const applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
@@ -55,7 +52,10 @@ export class ApplicationOverviewComponent implements OnInit {
       this.grantTypes = applicationOAuthSettings.grantTypes;
       this.clientId = applicationOAuthSettings.clientId;
       this.clientSecret = applicationOAuthSettings.clientSecret;
-      this.redirectUri = applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined ? applicationOAuthSettings.redirectUris[0] : 'Not defined' ;
+      this.redirectUri =
+        applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined
+          ? applicationOAuthSettings.redirectUris[0]
+          : 'Not defined';
       this.authorizationHeader = btoa(this.clientId + ':' + this.clientSecret);
       this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
     } else {
@@ -95,5 +95,5 @@ export class ApplicationOverviewComponent implements OnInit {
 
   displayAuthBasicExample(): boolean {
     return !this.tokenEndpointAuthMethod || this.tokenEndpointAuthMethod === 'client_secret_basic';
-  };
+  }
 }

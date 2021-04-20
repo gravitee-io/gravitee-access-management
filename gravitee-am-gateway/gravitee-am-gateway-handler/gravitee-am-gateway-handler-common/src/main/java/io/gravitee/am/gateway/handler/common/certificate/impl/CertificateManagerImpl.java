@@ -27,17 +27,16 @@ import io.jsonwebtoken.security.Keys;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-
 import java.security.Key;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -84,30 +83,31 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
     @Override
     public Maybe<CertificateProvider> findByAlgorithm(String algorithm) {
-
-        if(algorithm==null || algorithm.trim().isEmpty()) {
+        if (algorithm == null || algorithm.trim().isEmpty()) {
             return Maybe.empty();
         }
 
-        Optional<CertificateProvider> certificate = this
-                .providers()
+        Optional<CertificateProvider> certificate =
+            this.providers()
                 .stream()
-                .filter(certificateProvider ->
-                        certificateProvider!=null && certificateProvider.getProvider()!=null &&
+                .filter(
+                    certificateProvider ->
+                        certificateProvider != null &&
+                        certificateProvider.getProvider() != null &&
                         algorithm.equals(certificateProvider.getProvider().signatureAlgorithm())
                 )
                 .findFirst();
 
-        return certificate.isPresent()?Maybe.just(certificate.get()):Maybe.empty();
+        return certificate.isPresent() ? Maybe.just(certificate.get()) : Maybe.empty();
     }
 
     @Override
     public Collection<CertificateProvider> providers() {
         return certificateProviderManager
-                .certificateProviders()
-                .stream()
-                .filter(c -> domain.getId().equals(c.getDomain()))
-                .collect(Collectors.toList());
+            .certificateProviders()
+            .stream()
+            .filter(c -> domain.getId().equals(c.getDomain()))
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -143,7 +143,6 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
 
         io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
-
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
                 return Single.just(key);
@@ -161,14 +160,12 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
             @Override
             public String signatureAlgorithm() {
-                int keySize = key.getValue().toString().getBytes().length*8;
-                if(keySize>=512) {
+                int keySize = key.getValue().toString().getBytes().length * 8;
+                if (keySize >= 512) {
                     return "HS512";
-                }
-                else if(keySize>=384) {
+                } else if (keySize >= 384) {
                     return "HS384";
-                }
-                else if(keySize>=256) {
+                } else if (keySize >= 256) {
                     return "HS256";
                 }
                 return null;
@@ -187,7 +184,6 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, "none"));
 
         io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
-
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
                 throw new UnsupportedOperationException("No key for \"none\" algorithm");

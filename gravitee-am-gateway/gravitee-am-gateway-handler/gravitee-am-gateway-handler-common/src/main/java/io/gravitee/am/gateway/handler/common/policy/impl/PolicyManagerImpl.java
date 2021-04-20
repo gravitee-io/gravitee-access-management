@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.common.policy.impl;
 
-import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.PolicyEvent;
+import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.Domain;
@@ -30,16 +30,15 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -103,12 +102,11 @@ public class PolicyManagerImpl extends AbstractService implements PolicyManager,
 
     @Override
     public Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint) {
-        return Observable.fromIterable(policyModels.values())
-                .filter(policy -> policy.isEnabled() && policy.getExtensionPoint().equals(extensionPoint))
-                .toSortedList(Comparator.comparing(io.gravitee.am.model.Policy::getOrder))
-                .map(policies1 -> policies1.stream()
-                        .map(policy -> policies.get(policy.getId()))
-                        .collect(Collectors.toList()));
+        return Observable
+            .fromIterable(policyModels.values())
+            .filter(policy -> policy.isEnabled() && policy.getExtensionPoint().equals(extensionPoint))
+            .toSortedList(Comparator.comparing(io.gravitee.am.model.Policy::getOrder))
+            .map(policies1 -> policies1.stream().map(policy -> policies.get(policy.getId())).collect(Collectors.toList()));
     }
 
     @Override
@@ -120,14 +118,16 @@ public class PolicyManagerImpl extends AbstractService implements PolicyManager,
     private void updatePolicy(String policyId, PolicyEvent policyEvent) {
         final String eventType = policyEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} policy event for {}", domain.getName(), eventType, policyId);
-        policyService.findById(policyId)
-                .subscribe(
-                        policy -> {
-                            updatePolicyProvider(policy);
-                            logger.info("Policy {} {}d for domain {}", policyId, eventType, domain.getName());
-                        },
-                        error -> logger.error("Unable to {} policy for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No policy found with id {}", policyId));
+        policyService
+            .findById(policyId)
+            .subscribe(
+                policy -> {
+                    updatePolicyProvider(policy);
+                    logger.info("Policy {} {}d for domain {}", policyId, eventType, domain.getName());
+                },
+                error -> logger.error("Unable to {} policy for domain {}", eventType, domain.getName(), error),
+                () -> logger.error("No policy found with id {}", policyId)
+            );
     }
 
     private void removePolicy(String policyId) {
@@ -146,16 +146,17 @@ public class PolicyManagerImpl extends AbstractService implements PolicyManager,
     }
 
     private void updatePolicies() {
-        policyService.findByDomain(domain.getId())
-                .flatMapObservable(policies -> Observable.fromIterable(policies))
-                .filter(io.gravitee.am.model.Policy::isEnabled)
-                .toList()
-                .subscribe(
-                        policies1 -> {
-                            policies1.forEach(policy -> updatePolicyProvider(policy));
-                            logger.info("Policies loaded for domain {}", domain.getName());
-                        },
-                        error -> logger.error("Unable to initialize policies for domain {}", domain.getName(), error)
-                );
+        policyService
+            .findByDomain(domain.getId())
+            .flatMapObservable(policies -> Observable.fromIterable(policies))
+            .filter(io.gravitee.am.model.Policy::isEnabled)
+            .toList()
+            .subscribe(
+                policies1 -> {
+                    policies1.forEach(policy -> updatePolicyProvider(policy));
+                    logger.info("Policies loaded for domain {}", domain.getName());
+                },
+                error -> logger.error("Unable to initialize policies for domain {}", domain.getName(), error)
+            );
     }
 }

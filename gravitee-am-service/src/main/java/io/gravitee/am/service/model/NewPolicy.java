@@ -16,7 +16,6 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
-
 import javax.validation.constraints.NotNull;
 
 /**
@@ -101,14 +100,31 @@ public class NewPolicy {
 
     @Override
     public String toString() {
-        return "{\"_class\":\"NewPolicy\", " +
-                "\"id\":" + (id == null ? "null" : "\"" + id + "\"") + ", " +
-                "\"enabled\":\"" + enabled + "\"" + ", " +
-                "\"type\":" + (type == null ? "null" : "\"" + type + "\"") + ", " +
-                "\"name\":" + (name == null ? "null" : "\"" + name + "\"") + ", " +
-                "\"extensionPoint\":" + (extensionPoint == null ? "null" : extensionPoint) + ", " +
-                "\"order\":\"" + order + "\"" + ", " +
-                "\"configuration\":" + (configuration == null ? "null" : "\"" + configuration + "\"") +
-                "}";
+        return (
+            "{\"_class\":\"NewPolicy\", " +
+            "\"id\":" +
+            (id == null ? "null" : "\"" + id + "\"") +
+            ", " +
+            "\"enabled\":\"" +
+            enabled +
+            "\"" +
+            ", " +
+            "\"type\":" +
+            (type == null ? "null" : "\"" + type + "\"") +
+            ", " +
+            "\"name\":" +
+            (name == null ? "null" : "\"" + name + "\"") +
+            ", " +
+            "\"extensionPoint\":" +
+            (extensionPoint == null ? "null" : extensionPoint) +
+            ", " +
+            "\"order\":\"" +
+            order +
+            "\"" +
+            ", " +
+            "\"configuration\":" +
+            (configuration == null ? "null" : "\"" + configuration + "\"") +
+            "}"
+        );
     }
 }

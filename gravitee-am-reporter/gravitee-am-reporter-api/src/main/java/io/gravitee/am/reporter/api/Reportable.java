@@ -22,7 +22,6 @@ import io.gravitee.am.model.ReferenceType;
  * @author GraviteeSource Team
  */
 public interface Reportable extends io.gravitee.reporter.api.Reportable {
-
     String getReferenceId();
 
     ReferenceType getReferenceType();

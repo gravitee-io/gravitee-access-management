@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.register;
 
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserBodyRequestParseHandler;
-
 import java.util.Arrays;
 
 /**

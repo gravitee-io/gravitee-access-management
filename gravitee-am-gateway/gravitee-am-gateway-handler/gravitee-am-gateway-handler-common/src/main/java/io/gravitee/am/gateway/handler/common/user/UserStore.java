@@ -22,7 +22,6 @@ import io.gravitee.am.model.User;
  * @author GraviteeSource Team
  */
 public interface UserStore {
-
     void add(User user);
 
     void remove(String userId);

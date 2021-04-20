@@ -15,17 +15,29 @@
  */
 package io.gravitee.am.gateway.handler.email.impl;
 
+import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.gateway.handler.email.EmailService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
+import java.io.File;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import javax.activation.MimetypesFileTypeMap;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -37,19 +49,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-
-import javax.activation.MimetypesFileTypeMap;
-import java.io.File;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -81,7 +80,11 @@ public class EmailServiceImpl implements EmailService {
     public void send(Email email, User user, Client client) {
         if (enabled) {
             try {
-                final MimeMessageHelper mailMessage = new MimeMessageHelper(mailSender.createMimeMessage(), true, StandardCharsets.UTF_8.name());
+                final MimeMessageHelper mailMessage = new MimeMessageHelper(
+                    mailSender.createMimeMessage(),
+                    true,
+                    StandardCharsets.UTF_8.name()
+                );
                 final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
                 final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
 
@@ -104,11 +107,15 @@ public class EmailServiceImpl implements EmailService {
                 final String html = addResourcesInMessage(mailMessage, content);
                 LOGGER.debug("Sending an email to: {}\nSubject: {}\nMessage: {}", email.getTo(), email.getSubject(), html);
                 mailSender.send(mailMessage.getMimeMessage());
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).user(user));
+                auditService.report(
+                    AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).user(user)
+                );
             } catch (final Exception ex) {
                 LOGGER.error("Error while sending email", ex);
                 new TechnicalManagementException("Error while sending email", ex);
-                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).throwable(ex));
+                auditService.report(
+                    AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).client(client).email(email).throwable(ex)
+                );
             }
         }
     }
@@ -119,15 +126,20 @@ public class EmailServiceImpl implements EmailService {
         final List<String> resources = new ArrayList<>();
 
         final Elements imageElements = document.getElementsByTag("img");
-        resources.addAll(imageElements.stream()
+        resources.addAll(
+            imageElements
+                .stream()
                 .filter(imageElement -> imageElement.hasAttr("src"))
                 .filter(imageElement -> !imageElement.attr("src").startsWith("http"))
-                .map(imageElement -> {
-                    final String src = imageElement.attr("src");
-                    imageElement.attr("src", "cid:" + src);
-                    return src;
-                })
-                .collect(Collectors.toList()));
+                .map(
+                    imageElement -> {
+                        final String src = imageElement.attr("src");
+                        imageElement.attr("src", "cid:" + src);
+                        return src;
+                    }
+                )
+                .collect(Collectors.toList())
+        );
 
         final String html = document.html();
         mailMessage.setText(html, true);
@@ -163,8 +175,7 @@ public class EmailServiceImpl implements EmailService {
     private static String extractMimeType(final String encoded) {
         final Pattern mime = Pattern.compile("^data:([a-zA-Z0-9]+/[a-zA-Z0-9]+).*,.*");
         final Matcher matcher = mime.matcher(encoded);
-        if (!matcher.find())
-            return "";
+        if (!matcher.find()) return "";
         return matcher.group(1).toLowerCase();
     }
 }

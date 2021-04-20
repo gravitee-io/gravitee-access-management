@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication.spring;
 
+import static java.util.Arrays.asList;
+
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.client.MongoClientSettings;
@@ -28,8 +30,6 @@ import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswo
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import static java.util.Arrays.asList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -51,10 +51,11 @@ public class MongoAuthenticationProviderConfiguration {
             ClusterSettings clusterSettings = ClusterSettings.builder().hosts(asList(serverAddress)).build();
             MongoClientSettings.Builder settings = MongoClientSettings.builder().clusterSettings(clusterSettings);
             if (this.configuration.isEnableCredentials()) {
-                MongoCredential credential = MongoCredential.createCredential(this.configuration
-                        .getUsernameCredentials(), this.configuration
-                        .getDatabaseCredentials(), this.configuration
-                        .getPasswordCredentials().toCharArray());
+                MongoCredential credential = MongoCredential.createCredential(
+                    this.configuration.getUsernameCredentials(),
+                    this.configuration.getDatabaseCredentials(),
+                    this.configuration.getPasswordCredentials().toCharArray()
+                );
                 settings.credential(credential);
             }
             mongoClient = MongoClients.create(settings.build());
@@ -64,7 +65,10 @@ public class MongoAuthenticationProviderConfiguration {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        if (configuration.getPasswordEncoder() != null && io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.BCRYPT.getValue().equals(configuration.getPasswordEncoder())) {
+        if (
+            configuration.getPasswordEncoder() != null &&
+            io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.BCRYPT.getValue().equals(configuration.getPasswordEncoder())
+        ) {
             return new BCryptPasswordEncoder();
         }
         return NoOpPasswordEncoder.getInstance();

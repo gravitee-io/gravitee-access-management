@@ -16,7 +16,6 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Template;
-
 import javax.validation.constraints.NotNull;
 
 /**
@@ -26,10 +25,13 @@ import javax.validation.constraints.NotNull;
 public class NewForm {
 
     private boolean enabled;
+
     @NotNull
     private Template template;
+
     @NotNull
     private String content;
+
     private String assets;
 
     public boolean isEnabled() {

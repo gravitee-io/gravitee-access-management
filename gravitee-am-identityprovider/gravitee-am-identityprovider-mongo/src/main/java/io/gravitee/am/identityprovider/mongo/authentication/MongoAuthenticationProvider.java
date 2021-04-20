@@ -17,6 +17,8 @@ package io.gravitee.am.identityprovider.mongo.authentication;
 
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -27,10 +29,9 @@ import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderMapper;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import java.util.*;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -39,14 +40,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.*;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Import({MongoAuthenticationProviderConfiguration.class})
+@Import({ MongoAuthenticationProviderConfiguration.class })
 public class MongoAuthenticationProvider implements AuthenticationProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoAuthenticationProvider.class);
@@ -73,8 +72,9 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     public Maybe<User> loadUserByUsername(Authentication authentication) {
         String username = ((String) authentication.getPrincipal()).toLowerCase();
         return findUserByUsername(username)
-                .switchIfEmpty(Maybe.error(new UsernameNotFoundException(username)))
-                .map(user -> {
+            .switchIfEmpty(Maybe.error(new UsernameNotFoundException(username)))
+            .map(
+                user -> {
                     String password = user.getString(this.configuration.getPasswordField());
                     String presentedPassword = authentication.getCredentials().toString();
 
@@ -88,17 +88,18 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
                         throw new BadCredentialsException("Bad credentials");
                     }
                     return createUser(user);
-                });
+                }
+            );
     }
 
     public Maybe<User> loadUserByUsername(String username) {
         final String encodedUsername = username.toLowerCase();
-        return findUserByUsername(encodedUsername)
-                .map(document -> createUser(document));
+        return findUserByUsername(encodedUsername).map(document -> createUser(document));
     }
 
     private Maybe<Document> findUserByUsername(String username) {
-        MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
+        MongoCollection<Document> usersCol =
+            this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
         String rawQuery = this.configuration.getFindUserByUsernameQuery().replaceAll("\\?", username);
         String jsonQuery = convertToJsonString(rawQuery);
         BsonDocument query = BsonDocument.parse(jsonQuery);
@@ -110,9 +111,9 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
         DefaultUser user = new DefaultUser(username);
         Map<String, Object> claims = new HashMap<>();
 
-        String sub = document.containsKey(FIELD_ID) ?
-                document.get(FIELD_ID) instanceof ObjectId ? ((ObjectId) document.get(FIELD_ID)).toString() : document.getString(FIELD_ID)
-                : username;
+        String sub = document.containsKey(FIELD_ID)
+            ? document.get(FIELD_ID) instanceof ObjectId ? ((ObjectId) document.get(FIELD_ID)).toString() : document.getString(FIELD_ID)
+            : username;
         // set technical id
         user.setId(sub);
 
@@ -143,24 +144,32 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     }
 
     private String convertToJsonString(String rawString) {
-        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:]+", "\"$0\"").replaceAll("\\s+","");
+        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:]+", "\"$0\"").replaceAll("\\s+", "");
         return rawString;
     }
 
     private List<String> getUserRoles(Document document) {
         Set<String> roles = new HashSet();
         if (roleMapper != null && roleMapper.getRoles() != null) {
-            roleMapper.getRoles().forEach((role, users) -> {
-                Arrays.asList(users).forEach(u -> {
-                    // user/group have the following syntax userAttribute=userValue
-                    String[] attributes = u.split("=", 2);
-                    String userAttribute = attributes[0];
-                    String userValue = attributes[1];
-                    if (document.containsKey(userAttribute) && document.getString(userAttribute).equals(userValue)) {
-                        roles.add(role);
+            roleMapper
+                .getRoles()
+                .forEach(
+                    (role, users) -> {
+                        Arrays
+                            .asList(users)
+                            .forEach(
+                                u -> {
+                                    // user/group have the following syntax userAttribute=userValue
+                                    String[] attributes = u.split("=", 2);
+                                    String userAttribute = attributes[0];
+                                    String userValue = attributes[1];
+                                    if (document.containsKey(userAttribute) && document.getString(userAttribute).equals(userValue)) {
+                                        roles.add(role);
+                                    }
+                                }
+                            );
                     }
-                });
-            });
+                );
         }
         return new ArrayList<>(roles);
     }

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.identityprovider.ldap.authentication;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -24,11 +27,9 @@ import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderMapper;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.ldap.authentication.spring.LdapAuthenticationProviderConfiguration;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
+import java.util.*;
 import org.ldaptive.*;
 import org.ldaptive.auth.AuthenticationRequest;
 import org.ldaptive.auth.AuthenticationResponse;
@@ -41,15 +42,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
-import java.util.*;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(LdapAuthenticationProviderConfiguration.class)
-public class LdapAuthenticationProvider extends AbstractService<AuthenticationProvider> implements AuthenticationProvider, InitializingBean {
+public class LdapAuthenticationProvider
+    extends AbstractService<AuthenticationProvider>
+    implements AuthenticationProvider, InitializingBean {
 
     private final Logger LOGGER = LoggerFactory.getLogger(LdapAuthenticationProvider.class);
 
@@ -127,47 +128,54 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        return Maybe.fromCallable(() -> {
-            try {
-                String username = (String) authentication.getPrincipal();
-                String password = (String) authentication.getCredentials();
-                // authenticate user and and fetch groups if exist
-                AuthenticationResponse response = authenticator.authenticate(new AuthenticationRequest(username, new Credential(password), ReturnAttributes.ALL_USER.value()));
-                if (response.getResult()) { // authentication succeeded
-                    LdapEntry userEntry = response.getLdapEntry();
-                    return userEntry;
-                } else { // authentication failed
-                    LOGGER.debug("Failed to authenticate user", response.getMessage());
-                    throw new BadCredentialsException(response.getMessage());
+        return Maybe
+            .fromCallable(
+                () -> {
+                    try {
+                        String username = (String) authentication.getPrincipal();
+                        String password = (String) authentication.getCredentials();
+                        // authenticate user and and fetch groups if exist
+                        AuthenticationResponse response = authenticator.authenticate(
+                            new AuthenticationRequest(username, new Credential(password), ReturnAttributes.ALL_USER.value())
+                        );
+                        if (response.getResult()) { // authentication succeeded
+                            LdapEntry userEntry = response.getLdapEntry();
+                            return userEntry;
+                        } else { // authentication failed
+                            LOGGER.debug("Failed to authenticate user", response.getMessage());
+                            throw new BadCredentialsException(response.getMessage());
+                        }
+                    } catch (LdapException e) {
+                        LOGGER.error("An error occurs during LDAP authentication", e);
+                        throw new InternalAuthenticationServiceException(e.getMessage(), e);
+                    }
                 }
-            } catch (LdapException e) {
-                LOGGER.error("An error occurs during LDAP authentication", e);
-                throw new InternalAuthenticationServiceException(e.getMessage(), e);
-            }
-        })
-        .map(this::createUser);
+            )
+            .map(this::createUser);
     }
 
     @Override
     public Maybe<User> loadUserByUsername(String username) {
-        return Maybe.fromCallable(() -> {
-            try {
-                // find user
-                SearchFilter searchFilter = createSearchFilter(userSearchExecutor, username);
-                SearchResult userSearchResult = userSearchExecutor.search(searchConnectionFactory, searchFilter).getResult();
-                LdapEntry userEntry = userSearchResult.getEntry();
-                if (userEntry != null) {
-                    return userEntry;
-                } else { // failed to find user
-                    throw new UsernameNotFoundException(username);
+        return Maybe
+            .fromCallable(
+                () -> {
+                    try {
+                        // find user
+                        SearchFilter searchFilter = createSearchFilter(userSearchExecutor, username);
+                        SearchResult userSearchResult = userSearchExecutor.search(searchConnectionFactory, searchFilter).getResult();
+                        LdapEntry userEntry = userSearchResult.getEntry();
+                        if (userEntry != null) {
+                            return userEntry;
+                        } else { // failed to find user
+                            throw new UsernameNotFoundException(username);
+                        }
+                    } catch (LdapException e) {
+                        LOGGER.error("An error occurs while searching for a LDAP user", e);
+                        throw new InternalAuthenticationServiceException(e.getMessage(), e);
+                    }
                 }
-            } catch (LdapException e) {
-                LOGGER.error("An error occurs while searching for a LDAP user", e);
-                throw new InternalAuthenticationServiceException(e.getMessage(), e);
-            }
-        })
-        .map(this::createUser);
-
+            )
+            .map(this::createUser);
     }
 
     private User createUser(LdapEntry ldapEntry) {
@@ -177,19 +185,23 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
         Map<String, Object> claims = new HashMap<>();
         claims.put(StandardClaims.SUB, user.getUsername());
         if (mapper.getMappers() != null && !mapper.getMappers().isEmpty()) {
-            mapper.getMappers().forEach((k, v) -> {
-                LdapAttribute ldapAttribute = ldapEntry.getAttribute(v);
-                if (ldapAttribute != null) {
-                    Collection<String> ldapValues = ldapAttribute.getStringValues();
-                    if (ldapValues != null) {
-                        if (ldapValues.size() == 1) {
-                            claims.put(k, ldapValues.iterator().next());
-                        } else {
-                            claims.put(k, ldapValues);
+            mapper
+                .getMappers()
+                .forEach(
+                    (k, v) -> {
+                        LdapAttribute ldapAttribute = ldapEntry.getAttribute(v);
+                        if (ldapAttribute != null) {
+                            Collection<String> ldapValues = ldapAttribute.getStringValues();
+                            if (ldapValues != null) {
+                                if (ldapValues.size() == 1) {
+                                    claims.put(k, ldapValues.iterator().next());
+                                } else {
+                                    claims.put(k, ldapValues);
+                                }
+                            }
                         }
                     }
-                }
-            });
+                );
         } else {
             // default values
             addClaim(claims, ldapEntry, StandardClaims.NAME, "displayname");
@@ -216,27 +228,37 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
     private List<String> getUserRoles(LdapEntry ldapEntry) {
         Set<String> roles = new HashSet();
         if (roleMapper != null && roleMapper.getRoles() != null) {
-            roleMapper.getRoles().forEach((role, users) -> {
-                Arrays.asList(users).forEach(u -> {
-                    // user/group have the following syntax userAttribute=userValue
-                    String[] attributes = u.split("=",2);
-                    String userAttribute = attributes[0];
-                    String userValue = attributes[1];
+            roleMapper
+                .getRoles()
+                .forEach(
+                    (role, users) -> {
+                        Arrays
+                            .asList(users)
+                            .forEach(
+                                u -> {
+                                    // user/group have the following syntax userAttribute=userValue
+                                    String[] attributes = u.split("=", 2);
+                                    String userAttribute = attributes[0];
+                                    String userValue = attributes[1];
 
-                    // group
-                    if (MEMBEROF_ATTRIBUTE.equals(userAttribute) && ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE) != null) {
-                        if (ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE).getStringValues().contains(userValue)) {
-                            roles.add(role);
-                        }
-                    // user
-                    } else {
-                        if (ldapEntry.getAttribute(userAttribute) != null &&
-                                ldapEntry.getAttribute(userAttribute).getStringValue().equals(userValue)) {
-                            roles.add(role);
-                        }
+                                    // group
+                                    if (MEMBEROF_ATTRIBUTE.equals(userAttribute) && ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE) != null) {
+                                        if (ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE).getStringValues().contains(userValue)) {
+                                            roles.add(role);
+                                        }
+                                        // user
+                                    } else {
+                                        if (
+                                            ldapEntry.getAttribute(userAttribute) != null &&
+                                            ldapEntry.getAttribute(userAttribute).getStringValue().equals(userValue)
+                                        ) {
+                                            roles.add(role);
+                                        }
+                                    }
+                                }
+                            );
                     }
-                });
-            });
+                );
         }
         return new ArrayList<>(roles);
     }

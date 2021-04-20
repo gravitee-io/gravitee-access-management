@@ -22,7 +22,5 @@ import io.gravitee.am.common.jwt.JWT;
  * @author GraviteeSource Team
  */
 public interface JWTParser {
-
     JWT parse(String payload);
-
 }

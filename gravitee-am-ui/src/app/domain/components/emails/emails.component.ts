@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import {Component, Input, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {AuthService} from "../../../services/auth.service";
+import {ActivatedRoute, Router} from '@angular/router';
+import {AuthService} from '../../../services/auth.service';
 
 @Component({
   selector: 'app-emails',
@@ -32,7 +32,7 @@ export class EmailsComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
+    this.appId = this.route.snapshot.parent.parent.params.appId;
 
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.viewPermission = 'organization_form_read';

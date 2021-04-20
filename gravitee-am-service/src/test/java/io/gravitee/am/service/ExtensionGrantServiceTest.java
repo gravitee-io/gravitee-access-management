@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.common.event.Event;
@@ -31,17 +34,13 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.*;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -65,7 +64,7 @@ public class ExtensionGrantServiceTest {
     @Mock
     private AuditService auditService;
 
-    private final static String DOMAIN = "domain1";
+    private static final String DOMAIN = "domain1";
 
     @Test
     public void shouldFindById() {
@@ -252,7 +251,8 @@ public class ExtensionGrantServiceTest {
         extensionGrant.setId("extension-grant-id");
         extensionGrant.setGrantType("extension-grant-type");
         when(extensionGrantRepository.findById(extensionGrant.getId())).thenReturn(Maybe.just(extensionGrant));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant.getGrantType() + "~" + extensionGrant.getId())).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant.getGrantType() + "~" + extensionGrant.getId()))
+            .thenReturn(Single.just(Collections.singleton(new Application())));
 
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, extensionGrant.getId()).test();
 
@@ -275,9 +275,12 @@ public class ExtensionGrantServiceTest {
         extensionGrant2.setCreatedAt(new Date());
 
         when(extensionGrantRepository.findById(extensionGrant.getId())).thenReturn(Maybe.just(extensionGrant));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant.getGrantType() + "~" + extensionGrant.getId())).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant.getGrantType())).thenReturn(Single.just(Collections.singleton(new Application())));
-        when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Single.just(new HashSet<>(Arrays.asList(extensionGrant, extensionGrant2))));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant.getGrantType() + "~" + extensionGrant.getId()))
+            .thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant.getGrantType()))
+            .thenReturn(Single.just(Collections.singleton(new Application())));
+        when(extensionGrantRepository.findByDomain(DOMAIN))
+            .thenReturn(Single.just(new HashSet<>(Arrays.asList(extensionGrant, extensionGrant2))));
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, extensionGrant.getId()).test();
 
         testObserver.assertError(ExtensionGrantWithApplicationsException.class);
@@ -300,9 +303,12 @@ public class ExtensionGrantServiceTest {
 
         when(extensionGrantRepository.findById(extensionGrant2.getId())).thenReturn(Maybe.just(extensionGrant2));
         when(extensionGrantRepository.delete(extensionGrant2.getId())).thenReturn(Completable.complete());
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant2.getGrantType() + "~" + extensionGrant2.getId())).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant2.getGrantType())).thenReturn(Single.just(Collections.singleton(new Application())));
-        when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Single.just(new HashSet<>(Arrays.asList(extensionGrant, extensionGrant2))));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant2.getGrantType() + "~" + extensionGrant2.getId()))
+            .thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant2.getGrantType()))
+            .thenReturn(Single.just(Collections.singleton(new Application())));
+        when(extensionGrantRepository.findByDomain(DOMAIN))
+            .thenReturn(Single.just(new HashSet<>(Arrays.asList(extensionGrant, extensionGrant2))));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, extensionGrant2.getId()).test();
 
@@ -332,8 +338,10 @@ public class ExtensionGrantServiceTest {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(existingExtensionGrant));
         when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
         when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(existingExtensionGrant)));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant~my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant~my-extension-grant"))
+            .thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant"))
+            .thenReturn(Single.just(Collections.emptySet()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();

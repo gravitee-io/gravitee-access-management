@@ -19,10 +19,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.factor.api.FactorConfiguration;
 import io.gravitee.am.plugins.factor.core.FactorConfigurationFactory;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -32,8 +31,7 @@ public class FactorConfigurationFactoryImpl implements FactorConfigurationFactor
 
     private final Logger logger = LoggerFactory.getLogger(FactorConfigurationFactoryImpl.class);
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private final ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     @Override
     public <T extends FactorConfiguration> T create(Class<T> clazz, String content) {

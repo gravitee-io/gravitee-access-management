@@ -67,11 +67,22 @@ public class UpdatePolicy {
 
     @Override
     public String toString() {
-        return "{\"_class\":\"UpdatePolicy\", " +
-                "\"enabled\":\"" + enabled + "\"" + ", " +
-                "\"name\":" + (name == null ? "null" : "\"" + name + "\"") + ", " +
-                "\"order\":\"" + order + "\"" + ", " +
-                "\"configuration\":" + (configuration == null ? "null" : "\"" + configuration + "\"") +
-                "}";
+        return (
+            "{\"_class\":\"UpdatePolicy\", " +
+            "\"enabled\":\"" +
+            enabled +
+            "\"" +
+            ", " +
+            "\"name\":" +
+            (name == null ? "null" : "\"" + name + "\"") +
+            ", " +
+            "\"order\":\"" +
+            order +
+            "\"" +
+            ", " +
+            "\"configuration\":" +
+            (configuration == null ? "null" : "\"" + configuration + "\"") +
+            "}"
+        );
     }
 }

@@ -19,7 +19,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
-
 import java.util.Date;
 import java.util.Set;
 
@@ -89,8 +88,7 @@ public class Domain implements Resource {
      */
     private Set<String> identities;
 
-    public Domain() {
-    }
+    public Domain() {}
 
     public Domain(Domain other) {
         this.id = other.id;
@@ -206,44 +204,56 @@ public class Domain implements Resource {
     }
 
     public boolean isDynamicClientRegistrationEnabled() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
-                this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled();
+        return (
+            this.getOidc() != null &&
+            this.getOidc().getClientRegistrationSettings() != null &&
+            this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled()
+        );
     }
 
     public boolean isOpenDynamicClientRegistrationEnabled() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
-                this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled() &&
-                this.getOidc().getClientRegistrationSettings().isOpenDynamicClientRegistrationEnabled();
+        return (
+            this.getOidc() != null &&
+            this.getOidc().getClientRegistrationSettings() != null &&
+            this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled() &&
+            this.getOidc().getClientRegistrationSettings().isOpenDynamicClientRegistrationEnabled()
+        );
     }
 
     public boolean isDynamicClientRegistrationTemplateEnabled() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
-                this.getOidc().getClientRegistrationSettings().isClientTemplateEnabled();
+        return (
+            this.getOidc() != null &&
+            this.getOidc().getClientRegistrationSettings() != null &&
+            this.getOidc().getClientRegistrationSettings().isClientTemplateEnabled()
+        );
     }
 
     public boolean isRedirectUriLocalhostAllowed() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
-                this.getOidc().getClientRegistrationSettings().isAllowLocalhostRedirectUri();
+        return (
+            this.getOidc() != null &&
+            this.getOidc().getClientRegistrationSettings() != null &&
+            this.getOidc().getClientRegistrationSettings().isAllowLocalhostRedirectUri()
+        );
     }
 
     public boolean isRedirectUriUnsecuredHttpSchemeAllowed() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
-                this.getOidc().getClientRegistrationSettings().isAllowHttpSchemeRedirectUri();
+        return (
+            this.getOidc() != null &&
+            this.getOidc().getClientRegistrationSettings() != null &&
+            this.getOidc().getClientRegistrationSettings().isAllowHttpSchemeRedirectUri()
+        );
     }
 
     public boolean isRedirectUriWildcardAllowed() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
-                this.getOidc().getClientRegistrationSettings().isAllowWildCardRedirectUri();
+        return (
+            this.getOidc() != null &&
+            this.getOidc().getClientRegistrationSettings() != null &&
+            this.getOidc().getClientRegistrationSettings().isAllowWildCardRedirectUri()
+        );
     }
 
     public boolean isRedirectUriStrictMatching() {
-        return this.getOidc()!=null && this.getOidc().isRedirectUriStrictMatching();
+        return this.getOidc() != null && this.getOidc().isRedirectUriStrictMatching();
     }
 
     public ReferenceType getReferenceType() {

@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.mongo.user.MongoUserProvider;
  * @author GraviteeSource Team
  */
 public class MongoIdentityProvider implements IdentityProvider {
+
     public Class<? extends IdentityProviderConfiguration> configuration() {
         return MongoIdentityProviderConfiguration.class;
     }

@@ -20,6 +20,10 @@ import freemarker.core.HTMLOutputFormat;
 import freemarker.core.TemplateClassResolver;
 import freemarker.core.TemplateConfiguration;
 import io.gravitee.common.util.EnvironmentUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +34,6 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -44,10 +43,10 @@ public class EmailConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailConfiguration.class);
 
-    private final static String EMAIL_PROPERTIES_PREFIX = "email.properties";
-    private final static String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
+    private static final String EMAIL_PROPERTIES_PREFIX = "email.properties";
+    private static final String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
 
-    private final static String HTML_TEMPLATE_EXTENSION = "html";
+    private static final String HTML_TEMPLATE_EXTENSION = "html";
 
     @Value("${email.host}")
     private String host;
@@ -76,8 +75,7 @@ public class EmailConfiguration {
         javaMailSender.setHost(host);
         try {
             javaMailSender.setPort(Integer.valueOf(this.port));
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
         javaMailSender.setUsername(username);
         javaMailSender.setPassword(password);
         javaMailSender.setProtocol(protocol);
@@ -89,24 +87,27 @@ public class EmailConfiguration {
         Map<String, Object> envProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EMAIL_PROPERTIES_PREFIX);
 
         Properties properties = new Properties();
-        envProperties.forEach((key, value) -> properties.setProperty(
-                MAILAPI_PROPERTIES_PREFIX + key.substring(EMAIL_PROPERTIES_PREFIX.length() + 1),
-                value.toString()));
+        envProperties.forEach(
+            (key, value) ->
+                properties.setProperty(MAILAPI_PROPERTIES_PREFIX + key.substring(EMAIL_PROPERTIES_PREFIX.length() + 1), value.toString())
+        );
 
         return properties;
     }
 
     @Bean
     public freemarker.template.Configuration getConfiguration() {
-        final freemarker.template.Configuration configuration =
-                new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_22);
+        final freemarker.template.Configuration configuration = new freemarker.template.Configuration(
+            freemarker.template.Configuration.VERSION_2_3_22
+        );
         configuration.setLocalizedLookup(false);
         configuration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         TemplateConfiguration tcHTML = new TemplateConfiguration();
         tcHTML.setOutputFormat(HTMLOutputFormat.INSTANCE);
 
         configuration.setTemplateConfigurations(
-                new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher(HTML_TEMPLATE_EXTENSION), tcHTML));
+            new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher(HTML_TEMPLATE_EXTENSION), tcHTML)
+        );
 
         try {
             TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath)) };
@@ -121,5 +122,4 @@ public class EmailConfiguration {
     public StringTemplateLoader overrideTemplateLoader() {
         return new StringTemplateLoader();
     }
-
 }

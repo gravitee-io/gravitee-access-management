@@ -23,7 +23,6 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Single;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.Optional;
 
 /**
@@ -43,21 +42,26 @@ public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHand
         final String userId = context.request().getParam("userId");
         final String clientId = context.request().getParam("clientId");
 
-        Single.just(Optional.ofNullable(clientId))
-                .flatMap(optClient -> {
+        Single
+            .just(Optional.ofNullable(clientId))
+            .flatMap(
+                optClient -> {
                     if (optClient.isPresent()) {
                         return userService.consents(userId, optClient.get());
                     }
                     return userService.consents(userId);
-                })
-                .subscribe(
-                        scopeApprovals -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(Json.encodePrettily(scopeApprovals)),
-                        error -> context.fail(error));
-
+                }
+            )
+            .subscribe(
+                scopeApprovals ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .end(Json.encodePrettily(scopeApprovals)),
+                error -> context.fail(error)
+            );
     }
 
     /**
@@ -67,18 +71,17 @@ public class UserConsentsEndpointHandler extends AbstractUserConsentEndpointHand
         final String userId = context.request().getParam("userId");
         final String clientId = context.request().getParam("clientId");
 
-        Single.just(Optional.ofNullable(clientId))
-                .flatMapCompletable(optClient -> {
+        Single
+            .just(Optional.ofNullable(clientId))
+            .flatMapCompletable(
+                optClient -> {
                     if (optClient.isPresent()) {
                         return getPrincipal(context)
-                                .flatMapCompletable(principal -> userService.revokeConsents(userId, optClient.get(), principal));
+                            .flatMapCompletable(principal -> userService.revokeConsents(userId, optClient.get(), principal));
                     }
-                    return getPrincipal(context)
-                            .flatMapCompletable(principal -> userService.revokeConsents(userId, principal));
-                })
-                .subscribe(
-                        () -> context.response().setStatusCode(204).end(),
-                        error -> context.fail(error));
-
+                    return getPrincipal(context).flatMapCompletable(principal -> userService.revokeConsents(userId, principal));
+                }
+            )
+            .subscribe(() -> context.response().setStatusCode(204).end(), error -> context.fail(error));
     }
 }

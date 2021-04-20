@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {AuthService} from '../../../../../../services/auth.service';
-import {BreadcrumbService} from '../../../../../../services/breadcrumb.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../../../../../services/auth.service';
+import { BreadcrumbService } from '../../../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-application-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
 export class ApplicationFormComponent implements OnInit {
   private domainId: string;
@@ -32,14 +32,12 @@ export class ApplicationFormComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private breadcrumbService: BreadcrumbService,
-              private authService: AuthService) { }
+  constructor(private route: ActivatedRoute, private breadcrumbService: BreadcrumbService, private authService: AuthService) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
-    this.rawTemplate = this.route.snapshot.queryParams['template'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
+    this.appId = this.route.snapshot.parent.parent.params.appId;
+    this.rawTemplate = this.route.snapshot.queryParams.template;
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.createMode = this.authService.hasPermissions(['application_form_create']);
     this.editMode = this.authService.hasPermissions(['application_form_update']);
@@ -48,6 +46,9 @@ export class ApplicationFormComponent implements OnInit {
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.appId + '/design/forms/form*', this.template);
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/applications/' + this.appId + '/design/forms/form*',
+      this.template,
+    );
   }
 }

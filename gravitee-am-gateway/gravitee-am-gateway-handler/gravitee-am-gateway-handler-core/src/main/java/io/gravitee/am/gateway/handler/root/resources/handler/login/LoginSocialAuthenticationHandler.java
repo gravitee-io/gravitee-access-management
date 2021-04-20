@@ -31,12 +31,11 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Fetch social providers information if client using one of them
@@ -65,89 +64,129 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
 
         // fetch client identity providers
-        getSocialIdentityProviders(client.getIdentities(), identityProvidersResultHandler -> {
-            if (identityProvidersResultHandler.failed()) {
-                logger.error("Unable to fetch client social identity providers", identityProvidersResultHandler.cause());
-                routingContext.fail(new InvalidRequestException("Unable to fetch client social identity providers"));
-            }
-
-            List<IdentityProvider> socialIdentityProviders = identityProvidersResultHandler.result();
-
-            // no social provider, continue
-            if (socialIdentityProviders == null || socialIdentityProviders.isEmpty()) {
-                routingContext.next();
-                return;
-            }
-
-            // client enable social connect
-            // get social identity providers information to correctly build the login page
-            enhanceSocialIdentityProviders(socialIdentityProviders, routingContext.request(), resultHandler -> {
-                if (resultHandler.failed()) {
-                    logger.error("Unable to enhance client social identity providers", resultHandler.cause());
-                    routingContext.fail(new InvalidRequestException("Unable to enhance client social identity providers"));
+        getSocialIdentityProviders(
+            client.getIdentities(),
+            identityProvidersResultHandler -> {
+                if (identityProvidersResultHandler.failed()) {
+                    logger.error("Unable to fetch client social identity providers", identityProvidersResultHandler.cause());
+                    routingContext.fail(new InvalidRequestException("Unable to fetch client social identity providers"));
                 }
 
-                // put social providers in context data
-                final List<SocialProviderData> socialProviderData = resultHandler.result();
-                if (socialProviderData != null) {
-                    List<SocialProviderData> filteredSocialProviderData = socialProviderData.stream().filter(providerData -> providerData.getIdentityProvider() != null && providerData.getAuthorizeUrl() != null).collect(Collectors.toList());
-                    List<IdentityProvider> providers = filteredSocialProviderData.stream().map(SocialProviderData::getIdentityProvider).collect(Collectors.toList());
-                    Map<String, String> authorizeUrls = filteredSocialProviderData.stream().collect(Collectors.toMap(o -> o.getIdentityProvider().getId(), o -> o.getAuthorizeUrl()));
+                List<IdentityProvider> socialIdentityProviders = identityProvidersResultHandler.result();
 
-                    // backwards compatibility
-                    routingContext.put(OAUTH2_PROVIDER_CONTEXT_KEY, providers);
-                    routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, providers);
-                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, authorizeUrls);
+                // no social provider, continue
+                if (socialIdentityProviders == null || socialIdentityProviders.isEmpty()) {
+                    routingContext.next();
+                    return;
                 }
 
-                // continue
-                routingContext.next();
-            });
-        });
+                // client enable social connect
+                // get social identity providers information to correctly build the login page
+                enhanceSocialIdentityProviders(
+                    socialIdentityProviders,
+                    routingContext.request(),
+                    resultHandler -> {
+                        if (resultHandler.failed()) {
+                            logger.error("Unable to enhance client social identity providers", resultHandler.cause());
+                            routingContext.fail(new InvalidRequestException("Unable to enhance client social identity providers"));
+                        }
 
+                        // put social providers in context data
+                        final List<SocialProviderData> socialProviderData = resultHandler.result();
+                        if (socialProviderData != null) {
+                            List<SocialProviderData> filteredSocialProviderData = socialProviderData
+                                .stream()
+                                .filter(
+                                    providerData -> providerData.getIdentityProvider() != null && providerData.getAuthorizeUrl() != null
+                                )
+                                .collect(Collectors.toList());
+                            List<IdentityProvider> providers = filteredSocialProviderData
+                                .stream()
+                                .map(SocialProviderData::getIdentityProvider)
+                                .collect(Collectors.toList());
+                            Map<String, String> authorizeUrls = filteredSocialProviderData
+                                .stream()
+                                .collect(Collectors.toMap(o -> o.getIdentityProvider().getId(), o -> o.getAuthorizeUrl()));
+
+                            // backwards compatibility
+                            routingContext.put(OAUTH2_PROVIDER_CONTEXT_KEY, providers);
+                            routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, providers);
+                            routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, authorizeUrls);
+                        }
+
+                        // continue
+                        routingContext.next();
+                    }
+                );
+            }
+        );
     }
 
     private void getSocialIdentityProviders(Set<String> identities, Handler<AsyncResult<List<IdentityProvider>>> resultHandler) {
         if (identities == null) {
             resultHandler.handle(Future.succeededFuture(Collections.emptyList()));
         } else {
-            resultHandler.handle(Future.succeededFuture(identities.stream()
-                    .map(identity -> identityProviderManager.getIdentityProvider(identity))
-                    .filter(identityProvider -> identityProvider != null && identityProvider.isExternal())
-                    .collect(Collectors.toList())));
+            resultHandler.handle(
+                Future.succeededFuture(
+                    identities
+                        .stream()
+                        .map(identity -> identityProviderManager.getIdentityProvider(identity))
+                        .filter(identityProvider -> identityProvider != null && identityProvider.isExternal())
+                        .collect(Collectors.toList())
+                )
+            );
         }
     }
 
-    private void enhanceSocialIdentityProviders(List<IdentityProvider> identityProviders, HttpServerRequest request, Handler<AsyncResult<List<SocialProviderData>>> resultHandler) {
-        Observable.fromIterable(identityProviders)
-                .flatMapMaybe(identityProvider -> {
+    private void enhanceSocialIdentityProviders(
+        List<IdentityProvider> identityProviders,
+        HttpServerRequest request,
+        Handler<AsyncResult<List<SocialProviderData>>> resultHandler
+    ) {
+        Observable
+            .fromIterable(identityProviders)
+            .flatMapMaybe(
+                identityProvider -> {
                     // get social identity provider type (currently use for display purpose (logo, description, ...)
                     String identityProviderType = identityProvider.getType();
-                    Optional<String> identityProviderSocialType = socialProviders.stream().filter(socialProvider -> identityProviderType.toLowerCase().contains(socialProvider)).findFirst();
+                    Optional<String> identityProviderSocialType = socialProviders
+                        .stream()
+                        .filter(socialProvider -> identityProviderType.toLowerCase().contains(socialProvider))
+                        .findFirst();
                     if (identityProviderSocialType.isPresent()) {
                         identityProvider.setType(identityProviderSocialType.get());
                     }
                     // get social sign in url
                     return getAuthorizeUrl(identityProvider.getId(), request)
-                            .map(authorizeUrl -> new SocialProviderData(identityProvider, authorizeUrl))
-                            .defaultIfEmpty(new SocialProviderData(identityProvider,null));
-                })
-                .toList()
-                .subscribe(socialProviderData -> resultHandler.handle(Future.succeededFuture(socialProviderData)),
-                        error -> resultHandler.handle(Future.failedFuture(error)));
+                        .map(authorizeUrl -> new SocialProviderData(identityProvider, authorizeUrl))
+                        .defaultIfEmpty(new SocialProviderData(identityProvider, null));
+                }
+            )
+            .toList()
+            .subscribe(
+                socialProviderData -> resultHandler.handle(Future.succeededFuture(socialProviderData)),
+                error -> resultHandler.handle(Future.failedFuture(error))
+            );
     }
 
     private Maybe<String> getAuthorizeUrl(String identityProviderId, HttpServerRequest request) {
-        return identityProviderManager.get(identityProviderId)
-                .flatMap(authenticationProvider -> {
+        return identityProviderManager
+            .get(identityProviderId)
+            .flatMap(
+                authenticationProvider -> {
                     Map<String, String> parameters = Collections.singletonMap("provider", identityProviderId);
                     String redirectUri = buildUri(request, "/" + domain.getPath() + "/login/callback", parameters);
                     Request signInURL = ((SocialAuthenticationProvider) authenticationProvider).signInUrl(redirectUri);
                     if (signInURL == null) {
                         return Maybe.empty();
                     }
-                    return Maybe.just(HttpMethod.GET.equals(signInURL.getMethod()) ? signInURL.getUri() : buildUri(request, "/" + domain.getPath() + "/login/SSO/POST", parameters));
-                });
+                    return Maybe.just(
+                        HttpMethod.GET.equals(signInURL.getMethod())
+                            ? signInURL.getUri()
+                            : buildUri(request, "/" + domain.getPath() + "/login/SSO/POST", parameters)
+                    );
+                }
+            );
     }
 
     private String buildUri(HttpServerRequest request, String path, Map<String, String> parameters) throws URISyntaxException {
@@ -155,6 +194,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
     }
 
     private class SocialProviderData {
+
         private IdentityProvider identityProvider;
         private String authorizeUrl;
 

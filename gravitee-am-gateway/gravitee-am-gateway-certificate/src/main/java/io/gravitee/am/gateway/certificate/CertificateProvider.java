@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.certificate.jwt.JWTParser;
  * @author GraviteeSource Team
  */
 public class CertificateProvider {
+
     private io.gravitee.am.certificate.api.CertificateProvider provider;
     private String domain;
     private JWTParser jwtParser;

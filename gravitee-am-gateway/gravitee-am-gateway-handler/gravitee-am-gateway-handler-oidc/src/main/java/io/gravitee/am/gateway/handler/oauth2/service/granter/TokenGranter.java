@@ -35,7 +35,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface TokenGranter {
-
     /**
      * Select which OAuth 2.0 grant flow can handle the incoming Access Token Request
      * @param grantType OAuth 2.0 grant flow type

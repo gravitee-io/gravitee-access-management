@@ -39,4 +39,3 @@ public class FactorAlreadyExistsException extends AbstractManagementException {
         return "A factor with factor type : " + factorType + " already exists";
     }
 }
-

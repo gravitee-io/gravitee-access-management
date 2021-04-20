@@ -30,22 +30,23 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
-public class IdentityProviderManagerImpl extends AbstractService<IdentityProviderManager> implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload> {
+public class IdentityProviderManagerImpl
+    extends AbstractService<IdentityProviderManager>
+    implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
@@ -83,10 +84,12 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
         logger.info("Initializing user providers");
         List<IdentityProvider> identities = identityProviderService.findAll().blockingGet();
-        identities.forEach(identityProvider -> {
-            logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-            loadUserProvider(identityProvider);
-        });
+        identities.forEach(
+            identityProvider -> {
+                logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+                loadUserProvider(identityProvider);
+            }
+        );
     }
 
     @Override
@@ -119,7 +122,19 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         newIdentityProvider.setId(DEFAULT_IDP_PREFIX + lowerCaseId);
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
         newIdentityProvider.setType(DEFAULT_IDP_TYPE);
-        newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
+        newIdentityProvider.setConfiguration(
+            "{\"uri\":\"" +
+            mongoUri +
+            "\",\"host\":\"" +
+            mongoHost +
+            "\",\"port\":" +
+            mongoPort +
+            ",\"enableCredentials\":false,\"database\":\"" +
+            mongoDBName +
+            "\",\"usersCollection\":\"idp_users_" +
+            lowerCaseId +
+            "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}"
+        );
 
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null);
     }
@@ -136,11 +151,13 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
     private void deployUserProvider(String identityProviderId) {
         logger.info("Management API has received a deploy identity provider event for {}", identityProviderId);
-        identityProviderService.findById(identityProviderId)
-                .subscribe(
-                        identityProvider -> loadUserProvider(identityProvider),
-                        error -> logger.error("Unable to deploy user provider  {}", identityProviderId, error),
-                        () -> logger.error("No identity provider found with id {}", identityProviderId));
+        identityProviderService
+            .findById(identityProviderId)
+            .subscribe(
+                identityProvider -> loadUserProvider(identityProvider),
+                error -> logger.error("Unable to deploy user provider  {}", identityProviderId, error),
+                () -> logger.error("No identity provider found with id {}", identityProviderId)
+            );
     }
 
     private void removeUserProvider(String identityProviderId) {
@@ -150,7 +167,10 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
     private void loadUserProvider(IdentityProvider identityProvider) {
         try {
-            UserProvider userProvider = identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
+            UserProvider userProvider = identityProviderPluginManager.create(
+                identityProvider.getType(),
+                identityProvider.getConfiguration()
+            );
             if (userProvider != null) {
                 logger.info("Initializing user provider : {}", identityProvider.getId());
                 userProviders.put(identityProvider.getId(), userProvider);
@@ -158,7 +178,12 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                 userProviders.remove(identityProvider.getId());
             }
         } catch (Exception ex) {
-            logger.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
+            logger.error(
+                "An error has occurred while loading user provider: {} [{}]",
+                identityProvider.getName(),
+                identityProvider.getType(),
+                ex
+            );
             userProviders.remove(identityProvider.getId());
         }
     }

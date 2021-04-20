@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl;
 
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+
 import com.nimbusds.jose.JWSAlgorithm;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
@@ -44,16 +46,13 @@ import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
-
-import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -97,26 +96,26 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     @Override
     public Single<Client> create(DynamicClientRegistrationRequest request, String basePath) {
         //If Dynamic client registration from template is enabled and request contains a software_id
-        if(domain.isDynamicClientRegistrationTemplateEnabled() && request.getSoftwareId()!=null && request.getSoftwareId().isPresent()) {
+        if (domain.isDynamicClientRegistrationTemplateEnabled() && request.getSoftwareId() != null && request.getSoftwareId().isPresent()) {
             return this.createClientFromTemplate(request, basePath);
         }
-        return this.createClientFromRequest(request,basePath);
+        return this.createClientFromRequest(request, basePath);
     }
 
     @Override
     public Single<Client> patch(Client toPatch, DynamicClientRegistrationRequest request, String basePath) {
         return this.validateClientPatchRequest(request)
-                .map(req -> req.patch(toPatch))
-                .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::update);
+            .map(req -> req.patch(toPatch))
+            .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
+            .flatMap(clientService::update);
     }
 
     @Override
     public Single<Client> update(Client toUpdate, DynamicClientRegistrationRequest request, String basePath) {
         return this.validateClientRegistrationRequest(request)
-                .map(req -> req.patch(toUpdate))
-                .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::update);
+            .map(req -> req.patch(toUpdate))
+            .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
+            .flatMap(clientService::update);
     }
 
     @Override
@@ -126,10 +125,11 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Override
     public Single<Client> renewSecret(Client toRenew, String basePath) {
-        return clientService.renewClientSecret(domain.getId(), toRenew.getId())
-                // after each modification we must update the registration token
-                .flatMap(client -> applyRegistrationAccessToken(basePath, client))
-                .flatMap(clientService::update);
+        return clientService
+            .renewClientSecret(domain.getId(), toRenew.getId())
+            // after each modification we must update the registration token
+            .flatMap(client -> applyRegistrationAccessToken(basePath, client))
+            .flatMap(clientService::update);
     }
 
     private Single<Client> createClientFromRequest(DynamicClientRegistrationRequest request, String basePath) {
@@ -139,11 +139,11 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         client.setDomain(domain.getId());
 
         return this.validateClientRegistrationRequest(request)
-                .map(req -> req.patch(client))
-                .flatMap(this::applyDefaultIdentityProvider)
-                .flatMap(this::applyDefaultCertificateProvider)
-                .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::create);
+            .map(req -> req.patch(client))
+            .flatMap(this::applyDefaultIdentityProvider)
+            .flatMap(this::applyDefaultCertificateProvider)
+            .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
+            .flatMap(clientService::create);
     }
 
     /**
@@ -157,18 +157,21 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * </pre>
      */
     private Single<Client> createClientFromTemplate(DynamicClientRegistrationRequest request, String basePath) {
-        return clientService.findById(request.getSoftwareId().get())
-                .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("No template found for software_id "+request.getSoftwareId().get())))
-                .flatMapSingle(this::sanitizeTemplate)
-                .map(request::patch)
-                .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::create)
-                .flatMap(client -> copyForms(request.getSoftwareId().get(),client))
-                .flatMap(client -> copyEmails(request.getSoftwareId().get(),client));
+        return clientService
+            .findById(request.getSoftwareId().get())
+            .switchIfEmpty(
+                Maybe.error(new InvalidClientMetadataException("No template found for software_id " + request.getSoftwareId().get()))
+            )
+            .flatMapSingle(this::sanitizeTemplate)
+            .map(request::patch)
+            .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
+            .flatMap(clientService::create)
+            .flatMap(client -> copyForms(request.getSoftwareId().get(), client))
+            .flatMap(client -> copyEmails(request.getSoftwareId().get(), client));
     }
 
     private Single<Client> sanitizeTemplate(Client template) {
-        if(!template.isTemplate()) {
+        if (!template.isTemplate()) {
             return Single.error(new InvalidClientMetadataException("Client behind software_id is not a template"));
         }
         //Erase potential confidential values.
@@ -188,13 +191,11 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     private Single<Client> copyForms(String sourceId, Client client) {
-        return formService.copyFromClient(domain.getId(), sourceId, client.getId())
-                .flatMap(irrelevant -> Single.just(client));
+        return formService.copyFromClient(domain.getId(), sourceId, client.getId()).flatMap(irrelevant -> Single.just(client));
     }
 
     private Single<Client> copyEmails(String sourceId, Client client) {
-        return emailTemplateService.copyFromClient(domain.getId(), sourceId, client.getId())
-                .flatMap(irrelevant -> Single.just(client));
+        return emailTemplateService.copyFromClient(domain.getId(), sourceId, client.getId()).flatMap(irrelevant -> Single.just(client));
     }
 
     /**
@@ -204,13 +205,16 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @return
      */
     private Single<Client> applyDefaultIdentityProvider(Client client) {
-        return identityProviderService.findByDomain(client.getDomain())
-            .map(identityProviders -> {
-                if(identityProviders!=null && !identityProviders.isEmpty()) {
-                    client.setIdentities(Collections.singleton(identityProviders.get(0).getId()));
+        return identityProviderService
+            .findByDomain(client.getDomain())
+            .map(
+                identityProviders -> {
+                    if (identityProviders != null && !identityProviders.isEmpty()) {
+                        client.setIdentities(Collections.singleton(identityProviders.get(0).getId()));
+                    }
+                    return client;
                 }
-                return client;
-            });
+            );
     }
 
     /**
@@ -220,17 +224,19 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @return
      */
     private Single<Client> applyDefaultCertificateProvider(Client client) {
-        return certificateService.findByDomain(client.getDomain())
-                .map(certificates -> {
-                    if(certificates!=null && !certificates.isEmpty()) {
+        return certificateService
+            .findByDomain(client.getDomain())
+            .map(
+                certificates -> {
+                    if (certificates != null && !certificates.isEmpty()) {
                         client.setCertificate(certificates.get(0).getId());
                     }
                     return client;
-                });
+                }
+            );
     }
 
     private Single<Client> applyRegistrationAccessToken(String basePath, Client client) {
-
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration(basePath);
 
         JWT jwt = new JWT();
@@ -239,16 +245,19 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         jwt.setAud(client.getClientId());
         jwt.setDomain(client.getDomain());
         jwt.setIat(new Date().getTime() / 1000l);
-        jwt.setExp(Date.from(new Date().toInstant().plusSeconds(3600*24*365*2)).getTime() / 1000l);
+        jwt.setExp(Date.from(new Date().toInstant().plusSeconds(3600 * 24 * 365 * 2)).getTime() / 1000l);
         jwt.setScope(Scope.DCR.getKey());
         jwt.setJti(SecureRandomString.generate());
 
-        return jwtService.encode(jwt, client)
-                .map(token -> {
+        return jwtService
+            .encode(jwt, client)
+            .map(
+                token -> {
                     client.setRegistrationAccessToken(token);
-                    client.setRegistrationClientUri(openIDProviderMetadata.getRegistrationEndpoint()+"/"+client.getClientId());
+                    client.setRegistrationClientUri(openIDProviderMetadata.getRegistrationEndpoint() + "/" + client.getClientId());
                     return client;
-                });
+                }
+            );
     }
 
     /**
@@ -260,36 +269,39 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      */
     private Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(final DynamicClientRegistrationRequest request) {
         LOGGER.debug("Validating dynamic client registration payload");
-        return this.validateClientRegistrationRequest(request,false);
+        return this.validateClientRegistrationRequest(request, false);
     }
 
     private Single<DynamicClientRegistrationRequest> validateClientPatchRequest(DynamicClientRegistrationRequest request) {
         LOGGER.debug("Validating dynamic client registration payload : patch");
         //redirect_uri is mandatory in the request, but in case of patch we may omit it...
-        return this.validateClientRegistrationRequest(request,true);
+        return this.validateClientRegistrationRequest(request, true);
     }
 
-    private Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(final DynamicClientRegistrationRequest request, boolean isPatch) {
-        if(request==null) {
+    private Single<DynamicClientRegistrationRequest> validateClientRegistrationRequest(
+        final DynamicClientRegistrationRequest request,
+        boolean isPatch
+    ) {
+        if (request == null) {
             return Single.error(new InvalidClientMetadataException());
         }
 
         return this.validateRedirectUri(request, isPatch)
-                .flatMap(this::validateScopes)
-                .flatMap(this::validateGrantType)
-                .flatMap(this::validateResponseType)
-                .flatMap(this::validateSubjectType)
-                .flatMap(this::validateRequestUri)
-                .flatMap(this::validateSectorIdentifierUri)
-                .flatMap(this::validateJKWs)
-                .flatMap(this::validateUserinfoSigningAlgorithm)
-                .flatMap(this::validateUserinfoEncryptionAlgorithm)
-                .flatMap(this::validateIdTokenSigningAlgorithm)
-                .flatMap(this::validateIdTokenEncryptionAlgorithm)
-                .flatMap(this::validateTlsClientAuth)
-                .flatMap(this::validateSelfSignedClientAuth)
-                .flatMap(this::validateAuthorizationSigningAlgorithm)
-                .flatMap(this::validateAuthorizationEncryptionAlgorithm);
+            .flatMap(this::validateScopes)
+            .flatMap(this::validateGrantType)
+            .flatMap(this::validateResponseType)
+            .flatMap(this::validateSubjectType)
+            .flatMap(this::validateRequestUri)
+            .flatMap(this::validateSectorIdentifierUri)
+            .flatMap(this::validateJKWs)
+            .flatMap(this::validateUserinfoSigningAlgorithm)
+            .flatMap(this::validateUserinfoEncryptionAlgorithm)
+            .flatMap(this::validateIdTokenSigningAlgorithm)
+            .flatMap(this::validateIdTokenEncryptionAlgorithm)
+            .flatMap(this::validateTlsClientAuth)
+            .flatMap(this::validateSelfSignedClientAuth)
+            .flatMap(this::validateAuthorizationSigningAlgorithm)
+            .flatMap(this::validateAuthorizationEncryptionAlgorithm);
     }
 
     /**
@@ -300,9 +312,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @return DynamicClientRegistrationRequest
      */
     private Single<DynamicClientRegistrationRequest> validateRedirectUri(DynamicClientRegistrationRequest request, boolean isPatch) {
-
         //Except for patching a client, redirect_uris metadata is required but may be null or empty.
-        if(!isPatch && request.getRedirectUris() == null) {
+        if (!isPatch && request.getRedirectUris() == null) {
             return Single.error(new InvalidRedirectUriException());
         }
 
@@ -311,8 +322,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateResponseType(DynamicClientRegistrationRequest request) {
         //if response_type provided, they must be valid.
-        if(request.getResponseTypes()!=null) {
-            if(!ResponseTypeUtils.isSupportedResponseType(request.getResponseTypes().orElse(Collections.emptyList()))) {
+        if (request.getResponseTypes() != null) {
+            if (!ResponseTypeUtils.isSupportedResponseType(request.getResponseTypes().orElse(Collections.emptyList()))) {
                 return Single.error(new InvalidClientMetadataException("Invalid response type."));
             }
         }
@@ -321,7 +332,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateGrantType(DynamicClientRegistrationRequest request) {
         //if grant_type provided, they must be valid.
-        if(request.getGrantTypes()!=null) {
+        if (request.getGrantTypes() != null) {
             if (!GrantTypeUtils.isSupportedGrantType(request.getGrantTypes().orElse(Collections.emptyList()))) {
                 return Single.error(new InvalidClientMetadataException("Missing or invalid grant type."));
             }
@@ -331,8 +342,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateSubjectType(DynamicClientRegistrationRequest request) {
         //if subject_type is provided, it must be valid.
-        if(request.getSubjectType()!=null && request.getSubjectType().isPresent()) {
-            if(!SubjectTypeUtils.isValidSubjectType(request.getSubjectType().get())) {
+        if (request.getSubjectType() != null && request.getSubjectType().isPresent()) {
+            if (!SubjectTypeUtils.isValidSubjectType(request.getSubjectType().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported subject type"));
             }
         }
@@ -341,8 +352,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateUserinfoSigningAlgorithm(DynamicClientRegistrationRequest request) {
         //if userinfo_signed_response_alg is provided, it must be valid.
-        if(request.getUserinfoSignedResponseAlg()!=null && request.getUserinfoSignedResponseAlg().isPresent()) {
-            if(!JWAlgorithmUtils.isValidUserinfoSigningAlg(request.getUserinfoSignedResponseAlg().get())) {
+        if (request.getUserinfoSignedResponseAlg() != null && request.getUserinfoSignedResponseAlg().isPresent()) {
+            if (!JWAlgorithmUtils.isValidUserinfoSigningAlg(request.getUserinfoSignedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported userinfo signing algorithm"));
             }
         }
@@ -350,20 +361,23 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     private Single<DynamicClientRegistrationRequest> validateUserinfoEncryptionAlgorithm(DynamicClientRegistrationRequest request) {
-        if(request.getUserinfoEncryptedResponseEnc()!=null && request.getUserinfoEncryptedResponseAlg()==null) {
-            return Single.error(new InvalidClientMetadataException("When userinfo_encrypted_response_enc is included, userinfo_encrypted_response_alg MUST also be provided"));
+        if (request.getUserinfoEncryptedResponseEnc() != null && request.getUserinfoEncryptedResponseAlg() == null) {
+            return Single.error(
+                new InvalidClientMetadataException(
+                    "When userinfo_encrypted_response_enc is included, userinfo_encrypted_response_alg MUST also be provided"
+                )
+            );
         }
         //if userinfo_encrypted_response_alg is provided, it must be valid.
-        if(request.getUserinfoEncryptedResponseAlg()!=null && request.getUserinfoEncryptedResponseAlg().isPresent()) {
-            if(!JWAlgorithmUtils.isValidUserinfoResponseAlg(request.getUserinfoEncryptedResponseAlg().get())) {
+        if (request.getUserinfoEncryptedResponseAlg() != null && request.getUserinfoEncryptedResponseAlg().isPresent()) {
+            if (!JWAlgorithmUtils.isValidUserinfoResponseAlg(request.getUserinfoEncryptedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported userinfo_encrypted_response_alg value"));
             }
-            if(request.getUserinfoEncryptedResponseEnc()!=null && request.getUserinfoEncryptedResponseEnc().isPresent()) {
-                if(!JWAlgorithmUtils.isValidUserinfoResponseEnc(request.getUserinfoEncryptedResponseEnc().get())) {
+            if (request.getUserinfoEncryptedResponseEnc() != null && request.getUserinfoEncryptedResponseEnc().isPresent()) {
+                if (!JWAlgorithmUtils.isValidUserinfoResponseEnc(request.getUserinfoEncryptedResponseEnc().get())) {
                     return Single.error(new InvalidClientMetadataException("Unsupported userinfo_encrypted_response_enc value"));
                 }
-            }
-            else {
+            } else {
                 //Apply default value if userinfo_encrypted_response_alg is informed and not userinfo_encrypted_response_enc.
                 request.setUserinfoEncryptedResponseEnc(Optional.of(JWAlgorithmUtils.getDefaultUserinfoResponseEnc()));
             }
@@ -373,8 +387,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateIdTokenSigningAlgorithm(DynamicClientRegistrationRequest request) {
         //if userinfo_signed_response_alg is provided, it must be valid.
-        if(request.getIdTokenSignedResponseAlg()!=null && request.getIdTokenSignedResponseAlg().isPresent()) {
-            if(!JWAlgorithmUtils.isValidIdTokenSigningAlg(request.getIdTokenSignedResponseAlg().get())) {
+        if (request.getIdTokenSignedResponseAlg() != null && request.getIdTokenSignedResponseAlg().isPresent()) {
+            if (!JWAlgorithmUtils.isValidIdTokenSigningAlg(request.getIdTokenSignedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported id_token signing algorithm"));
             }
         }
@@ -382,20 +396,23 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     private Single<DynamicClientRegistrationRequest> validateIdTokenEncryptionAlgorithm(DynamicClientRegistrationRequest request) {
-        if(request.getIdTokenEncryptedResponseEnc()!=null && request.getIdTokenEncryptedResponseAlg()==null) {
-            return Single.error(new InvalidClientMetadataException("When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided"));
+        if (request.getIdTokenEncryptedResponseEnc() != null && request.getIdTokenEncryptedResponseAlg() == null) {
+            return Single.error(
+                new InvalidClientMetadataException(
+                    "When id_token_encrypted_response_enc is included, id_token_encrypted_response_alg MUST also be provided"
+                )
+            );
         }
         //if id_token_encrypted_response_alg is provided, it must be valid.
-        if(request.getIdTokenEncryptedResponseAlg()!=null && request.getIdTokenEncryptedResponseAlg().isPresent()) {
-            if(!JWAlgorithmUtils.isValidIdTokenResponseAlg(request.getIdTokenEncryptedResponseAlg().get())) {
+        if (request.getIdTokenEncryptedResponseAlg() != null && request.getIdTokenEncryptedResponseAlg().isPresent()) {
+            if (!JWAlgorithmUtils.isValidIdTokenResponseAlg(request.getIdTokenEncryptedResponseAlg().get())) {
                 return Single.error(new InvalidClientMetadataException("Unsupported id_token_encrypted_response_alg value"));
             }
-            if(request.getIdTokenEncryptedResponseEnc()!=null && request.getIdTokenEncryptedResponseEnc().isPresent()) {
-                if(!JWAlgorithmUtils.isValidIdTokenResponseEnc(request.getIdTokenEncryptedResponseEnc().get())) {
+            if (request.getIdTokenEncryptedResponseEnc() != null && request.getIdTokenEncryptedResponseEnc().isPresent()) {
+                if (!JWAlgorithmUtils.isValidIdTokenResponseEnc(request.getIdTokenEncryptedResponseEnc().get())) {
                     return Single.error(new InvalidClientMetadataException("Unsupported id_token_encrypted_response_enc value"));
                 }
-            }
-            else {
+            } else {
                 //Apply default value if id_token_encrypted_response_alg is informed and not id_token_encrypted_response_enc.
                 request.setIdTokenEncryptedResponseEnc(Optional.of(JWAlgorithmUtils.getDefaultIdTokenResponseEnc()));
             }
@@ -405,12 +422,12 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateRequestUri(DynamicClientRegistrationRequest request) {
         //Check request_uri well formated
-        if(request.getRequestUris()!=null && request.getRequestUris().isPresent()) {
+        if (request.getRequestUris() != null && request.getRequestUris().isPresent()) {
             try {
                 //throw exception if uri mal formated
                 request.getRequestUris().get().stream().forEach(this::formatUrl);
             } catch (InvalidClientMetadataException err) {
-                return Single.error(new InvalidClientMetadataException("request_uris: "+err.getMessage()));
+                return Single.error(new InvalidClientMetadataException("request_uris: " + err.getMessage()));
             }
         }
         return Single.just(request);
@@ -418,65 +435,82 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<DynamicClientRegistrationRequest> validateSectorIdentifierUri(DynamicClientRegistrationRequest request) {
         //if sector_identifier_uri is provided, then retrieve content and validate redirect_uris among this list.
-        if(request.getSectorIdentifierUri()!=null && request.getSectorIdentifierUri().isPresent()) {
-
+        if (request.getSectorIdentifierUri() != null && request.getSectorIdentifierUri().isPresent()) {
             URI uri;
             try {
                 //throw exception if uri mal formated
                 uri = formatUrl(request.getSectorIdentifierUri().get());
             } catch (InvalidClientMetadataException err) {
-                return Single.error(new InvalidClientMetadataException("sector_identifier_uri: "+err.getMessage()));
+                return Single.error(new InvalidClientMetadataException("sector_identifier_uri: " + err.getMessage()));
             }
 
-            if(!uri.getScheme().equalsIgnoreCase("https")) {
-                return Single.error(new InvalidClientMetadataException("Scheme must be https for sector_identifier_uri : "+request.getSectorIdentifierUri().get()));
+            if (!uri.getScheme().equalsIgnoreCase("https")) {
+                return Single.error(
+                    new InvalidClientMetadataException(
+                        "Scheme must be https for sector_identifier_uri : " + request.getSectorIdentifierUri().get()
+                    )
+                );
             }
 
-            return client.getAbs(uri.toString())
-                    .rxSend()
-                    .map(HttpResponse::bodyAsString)
-                    .map(JsonArray::new)
-                    .onErrorResumeNext(Single.error(new InvalidClientMetadataException("Unable to parse sector_identifier_uri : "+ uri.toString())))
-                    .flatMapPublisher(Flowable::fromIterable)
-                    .cast(String.class)
-                    .collect(HashSet::new,(set, value)->set.add(value))
-                    .flatMap(allowedRedirectUris -> Observable.fromIterable(request.getRedirectUris().get())
+            return client
+                .getAbs(uri.toString())
+                .rxSend()
+                .map(HttpResponse::bodyAsString)
+                .map(JsonArray::new)
+                .onErrorResumeNext(
+                    Single.error(new InvalidClientMetadataException("Unable to parse sector_identifier_uri : " + uri.toString()))
+                )
+                .flatMapPublisher(Flowable::fromIterable)
+                .cast(String.class)
+                .collect(HashSet::new, (set, value) -> set.add(value))
+                .flatMap(
+                    allowedRedirectUris ->
+                        Observable
+                            .fromIterable(request.getRedirectUris().get())
                             .filter(redirectUri -> !allowedRedirectUris.contains(redirectUri))
-                            .collect(ArrayList<String>::new, (list, missingRedirectUri)-> list.add(missingRedirectUri))
-                            .flatMap(missing -> {
-                                if(!missing.isEmpty()) {
-                                    return Single.error(
-                                            new InvalidRedirectUriException("redirect uris are not allowed according to sector_identifier_uri: "+
-                                                    String.join(" ",missing)
+                            .collect(ArrayList<String>::new, (list, missingRedirectUri) -> list.add(missingRedirectUri))
+                            .flatMap(
+                                missing -> {
+                                    if (!missing.isEmpty()) {
+                                        return Single.error(
+                                            new InvalidRedirectUriException(
+                                                "redirect uris are not allowed according to sector_identifier_uri: " +
+                                                String.join(" ", missing)
                                             )
-                                    );
-                                } else {
-                                    return Single.just(request);
+                                        );
+                                    } else {
+                                        return Single.just(request);
+                                    }
                                 }
-                            })
-                    );
+                            )
+                );
         }
         return Single.just(request);
     }
 
     private Single<DynamicClientRegistrationRequest> validateJKWs(DynamicClientRegistrationRequest request) {
         //The jwks_uri and jwks parameters MUST NOT be used together.
-        if(request.getJwks()!=null && request.getJwks().isPresent() && request.getJwksUri()!=null && request.getJwksUri().isPresent()) {
+        if (
+            request.getJwks() != null && request.getJwks().isPresent() && request.getJwksUri() != null && request.getJwksUri().isPresent()
+        ) {
             return Single.error(new InvalidClientMetadataException("The jwks_uri and jwks parameters MUST NOT be used together."));
         }
 
         //Check jwks_uri
-        if(request.getJwksUri()!=null && request.getJwksUri().isPresent()) {
-            return jwkService.getKeys(request.getJwksUri().get())
-                    .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("No JWK found behind jws uri...")))
-                    .flatMapSingle(jwkSet -> {
+        if (request.getJwksUri() != null && request.getJwksUri().isPresent()) {
+            return jwkService
+                .getKeys(request.getJwksUri().get())
+                .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("No JWK found behind jws uri...")))
+                .flatMapSingle(
+                    jwkSet -> {
                         /* Uncomment if we expect to save it as fallback
                         if(jwkSet!=null && jwkSet.isPresent()) {
                             request.setJwks(jwkSet);
                         }
                         */
                         return Single.just(request);
-                    });
+                    }
+                );
         }
 
         return Single.just(request);
@@ -489,18 +523,20 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @return DynamicClientRegistrationRequest
      */
     private Single<DynamicClientRegistrationRequest> validateScopes(DynamicClientRegistrationRequest request) {
+        final boolean hasAllowedScopes =
+            domain.getOidc() != null &&
+            domain.getOidc().getClientRegistrationSettings() != null &&
+            domain.getOidc().getClientRegistrationSettings().isAllowedScopesEnabled() &&
+            domain.getOidc().getClientRegistrationSettings().getAllowedScopes() != null;
 
-        final boolean hasAllowedScopes = domain.getOidc()!=null && domain.getOidc().getClientRegistrationSettings()!=null &&
-                domain.getOidc().getClientRegistrationSettings().isAllowedScopesEnabled() &&
-                domain.getOidc().getClientRegistrationSettings().getAllowedScopes()!=null;
-
-        final boolean hasDefaultScopes = domain.getOidc()!=null && domain.getOidc().getClientRegistrationSettings()!=null &&
-                domain.getOidc().getClientRegistrationSettings().getDefaultScopes()!=null &&
-                !domain.getOidc().getClientRegistrationSettings().getDefaultScopes().isEmpty();
+        final boolean hasDefaultScopes =
+            domain.getOidc() != null &&
+            domain.getOidc().getClientRegistrationSettings() != null &&
+            domain.getOidc().getClientRegistrationSettings().getDefaultScopes() != null &&
+            !domain.getOidc().getClientRegistrationSettings().getDefaultScopes().isEmpty();
 
         //Remove from the request every non allowed scope
-        if(request.getScope()!=null && request.getScope().isPresent() && hasAllowedScopes) {
-
+        if (request.getScope() != null && request.getScope().isPresent() && hasAllowedScopes) {
             final Set<String> allowedScopes = new HashSet<>(domain.getOidc().getClientRegistrationSettings().getAllowedScopes());
             final Set<String> requestedScopes = new HashSet<>(request.getScope().get());
 
@@ -508,13 +544,15 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             requestedScopes.retainAll(allowedScopes);
 
             //Update the request
-            request.setScope(Optional.of(String.join(SCOPE_DELIMITER,requestedScopes)));
+            request.setScope(Optional.of(String.join(SCOPE_DELIMITER, requestedScopes)));
         }
 
         //Apply default scope if scope metadata is empty
-        if((request.getScope()==null || !request.getScope().isPresent() || request.getScope().get().isEmpty()) && hasDefaultScopes) {
+        if ((request.getScope() == null || !request.getScope().isPresent() || request.getScope().get().isEmpty()) && hasDefaultScopes) {
             //Add default scopes if needed
-            request.setScope(Optional.of(String.join(SCOPE_DELIMITER,domain.getOidc().getClientRegistrationSettings().getDefaultScopes())));
+            request.setScope(
+                Optional.of(String.join(SCOPE_DELIMITER, domain.getOidc().getClientRegistrationSettings().getDefaultScopes()))
+            );
         }
 
         return Single.just(request);
@@ -536,9 +574,15 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     private Single<DynamicClientRegistrationRequest> validateAuthorizationEncryptionAlgorithm(DynamicClientRegistrationRequest request) {
-        if ((request.getAuthorizationEncryptedResponseEnc() != null && request.getAuthorizationEncryptedResponseEnc().isPresent()) &&
-                (request.getAuthorizationEncryptedResponseAlg() == null || !request.getAuthorizationEncryptedResponseAlg().isPresent())) {
-            return Single.error(new InvalidClientMetadataException("When authorization_encrypted_response_enc is included, authorization_encrypted_response_alg MUST also be provided"));
+        if (
+            (request.getAuthorizationEncryptedResponseEnc() != null && request.getAuthorizationEncryptedResponseEnc().isPresent()) &&
+            (request.getAuthorizationEncryptedResponseAlg() == null || !request.getAuthorizationEncryptedResponseAlg().isPresent())
+        ) {
+            return Single.error(
+                new InvalidClientMetadataException(
+                    "When authorization_encrypted_response_enc is included, authorization_encrypted_response_alg MUST also be provided"
+                )
+            );
         }
 
         // If authorization_encrypted_response_alg is provided, it must be valid.
@@ -571,37 +615,75 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @return DynamicClientRegistrationRequest
      */
     private Single<DynamicClientRegistrationRequest> validateTlsClientAuth(DynamicClientRegistrationRequest request) {
-        if(request.getTokenEndpointAuthMethod() != null &&
-                request.getTokenEndpointAuthMethod().isPresent() &&
-                ClientAuthenticationMethod.TLS_CLIENT_AUTH.equalsIgnoreCase(request.getTokenEndpointAuthMethod().get())) {
-
-            if ((request.getTlsClientAuthSubjectDn() == null || ! request.getTlsClientAuthSubjectDn().isPresent()) &&
-                    (request.getTlsClientAuthSanDns() == null || ! request.getTlsClientAuthSanDns().isPresent()) &&
-                    (request.getTlsClientAuthSanIp() == null || ! request.getTlsClientAuthSanIp().isPresent()) &&
-                    (request.getTlsClientAuthSanEmail() == null || ! request.getTlsClientAuthSanEmail().isPresent()) &&
-                    (request.getTlsClientAuthSanUri() == null || ! request.getTlsClientAuthSanUri().isPresent())) {
+        if (
+            request.getTokenEndpointAuthMethod() != null &&
+            request.getTokenEndpointAuthMethod().isPresent() &&
+            ClientAuthenticationMethod.TLS_CLIENT_AUTH.equalsIgnoreCase(request.getTokenEndpointAuthMethod().get())
+        ) {
+            if (
+                (request.getTlsClientAuthSubjectDn() == null || !request.getTlsClientAuthSubjectDn().isPresent()) &&
+                (request.getTlsClientAuthSanDns() == null || !request.getTlsClientAuthSanDns().isPresent()) &&
+                (request.getTlsClientAuthSanIp() == null || !request.getTlsClientAuthSanIp().isPresent()) &&
+                (request.getTlsClientAuthSanEmail() == null || !request.getTlsClientAuthSanEmail().isPresent()) &&
+                (request.getTlsClientAuthSanUri() == null || !request.getTlsClientAuthSanUri().isPresent())
+            ) {
                 return Single.error(new InvalidClientMetadataException("Missing TLS parameter for tls_client_auth."));
             }
 
-            if (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent() && (
-                    request.getTlsClientAuthSanDns().isPresent() || request.getTlsClientAuthSanEmail().isPresent() ||
-                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+            if (
+                request.getTlsClientAuthSubjectDn() != null &&
+                request.getTlsClientAuthSubjectDn().isPresent() &&
+                (
+                    request.getTlsClientAuthSanDns().isPresent() ||
+                    request.getTlsClientAuthSanEmail().isPresent() ||
+                    request.getTlsClientAuthSanIp().isPresent() ||
+                    request.getTlsClientAuthSanUri().isPresent()
+                )
+            ) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
-            } else if (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent() && (
-                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanEmail().isPresent() ||
-                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+            } else if (
+                request.getTlsClientAuthSanDns() != null &&
+                request.getTlsClientAuthSanDns().isPresent() &&
+                (
+                    request.getTlsClientAuthSubjectDn().isPresent() ||
+                    request.getTlsClientAuthSanEmail().isPresent() ||
+                    request.getTlsClientAuthSanIp().isPresent() ||
+                    request.getTlsClientAuthSanUri().isPresent()
+                )
+            ) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
-            } else if (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent() && (
-                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanDns().isPresent() ||
-                            request.getTlsClientAuthSanEmail().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+            } else if (
+                request.getTlsClientAuthSanIp() != null &&
+                request.getTlsClientAuthSanIp().isPresent() &&
+                (
+                    request.getTlsClientAuthSubjectDn().isPresent() ||
+                    request.getTlsClientAuthSanDns().isPresent() ||
+                    request.getTlsClientAuthSanEmail().isPresent() ||
+                    request.getTlsClientAuthSanUri().isPresent()
+                )
+            ) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
-            } else if (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent() && (
-                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanDns().isPresent() ||
-                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+            } else if (
+                request.getTlsClientAuthSanEmail() != null &&
+                request.getTlsClientAuthSanEmail().isPresent() &&
+                (
+                    request.getTlsClientAuthSubjectDn().isPresent() ||
+                    request.getTlsClientAuthSanDns().isPresent() ||
+                    request.getTlsClientAuthSanIp().isPresent() ||
+                    request.getTlsClientAuthSanUri().isPresent()
+                )
+            ) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
-            } else if (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent() && (
-                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanDns().isPresent() ||
-                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanEmail().isPresent())) {
+            } else if (
+                request.getTlsClientAuthSanUri() != null &&
+                request.getTlsClientAuthSanUri().isPresent() &&
+                (
+                    request.getTlsClientAuthSubjectDn().isPresent() ||
+                    request.getTlsClientAuthSanDns().isPresent() ||
+                    request.getTlsClientAuthSanIp().isPresent() ||
+                    request.getTlsClientAuthSanEmail().isPresent()
+                )
+            ) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
             }
         }
@@ -624,12 +706,18 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @return DynamicClientRegistrationRequest
      */
     private Single<DynamicClientRegistrationRequest> validateSelfSignedClientAuth(DynamicClientRegistrationRequest request) {
-        if (request.getTokenEndpointAuthMethod() != null &&
-                request.getTokenEndpointAuthMethod().isPresent() &&
-                ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equalsIgnoreCase(request.getTokenEndpointAuthMethod().get())) {
-            if ((request.getJwks() == null || !request.getJwks().isPresent()) &&
-                    (request.getJwksUri() == null || !request.getJwksUri().isPresent())) {
-                return Single.error(new InvalidClientMetadataException("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri."));
+        if (
+            request.getTokenEndpointAuthMethod() != null &&
+            request.getTokenEndpointAuthMethod().isPresent() &&
+            ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equalsIgnoreCase(request.getTokenEndpointAuthMethod().get())
+        ) {
+            if (
+                (request.getJwks() == null || !request.getJwks().isPresent()) &&
+                (request.getJwksUri() == null || !request.getJwksUri().isPresent())
+            ) {
+                return Single.error(
+                    new InvalidClientMetadataException("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri.")
+                );
             }
         }
         return Single.just(request);
@@ -643,9 +731,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private URI formatUrl(String uri) {
         try {
             return UriBuilder.fromHttpUrl(uri).build();
-        }
-        catch(IllegalArgumentException | URISyntaxException ex) {
-            throw new InvalidClientMetadataException(uri+" is not valid.");
+        } catch (IllegalArgumentException | URISyntaxException ex) {
+            throw new InvalidClientMetadataException(uri + " is not valid.");
         }
     }
 }

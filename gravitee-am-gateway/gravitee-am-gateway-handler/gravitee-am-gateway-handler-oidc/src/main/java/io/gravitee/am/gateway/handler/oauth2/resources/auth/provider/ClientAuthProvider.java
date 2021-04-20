@@ -29,7 +29,6 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
  * @author GraviteeSource Team
  */
 public interface ClientAuthProvider {
-
     boolean canHandle(Client client, HttpServerRequest request);
 
     void handle(Client client, HttpServerRequest request, Handler<AsyncResult<Client>> handler);

@@ -50,16 +50,17 @@ public class GraviteeVerticle extends AbstractVerticle {
     public void start(Future<Void> startFuture) {
         httpServer.requestHandler(request -> reactor.route().accept(request));
 
-        httpServer.listen(res -> {
-            if (res.succeeded()) {
-                logger.info("HTTP Server is now listening for requests on port {}",
-                        httpServerConfiguration.getPort());
-                startFuture.complete();
-            } else {
-                logger.error("Unable to start HTTP Server", res.cause());
-                startFuture.fail(res.cause());
+        httpServer.listen(
+            res -> {
+                if (res.succeeded()) {
+                    logger.info("HTTP Server is now listening for requests on port {}", httpServerConfiguration.getPort());
+                    startFuture.complete();
+                } else {
+                    logger.error("Unable to start HTTP Server", res.cause());
+                    startFuture.fail(res.cause());
+                }
             }
-        });
+        );
     }
 
     @Override

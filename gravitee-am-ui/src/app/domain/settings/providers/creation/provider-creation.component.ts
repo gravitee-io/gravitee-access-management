@@ -13,31 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {MatStepper} from '@angular/material';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ProviderService} from '../../../../services/provider.service';
-import {SnackbarService} from '../../../../services/snackbar.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { MatStepper } from '@angular/material';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ProviderService } from '../../../../services/provider.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
   selector: 'app-idp-creation',
   templateUrl: './provider-creation.component.html',
-  styleUrls: ['./provider-creation.component.scss']
+  styleUrls: ['./provider-creation.component.scss'],
 })
 export class ProviderCreationComponent implements OnInit {
   public provider: any = {};
   private domainId: string;
   private organizationContext: boolean;
   configurationIsValid = false;
-  @ViewChild ('stepper') stepper: MatStepper;
+  @ViewChild('stepper') stepper: MatStepper;
 
-  constructor(private providerService: ProviderService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) { }
+  constructor(
+    private providerService: ProviderService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -45,7 +47,7 @@ export class ProviderCreationComponent implements OnInit {
 
   create() {
     this.provider.configuration = JSON.stringify(this.provider.configuration);
-    this.providerService.create(this.domainId, this.provider, this.organizationContext).subscribe(data => {
+    this.providerService.create(this.domainId, this.provider, this.organizationContext).subscribe((data) => {
       this.snackbarService.open('Provider ' + data.name + ' created');
       if (this.organizationContext) {
         this.router.navigate(['/settings', 'management', 'providers', data.id]);

@@ -15,16 +15,16 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UserService} from '../../../services/user.service';
+import { UserService } from '../../../services/user.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { DialogService } from '../../../services/dialog.service';
 import { OrganizationService } from '../../../services/organization.service';
-import {AuthService} from '../../../services/auth.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.component.html',
-  styleUrls: ['./users.component.scss']
+  styleUrls: ['./users.component.scss'],
 })
 export class UsersComponent implements OnInit {
   private searchValue: string;
@@ -36,19 +36,21 @@ export class UsersComponent implements OnInit {
   page: any = {};
   createMode: boolean;
 
-  constructor(private userService: UserService,
-              private organizationService: OrganizationService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute,
-              private router: Router) {
+  constructor(
+    private userService: UserService,
+    private organizationService: OrganizationService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 25;
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.createMode = false;
@@ -57,21 +59,23 @@ export class UsersComponent implements OnInit {
       this.createMode = this.authService.hasPermissions(['domain_user_create']);
       this.requiredReadPermission = 'domain_user_read';
     }
-    this.pagedUsers = this.route.snapshot.data['users'];
+    this.pagedUsers = this.route.snapshot.data.users;
     this.users = this.pagedUsers.data;
     this.page.totalElements = this.pagedUsers.totalCount;
   }
 
   get isEmpty() {
-    return !this.users || this.users.length === 0 && !this.searchValue;
+    return !this.users || (this.users.length === 0 && !this.searchValue);
   }
 
   loadUsers() {
-    const findUsers = (this.searchValue) ?
-      this.userService.search(this.domainId, this.searchValue + '*', this.page.pageNumber, this.page.size, this.organizationContext) :
-      (this.organizationContext ? this.organizationService.users(this.page.pageNumber, this.page.size) : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size));
+    const findUsers = this.searchValue
+      ? this.userService.search(this.domainId, this.searchValue + '*', this.page.pageNumber, this.page.size, this.organizationContext)
+      : this.organizationContext
+      ? this.organizationService.users(this.page.pageNumber, this.page.size)
+      : this.userService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
 
-    findUsers.subscribe(pagedUsers => {
+    findUsers.subscribe((pagedUsers) => {
       this.page.totalElements = pagedUsers.totalCount;
       this.users = pagedUsers.data;
     });
@@ -79,17 +83,15 @@ export class UsersComponent implements OnInit {
 
   delete(id, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete User', 'Are you sure you want to delete this user ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
-            this.snackbarService.open('User deleted');
-            this.page.pageNumber = 0;
-            this.loadUsers();
-          });
-        }
-      });
+    this.dialogService.confirm('Delete User', 'Are you sure you want to delete this user ?').subscribe((res) => {
+      if (res) {
+        this.userService.delete(this.domainId, id, this.organizationContext).subscribe((response) => {
+          this.snackbarService.open('User deleted');
+          this.page.pageNumber = 0;
+          this.loadUsers();
+        });
+      }
+    });
   }
 
   onSearch(event) {

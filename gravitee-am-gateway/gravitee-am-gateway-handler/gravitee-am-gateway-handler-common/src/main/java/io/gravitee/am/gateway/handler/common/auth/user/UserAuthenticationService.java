@@ -24,7 +24,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface UserAuthenticationService {
-
     /**
      * Method called when a user has been authenticated by any means (login, extension-grant, token ...)
      *

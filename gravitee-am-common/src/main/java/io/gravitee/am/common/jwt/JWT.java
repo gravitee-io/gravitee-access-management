@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class JWT extends HashMap<String, Object> {
 
-    public JWT() { }
+    public JWT() {}
 
     public JWT(Map<? extends String, ?> claims) {
         super(claims);
@@ -58,7 +58,7 @@ public class JWT extends HashMap<String, Object> {
     }
 
     public long getExp() {
-        return containsKey(Claims.exp) ? ((Number) get(Claims.exp)).longValue(): 0l;
+        return containsKey(Claims.exp) ? ((Number) get(Claims.exp)).longValue() : 0l;
     }
 
     public void setExp(long exp) {

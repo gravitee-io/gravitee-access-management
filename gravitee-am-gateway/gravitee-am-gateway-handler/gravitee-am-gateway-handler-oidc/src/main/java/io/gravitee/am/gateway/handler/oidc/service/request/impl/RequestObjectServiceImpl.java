@@ -41,13 +41,12 @@ import io.reactivex.SingleSource;
 import io.reactivex.functions.Function;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -75,15 +74,18 @@ public class RequestObjectServiceImpl implements RequestObjectService {
 
     @Override
     public Single<JWT> readRequestObject(String request, Client client) {
-        return jweService.decrypt(request, client)
-                .onErrorResumeNext(Single.error(new InvalidRequestObjectException("Malformed request object")))
-                .flatMap((Function<JWT, SingleSource<JWT>>) jwt -> {
+        return jweService
+            .decrypt(request, client)
+            .onErrorResumeNext(Single.error(new InvalidRequestObjectException("Malformed request object")))
+            .flatMap(
+                (Function<JWT, SingleSource<JWT>>) jwt -> {
                     if (jwt instanceof SignedJWT) {
                         return validateSignature((SignedJWT) jwt, client);
                     } else {
                         return Single.just(jwt);
                     }
-                });
+                }
+            );
     }
 
     @Override
@@ -93,24 +95,27 @@ public class RequestObjectServiceImpl implements RequestObjectService {
                 // Extract the identifier
                 String identifier = requestUri.substring(RESOURCE_OBJECT_URN_PREFIX.length());
 
-                return requestObjectRepository.findById(identifier)
-                        .switchIfEmpty(Single.error(new InvalidRequestObjectException()))
-                        .flatMap((Function<RequestObject, Single<JWT>>) req -> {
+                return requestObjectRepository
+                    .findById(identifier)
+                    .switchIfEmpty(Single.error(new InvalidRequestObjectException()))
+                    .flatMap(
+                        (Function<RequestObject, Single<JWT>>) req -> {
                             if (req.getExpireAt().after(new Date())) {
                                 return readRequestObject(req.getPayload(), client);
                             }
 
                             return Single.error(new InvalidRequestObjectException());
-                        });
+                        }
+                    );
             } else {
-                return webClient.getAbs(UriBuilder.fromHttpUrl(requestUri).build().toString())
-                        .rxSend()
-                        .map(HttpResponse::bodyAsString)
-                        .flatMap((Function<String, Single<JWT>>) s -> readRequestObject(s, client));
+                return webClient
+                    .getAbs(UriBuilder.fromHttpUrl(requestUri).build().toString())
+                    .rxSend()
+                    .map(HttpResponse::bodyAsString)
+                    .flatMap((Function<String, Single<JWT>>) s -> readRequestObject(s, client));
             }
-        }
-        catch (IllegalArgumentException | URISyntaxException ex) {
-            return Single.error(new InvalidRequestObjectException(requestUri+" is not valid."));
+        } catch (IllegalArgumentException | URISyntaxException ex) {
+            return Single.error(new InvalidRequestObjectException(requestUri + " is not valid."));
         }
     }
 
@@ -121,14 +126,15 @@ public class RequestObjectServiceImpl implements RequestObjectService {
 
             // The authorization server shall verify that the request object is valid, the signature algorithm is not
             // none, and the signature is correct as in clause 6.3 of [OIDC].
-            if (! (jwt instanceof SignedJWT) || jwt.getHeader().getAlgorithm() == Algorithm.NONE) {
-                    return Single.error(new InvalidRequestObjectException("Request object must be signed"));
+            if (!(jwt instanceof SignedJWT) || jwt.getHeader().getAlgorithm() == Algorithm.NONE) {
+                return Single.error(new InvalidRequestObjectException("Request object must be signed"));
             }
 
             SignedJWT signedJWT = (SignedJWT) jwt;
 
             return validateSignature(signedJWT, client)
-                    .flatMap(new Function<JWT, SingleSource<RequestObject>>() {
+                .flatMap(
+                    new Function<JWT, SingleSource<RequestObject>>() {
                         @Override
                         public SingleSource<RequestObject> apply(JWT jwt) throws Exception {
                             RequestObject requestObject = new RequestObject();
@@ -145,8 +151,10 @@ public class RequestObjectServiceImpl implements RequestObjectService {
 
                             return requestObjectRepository.create(requestObject);
                         }
-                    })
-                    .flatMap((Function<RequestObject, SingleSource<RequestObjectRegistrationResponse>>) requestObject -> {
+                    }
+                )
+                .flatMap(
+                    (Function<RequestObject, SingleSource<RequestObjectRegistrationResponse>>) requestObject -> {
                         RequestObjectRegistrationResponse response = new RequestObjectRegistrationResponse();
 
                         response.setIss(openIDDiscoveryService.getIssuer(request.getOrigin()));
@@ -155,36 +163,44 @@ public class RequestObjectServiceImpl implements RequestObjectService {
                         response.setExp(requestObject.getExpireAt().getTime());
 
                         return Single.just(response);
-                    });
+                    }
+                );
         } catch (ParseException pe) {
             return Single.error(new InvalidRequestObjectException());
         }
     }
 
     private Single<JWT> validateSignature(SignedJWT jwt, Client client) {
-        return jwkService.getKeys(client)
-                .switchIfEmpty(Maybe.error(new InvalidRequestObjectException()))
-                .flatMap(new Function<JWKSet, MaybeSource<JWK>>() {
+        return jwkService
+            .getKeys(client)
+            .switchIfEmpty(Maybe.error(new InvalidRequestObjectException()))
+            .flatMap(
+                new Function<JWKSet, MaybeSource<JWK>>() {
                     @Override
                     public MaybeSource<JWK> apply(JWKSet jwkSet) throws Exception {
                         return jwkService.getKey(jwkSet, jwt.getHeader().getKeyID());
                     }
-                })
-                .switchIfEmpty(Maybe.error(new InvalidRequestObjectException()))
-                .flatMapSingle(new Function<JWK, SingleSource<JWT>>() {
+                }
+            )
+            .switchIfEmpty(Maybe.error(new InvalidRequestObjectException()))
+            .flatMapSingle(
+                new Function<JWK, SingleSource<JWT>>() {
                     @Override
                     public SingleSource<JWT> apply(JWK jwk) throws Exception {
                         // 6.3.2.  Signed Request Object
                         // To perform Signature Validation, the alg Header Parameter in the
                         // JOSE Header MUST match the value of the request_object_signing_alg
                         // set during Client Registration
-                        if (jwt.getHeader().getAlgorithm().getName().equals(client.getRequestObjectSigningAlg()) &&
-                                jwsService.isValidSignature(jwt, jwk)) {
+                        if (
+                            jwt.getHeader().getAlgorithm().getName().equals(client.getRequestObjectSigningAlg()) &&
+                            jwsService.isValidSignature(jwt, jwk)
+                        ) {
                             return Single.just(jwt);
                         } else {
                             return Single.error(new InvalidRequestObjectException("Invalid signature"));
                         }
                     }
-                });
+                }
+            );
     }
 }

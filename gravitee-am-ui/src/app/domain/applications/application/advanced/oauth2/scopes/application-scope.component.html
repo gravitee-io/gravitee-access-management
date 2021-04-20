@@ -15,19 +15,19 @@
     limitations under the License.
 
 -->
-<form #applicationScopeForm="ngForm" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px;">
+<form #applicationScopeForm="ngForm" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px">
   <div fxLayout="row" fxLayoutGap="5px">
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="20">
       <mat-select placeholder="Scope" name="key" [(ngModel)]="scope.key" [formControl]="selectScopes">
-        <mat-select-trigger>{{selectScopes.value ? selectScopes.value : ''}}</mat-select-trigger>
+        <mat-select-trigger>{{ selectScopes.value ? selectScopes.value : '' }}</mat-select-trigger>
         <mat-option *ngFor="let scope of scopes" [value]="scope.key">
-          <mat-icon style="vertical-align:middle;">donut_large</mat-icon>
-          <span>{{ scope.key }}</span> | <small>{{scope.name}}</small>
+          <mat-icon style="vertical-align: middle">donut_large</mat-icon>
+          <span>{{ scope.key }}</span> | <small>{{ scope.name }}</small>
         </mat-option>
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="26">
-      <input matInput type="number" placeholder="Duration time" name="expiresIn" min="0" [min]="0" [(ngModel)]="scope.expiresIn">
+      <input matInput type="number" placeholder="Duration time" name="expiresIn" min="0" [min]="0" [(ngModel)]="scope.expiresIn" />
       <mat-hint>Optional. User consent duration.</mat-hint>
     </mat-form-field>
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="38">
@@ -43,7 +43,7 @@
       <mat-hint>Optional. Unit time for the user consent duration.</mat-hint>
     </mat-form-field>
     <div>
-      <button style="margin-top: 7px;" mat-stroked-button [disabled]="formIsInvalid()" (click)="addScope()">+ ADD</button>
+      <button style="margin-top: 7px" mat-stroked-button [disabled]="formIsInvalid()" (click)="addScope()">+ ADD</button>
     </div>
   </div>
 </form>

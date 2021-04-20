@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +34,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface UserService {
-
     Single<Set<User>> findByDomain(String domain);
 
     Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);

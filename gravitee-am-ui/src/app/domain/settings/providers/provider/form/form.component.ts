@@ -18,7 +18,7 @@ import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChange
 @Component({
   selector: 'provider-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
 export class ProviderFormComponent implements OnInit, OnChanges {
   @Input('providerConfiguration') configuration: any = {};
@@ -27,10 +27,9 @@ export class ProviderFormComponent implements OnInit, OnChanges {
   displayForm: boolean = false;
   data: any = {};
 
-  constructor() { }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.providerSchema) {
@@ -53,7 +52,7 @@ export class ProviderFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    let configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    let configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

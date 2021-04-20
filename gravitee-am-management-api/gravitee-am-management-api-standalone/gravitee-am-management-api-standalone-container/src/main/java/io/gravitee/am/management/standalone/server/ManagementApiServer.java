@@ -18,6 +18,8 @@ package io.gravitee.am.management.standalone.server;
 import io.gravitee.am.management.handlers.management.api.ManagementApplication;
 import io.gravitee.am.management.handlers.management.api.spring.ManagementConfiguration;
 import io.gravitee.node.jetty.JettyHttpServer;
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -31,9 +33,6 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
 import org.springframework.web.filter.DelegatingFilterProxy;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.springframework.web.servlet.DispatcherServlet;
-
-import javax.servlet.DispatcherType;
-import java.util.EnumSet;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -52,7 +51,6 @@ public class ManagementApiServer extends JettyHttpServer {
     }
 
     public void attachHandlers() {
-
         // Create the servlet context
         final ServletContextHandler context = new ServletContextHandler(this.server, entrypoint, ServletContextHandler.SESSIONS);
 
@@ -77,6 +75,10 @@ public class ManagementApiServer extends JettyHttpServer {
         context.addFilter(ForwardedHeaderFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 
         // Spring Security filter
-        context.addFilter(new FilterHolder(new DelegatingFilterProxy("springSecurityFilterChain")), "/*", EnumSet.allOf(DispatcherType.class));
+        context.addFilter(
+            new FilterHolder(new DelegatingFilterProxy("springSecurityFilterChain")),
+            "/*",
+            EnumSet.allOf(DispatcherType.class)
+        );
     }
 }

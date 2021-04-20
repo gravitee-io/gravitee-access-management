@@ -19,11 +19,10 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.reactivex.observers.TestObserver;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collections;
 import java.util.Set;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -132,5 +131,4 @@ public class MongoScopeRepositoryTest extends AbstractManagementRepositoryTest {
         // fetch scope
         scopeRepository.findById(scopeCreated.getId()).test().assertEmpty();
     }
-
 }

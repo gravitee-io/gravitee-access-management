@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
@@ -35,16 +38,12 @@ import io.vertx.ext.auth.AbstractUser;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Collections;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -66,61 +65,61 @@ public class TokenEndpointTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        router.route(HttpMethod.POST, "/oauth/token")
-                .handler(new TokenRequestParseHandler())
-                .handler(tokenEndpointHandler);
+        router.route(HttpMethod.POST, "/oauth/token").handler(new TokenRequestParseHandler()).handler(tokenEndpointHandler);
         router.route().failureHandler(new ExceptionHandler());
     }
 
     @Test
     public void shouldInvokeTokenEndpoint_emptyScope() throws Exception {
-        testRequest(
-                HttpMethod.POST, "/oauth/token?grant_type=client_credentials&scope=",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+        testRequest(HttpMethod.POST, "/oauth/token?grant_type=client_credentials&scope=", HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test
     public void shouldNotInvokeTokenEndpoint_noClient() throws Exception {
-        testRequest(
-                HttpMethod.POST, "/oauth/token?grant_type=client_credentials",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+        testRequest(HttpMethod.POST, "/oauth/token?grant_type=client_credentials", HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test
     public void shouldNotInvokeTokenEndpoint_invalidClient() throws Exception {
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new AbstractUser() {
+        router
+            .route()
+            .order(-1)
+            .handler(
+                new Handler<RoutingContext>() {
                     @Override
-                    protected void doIsPermitted(String s, Handler<AsyncResult<Boolean>> handler) {
+                    public void handle(RoutingContext routingContext) {
+                        routingContext.setUser(
+                            new User(
+                                new AbstractUser() {
+                                    @Override
+                                    protected void doIsPermitted(String s, Handler<AsyncResult<Boolean>> handler) {}
 
+                                    @Override
+                                    public JsonObject principal() {
+                                        return null;
+                                    }
+
+                                    @Override
+                                    public void setAuthProvider(AuthProvider authProvider) {}
+                                }
+                            )
+                        );
+                        routingContext.next();
                     }
+                }
+            );
 
-                    @Override
-                    public JsonObject principal() {
-                        return null;
-                    }
-
-                    @Override
-                    public void setAuthProvider(AuthProvider authProvider) {
-
-                    }
-                }));
-                routingContext.next();
-            }
-        });
-
-        testRequest(
-                HttpMethod.POST, "/oauth/token?grant_type=client_credentials",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+        testRequest(HttpMethod.POST, "/oauth/token?grant_type=client_credentials", HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test
     public void shouldNotInvokeAuthorizationEndpoint_duplicateParameters() throws Exception {
         testRequest(
-                HttpMethod.POST, "/oauth/token?grant_type=client_credentials&grant_type=client_credentials",
-                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+            HttpMethod.POST,
+            "/oauth/token?grant_type=client_credentials&grant_type=client_credentials",
+            HttpStatusCode.BAD_REQUEST_400,
+            "Bad Request"
+        );
     }
 
     @Test
@@ -128,17 +127,25 @@ public class TokenEndpointTest extends RxWebTestBase {
         io.gravitee.am.model.oidc.Client client = new io.gravitee.am.model.oidc.Client();
         client.setClientId("my-client-id");
 
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.put("client", new Client());
-                routingContext.next();
-            }
-        });
+        router
+            .route()
+            .order(-1)
+            .handler(
+                new Handler<RoutingContext>() {
+                    @Override
+                    public void handle(RoutingContext routingContext) {
+                        routingContext.put("client", new Client());
+                        routingContext.next();
+                    }
+                }
+            );
 
         testRequest(
-                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret",
-                HttpStatusCode.BAD_REQUEST_400, "Bad Request");
+            HttpMethod.POST,
+            "/oauth/token?client_id=my-client&client_secret=my-secret",
+            HttpStatusCode.BAD_REQUEST_400,
+            "Bad Request"
+        );
     }
 
     @Test
@@ -146,17 +153,25 @@ public class TokenEndpointTest extends RxWebTestBase {
         Client client = new Client();
         client.setClientId("other-client-id");
 
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.put("client", client);
-                routingContext.next();
-            }
-        });
+        router
+            .route()
+            .order(-1)
+            .handler(
+                new Handler<RoutingContext>() {
+                    @Override
+                    public void handle(RoutingContext routingContext) {
+                        routingContext.put("client", client);
+                        routingContext.next();
+                    }
+                }
+            );
 
         testRequest(
-                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+            HttpMethod.POST,
+            "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized"
+        );
     }
 
     @Test
@@ -165,13 +180,18 @@ public class TokenEndpointTest extends RxWebTestBase {
         client.setClientId("my-client");
         client.setScopes(Collections.singletonList("read"));
 
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.put("client", client);
-                routingContext.next();
-            }
-        });
+        router
+            .route()
+            .order(-1)
+            .handler(
+                new Handler<RoutingContext>() {
+                    @Override
+                    public void handle(RoutingContext routingContext) {
+                        routingContext.put("client", client);
+                        routingContext.next();
+                    }
+                }
+            );
 
         // Jackson is unable to generate a JSON from a mocked interface.
         Token accessToken = new AccessToken("my-token");
@@ -179,8 +199,11 @@ public class TokenEndpointTest extends RxWebTestBase {
         when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.oidc.Client.class))).thenReturn(Single.just(accessToken));
 
         testRequest(
-                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
-                HttpStatusCode.OK_200, "OK");
+            HttpMethod.POST,
+            "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
+            HttpStatusCode.OK_200,
+            "OK"
+        );
     }
 
     @Test
@@ -189,19 +212,28 @@ public class TokenEndpointTest extends RxWebTestBase {
         client.setClientId("my-client");
         client.setScopes(Collections.singletonList("read"));
 
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.put("client", client);
-                routingContext.next();
-            }
-        });
+        router
+            .route()
+            .order(-1)
+            .handler(
+                new Handler<RoutingContext>() {
+                    @Override
+                    public void handle(RoutingContext routingContext) {
+                        routingContext.put("client", client);
+                        routingContext.next();
+                    }
+                }
+            );
 
-        when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.oidc.Client.class))).thenReturn(Single.error(new Exception()));
+        when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.oidc.Client.class)))
+            .thenReturn(Single.error(new Exception()));
 
         testRequest(
-                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
-                HttpStatusCode.INTERNAL_SERVER_ERROR_500, "Internal Server Error");
+            HttpMethod.POST,
+            "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
+            HttpStatusCode.INTERNAL_SERVER_ERROR_500,
+            "Internal Server Error"
+        );
     }
 
     @Test
@@ -210,16 +242,24 @@ public class TokenEndpointTest extends RxWebTestBase {
         client.setClientId("my-client");
         client.setAuthorizedGrantTypes(null);
 
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.put("client", client);
-                routingContext.next();
-            }
-        });
+        router
+            .route()
+            .order(-1)
+            .handler(
+                new Handler<RoutingContext>() {
+                    @Override
+                    public void handle(RoutingContext routingContext) {
+                        routingContext.put("client", client);
+                        routingContext.next();
+                    }
+                }
+            );
 
         testRequest(
-                HttpMethod.POST, "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+            HttpMethod.POST,
+            "/oauth/token?client_id=my-client&client_secret=my-secret&grant_type=client_credentials",
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized"
+        );
     }
 }

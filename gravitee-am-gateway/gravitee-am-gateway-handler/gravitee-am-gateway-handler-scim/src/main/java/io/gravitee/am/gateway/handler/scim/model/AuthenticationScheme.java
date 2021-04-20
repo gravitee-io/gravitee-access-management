@@ -25,12 +25,29 @@ import com.fasterxml.jackson.annotation.JsonFormat;
  */
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum AuthenticationScheme {
-
     OAUTH("oauth", "OAuth 1.0", "Authentication scheme using the OAuth 1.0 Standard", "https://oauth.net/core/1.0a/", null),
     OAUTH2("oauth2", "OAuth 2.0", "Authentication scheme using the OAuth 2.0 Standard", "https://tools.ietf.org/html/rfc6749", null),
-    OAUTH_BEARER_TOKEN("oauthbearertoken", "OAuth Bearer Token", "Authentication scheme using the OAuth Bearer Token Standard", "http://www.rfc-editor.org/info/rfc6750", null),
-    HTTP_BASIC("httpbasic", "HTTP Basic", "Authentication scheme using the HTTP Basic Standard", "http://www.rfc-editor.org/info/rfc2617", null),
-    HTTP_DIGEST("httpdigest", "HTTP Digest", "Authentication scheme using the HTTP Digest Standard", "https://tools.ietf.org/html/rfc7616", null);
+    OAUTH_BEARER_TOKEN(
+        "oauthbearertoken",
+        "OAuth Bearer Token",
+        "Authentication scheme using the OAuth Bearer Token Standard",
+        "http://www.rfc-editor.org/info/rfc6750",
+        null
+    ),
+    HTTP_BASIC(
+        "httpbasic",
+        "HTTP Basic",
+        "Authentication scheme using the HTTP Basic Standard",
+        "http://www.rfc-editor.org/info/rfc2617",
+        null
+    ),
+    HTTP_DIGEST(
+        "httpdigest",
+        "HTTP Digest",
+        "Authentication scheme using the HTTP Digest Standard",
+        "https://tools.ietf.org/html/rfc7616",
+        null
+    );
 
     /**
      * The authentication scheme.

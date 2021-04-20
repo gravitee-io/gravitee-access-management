@@ -15,28 +15,26 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { SidenavService } from "./components/sidenav/sidenav.service";
-import { AuthService } from "./services/auth.service";
+import { SidenavService } from './components/sidenav/sidenav.service';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
   reducedMode: boolean = false;
 
-  constructor(public router : Router,
-              private authService: AuthService,
-              private sidenavService: SidenavService) {}
+  constructor(public router: Router, private authService: AuthService, private sidenavService: SidenavService) {}
 
   ngOnInit() {
-    this.authService.notifyObservable$.subscribe(response => {
+    this.authService.notifyObservable$.subscribe((response) => {
       if (response && response === 'Unauthorized') {
         this.router.navigate(['/login']);
       }
-    })
+    });
 
-    this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
+    this.sidenavService.resizeSidenavObservable.subscribe((reducedMode) => (this.reducedMode = reducedMode));
   }
 }

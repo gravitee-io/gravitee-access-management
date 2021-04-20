@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationService } from "../../../../../../services/organization.service";
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'certificate-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class CertificateCreationStep1Component implements OnInit {
   private certificateTypes: any = {
-    'javakeystore-am-certificate' : 'Java Keystore (.jks)',
-    'pkcs12-am-certificate' : 'PKCS#12 (.p12)'
+    'javakeystore-am-certificate': 'Java Keystore (.jks)',
+    'pkcs12-am-certificate': 'PKCS#12 (.p12)',
   };
   @Input() certificate: any;
   certificates: any[];
   selectedCertificateTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.certificates().subscribe(data => this.certificates = data);
+    this.organizationService.certificates().subscribe((data) => (this.certificates = data));
   }
 
   selectCertificateType() {

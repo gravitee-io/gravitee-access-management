@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationService } from "../../../../../../services/organization.service";
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'factor-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class FactorCreationStep1Component implements OnInit {
   private factorTypes: any = {
-    'otp-am-factor' : 'Generic OTP Factor'
+    'otp-am-factor': 'Generic OTP Factor',
   };
   @Input() factor: any;
   factors: any[];
   selectedFactorTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.factors().subscribe(data => this.factors = data);
+    this.organizationService.factors().subscribe((data) => (this.factors = data));
   }
 
   selectFactorType() {

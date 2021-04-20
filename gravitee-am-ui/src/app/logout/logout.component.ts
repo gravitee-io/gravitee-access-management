@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {AppConfig} from '../../config/app.config';
+import { Component, OnInit } from '@angular/core';
+import { AppConfig } from '../../config/app.config';
 
 @Component({
   selector: 'app-logout',
-  template: ``
+  template: '',
 })
 export class LogoutComponent implements OnInit {
   private logoutEndpoint = AppConfig.settings.baseURL + '/auth/logout';
 
-  constructor() { }
+  constructor() {}
 
   ngOnInit() {
     this.logoutEndpoint = this.logoutEndpoint + '?target_url=' + window.location.href + '/callback';
     window.location.href = this.logoutEndpoint;
   }
-
 }

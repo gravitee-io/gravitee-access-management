@@ -19,5 +19,4 @@ package io.gravitee.am.management.handlers.management.api.authentication.manager
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FormManager {
-}
+public interface FormManager {}

@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {RoleService} from '../../../services/role.service';
-import {DialogService} from '../../../services/dialog.service';
-import {SnackbarService} from '../../../services/snackbar.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { RoleService } from '../../../services/role.service';
+import { DialogService } from '../../../services/dialog.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 
 @Component({
   selector: 'app-roles',
   templateUrl: './roles.component.html',
-  styleUrls: ['./roles.component.scss']
+  styleUrls: ['./roles.component.scss'],
 })
 export class DomainSettingsRolesComponent implements OnInit {
   roles: any[];
   domainId: string;
 
-  constructor(private roleService: RoleService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private route: ActivatedRoute) { }
+  constructor(
+    private roleService: RoleService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.roles = this.route.snapshot.data['roles'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.roles = this.route.snapshot.data.roles;
   }
 
   get isEmpty() {
@@ -43,21 +45,18 @@ export class DomainSettingsRolesComponent implements OnInit {
   }
 
   loadRoles() {
-    this.roleService.findByDomain(this.domainId).subscribe(response => this.roles = response);
+    this.roleService.findByDomain(this.domainId).subscribe((response) => (this.roles = response));
   }
 
   delete(id, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Role', 'Are you sure you want to delete this role ?')
-      .subscribe(res => {
-        if (res) {
-          this.roleService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open('Role deleted');
-            this.loadRoles();
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Role', 'Are you sure you want to delete this role ?').subscribe((res) => {
+      if (res) {
+        this.roleService.delete(this.domainId, id).subscribe((response) => {
+          this.snackbarService.open('Role deleted');
+          this.loadRoles();
+        });
+      }
+    });
   }
-
 }

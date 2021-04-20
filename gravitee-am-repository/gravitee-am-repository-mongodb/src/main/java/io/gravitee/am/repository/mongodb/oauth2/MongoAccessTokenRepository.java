@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
@@ -23,16 +26,12 @@ import io.gravitee.am.repository.mongodb.oauth2.internal.model.AccessTokenMongo;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.reactivex.*;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -68,25 +67,22 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     private Maybe<AccessToken> findById(String id) {
-        return Observable
-                .fromPublisher(accessTokenCollection.find(eq(FIELD_ID, id)).limit(1).first())
-                .firstElement()
-                .map(this::convert);
+        return Observable.fromPublisher(accessTokenCollection.find(eq(FIELD_ID, id)).limit(1).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Maybe<AccessToken> findByToken(String token) {
         return Observable
-                .fromPublisher(accessTokenCollection.find(eq(FIELD_TOKEN, token)).limit(1).first())
-                .firstElement()
-                .map(this::convert);
+            .fromPublisher(accessTokenCollection.find(eq(FIELD_TOKEN, token)).limit(1).first())
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
     public Single<AccessToken> create(AccessToken accessToken) {
         return Single
-                .fromPublisher(accessTokenCollection.insertOne(convert(accessToken)))
-                .flatMap(success -> findById(accessToken.getId()).toSingle());
+            .fromPublisher(accessTokenCollection.insertOne(convert(accessToken)))
+            .flatMap(success -> findById(accessToken.getId()).toSingle());
     }
 
     @Override
@@ -102,22 +98,18 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     @Override
     public Observable<AccessToken> findByClientIdAndSubject(String clientId, String subject) {
         return Observable
-                .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT_ID, clientId), eq(FIELD_SUBJECT, subject))))
-                .map(this::convert);
+            .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT_ID, clientId), eq(FIELD_SUBJECT, subject))))
+            .map(this::convert);
     }
 
     @Override
     public Observable<AccessToken> findByClientId(String clientId) {
-        return Observable
-                .fromPublisher(accessTokenCollection.find(eq(FIELD_CLIENT_ID, clientId)))
-                .map(this::convert);
+        return Observable.fromPublisher(accessTokenCollection.find(eq(FIELD_CLIENT_ID, clientId))).map(this::convert);
     }
 
     @Override
     public Observable<AccessToken> findByAuthorizationCode(String authorizationCode) {
-        return Observable
-                .fromPublisher(accessTokenCollection.find(eq(FIELD_AUTHORIZATION_CODE, authorizationCode)))
-                .map(this::convert);
+        return Observable.fromPublisher(accessTokenCollection.find(eq(FIELD_AUTHORIZATION_CODE, authorizationCode))).map(this::convert);
     }
 
     @Override

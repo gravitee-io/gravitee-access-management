@@ -15,17 +15,16 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.ExtensionGrantPlugin;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
-import org.junit.Test;
-
 import javax.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doReturn;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -42,24 +41,18 @@ public class ExtensionGrantPluginResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(extensionGrantPlugin)).when(extensionGrantPluginService).findById(extensionGrantPluginId);
 
-        final Response response = target("platform")
-                .path("plugins")
-                .path("extensionGrants")
-                .path(extensionGrantPluginId)
-                .request().get();
+        final Response response = target("platform").path("plugins").path("extensionGrants").path(extensionGrantPluginId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
 
     @Test
     public void shouldGet_technicalManagementException() {
         final String extensionGrantPluginId = "extensionGrant-plugin-id";
-        doReturn(Maybe.error(new TechnicalManagementException("Error occurs"))).when(extensionGrantPluginService).findById(extensionGrantPluginId);
+        doReturn(Maybe.error(new TechnicalManagementException("Error occurs")))
+            .when(extensionGrantPluginService)
+            .findById(extensionGrantPluginId);
 
-        final Response response = target("platform")
-                .path("plugins")
-                .path("extensionGrants")
-                .path(extensionGrantPluginId)
-                .request().get();
+        final Response response = target("platform").path("plugins").path("extensionGrants").path(extensionGrantPluginId).request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
@@ -76,11 +69,12 @@ public class ExtensionGrantPluginResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(schema)).when(extensionGrantPluginService).getSchema(extensionGrantPluginId);
 
         final Response response = target("platform")
-                .path("plugins")
-                .path("extensionGrants")
-                .path(extensionGrantPluginId)
-                .path("schema")
-                .request().get();
+            .path("plugins")
+            .path("extensionGrants")
+            .path(extensionGrantPluginId)
+            .path("schema")
+            .request()
+            .get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final String responseEntity = readEntity(response, String.class);
@@ -90,14 +84,17 @@ public class ExtensionGrantPluginResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetSchema_technicalManagementException() {
         final String extensionGrantPluginId = "extensionGrant-plugin-id";
-        doReturn(Maybe.error(new TechnicalManagementException("Error occurs"))).when(extensionGrantPluginService).findById(extensionGrantPluginId);
+        doReturn(Maybe.error(new TechnicalManagementException("Error occurs")))
+            .when(extensionGrantPluginService)
+            .findById(extensionGrantPluginId);
 
         final Response response = target("platform")
-                .path("plugins")
-                .path("extensionGrants")
-                .path(extensionGrantPluginId)
-                .path("schema")
-                .request().get();
+            .path("plugins")
+            .path("extensionGrants")
+            .path(extensionGrantPluginId)
+            .path("schema")
+            .request()
+            .get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 }

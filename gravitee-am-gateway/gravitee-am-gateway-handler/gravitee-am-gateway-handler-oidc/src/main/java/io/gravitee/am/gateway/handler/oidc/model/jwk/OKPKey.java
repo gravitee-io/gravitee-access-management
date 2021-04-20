@@ -32,6 +32,7 @@ public class OKPKey extends JWK {
 
     @JsonProperty("crv")
     private String crv;
+
     @JsonProperty("x")
     private String x;
 

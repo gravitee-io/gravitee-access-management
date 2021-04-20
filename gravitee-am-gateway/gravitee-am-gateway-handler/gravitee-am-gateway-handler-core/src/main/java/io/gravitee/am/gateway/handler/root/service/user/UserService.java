@@ -18,9 +18,9 @@ package io.gravitee.am.gateway.handler.root.service.user;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.User;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -30,7 +30,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface UserService {
-
     Maybe<UserToken> verifyToken(String token);
 
     Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
@@ -58,5 +57,4 @@ public interface UserService {
     default Single<RegistrationResponse> confirmRegistration(Client client, User user) {
         return confirmRegistration(client, user, null);
     }
-
 }

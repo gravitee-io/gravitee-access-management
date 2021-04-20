@@ -23,7 +23,6 @@ import io.vertx.ext.auth.AuthProvider;
  * @author GraviteeSource Team
  */
 public interface FormLoginHandler {
-
     /**
      * The default value of the form attribute which will contain the username
      */
@@ -39,8 +38,9 @@ public interface FormLoginHandler {
      */
     String DEFAULT_RETURN_URL_PARAM = "return_url";
 
-
     static io.vertx.reactivex.ext.web.handler.FormLoginHandler create(AuthProvider authProvider) {
-        return io.vertx.reactivex.ext.web.handler.FormLoginHandler.newInstance(new FormLoginHandlerImpl(authProvider, DEFAULT_USERNAME_PARAM, DEFAULT_PASSWORD_PARAM, DEFAULT_RETURN_URL_PARAM, null));
+        return io.vertx.reactivex.ext.web.handler.FormLoginHandler.newInstance(
+            new FormLoginHandlerImpl(authProvider, DEFAULT_USERNAME_PARAM, DEFAULT_PASSWORD_PARAM, DEFAULT_RETURN_URL_PARAM, null)
+        );
     }
 }

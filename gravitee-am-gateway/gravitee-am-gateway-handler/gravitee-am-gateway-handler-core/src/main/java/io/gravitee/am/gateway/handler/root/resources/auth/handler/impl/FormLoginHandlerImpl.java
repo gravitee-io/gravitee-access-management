@@ -31,13 +31,12 @@ import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Extends default {@link io.vertx.ext.web.handler.FormLoginHandler} and appends
@@ -56,7 +55,13 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
     private String directLoggedInOKURL;
     private UserAuthProvider authProvider;
 
-    public FormLoginHandlerImpl(AuthProvider authProvider, String usernameParam, String passwordParam, String returnURLParam, String directLoggedInOKURL) {
+    public FormLoginHandlerImpl(
+        AuthProvider authProvider,
+        String usernameParam,
+        String passwordParam,
+        String returnURLParam,
+        String directLoggedInOKURL
+    ) {
         super(authProvider, usernameParam, passwordParam, returnURLParam, directLoggedInOKURL);
         this.usernameParam = usernameParam;
         this.passwordParam = passwordParam;
@@ -89,44 +94,48 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
 
                 // build authentication object with ip address and user agent
                 JsonObject authInfo = new JsonObject()
-                        .put("username", username)
-                        .put("password", password)
-                        .put(Claims.ip_address, remoteAddress(req))
-                        .put(Claims.user_agent, userAgent(req))
-                        .put(Parameters.CLIENT_ID, clientId);
+                    .put("username", username)
+                    .put("password", password)
+                    .put(Claims.ip_address, remoteAddress(req))
+                    .put(Claims.user_agent, userAgent(req))
+                    .put(Parameters.CLIENT_ID, clientId);
 
-                authProvider.authenticate(context, authInfo, res -> {
-                    if (res.succeeded()) {
-                        User user = res.result();
-                        context.setUser(user);
-                        if (session != null) {
-                            // the user has upgraded from unauthenticated to authenticated
-                            // session should be upgraded as recommended by owasp
-                            session.regenerateId();
+                authProvider.authenticate(
+                    context,
+                    authInfo,
+                    res -> {
+                        if (res.succeeded()) {
+                            User user = res.result();
+                            context.setUser(user);
+                            if (session != null) {
+                                // the user has upgraded from unauthenticated to authenticated
+                                // session should be upgraded as recommended by owasp
+                                session.regenerateId();
 
-                            // Note : keep returnURLParam in session in case the user go to previous page
-                            // String returnURL = session.remove(returnURLParam);
-                            String returnURL = session.get(returnURLParam);
-                            if (returnURL != null) {
-                                // Now redirect back to the original url
-                                doRedirect(req.response(), returnURL);
-                                return;
+                                // Note : keep returnURLParam in session in case the user go to previous page
+                                // String returnURL = session.remove(returnURLParam);
+                                String returnURL = session.get(returnURLParam);
+                                if (returnURL != null) {
+                                    // Now redirect back to the original url
+                                    doRedirect(req.response(), returnURL);
+                                    return;
+                                }
                             }
-                        }
-                        // Either no session or no return url
-                        if (directLoggedInOKURL != null) {
-                            // Redirect to the default logged in OK page - this would occur
-                            // if the user logged in directly at this URL without being redirected here first from another
-                            // url
-                            doRedirect(req.response(), directLoggedInOKURL);
+                            // Either no session or no return url
+                            if (directLoggedInOKURL != null) {
+                                // Redirect to the default logged in OK page - this would occur
+                                // if the user logged in directly at this URL without being redirected here first from another
+                                // url
+                                doRedirect(req.response(), directLoggedInOKURL);
+                            } else {
+                                // Just show a basic page
+                                req.response().end(DEFAULT_DIRECT_LOGGED_IN_OK_PAGE);
+                            }
                         } else {
-                            // Just show a basic page
-                            req.response().end(DEFAULT_DIRECT_LOGGED_IN_OK_PAGE);
+                            handleException(context);
                         }
-                    } else {
-                        handleException(context);
                     }
-                });
+                );
             }
         }
     }
@@ -144,7 +153,9 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
             // build login url with error message
             QueryStringDecoder queryStringDecoder = new QueryStringDecoder(returnUrl);
             Map<String, String> parameters = new LinkedHashMap<>();
-            parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
+            parameters.putAll(
+                queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0)))
+            );
             parameters.put("error", "login_failed");
             String uri = UriBuilderRequest.resolveProxyRequest(req, req.uri(), parameters, true);
             doRedirect(resp, uri);
@@ -153,12 +164,11 @@ public class FormLoginHandlerImpl extends io.vertx.ext.web.handler.impl.FormLogi
         }
     }
 
-
     private String remoteAddress(HttpServerRequest httpServerRequest) {
         String xForwardedFor = httpServerRequest.getHeader(HttpHeaders.X_FORWARDED_FOR);
         String remoteAddress;
 
-        if(xForwardedFor != null && xForwardedFor.length() > 0) {
+        if (xForwardedFor != null && xForwardedFor.length() > 0) {
             int idx = xForwardedFor.indexOf(',');
 
             remoteAddress = (idx != -1) ? xForwardedFor.substring(0, idx) : xForwardedFor;

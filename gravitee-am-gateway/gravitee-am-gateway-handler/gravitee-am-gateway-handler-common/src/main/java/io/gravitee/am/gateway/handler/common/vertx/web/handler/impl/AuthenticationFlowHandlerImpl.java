@@ -23,10 +23,9 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.*;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.LinkedList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

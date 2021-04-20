@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-domain-factors',
   templateUrl: './factors.component.html',
-  styleUrls: ['./factors.component.scss']
+  styleUrls: ['./factors.component.scss'],
 })
 export class DomainSettingsFactorsComponent implements OnInit {
   private factorTypes: any = {
-    'otp-am-factor' : 'Generic OTP Factor'
+    'otp-am-factor': 'Generic OTP Factor',
   };
   factors: any[];
   domainId: any;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.factors = this.route.snapshot.data['factors'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.factors = this.route.snapshot.data.factors;
   }
 
   isEmpty() {

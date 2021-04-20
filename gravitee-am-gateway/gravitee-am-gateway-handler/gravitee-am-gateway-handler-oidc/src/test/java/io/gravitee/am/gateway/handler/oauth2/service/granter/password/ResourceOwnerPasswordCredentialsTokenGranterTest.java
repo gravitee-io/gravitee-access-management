@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.password;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -23,22 +26,18 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Arrays;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -75,7 +74,7 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
 
         Client client = new Client();
         client.setClientId("my-client-id");
-        client.setAuthorizedGrantTypes(Arrays.asList(new String[]{"password"}));
+        client.setAuthorizedGrantTypes(Arrays.asList(new String[] { "password" }));
 
         Token accessToken = new AccessToken("test-token");
 
@@ -90,7 +89,5 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(token -> token.getValue().equals("test-token"));
-
     }
-
 }

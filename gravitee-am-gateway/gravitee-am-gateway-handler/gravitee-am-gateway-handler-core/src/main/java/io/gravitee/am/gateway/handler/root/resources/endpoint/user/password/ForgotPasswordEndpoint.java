@@ -24,11 +24,10 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,18 +70,22 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
         // render the forgot password page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render forgot password page", res.cause());
-                routingContext.fail(res.cause());
+        engine.render(
+            routingContext.data(),
+            getTemplateFileName(client),
+            res -> {
+                if (res.succeeded()) {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(res.result());
+                } else {
+                    logger.error("Unable to render forgot password page", res.cause());
+                    routingContext.fail(res.cause());
+                }
             }
-        });
+        );
     }
 
     private String getTemplateFileName(Client client) {
-        return "forgot_password" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId(): "");
+        return "forgot_password" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
     }
 }

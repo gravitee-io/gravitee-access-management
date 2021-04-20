@@ -15,25 +15,27 @@
     limitations under the License.
 
 -->
-<form #claimForm="ngForm" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px;">
+<form #claimForm="ngForm" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px">
   <div fxLayout="row" fxLayoutGap="5px">
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="20">
       <mat-select placeholder="Token Type" name="tokenType" required [(ngModel)]="claim.tokenType">
         <mat-option *ngFor="let tokenType of tokenTypes" [value]="tokenType">
-          {{tokenType}}
+          {{ tokenType }}
         </mat-option>
       </mat-select>
     </mat-form-field>
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="26">
-      <input matInput name="claimName" placeholder="Claim name" required [(ngModel)]="claim.claimName"/>
+      <input matInput name="claimName" placeholder="Claim name" required [(ngModel)]="claim.claimName" />
       <mat-hint>The claim's name.</mat-hint>
     </mat-form-field>
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="38">
-      <input matInput name="claimValue" placeholder="Claim value" required [(ngModel)]="claim.claimValue"/>
+      <input matInput name="claimValue" placeholder="Claim value" required [(ngModel)]="claim.claimValue" />
       <mat-hint>The claim's value (support EL).</mat-hint>
     </mat-form-field>
     <div>
-      <button style="margin-top: 7px;" mat-stroked-button [disabled]="claimForm.invalid || claimForm.pristine" (click)="addClaim()">+ ADD</button>
+      <button style="margin-top: 7px" mat-stroked-button [disabled]="claimForm.invalid || claimForm.pristine" (click)="addClaim()">
+        + ADD
+      </button>
     </div>
   </div>
 </form>

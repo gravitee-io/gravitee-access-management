@@ -18,7 +18,6 @@ package io.gravitee.am.identityprovider.oauth2;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
 import io.gravitee.am.identityprovider.oauth2.resolver.KeyResolver;
-
 import java.util.Set;
 
 /**

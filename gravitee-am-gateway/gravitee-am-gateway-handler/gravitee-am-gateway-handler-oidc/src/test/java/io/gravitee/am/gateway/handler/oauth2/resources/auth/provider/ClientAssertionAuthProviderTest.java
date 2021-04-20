@@ -15,6 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
@@ -22,6 +28,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionSe
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,15 +38,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -46,7 +45,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @RunWith(MockitoJUnitRunner.class)
 public class ClientAssertionAuthProviderTest {
 
-    private final static String CLIENT_ID = "my-client";
+    private static final String CLIENT_ID = "my-client";
 
     @Mock
     private ClientAssertionService clientAssertionService;
@@ -66,14 +65,18 @@ public class ClientAssertionAuthProviderTest {
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION)).thenReturn("dummy");
 
-        when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.just(client));
+        when(clientAssertionService.assertClient(any(), any(), any())).thenReturn(Maybe.just(client));
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(clientAsyncResult);
-            Assert.assertNotNull(clientAsyncResult.result());
-        });
+        authProvider.handle(
+            client,
+            httpServerRequest,
+            clientAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(clientAsyncResult);
+                Assert.assertNotNull(clientAsyncResult.result());
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
@@ -85,15 +88,20 @@ public class ClientAssertionAuthProviderTest {
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION)).thenReturn("dummy");
 
-        when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.error(new InvalidClientException("Unknown or unsupported assertion_type")));
+        when(clientAssertionService.assertClient(any(), any(), any()))
+            .thenReturn(Maybe.error(new InvalidClientException("Unknown or unsupported assertion_type")));
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(clientAsyncResult);
-            Assert.assertTrue(clientAsyncResult.failed());
-            Assert.assertTrue(clientAsyncResult.cause() instanceof InvalidClientException);
-        });
+        authProvider.handle(
+            client,
+            httpServerRequest,
+            clientAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(clientAsyncResult);
+                Assert.assertTrue(clientAsyncResult.failed());
+                Assert.assertTrue(clientAsyncResult.cause() instanceof InvalidClientException);
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }
@@ -102,21 +110,24 @@ public class ClientAssertionAuthProviderTest {
     public void unauthorized_invalidClient_clientDoesNotMatch() throws Exception {
         Client client = Mockito.mock(Client.class);
         when(client.getClientId()).thenReturn(CLIENT_ID);
-        when(clientAssertionService.assertClient(any(),any(),any())).thenReturn(Maybe.just(client));
+        when(clientAssertionService.assertClient(any(), any(), any())).thenReturn(Maybe.just(client));
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION_TYPE)).thenReturn("unknown");
         when(httpServerRequest.getParam(Parameters.CLIENT_ASSERTION)).thenReturn("dummy");
         when(httpServerRequest.getParam(Parameters.CLIENT_ID)).thenReturn("notMatching");
 
-
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.handle(client, httpServerRequest, clientAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(clientAsyncResult);
-            Assert.assertTrue(clientAsyncResult.failed());
-            Assert.assertTrue(clientAsyncResult.cause() instanceof InvalidClientException);
-        });
+        authProvider.handle(
+            client,
+            httpServerRequest,
+            clientAsyncResult -> {
+                latch.countDown();
+                Assert.assertNotNull(clientAsyncResult);
+                Assert.assertTrue(clientAsyncResult.failed());
+                Assert.assertTrue(clientAsyncResult.cause() instanceof InvalidClientException);
+            }
+        );
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
     }

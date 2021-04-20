@@ -38,7 +38,6 @@ public class FilterUtils {
     }
 
     public static AuditOutcome filterAuditOutcome(AuditOutcome auditOutcome) {
-
         AuditOutcome filteredAuditOutcome = null;
 
         if (auditOutcome != null) {
@@ -50,7 +49,6 @@ public class FilterUtils {
     }
 
     public static AuditEntity filterAuditEntityInfos(AuditEntity auditEntity) {
-
         AuditEntity filteredAuditEntity = null;
 
         if (auditEntity != null) {

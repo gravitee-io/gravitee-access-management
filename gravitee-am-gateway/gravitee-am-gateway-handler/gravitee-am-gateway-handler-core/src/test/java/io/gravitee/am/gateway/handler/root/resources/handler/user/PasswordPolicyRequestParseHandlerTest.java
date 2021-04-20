@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
@@ -26,9 +29,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,46 +47,55 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        router.route()
-                .handler(BodyHandler.create())
-                .failureHandler(new ErrorHandler());
+        router.route().handler(BodyHandler.create()).failureHandler(new ErrorHandler());
     }
 
     @Test
     public void shouldNotHandle_invalid_password() throws Exception {
-        router.route("/")
-                .handler(passwordPolicyRequestParseHandler)
-                .handler(rc -> rc.response().end());
+        router.route("/").handler(passwordPolicyRequestParseHandler).handler(rc -> rc.response().end());
 
         when(passwordValidator.validate(anyString())).thenReturn(false);
 
-        testRequest(HttpMethod.POST, "/", req -> {
-            Buffer buffer = Buffer.buffer();
-            buffer.appendString("password=password");
-            req.headers().set("content-length", String.valueOf(buffer.length()));
-            req.headers().set("content-type", "application/x-www-form-urlencoded");
-            req.write(buffer);
-        }, resp -> {
-            String location = resp.headers().get("location");
-            assertNotNull(location);
-            assertTrue(location.contains("warning=invalid_password_value"));
-        },302, "Found", null);
+        testRequest(
+            HttpMethod.POST,
+            "/",
+            req -> {
+                Buffer buffer = Buffer.buffer();
+                buffer.appendString("password=password");
+                req.headers().set("content-length", String.valueOf(buffer.length()));
+                req.headers().set("content-type", "application/x-www-form-urlencoded");
+                req.write(buffer);
+            },
+            resp -> {
+                String location = resp.headers().get("location");
+                assertNotNull(location);
+                assertTrue(location.contains("warning=invalid_password_value"));
+            },
+            302,
+            "Found",
+            null
+        );
     }
 
     @Test
     public void shouldHandle() throws Exception {
-        router.route("/")
-                .handler(passwordPolicyRequestParseHandler)
-                .handler(rc -> rc.response().end());
+        router.route("/").handler(passwordPolicyRequestParseHandler).handler(rc -> rc.response().end());
 
         when(passwordValidator.validate(anyString())).thenReturn(true);
 
-        testRequest(HttpMethod.POST, "/", req -> {
-            Buffer buffer = Buffer.buffer();
-            buffer.appendString("password=password");
-            req.headers().set("content-length", String.valueOf(buffer.length()));
-            req.headers().set("content-type", "application/x-www-form-urlencoded");
-            req.write(buffer);
-        },200, "OK", null);
+        testRequest(
+            HttpMethod.POST,
+            "/",
+            req -> {
+                Buffer buffer = Buffer.buffer();
+                buffer.appendString("password=password");
+                req.headers().set("content-length", String.valueOf(buffer.length()));
+                req.headers().set("content-type", "application/x-www-form-urlencoded");
+                req.write(buffer);
+            },
+            200,
+            "OK",
+            null
+        );
     }
 }

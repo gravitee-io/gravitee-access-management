@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.List;
 
 /**
@@ -34,8 +33,6 @@ public class AuthenticationFlowChainHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
-        new AuthenticationFlowChain(steps)
-                .exitHandler(stepHandler -> stepHandler.handle(routingContext))
-                .handle(routingContext);
+        new AuthenticationFlowChain(steps).exitHandler(stepHandler -> stepHandler.handle(routingContext)).handle(routingContext);
     }
 }

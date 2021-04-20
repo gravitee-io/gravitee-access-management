@@ -31,5 +31,4 @@ public class AuditNotFoundException extends AbstractNotFoundException {
     public String getMessage() {
         return "Audit [" + audit + "] can not be found.";
     }
-
 }

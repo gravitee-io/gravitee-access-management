@@ -23,9 +23,8 @@ describe('FactorFormComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FactorFormComponent ]
-    })
-    .compileComponents();
+      declarations: [FactorFormComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

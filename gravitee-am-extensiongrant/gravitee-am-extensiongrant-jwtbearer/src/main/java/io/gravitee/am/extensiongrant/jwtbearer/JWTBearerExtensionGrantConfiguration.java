@@ -16,7 +16,6 @@
 package io.gravitee.am.extensiongrant.jwtbearer;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
-
 import java.util.List;
 import java.util.Map;
 

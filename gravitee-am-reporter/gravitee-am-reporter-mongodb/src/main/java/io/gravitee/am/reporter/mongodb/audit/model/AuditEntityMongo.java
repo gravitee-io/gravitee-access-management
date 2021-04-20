@@ -26,6 +26,7 @@ public class AuditEntityMongo {
 
     @BsonProperty("id")
     private String id;
+
     private String alternativeId;
     private String type;
     private String displayName;

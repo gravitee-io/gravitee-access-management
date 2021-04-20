@@ -20,7 +20,6 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
-
 import java.util.*;
 
 /**
@@ -120,12 +119,10 @@ public class User {
 
     private Date updatedAt;
 
-    public User() {
-    }
+    public User() {}
 
     public User(boolean withDefaultValues) {
-
-        if(!withDefaultValues) {
+        if (!withDefaultValues) {
             this.accountNonExpired = null;
             this.accountNonLocked = null;
             this.credentialsNonExpired = null;
@@ -136,7 +133,6 @@ public class User {
             this.loginsCount = null;
         }
     }
-
 
     public User(User other) {
         this.id = other.id;
@@ -257,7 +253,14 @@ public class User {
                 return (String) getAdditionalInformation().get(StandardClaims.NAME);
             }
             if (getAdditionalInformation().get(StandardClaims.GIVEN_NAME) != null) {
-                return getAdditionalInformation().get(StandardClaims.GIVEN_NAME) + ((getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) ? " " + getAdditionalInformation().get(StandardClaims.FAMILY_NAME) : "");
+                return (
+                    getAdditionalInformation().get(StandardClaims.GIVEN_NAME) +
+                    (
+                        (getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null)
+                            ? " " + getAdditionalInformation().get(StandardClaims.FAMILY_NAME)
+                            : ""
+                    )
+                );
             }
         }
 
@@ -325,7 +328,8 @@ public class User {
         if (picture == null) {
             if (photos != null && !photos.isEmpty()) {
                 // fall back to SCIM photos
-                picture = photos.stream().filter(Attribute::isPrimary).map(Attribute::getValue).findFirst().orElse(photos.get(0).getValue());
+                picture =
+                    photos.stream().filter(Attribute::isPrimary).map(Attribute::getValue).findFirst().orElse(photos.get(0).getValue());
             } else if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.PICTURE) != null) {
                 // fall back to OIDC standard claims
                 picture = (String) getAdditionalInformation().get(StandardClaims.PICTURE);

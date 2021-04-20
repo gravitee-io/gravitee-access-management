@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team

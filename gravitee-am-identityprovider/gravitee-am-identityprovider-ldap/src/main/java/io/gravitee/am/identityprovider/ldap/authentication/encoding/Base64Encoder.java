@@ -23,7 +23,6 @@ import org.ldaptive.LdapUtils;
  */
 public class Base64Encoder implements BinaryToTextEncoder {
 
-
     @Override
     public String encode(byte[] value) {
         return LdapUtils.base64Encode(value);

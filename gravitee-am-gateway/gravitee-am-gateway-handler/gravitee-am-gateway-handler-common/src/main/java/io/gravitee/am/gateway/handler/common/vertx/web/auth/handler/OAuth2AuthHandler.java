@@ -70,7 +70,6 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthP
  * @author GraviteeSource Team
  */
 public interface OAuth2AuthHandler extends AuthHandler {
-
     String RAW_TOKEN_CONTEXT_KEY = "raw_token";
     String TOKEN_CONTEXT_KEY = "token";
     String CLIENT_CONTEXT_KEY = "client";

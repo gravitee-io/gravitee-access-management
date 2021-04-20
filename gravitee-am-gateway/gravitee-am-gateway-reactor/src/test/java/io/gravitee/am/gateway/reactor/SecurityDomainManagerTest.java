@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.gateway.reactor;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainManager;
@@ -25,9 +28,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

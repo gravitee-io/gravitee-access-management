@@ -17,7 +17,6 @@ package io.gravitee.am.plugins.certificate.core;
 
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.plugin.core.api.Plugin;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -27,7 +26,6 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface CertificatePluginManager {
-
     void register(CertificateDefinition certificatePluginDefinition);
 
     Collection<Plugin> getAll();

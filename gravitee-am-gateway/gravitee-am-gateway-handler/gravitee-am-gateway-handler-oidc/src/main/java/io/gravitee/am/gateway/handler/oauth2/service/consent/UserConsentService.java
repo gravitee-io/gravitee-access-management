@@ -20,7 +20,6 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +28,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface UserConsentService {
-
     Single<Set<String>> checkConsent(Client client, io.gravitee.am.model.User user);
 
     Single<List<ScopeApproval>> saveConsent(Client client, List<ScopeApproval> approvals, User principal);

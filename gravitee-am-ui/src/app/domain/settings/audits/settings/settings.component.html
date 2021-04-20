@@ -20,29 +20,35 @@
   <h1>Audit settings</h1>
   <div fxLayout="row">
     <div fxFlex="70">
-      <ngx-datatable *ngIf="!isEmpty" class="material"
-                     [columnMode]="'flex'"
-                     [headerHeight]="40"
-                     [footerHeight]="40"
-                     [rowHeight]="50"
-                     [rows]='reporters'
-                     [sorts]="[{prop: 'enabled', dir: 'desc'}]"
-                     [rowClass]="rowClass">
+      <ngx-datatable
+        *ngIf="!isEmpty"
+        class="material"
+        [columnMode]="'flex'"
+        [headerHeight]="40"
+        [footerHeight]="40"
+        [rowHeight]="50"
+        [rows]="reporters"
+        [sorts]="[{ prop: 'enabled', dir: 'desc' }]"
+        [rowClass]="rowClass"
+      >
         <ngx-datatable-column>
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-icon [ngStyle]="{'color': row.enabled ? 'green' : 'orange'}"  matTooltip="{{row.enabled ? 'Reporter enabled' : 'Reporter disabled'}}">
-              {{row.enabled ? 'done' : 'not_interested'}}
+            <mat-icon
+              [ngStyle]="{ color: row.enabled ? 'green' : 'orange' }"
+              matTooltip="{{ row.enabled ? 'Reporter enabled' : 'Reporter disabled' }}"
+            >
+              {{ row.enabled ? 'done' : 'not_interested' }}
             </mat-icon>
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Reporter" [flexGrow]="2">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.name}}
+            {{ row.name }}
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="Type" [flexGrow]="2">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.type}}
+            {{ row.type }}
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column [flexGrow]="1">
@@ -54,16 +60,12 @@
         </ngx-datatable-column>
       </ngx-datatable>
 
-      <app-emptystate *ngIf="isEmpty"
-                      [message]="'Audit Reporters will appear here'"
-                      [icon]="'list'"></app-emptystate>
+      <app-emptystate *ngIf="isEmpty" [message]="'Audit Reporters will appear here'" [icon]="'list'"></app-emptystate>
     </div>
     <div class="gv-page-description" fxFlex>
       <h3>Audit reporters</h3>
       <div class="gv-page-description-content">
-        <p>
-          Reporters are used by the platform to report many types of event (e.g Audit logs).
-        </p>
+        <p>Reporters are used by the platform to report many types of event (e.g Audit logs).</p>
       </div>
     </div>
   </div>

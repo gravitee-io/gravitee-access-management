@@ -24,10 +24,9 @@ import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.reactivex.Single;
+import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
-import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,8 +48,10 @@ public class UserConsentServiceImpl implements UserConsentService {
 
     @Override
     public Single<Set<String>> checkConsent(Client client, io.gravitee.am.model.User user) {
-        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), user.getId(), client.getClientId())
-                .map(userApprovals -> {
+        return scopeApprovalService
+            .findByDomainAndUserAndClient(domain.getId(), user.getId(), client.getClientId())
+            .map(
+                userApprovals -> {
                     Set<String> approvedConsent = new HashSet<>();
                     // Look at the user consent and see if they have expired
                     if (userApprovals != null) {
@@ -64,7 +65,8 @@ public class UserConsentServiceImpl implements UserConsentService {
                         }
                     }
                     return approvedConsent;
-                });
+                }
+            );
     }
 
     @Override
@@ -77,20 +79,23 @@ public class UserConsentServiceImpl implements UserConsentService {
 
     @Override
     public Single<List<Scope>> getConsentInformation(Set<String> consent) {
-        return scopeService.getAll()
-                .map(scopes -> {
+        return scopeService
+            .getAll()
+            .map(
+                scopes -> {
                     List<Scope> requestedScopes = new ArrayList<>();
                     for (String requestScope : consent) {
                         Scope requestedScope = scopes
-                                .stream()
-                                .filter(scope -> scope.getKey().equalsIgnoreCase(requestScope))
-                                .findAny()
-                                .orElse(new Scope(requestScope));
+                            .stream()
+                            .filter(scope -> scope.getKey().equalsIgnoreCase(requestScope))
+                            .findAny()
+                            .orElse(new Scope(requestScope));
 
                         requestedScopes.add(requestedScope);
                     }
                     return requestedScopes;
-                });
+                }
+            );
     }
 
     private Date computeExpiry(Client client, String scope) {

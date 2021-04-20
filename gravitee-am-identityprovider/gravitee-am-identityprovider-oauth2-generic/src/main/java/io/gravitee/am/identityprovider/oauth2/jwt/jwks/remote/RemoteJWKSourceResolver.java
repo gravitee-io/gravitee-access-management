@@ -19,7 +19,6 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.jwk.source.RemoteJWKSet;
 import com.nimbusds.jose.proc.SecurityContext;
 import io.gravitee.am.identityprovider.oauth2.jwt.jwks.JWKSourceResolver;
-
 import java.net.URL;
 
 /**

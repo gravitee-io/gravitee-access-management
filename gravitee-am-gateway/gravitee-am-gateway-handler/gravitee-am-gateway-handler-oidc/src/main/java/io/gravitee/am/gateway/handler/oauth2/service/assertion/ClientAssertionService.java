@@ -26,6 +26,5 @@ import io.reactivex.Maybe;
  * @author GraviteeSource Team
  */
 public interface ClientAssertionService {
-
     Maybe<Client> assertClient(String assertionType, String assertion, String basePath);
 }

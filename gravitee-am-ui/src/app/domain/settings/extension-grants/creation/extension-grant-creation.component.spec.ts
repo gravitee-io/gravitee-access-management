@@ -23,9 +23,8 @@ describe('ExtensionGrantCreationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ExtensionGrantCreationComponent ]
-    })
-    .compileComponents();
+      declarations: [ExtensionGrantCreationComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

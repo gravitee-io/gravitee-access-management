@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
@@ -29,9 +32,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,11 +55,11 @@ public class LoginAttemptServiceTest {
     @Test
     public void shouldCreateUser_accountLockFirstConnection() {
         final LoginAttemptCriteria loginAttemptCriteria = new LoginAttemptCriteria.Builder()
-                .client("client-1")
-                .domain("domain-1")
-                .username("user-1")
-                .identityProvider("idp-1")
-                .build();
+            .client("client-1")
+            .domain("domain-1")
+            .username("user-1")
+            .identityProvider("idp-1")
+            .build();
 
         final LoginAttempt loginAttempt = new LoginAttempt();
         loginAttempt.setAttempts(1);
@@ -84,11 +84,11 @@ public class LoginAttemptServiceTest {
     @Test
     public void shouldUpdateUser_accountLockAlreadyRegistered() {
         final LoginAttemptCriteria loginAttemptCriteria = new LoginAttemptCriteria.Builder()
-                .client("client-1")
-                .domain("domain-1")
-                .username("user-1")
-                .identityProvider("idp-1")
-                .build();
+            .client("client-1")
+            .domain("domain-1")
+            .username("user-1")
+            .identityProvider("idp-1")
+            .build();
 
         final LoginAttempt loginAttempt = new LoginAttempt();
         loginAttempt.setAttempts(1);

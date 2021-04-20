@@ -16,7 +16,6 @@
 package io.gravitee.am.model.common.event;
 
 import io.gravitee.am.common.event.Type;
-
 import java.util.Date;
 
 /**
@@ -31,7 +30,7 @@ public class Event {
     private Date createdAt;
     private Date updatedAt;
 
-    public Event() { }
+    public Event() {}
 
     public Event(Type type, Payload payload) {
         this.type = type;
@@ -80,12 +79,23 @@ public class Event {
 
     @Override
     public String toString() {
-        return "{\"_class\":\"Event\", " +
-                "\"id\":" + (id == null ? "null" : "\"" + id + "\"") + ", " +
-                "\"type\":" + (type == null ? "null" : type) + ", " +
-                "\"payload\":" + (payload == null ? "null" : payload) + ", " +
-                "\"createdAt\":" + (createdAt == null ? "null" : createdAt) + ", " +
-                "\"updatedAt\":" + (updatedAt == null ? "null" : updatedAt) +
-                "}";
+        return (
+            "{\"_class\":\"Event\", " +
+            "\"id\":" +
+            (id == null ? "null" : "\"" + id + "\"") +
+            ", " +
+            "\"type\":" +
+            (type == null ? "null" : type) +
+            ", " +
+            "\"payload\":" +
+            (payload == null ? "null" : payload) +
+            ", " +
+            "\"createdAt\":" +
+            (createdAt == null ? "null" : createdAt) +
+            ", " +
+            "\"updatedAt\":" +
+            (updatedAt == null ? "null" : updatedAt) +
+            "}"
+        );
     }
 }

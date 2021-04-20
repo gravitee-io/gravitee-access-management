@@ -32,13 +32,12 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,10 +52,12 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
     private ExecutionContextFactory executionContextFactory;
     private ExtensionPoint extensionPoint;
 
-    public PolicyChainHandlerImpl(PolicyManager policyManager,
-                                  PolicyChainProcessorFactory policyChainProcessorFactory,
-                                  ExecutionContextFactory executionContextFactory,
-                                  ExtensionPoint extensionPoint) {
+    public PolicyChainHandlerImpl(
+        PolicyManager policyManager,
+        PolicyChainProcessorFactory policyChainProcessorFactory,
+        ExecutionContextFactory executionContextFactory,
+        ExtensionPoint extensionPoint
+    ) {
         this.policyManager = policyManager;
         this.policyChainProcessorFactory = policyChainProcessorFactory;
         this.executionContextFactory = executionContextFactory;
@@ -66,50 +67,59 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext context) {
         // resolve policies
-        resolve(extensionPoint, handler -> {
-            if (handler.failed()) {
-                logger.error("An error occurs while resolving policies", handler.cause());
-                context.fail(handler.cause());
-                return;
-            }
-
-            List<Policy> policies = handler.result();
-            // if no policies continue
-            if (policies.isEmpty()) {
-                context.next();
-                return;
-            }
-
-            // prepare execution context
-            prepareContext(context, contextHandler -> {
-                if (contextHandler.failed()) {
-                    logger.error("An error occurs while preparing execution context", contextHandler.cause());
-                    context.fail(contextHandler.cause());
+        resolve(
+            extensionPoint,
+            handler -> {
+                if (handler.failed()) {
+                    logger.error("An error occurs while resolving policies", handler.cause());
+                    context.fail(handler.cause());
                     return;
                 }
 
-                // call the policy chain
-                executePolicyChain(policies, contextHandler.result(), policyChainHandler -> {
-                    if (policyChainHandler.failed()) {
-                        logger.debug("An error occurs while executing the policy chain", policyChainHandler.cause());
-                        context.fail(policyChainHandler.cause());
-                        return;
-                    }
-                    // update context attributes
-                    ExecutionContext executionContext = policyChainHandler.result();
-                    executionContext.getAttributes().forEach((k, v) -> context.put(k, v));
-                    // continue
+                List<Policy> policies = handler.result();
+                // if no policies continue
+                if (policies.isEmpty()) {
                     context.next();
-                });
-            });
-        });
+                    return;
+                }
+
+                // prepare execution context
+                prepareContext(
+                    context,
+                    contextHandler -> {
+                        if (contextHandler.failed()) {
+                            logger.error("An error occurs while preparing execution context", contextHandler.cause());
+                            context.fail(contextHandler.cause());
+                            return;
+                        }
+
+                        // call the policy chain
+                        executePolicyChain(
+                            policies,
+                            contextHandler.result(),
+                            policyChainHandler -> {
+                                if (policyChainHandler.failed()) {
+                                    logger.debug("An error occurs while executing the policy chain", policyChainHandler.cause());
+                                    context.fail(policyChainHandler.cause());
+                                    return;
+                                }
+                                // update context attributes
+                                ExecutionContext executionContext = policyChainHandler.result();
+                                executionContext.getAttributes().forEach((k, v) -> context.put(k, v));
+                                // continue
+                                context.next();
+                            }
+                        );
+                    }
+                );
+            }
+        );
     }
 
     private void resolve(ExtensionPoint extensionPoint, Handler<AsyncResult<List<Policy>>> handler) {
-        policyManager.findByExtensionPoint(extensionPoint)
-                .subscribe(
-                        policies -> handler.handle(Future.succeededFuture(policies)),
-                        error -> handler.handle(Future.failedFuture(error)));
+        policyManager
+            .findByExtensionPoint(extensionPoint)
+            .subscribe(policies -> handler.handle(Future.succeededFuture(policies)), error -> handler.handle(Future.failedFuture(error)));
     }
 
     private void prepareContext(RoutingContext routingContext, Handler<AsyncResult<ExecutionContext>> handler) {
@@ -132,11 +142,28 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
         }
     }
 
-    private void executePolicyChain(List<Policy> policies, ExecutionContext executionContext, Handler<AsyncResult<ExecutionContext>> handler) {
+    private void executePolicyChain(
+        List<Policy> policies,
+        ExecutionContext executionContext,
+        Handler<AsyncResult<ExecutionContext>> handler
+    ) {
         policyChainProcessorFactory
-                .create(policies, executionContext)
-                .handler(executionContext1 -> handler.handle(Future.succeededFuture(executionContext1)))
-                .errorHandler(processorFailure -> handler.handle(Future.failedFuture(new PolicyChainException(processorFailure.message(), processorFailure.statusCode(), processorFailure.key(), processorFailure.parameters(), processorFailure.contentType()))))
-                .handle(executionContext);
+            .create(policies, executionContext)
+            .handler(executionContext1 -> handler.handle(Future.succeededFuture(executionContext1)))
+            .errorHandler(
+                processorFailure ->
+                    handler.handle(
+                        Future.failedFuture(
+                            new PolicyChainException(
+                                processorFailure.message(),
+                                processorFailure.statusCode(),
+                                processorFailure.key(),
+                                processorFailure.parameters(),
+                                processorFailure.contentType()
+                            )
+                        )
+                    )
+            )
+            .handle(executionContext);
     }
 }

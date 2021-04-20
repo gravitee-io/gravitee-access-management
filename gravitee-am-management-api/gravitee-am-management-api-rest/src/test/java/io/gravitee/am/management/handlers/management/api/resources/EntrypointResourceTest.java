@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Entrypoint;
@@ -22,18 +27,11 @@ import io.gravitee.am.service.exception.EntrypointNotFoundException;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,7 +44,6 @@ public class EntrypointResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldGetEntrypoint() {
-
         final Entrypoint mockEntrypoint = new Entrypoint();
         mockEntrypoint.setId(ENTRYPOINT_ID);
         mockEntrypoint.setOrganizationId(ORGANIZATION_ID);
@@ -59,9 +56,7 @@ public class EntrypointResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(mockEntrypoint)).when(entrypointService).findById(ENTRYPOINT_ID, ORGANIZATION_ID);
 
-        final Response response = target("organizations")
-                .path(ORGANIZATION_ID)
-                .path("entrypoints").path(ENTRYPOINT_ID).request().get();
+        final Response response = target("organizations").path(ORGANIZATION_ID).path("entrypoints").path(ENTRYPOINT_ID).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Entrypoint entrypoint = readEntity(response, Entrypoint.class);
@@ -77,19 +72,17 @@ public class EntrypointResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldNotGetEntrypoint_notFound() {
+        doReturn(Single.error(new EntrypointNotFoundException(ENTRYPOINT_ID)))
+            .when(entrypointService)
+            .findById(ENTRYPOINT_ID, ORGANIZATION_ID);
 
-        doReturn(Single.error(new EntrypointNotFoundException(ENTRYPOINT_ID))).when(entrypointService).findById(ENTRYPOINT_ID, ORGANIZATION_ID);
-
-        final Response response = target("organizations")
-                .path(ORGANIZATION_ID)
-                .path("entrypoints").path(ENTRYPOINT_ID).request().get();
+        final Response response = target("organizations").path(ORGANIZATION_ID).path("entrypoints").path(ENTRYPOINT_ID).request().get();
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
     @Test
     public void shouldUpdateEntrypoint() {
-
         UpdateEntrypoint updateEntrypoint = new UpdateEntrypoint();
         updateEntrypoint.setName("name");
         updateEntrypoint.setUrl("https://auth.company.com");
@@ -100,11 +93,14 @@ public class EntrypointResourceTest extends JerseySpringTest {
         mockEntrypoint.setOrganizationId(ORGANIZATION_ID);
         mockEntrypoint.setName("name");
 
-        doReturn(Single.just(mockEntrypoint)).when(entrypointService).update(eq(ENTRYPOINT_ID), eq(ORGANIZATION_ID), any(UpdateEntrypoint.class), any(User.class));
+        doReturn(Single.just(mockEntrypoint))
+            .when(entrypointService)
+            .update(eq(ENTRYPOINT_ID), eq(ORGANIZATION_ID), any(UpdateEntrypoint.class), any(User.class));
 
-        final Response response = put(target("organizations")
-                .path(ORGANIZATION_ID)
-                .path("entrypoints").path(ENTRYPOINT_ID), updateEntrypoint);
+        final Response response = put(
+            target("organizations").path(ORGANIZATION_ID).path("entrypoints").path(ENTRYPOINT_ID),
+            updateEntrypoint
+        );
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
@@ -116,17 +112,19 @@ public class EntrypointResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldNotUpdateEntrypoint_notFound() {
-
         UpdateEntrypoint updateEntrypoint = new UpdateEntrypoint();
         updateEntrypoint.setName("name");
         updateEntrypoint.setUrl("https://auth.company.com");
         updateEntrypoint.setTags(Collections.emptyList());
 
-        doReturn(Single.error(new EntrypointNotFoundException(ENTRYPOINT_ID))).when(entrypointService).update(eq(ENTRYPOINT_ID), eq(ORGANIZATION_ID), any(UpdateEntrypoint.class), any(User.class));
+        doReturn(Single.error(new EntrypointNotFoundException(ENTRYPOINT_ID)))
+            .when(entrypointService)
+            .update(eq(ENTRYPOINT_ID), eq(ORGANIZATION_ID), any(UpdateEntrypoint.class), any(User.class));
 
-        final Response response = put(target("organizations")
-                .path(ORGANIZATION_ID)
-                .path("entrypoints").path(ENTRYPOINT_ID), updateEntrypoint);
+        final Response response = put(
+            target("organizations").path(ORGANIZATION_ID).path("entrypoints").path(ENTRYPOINT_ID),
+            updateEntrypoint
+        );
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }

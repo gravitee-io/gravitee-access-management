@@ -22,7 +22,6 @@ import io.gravitee.am.service.model.UpdateFactor;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -30,7 +29,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface FactorService {
-
     Single<List<Factor>> findAll();
 
     Maybe<Factor> findById(String id);

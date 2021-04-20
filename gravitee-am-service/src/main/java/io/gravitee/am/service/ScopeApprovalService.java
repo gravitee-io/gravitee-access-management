@@ -21,7 +21,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Set;
 
@@ -30,7 +29,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ScopeApprovalService {
-
     Maybe<ScopeApproval> findById(String id);
 
     Single<Set<ScopeApproval>> findByDomainAndUser(String domain, String user);

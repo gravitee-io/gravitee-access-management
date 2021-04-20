@@ -19,7 +19,6 @@ import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.Set;
 
 /**
@@ -27,7 +26,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ExtensionGrantRepository extends CrudRepository<ExtensionGrant, String> {
-
     Single<Set<ExtensionGrant>> findByDomain(String domain);
 
     Maybe<ExtensionGrant> findByDomainAndName(String domain, String name);

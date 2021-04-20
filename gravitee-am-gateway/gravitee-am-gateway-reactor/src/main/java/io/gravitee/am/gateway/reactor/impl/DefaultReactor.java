@@ -103,9 +103,11 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
 
     @Override
     public Router unMountSubRouter(String contextPath) {
-        router.getRoutes().stream()
-                .filter(route -> route.getPath() != null && route.getPath().startsWith(contextPath))
-                .forEach(Route::remove);
+        router
+            .getRoutes()
+            .stream()
+            .filter(route -> route.getPath() != null && route.getPath().startsWith(contextPath))
+            .forEach(Route::remove);
 
         return router;
     }
@@ -129,5 +131,4 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
 
         serverResponse.end();
     }
-
 }

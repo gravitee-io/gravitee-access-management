@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import {DomainService} from "../../../../../services/domain.service";
-import {DialogService} from "../../../../../services/dialog.service";
-import {SnackbarService} from "../../../../../services/snackbar.service";
-import {AuthService} from "../../../../../services/auth.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DomainService } from '../../../../../services/domain.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-openid-client-registration-settings',
   templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss']
+  styleUrls: ['./settings.component.scss'],
 })
 export class ClientRegistrationSettingsComponent implements OnInit {
   formChanged = false;
@@ -33,15 +33,17 @@ export class ClientRegistrationSettingsComponent implements OnInit {
   toolTipMessage = '';
   readonly: boolean;
 
-  constructor(private domainService: DomainService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private authService: AuthService) {}
+  constructor(
+    private domainService: DomainService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = this.route.snapshot.data.domain;
     this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
   }
 
@@ -98,7 +100,7 @@ export class ClientRegistrationSettingsComponent implements OnInit {
   }
 
   patch() {
-    this.domainService.patchOpenidDCRSettings(this.domain.id, this.domain).subscribe(response => {
+    this.domainService.patchOpenidDCRSettings(this.domain.id, this.domain).subscribe((response) => {
       this.domain = response;
       this.domainService.notify(this.domain);
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');

@@ -15,17 +15,16 @@
  */
 package io.gravitee.am.management.service.permissions;
 
+import static java.util.Arrays.asList;
+
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-
-import static java.util.Arrays.asList;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -36,19 +35,16 @@ class OrPermissionAcls implements PermissionAcls {
     private List<PermissionAcls> permissionAcls;
 
     OrPermissionAcls(PermissionAcls... permissionAcls) {
-
         this.permissionAcls = asList(permissionAcls);
     }
 
     @Override
     public boolean match(Map<Membership, Map<Permission, Set<Acl>>> permissions) {
-
         return permissionAcls.stream().anyMatch(p -> p.match(permissions));
     }
 
     @Override
     public Stream<Map.Entry<ReferenceType, String>> referenceStream() {
-
         return permissionAcls.stream().flatMap(PermissionAcls::referenceStream).distinct();
     }
 }

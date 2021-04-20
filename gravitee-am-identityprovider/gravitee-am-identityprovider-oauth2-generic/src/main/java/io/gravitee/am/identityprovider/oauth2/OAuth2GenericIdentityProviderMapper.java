@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.oauth2;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
-
 import java.util.Map;
 
 /**
@@ -24,6 +23,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class OAuth2GenericIdentityProviderMapper implements IdentityProviderMapper {
+
     private Map<String, String> mappers;
 
     public Map<String, String> getMappers() {

@@ -30,8 +30,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.net.URI;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -40,13 +39,13 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.net.URI;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"email"})
+@Api(tags = { "email" })
 @Deprecated
 public class ClientEmailsResource extends AbstractResource {
 
@@ -64,61 +63,87 @@ public class ClientEmailsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Find a email for a client",
-            notes = "User must have APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified client " +
-                    "or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified domain " +
-                    "or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified environment " +
-                    "or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Email successfully fetched"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Find a email for a client",
+        notes = "User must have APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified client " +
+        "or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified domain " +
+        "or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified environment " +
+        "or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 200, message = "Email successfully fetched"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void get(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("client") String client,
-            @NotNull @QueryParam("template") Template emailTemplate,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("client") String client,
+        @NotNull @QueryParam("template") Template emailTemplate,
+        @Suspended final AsyncResponse response
+    ) {
         checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.READ)
-                .andThen(emailTemplateService.findByDomainAndClientAndTemplate(domain, client, emailTemplate.template())
-                        .map(email -> Response.ok(email).build())
-                        .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build()))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                emailTemplateService
+                    .findByDomainAndClientAndTemplate(domain, client, emailTemplate.template())
+                    .map(email -> Response.ok(email).build())
+                    .defaultIfEmpty(Response.status(HttpStatusCode.NOT_FOUND_404).build())
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a email for a client",
-            notes = "User must have APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified client " +
-                    "or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified domain " +
-                    "or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified environment " +
-                    "or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Email successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Create a email for a client",
+        notes = "User must have APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified client " +
+        "or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified domain " +
+        "or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified environment " +
+        "or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 201, message = "Email successfully created"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void create(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("client") String client,
-            @ApiParam(name = "email", required = true)
-            @Valid @NotNull final NewEmail newEmail,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("client") String client,
+        @ApiParam(name = "email", required = true) @Valid @NotNull final NewEmail newEmail,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, client, Permission.APPLICATION_EMAIL_TEMPLATE, Acl.CREATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> clientService.findById(client))
-                        .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
-                        .flatMapSingle(__ -> emailTemplateService.create(domain, client, newEmail, authenticatedUser))
-                        .map(email -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/clients/" + client + "/emails/" + email.getId()))
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMap(irrelevant -> clientService.findById(client))
+                    .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
+                    .flatMapSingle(__ -> emailTemplateService.create(domain, client, newEmail, authenticatedUser))
+                    .map(
+                        email ->
+                            Response
+                                .created(
+                                    URI.create(
+                                        "/organizations/" +
+                                        organizationId +
+                                        "/environments/" +
+                                        environmentId +
+                                        "/domains/" +
+                                        domain +
+                                        "/clients/" +
+                                        client +
+                                        "/emails/" +
+                                        email.getId()
+                                    )
+                                )
                                 .entity(email)
-                                .build()))
-                .subscribe(response::resume, response::resume);
+                                .build()
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{email}")

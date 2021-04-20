@@ -23,15 +23,22 @@
     <mat-list dense>
       <mat-list-item>
         <mat-icon matListIcon>info</mat-icon>
-        <h3 matLine> Extension points allow you to extend the behavior of the Gateway Server by executing policies on <b> specific stages.</b> </h3>
+        <h3 matLine>
+          Extension points allow you to extend the behavior of the Gateway Server by executing policies on <b> specific stages.</b>
+        </h3>
       </mat-list-item>
       <mat-list-item>
         <mat-icon matListIcon>info</mat-icon>
-        <h3 matLine> Each extension point has access to the <b> Execution Context </b> to retrieve and set information required to execute the policy code. </h3>
+        <h3 matLine>
+          Each extension point has access to the <b> Execution Context </b> to retrieve and set information required to execute the policy
+          code.
+        </h3>
       </mat-list-item>
       <mat-list-item>
         <mat-icon matListIcon>info</mat-icon>
-        <h3 matLine> Those <b> Execution Context data </b> will be propagate to the next steps to be used later on (e.g custom HTML forms). </h3>
+        <h3 matLine>
+          Those <b> Execution Context data </b> will be propagate to the next steps to be used later on (e.g custom HTML forms).
+        </h3>
       </mat-list-item>
     </mat-list>
 
@@ -54,26 +61,28 @@
     <mat-list dense>
       <mat-list-item>
         <mat-icon matListIcon>extension</mat-icon>
-        <h3 matLine> <b>ROOT</b> </h3>
+        <h3 matLine><b>ROOT</b></h3>
         <p matLine>
           <span>Catch all routes handler.</span><br />
-          <span style="color:grey;">It allows you to apply technical and functional controls for all the incoming requests.</span>
+          <span style="color: grey">It allows you to apply technical and functional controls for all the incoming requests.</span>
         </p>
       </mat-list-item>
       <mat-list-item>
         <mat-icon matListIcon>extension</mat-icon>
-        <h3 matLine> <b>PRE_CONSENT</b> </h3>
+        <h3 matLine><b>PRE_CONSENT</b></h3>
         <p matLine>
           <span>Pre End-User Consent step happens after the user has logged in.</span><br />
-          <span style="color:grey;">It allows you to fetch more information or validate incoming data before displaying the User Consent HTML Page.</span>
+          <span style="color: grey"
+            >It allows you to fetch more information or validate incoming data before displaying the User Consent HTML Page.</span
+          >
         </p>
       </mat-list-item>
       <mat-list-item>
         <mat-icon matListIcon>extension</mat-icon>
-        <h3 matLine> <b>POST_CONSENT</b> </h3>
+        <h3 matLine><b>POST_CONSENT</b></h3>
         <p matLine>
           <span>Post End-User Consent step happens after the user has given his consent to the processing of personal data.</span><br />
-          <span style="color:grey;">It allows you to validate incoming data (user consent) before giving access to the application.</span>
+          <span style="color: grey">It allows you to validate incoming data (user consent) before giving access to the application.</span>
         </p>
       </mat-list-item>
     </mat-list>

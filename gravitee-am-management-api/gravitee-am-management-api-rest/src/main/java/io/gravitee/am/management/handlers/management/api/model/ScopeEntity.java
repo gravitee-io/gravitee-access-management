@@ -28,8 +28,7 @@ public class ScopeEntity {
     private String name;
     private String description;
 
-    public ScopeEntity() {
-    }
+    public ScopeEntity() {}
 
     public ScopeEntity(String id, String key, String name, String description) {
         this.id = id;

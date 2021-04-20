@@ -23,7 +23,6 @@ import org.springframework.context.ApplicationContext;
  * @author GraviteeSource Team
  */
 public interface ProtocolPluginManager {
-
     void register(ProtocolDefinition protocolDefinition);
 
     ProtocolProvider create(String type, ApplicationContext parentContext);

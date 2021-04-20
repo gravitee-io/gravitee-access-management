@@ -37,8 +37,7 @@ public class HttpIdentityProviderResponse {
         this.content = content;
         this.headers = new HttpHeaders(response.headers().size());
 
-        response.headers().names().forEach(headerName ->
-                this.headers.put(headerName, response.headers().getAll(headerName)));
+        response.headers().names().forEach(headerName -> this.headers.put(headerName, response.headers().getAll(headerName)));
     }
 
     public int getStatus() {

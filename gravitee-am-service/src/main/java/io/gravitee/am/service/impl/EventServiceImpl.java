@@ -21,14 +21,13 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.Single;
+import java.util.Date;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,26 +48,32 @@ public class EventServiceImpl implements EventService {
 
         event.setCreatedAt(new Date());
         event.setUpdatedAt(event.getCreatedAt());
-        return eventRepository.create(event)
-                .onErrorResumeNext(ex -> {
+        return eventRepository
+            .create(event)
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to create an event", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an event", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<List<Event>> findByTimeFrame(long from, long to) {
         LOGGER.debug("Find events with time frame {} and {}", from, to);
-        return eventRepository.findByTimeFrame(from, to)
-                .onErrorResumeNext(ex -> {
+        return eventRepository
+            .findByTimeFrame(from, to)
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to find events by time frame", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find events by time frame", ex));
-                });
+                }
+            );
     }
 }

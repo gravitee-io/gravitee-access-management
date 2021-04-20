@@ -17,7 +17,6 @@ package io.gravitee.am.plugins.policy.core;
 
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.plugin.policy.PolicyPlugin;
-
 import java.io.IOException;
 import java.util.Collection;
 
@@ -26,7 +25,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface PolicyPluginManager {
-
     Policy create(String type, String configuration);
 
     Collection<PolicyPlugin> getAll();

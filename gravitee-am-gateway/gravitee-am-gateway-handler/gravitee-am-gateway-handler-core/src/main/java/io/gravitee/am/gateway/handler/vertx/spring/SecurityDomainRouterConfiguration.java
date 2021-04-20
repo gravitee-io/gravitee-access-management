@@ -29,12 +29,7 @@ import org.springframework.context.annotation.Import;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Import({
-        ThymeleafConfiguration.class,
-        FreeMarkerConfiguration.class,
-        EmailConfiguration.class,
-        ServiceConfiguration.class
-})
+@Import({ ThymeleafConfiguration.class, FreeMarkerConfiguration.class, EmailConfiguration.class, ServiceConfiguration.class })
 @Configuration
 public class SecurityDomainRouterConfiguration {
 
@@ -42,5 +37,4 @@ public class SecurityDomainRouterConfiguration {
     public VertxSecurityDomainHandler securityDomainHandler() {
         return new VertxSecurityDomainHandler();
     }
-
 }

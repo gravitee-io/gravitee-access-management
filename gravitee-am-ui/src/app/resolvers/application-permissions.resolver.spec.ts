@@ -20,7 +20,7 @@ import { ApplicationPermissionsResolver } from './application-permissions.resolv
 describe('ApplicationPermissionsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ApplicationPermissionsResolver]
+      providers: [ApplicationPermissionsResolver],
     });
   });
 

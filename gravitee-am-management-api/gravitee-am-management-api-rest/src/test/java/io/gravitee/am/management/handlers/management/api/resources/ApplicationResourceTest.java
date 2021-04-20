@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
@@ -34,17 +38,11 @@ import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-
 import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,7 +59,9 @@ public class ApplicationResourceTest extends JerseySpringTest {
         final Application mockApplication = buildApplicationMock();
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
-        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION)))
+            .when(permissionService)
+            .findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockApplication)).when(applicationService).findById(mockApplication.getId());
 
@@ -97,7 +97,9 @@ public class ApplicationResourceTest extends JerseySpringTest {
         final Application mockApplication = buildApplicationMock();
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
-        doReturn(Single.just(Permission.of(Permission.APPLICATION, Acl.READ))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString()); // only application read permission
+        doReturn(Single.just(Permission.of(Permission.APPLICATION, Acl.READ)))
+            .when(permissionService)
+            .findAllPermissions(any(User.class), any(ReferenceType.class), anyString()); // only application read permission
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockApplication)).when(applicationService).findById(mockApplication.getId());
 
@@ -163,7 +165,9 @@ public class ApplicationResourceTest extends JerseySpringTest {
         mockClient.setDomain("wrong-domain");
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
-        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION)))
+            .when(permissionService)
+            .findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockClient)).when(applicationService).findById(applicationId);
 
@@ -173,7 +177,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldUpdateApplication() {
-
         final String domainId = "domain-id";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -183,12 +186,19 @@ public class ApplicationResourceTest extends JerseySpringTest {
         patchApplication.setDescription(Optional.of("New description"));
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
-        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION)))
+            .when(permissionService)
+            .findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockApplication)).when(applicationService).patch(eq(domainId), eq(mockApplication.getId()), any(PatchApplication.class), any(User.class));
+        doReturn(Single.just(mockApplication))
+            .when(applicationService)
+            .patch(eq(domainId), eq(mockApplication.getId()), any(PatchApplication.class), any(User.class));
 
         // heck all data are returned when having all permissions.
-        final Response response = put(target("domains").path(domainId).path("applications").path(mockApplication.getId()), patchApplication);
+        final Response response = put(
+            target("domains").path(domainId).path("applications").path(mockApplication.getId()),
+            patchApplication
+        );
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Application application = readEntity(response, Application.class);
@@ -212,7 +222,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldUpdateFilteredApplication() {
-
         final String domainId = "domain-id";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -222,12 +231,19 @@ public class ApplicationResourceTest extends JerseySpringTest {
         patchApplication.setDescription(Optional.of("New description"));
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
-        doReturn(Single.just(Permission.of(Permission.APPLICATION, Acl.READ))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString()); // only application read permission
+        doReturn(Single.just(Permission.of(Permission.APPLICATION, Acl.READ)))
+            .when(permissionService)
+            .findAllPermissions(any(User.class), any(ReferenceType.class), anyString()); // only application read permission
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockApplication)).when(applicationService).patch(eq(domainId), eq(mockApplication.getId()), any(PatchApplication.class), any(User.class));
+        doReturn(Single.just(mockApplication))
+            .when(applicationService)
+            .patch(eq(domainId), eq(mockApplication.getId()), any(PatchApplication.class), any(User.class));
 
         // Check all data are returned when having all permissions.
-        final Response response = put(target("domains").path(domainId).path("applications").path(mockApplication.getId()), patchApplication);
+        final Response response = put(
+            target("domains").path(domainId).path("applications").path(mockApplication.getId()),
+            patchApplication
+        );
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Application application = readEntity(response, Application.class);
@@ -251,7 +267,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldUpdateApplication_domainNotFound() {
-
         final String domainId = "domain-id";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -261,16 +276,20 @@ public class ApplicationResourceTest extends JerseySpringTest {
         patchApplication.setDescription(Optional.of("New description"));
 
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
-        doReturn(Single.just(Permission.of(Permission.APPLICATION, Acl.READ))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString()); // only application read permission
+        doReturn(Single.just(Permission.of(Permission.APPLICATION, Acl.READ)))
+            .when(permissionService)
+            .findAllPermissions(any(User.class), any(ReferenceType.class), anyString()); // only application read permission
         doReturn(Maybe.empty()).when(domainService).findById(domainId);
 
-        final Response response = put(target("domains").path(domainId).path("applications").path(mockApplication.getId()), patchApplication);
+        final Response response = put(
+            target("domains").path(domainId).path("applications").path(mockApplication.getId()),
+            patchApplication
+        );
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
     @Test
     public void shouldUpdateApplication_forbidden() {
-
         final String domainId = "domain-id";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -282,13 +301,15 @@ public class ApplicationResourceTest extends JerseySpringTest {
         doReturn(Single.just(false)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
 
-        final Response response = put(target("domains").path(domainId).path("applications").path(mockApplication.getId()), patchApplication);
+        final Response response = put(
+            target("domains").path(domainId).path("applications").path(mockApplication.getId()),
+            patchApplication
+        );
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 
     @Test
     public void shouldUpdateApplication_badRequest() {
-
         // Empty patch should result in 400 bad request.
         PatchApplication patchApplication = new PatchApplication();
 
@@ -308,17 +329,19 @@ public class ApplicationResourceTest extends JerseySpringTest {
         mockClient.setName("client-name");
         mockClient.setDomain(domainId);
 
-        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION))).when(permissionService).findAllPermissions(any(User.class), eq(ReferenceType.APPLICATION), anyString());
+        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION)))
+            .when(permissionService)
+            .findAllPermissions(any(User.class), eq(ReferenceType.APPLICATION), anyString());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(mockClient)).when(applicationService).renewClientSecret(eq(domainId), eq(clientId), any());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("applications")
-                .path(clientId)
-                .path("secret/_renew")
-                .request()
-                .post(null);
+            .path(domainId)
+            .path("applications")
+            .path(clientId)
+            .path("secret/_renew")
+            .request()
+            .post(null);
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
 
@@ -335,20 +358,21 @@ public class ApplicationResourceTest extends JerseySpringTest {
         mockClient.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.error(new ApplicationNotFoundException(clientId))).when(applicationService).renewClientSecret(eq(domainId), eq(clientId), any());
+        doReturn(Single.error(new ApplicationNotFoundException(clientId)))
+            .when(applicationService)
+            .renewClientSecret(eq(domainId), eq(clientId), any());
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("applications")
-                .path(clientId)
-                .path("secret/_renew")
-                .request()
-                .post(null);
+            .path(domainId)
+            .path("applications")
+            .path(clientId)
+            .path("secret/_renew")
+            .request()
+            .post(null);
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
     private Application buildApplicationMock() {
-
         Application mockApplication = new Application();
         mockApplication.setId("client-id");
         mockApplication.setName("client-name");

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ExtensionGrant;
@@ -24,15 +27,11 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,35 +49,48 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     public void init() {
         extensionGrantsCollection = mongoOperations.getCollection("extension_grants", ExtensionGrantMongo.class);
         super.createIndex(extensionGrantsCollection, new Document(FIELD_DOMAIN, 1));
-        super.createIndex(extensionGrantsCollection,new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1));
+        super.createIndex(extensionGrantsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1));
     }
 
     @Override
     public Single<Set<ExtensionGrant>> findByDomain(String domain) {
-        return Observable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable
+            .fromPublisher(extensionGrantsCollection.find(eq(FIELD_DOMAIN, domain)))
+            .map(this::convert)
+            .collect(HashSet::new, Set::add);
     }
 
     @Override
     public Maybe<ExtensionGrant> findByDomainAndName(String domain, String name) {
-        return Observable.fromPublisher(extensionGrantsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_NAME, name))).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(extensionGrantsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_NAME, name))).first())
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
     public Maybe<ExtensionGrant> findById(String tokenGranterId) {
-        return Observable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_ID, tokenGranterId)).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(extensionGrantsCollection.find(eq(FIELD_ID, tokenGranterId)).first())
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
     public Single<ExtensionGrant> create(ExtensionGrant item) {
         ExtensionGrantMongo extensionGrant = convert(item);
         extensionGrant.setId(extensionGrant.getId() == null ? RandomString.generate() : extensionGrant.getId());
-        return Single.fromPublisher(extensionGrantsCollection.insertOne(extensionGrant)).flatMap(success -> findById(extensionGrant.getId()).toSingle());
+        return Single
+            .fromPublisher(extensionGrantsCollection.insertOne(extensionGrant))
+            .flatMap(success -> findById(extensionGrant.getId()).toSingle());
     }
 
     @Override
     public Single<ExtensionGrant> update(ExtensionGrant item) {
         ExtensionGrantMongo extensionGrant = convert(item);
-        return Single.fromPublisher(extensionGrantsCollection.replaceOne(eq(FIELD_ID, extensionGrant.getId()), extensionGrant)).flatMap(updateResult -> findById(extensionGrant.getId()).toSingle());
+        return Single
+            .fromPublisher(extensionGrantsCollection.replaceOne(eq(FIELD_ID, extensionGrant.getId()), extensionGrant))
+            .flatMap(updateResult -> findById(extensionGrant.getId()).toSingle());
     }
 
     @Override

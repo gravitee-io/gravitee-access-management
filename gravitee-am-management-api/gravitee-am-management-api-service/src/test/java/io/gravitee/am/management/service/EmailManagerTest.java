@@ -74,7 +74,8 @@ public class EmailManagerTest {
 
         ((EmailManagerImpl) emailManager).loadEmail(domainEmail);
 
-        String templateKey = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + "domain1";
+        String templateKey =
+            Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + "domain1";
         Email email = emailManager.getEmail(templateKey, "subject", 1000);
 
         Assert.assertNotNull(email);

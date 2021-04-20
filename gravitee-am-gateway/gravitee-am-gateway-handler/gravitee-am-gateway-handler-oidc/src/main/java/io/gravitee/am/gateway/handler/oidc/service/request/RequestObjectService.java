@@ -24,7 +24,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Teams
  */
 public interface RequestObjectService {
-
     /**
      * The URN prefix used by AS when storing Request Object
      */

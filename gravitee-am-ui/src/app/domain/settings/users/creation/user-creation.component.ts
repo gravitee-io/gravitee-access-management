@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {animate, style, transition, trigger} from '@angular/animations';
-import {SnackbarService} from '../../../../services/snackbar.service';
-import {UserService} from '../../../../services/user.service';
-import {ProviderService} from '../../../../services/provider.service';
-import {UserClaimComponent} from './user-claim.component';
+import { Component, ComponentFactoryResolver, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { animate, style, transition, trigger } from '@angular/animations';
+import { SnackbarService } from '../../../../services/snackbar.service';
+import { UserService } from '../../../../services/user.service';
+import { ProviderService } from '../../../../services/provider.service';
+import { UserClaimComponent } from './user-claim.component';
 import * as _ from 'lodash';
 
 @Component({
   selector: 'user-creation',
-  animations: [
-    trigger(
-      'fadeInOut', [
-        transition(':leave', [
-          animate(500, style({opacity:0}))
-        ])
-      ]
-    )
-  ],
+  animations: [trigger('fadeInOut', [transition(':leave', [animate(500, style({ opacity: 0 }))])])],
   templateUrl: './user-creation.component.html',
-  styleUrls: ['./user-creation.component.scss']
+  styleUrls: ['./user-creation.component.scss'],
 })
 export class UserCreationComponent implements OnInit {
   private domainId: string;
@@ -46,17 +38,18 @@ export class UserCreationComponent implements OnInit {
   userProviders: any[];
   @ViewChild('dynamic', { read: ViewContainerRef }) viewContainerRef: ViewContainerRef;
 
-  constructor(private userService: UserService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private snackbarService: SnackbarService,
-              private factoryResolver: ComponentFactoryResolver,
-              private providerService: ProviderService) {
-  }
+  constructor(
+    private userService: UserService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+    private factoryResolver: ComponentFactoryResolver,
+    private providerService: ProviderService,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.providerService.findUserProvidersByDomain(this.domainId).subscribe((response) => {
       this.userProviders = response;
     });
   }
@@ -66,14 +59,14 @@ export class UserCreationComponent implements OnInit {
     // set additional information
     if (this.userClaims && Object.keys(this.userClaims).length > 0) {
       let additionalInformation = {};
-      _.each(this.userClaims, function(item) {
+      _.each(this.userClaims, function (item) {
         additionalInformation[item.claimName] = item.claimValue;
       });
       this.user.additionalInformation = additionalInformation;
     }
     // set pre-registration
     this.user.preRegistration = this.preRegistration;
-    this.userService.create(this.domainId, this.user).subscribe(data => {
+    this.userService.create(this.domainId, this.user).subscribe((data) => {
       this.snackbarService.open('User ' + data.username + ' created');
       this.router.navigate(['/domains', this.domainId, 'settings', 'users', data.id]);
     });
@@ -100,13 +93,13 @@ export class UserCreationComponent implements OnInit {
     const component = this.viewContainerRef.createComponent(factory);
 
     let that = this;
-    component.instance.addClaimChange.subscribe(claim => {
+    component.instance.addClaimChange.subscribe((claim) => {
       if (claim.name && claim.value) {
-        that.userClaims[claim.id] = {'claimName': claim.name, 'claimValue': claim.value};
+        that.userClaims[claim.id] = { claimName: claim.name, claimValue: claim.value };
       }
     });
 
-    component.instance.removeClaimChange.subscribe(claim => {
+    component.instance.removeClaimChange.subscribe((claim) => {
       delete that.userClaims[claim.id];
       that.viewContainerRef.remove(that.viewContainerRef.indexOf(component.hostView));
       if (claim.name && claim.value) {

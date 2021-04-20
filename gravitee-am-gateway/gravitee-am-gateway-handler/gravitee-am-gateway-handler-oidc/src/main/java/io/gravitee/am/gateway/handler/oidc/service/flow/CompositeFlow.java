@@ -28,19 +28,18 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CompositeFlow implements Flow, InitializingBean  {
+public class CompositeFlow implements Flow, InitializingBean {
 
     private List<Flow> flows = new ArrayList<>();
 
@@ -64,10 +63,15 @@ public class CompositeFlow implements Flow, InitializingBean  {
     @Override
     public Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, Client client, User endUser) {
         return Observable
-                .fromIterable(flows)
-                .filter(flow -> flow.handle(authorizationRequest.getResponseType()))
-                .switchIfEmpty(Observable.error(new UnsupportedResponseTypeException("Unsupported response type: " + authorizationRequest.getResponseType())))
-                .flatMapSingle(flow -> flow.run(authorizationRequest, client, endUser)).singleOrError();
+            .fromIterable(flows)
+            .filter(flow -> flow.handle(authorizationRequest.getResponseType()))
+            .switchIfEmpty(
+                Observable.error(
+                    new UnsupportedResponseTypeException("Unsupported response type: " + authorizationRequest.getResponseType())
+                )
+            )
+            .flatMapSingle(flow -> flow.run(authorizationRequest, client, endUser))
+            .singleOrError();
     }
 
     @Override
@@ -83,5 +87,4 @@ public class CompositeFlow implements Flow, InitializingBean  {
         ((AbstractFlow) flow).setApplicationContext(applicationContext);
         ((AbstractFlow) flow).afterPropertiesSet();
     }
-
 }

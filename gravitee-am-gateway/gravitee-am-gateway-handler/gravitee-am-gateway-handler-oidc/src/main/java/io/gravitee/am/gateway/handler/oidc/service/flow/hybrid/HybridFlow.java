@@ -29,7 +29,6 @@ import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,14 +55,16 @@ import java.util.List;
  */
 public class HybridFlow extends AbstractFlow {
 
-    private final static List<String> RESPONSE_TYPES = Arrays.asList(ResponseType.CODE_TOKEN, ResponseType.CODE_ID_TOKEN, ResponseType.CODE_ID_TOKEN_TOKEN);
+    private static final List<String> RESPONSE_TYPES = Arrays.asList(
+        ResponseType.CODE_TOKEN,
+        ResponseType.CODE_ID_TOKEN,
+        ResponseType.CODE_ID_TOKEN_TOKEN
+    );
     private AuthorizationCodeService authorizationCodeService;
     private TokenService tokenService;
     private IDTokenService idTokenService;
 
-    public HybridFlow(AuthorizationCodeService authorizationCodeService,
-                      TokenService tokenService,
-                      IDTokenService idTokenService) {
+    public HybridFlow(AuthorizationCodeService authorizationCodeService, TokenService tokenService, IDTokenService idTokenService) {
         super(RESPONSE_TYPES);
         this.authorizationCodeService = authorizationCodeService;
         this.tokenService = tokenService;
@@ -73,8 +74,10 @@ public class HybridFlow extends AbstractFlow {
     @Override
     protected Single<AuthorizationResponse> prepareResponse(AuthorizationRequest authorizationRequest, Client client, User endUser) {
         // Authorization Code is always returned when using the Hybrid Flow.
-        return authorizationCodeService.create(authorizationRequest, endUser)
-                .flatMap(code -> {
+        return authorizationCodeService
+            .create(authorizationRequest, endUser)
+            .flatMap(
+                code -> {
                     // prepare response
                     HybridResponse hybridResponse = new HybridResponse();
                     hybridResponse.setRedirectUri(authorizationRequest.getRedirectUri());
@@ -88,19 +91,26 @@ public class HybridFlow extends AbstractFlow {
                     switch (authorizationRequest.getResponseType()) {
                         // code id_token response type MUST include both an Authorization Code and an id_token
                         case ResponseType.CODE_ID_TOKEN:
-                            return idTokenService.create(oAuth2Request, client, endUser)
-                                    .map(idToken -> {
+                            return idTokenService
+                                .create(oAuth2Request, client, endUser)
+                                .map(
+                                    idToken -> {
                                         hybridResponse.setIdToken(idToken);
                                         return hybridResponse;
-                                    });
+                                    }
+                                );
                         // others Hybrid Flow response type MUST include at least an Access Token, an Access Token Type and optionally an ID Token
                         default:
-                            return tokenService.create(oAuth2Request, client, endUser)
-                                    .map(accessToken -> {
+                            return tokenService
+                                .create(oAuth2Request, client, endUser)
+                                .map(
+                                    accessToken -> {
                                         hybridResponse.setAccessToken(accessToken);
                                         return hybridResponse;
-                                    });
+                                    }
+                                );
                     }
-                });
+                }
+            );
     }
 }

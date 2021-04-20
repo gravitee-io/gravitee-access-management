@@ -21,7 +21,7 @@ package io.gravitee.am.common.exception.authentication;
  */
 public class InternalAuthenticationServiceException extends AuthenticationException {
 
-    public InternalAuthenticationServiceException() { }
+    public InternalAuthenticationServiceException() {}
 
     public InternalAuthenticationServiceException(String message, Throwable cause) {
         super(message, cause);

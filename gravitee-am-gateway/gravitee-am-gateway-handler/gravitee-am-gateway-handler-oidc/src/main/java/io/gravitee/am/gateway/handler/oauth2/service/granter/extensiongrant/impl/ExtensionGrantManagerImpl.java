@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.impl;
 
-import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ExtensionGrantEvent;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranter;
@@ -36,22 +36,23 @@ import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ExtensionGrantManagerImpl extends AbstractService implements ExtensionGrantManager, InitializingBean, EventListener<ExtensionGrantEvent, Payload> {
+public class ExtensionGrantManagerImpl
+    extends AbstractService
+    implements ExtensionGrantManager, InitializingBean, EventListener<ExtensionGrantEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtensionGrantManagerImpl.class);
     private TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
@@ -86,17 +87,19 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing extension grants for domain {}", domain.getName());
-        extensionGrantRepository.findByDomain(domain.getId())
-                .subscribe(
-                        extensionGrants -> {
-                            if (extensionGrants != null && !extensionGrants.isEmpty()) {
-                                // backward compatibility, get the oldest extension grant to set the good one for the old clients
-                                minDate = Collections.min(extensionGrants.stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
-                                extensionGrants.forEach(extensionGrant -> updateExtensionGrantProvider(extensionGrant));
-                            }
-                            logger.info("Extension grants loaded for domain {}", domain.getName());
-                        },
-                        error -> logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error));
+        extensionGrantRepository
+            .findByDomain(domain.getId())
+            .subscribe(
+                extensionGrants -> {
+                    if (extensionGrants != null && !extensionGrants.isEmpty()) {
+                        // backward compatibility, get the oldest extension grant to set the good one for the old clients
+                        minDate = Collections.min(extensionGrants.stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
+                        extensionGrants.forEach(extensionGrant -> updateExtensionGrantProvider(extensionGrant));
+                    }
+                    logger.info("Extension grants loaded for domain {}", domain.getName());
+                },
+                error -> logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error)
+            );
 
         logger.info("Register event listener for extension grant events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ExtensionGrantEvent.class, domain.getId());
@@ -128,18 +131,20 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     private void updateExtensionGrant(String extensionGrantId, ExtensionGrantEvent extensionGrantEvent) {
         final String eventType = extensionGrantEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} extension grant event for {}", domain.getName(), eventType, extensionGrantId);
-        extensionGrantRepository.findById(extensionGrantId)
-                .subscribe(
-                        extensionGrant -> {
-                            // backward compatibility, get the oldest extension grant to set the good one for the old clients
-                            if (extensionGrants.isEmpty()) {
-                                minDate = extensionGrant.getCreatedAt();
-                            }
-                            updateExtensionGrantProvider(extensionGrant);
-                            logger.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName());
-                        },
-                        error -> logger.error("Unable to {} extension grant for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No extension grant found with id {}", extensionGrantId));
+        extensionGrantRepository
+            .findById(extensionGrantId)
+            .subscribe(
+                extensionGrant -> {
+                    // backward compatibility, get the oldest extension grant to set the good one for the old clients
+                    if (extensionGrants.isEmpty()) {
+                        minDate = extensionGrant.getCreatedAt();
+                    }
+                    updateExtensionGrantProvider(extensionGrant);
+                    logger.info("Extension grant {} {}d for domain {}", extensionGrantId, eventType, domain.getName());
+                },
+                error -> logger.error("Unable to {} extension grant for domain {}", eventType, domain.getName(), error),
+                () -> logger.error("No extension grant found with id {}", extensionGrantId)
+            );
     }
 
     private void removeExtensionGrant(String extensionGrantId) {
@@ -162,9 +167,19 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                     logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider());
                 }
             }
-            ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
-            ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant,
-                    userAuthenticationManager, tokenService, tokenRequestResolver, identityProviderManager);
+            ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(
+                extensionGrant.getType(),
+                extensionGrant.getConfiguration(),
+                authenticationProvider
+            );
+            ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(
+                extensionGrantProvider,
+                extensionGrant,
+                userAuthenticationManager,
+                tokenService,
+                tokenRequestResolver,
+                identityProviderManager
+            );
             // backward compatibility, set min date to the extension grant granter to choose the good one for the old clients
             extensionGrantGranter.setMinDate(minDate);
             ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);

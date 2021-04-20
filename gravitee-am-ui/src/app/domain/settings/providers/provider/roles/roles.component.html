@@ -19,22 +19,26 @@
   <div fxLayout="column" fxFlex="70">
     <mat-list *ngIf="!isEmpty">
       <span *ngFor="let role of providerRoles">
-        <h3 matSubheader>{{getRole(role)}}</h3>
+        <h3 matSubheader>{{ getRole(role) }}</h3>
         <mat-list-item *ngFor="let user of providerRoleMapper[role]">
           <mat-icon mat-list-icon>person</mat-icon>
-          <h4 matLine>{{displayMapping(user)}}</h4>
-          <button *hasPermission="['domain_identity_provider_update']" mat-icon-button (click)="deleteUserFromRole(role, user, $event);"><mat-icon>delete</mat-icon></button>
+          <h4 matLine>{{ displayMapping(user) }}</h4>
+          <button *hasPermission="['domain_identity_provider_update']" mat-icon-button (click)="deleteUserFromRole(role, user, $event)">
+            <mat-icon>delete</mat-icon>
+          </button>
         </mat-list-item>
         <mat-divider></mat-divider>
       </span>
     </mat-list>
 
-    <app-emptystate *ngIf="isEmpty"
-                    [message]="'Role mappers will appear here'"
-                    [subMessage]="'Start adding users to roles'"
-                    [icon]="'supervisor_account'"></app-emptystate>
+    <app-emptystate
+      *ngIf="isEmpty"
+      [message]="'Role mappers will appear here'"
+      [subMessage]="'Start adding users to roles'"
+      [icon]="'supervisor_account'"
+    ></app-emptystate>
 
-    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+    <div *hasPermission="['domain_identity_provider_update']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
       <button mat-fab color="primary" (click)="add()">
         <mat-icon>add</mat-icon>
       </button>
@@ -43,15 +47,9 @@
   <div class="gv-page-description" fxFlex>
     <h3>Role mappers</h3>
     <div class="gv-page-description-content">
-      <p>
-        Role mappers let you set roles and permissions for your users.
-      </p>
-      <p>
-        You can map these roles with your identity provider users.
-      </p>
-      <p>
-        This mapping occurs during user authentication.
-      </p>
+      <p>Role mappers let you set roles and permissions for your users.</p>
+      <p>You can map these roles with your identity provider users.</p>
+      <p>This mapping occurs during user authentication.</p>
       <small>
         To specify users and groups roles, you can use the following syntax <code>attributeName=attributeValue</code>
         and choose the corresponding roles.

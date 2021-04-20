@@ -20,7 +20,7 @@ import { ApplicationResolver } from './application.resolver';
 describe('ApplicationResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ApplicationResolver]
+      providers: [ApplicationResolver],
     });
   });
 

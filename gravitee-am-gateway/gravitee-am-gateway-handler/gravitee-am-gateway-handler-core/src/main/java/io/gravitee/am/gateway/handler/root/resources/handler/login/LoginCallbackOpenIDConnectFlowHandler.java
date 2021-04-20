@@ -25,12 +25,11 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -73,20 +72,26 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
         }
 
         // implicit flow, we need to retrieve hash url from the browser to get access_token, id_token, ...
-        engine.render(Collections.singletonMap("providerId", providerId), "login_callback", res -> {
-            if (res.succeeded()) {
-                context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                context.response().end(res.result());
-            } else {
-                logger.error("Unable to render login callback page", res.cause());
-                context.fail(res.cause());
+        engine.render(
+            Collections.singletonMap("providerId", providerId),
+            "login_callback",
+            res -> {
+                if (res.succeeded()) {
+                    context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    context.response().end(res.result());
+                } else {
+                    logger.error("Unable to render login callback page", res.cause());
+                    context.fail(res.cause());
+                }
             }
-        });
+        );
     }
 
     private boolean canHandle(AuthenticationProvider authenticationProvider) {
-        return (authenticationProvider instanceof OpenIDConnectAuthenticationProvider)
-                && (((OpenIDConnectAuthenticationProvider) authenticationProvider).authenticationFlow().equals(AuthenticationFlow.IMPLICIT_FLOW));
+        return (
+            (authenticationProvider instanceof OpenIDConnectAuthenticationProvider) &&
+            (((OpenIDConnectAuthenticationProvider) authenticationProvider).authenticationFlow().equals(AuthenticationFlow.IMPLICIT_FLOW))
+        );
     }
 
     private Map<String, String> getParams(String query) {

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
+import static io.vertx.reactivex.ext.web.handler.SessionHandler.*;
+
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.SessionHandlerImpl;
 import io.gravitee.am.model.Domain;
@@ -25,9 +27,6 @@ import io.vertx.reactivex.ext.web.sstore.LocalSessionStore;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-
-import static io.vertx.reactivex.ext.web.handler.SessionHandler.*;
-
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -52,13 +51,24 @@ public class SessionHandlerFactory implements FactoryBean<SessionHandler> {
     @Override
     public io.vertx.reactivex.ext.web.handler.SessionHandler getObject() {
         SessionStore sessionStore = LocalSessionStore.create(vertx).getDelegate();
-        return io.vertx.reactivex.ext.web.handler.SessionHandler.newInstance(new SessionHandlerImpl(DEFAULT_SESSION_COOKIE_NAME, DEFAULT_SESSION_COOKIE_PATH, DEFAULT_SESSION_TIMEOUT, DEFAULT_NAG_HTTPS, DEFAULT_COOKIE_SECURE_FLAG, DEFAULT_COOKIE_HTTP_ONLY_FLAG, DEFAULT_SESSIONID_MIN_LENGTH, sessionStore)
+        return io.vertx.reactivex.ext.web.handler.SessionHandler.newInstance(
+            new SessionHandlerImpl(
+                DEFAULT_SESSION_COOKIE_NAME,
+                DEFAULT_SESSION_COOKIE_PATH,
+                DEFAULT_SESSION_TIMEOUT,
+                DEFAULT_NAG_HTTPS,
+                DEFAULT_COOKIE_SECURE_FLAG,
+                DEFAULT_COOKIE_HTTP_ONLY_FLAG,
+                DEFAULT_SESSIONID_MIN_LENGTH,
+                sessionStore
+            )
                 .setCookieHttpOnlyFlag(true)
                 .setSessionCookieName(environment.getProperty("http.cookie.session.name", String.class, DEFAULT_SESSION_COOKIE_NAME))
                 .setSessionCookiePath("/" + domain.getPath())
                 .setSessionTimeout(environment.getProperty("http.cookie.session.timeout", Long.class, DEFAULT_SESSION_TIMEOUT))
                 .setCookieSecureFlag(environment.getProperty("http.cookie.secure", Boolean.class, false))
-                .setAuthProvider(userAuthProvider));
+                .setAuthProvider(userAuthProvider)
+        );
     }
 
     @Override

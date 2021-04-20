@@ -20,11 +20,10 @@ package io.gravitee.am.common.event;
  * @author GraviteeSource Team
  */
 public enum Action {
-
     CREATE,
     UPDATE,
     DELETE,
     BULK_CREATE,
     BULK_UPDATE,
-    BULK_DELETE
+    BULK_DELETE,
 }

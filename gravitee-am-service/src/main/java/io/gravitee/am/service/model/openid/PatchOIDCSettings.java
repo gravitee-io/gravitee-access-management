@@ -20,7 +20,6 @@ import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -55,16 +54,15 @@ public class PatchOIDCSettings {
     }
 
     public OIDCSettings patch(OIDCSettings toPatch) {
-
         //If source may be null, in such case init with default values
-        if (toPatch == null ) {
+        if (toPatch == null) {
             toPatch = OIDCSettings.defaultSettings();
         }
         SetterUtils.safeSet(toPatch::setRedirectUriStrictMatching, this.getRedirectUriStrictMatching(), boolean.class);
 
-        if(getClientRegistrationSettings()!=null) {
+        if (getClientRegistrationSettings() != null) {
             //If present apply settings, else return default settings.
-            if(getClientRegistrationSettings().isPresent()) {
+            if (getClientRegistrationSettings().isPresent()) {
                 PatchClientRegistrationSettings patcher = getClientRegistrationSettings().get();
                 ClientRegistrationSettings source = toPatch.getClientRegistrationSettings();
                 toPatch.setClientRegistrationSettings(patcher.patch(source));
@@ -76,13 +74,15 @@ public class PatchOIDCSettings {
         return toPatch;
     }
 
-
     public Set<Permission> getRequiredPermissions() {
-
         Set<Permission> requiredPermissions = new HashSet<>();
 
-        if (clientRegistrationSettings != null && clientRegistrationSettings.isPresent()
-                || redirectUriStrictMatching != null && redirectUriStrictMatching.isPresent()) {
+        if (
+            clientRegistrationSettings != null &&
+            clientRegistrationSettings.isPresent() ||
+            redirectUriStrictMatching != null &&
+            redirectUriStrictMatching.isPresent()
+        ) {
             requiredPermissions.add(Permission.DOMAIN_OPENID);
         }
 

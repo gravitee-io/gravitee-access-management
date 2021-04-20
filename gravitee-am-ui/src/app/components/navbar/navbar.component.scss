@@ -52,7 +52,9 @@ mat-toolbar {
   .userAccountActions.first {
     background-color: #f5f5f5;
     mat-list-item.domain-disabled {
-      mat-icon, h4, span {
+      mat-icon,
+      h4,
+      span {
         color: orange;
       }
       span {

@@ -25,17 +25,17 @@ import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class UserConsentFailureHandler implements Handler<RoutingContext> {
+
     private static final Logger logger = LoggerFactory.getLogger(UserConsentFailureHandler.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
     private Domain domain;

@@ -15,18 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.utils;
 
+import static com.nimbusds.jose.JWEAlgorithm.*;
+
 import com.nimbusds.jose.EncryptionMethod;
 import com.nimbusds.jose.JWSAlgorithm;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.nimbusds.jose.JWEAlgorithm.*;
-
 
 /**
  * Related to JWA RFC - https://tools.ietf.org/html/rfc7518
@@ -38,37 +36,65 @@ public class JWAlgorithmUtils {
     /**
      * Unless we want specific values for id_token, userinfo, authorization and so on, we will share same settings.
      */
-    private static final Set<String> SUPPORTED_SIGNING_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            JWSAlgorithm.RS256.getName(), JWSAlgorithm.RS384.getName(), JWSAlgorithm.RS512.getName(),
-            JWSAlgorithm.HS256.getName(), JWSAlgorithm.HS384.getName(), JWSAlgorithm.HS512.getName()
-    )));
+    private static final Set<String> SUPPORTED_SIGNING_ALG = Collections.unmodifiableSet(
+        new HashSet<>(
+            Arrays.asList(
+                JWSAlgorithm.RS256.getName(),
+                JWSAlgorithm.RS384.getName(),
+                JWSAlgorithm.RS512.getName(),
+                JWSAlgorithm.HS256.getName(),
+                JWSAlgorithm.HS384.getName(),
+                JWSAlgorithm.HS512.getName()
+            )
+        )
+    );
 
     /**
      * https://tools.ietf.org/html/rfc7518#section-4.1
      */
-    private static final Set<String> SUPPORTED_KEY_ENCRYPTION_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            //Elliptic/Edward Curve algorithm
-            ECDH_ES.getName(), ECDH_ES_A128KW.getName(), ECDH_ES_A192KW.getName(), ECDH_ES_A256KW.getName(),
-            //RSA algorithm
-            RSA_OAEP_256.getName(),
-            //Direct
-            DIR.getName(),
-            //AES Key wrap
-            A128KW.getName(), A192KW.getName(), A256KW.getName(),
-            //AES GCM
-            A128GCMKW.getName(), A192GCMKW.getName(), A256GCMKW.getName(),
-            //Password Base Encryption
-            PBES2_HS256_A128KW.getName(), PBES2_HS384_A192KW.getName(), PBES2_HS512_A256KW.getName()
-
-    )));
+    private static final Set<String> SUPPORTED_KEY_ENCRYPTION_ALG = Collections.unmodifiableSet(
+        new HashSet<>(
+            Arrays.asList(
+                //Elliptic/Edward Curve algorithm
+                ECDH_ES.getName(),
+                ECDH_ES_A128KW.getName(),
+                ECDH_ES_A192KW.getName(),
+                ECDH_ES_A256KW.getName(),
+                //RSA algorithm
+                RSA_OAEP_256.getName(),
+                //Direct
+                DIR.getName(),
+                //AES Key wrap
+                A128KW.getName(),
+                A192KW.getName(),
+                A256KW.getName(),
+                //AES GCM
+                A128GCMKW.getName(),
+                A192GCMKW.getName(),
+                A256GCMKW.getName(),
+                //Password Base Encryption
+                PBES2_HS256_A128KW.getName(),
+                PBES2_HS384_A192KW.getName(),
+                PBES2_HS512_A256KW.getName()
+            )
+        )
+    );
 
     /**
      * See https://tools.ietf.org/html/rfc7518#section-5.1
      */
-    private static final Set<String> SUPPORTED_CONTENT_ENCRYPTION_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            EncryptionMethod.A128CBC_HS256.getName(), EncryptionMethod.A192CBC_HS384.getName(), EncryptionMethod.A256CBC_HS512.getName(),
-            EncryptionMethod.A128GCM.getName(), EncryptionMethod.A192GCM.getName(), EncryptionMethod.A256GCM.getName()
-    )));
+    private static final Set<String> SUPPORTED_CONTENT_ENCRYPTION_ALG = Collections.unmodifiableSet(
+        new HashSet<>(
+            Arrays.asList(
+                EncryptionMethod.A128CBC_HS256.getName(),
+                EncryptionMethod.A192CBC_HS384.getName(),
+                EncryptionMethod.A256CBC_HS512.getName(),
+                EncryptionMethod.A128GCM.getName(),
+                EncryptionMethod.A192GCM.getName(),
+                EncryptionMethod.A256GCM.getName()
+            )
+        )
+    );
 
     /**
      * @return the supported list of userinfo signing algorithm.

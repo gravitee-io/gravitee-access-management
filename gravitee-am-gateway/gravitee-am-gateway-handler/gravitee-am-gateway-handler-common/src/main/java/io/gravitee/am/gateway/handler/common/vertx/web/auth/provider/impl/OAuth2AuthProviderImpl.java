@@ -38,11 +38,17 @@ public class OAuth2AuthProviderImpl implements OAuth2AuthProvider {
 
     @Override
     public void decodeToken(String token, boolean offlineVerification, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
-        introspectionTokenService.introspect(token, offlineVerification)
-                .flatMapMaybe(jwt -> clientSyncService.findByDomainAndClientId(jwt.getDomain(), jwt.getAud())
-                        .map(client -> new OAuth2AuthResponse(jwt, client)))
-                .subscribe(
-                        accessToken -> handler.handle(Future.succeededFuture(accessToken)),
-                        error -> handler.handle(Future.failedFuture(error)));
+        introspectionTokenService
+            .introspect(token, offlineVerification)
+            .flatMapMaybe(
+                jwt ->
+                    clientSyncService
+                        .findByDomainAndClientId(jwt.getDomain(), jwt.getAud())
+                        .map(client -> new OAuth2AuthResponse(jwt, client))
+            )
+            .subscribe(
+                accessToken -> handler.handle(Future.succeededFuture(accessToken)),
+                error -> handler.handle(Future.failedFuture(error))
+            );
     }
 }

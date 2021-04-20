@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.impl;
 
-import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -43,9 +43,9 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class UserAuthProviderImpl implements UserAuthProvider {
 
-    private final static Logger logger = LoggerFactory.getLogger(UserAuthProviderImpl.class);
-    private final static String USERNAME_PARAMETER = "username";
-    private final static String PASSWORD_PARAMETER = "password";
+    private static final Logger logger = LoggerFactory.getLogger(UserAuthProviderImpl.class);
+    private static final String USERNAME_PARAMETER = "username";
+    private static final String PASSWORD_PARAMETER = "password";
 
     @Autowired
     private UserAuthenticationManager userAuthenticationManager;
@@ -61,30 +61,39 @@ public class UserAuthProviderImpl implements UserAuthProvider {
         String ipAddress = authInfo.getString(Claims.ip_address);
         String userAgent = authInfo.getString(Claims.user_agent);
 
-        parseClient(clientId, parseClientHandler -> {
-            if (parseClientHandler.failed()) {
-                logger.error("Authentication failure: unable to retrieve client " + clientId, parseClientHandler.cause());
-                handler.handle(Future.failedFuture(parseClientHandler.cause()));
-                return;
-            }
+        parseClient(
+            clientId,
+            parseClientHandler -> {
+                if (parseClientHandler.failed()) {
+                    logger.error("Authentication failure: unable to retrieve client " + clientId, parseClientHandler.cause());
+                    handler.handle(Future.failedFuture(parseClientHandler.cause()));
+                    return;
+                }
 
-            // retrieve the client (application)
-            final Client client = parseClientHandler.result();
+                // retrieve the client (application)
+                final Client client = parseClientHandler.result();
 
-            // end user authentication
-            SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request()));
-            final Authentication authentication = new EndUserAuthentication(username, password, authenticationContext);
+                // end user authentication
+                SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(
+                    new VertxHttpServerRequest(context.request())
+                );
+                final Authentication authentication = new EndUserAuthentication(username, password, authenticationContext);
 
-            authenticationContext.set(Claims.ip_address, ipAddress);
-            authenticationContext.set(Claims.user_agent, userAgent);
-            authenticationContext.set(Claims.domain, client.getDomain());
+                authenticationContext.set(Claims.ip_address, ipAddress);
+                authenticationContext.set(Claims.user_agent, userAgent);
+                authenticationContext.set(Claims.domain, client.getDomain());
 
-            userAuthenticationManager.authenticate(client, authentication)
+                userAuthenticationManager
+                    .authenticate(client, authentication)
                     .subscribe(
-                            user -> handler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))),
-                            error -> handler.handle(Future.failedFuture(error))
+                        user ->
+                            handler.handle(
+                                Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user))
+                            ),
+                        error -> handler.handle(Future.failedFuture(error))
                     );
-        });
+            }
+        );
     }
 
     @Override
@@ -96,11 +105,14 @@ public class UserAuthProviderImpl implements UserAuthProvider {
         logger.debug("Attempt authentication with client " + clientId);
 
         clientSyncService
-                .findByClientId(clientId)
-                .subscribe(
-                        client -> authHandler.handle(Future.succeededFuture(client)),
-                        error -> authHandler.handle(Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))),
-                        () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
-                );
+            .findByClientId(clientId)
+            .subscribe(
+                client -> authHandler.handle(Future.succeededFuture(client)),
+                error ->
+                    authHandler.handle(
+                        Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))
+                    ),
+                () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
+            );
     }
 }

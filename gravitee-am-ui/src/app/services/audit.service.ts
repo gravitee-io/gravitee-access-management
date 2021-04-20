@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { AppConfig } from "../../config/app.config";
-import { HttpClient } from "@angular/common/http";
-import { OrganizationService } from "./organization.service";
+import { AppConfig } from '../../config/app.config';
+import { HttpClient } from '@angular/common/http';
+import { OrganizationService } from './organization.service';
 import * as moment from 'moment';
 
 @Injectable()
 export class AuditService {
   private auditsURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient,
-              private organizationService: OrganizationService) { }
+  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
 
-  findByDomain(domainId, page, size): any  {
+  findByDomain(domainId, page, size): any {
     let from = moment().subtract(1, 'days').valueOf();
     let to = moment().valueOf();
-    return this.http.get(this.auditsURL + domainId + '/audits?page=' + page + '&size=' + size + "&from=" + from + '&to=' + to);
+    return this.http.get(this.auditsURL + domainId + '/audits?page=' + page + '&size=' + size + '&from=' + from + '&to=' + to);
   }
 
-  get(domainId, auditId): any  {
+  get(domainId, auditId): any {
     return this.http.get(this.auditsURL + domainId + '/audits/' + auditId);
   }
 
@@ -41,11 +40,18 @@ export class AuditService {
       return this.organizationService.audits(page, size, type, status, user, from, to);
     }
 
-    return this.http.get(this.auditsURL + domainId + '/audits?page=' + page + '&size=' + size +
-      (type ? '&type=' + type : '') +
-      (status ? '&status=' + status : '') +
-      (user ? '&user=' + user : '') +
-      (from ? '&from=' + from : '') +
-      (to ? '&to=' + to : ''));
+    return this.http.get(
+      this.auditsURL +
+        domainId +
+        '/audits?page=' +
+        page +
+        '&size=' +
+        size +
+        (type ? '&type=' + type : '') +
+        (status ? '&status=' + status : '') +
+        (user ? '&user=' + user : '') +
+        (from ? '&from=' + from : '') +
+        (to ? '&to=' + to : ''),
+    );
   }
 }

@@ -20,7 +20,7 @@ import { FactorService } from './factor.service';
 describe('FactorService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [FactorService]
+      providers: [FactorService],
     });
   });
 

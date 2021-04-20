@@ -22,6 +22,11 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
 import io.vertx.reactivex.core.Vertx;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -31,12 +36,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -45,7 +44,7 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
 
     private final Logger logger = LoggerFactory.getLogger(IdentityProviderPluginManagerImpl.class);
 
-    private final static String SCHEMAS_DIRECTORY = "schemas";
+    private static final String SCHEMAS_DIRECTORY = "schemas";
 
     private final Map<String, IdentityProvider> identityProviders = new HashMap<>();
     private final Map<IdentityProvider, Plugin> identityProviderPlugins = new HashMap<>();
@@ -71,11 +70,15 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
 
     @Override
     public void register(IdentityProviderDefinition identityProviderPluginDefinition) {
-        identityProviders.putIfAbsent(identityProviderPluginDefinition.getPlugin().id(),
-                identityProviderPluginDefinition.getIdentityProvider());
+        identityProviders.putIfAbsent(
+            identityProviderPluginDefinition.getPlugin().id(),
+            identityProviderPluginDefinition.getIdentityProvider()
+        );
 
-        identityProviderPlugins.putIfAbsent(identityProviderPluginDefinition.getIdentityProvider(),
-                identityProviderPluginDefinition.getPlugin());
+        identityProviderPlugins.putIfAbsent(
+            identityProviderPluginDefinition.getIdentityProvider(),
+            identityProviderPluginDefinition.getPlugin()
+        );
     }
 
     @Override
@@ -90,13 +93,22 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     }
 
     @Override
-    public AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper, CertificateManager certificateManager) {
+    public AuthenticationProvider create(
+        String type,
+        String configuration,
+        Map<String, String> mappers,
+        Map<String, String[]> roleMapper,
+        CertificateManager certificateManager
+    ) {
         logger.debug("Looking for an authentication provider for [{}]", type);
         IdentityProvider identityProvider = identityProviders.get(type);
 
         if (identityProvider != null) {
             Class<? extends IdentityProviderConfiguration> configurationClass = identityProvider.configuration();
-            IdentityProviderConfiguration identityProviderConfiguration = identityProviderConfigurationFactory.create(configurationClass, configuration);
+            IdentityProviderConfiguration identityProviderConfiguration = identityProviderConfigurationFactory.create(
+                configurationClass,
+                configuration
+            );
 
             Class<? extends IdentityProviderMapper> mapperClass = identityProvider.mapper();
             IdentityProviderMapper identityProviderMapper = identityProviderMapperFactory.create(mapperClass, mappers);
@@ -105,9 +117,13 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
             IdentityProviderRoleMapper identityProviderRoleMapper = identityProviderRoleMapperFactory.create(roleMapperClass, roleMapper);
 
             return create0(
-                    identityProviderPlugins.get(identityProvider),
-                    identityProvider.authenticationProvider(),
-                    identityProviderConfiguration, identityProviderMapper, identityProviderRoleMapper, certificateManager);
+                identityProviderPlugins.get(identityProvider),
+                identityProvider.authenticationProvider(),
+                identityProviderConfiguration,
+                identityProviderMapper,
+                identityProviderRoleMapper,
+                certificateManager
+            );
         } else {
             logger.error("No identity provider is registered for type {}", type);
             throw new IllegalStateException("No identity provider is registered for type " + type);
@@ -120,19 +136,18 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
         IdentityProvider identityProvider = identityProviders.get(type);
 
         if (identityProvider != null) {
-
             Class<? extends IdentityProviderConfiguration> configurationClass = identityProvider.configuration();
-            IdentityProviderConfiguration identityProviderConfiguration = identityProviderConfigurationFactory.create(configurationClass, configuration);
+            IdentityProviderConfiguration identityProviderConfiguration = identityProviderConfigurationFactory.create(
+                configurationClass,
+                configuration
+            );
 
             if (identityProvider.userProvider() == null || !identityProviderConfiguration.userProvider()) {
                 logger.info("No user provider is registered for type {}", type);
                 return null;
             }
 
-            return create0(
-                    identityProviderPlugins.get(identityProvider),
-                    identityProvider.userProvider(),
-                    identityProviderConfiguration);
+            return create0(identityProviderPlugins.get(identityProvider), identityProvider.userProvider(), identityProviderConfiguration);
         } else {
             logger.error("No identity provider is registered for type {}", type);
             throw new IllegalStateException("No identity provider is registered for type " + type);
@@ -144,8 +159,9 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
         IdentityProvider identityProvider = identityProviders.get(identityProviderId);
         Path policyWorkspace = identityProviderPlugins.get(identityProvider).path();
 
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+        File[] schemas = policyWorkspace
+            .toFile()
+            .listFiles(pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
 
         if (schemas.length == 1) {
             File schemaDir = schemas[0];
@@ -158,8 +174,14 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
         return null;
     }
 
-    private <T> T create0(Plugin plugin, Class<T> identityClass, IdentityProviderConfiguration identityProviderConfiguration,
-                          IdentityProviderMapper identityProviderMapper, IdentityProviderRoleMapper identityProviderRoleMapper, CertificateManager certificateManager) {
+    private <T> T create0(
+        Plugin plugin,
+        Class<T> identityClass,
+        IdentityProviderConfiguration identityProviderConfiguration,
+        IdentityProviderMapper identityProviderMapper,
+        IdentityProviderRoleMapper identityProviderRoleMapper,
+        CertificateManager certificateManager
+    ) {
         if (identityClass == null) {
             return null;
         }
@@ -167,47 +189,55 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
         try {
             T identityObj = createInstance(identityClass);
             final Import annImport = identityClass.getAnnotation(Import.class);
-            Set<Class<?>> configurations = (annImport != null) ?
-                    new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
+            Set<Class<?>> configurations = (annImport != null) ? new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
 
-            ApplicationContext idpApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
-                @Override
-                public Set<Class<?>> configurations() {
-                    return configurations;
-                }
-
-                @Override
-                public ConfigurableApplicationContext applicationContext() {
-                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
-
-                    // Add gravitee properties
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new PropertiesBeanFactoryPostProcessor(properties));
-
-                    // Add Vert.x instance
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new VertxBeanFactoryPostProcessor(vertx));
-
-                    // Add identity provider configuration bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration));
-
-                    // Add identity provider mapper bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper != null ? identityProviderMapper : new NoIdentityProviderMapper()));
-
-                    // Add identity provider role mapper bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new IdentityProviderRoleMapperBeanFactoryPostProcessor(identityProviderRoleMapper != null ? identityProviderRoleMapper : new NoIdentityProviderRoleMapper()));
-
-                    if (certificateManager != null) {
-                        // Add certificate manager bean
-                        configurableApplicationContext.addBeanFactoryPostProcessor(new CertificateManagerBeanFactoryPostProcessor(certificateManager));
+            ApplicationContext idpApplicationContext = pluginContextFactory.create(
+                new AnnotationBasedPluginContextConfigurer(plugin) {
+                    @Override
+                    public Set<Class<?>> configurations() {
+                        return configurations;
                     }
 
-                    return configurableApplicationContext;
+                    @Override
+                    public ConfigurableApplicationContext applicationContext() {
+                        ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+
+                        // Add gravitee properties
+                        configurableApplicationContext.addBeanFactoryPostProcessor(new PropertiesBeanFactoryPostProcessor(properties));
+
+                        // Add Vert.x instance
+                        configurableApplicationContext.addBeanFactoryPostProcessor(new VertxBeanFactoryPostProcessor(vertx));
+
+                        // Add identity provider configuration bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration)
+                        );
+
+                        // Add identity provider mapper bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new IdentityProviderMapperBeanFactoryPostProcessor(
+                                identityProviderMapper != null ? identityProviderMapper : new NoIdentityProviderMapper()
+                            )
+                        );
+
+                        // Add identity provider role mapper bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new IdentityProviderRoleMapperBeanFactoryPostProcessor(
+                                identityProviderRoleMapper != null ? identityProviderRoleMapper : new NoIdentityProviderRoleMapper()
+                            )
+                        );
+
+                        if (certificateManager != null) {
+                            // Add certificate manager bean
+                            configurableApplicationContext.addBeanFactoryPostProcessor(
+                                new CertificateManagerBeanFactoryPostProcessor(certificateManager)
+                            );
+                        }
+
+                        return configurableApplicationContext;
+                    }
                 }
-            });
+            );
 
             idpApplicationContext.getAutowireCapableBeanFactory().autowireBean(identityObj);
 
@@ -226,34 +256,34 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
         try {
             T identityObj = createInstance(userProvider);
             final Import annImport = userProvider.getAnnotation(Import.class);
-            Set<Class<?>> configurations = (annImport != null) ?
-                    new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
+            Set<Class<?>> configurations = (annImport != null) ? new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
 
-            ApplicationContext idpApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
-                @Override
-                public Set<Class<?>> configurations() {
-                    return configurations;
+            ApplicationContext idpApplicationContext = pluginContextFactory.create(
+                new AnnotationBasedPluginContextConfigurer(plugin) {
+                    @Override
+                    public Set<Class<?>> configurations() {
+                        return configurations;
+                    }
+
+                    @Override
+                    public ConfigurableApplicationContext applicationContext() {
+                        ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+
+                        // Add gravitee properties
+                        configurableApplicationContext.addBeanFactoryPostProcessor(new PropertiesBeanFactoryPostProcessor(properties));
+
+                        // Add Vert.x instance
+                        configurableApplicationContext.addBeanFactoryPostProcessor(new VertxBeanFactoryPostProcessor(vertx));
+
+                        // Add identity provider configuration bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration)
+                        );
+
+                        return configurableApplicationContext;
+                    }
                 }
-
-                @Override
-                public ConfigurableApplicationContext applicationContext() {
-                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
-
-                    // Add gravitee properties
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new PropertiesBeanFactoryPostProcessor(properties));
-
-                    // Add Vert.x instance
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new VertxBeanFactoryPostProcessor(vertx));
-
-                    // Add identity provider configuration bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration));
-
-                    return configurableApplicationContext;
-                }
-            });
+            );
 
             idpApplicationContext.getAutowireCapableBeanFactory().autowireBean(identityObj);
 

@@ -23,7 +23,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface FactorProvider {
-
     Completable verify(String secretKey, String code);
 
     Single<Enrollment> enroll(String account);

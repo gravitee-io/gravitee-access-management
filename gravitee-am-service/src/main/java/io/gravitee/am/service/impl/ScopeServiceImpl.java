@@ -36,16 +36,15 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -84,12 +83,19 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public Maybe<Scope> findById(String id) {
         LOGGER.debug("Find scope by ID: {}", id);
-        return scopeRepository.findById(id)
-                .onErrorResumeNext(ex -> {
+        return scopeRepository
+            .findById(id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a scope using its ID: {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a scope using its ID: %s", id), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a scope using its ID: %s", id),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
@@ -97,9 +103,11 @@ public class ScopeServiceImpl implements ScopeService {
         LOGGER.debug("Create a new scope {} for domain {}", newScope, domain);
         // replace all whitespace by an underscore (whitespace is a reserved keyword to separate tokens)
         String scopeKey = newScope.getKey().replaceAll("\\s+", "_");
-        return scopeRepository.findByDomainAndKey(domain, scopeKey)
-                .isEmpty()
-                .flatMap(empty -> {
+        return scopeRepository
+            .findByDomainAndKey(domain, scopeKey)
+            .isEmpty()
+            .flatMap(
+                empty -> {
                     if (!empty) {
                         throw new ScopeAlreadyExistsException(scopeKey, domain);
                     }
@@ -115,31 +123,52 @@ public class ScopeServiceImpl implements ScopeService {
                     scope.setUpdatedAt(new Date());
 
                     return scopeRepository.create(scope);
-                })
-                .flatMap(scope -> {
+                }
+            )
+            .flatMap(
+                scope -> {
                     // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(scope));
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to create a scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a scope", ex));
-                })
-                .doOnSuccess(scope -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).scope(scope)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).throwable(throwable)));
+                }
+            )
+            .doOnSuccess(
+                scope ->
+                    auditService.report(
+                        AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).scope(scope)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(ScopeAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.SCOPE_CREATED)
+                            .throwable(throwable)
+                    )
+            );
     }
 
     @Override
     public Single<Scope> create(String domain, NewSystemScope newScope) {
         LOGGER.debug("Create a new system scope {} for domain {}", newScope, domain);
         String scopeKey = newScope.getKey().toLowerCase();
-        return scopeRepository.findByDomainAndKey(domain, scopeKey)
-                .isEmpty()
-                .flatMap(empty -> {
+        return scopeRepository
+            .findByDomainAndKey(domain, scopeKey)
+            .isEmpty()
+            .flatMap(
+                empty -> {
                     if (!empty) {
                         throw new ScopeAlreadyExistsException(scopeKey, domain);
                     }
@@ -156,45 +185,57 @@ public class ScopeServiceImpl implements ScopeService {
                     scope.setCreatedAt(new Date());
                     scope.setUpdatedAt(new Date());
                     return scopeRepository.create(scope);
-                })
-                .flatMap(scope -> {
+                }
+            )
+            .flatMap(
+                scope -> {
                     // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(scope));
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to create a system scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a system scope", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Scope> patch(String domain, String id, PatchScope patchScope, User principal) {
         LOGGER.debug("Patching a scope {} for domain {}", id, domain);
-        return scopeRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
-                .flatMapSingle(oldScope -> {
+        return scopeRepository
+            .findById(id)
+            .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
+            .flatMapSingle(
+                oldScope -> {
                     Scope scopeToUpdate = patchScope.patch(oldScope);
                     return update(domain, scopeToUpdate, oldScope, principal);
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to patch a scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to patch a scope", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Scope> update(String domain, String id, UpdateScope updateScope, User principal) {
         LOGGER.debug("Update a scope {} for domain {}", id, domain);
-        return scopeRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
-                .flatMapSingle(oldScope -> {
+        return scopeRepository
+            .findById(id)
+            .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
+            .flatMapSingle(
+                oldScope -> {
                     Scope scopeToUpdate = new Scope(oldScope);
                     scopeToUpdate.setName(updateScope.getName());
                     scopeToUpdate.setDescription(updateScope.getDescription());
@@ -204,35 +245,64 @@ public class ScopeServiceImpl implements ScopeService {
                     }
 
                     return update(domain, scopeToUpdate, oldScope, principal);
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to update a scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a scope", ex));
-                });
+                }
+            );
     }
 
     private Single<Scope> update(String domain, Scope toUpdate, Scope oldValue, User principal) {
-
         toUpdate.setUpdatedAt(new Date());
-        return scopeRepository.update(toUpdate)
-                .flatMap(scope1 -> {
+        return scopeRepository
+            .update(toUpdate)
+            .flatMap(
+                scope1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.SCOPE, new Payload(scope1.getId(), ReferenceType.DOMAIN, scope1.getDomain(), Action.UPDATE));
+                    Event event = new Event(
+                        Type.SCOPE,
+                        new Payload(scope1.getId(), ReferenceType.DOMAIN, scope1.getDomain(), Action.UPDATE)
+                    );
                     return eventService.create(event).flatMap(__ -> Single.just(scope1));
-                })
-                .doOnSuccess(scope1 -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).oldValue(oldValue).scope(scope1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).throwable(throwable)));
+                }
+            )
+            .doOnSuccess(
+                scope1 ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(ScopeAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.SCOPE_UPDATED)
+                            .oldValue(oldValue)
+                            .scope(scope1)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(ScopeAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.SCOPE_UPDATED)
+                            .throwable(throwable)
+                    )
+            );
     }
 
     @Override
     public Single<Scope> update(String domain, String id, UpdateSystemScope updateScope) {
         LOGGER.debug("Update a system scope {} for domain {}", id, domain);
-        return scopeRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
-                .flatMapSingle(scope -> {
+        return scopeRepository
+            .findById(id)
+            .switchIfEmpty(Maybe.error(new ScopeNotFoundException(id)))
+            .flatMapSingle(
+                scope -> {
                     scope.setName(updateScope.getName());
                     scope.setDescription(updateScope.getDescription());
                     scope.setUpdatedAt(new Date());
@@ -241,113 +311,193 @@ public class ScopeServiceImpl implements ScopeService {
                     scope.setExpiresIn(updateScope.getExpiresIn());
                     scope.setDiscovery(updateScope.isDiscovery());
                     return scopeRepository.update(scope);
-                })
-                .flatMap(scope -> {
+                }
+            )
+            .flatMap(
+                scope -> {
                     // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(scope));
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to update a system scope", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a system scope", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Completable delete(String scopeId, boolean force, User principal) {
         LOGGER.debug("Delete scope {}", scopeId);
-        return scopeRepository.findById(scopeId)
-                .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
-                .flatMapSingle(scope -> {
+        return scopeRepository
+            .findById(scopeId)
+            .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
+            .flatMapSingle(
+                scope -> {
                     if (scope.isSystem() && !force) {
                         throw new SystemScopeDeleteException(scopeId);
                     }
                     return Single.just(scope);
-                })
-                .flatMapCompletable(scope ->
-
-                        Completable.fromSingle(
-                                // 1_ Remove permissions from role
-                                roleService.findByDomain(scope.getDomain())
-                                        .flatMapObservable(roles -> Observable.fromIterable(roles.stream()
-                                                .filter(role -> role.getOauthScopes() != null && role.getOauthScopes().contains(scope.getKey()))
-                                                .collect(Collectors.toList())))
-                                        .flatMapSingle(role -> {
-                                            role.getOauthScopes().remove(scope.getKey());
-                                            UpdateRole updatedRole = new UpdateRole();
-                                            updatedRole.setName(role.getName());
-                                            updatedRole.setDescription(role.getDescription());
-                                            updatedRole.setPermissions(role.getOauthScopes());
-                                            // Save role
-                                            return roleService.update(scope.getDomain(), role.getId(), updatedRole);
-                                        }).toList())
-                                .andThen(
-                                        // 2_ Remove scopes from application
-                                        applicationService.findByDomain(scope.getDomain())
-                                                .flatMapObservable(applications -> Observable.fromIterable(applications.stream()
-                                                        .filter(application -> {
-                                                            if (application.getSettings() == null) {
-                                                                return false;
-                                                            }
-                                                            if (application.getSettings().getOauth() == null) {
-                                                                return false;
-                                                            }
-                                                            ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
-                                                            return oAuthSettings.getScopes() != null && oAuthSettings.getScopes().contains(scope.getKey());
-                                                        })
-                                                        .collect(Collectors.toList())))
-                                                .flatMapSingle(application -> {
-                                                    // Remove scope from application
-                                                    application.getSettings().getOauth().getScopes().remove(scope.getKey());
-                                                    // Then update
-                                                    return applicationService.update(application);
-                                                }).toList()).toCompletable()
-                                // 3_ Remove scopes from scope_approvals
-                                .andThen(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey()))
-                                // 4_ Delete scope
-                                .andThen(scopeRepository.delete(scopeId))
-                                // 5_ create event for sync process
-                                .andThen(
-                                        Completable.fromSingle(
-                                                eventService.create(new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.DELETE))))
+                }
+            )
+            .flatMapCompletable(
+                scope ->
+                    Completable
+                        .fromSingle(
+                            // 1_ Remove permissions from role
+                            roleService
+                                .findByDomain(scope.getDomain())
+                                .flatMapObservable(
+                                    roles ->
+                                        Observable.fromIterable(
+                                            roles
+                                                .stream()
+                                                .filter(
+                                                    role -> role.getOauthScopes() != null && role.getOauthScopes().contains(scope.getKey())
+                                                )
+                                                .collect(Collectors.toList())
+                                        )
                                 )
-                                .doOnComplete(() -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).scope(scope)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).throwable(throwable)))
-                )
-                .onErrorResumeNext(ex -> {
+                                .flatMapSingle(
+                                    role -> {
+                                        role.getOauthScopes().remove(scope.getKey());
+                                        UpdateRole updatedRole = new UpdateRole();
+                                        updatedRole.setName(role.getName());
+                                        updatedRole.setDescription(role.getDescription());
+                                        updatedRole.setPermissions(role.getOauthScopes());
+                                        // Save role
+                                        return roleService.update(scope.getDomain(), role.getId(), updatedRole);
+                                    }
+                                )
+                                .toList()
+                        )
+                        .andThen(
+                            // 2_ Remove scopes from application
+                            applicationService
+                                .findByDomain(scope.getDomain())
+                                .flatMapObservable(
+                                    applications ->
+                                        Observable.fromIterable(
+                                            applications
+                                                .stream()
+                                                .filter(
+                                                    application -> {
+                                                        if (application.getSettings() == null) {
+                                                            return false;
+                                                        }
+                                                        if (application.getSettings().getOauth() == null) {
+                                                            return false;
+                                                        }
+                                                        ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
+                                                        return (
+                                                            oAuthSettings.getScopes() != null &&
+                                                            oAuthSettings.getScopes().contains(scope.getKey())
+                                                        );
+                                                    }
+                                                )
+                                                .collect(Collectors.toList())
+                                        )
+                                )
+                                .flatMapSingle(
+                                    application -> {
+                                        // Remove scope from application
+                                        application.getSettings().getOauth().getScopes().remove(scope.getKey());
+                                        // Then update
+                                        return applicationService.update(application);
+                                    }
+                                )
+                                .toList()
+                        )
+                        .toCompletable()
+                        // 3_ Remove scopes from scope_approvals
+                        .andThen(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey()))
+                        // 4_ Delete scope
+                        .andThen(scopeRepository.delete(scopeId))
+                        // 5_ create event for sync process
+                        .andThen(
+                            Completable.fromSingle(
+                                eventService.create(
+                                    new Event(
+                                        Type.SCOPE,
+                                        new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.DELETE)
+                                    )
+                                )
+                            )
+                        )
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(ScopeAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.SCOPE_DELETED)
+                                        .scope(scope)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(ScopeAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.SCOPE_DELETED)
+                                        .throwable(throwable)
+                                )
+                        )
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete scope: {}", scopeId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete scope: %s", scopeId), ex));
-                });
+                    return Completable.error(
+                        new TechnicalManagementException(String.format("An error occurs while trying to delete scope: %s", scopeId), ex)
+                    );
+                }
+            );
     }
 
     @Override
     public Single<Set<Scope>> findByDomain(String domain) {
         LOGGER.debug("Find scopes by domain: {}", domain);
-        return scopeRepository.findByDomain(domain)
-                .onErrorResumeNext(ex -> {
+        return scopeRepository
+            .findByDomain(domain)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find scopes by domain: {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find scopes by domain: %s", domain), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find scopes by domain: %s", domain),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<Scope> findByDomainAndKey(String domain, String scopeKey) {
         LOGGER.debug("Find scopes by domain: {} and scope key: {}", domain, scopeKey);
-        return scopeRepository.findByDomainAndKey(domain, scopeKey)
-                .onErrorResumeNext(ex -> {
+        return scopeRepository
+            .findByDomainAndKey(domain, scopeKey)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find scopes by domain: {} and scope key: {}", domain, scopeKey, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find scopes by domain: %s and scope key: %s", domain, scopeKey), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find scopes by domain: %s and scope key: %s", domain, scopeKey),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     /**
@@ -357,16 +507,15 @@ public class ScopeServiceImpl implements ScopeService {
     @Override
     public Single<Boolean> validateScope(String domain, List<String> scopes) {
         if (scopes == null || scopes.isEmpty()) {
-            return Single.just(true);//nothing to do...
+            return Single.just(true); //nothing to do...
         }
 
         return findByDomain(domain)
-                .map(domainSet -> domainSet.stream().map(scope -> scope.getKey()).collect(Collectors.toSet()))
-                .flatMap(domainScopes -> this.validateScope(domainScopes, scopes));
+            .map(domainSet -> domainSet.stream().map(scope -> scope.getKey()).collect(Collectors.toSet()))
+            .flatMap(domainScopes -> this.validateScope(domainScopes, scopes));
     }
 
     private Single<Boolean> validateScope(Set<String> domainScopes, List<String> scopes) {
-
         for (String scope : scopes) {
             if (!domainScopes.contains(scope)) {
                 return Single.error(new InvalidClientMetadataException("scope " + scope + " is not valid."));
@@ -375,6 +524,4 @@ public class ScopeServiceImpl implements ScopeService {
 
         return Single.just(true);
     }
-
-
 }

@@ -24,6 +24,5 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface AnalyticsService {
-
     Single<AnalyticsResponse> execute(AnalyticsQuery query);
 }

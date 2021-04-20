@@ -38,5 +38,4 @@ public class CertificateConfiguration {
     public CertificateConfigurationFactory certificateConfigurationFactory() {
         return new CertificateConfigurationFactoryImpl();
     }
-
 }
