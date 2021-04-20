@@ -28,8 +28,8 @@
 - [cockpit] Report gateway nodes in commands https://github.com/gravitee-io/issues/issues/5058[#5058]
 - [cockpit] add healthcheck command https://github.com/gravitee-io/issues/issues/5171[#5171]
 
- 
- 
+
+
 
 == https://github.com/gravitee-io/issues/milestone/374?closed=1[AM - 3.7.2 (2021-04-19)]
 
@@ -45,8 +45,8 @@
 
 - Password policy missing and inconsistent validation rules https://github.com/gravitee-io/issues/issues/5335[#5335]
 
- 
- 
+
+
 
 == https://github.com/gravitee-io/issues/milestone/375?closed=1[AM - 3.6.4 (2021-04-19)]
 
@@ -57,8 +57,8 @@
 - Failed to resolve jwtGenerator https://github.com/gravitee-io/issues/issues/5454[#5454]
 - Java.lang.IllegalStateExceptionSearch method not implemented for File reporter https://github.com/gravitee-io/issues/issues/5456[#5456]
 
- 
- 
+
+
 
 == https://github.com/gravitee-io/issues/milestone/373?closed=1[AM - 3.6.3 (2021-04-19)]
 
@@ -72,8 +72,8 @@
 
 - Update postman test https://github.com/gravitee-io/issues/issues/5437[#5437]
 
- 
- 
+
+
 
 == https://github.com/gravitee-io/issues/milestone/369?closed=1[AM - 3.6.2 (2021-04-15)]
 
@@ -88,8 +88,8 @@
 
 - Merge 3.5.4 https://github.com/gravitee-io/issues/issues/5394[#5394]
 
- 
- 
+
+
 
 == https://github.com/gravitee-io/issues/milestone/360?closed=1[AM - 3.5.4 (2021-04-09)]
 
@@ -129,8 +129,8 @@
 
 - Dynamic newsletter taglines https://github.com/gravitee-io/issues/issues/5270[#5270]
 
- 
- 
+
+
 == https://github.com/gravitee-io/issues/milestone/362?closed=1[AM - 3.7.1 (2021-03-24)]
 
 === Bug fixes
@@ -369,6 +369,7 @@
 *_Gateway_*
 
 - [passwordless] Split the webauthn.js file to be able to override it https://github.com/gravitee-io/issues/issues/4812[#4812]
+
 == https://github.com/gravitee-io/issues/milestone/247?closed=1[AM - 3.5.0 (2020-12-23)]
 
 === Bug fixes
