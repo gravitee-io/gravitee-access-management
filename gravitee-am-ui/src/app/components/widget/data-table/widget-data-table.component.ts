@@ -48,13 +48,16 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
       const columnValue = this.chart.columns[1];
       this.sorts = [{ prop: columnValue, dir: 'desc' }];
       this.rows = Object.keys(response).map((key) => {
-        const obj = {};
-        obj[columnName] = this.getColumnName(key, metadata);
-        obj[columnValue] = response[key];
-        obj.name = obj[columnName];
-        obj.value = obj[columnValue];
-        obj.deleted = this.resourceDeleted(key, metadata);
-        obj.link = this.getResourceLink(key, metadata, field);
+        const name = this.getColumnName(key, metadata);
+        const value = response[key];
+        const obj = {
+          name,
+          value,
+          deleted: this.resourceDeleted(key, metadata),
+          link: this.getResourceLink(key, metadata, field),
+        };
+        obj[columnName] = name;
+        obj[columnValue] = value;
         return obj;
       });
       setTimeout(() => {

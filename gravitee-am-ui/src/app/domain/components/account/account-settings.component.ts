@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {ProviderService} from '../../../services/provider.service';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ProviderService } from '../../../services/provider.service';
 import * as moment from 'moment';
 
 @Component({
   selector: 'app-account-settings',
   templateUrl: './account-settings.component.html',
-  styleUrls: ['./account-settings.component.scss']
+  styleUrls: ['./account-settings.component.scss'],
 })
 export class AccountSettingsComponent implements OnInit, OnChanges {
   @Output() onSavedAccountSettings = new EventEmitter<any>();
@@ -38,15 +38,14 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   private defaultAccountBlockedDuration = 2;
   private defaultAccountBlockedDurationUnit = 'hours';
 
-  constructor(private route: ActivatedRoute,
-              private providerService: ProviderService) {}
+  constructor(private route: ActivatedRoute, private providerService: ProviderService) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.parent.parent.params.domainId
-        ? this.route.snapshot.parent.parent.params.domainId
-        : this.route.snapshot.parent.parent.parent.params.domainId;
+      ? this.route.snapshot.parent.parent.params.domainId
+      : this.route.snapshot.parent.parent.parent.params.domainId;
     this.initDateValues();
-    this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
+    this.providerService.findUserProvidersByDomain(this.domainId).subscribe((response) => {
       this.userProviders = response;
     });
   }
@@ -61,11 +60,17 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   save() {
     let accountSettings = Object.assign({}, this.accountSettings);
     if (accountSettings.inherited) {
-      accountSettings = { 'inherited' : true };
+      accountSettings = { inherited: true };
     } else {
       // set duration values
-      accountSettings.loginAttemptsResetTime = this.getDuration(accountSettings.loginAttemptsResetTime, accountSettings.loginAttemptsResetTimeUnitTime);
-      accountSettings.accountBlockedDuration = this.getDuration(accountSettings.accountBlockedDuration, accountSettings.accountBlockedDurationUnitTime);
+      accountSettings.loginAttemptsResetTime = this.getDuration(
+        accountSettings.loginAttemptsResetTime,
+        accountSettings.loginAttemptsResetTimeUnitTime,
+      );
+      accountSettings.accountBlockedDuration = this.getDuration(
+        accountSettings.accountBlockedDuration,
+        accountSettings.accountBlockedDurationUnitTime,
+      );
       delete accountSettings.loginAttemptsResetTimeUnitTime;
       delete accountSettings.accountBlockedDurationUnitTime;
     }
@@ -90,9 +95,11 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     // apply default values
     this.accountSettings.maxLoginAttempts = this.accountSettings.maxLoginAttempts || this.defaultMaxAttempts;
     this.accountSettings.loginAttemptsResetTime = this.accountSettings.loginAttemptsResetTime || this.defaultLoginAttemptsResetTime;
-    this.accountSettings.loginAttemptsResetTimeUnitTime = this.accountSettings.loginAttemptsResetTimeUnitTime || this.defaultLoginAttemptsResetTimeUnit;
+    this.accountSettings.loginAttemptsResetTimeUnitTime =
+      this.accountSettings.loginAttemptsResetTimeUnitTime || this.defaultLoginAttemptsResetTimeUnit;
     this.accountSettings.accountBlockedDuration = this.accountSettings.accountBlockedDuration || this.defaultAccountBlockedDuration;
-    this.accountSettings.accountBlockedDurationUnitTime = this.accountSettings.accountBlockedDurationUnitTime || this.defaultAccountBlockedDurationUnit;
+    this.accountSettings.accountBlockedDurationUnitTime =
+      this.accountSettings.accountBlockedDurationUnitTime || this.defaultAccountBlockedDurationUnit;
   }
 
   isBrutForceAuthenticationEnabled() {
@@ -174,12 +181,12 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   private getHumanizeDuration(value) {
     const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
-    const humanizeDateValue = (humanizeDate[0] === 'a' || humanizeDate[0] === 'an') ? 1 : humanizeDate[0];
+    const humanizeDateValue = humanizeDate[0] === 'a' || humanizeDate[0] === 'an' ? 1 : humanizeDate[0];
     const humanizeDateUnit = humanizeDate[1].endsWith('s') ? humanizeDate[1] : humanizeDate[1] + 's';
     return new Array(humanizeDateValue, humanizeDateUnit);
   }
 
   private getDuration(value, unit) {
-    return moment.duration(parseInt(value), unit).asSeconds();
+    return moment.duration(parseInt(value, 10), unit).asSeconds();
   }
 }

@@ -74,6 +74,7 @@ export class EntrypointComponent implements OnInit {
   }
 
   tagsChanged() {
+    // @ts-ignore
     this.chipInput.nativeElement.blur();
     this.formChanged = true;
     this.entrypoint.tags = _.map(this.selectedTags, (tag) => tag.id);
