@@ -50,6 +50,7 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
  */
 @Repository
 public class JdbcDomainRepository extends AbstractJdbcRepository implements DomainRepository {
+
     @Autowired
     private SpringDomainRepository domainRepository;
     @Autowired
@@ -119,8 +120,8 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     }
 
     @Override
-    public Flowable<Domain> findAllByEnvironment(String environmentId) {
-        LOGGER.debug("findAllByEnvironment({})", environmentId);
+    public Flowable<Domain> findAllByReferenceId(String environmentId) {
+        LOGGER.debug("findAllByReferenceId({})", environmentId);
         Flowable<Domain> domains = domainRepository.findAllByReferenceId(environmentId, ReferenceType.ENVIRONMENT.name()).map(this::toDomain);
         return domains.flatMap(this::completeDomain)
                 .doOnError((error) -> LOGGER.error("unable to retrieve all domain with environment {}", environmentId, error));
@@ -188,6 +189,31 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .then(deleteChildEntities(domainId))
                 .as(trx::transactional))
                 .doOnError((error) -> LOGGER.error("unable to delete Domain with id {}", domainId, error));
+    }
+
+    @Override
+    public Flowable<Domain> search(String environmentId, String query){
+        LOGGER.debug("search({}, {})", environmentId, query);
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+
+        String search = new StringBuilder("SELECT * FROM domains d WHERE")
+                .append(" d.reference_type = :referenceType AND d.reference_id = :referenceId")
+                .append(" AND d.name " + (wildcardMatch ? "LIKE" : "="))
+                .append(" :value")
+                .toString();
+
+        return fluxToFlowable(dbClient.execute(search)
+                .bind("referenceType", ReferenceType.ENVIRONMENT.name())
+                .bind("referenceId", environmentId)
+                .bind("value", wildcardMatch ? wildcardQuery : query)
+                .as(JdbcDomain.class)
+                .fetch()
+                .all())
+                .map(this::toDomain)
+                .flatMap(this::completeDomain)
+                .doOnError((error) -> LOGGER.error("Unable to search domains with referenceId {}", environmentId, error));
     }
 
     private Flowable<Domain> completeDomain(Domain entity) {

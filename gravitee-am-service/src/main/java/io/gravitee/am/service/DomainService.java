@@ -36,11 +36,13 @@ import java.util.Set;
  */
 public interface DomainService {
 
+    Flowable<Domain> findAllByEnvironment(String organizationId, String environment);
+
+    Flowable<Domain> search(String organizationId, String environmentId, String query);
+
     Maybe<Domain> findById(String id);
 
     Single<Domain> findByHrid(String environmentId, String hrid);
-
-    Flowable<Domain> findAllByEnvironment(String organizationId, String environment);
 
     Single<Set<Domain>> findAll();
 

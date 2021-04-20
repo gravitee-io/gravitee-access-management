@@ -163,13 +163,26 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Flowable<Domain> findAllByEnvironment(String organizationId, String environmentId) {
+    public Flowable<Domain> search(String organizationId, String environmentId, String query) {
+        LOGGER.debug("Search domains with query {} for environmentId {}", query, environmentId);
+        return environmentService.findById(environmentId, organizationId)
+                .map(Environment::getId)
+                .flatMapPublisher(envId -> domainRepository.search(environmentId, query))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error has occurred when trying to search domains with query {} for environmentId {}", query, environmentId, ex);
+                });
+    }
 
+    @Override
+    public Flowable<Domain> findAllByEnvironment(String organizationId, String environmentId) {
         LOGGER.debug("Find all domains of environment {} (organization {})", environmentId, organizationId);
 
         return environmentService.findById(environmentId, organizationId)
                 .map(Environment::getId)
-                .flatMapPublisher(environmentsId -> domainRepository.findAllByEnvironment(environmentId));
+                .flatMapPublisher(envId -> domainRepository.findAllByReferenceId(envId))
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error has occurred when trying to find domains by environment", ex);
+                });
     }
 
     @Override

@@ -28,6 +28,14 @@ export class DomainService {
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
+  findByEnvironment(page, size): Observable<any> {
+    return this.http.get<any>(this.domainsURL + '?page=' + page + '&size=' + size);
+  }
+
+  search(searchTerm, page, size): Observable<any> {
+    return this.http.get<any>(this.domainsURL  + '?q=' + searchTerm + '&page=' + page + '&size=' + size);
+  }
+
   list(): Observable<any> {
     return this.http.get<any>(this.domainsURL);
   }

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import { DialogService } from "../../services/dialog.service";
-import { SnackbarService } from "../../services/snackbar.service";
-import { ActivatedRoute } from "@angular/router";
-import { ApplicationService } from "../../services/application.service";
+import {Component, OnInit} from '@angular/core';
+import {DialogService} from "../../services/dialog.service";
+import {SnackbarService} from "../../services/snackbar.service";
+import {ActivatedRoute} from "@angular/router";
+import {ApplicationService} from "../../services/application.service";
 
 @Component({
   selector: 'app-applications',
@@ -52,7 +52,7 @@ export class ApplicationsComponent implements OnInit {
 
   loadApps() {
     const findApps = (this.searchValue) ?
-      this.applicationService.search(this.domainId, this.searchValue + '*') :
+      this.applicationService.search(this.domainId, '*' + this.searchValue + '*') :
       this.applicationService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
 
     findApps.subscribe(pagedApps => {

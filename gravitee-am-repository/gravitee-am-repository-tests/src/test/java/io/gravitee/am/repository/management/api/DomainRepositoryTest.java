@@ -114,7 +114,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domainRepository.create(otherDomain).blockingGet();
 
         // fetch domains
-        TestSubscriber<Domain> testObserver1 = domainRepository.findAllByEnvironment("environment#1").test();
+        TestSubscriber<Domain> testObserver1 = domainRepository.findAllByReferenceId("environment#1").test();
         testObserver1.awaitTerminalEvent();
 
         testObserver1.assertComplete();

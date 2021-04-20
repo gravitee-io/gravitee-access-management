@@ -34,7 +34,7 @@ export class DomainsResolver implements Resolve<any> {
       });
     }
 
-    return this.domainService.list();
+    return this.domainService.findByEnvironment(0, 10);
   }
 
 }
