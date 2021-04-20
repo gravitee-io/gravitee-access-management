@@ -45,6 +45,8 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
         MongoCollection<Document> collection = mongoDatabase.getCollection("users");
         Document doc = new Document("username", "bob").append("password", "bobspassword");
         Observable.fromPublisher(collection.insertOne(doc)).blockingFirst();
+        Document doc2 = new Document("username", "user01").append("email", "user01@acme.com").append("password", "user01");
+        Observable.fromPublisher(collection.insertOne(doc2)).blockingFirst();
     }
 
     @Bean
@@ -56,6 +58,7 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
         configuration.setDatabase("test-idp-mongo");
         configuration.setUsersCollection("users");
         configuration.setFindUserByUsernameQuery("{username: ?}");
+        configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
         configuration.setPasswordField("password");
         configuration.setPasswordEncoder(PasswordEncoder.NONE.getValue());
 

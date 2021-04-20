@@ -60,6 +60,11 @@
       "title": "Query to find for a user using its identifier (username)",
       "description": "The query which is executed to search for an user using its identifier (username)."
     },
+    "findUserByMultipleFieldsQuery" : {
+      "type" : "string",
+      "title": "Query to find for a user using multiple fields (username or email)",
+      "description": "The query which is executed to search for an user using its identifier (username) or another field (email). If this field isn't specified, the findUserByUsernameQuery is used"
+    },
     "findUserByEmailQuery" : {
       "type" : "string",
       "default": "{email: ?}",

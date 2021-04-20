@@ -40,6 +40,7 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     private String user;
     private String password;
     private String selectUserByUsernameQuery;
+    private String selectUserByMultipleFieldsQuery;
     private String identifierAttribute = FIELD_ID;
     private String usernameAttribute = FIELD_USERNAME;
     private String passwordAttribute = FIELD_PASSWORD;
@@ -114,6 +115,14 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setSelectUserByUsernameQuery(String selectUserByUsernameQuery) {
         this.selectUserByUsernameQuery = selectUserByUsernameQuery;
+    }
+
+    public String getSelectUserByMultipleFieldsQuery() {
+        return selectUserByMultipleFieldsQuery;
+    }
+
+    public void setSelectUserByMultipleFieldsQuery(String selectUserByMultipleFieldsQuery) {
+        this.selectUserByMultipleFieldsQuery = selectUserByMultipleFieldsQuery;
     }
 
     public String getIdentifierAttribute() {

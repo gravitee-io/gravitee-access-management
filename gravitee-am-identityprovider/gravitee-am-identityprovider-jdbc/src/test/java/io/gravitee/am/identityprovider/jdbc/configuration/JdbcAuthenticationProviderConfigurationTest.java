@@ -29,6 +29,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.reactivex.Completable;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,9 +53,14 @@ public abstract class JdbcAuthenticationProviderConfigurationTest implements Ini
     public void afterPropertiesSet() throws Exception {
         // create table users and insert values
         Connection connection = connectionPool.create().block();
+        initData(connection);
+        Completable.fromPublisher(connection.close()).subscribe();
+    }
+
+    protected void initData(Connection connection) {
         Single.fromPublisher(connection.createStatement("create table users(id varchar(256), username varchar(256), password varchar(256), email varchar(256), metadata text)").execute()).subscribe();
         Single.fromPublisher(connection.createStatement("insert into users values('1', 'bob', 'bobspassword', null, null)").execute()).subscribe();
-        Completable.fromPublisher(connection.close()).subscribe();
+        Single.fromPublisher(connection.createStatement("insert into users values('2', 'user01', 'user01', 'user01@acme.com', null)").execute()).subscribe();
     }
 
     @Bean
@@ -88,6 +94,7 @@ public abstract class JdbcAuthenticationProviderConfigurationTest implements Ini
         configuration.setProtocol(protocol());
         configuration.setUsersTable("users");
         configuration.setSelectUserByUsernameQuery("select * from users where username = %s");
+        configuration.setSelectUserByMultipleFieldsQuery("select * from users where username = %s or email = %s ");
         configuration.setPasswordEncoder(PasswordEncoder.NONE.getValue());
 
         return configuration;
